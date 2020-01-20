@@ -41,13 +41,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     Required parameters
     -------------------
 
-    To run successfully, both one of the following has to be provided:
+    To run successfully, one of the following has to be provided:
 
     --command   The string to be executed. It can be a single command or a
                 complex multiline script.
     --script    The path to a script to be executed.
 
-    as well the settings need to be specified by:
+    and the settings need to be specified by:
 
     --settings  A string specifying the scheduler to be used and the additional
                 settings for it.
@@ -381,6 +381,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     # --- getting results
 
+    result = ""
     if outputs['return'] in ['both', 'stdout']:
         result = run.stdout.read()
     elif outputs['return'] in ['stderr']:

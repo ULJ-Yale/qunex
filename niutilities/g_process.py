@@ -25,6 +25,9 @@ Changelog
 2019-01-13 Jure Demsar
          - Fixed a bug that disabled cores parameter with the
            introduction of the threads parameter.
+2019-09-20 Jure Demsar
+         - Have all the files listed with the original name
+           in subject_hcp.txt.
 """
 
 import g_core
@@ -39,7 +42,7 @@ import os.path
 from datetime import datetime
 import niutilities.g_exceptions as ge
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 # =======================================================================
@@ -146,22 +149,56 @@ def updateOptions(session, options):
     return soptions
 
 
-def mapDeprecated(options, tomap):
+def mapDeprecated(options, tomap, mapValues, deprecatedList):
 
+    remapped   = []
     deprecated = []
-    mapwarn  = False
+    newvalues  = []
+
+    # -> check remapped parameters
+
     for k, v in options.iteritems():
         if k in tomap:
             options[tomap[k]] = v
-            deprecated.append(k)
+            remapped.append(k)
 
-    if deprecated:
-        print "\nWARNING: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
-        for k in deprecated:
-            print"         ... %s is now %s!" % (k, tomap[k])            
+    if remapped:
+        print "\nWARNING: Use of parameters with changed name(s)!\n       The following parameters have new names and will be deprecated:"
+        for k in remapped:
+            print "         ... %s is now %s!" % (k, tomap[k])            
             del options[k]
         print "         Please correct the listed parameter names in command line or batch file!"     
 
+
+    # -> check deprecated parameters
+
+    for k, v in options.iteritems():
+        if k in deprecatedList:
+            if v:
+                deprecated.append((k, v, deprecatedList[k]))
+
+    if deprecated:
+        print "\nWARNING: Use of deprecated parameter(s)!"
+        for k, v, n in deprecated:
+            if n:
+                print "         ... %s (current value: %s) is replaced by the parameter %s!" % (k, str(v), n)
+            else:
+                print "         ... %s (current value: %s) is being deprecated!" % (k, str(v))
+        print "         Please stop using the listed parameters in command line or batch file, and, when indicated, consider using the replacement parameter!"  
+
+    # -> check new parameter values
+
+    for k, v in options.iteritems():
+        if k in mapValues:
+            if v in mapValues[k]:
+                options[k] = mapValues[k][v]
+                newvalues.append([k, v, mapValues[k][v]])
+
+    if newvalues:
+        print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have new names:"
+        for k, v, n in newvalues:
+            print "         ... %s (%s) is now %s!" % (str(v), k, n)            
+        print "         Please correct the listed parameter values in command line or batch file!" 
 
 
 # =======================================================================
@@ -283,31 +320,31 @@ arglist = [['# ---- Basic settings'],
            ['scheduler_sleep',       '1',                                         float,  "time in seconds between submission of individual scheduler jobs"],
 
            ['# --- HCP options'],
-           ['hcp_mppversion',         'hcp',                                      str,    "Whether to use the HCP (hcp), Legacy (legacy), or Origin (strict) version of the MPP [hcp]"],
+           ['hcp_processing_mode',    'HCPStyleData',                             str,    "Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData)"],
            ['hcp_folderstructure',    'hcpls',                                    str,    "Which version of HCP folder structure to use, initial or hcpls ['hcpls']"],
            ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder"],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE"],
            ['hcp_Pipeline',           '',                                         str,    "path to pipeline base folder"],
            ['hcp_suffix',             '',                                         str,    "session id suffix if running HCP preprocessing variants"],
+           ['hcp_filename',           'standard',                                 str,    "How to name the image files in the hcp structure. The default is to name them by their number ('standard') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('original') (e.g. rfMRI_REST1_AP). ['standard']"],
            ['hcp_brainsize',          '150',                                      int,    "human brain size in mm"],
            ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE"],
            ['hcp_fmap',               '',                                         str,    "DEPRECATED!!! whether hi-res structural fieldmap is present - SiemensFieldMap for Siemens Phase/Magnitude pair, or GeneralElectricFieldMap for GE single B0 image, ['']"],
-           ['hcp_biascorrect_t1w',    'YES',                                      str,    "Whether to run T1w image bias correction in PreFS step when no T12 image is present: YES (default) or NONE"],
            ['hcp_echodiff',           '',                                         str,    "the delta in TE times for the hi-res fieldmap image ['']"],
-           ['hcp_sephaseneg',         '',                                         str,    "spin echo field map volume with a negative phase encoding direction: LR, RL, ['']"],
-           ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: LR, RL, ['']"],
-           ['hcp_dwelltime',          '',                                         str,    "Echo Spacing or Dwelltime of Spin Echo Field Map or '' if not used"],
+           ['hcp_sephaseneg',         '',                                         str,    "spin echo field map volume with a negative phase encoding direction: (AP, PA, LR, RL) ['']"],
+           ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) ['']"],
+           ['hcp_seechospacing',      '',                                         str,    "Echo Spacing or Dwelltime of Spin Echo Field Map or '' if not used"],
            ['hcp_seunwarpdir',        '',                                         str,    "Phase encoding direction of the spin echo field map. (Only applies when using a spin echo field map.) ['']"],
            ['hcp_t1samplespacing',    '',                                         str,    "0.0000074 ... DICOM field (0019,1018) in s or '' if not used"],
            ['hcp_t2samplespacing',    '',                                         str,    "0.0000021 ... DICOM field (0019,1018) in s or '' if not used"],
            ['hcp_unwarpdir',          '',                                         str,    "Readout direction of the T1w and T2w images (Used with either a regular field map or a spin echo field map) z appears to be best or '' if not used"],
            ['hcp_gdcoeffs',           '',                                         str,    "Location of gradient coefficient file, a string describing mulitiple options, or '' to skip"],
-           ['hcp_avgrdcmethod',       'NONE',                                     str,    "'FIELDMAP' ... Averaging and readout distortion correction methods: 'NONE' = average any repeats with no readout correction 'FIELDMAP' or 'SiemensFieldMap' or 'GeneralElectricFieldMap' = average any repeats and use field map for readout correction 'TOPUP' = average and distortion correct at the same time with topup/applytopup only works for 2 images currently"],
-           ['hcp_topupconfig',        '',                                         str,    "Config for topup or '' if not used"],
+           ['hcp_avgrdcmethod',       'NONE',                                     str,    "Averaging and readout distortion correction methods: 'NONE' = average any repeats with no readout correction 'FIELDMAP' or 'SiemensFieldMap' or 'GeneralElectricFieldMap' = average any repeats and use field map for readout correction 'TOPUP' = average and distortion correct at the same time with topup/applytopup only works for 2 images currently"],
+           ['hcp_topupconfig',        '',                                         str,    "A full path to the topup configuration file to use. Set to '' if the default is to be used or of TOPUP distortion correction is not used."],
            ['hcp_bfsigma',            '',                                         str,    "Bias Field Smoothing Sigma (optional)"],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
-           ['hcp_prefs_brainmask',    'NONE',                                     str,    "Whether to use a custom bain mask (MASK) in PreFS or not (NONE)"],
-           ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution of the structural images templates to use in the prefs step."],
+           ['hcp_prefs_custombrain',  '',                                         str,    "Whether to use a custom bain mask (MASK) or custom brain images (CUSTOM) in PreFS or not (NONE; the default)"],
+           ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution (in mm) of the structural images templates to use in the prefs step."],
            ['hcp_usejacobian',        '',                                         str,    "Not currently in usage (optional)"],
            ['hcp_printcom',           '',                                         str,    "Print command for the HCP scripts: set to echo to have commands printed and not executed."],
            ['hcp_expert_file',        '',                                         str,    "Name of the read-in expert options file for FreeSurfer"],
@@ -319,45 +356,49 @@ arglist = [['# ---- Basic settings'],
            ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
            ['hcp_fs_existing_subject','FALSE',                                    torf,   "Indicates that the command is to be run on top of an already existing analysis/subject. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE or FALSE [FALSE]. HCP Pipelines specific!"],
            ['hcp_fs_extra_reconall',  '',                                         str,    "A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
-           ['hcp_fs_no_conf2hires',   'FALSE',                                    torf,    "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]"],
+           ['hcp_fs_no_conf2hires',   'FALSE',                                    torf,   "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]"],
+           ['hcp_fs_flair',           'FALSE',                                    torf,   "If set to TRUE indicates that recon-all is to be run with the -FLAIR/-FLAIRpial options(rather than the -T2/-T2pial options). The FLAIR input image itself should still be provided via the '--t2' argument."],
            ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_fslong_check',       'last',                                     str,    "Whether to check the results of FreeSurferLongitudinal pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_postfs_check',       'last',                                     str,    "Whether to check the results of PostFreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_grayordinatesres',   '2',                                        int,    "Usually 2mm"],
            ['hcp_hiresmesh',          '164',                                      int,    "Usually 164 vertices"],
            ['hcp_lowresmesh',         '32',                                       int,    "Usually 32 vertices"],
-           ['hcp_regname',            'FS',                                       str,    "What registration is used FS or MSMSulc."],
+           ['hcp_regname',            '',                                         str,    "What registration is used FS or MSMSulc. FS if none is provided."],
            ['hcp_mcsigma',            '',                                         str,    "Correction sigma used for metric smooting (sqrt(200): 14.14213562373095048801) ['']."],
            ['hcp_inflatescale',       '1',                                        str,    "Inflate extra scale parameter [1]."],
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder."],
-           ['hcp_bold_sequencetype',  'single',                                   str,    "The type of the sequence used: multi(band) vs single(band)"],
-           ['hcp_bold_boldnamekey',   'number',                                   str,    "How to name the BOLD files in the hcp structure. The default is to name them by their bold number ('number') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('name') (e.g. rfMRI_REST1_AP). ['number']"],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results"],
            ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default"],
-           ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE or Legacy. HCP Pipelines only!"],
-           ['hcp_bold_usejacobian',   'FALSE',                                    str,    "Whether to apply the jacobian of the distortion correction to fMRI data. HCP Pipelines only!"],
-           ['hcp_bold_echospacing',   '0.00035',                                  str,    "Echo Spacing or Dwelltime of fMRI image in seconds"],
-           ['hcp_bold_correct',       'TOPUP',                                    str,    "BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE"],
-           ['hcp_bold_ref',           'NONE',                                     str,    "Whether BOLD image Reference images should be used - NONE or USE"],
+           ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE, LEGACY or SEBASED (for TOPUP DC only). HCP Pipelines only!"],
+           ['hcp_bold_usejacobian',   '',                                         str,    "Whether to apply the jacobian of the distortion correction to fMRI data. HCP Pipelines only!"],
+           ['hcp_bold_echospacing',   '',                                         str,    "Echo Spacing or Dwelltime of fMRI image in seconds"],
+           ['hcp_bold_dcmethod',      '',                                         str,    "BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE"],
+           ['hcp_bold_sephaseneg',    '',                                         str,    "Spin echo field map volume to use for BOLD TOPUP with a negative phase encoding direction (AP, PA, LR, RL), ['']"],
+           ['hcp_bold_sephasepos',    '',                                         str,    "Spin echo field map volume to use for BOLD TOPUP with a positive phase encoding direction (AP, PA, LR, RL), ['']"],           
+           ['hcp_bold_topupconfig',   '',                                         str,    "A full path to the topup configuration file to use. Set to '' if the default is to be used or of TOPUP distortion correction is not used."],
+           ['hcp_bold_dof',           '',                                         str,    "Degrees of freedom for EPI-T1 FLIRT. Empty to use HCP default."],
+           ['hcp_bold_sbref',         'NONE',                                     str,    "Whether BOLD image Reference images should be used - NONE or USE"],
            ['hcp_bold_echodiff',      'NONE',                                     str,    "Delta TE in ms for BOLD fieldmap images or NONE if not used"],
-           ['hcp_bold_unwarpdir',     'y',                                        str,    "The direction of unwarping, can be specified separately for LR/RL : 'LR=x|RL=-x|x'"],
+           ['hcp_bold_unwarpdir',     'y',                                        str,    "The direction of unwarping, can be specified separately for LR/RL: e.g. 'LR=x|RL=-x|x' or similarly for AP/PA"],
            ['hcp_bold_res',           '2',                                        str,    "Target image resolution 2mm recommended"],
            ['hcp_bold_gdcoeffs',      'NONE',                                     str,    "Gradient distorsion correction coefficients or NONE"],
-           ['hcp_bold_stcorr',        'TRUE',                                     str,    "Whether to do slice timing correction TRUE or NONE"],
-           ['hcp_bold_stcorrdir',     'up',                                       str,    "The direction of slice acquisition"],
-           ['hcp_bold_stcorrint',     'odd',                                      str,    "Whether slices were acquired in an interleaved fashion (odd) or not (empty)"],
+           ['hcp_bold_doslicetime',   '',                                         str,    "Whether to do slice timing correction TRUE or FALSE (default)"],
+           ['hcp_bold_slicetimerparams' ,'',                                      str,    "A comma or pipe separated string of parameters for FSL slicetimer."],
+           ['hcp_bold_stcorrdir',     '',                                         str,    "The direction of slice acquisition NOTE: deprecated!"],
+           ['hcp_bold_stcorrint',     '',                                         str,    "Whether slices were acquired in an interleaved fashion (odd) or not (empty) NOTE: deprecated!"],
            ['hcp_bold_movref',        'independent',                              str,    "What reference to use for movement correction (independent, first)"],
            ['hcp_bold_seimg',         'independent',                              str,    "What image to use for spin-echo distorsion correction (independent, first)"],
            ['hcp_bold_smoothFWHM',    '2',                                        str,    "Whether slices were acquired in an interleaved fashion (odd or even) or not (empty)"],
-           ['hcp_bold_usemask',       'T1',                                       str,    "what mask to use for the bold images (T1: default, BOLD: mask based on bet of the scout, NONE: do not use a mask)"],
-           ['hcp_bold_preregister',   'epi_reg',                                  str,    "What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt"],
-           ['hcp_bold_refreg',        'linear',                                   str,    "Whether to use only linaer (default) or also nonlinear registration of motion corrected bold to reference"],
+           ['hcp_bold_mask',          '',                                         str,    "Specifies what mask to use for the final bold. T1_fMRI_FOV: combined T1w brain mask and fMRI FOV masks (the default), T1_DILATED_fMRI_FOV: a once dilated T1w brain based mask combined with fMRI FOV, T1_DILATED2x_fMRI_FOV: a twice dilated T1w brain based mask combined with fMRI FOV, fMRI_FOV: a fMRI FOV mask."],
+           ['hcp_bold_preregistertool','',                                        str,    "What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt"],
+           ['hcp_bold_refreg',        '',                                         str,    "Whether to use only linaer (default) or also nonlinear registration of motion corrected bold to reference"],
            ['hcp_bold_movreg',        'MCFLIRT',                                  str,    "Whether to use FLIRT or MCFLIRT for motion correction"],
            ['hcp_bold_vol_check',     'last',                                     str,    "Whether to check the results of fMRIVolume pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_bold_surf_check',    'last',                                     str,    "Whether to check the results of fMRISurface pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_dwi_PEdir',          '1',                                        str,    "Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"],
            ['hcp_dwi_gdcoeffs',       'NONE',                                     str,    "DWI specific gradient distorsion coefficients file or NONE"],
-           ['hcp_dwi_dwelltime',      '',                                         str,    "Echo spacing in msec."],
+           ['hcp_dwi_echospacing',    '',                                         str,    "Echo spacing in msec."],
            ['hcp_dwi_dof',            '6',                                        str,    "Degrees of Freedom for post eddy registration to structural images. Defaults to 6."],
            ['hcp_dwi_b0maxbval',      '50',                                       str,    "Volumes with a bvalue smaller than this value will be considered as b0s. Defaults to 50"],
            ['hcp_dwi_extraeddyarg',   '',                                         str,    "A string specifying additional arguments to pass to eddy processing. Defaults to ''"],
@@ -367,21 +408,41 @@ arglist = [['# ---- Basic settings'],
            ['# --- Processing options'],
            ['run',                    'run',                                      str,    "run type: run - do the task, test - perform checks"],
            ['log',                    'keep',                                     str,    "Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed."]
-           ]
+          ]
+
 
 #   --------------------------------------------------------- PARAMETER MAPPING
 #   For historical reasons and to maintain backward compatibility, some of the
 #   parameters need to be mapped to a parameter with another name. The "tomap"
 #   dictionary specifies what is mapped to what.
 
-tomap = {'bppt':            'bolds',
-         'bppa':            'bold_actions',
-         'bppn':            'bold_nuisance',
-         'eventstring':     'event_string',
-         'eventfile':       'event_file',
-         'basefolder':      'subjectsfolder',
-         'subjects':        'sessions',
-         'bold_preprocess': 'bolds'}
+tomap = {'bppt':                    'bolds',
+         'bppa':                    'bold_actions',
+         'bppn':                    'bold_nuisance',
+         'eventstring':             'event_string',
+         'eventfile':               'event_file',
+         'basefolder':              'subjectsfolder',
+         'subjects':                'sessions',
+         'bold_preprocess':         'bolds',
+         'hcp_prefs_brainmask':     'hcp_prefs_custombrain',
+         'hcp_mppversion':          'hcp_processing_mode',
+         'hcp_dwelltime':           'hcp_seechospacing',
+         'hcp_bold_ref':            'hcp_bold_sbref',
+         'hcp_bold_preregister':    'hcp_bold_preregistertool',
+         'hcp_bold_stcorr':         'hcp_bold_doslicetime',
+         'hcp_bold_correct':        'hcp_bold_dcmethod',
+         'hcp_bold_usemask':        'hcp_bold_mask',
+         'hcp_bold_boldnamekey':    'hcp_filename',
+         'hcp_dwi_dwelltime':       'hcp_dwi_echospacing'}
+
+mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
+             'hcp_filename': {'name': 'original', 'number': 'standard'}}
+
+deprecated = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
+              'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams',
+              'hcp_bold_sequencetype': None,
+              'hcp_biascorrect_t1w': None}
+  
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -548,7 +609,7 @@ def run(command, args):
     for (k, v) in gpref.iteritems():
         options[k] = v
 
-    mapDeprecated(options, tomap)
+    mapDeprecated(options, tomap, mapValues, deprecated)
 
     # --- parse command line options
 
@@ -558,7 +619,7 @@ def run(command, args):
         else:
             options[k] = v
 
-    mapDeprecated(options, tomap)
+    mapDeprecated(options, tomap, mapValues, deprecated)
 
     # ---- Recode
 
@@ -700,7 +761,7 @@ def run(command, args):
 
         else:
             c = 0
-            threadPoolExecutor = ThreadPoolExecutor(cores)
+            processPoolExecutor = ProcessPoolExecutor(cores)
             futures = []
             if command in plactions:
                 todo = plactions[command]
@@ -709,7 +770,7 @@ def run(command, args):
                         soptions = updateOptions(session, options)
                         consoleLog += "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
                         print "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        future = threadPoolExecutor.submit(todo, session, soptions, overwrite, c + 1)
+                        future = processPoolExecutor.submit(todo, session, soptions, overwrite, c + 1)
                         futures.append(future)
                         c += 1
                         if nprocess and c >= nprocess:

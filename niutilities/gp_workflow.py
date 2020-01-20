@@ -827,7 +827,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     Reporting specific options:
 
     --TR          ... TR of the BOLD files [2.5].
-    --mov_pref    ... The prefix to be used for the group reports [].
+    --mov_pref    ... The prefix to be used for the figure plot files [].
     --mov_plot    ... The base name of the plot files. If set to empty no plots
                       are generated [mov_report].
     --mov_mreport ... The name of the group movement report file. If set to
@@ -1481,7 +1481,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                            processed [].
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
-                           bold3<bold_prefix>_g7_hpss.nii.gz [].
+                           bold3<bold_prefix>_s_hpss.nii.gz [].
 
     List of bold files specify, which types of bold files are to be processed,
     as they are specified in the batch.txt file. An example of a list of
@@ -1601,8 +1601,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     Volume smoothing
     ----------------
 
-    For volume formats the images will be smoothed using the mri_Smooth3D
-    gmrimage method. For cifti format the smooting will be done by calling the
+    For volume formats the images will be smoothed using the img_Smooth3D
+    nimage method. For cifti format the smooting will be done by calling the
     relevant wb_command command. The smoothing specific parameters are:
 
     --voxel_smooth  ... Gaussian smoothing FWHM in voxels [2]
@@ -1652,14 +1652,14 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     Results
     -------
 
-    The resulting smoothed files are saved with '_g7' added to the BOLD root
+    The resulting smoothed files are saved with '_s' added to the BOLD root
     filename.
 
 
     TEMPORAL FILTERING
     ==================
 
-    Temporal filtering is accomplished using mri_Filter gmrimage method. The
+    Temporal filtering is accomplished using img_Filter nimage method. The
     code is adopted from the FSL C++ code enabling appropriate handling of
     bad frames (as described above - see SCRUBBING). The specific parameters
     are:
@@ -1667,7 +1667,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
     --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
 
-    Please note that the values finaly passed to mri_Filter method are the
+    Please note that the values finaly passed to img_Filter method are the
     respective sigma values computed from the specified frequencies and TR.
 
     Results
@@ -2079,7 +2079,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                            processed [].
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
-                           bold3<bold_prefix>_g7_hpss.nii.gz [].
+                           bold3<bold_prefix>_s_hpss.nii.gz [].
     --conc_use         ... Whether to use information in the conc file as 
                            relative or absolute ['relative'].
 
@@ -2212,8 +2212,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Volume smoothing
     ----------------
 
-    For volume formats the images will be smoothed using the mri_Smooth3D
-    gmrimage method. For cifti format the smooting will be done by calling the
+    For volume formats the images will be smoothed using the img_Smooth3D
+    nimage method. For cifti format the smooting will be done by calling the
     relevant wb_command command. The smoothing specific parameters are:
 
     --voxel_smooth  ... Gaussian smoothing FWHM in voxels [2]
@@ -2263,14 +2263,14 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Results
     -------
 
-    The resulting smoothed files are saved with '_g7' added to the BOLD root
+    The resulting smoothed files are saved with '_s' added to the BOLD root
     filename.
 
 
     TEMPORAL FILTERING
     ==================
 
-    Temporal filtering is accomplished using mri_Filter gmrimage method. The
+    Temporal filtering is accomplished using img_Filter nimage method. The
     code is adopted from the FSL C++ code enabling appropriate handling of
     bad frames (as described above - see SCRUBBING). The specific parameters
     are:
@@ -2278,7 +2278,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
     --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
 
-    Please note that the values finaly passed to mri_Filter method are the
+    Please note that the values finaly passed to img_Filter method are the
     respective sigma values computed from the specified frequencies and TR.
 
     Results

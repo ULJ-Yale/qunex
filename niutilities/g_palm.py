@@ -79,8 +79,8 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
     PARAMETERS
     ==========
 
-    Image file(s)
-    -------------
+    --image: Image file(s) 
+    ----------------------
 
     One or multiple files can be specified as input. If multiple files are
     specified, they will be all passed to PALM. If they are cifti files, they
@@ -95,8 +95,8 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
 
     image="rs_connectivity.dtseries.nii|task_activation.dtseries.nii"
 
-    Design string
-    -------------
+    --design: Design string
+    -----------------------
 
     The design name and the specififc tails (if the defaults are not used) are
     specified by a design string. Design string is a pipe separated list of
@@ -137,8 +137,8 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
     * designs/transient_fmain.csv  (f-contrasts file)
 
 
-    Additional arguments to PALM
-    ----------------------------
+    --arg: Additional arguments to PALM
+    -----------------------------------
 
     Additional arguments to palm can be specified using the arguments string.
     The arguments string is a pipe separated list of arguments and optional
@@ -199,18 +199,18 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
     Additional optional parameters
     ------------------------------
     
-    * options   : a | separate string of additional options to be passed to the
+    --options   : a | separate string of additional options to be passed to the
                   command, e.g. specify 'surface' if only left and right surfaces
                   from dtseries or dscalar files are to be analysed
-    * root      : optional root name for the result images, design name is used
+    --root      : optional root name for the result images, design name is used
                   if the optional parameter is not specified
-    * cores     : number of cores to use in parallel for grayordinate
+    --cores     : number of cores to use in parallel for grayordinate
                   decomposition, all available cores (3 max for left surface,
                   right surface and volume files) will be used if not specified
-    * overwrite : whether to remove preexisting image files, if they exists, the
+    --overwrite : whether to remove preexisting image files, if they exists, the
                   command will exit with a warning if there are preexiting files
                   and overwrite is set to 'no' (the default)
-    * cleanup   : should the command clean all the temporary generated files or
+    --cleanup   : should the command clean all the temporary generated files or
                   not before the command exits [yes]
 
     Example use

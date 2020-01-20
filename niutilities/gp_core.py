@@ -103,7 +103,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
     returns:
     * bolds ... list of bolds to process
     * bskip ... list of bolds to skip
-    * nskip ... number of bolds to skup
+    * nskip ... number of bolds to skip
     * r     ... report
 
     lists contain tuples with the following elements:
@@ -135,6 +135,9 @@ def useOrSkipBOLD(sinfo, options, r=""):
         keep += [n for n in range(nbolds) if bolds[n][2] in btargets]
 
         # check bold names if present
+        keep += [n for n in range(nbolds) if bolds[n][3].get('filename') in btargets]
+
+        # check bold names if present
         keep += [n for n in range(nbolds) if bolds[n][3].get('boldname') in btargets]
 
         # check sequence names
@@ -148,19 +151,26 @@ def useOrSkipBOLD(sinfo, options, r=""):
         # set bolds and skips
 
         bskip = [bolds[i] for i in skip]
-        bolds = [bolds[i] for i in keep]        
+        bolds = [bolds[i] for i in keep]
 
         # sort and report
         bskip.sort()
         if len(bskip) > 0:
             r += "\n\nSkipping the following BOLD images:"
             for n, b, t, v in bskip:
-                if 'boldname' in v and options['hcp_bold_boldnamekey'] == 'name':
+                if 'filename' in v and options['hcp_filename'] == 'original':
+                    r += "\n...  %-20s [%-6s %s]" % (v['filename'], b, t)
+                elif 'boldname' in v and options['hcp_filename'] == 'original':
                     r += "\n...  %-20s [%-6s %s]" % (v['boldname'], b, t)
                 else:
                     r += "\n...  %-6s [%s]" % (b, t)
             r += "\n"
     bolds.sort()
+
+    # if bolds have boldname (legacy) and not filename, copy boldname to filename
+    for b in bolds:
+        if "filename" not in b[3] and "boldname" in b[3]:
+            b[3]["filename"] = b[3]["boldname"]
 
     return bolds, bskip, len(bskip), r
 
@@ -238,7 +248,7 @@ def getFileNames(sinfo, options):
 
     for ch in options['bold_actions']:
         if ch == 's':
-            f['conc_final'] = f['conc_final'].replace('.conc', '_g7.conc')
+            f['conc_final'] = f['conc_final'].replace('.conc', '_s.conc')
         elif ch == 'h':
             f['conc_final'] = f['conc_final'].replace('.conc', '_hpss.conc')
         elif ch == 'r':
@@ -392,7 +402,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     for ch in options['bold_actions']:
         if ch == 's':
-            f['bold_final'] = f['bold_final'].replace(ext, '_g7' + ext)
+            f['bold_final'] = f['bold_final'].replace(ext, '_s' + ext)
         elif ch == 'h':
             f['bold_final'] = f['bold_final'].replace(ext, '_hpss' + ext)
         elif ch == 'c':
