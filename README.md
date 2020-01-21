@@ -567,6 +567,7 @@ Change Log
 * 0.49.05 [niutilities library] Updated parameters
 * 0.49.06 [library] Added reporting of HCPpipelines version
 * 0.49.07 [library niutilities] Fixed and expanded functionality for PBS scheduler
+* 0.49.08 [connector] Corrected parameter name
 
 Stable Container Tag Log
 ========================
