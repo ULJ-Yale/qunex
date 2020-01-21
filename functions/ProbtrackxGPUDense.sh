@@ -328,7 +328,7 @@ for CASE in $CASES; do
             geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..." 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
             echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
             # -- Command to run
-            ProbtrackxGPUDenseCommand="${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}"
+            ProbtrackxGPUDenseCommand="${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${StudyFolder} ${CASE} ${Nsamples} ${SchedulerType}"
             # -- Echo the command
             echo "Running the following probtrackX GPU command: "     2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
             echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
