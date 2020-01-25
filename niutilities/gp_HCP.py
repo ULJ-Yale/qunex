@@ -4078,7 +4078,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n----------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP ICAFix registration [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP ICAFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -4096,7 +4096,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_bold_boldnamekey'] == 'name':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -4209,7 +4209,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     _, _, _, boldinfo = bold
 
-    if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['boldname']
         boldtarget = boldinfo['boldname']
     else:
@@ -4318,7 +4318,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             # extract data
             _, _, _, boldinfo = b
 
-            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+            if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['boldname']
                 boldtarget = boldinfo['boldname']
             else:
@@ -4432,7 +4432,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n----------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PostFix registration [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP PostFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -4450,7 +4450,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_bold_boldnamekey'] == 'name':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -4525,7 +4525,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     # extract data
     _, _, _, boldinfo = bold
 
-    if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['boldname']
         boldtarget = boldinfo['boldname']
     else:
@@ -4565,6 +4565,19 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         if 'hcp_postfix_dualscene' in options:
             dualscene = options['hcp_postfix_dualscene']
 
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = 2
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] is "compiled":
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] is "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] is "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                boldok = false
+
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
@@ -4582,7 +4595,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 'dualscene'         : dualscene,
                 'singlescene'       : singlescene,
                 'reusehighpass'     : reusehighpass,
-                'matlabrunmode'     : 1 if 'hcp_matlab_mode' not in options else options['hcp_matlab_mode']}
+                'matlabrunmode'     : matlabrunmode}
 
         # -- Test files
         # TODO TEST FILES
@@ -4660,7 +4673,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n----------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP ReFix registration [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP ReFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -4678,7 +4691,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_bold_boldnamekey'] == 'name':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -4781,7 +4794,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
     # extract data
     _, _, _, boldinfo = bold
 
-    if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['boldname']
         boldtarget = boldinfo['boldname']
     else:
@@ -4873,7 +4886,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     _, _, _, boldinfo = bold
 
-    if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['boldname']
         boldtarget = boldinfo['boldname']
     else:
@@ -4902,6 +4915,19 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
             r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
 
+            # matlab run mode, compiled=0, interpreted=1, octave=2
+            matlabrunmode = 2
+            if 'hcp_matlab_mode' in options:
+                if options['hcp_matlab_mode'] is "compiled":
+                    matlabrunmode = 0
+                elif options['hcp_matlab_mode'] is "interpreted":
+                    matlabrunmode = 1
+                elif options['hcp_matlab_mode'] is "octave":
+                    matlabrunmode = 2
+                else:
+                    r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                    boldok = false
+
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
@@ -4919,7 +4945,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     'highpass'            : 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass'],
                     'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                    'matlabrunmode'       : 1 if 'hcp_matlab_mode' not in options else options['hcp_matlab_mode'],
+                    'matlabrunmode'       : matlabrunmode,
                     'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
@@ -4999,7 +5025,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             # extract data
             _, _, _, boldinfo = b
 
-            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+            if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['boldname']
                 boldtarget = boldinfo['boldname']
             else:
@@ -5035,6 +5061,19 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 # add latest image
                 boldtargets = boldtargets + boldtarget
 
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = 2
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] is "compiled":
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] is "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] is "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                boldok = false
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
@@ -5054,7 +5093,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 'highpass'            : 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass'],
                 'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                'matlabrunmode'       : 1 if 'hcp_matlab_mode' not in options else options['hcp_matlab_mode'],
+                'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
