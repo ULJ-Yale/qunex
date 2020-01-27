@@ -25,8 +25,11 @@ def fz2zf(inf, outf=None):
 
     Converts the xyfz order of data to xyzf (needed for Philips functionals, DTIs, ...).
 
-    - inf:  input image filename to be shuffled
-    - outf: output image filename
+    PARAMETERS
+    ==========
+
+    --inf:  input image filename to be shuffled
+    --outf: output image filename
 
     If outf is not provided, it replaces the original file.
     '''
@@ -81,13 +84,19 @@ def reslice(inf, slices, outf=None):
 
     WARNING: it assumes ascending interpolated aquisition of slices!!
 
-    - inf:    input image filename to be reordered
-    - slices: number of slices per volume
-    - outf:   output image filename
+    PARAMETERS
+    ==========
+
+    --inf:    input image filename to be reordered
+    --slices: number of slices per volume
+    --outf:   output image filename
 
     If outf is not provided, it replaces the original file.
 
-    example: qunex reslice 07.nii.gz 48
+    EXAMPLE USE
+    ===========
+
+    qunex reslice 07.nii.gz 48
     '''
 
     slices = int(slices)
@@ -166,8 +175,11 @@ def reorder(inf, outf=None):
 
     Reorders the slices (y dimension) for images that are upside down.
 
-    - inf:  input image filename to be reordered
-    - outf: output image filename
+    PARAMETERS
+    ==========
+
+    --inf:  input image filename to be reordered
+    --outf: output image filename
 
     If outf is not provided, it replaces the original file.
     '''
@@ -217,9 +229,12 @@ def nifti24dfp(inf, outf=None):
     nifti24dfp inf=<input_image> [outf=<output_image>]
 
     Converts a NIfTI file to a 4dfp file.
+    
+    PARAMETERS
+    ==========
 
-    - inf:  input image filename to be converted
-    - outf: output image filename
+    --inf:  input image filename to be converted
+    --outf: output image filename
 
     If outf is not provided, the same root filename is used.
     '''
