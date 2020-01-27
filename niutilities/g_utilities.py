@@ -1596,10 +1596,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
         raise ge.CommandError("runList", "listfile not specified", "No runlist file specified", "Please provide path to the runlist file!")
 
     if runlists is None:
-        raise ge.CommandError("runList", "runlists not specified ", "No runlists specified", "Please provide list of list names to run!")
+        raise ge.CommandError("runList", "runlists not specified", "No runlists specified", "Please provide list of list names to run!")
 
     if not os.path.exists(listfile):
-        raise ge.CommandFailed("runList", "Funlist file does not exist", "Runlist file not found [%s]" % (listfile), "Please check your paths!")
+        raise ge.CommandFailed("runList", "runlist file does not exist", "Runlist file not found [%s]" % (listfile), "Please check your paths!")
 
     # prep log
     if logfolder is None:
