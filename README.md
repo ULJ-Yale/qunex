@@ -569,6 +569,7 @@ Change Log
 * 0.49.07 [library niutilities] Fixed and expanded functionality for PBS scheduler
 * 0.49.08 [connector] Corrected parameter name
 * 0.49.09 [qunex] HCPpipelines v4.1.3 
+* 0.49.10 [niutilities] Made SE selection for BOLD more robust and informative, added option to select by sequence number
 
 Stable Container Tag Log
 ========================
