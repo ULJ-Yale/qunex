@@ -3810,6 +3810,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
+
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP fMRISurface', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
@@ -3889,6 +3890,8 @@ def parseICAFixBolds(options, bolds, r):
         r += "\n\n%s single fix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
     else:
         r += "\n\n%s multi fix on %d groups" % (action("Processing", options['run']), len(icafixGroups))
+
+    r += "\n----------------------------------------------------------------\n"
 
     # --- Get hcp_icafix_bolds data from bolds
     if icafixBolds is not bolds:
@@ -4386,7 +4389,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
             # put all group bolds together
             icafixBolds = []
             for g in icafixGroups:
-                groupBolds = g["bolds"]
+                groupBolds = g["name"]
                 icafixBolds.extend(groupBolds)
 
         if threads == 1: # serial execution
@@ -4446,26 +4449,36 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
 
 def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
-    # extract data
-    _, _, _, boldinfo = bold
-
-    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-        printbold  = boldinfo['boldname']
-        boldtarget = boldinfo['boldname']
-    else:
-        printbold  = str(bold)
-        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
-    try:
+    # extract data
+    if singleFix:
+        _, _, _, boldinfo = bold
+
+        if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
+            printbold  = boldinfo['boldname']
+            boldtarget = boldinfo['boldname']
+        else:
+            printbold  = str(bold)
+            boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+        # TODO FIX path
+        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
         r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+    else:
+        printbold = bold
+        boldtarget = bold
+
+        # TODO FIX path
+        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+        r += "\n---> %s group %s" % (action("Processing", options['run']), printbold)
+
+    try:
         boldok = True
 
         # --- check for bold image
-        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
         r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
 
         # set different default values for single and multi fix
@@ -4505,7 +4518,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
-            --fmri-name="%(boldtarget)s" \
+            --fmri-name="%(boldimg)s" \
             --high-pass="%(highpass)d" \
             --template-scene-dual-screen="%(dualscene)s" \
             --template-scene-single-screen="%(singlescene)s" \
@@ -4514,7 +4527,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'PostFix.sh'),
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'boldtarget'        : boldtarget,
+                'boldimg'           : boldimg,
                 'highpass'          : highpass,
                 'dualscene'         : dualscene,
                 'singlescene'       : singlescene,
@@ -4531,6 +4544,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
+
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
@@ -4719,98 +4733,6 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFix, bold):
-    # extract data
-    _, _, _, boldinfo = bold
-
-    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-        printbold  = boldinfo['boldname']
-        boldtarget = boldinfo['boldname']
-    else:
-        printbold  = str(bold)
-        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
-    # prepare return variables
-    r = ""
-    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
-
-    try:
-        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
-        boldok = True
-
-        # --- check for bold image
-        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
-
-        # load parameters or use default values
-        highpass = 2000
-        if not singleFix:
-            highpass = 0
-        if 'hcp_icafix_highpass' in options:
-            highpass = options['hcp_icafix_highpass']
-
-        comm = '%(script)s \
-            --study-folder="%(studyfolder)s" \
-            --subject="%(subject)s" \
-            --fmri-name="%(boldtarget)s" \
-            --high-pass="%(highpass)d"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ApplyHandReClassifications.sh'),
-                'studyfolder'       : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'boldtarget'        : boldtarget,
-                'highpass'          : highpass}
-
-        # -- Test files
-        # TODO TEST FILE
-        tfile = "testfile.txt"
-        fullTest = None
-
-        # -- Run
-        if run and boldok:
-            if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP hand reclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
-
-                if failed:
-                    report['failed'].append(printbold)
-                else:
-                    report['done'].append(printbold)
-
-            # -- just checking
-            else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP hand reclassification ' + boldtarget, r)
-                if passed is None:
-                    r += "\n     ... single HCP hand reclassification can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
-                    report['ready'].append(printbold)
-                else:
-                    report['skipped'].append(printbold)
-
-        elif run:
-            report['not ready'].append(printbold)
-            if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
-            else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
-        else:
-            report['not ready'].append(printbold)
-            if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
-            else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
-
-    except (ExternalFailed, NoSourceFolder), errormessage:
-        r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
-        r = str(errormessage)
-        report['failed'].append(printbold)
-    except:
-        r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
-        report['failed'].append(printbold)
-
-    return {'r': r, 'report': report}
-
-
 def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     _, _, _, boldinfo = bold
@@ -4841,6 +4763,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
             boldok = True
 
             # --- check for bold image
+            # TODO FIX path
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
             r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
 
@@ -4860,7 +4783,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
-                --fmri-name="%(boldtarget)s" \
+                --fmri-name="%(boldimg)s" \
                 --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)d" \
@@ -4870,7 +4793,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixPipeline.sh'),
                     'path'                : sinfo['hcp'],
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
-                    'boldtarget'          : boldtarget,
+                    'boldimg'             : boldimg,
                     'highpass'            : 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass'],
                     'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
@@ -4888,6 +4811,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                 if options['run'] == "run":
                     if overwrite and os.path.exists(tfile):
                         os.remove(tfile)
+
                     r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single HCP ReFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
@@ -4947,7 +4871,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
         groupok = True
 
         # --- check for bold images and prepare images parameter
-        boldtargets = ""
+        boldimgs = ""
 
          # check if files for all bolds exist
         for b in bolds:
@@ -4973,6 +4897,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
                 boldok = True
 
+                # TODO FIX path
                 boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
                 r, boldok = checkForFile2(r, boldimg, '\n     ... bold image [%s] present' % boldimg, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
             else:
@@ -4984,11 +4909,11 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldtargets is not "":
-                    boldtargets = boldtarget + "@"
+                if boldimgs is not "":
+                    boldimgs = boldimgs + "@"
 
                 # add latest image
-                boldtargets = boldtargets + boldtarget
+                boldimgs = boldimgs + boldimg
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = 2
@@ -5003,11 +4928,14 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
                 boldok = false
 
+        # construct concat file name
+        concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupname)
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
-            --fmri-names="%(boldtargets)s" \
-            --concat-fmri-name="%(groupname)s" \
+            --fmri-names="%(boldimgs)s" \
+            --concat-fmri-name="%(concatfilename)s" \
             --high-pass="%(highpass)d" \
             --reg-name="%(regname)s" \
             --low-res-mesh="%(lowresmesh)s" \
@@ -5017,8 +4945,8 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
-                'boldtargets'         : boldtargets,
-                'groupname'           : groupname,
+                'boldimgs'            : boldimgs,
+                'concatfilename'      : concatfilename,
                 'highpass'            : 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass'],
                 'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
@@ -5028,6 +4956,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
 
         # -- Test files
         # TODO TEST FILE
+        #tfile = concatfilename + ".nii.gz"
         tfile = "testfile.txt"
         fullTest = None
 
@@ -5036,6 +4965,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
+
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
@@ -5073,6 +5003,100 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
     except:
         r += "\n --- Failed during processing of group %s with error:\n %s\n" % (groupname, traceback.format_exc())
         report['failed'].append(groupname)
+
+    return {'r': r, 'report': report}
+
+
+def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFix, bold):
+    # extract data
+    _, _, _, boldinfo = bold
+
+    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
+        printbold  = boldinfo['boldname']
+        boldtarget = boldinfo['boldname']
+    else:
+        printbold  = str(bold)
+        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        boldok = True
+
+        # --- check for bold image
+        # TODO FIX path
+        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+
+        # load parameters or use default values
+        highpass = 2000
+        if not singleFix:
+            highpass = 0
+        if 'hcp_icafix_highpass' in options:
+            highpass = options['hcp_icafix_highpass']
+
+        comm = '%(script)s \
+            --study-folder="%(studyfolder)s" \
+            --subject="%(subject)s" \
+            --fmri-name="%(boldimg)s" \
+            --high-pass="%(highpass)d"' % {
+                'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ApplyHandReClassifications.sh'),
+                'studyfolder'       : sinfo['hcp'],
+                'subject'           : sinfo['id'] + options['hcp_suffix'],
+                'boldtarget'        : boldimg,
+                'highpass'          : highpass}
+
+        # -- Test files
+        # TODO TEST FILE
+        tfile = "testfile.txt"
+        fullTest = None
+
+        # -- Run
+        if run and boldok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP hand reclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(printbold)
+                else:
+                    report['done'].append(printbold)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP hand reclassification ' + boldtarget, r)
+                if passed is None:
+                    r += "\n     ... single HCP hand reclassification can be run"
+                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(printbold)
+                else:
+                    report['skipped'].append(printbold)
+
+        elif run:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+        else:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
+        r = str(errormessage)
+        report['failed'].append(printbold)
+    except:
+        r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
+        report['failed'].append(printbold)
 
     return {'r': r, 'report': report}
 
@@ -5210,6 +5234,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
+
                 r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP BedpostX', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
 
             # -- just checking
