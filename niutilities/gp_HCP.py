@@ -1170,12 +1170,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, not T2w image was specified!\n            Consider using LegacyStyleData processing mode."
             run = False
 
+        # -> check version of FS against previous version of FS
 
-       # -> check version of FS against previous version of FS
+        # ------------------------------------------------------------------
+        # - Alan added integrated code for FreeSurfer 6.0 completion check
+        # -----------------------------------------------------------------
 
-       # ------------------------------------------------------------------
-       # - Alan added integrated code for FreeSurfer 6.0 completion check
-       # -----------------------------------------------------------------
         freesurferhome = options['hcp_freesurfer_home']
 
         # - Set FREESURFER_HOME based on --hcp_freesurfer_home flag to ensure backward compatibility
@@ -1230,7 +1230,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         tfile = tfiles[fsversion]
 
         
-        ## --> longitudinal run currently not supported
+        # --> longitudinal run currently not supported
         #
         # identify template if longitudinal run
         #
@@ -1312,7 +1312,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
                 # --> clean up only if hcp_fs_existing_subject is not set to True
                 if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_subject']:
-                    ## -> longitudinal mode currently not supported
+                    # -> longitudinal mode currently not supported
                     # if options['hcp_fs_longitudinal']:
                     #     if os.path.lexists(hcp['FS_long_results']):
                     #         r += "\n --> removing preexisting folder with longitudinal results [%s]" % (hcp['FS_long_results'])
