@@ -13,9 +13,9 @@ function [filename] = g_FilenameJoin(elements, delim)
 %
 %   EXAMPLE
 %
-%   filename = g_FilenameJoin({'bold1', 'g7', 'hpss'});
+%   filename = g_FilenameJoin({'bold1', 's', 'hpss'});
 %
-%   will result in 'bold1_g7_hpss'
+%   will result in 'bold1_s_hpss'
 %
 %   ---
 %   Written by Grega Repovš

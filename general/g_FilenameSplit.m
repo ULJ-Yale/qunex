@@ -13,9 +13,9 @@ function [elements] = g_FilenameSplit(filename, delim)
 %
 %   EXAMPLE
 %
-%   elements = g_FilenameSplit('bold3_g7_hpss.nii.gz');
+%   elements = g_FilenameSplit('bold3_s_hpss.nii.gz');
 %
-%   will result in elements = {'bold3', 'g7', 'hpss'}
+%   will result in elements = {'bold3', 's', 'hpss'}
 %
 %   ---
 %   Written by Grega Repovš

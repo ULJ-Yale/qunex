@@ -264,7 +264,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   Results
 %   -------
 %
-%   The resulting smoothed files are saved with '_g7' added to the BOLD root
+%   The resulting smoothed files are saved with '_s' added to the BOLD root
 %   filename.
 %
 %
@@ -718,7 +718,7 @@ end
 %                               ---> run processing loop
 
 tasklist = ['shrl'];
-exts     = {'_g7','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
+exts     = {'_s','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
 info     = {'Smoothing','High-pass filtering','Computing GLM','Low-pass filtering'};
 
 

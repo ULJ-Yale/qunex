@@ -110,7 +110,7 @@ end
 % 	----> run processing loop
 
 task = ['shrl'];
-exts = {'_g7','_hpss',['_res-' rgss],'_lpss'};
+exts = {'_s','_hpss',['_res-' rgss],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
 ext  = '';
 
