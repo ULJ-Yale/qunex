@@ -247,6 +247,9 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %  * rgss       ...  A comma separated list of regressors to include in GLM.
 %                    Possible values are:
 %                    * m  - motion parameters
+%                    * m1d - motion derivatives
+%                    * mSq  - squared motion parameters
+%                    * m1dSq - squared motion derivatives
 %                    * V  - ventricles signal
 %                    * WM - white matter signal
 %                    * WB - whole brain signal
@@ -254,7 +257,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %                    * e  - events listed in the provided fidl files (see
 %                           above), modeled as specified in the event_string
 %                           parameter.
-%                    [m,V,WM,WB,1d]
+%                    [m,m1d,mSq,m1dSq,V,WM,WB,1d]
 %  * eventstring ... A string describing, how to model the events listed in
 %                    the provided fidl files [].
 %
@@ -756,9 +759,12 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
 
     derivatives = ismember('1d', rgss);
     movement    = ismember('m', rgss);
+    movementDer = ismember('m1d', rgss);
+    movementSQ  = ismember('mSq', rgss);
+    movementDerSQ = ismember('m1dSq', rgss);
     task        = ismember('t', rgss);
     event       = ismember('e', rgss);
-    rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm'}));
+    rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm','m1d','mSq','m1dSq'}));
     hdr         = {};
     hdre        = {};
     hdrf        = [];
@@ -809,25 +815,54 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
             effect(end+1)   = find(ismember(effects, ts));
             eindex(end+1)   = 1;
         end
-
-        if derivatives
-            if omit
-                X = [X diff(nuisance.mov(omit:end,:))];
-            else
-                X = [X [zeros(1,nuisance.nmov); diff(nuisance.mov)]];
-            end
-            for mi = 1:nuisance.nmov
-                ts = sprintf('mov_%s_d1', nuisance.mov_hdr{mi});
-                effects{end+1} = ts;
-                hdr{end+1}     = ts;
-                hdre{end+1}    = ts;
-                hdrf(end+1)    = 1;
-                effect(end+1)  = find(ismember(effects, ts));
-                eindex(end+1)  = 1;
-            end
+    end
+    
+    if movementDer
+        if omit
+            X = [X diff(nuisance.mov(omit:end,:))];
+        else
+            X = [X [zeros(1,nuisance.nmov); diff(nuisance.mov)]];
+        end
+        for mi = 1:nuisance.nmov
+            ts = sprintf('mov_%s_d1', nuisance.mov_hdr{mi});
+            effects{end+1} = ts;
+            hdr{end+1}     = ts;
+            hdre{end+1}    = ts;
+            hdrf(end+1)    = 1;
+            effect(end+1)  = find(ismember(effects, ts));
+            eindex(end+1)  = 1;
         end
     end
-
+    
+    if movementSQ
+        X = [X nuisance.mov(omit+1:end,:).^2];
+        for mi = 1:nuisance.nmov
+            ts = sprintf('mov_%s_Sq', nuisance.mov_hdr{mi});
+            effects{end+1}  = ts;
+            hdr{end+1}      = ts;
+            hdre{end+1}     = ts;
+            hdrf(end+1)     = 1;
+            effect(end+1)   = find(ismember(effects, ts));
+            eindex(end+1)   = 1;
+        end
+    end
+    
+    if movementDerSQ
+         if omit
+            X = [X diff(nuisance.mov(omit:end,:)).^2];
+        else
+            X = [X [zeros(1,nuisance.nmov); diff(nuisance.mov).^2]];
+        end
+        for mi = 1:nuisance.nmov
+            ts = sprintf('mov_%s_d1Sq', nuisance.mov_hdr{mi});
+            effects{end+1} = ts;
+            hdr{end+1}     = ts;
+            hdre{end+1}    = ts;
+            hdrf(end+1)    = 1;
+            effect(end+1)  = find(ismember(effects, ts));
+            eindex(end+1)  = 1;
+        end
+    end
 
     %   ----> signal
 
