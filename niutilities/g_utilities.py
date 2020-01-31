@@ -1711,7 +1711,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             # -- remove parameters that are not allowed
 
             if commandName in niutilities.g_commands.commands:
-                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"]) 
+                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sfolder', 'folder']]):
                     allowedParameters += niutilities.g_commands.extraParameters
                 for param in commandParameters.keys():
@@ -1724,7 +1724,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                 for toIgnore in ignore:
                     if toIgnore in commandParameters:
                         del commandParameters[toIgnore]
-
+                        
             # -- setup command 
 
             command = ["qunex"]

@@ -10,6 +10,7 @@ import niutilities.g_commands as gcom
 import os.path
 import sys
 import copy
+import datetime
 
 # --- Get current Qu|Nex Suite version and prepend to help calls
 
@@ -282,9 +283,8 @@ def runCommand(command, args):
         else:
             eargs[k] = v
 
-    # -- check extra arguments
-
-    if eargs:
+    # -- check extra arguments, except for runList
+    if eargs and command != "runList":
         bad = []
         for k, v in eargs.items():
             if k not in gcom.extraParameters:
@@ -328,7 +328,7 @@ def runCommand(command, args):
             else:
 
                 # -- define number of sessions to run in each runList
-                sperlist = args['sperlist']                
+                sperlist = args['sperlist']
                 del args['sperlist']
 
                 # -- define number of runLists to run in parallel
@@ -350,9 +350,28 @@ def runCommand(command, args):
                     calls.append({'name': 'runList_%d' % (c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
 
         else:
-            bargs['eargs'] = eargs
-            gcom.commands[command]['com'](**bargs)
-            print "\n===> Successful completion of task"
+            # -- if using a scheduler schedule the whole runList commmand
+            if 'scheduler' in eargs:
+                if 'ignore' in args:
+                    args['ignore'] += 'scheduler'
+                else:
+                    args['ignore'] = 'scheduler'
+
+                runListFolder = folders['logfolder']
+
+                # create folder if it does not exist
+                if not os.path.isdir(runListFolder):
+                    os.makedirs(runListFolder)
+
+                logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+                logname = os.path.join(runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
+
+                niu.g_scheduler.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
+
+            else:
+                bargs['eargs'] = eargs
+                gcom.commands[command]['com'](**bargs)
+                print "\n===> Successful completion of task"
 
     # -- all other commands    
     else:
