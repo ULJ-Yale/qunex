@@ -3929,7 +3929,7 @@ def parseICAFixBolds(options, bolds, r):
                 
                 # bold not found in bolds
                 if not found:
-                    r += "     ... skipping %s found in bolds but not in hcp_icafix_bolds\n" % boldtarget
+                    r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % boldtarget
 
             # store data into the icafixBolds variable
             icafixBolds = boldData
@@ -4275,7 +4275,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupname)
 
         # bandpass
-        bandpass = 0 if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata']
+        bandpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         comm = '%(script)s \
                 "%(inputfile)s" \
@@ -4403,7 +4403,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
             icafixBolds = []
             for g in icafixGroups:
                 groupBolds = g["name"]
-                icafixBolds.extend(groupBolds)
+                icafixBolds.append(groupBolds)
 
         if threads == 1: # serial execution
             for b in icafixBolds:
@@ -4468,6 +4468,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
     # extract data
     if singleFix:
+        # highpass
+        highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
         _, _, _, boldinfo = bold
 
         if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
@@ -4477,29 +4480,26 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             printbold  = str(bold)
             boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-        # TODO FIX path
-        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
+        icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, printica)
+        r += "\n---> %s bold ICA %s" % (action("Processing", options['run']), printica)
+
     else:
+        # highpass
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
         printbold = bold
         boldtarget = bold
 
-        # TODO FIX path
-        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r += "\n---> %s group %s" % (action("Processing", options['run']), printbold)
+        printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
+        icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, printica)
+        r += "\n---> %s group ICA %s" % (action("Processing", options['run']), printica)
 
     try:
         boldok = True
 
-        # --- check for bold image
-        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
-
-        # set different default values for single and multi fix
-        highpass = 2000
-        if not singleFix:
-            highpass = 0
-        if 'hcp_icafix_highpass' in options:
-            highpass = options['hcp_icafix_highpass']
+        # --- check for ICA image
+        r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
 
         reusehighpass = "NO"
         if not singleFix:
@@ -4518,20 +4518,23 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = 2
         if 'hcp_matlab_mode' in options:
-            if options['hcp_matlab_mode'] is "compiled":
+            if options['hcp_matlab_mode'] == "compiled":
                 matlabrunmode = 0
-            elif options['hcp_matlab_mode'] is "interpreted":
+            elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = 1
-            elif options['hcp_matlab_mode'] is "octave":
+            elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
                 r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                boldok = false
+                boldok = False
+
+        # subject
+        subject = sinfo['id'] + options['hcp_suffix']
 
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
-            --fmri-name="%(boldimg)s" \
+            --fmri-name="%(boldtarget)s" \
             --high-pass="%(highpass)d" \
             --template-scene-dual-screen="%(dualscene)s" \
             --template-scene-single-screen="%(singlescene)s" \
@@ -4539,8 +4542,8 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'PostFix.sh'),
                 'studyfolder'       : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'boldimg'           : boldimg,
+                'subject'           : subject,
+                'boldtarget'        : boldtarget,
                 'highpass'          : highpass,
                 'dualscene'         : dualscene,
                 'singlescene'       : singlescene,
@@ -4548,8 +4551,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 'matlabrunmode'     : matlabrunmode}
 
         # -- Test files
-        # TODO TEST FILE
-        tfile = "testfile.txt"
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_%s_hp%s_ICA_Classification_singlescreen.scene" % (subject, boldtarget, highpass))
         fullTest = None
 
         # -- Run
@@ -4559,6 +4561,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                     os.remove(tfile)
 
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+
+                # log beautify
+                r += "\n\n"
 
                 if failed:
                     report['failed'].append(printbold)
@@ -4783,15 +4788,15 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
             # matlab run mode, compiled=0, interpreted=1, octave=2
             matlabrunmode = 2
             if 'hcp_matlab_mode' in options:
-                if options['hcp_matlab_mode'] is "compiled":
+                if options['hcp_matlab_mode'] == "compiled":
                     matlabrunmode = 0
-                elif options['hcp_matlab_mode'] is "interpreted":
+                elif options['hcp_matlab_mode'] == "interpreted":
                     matlabrunmode = 1
-                elif options['hcp_matlab_mode'] is "octave":
+                elif options['hcp_matlab_mode'] == "octave":
                     matlabrunmode = 2
                 else:
                     r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                    boldok = false
+                    boldok = False
 
             comm = '%(script)s \
                 --path="%(path)s" \
@@ -4939,7 +4944,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 matlabrunmode = 2
             else:
                 r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                boldok = false
+                boldok = False
 
         # construct concat file name
         concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupname)
