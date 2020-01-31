@@ -4145,6 +4145,9 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
         r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
 
+        # bold in input format
+        inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
+
         # bandpass value
         bandpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
@@ -4156,7 +4159,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
-                'inputfile'             : boldimg,
+                'inputfile'             : inputfile,
                 'bandpass'              : bandpass,
                 'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
@@ -4262,6 +4265,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         # construct concat file name
         concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupname)
 
+        # bandpass
+        bandpass = 0 if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata']
+
         comm = '%(script)s \
                 "%(inputfile)s" \
                 %(bandpass)d \
@@ -4272,7 +4278,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
-                'bandpass'              : 0 if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
+                'bandpass'              : bandpass,
                 'concatfilename'        : concatfilename,
                 'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
@@ -4280,9 +4286,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Test file
-        # TODO TEST FILE
-        #tfile = concatfilename + ".nii.gz"
-        tfile = "testfile.txt"
+        tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
         fullTest = None
 
         # -- Run
