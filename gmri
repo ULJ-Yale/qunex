@@ -539,8 +539,6 @@ def main(args=None):
         print e
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
         raise
-        print "--------------------------------------------------------------"
-        sys.exit(1)
     except SystemExit as e:
         sys.exit(e)
     except:
@@ -549,8 +547,6 @@ def main(args=None):
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
         print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
         raise
-        print "\n--------------------------------------------------------------\n"
-        sys.exit(1)
 
 
 if __name__ == "__main__":

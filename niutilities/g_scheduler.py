@@ -151,20 +151,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     Key: umask will be submitted using:
     "#PBS -W umask=<value>"
 
-    Key: nodes is a special case. It can have up to three values separated by
-    colon (":"). If there is only one value e.g. "nodes=4" it will submit:
-    "#PBS -l nodes=4"
-
-    When there are two values e.g. "nodes=4:2" it will submit:
-    "#PBS -l nodes=4:ppn=2"
-
-    When there are three values what is submitted depends on the type of the
-    last value. When it is numeric, e.g. "nodes:8:4:2", it will submit:
-    "#PBS -l nodes=8:ppn=4:cpus=2"
-
-    If the last of the three values is a string, e.g. "nodes:8:4:blue", it will
-    submit the last value as a self-standing key:
-    "#PBS -l nodes=8:ppn=4:blue"
+    Key: nodes is a special case. It will be submitted as:
+    "#PBS -l <value>"
 
     LSF settings
     ------------
@@ -227,7 +215,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     2018-10-04 - Grega Repovs
                  Excluded log validity checking for 'return'.
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               - Changed subjects to sessions
+    2019-20-01 Jure Demšar
+               - Upgraded job naming and PBS scheduler
     '''
 
     # --- check inputs
@@ -246,7 +236,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     try:
         setList   = [e.strip() for e in settings.split(",")]
         scheduler = setList.pop(0)
-        setDict   = dict([e.strip().split("=") for e in setList])
+        setDict   = dict([e.strip().split("=", 1) for e in setList])
         jobname   = setDict.pop('jobname', "schedule")
         comname   = setDict.pop('comname', "")
         jobnum    = setDict.pop('jobnum', "1")
@@ -304,7 +294,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
                 sCommand += "#PBS -l %s=%s\n" % (k, v)
-            elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e'):
+            elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e', 'l'):
                 sCommand += "#PBS -%s %s\n" % (k, v)
             elif k == 'depend':
                 sCommand += "#PBS -W depend=%s\n" % (v)
@@ -313,17 +303,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             elif k == 'N' and jobname == 'schedule':
                 jobname = v
             elif k == 'nodes':
-                v = v.split(':')
-                res = 'nodes=%s' % (v.pop(0))
-                if v:
-                    res += ":ppn=%s" % (v.pop(0))
-                if v:
-                    if v[0].isnumeric():
-                        res += ":gpus=%s" % (v.pop(0))
-                    else:
-                        res += ":" + v.pop(0)
-                sCommand += "#PBS -l %s\n" % res
-                
+                sCommand += "#PBS -l nodes=%s\n" % v
         sCommand += "#PBS -N %s-%s#%s\n" % (jobname, comname, jobnum)
         if outputs['stdout'] is not None:
             sCommand += "#PBS -o %s\n" % (outputs['stdout'])

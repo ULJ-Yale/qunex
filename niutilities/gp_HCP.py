@@ -1172,12 +1172,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, not T2w image was specified!\n            Consider using LegacyStyleData processing mode."
             run = False
 
+        # -> check version of FS against previous version of FS
 
-       # -> check version of FS against previous version of FS
+        # ------------------------------------------------------------------
+        # - Alan added integrated code for FreeSurfer 6.0 completion check
+        # -----------------------------------------------------------------
 
-       # ------------------------------------------------------------------
-       # - Alan added integrated code for FreeSurfer 6.0 completion check
-       # -----------------------------------------------------------------
         freesurferhome = options['hcp_freesurfer_home']
 
         # - Set FREESURFER_HOME based on --hcp_freesurfer_home flag to ensure backward compatibility
@@ -1232,7 +1232,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         tfile = tfiles[fsversion]
 
         
-        ## --> longitudinal run currently not supported
+        # --> longitudinal run currently not supported
         #
         # identify template if longitudinal run
         #
@@ -1314,7 +1314,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
                 # --> clean up only if hcp_fs_existing_subject is not set to True
                 if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_subject']:
-                    ## -> longitudinal mode currently not supported
+                    # -> longitudinal mode currently not supported
                     # if options['hcp_fs_longitudinal']:
                     #     if os.path.lexists(hcp['FS_long_results']):
                     #         r += "\n --> removing preexisting folder with longitudinal results [%s]" % (hcp['FS_long_results'])
@@ -2778,6 +2778,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     2020-01-16 Grega Repovš
              - Introduced bold specific SE options and updated documentation
+    2020-01-28 Grega Repovš
+             - Made SE selection more rubust
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2866,7 +2868,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     run = False
 
             if sesettings:
-                r += "\n---> Looking for spin echo fieldmap set images."
+                r += "\n---> Looking for spin echo fieldmap set images [%s/%s]." % (options['hcp_bold_sephasepos'], options['hcp_bold_sephaseneg'])
 
                 for bold in range(50):
                     spinok = False
@@ -2875,21 +2877,28 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     sepath = glob.glob(os.path.join(hcp['source'], "SpinEchoFieldMap%d*" % (bold)))
                     if sepath:
                         sepath = sepath[0]
+                        r += "\n     ... identified folder %s" % (os.path.basename(sepath))
                         # get all *.nii.gz files in that folder
                         images = glob.glob(os.path.join(sepath, "*.nii.gz"))
 
-                        # variable for storing the paired string
+                        # variable for checking se status
                         spinok = True
+                        spinPos, spinNeg = None, None
                         
                         # search in images
                         for i in images:
-                            # look for positive 
-                            if "_" + options['hcp_bold_sephasepos'] in i:
+                            # look for phase positive 
+                            if "_" + options['hcp_bold_sephasepos'] in os.path.basename(i):
                                 spinPos = i
-                                r, spinok = checkForFile2(r, spinPos, "\n     ... %s spin echo fieldmap image present" % (options['hcp_bold_sephasepos']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephasepos']), status=spinok)
-                            elif "_" + options['hcp_bold_sephaseneg'] in i:
+                                r, spinok = checkForFile2(r, spinPos, "\n     ... phase positive %s spin echo fieldmap image present" % (options['hcp_bold_sephasepos']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephasepos']), status=spinok)
+                            # look for phase negative
+                            elif "_" + options['hcp_bold_sephaseneg'] in os.path.basename(i):
                                 spinNeg = i
-                                r, spinok = checkForFile2(r, spinNeg, "\n     ... %s spin echo fieldmap image present" % (options['hcp_bold_sephaseneg']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephaseneg']), status=spinok)
+                                r, spinok = checkForFile2(r, spinNeg, "\n     ... phase negative %s spin echo fieldmap image present" % (options['hcp_bold_sephaseneg']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephaseneg']), status=spinok)
+
+                        if not all([spinPos, spinNeg]):
+                            r += "\n---> ERROR: Either one of both pairs of SpinEcho images are missing in the %s folder! Please check your data or settings!" % (os.path.basename(sepath))
+                            spinok = False
 
                     if spinok:
                         sepresent.append(bold)
