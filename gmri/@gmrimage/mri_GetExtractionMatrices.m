@@ -59,7 +59,7 @@ if nargin < 2 error('ERROR: Events string has to be specified!'); end
 default = 'badevents=use|verbose=false';
 options = g_ParseOptions([], options, default);
 
-verbose = strcmp(options.verbose, 'true')
+verbose = strcmp(options.verbose, 'true');
 
 % ----- check data
 
@@ -75,7 +75,7 @@ if ~go
 end
 
 if ~isnumeric(options.badevents)
-    if ~ismember(options.badevents, {'use', 'ignore'}
+    if ~ismember(options.badevents, {'use', 'ignore'})
         [options.badevents, ok] = str2num(options.badevents);
         if ~ok
             error('ERROR: badevents option is neither a number of a valid option [%s]!\n\n', options.badevents);
@@ -85,7 +85,7 @@ end
 
 % ----- get fidl event list
 
-elist = g_ReadEventFile(fidlf);
+elist = g_ReadEventFile(fidlfile);
 
 % ----- prepare run info
 
@@ -116,12 +116,12 @@ for n = 1:nexlists
 
     eventset = strtrim(regexp(exdef{2}, ',', 'split'));
     startref = exdef{3}(1);
-    [startoff, oks] = str2nun(exdef{3}(2:));
+    [startoff, oks] = str2num(exdef{3}(2:end));
     endref = exdef{4}(1);
-    [endoff, oke] = str2nun(exdef{4}(2:));
+    [endoff, oke] = str2num(exdef{4}(2:end));
 
     ok = true;
-    if ~all(ismember{startref, endref}, {'s', 'e'}); ok = false; end
+    if ~all(ismember({startref, endref}, {'s', 'e'})); ok = false; end
     ok = ok & oks & oke;
     if ~ok
         fprintf('ERROR: start or end extraction definition [%s] does not match the correct format. Skipping.\n', exlist{n});
@@ -135,9 +135,9 @@ for n = 1:nexlists
     for e = 1:length(eventset)
         eventcode    = find(ismember(elist.events, eventset(e)));
         eventidx     = ismember(elist.event, eventcode);
-        eventstarts  = elist.frame(evendidx);
+        eventstarts  = elist.frame(eventidx);
         eventlengths = elist.elength(eventidx);
-        nexevents    = length(eventidx);
+        nexevents    = sum(eventidx);
         
         if startref == 's'
             exstarts = eventstarts + startoff;
@@ -184,8 +184,8 @@ for n = 1:nexlists
         okrows  = sum(exmat, 2) >= minok;
     elseif strcmp(options.badevents, 'ignore')
         ignore  = ~obj.use;
-        okrows  = sum(bsxfun(@and, exmat, ignore)) == 0;
+        okrows  = sum(bsxfun(@and, exmat, ignore), 2) == 0;
     end
-            
-    exsets(n).exmat = exmat(okrows);
+
+    exsets(n).exmat = exmat(okrows, :);
 end
