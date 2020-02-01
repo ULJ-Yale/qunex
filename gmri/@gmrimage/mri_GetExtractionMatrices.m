@@ -11,6 +11,8 @@ function [exsets] = mri_GetExtractionMatrices(obj, exlist, options)
 %
 %   obj       - Image object to create matrices for
 %   exlist    - The definition of which events to use, specifically:
+%               ->  a numeric array mask defining which frames to use (1) and which not (0), or 
+%               ->  a single number, specifying the number of frames to skip at the start of each bold, or
 %               ->  a string describing which events to extract timeseries for, and the frame offset from 
 %                   the start and end of the event in format: 
 %                   '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>') 
@@ -31,6 +33,11 @@ function [exsets] = mri_GetExtractionMatrices(obj, exlist, options)
 %   options   - A string specifying additional analysis options formated as pipe separated pairs of colon separated
 %               key, value pairs: "<key>:<value>|<key>:<value>"
 %               It takes the following keys and values:
+%               -> ignore    ... a comma separated list of information to identify frames to ignore, options are:
+%                                -> use      ... ignore frames as marked in the use field of the bold file
+%                                -> fidl     ... ignore frames as marked in .fidl file (only available with event extraction)
+%                                -> <column> ... the column name in *_scrub.txt file that matches bold file to be used for ignore mask
+%                                ['use']
 %               -> badevents ... what to do with events that have frames marked as bad, options are:
 %                                -> use      ... use any frames that are not marked as bad
 %                                -> <number> ... use the frames that are not marked as bad if at least <number> ok frames exist
@@ -61,6 +68,70 @@ options = g_ParseOptions([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
 
+
+% ---> creating use mask
+
+toignore  = strtrim(regexp(options['ignore'], ',', 'split'));
+useframes = ones(length(y.use), 1);
+fignore   = false;
+
+for ti = toignore
+    if ismember('use', ti)
+        useframes = y.use & useframes;
+    elseif ismember('fidl', ti)
+        fignore = true;
+    else 
+        useScrub = find(ismember(y.scrub_hdr, ti));
+        if isempty(useScrub)
+            error('ERROR: The specified badframes field (%s) is not valid!', ti{1});
+        end
+        useframes = useframes & y.scrub(:, useScrub)' == 0;
+    end
+end
+
+y.use = useframes;
+
+
+% ----- prepare run info
+
+nruns = length(obj.runframes);
+runid = ones(1, obj.frames);
+runlimits = [1 obj.runframes(1)];
+for n = 2:nruns
+    runlimits(n,:) = [runlimits(n-1,2) + 1, runlimits(n-1,2) + obj.runframes(n)];
+    runid(runlimits(n,1):runlimits(n,2)) = n;
+end
+
+tstemplate = zeros(1, obj.frames);
+
+
+% ----- extracting based on numeric data
+
+if isnumeric(exlist)
+    if length(exlist) == 1
+        exmat = ones(1, frames);
+        if exlist > 0
+            for n = 1:nruns
+                exmat(runlimits(n,1):runlimits(n,1)+exlist) = 0;
+            end
+        end
+    elseif length(exlist) > 1
+        if length(exlist) ~= obj.frames
+            error('ERROR: The length of the extraction matrix [%s] does not match the number of image frames!', length(exlist), obj.frames);
+        end
+        exmat = exlist;
+    else
+        exmat = ones(1, frames);
+    end
+
+    exsets.title = '';
+    exsets.exdef = exlist;
+    exsets.exmat = exmat;
+    return
+end
+
+% ----- extracting based on events
+
 % ----- check data
 
 [fidlfile, exlist] = strtok(exlist, '|');
@@ -87,17 +158,20 @@ end
 
 elist = g_ReadEventFile(fidlfile);
 
-% ----- prepare run info
+% ----- take out frames to ignore based on fidl
 
-nruns = length(obj.runframes);
-runid = ones(1, obj.frames);
-runlimits = [1 obj.runframes(1)];
-for n = 2:nruns
-    runlimits(n,:) = [runlimits(n-1,2) + 1, runlimits(n-1,2) + obj.runframes(n)];
-    runid(runlimits(n,1):runlimits(n,2)) = n;
+if fignore
+    ignoreidx = find(elist.event == -1);
+    for idx = ignoreidx
+        if elist.frame(idx) <= obj.frames
+            if elist.frame(idx) + elist.elength(idx) > obj.frames
+                y.use(elist.frame(idx):end) = 0;
+            else
+                y.use(elist.frame(idx):elist.frame(idx)+elist.elength(idx)) = 0;
+            end
+        end
+    end
 end
-
-tstemplate = zeros(1, obj.frames);
 
 % ----- prepare extraction matrices
 
