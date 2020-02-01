@@ -37,7 +37,7 @@ function [exsets] = mri_GetExtractionMatrices(obj, exlist, options)
 %                                -> use      ... ignore frames as marked in the use field of the bold file
 %                                -> fidl     ... ignore frames as marked in .fidl file (only available with event extraction)
 %                                -> <column> ... the column name in *_scrub.txt file that matches bold file to be used for ignore mask
-%                                ['use']
+%                                ['use, fidl']
 %               -> badevents ... what to do with events that have frames marked as bad, options are:
 %                                -> use      ... use any frames that are not marked as bad
 %                                -> <number> ... use the frames that are not marked as bad if at least <number> ok frames exist
@@ -63,7 +63,7 @@ if nargin < 2 error('ERROR: Events string has to be specified!'); end
 
 % ----- parse options
 
-default = 'badevents=use|verbose=false';
+default = 'ignore=use,fidl|badevents=use|verbose=false';
 options = g_ParseOptions([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
@@ -71,25 +71,25 @@ verbose = strcmp(options.verbose, 'true');
 
 % ---> creating use mask
 
-toignore  = strtrim(regexp(options['ignore'], ',', 'split'));
-useframes = ones(length(y.use), 1);
+toignore  = strtrim(regexp(options.ignore, ',', 'split'));
+useframes = ones(1, length(obj.use));
 fignore   = false;
 
 for ti = toignore
     if ismember('use', ti)
-        useframes = y.use & useframes;
+        useframes = obj.use & useframes;
     elseif ismember('fidl', ti)
         fignore = true;
     else 
-        useScrub = find(ismember(y.scrub_hdr, ti));
+        useScrub = find(ismember(obj.scrub_hdr, ti));
         if isempty(useScrub)
             error('ERROR: The specified badframes field (%s) is not valid!', ti{1});
         end
-        useframes = useframes & y.scrub(:, useScrub)' == 0;
+        useframes = useframes & obj.scrub(:, useScrub)' == 0;
     end
 end
 
-y.use = useframes;
+obj.use = useframes;
 
 
 % ----- prepare run info
@@ -109,7 +109,7 @@ tstemplate = zeros(1, obj.frames);
 
 if isnumeric(exlist)
     if length(exlist) == 1
-        exmat = ones(1, frames);
+        exmat = ones(1, obj.frames);
         if exlist > 0
             for n = 1:nruns
                 exmat(runlimits(n,1):runlimits(n,1)+exlist) = 0;
@@ -165,9 +165,9 @@ if fignore
     for idx = ignoreidx
         if elist.frame(idx) <= obj.frames
             if elist.frame(idx) + elist.elength(idx) > obj.frames
-                y.use(elist.frame(idx):end) = 0;
+                obj.use(elist.frame(idx):end) = 0;
             else
-                y.use(elist.frame(idx):elist.frame(idx)+elist.elength(idx)) = 0;
+                obj.use(elist.frame(idx):elist.frame(idx)+elist.elength(idx)) = 0;
             end
         end
     end
