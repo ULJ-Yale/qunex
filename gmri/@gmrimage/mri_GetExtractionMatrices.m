@@ -1,6 +1,6 @@
-function [exsets] = mri_GetExtractionMatrices(obj, exlist, options)
+function [exsets] = mri_GetExtractionMatrices(obj, frames, options)
 
-%function [exsets] = mri_GetExtractionMatrices(obj, exlist, options)
+%function [exsets] = mri_GetExtractionMatrices(obj, frames, options)
 %
 %   Generates a set of matrices for extraction of data, one matrix for each specified
 %   extraction sets, one line for each event to be extracted, coding for each point in
@@ -10,7 +10,7 @@ function [exsets] = mri_GetExtractionMatrices(obj, exlist, options)
 %   =====
 %
 %   obj       - Image object to create matrices for
-%   exlist    - The definition of which events to use, specifically:
+%   frames    - The definition of which frames to extract, specifically:
 %               ->  a numeric array mask defining which frames to use (1) and which not (0), or 
 %               ->  a single number, specifying the number of frames to skip at the start of each bold, or
 %               ->  a string describing which events to extract timeseries for, and the frame offset from 
@@ -107,25 +107,25 @@ tstemplate = zeros(1, obj.frames);
 
 % ----- extracting based on numeric data
 
-if isnumeric(exlist)
-    if length(exlist) == 1
+if isnumeric(frames)
+    if length(frames) == 1
         exmat = ones(1, obj.frames);
-        if exlist > 0
+        if frames > 0
             for n = 1:nruns
-                exmat(runlimits(n,1):runlimits(n,1)+exlist) = 0;
+                exmat(runlimits(n,1):runlimits(n,1)+frames) = 0;
             end
         end
-    elseif length(exlist) > 1
-        if length(exlist) ~= obj.frames
-            error('ERROR: The length of the extraction matrix [%s] does not match the number of image frames!', length(exlist), obj.frames);
+    elseif length(frames) > 1
+        if length(frames) ~= obj.frames
+            error('ERROR: The length of the extraction matrix [%s] does not match the number of image frames!', length(frames), obj.frames);
         end
-        exmat = exlist;
+        exmat = frames;
     else
-        exmat = ones(1, frames);
+        exmat = ones(1, obj.frames);
     end
 
     exsets.title = '';
-    exsets.exdef = exlist;
+    exsets.exdef = frames;
     exsets.exmat = exmat;
     return
 end
@@ -134,7 +134,7 @@ end
 
 % ----- check data
 
-[fidlfile, exlist] = strtok(exlist, '|');
+[fidlfile, exlist] = strtok(frames, '|');
 exlist = exlist(2:end);
 exlist = strtrim(regexp(exlist, '\|', 'split'));
 nexlists = length(exlist);
