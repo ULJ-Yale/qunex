@@ -140,12 +140,15 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 
 % ----- parse options
 
-default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false';
+default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false';
 options = g_ParseOptions([], options, default);
 
-verbose = strcmp(options.verbose, 'true')
+verbose = strcmp(options.verbose, 'true');
+printdebug = strcmp(options.debug, 'true');
 
-% g_PrintStruct(options, 'Options used');
+if printdebug
+    g_PrintStruct(options, 'Options used');
+end
 
 if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
     error('ERROR: Invalid eventdata option: %s', options.eventdata);
@@ -155,8 +158,8 @@ if ~ismember(options.roimethod, {'mean', 'pca', 'median'})
     error('ERROR: Invalid roi extraction method: %s', options.roimethod);
 end
 
-if ~ismember(options.fcmethod, {'r', 'cv'})
-    error('ERROR: Invalid functional connectivity computation method: %s', options.fcmethod);
+if ~ismember(options.fcmeasure, {'r', 'cv'})
+    error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
 end
 
 % ----- What should be saved
@@ -164,16 +167,16 @@ end
 options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 
 if ismember({'none'}, options.saveind)
-    options.saveind = '';
+    options.saveind = [];
 elseif ismember({'all'}, options.saveind)
     options.saveind = {'r', 'fz', 'z', 'p', 'cv'};
 end
 
-if options.saveind 
-    if strcmp(options.fcmethod, 'r')
-        options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p'})
+if length(options.saveind) 
+    if strcmp(options.fcmeasure, 'r')
+        options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p'});
     else
-        options.saveind = intersect(options.saveind, {'cv'})
+        options.saveind = intersect(options.saveind, {'cv'});
     end
 end
 
@@ -203,7 +206,7 @@ go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
 if sroifile
     go = go & g_CheckFile(sroifile, 'individual ROI file', 'error');
 end
-g_CheckFolder(targetf, 'results folder');
+g_CheckFolder(targetf, 'results folder', true, verbose);
 
 if ~go
     error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
@@ -213,7 +216,7 @@ end
 %   ------------------------------------------------------------------------------------------
 %                                                                            do the processing
 
-if verbose; fprintf('\n     ... creating ROI mask'); end
+if verbose; fprintf('     ... creating ROI mask\n'); end
 
 roi  = gmrimage.mri_ReadROI(roiinfo, sroifile);
 nroi = length(roi.roi.roinames);
@@ -221,28 +224,38 @@ nroi = length(roi.roi.roinames);
 
 % ---> reading image files
 
-if verbose; fprintf('\n     ... reading image file(s)'); end
+if verbose; fprintf('     ... reading image file(s)'); end
 y = gmrimage(bolds);
-if verbose; fprintf(' ... %d frames read, done.', y.frames); end
+if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 
 
 % ---> create extraction sets
 
+if verbose; fprintf('     ... generating extraction sets ...'); end
 exsets = y.mri_GetExtractionMatrices(frames, options);
+if verbose; fprintf(' done.\n'); end
 
 % ---> loop through extraction sets
+
+if verbose; fprintf('     ... computing seedmaps\n'); end
 
 nsets = length(exsets);
 for n = 1:nsets
 
+    if verbose; fprintf('         ... set %s', exsets(n).title); end
+    
     % --> get the extracted timeseries
 
-    ts = y.mri_ExtractTimeseries(exmat, options.eventdata);
+    ts = y.mri_ExtractTimeseries(exsets(n).exmat, options.eventdata);
+
+    if verbose; fprintf(' ... extracted ts'); end
     
     % --> generate seedmaps
 
     rs = ts.mri_ExtractROI(roi, [], options.roimethod);
-    fc = t.mri_ComputeCorrelations(rs', [], strcmp(options.fcmethod, 'cv'));
+    fc = ts.mri_ComputeCorrelations(rs', [], strcmp(options.fcmeasure, 'cv'));
+
+    if verbose; fprintf(' ... computed seedmap'); end
 
     % ------> Embedd results
 
@@ -251,21 +264,29 @@ for n = 1:nsets
     fcmaps(n).roi   = roi.roi.roinames;
     fcmaps(n).N     = ts.frames;
 
+    if verbose; fprintf(' ... embedded\n'); end
+
 end
 
 
 % ---> save individual results
 
-if options.saveind
+if ~isempty(options.saveind)
+
+    if verbose; fprintf('     ... saving seedmaps\n'); end
 
     % --- loop through sets
 
     for n = 1:nsets
         if fcmaps(n).title, settitle = ['_' fcmaps(n).title]; else settitle = ''; end
 
+        if verbose; fprintf('         ... set %s, roi:', fcmaps(n).title); end
+
         % --- loop through roi
 
         for r = 1:nroi
+
+            if verbose; fprintf(' %s', fcmaps(n).roi{r}); end
 
             % --- prepare basename
 
@@ -273,12 +294,12 @@ if options.saveind
 
             % --- prepare computed data
             
-            if any(ismember(options.saveind, {'fz', 'p', 'Z'}))
+            if any(ismember(options.saveind, {'fz', 'p', 'z'}))
                 fz = fcmaps(n).fc;
                 fz.data = fc_Fisher(fz.data);
             end
 
-            if any(ismember(options.saveind, {'p', 'Z'}))
+            if any(ismember(options.saveind, {'p', 'z'}))
                 Z = fcmaps(n).fc;
                 Z.data = fz.data/(1/sqrt(fcmaps(n).N-3));
             end
@@ -293,17 +314,18 @@ if options.saveind
             for sn = 1:length(options.saveind)
                 switch options.saveind{sn}
                     case 'r'
-                        fcmaps(n).fc.mri_saveimage([basefilename '_r']);
+                        fcmaps(n).fc.mri_saveimage(fullfile(targetf, [basefilename '_r']));
                     case 'fz'
-                        fz.mri_saveimage([basefilename '_Fz']);
+                        fz.mri_saveimage(fullfile(targetf, [basefilename '_Fz']));
                     case 'z'
-                        Z.mri_saveimage([basefilename '_Z']);
+                        Z.mri_saveimage(fullfile(targetf, [basefilename '_Z']));
                     case 'p'
-                        p.mri_saveimage([basefilename '_p']);
+                        p.mri_saveimage(fullfile(targetf, [basefilename '_p']));
                     case 'fz'
-                        fcmaps(n).fc.mri_saveimage([basefilename '_cov']);                    
+                        fcmaps(n).fc.mri_saveimage(fullfile(targetf, [basefilename '_cov']));
                 end
             end
         end
+        if verbose; fprintf(' done.\n'); end
     end
 end

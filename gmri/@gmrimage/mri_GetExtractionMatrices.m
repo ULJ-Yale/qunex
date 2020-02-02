@@ -63,11 +63,15 @@ if nargin < 2 error('ERROR: Events string has to be specified!'); end
 
 % ----- parse options
 
-default = 'ignore=use,fidl|badevents=use|verbose=false';
+default = 'ignore=use,fidl|badevents=use|verbose=false|debug=false';
 options = g_ParseOptions([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
+printdebug = strcmp(options.debug, 'true');
 
+if printdebug
+    g_PrintStruct(options, 'Options used');
+end
 
 % ---> creating use mask
 

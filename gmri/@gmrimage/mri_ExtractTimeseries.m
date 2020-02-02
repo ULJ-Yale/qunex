@@ -48,6 +48,7 @@ if strcmp(method, 'all')
 else
     nevents = size(exmat, 1);
     simg = obj.zeroframes(nevents);
+    exmat = exmat == 1;
     
     for n = 1:nevents
         switch method
