@@ -99,6 +99,11 @@ for s = files(:)'
             nfiles = nfiles + 1;
             subject(nsubjects).files{nf} = strtrim(s(2:end));
         end
+    elseif ~isempty(strfind(s, 'conc:'))
+        [t, s] = strtok(s, ':');
+        if g_CheckFile(strtrim(s(2:end)), 'conc file', report, prepend);
+            subject(nsubjects).conc = strtrim(s(2:end));
+        end
     elseif ~isempty(strfind(s, 'fidl:'))
         [t, s] = strtok(s, ':');
         if g_CheckFile(strtrim(s(2:end)), 'fidl file', report, prepend);
