@@ -265,11 +265,11 @@ for n = 1:nsets
 
     if strcmp(options.fcmeasure, 'cv')
         fc = rs';
-        fc = bsxfun(@minus, fc', mean(fc)) ./ sqrt(obj.voxels-1);
+        fc = bsxfun(@minus, fc', mean(fc)) ./ sqrt(ts.voxels-1);
         fc = fc' * fc;
     else
         fc = zscore(rs', 0, 1);
-        fc = fc ./ sqrt(obj.frames -1);
+        fc = fc ./ sqrt(ts.frames -1);
         fc = fc' * fc;
     end
     
@@ -321,9 +321,9 @@ if ismember({'txt'}, options.saveformat)
     fout = fopen([basefilename '.txt'], 'w');
 
     if strcmp(options.fcmeasure, 'cv')
-        fprintf(fout, 'name\title\troi1\roi2\tcv\n');
+        fprintf(fout, 'name\ttitle\troi1\troi2\tcv\n');
     else
-        fprintf(fout, 'name\title\troi1\roi2\tr\tFz\tZ\tp\n');
+        fprintf(fout, 'name\ttitle\troi1\troi2\tr\tFz\tZ\tp\n');
     end
 
     for n = 1:nsets
@@ -341,22 +341,26 @@ if ismember({'txt'}, options.saveformat)
         roi1 = fcmat(n).roi(idx1);
         roi2 = fcmat(n).roi(idx2);
 
-        nfc  = length(idx1);
+        idx  = reshape([1:nroi*nroi], nroi, nroi);
+        idx  = tril(idx, -1);
+        idx  = idx(idx > 0);
+
+        nfc  = length(idx);
 
         % --- write up
 
         if strcmp(options.fcmeasure, 'cv')
-            cv = fcmat(n).cv(idx1);
+            cv = fcmat(n).cv(idx);
             for c = 1:nfc
-                fprintf('%s\t%s\t%s\t%s\t%.5f\n', name, settitle, roi1{c}, roi2{c}, cv(c));
+                fprintf(fout, '%s\t%s\t%s\t%s\t%.5f\n', name, settitle, roi1{c}, roi2{c}, cv(c));
             end
         else
-            r  = fcmat(n).r(idx1);
-            fz = fcmat(n).fz(idx1);
-            z  = fcmat(n).z(idx1);
-            p  = fcmat(n).p(idx1);
+            r  = fcmat(n).r(idx);
+            fz = fcmat(n).fz(idx);
+            z  = fcmat(n).z(idx);
+            p  = fcmat(n).p(idx);
             for c = 1:nfc
-                fprintf('%s\t%s\t%s\t%s\t%.5f\t%.5f\t%.5f\t%.7f\n', name, settitle, roi1{c}, roi2{c}, r(c), fz(c), z(c), p(c));
+                fprintf(fout, '%s\t%s\t%s\t%s\t%.5f\t%.5f\t%.5f\t%.7f\n', name, settitle, roi1{c}, roi2{c}, r(c), fz(c), z(c), p(c));
             end
         end
     end
