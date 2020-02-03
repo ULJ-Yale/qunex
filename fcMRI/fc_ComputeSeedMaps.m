@@ -59,12 +59,18 @@ function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 %                                -> cv       ... covariance estimate
 %                                ['r']
 %               -> saveind   ... a comma separted list of individual session / subject files to save
-%                                -> r        ... save Pearson correlation coefficients (r only)
-%                                -> fz       ... save Fisher Z values (r only)
-%                                -> z        ... save Z statistic (r only)
-%                                -> p        ... save p value (r only)
-%                                -> cv       ... save covariances (cv only)
-%                                -> all      ... save all relevant values
+%                                -> r        ... save Pearson correlation coefficients (r only) separately for each roi
+%                                -> fz       ... save Fisher Z values (r only) separately for each roi
+%                                -> z        ... save Z statistic (r only) separately for each roi
+%                                -> p        ... save p value (r only) separately for each roi
+%                                -> cv       ... save covariances (cv only) separately for each roi
+%                                -> allbyroi ... save all relevant values by roi
+%                                -> jr       ... save Pearson correlation coefficients (r only) in a single file for all roi
+%                                -> jfz      ... save Fisher Z values (r only) in a single file for all roi
+%                                -> jz       ... save Z statistic (r only) in a single file for all roi
+%                                -> jp       ... save p value (r only) in a single file for all roi
+%                                -> jcv      ... save covariances (cv only) in a single file for all roi
+%                                -> alljoint ... save all relevant values in a joint file
 %                                -> none     ... do not save any individual level results
 %                                ['none']
 %                                Default is 'none'. Any invalid options will be ignored without a warning.
@@ -275,14 +281,44 @@ if ~isempty(options.saveind)
 
     if verbose; fprintf('     ... saving seedmaps\n'); end
 
+    % set up filetype for single images
+
+    if strcmp(y.filetype, '.dtseries')
+        tfiletype = '.dscalar';
+    else
+        tfiletype = y.filetype;
+    end
+
     % --- loop through sets
 
     for n = 1:nsets
         if fcmaps(n).title, settitle = ['_' fcmaps(n).title]; else settitle = ''; end
 
-        if verbose; fprintf('         ... set %s, roi:', fcmaps(n).title); end
+
+        % --- prepare computed data
+
+        if verbose; fprintf('         ... preparing data'); end
+            
+        if any(ismember(options.saveind, {'fz', 'p', 'z'}))
+            fz = fcmaps(n).fc;
+            fz.data = fc_Fisher(fz.data);
+        end
+
+        if any(ismember(options.saveind, {'p', 'z'}))
+            Z = fcmaps(n).fc;
+            Z.data = fz.data/(1/sqrt(fcmaps(n).N-3));
+        end
+
+        if ismember('p', options.saveind)
+            p = fcmaps(n).fc;
+            p.data = (1 - normcdf(abs(Z.data), 0, 1)) * 2 .* sign(fz.data);
+        end
+
+        if verbose; fprintf(' ... done\n'); end
 
         % --- loop through roi
+
+        if verbose; fprintf('         ... saving set %s, roi:', fcmaps(n).title); end
 
         for r = 1:nroi
 
@@ -292,37 +328,30 @@ if ~isempty(options.saveind)
 
             basefilename = sprintf('seed_%s%s_%s', name, settitle, fcmaps(n).roi{r});
 
-            % --- prepare computed data
-            
-            if any(ismember(options.saveind, {'fz', 'p', 'z'}))
-                fz = fcmaps(n).fc;
-                fz.data = fc_Fisher(fz.data);
-            end
-
-            if any(ismember(options.saveind, {'p', 'z'}))
-                Z = fcmaps(n).fc;
-                Z.data = fz.data/(1/sqrt(fcmaps(n).N-3));
-            end
-
-            if ismember('p', options.saveind)
-                p = fcmaps(n).fc;
-                p.data = (1 - normcdf(abs(Z.data), 0, 1)) * 2 .* sign(fz.data);
-            end
-
             % --- save images
 
             for sn = 1:length(options.saveind)
                 switch options.saveind{sn}
                     case 'r'
-                        fcmaps(n).fc.mri_saveimage(fullfile(targetf, [basefilename '_r']));
+                        t = fcmaps(n).fc.sliceframes([1:nroi] == r);                                              
+                        t.filetype = tfiletype;
+                        t.mri_saveimage(fullfile(targetf, [basefilename '_r']));
                     case 'fz'
-                        fz.mri_saveimage(fullfile(targetf, [basefilename '_Fz']));
+                        t = fz.sliceframes([1:nroi] == r);
+                        t.filetype = tfiletype;
+                        t.mri_saveimage(fullfile(targetf, [basefilename '_Fz']));
                     case 'z'
-                        Z.mri_saveimage(fullfile(targetf, [basefilename '_Z']));
+                        t = Z.sliceframes([1:nroi] == r);
+                        t.filetype = tfiletype;
+                        t.mri_saveimage(fullfile(targetf, [basefilename '_Z']));
                     case 'p'
-                        p.mri_saveimage(fullfile(targetf, [basefilename '_p']));
+                        t = p.sliceframes([1:nroi] == r);
+                        t.filetype = tfiletype;
+                        t.mri_saveimage(fullfile(targetf, [basefilename '_p']));
                     case 'fz'
-                        fcmaps(n).fc.mri_saveimage(fullfile(targetf, [basefilename '_cov']));
+                        t = fcmaps(n).fc.sliceframes([1:nroi] == r);
+                        t.filetype = tfiletype;
+                        t.mri_saveimage(fullfile(targetf, [basefilename '_cov']));
                 end
             end
         end
