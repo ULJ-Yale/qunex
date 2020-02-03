@@ -5031,7 +5031,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
 
         # log beautify
-        r += "\n\n\n"
+        r += "\n\n"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
