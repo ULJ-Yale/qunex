@@ -4769,21 +4769,19 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
     try:
         # run HCP hand reclassification
         r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
-        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, True, bold)
+        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, True, boldtarget, printbold)
 
         # merge r
         r += result['r']
 
-        # check if hand reclassification was OK
+        # move on to ReFix
         rcReport = result['report']
         if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
             r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
             boldok = True
 
-            # --- check for bold image
-            # TODO FIX path
-            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+            # highpass
+            highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
             matlabrunmode = 2
@@ -4798,10 +4796,13 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
                     boldok = False
 
+            # regname
+            regname = "NONE" if 'hcp_regname' not in options else options['hcp_regname']
+
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
-                --fmri-name="%(boldimg)s" \
+                --fmri-name="%(boldtarget)s" \
                 --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)d" \
@@ -4811,17 +4812,21 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixPipeline.sh'),
                     'path'                : sinfo['hcp'],
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
-                    'boldimg'             : boldimg,
-                    'highpass'            : 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass'],
-                    'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
+                    'boldtarget'          : boldtarget,
+                    'highpass'            : highpass,
+                    'regname'             : regname,
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                     'matlabrunmode'       : matlabrunmode,
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+            # postfix
+            postfix = "%s_Atlas_hp%s_clean.dtseries.nii" % (boldtarget, highpass)
+            if regname != "NONE" and regname != "":
+                postfix = "%s_Atlas_%s_hp%s_clean.dtseries.nii" % (boldtarget, regname, highpass)
+
             # -- Test files
-            # TODO TEST FILE
-            tfile = "testfile.txt"
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, postfix)
             fullTest = None
 
             # -- Run
@@ -4889,10 +4894,13 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
         groupok = True
 
         # --- check for bold images and prepare images parameter
-        boldimgs = ""
+        boldtargets = ""
 
-         # check if files for all bolds exist
+        # check if files for all bolds exist
         for b in bolds:
+            # boldok
+            boldok = True
+
             # extract data
             _, _, _, boldinfo = b
 
@@ -4903,57 +4911,61 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 printbold  = str(bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-            # run HCP hand reclassification
-            r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
-            result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, b)
-
-            # merge r
-            r += result['r']
-
-            # check if hand reclassification was OK
-            rcReport = result['report']
-            if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
-                boldok = True
-
-                # TODO FIX path
-                boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-                r, boldok = checkForFile2(r, boldimg, '\n     ... bold image [%s] present' % boldimg, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
-            else:
-                r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
-                boldok = False
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
                 groupok = False
                 break
             else:
                 # add @ separator
-                if boldimgs is not "":
-                    boldimgs = boldimgs + "@"
+                if boldtargets is not "":
+                    boldtargets = boldtargets + "@"
 
                 # add latest image
-                boldimgs = boldimgs + boldimg
+                boldtargets = boldtargets + boldtarget
+
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
+        # check if files for the groups exist and run hand HCP hand reclassification
+        groupica = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s_hp%s_clean.nii.gz" % (groupname, highpass))
+        r, groupok = checkForFile2(r, groupica, '\n     ... group ICA %s present' % groupname, '\n     ... ERROR: group ICA [%s] missing!' % groupica, status=groupok)
+
+        # run HCP hand reclassification
+        r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
+        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, groupname, groupname)
+
+        # merge r
+        r += result['r']
+
+        # check if hand reclassification was OK
+        rcReport = result['report']
+        if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
+            groupok = True
+        else:
+            r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
+            groupok = False
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = 2
         if 'hcp_matlab_mode' in options:
-            if options['hcp_matlab_mode'] is "compiled":
+            if options['hcp_matlab_mode'] == "compiled":
                 matlabrunmode = 0
-            elif options['hcp_matlab_mode'] is "interpreted":
+            elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = 1
-            elif options['hcp_matlab_mode'] is "octave":
+            elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
                 r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                boldok = False
+                groupok = False
 
-        # construct concat file name
-        concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupname)
+        regname = "NONE" if 'hcp_regname' not in options else options['hcp_regname']
 
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
-            --fmri-names="%(boldimgs)s" \
-            --concat-fmri-name="%(concatfilename)s" \
+            --fmri-names="%(boldtargets)s" \
+            --concat-fmri-name="%(groupname)s" \
             --high-pass="%(highpass)d" \
             --reg-name="%(regname)s" \
             --low-res-mesh="%(lowresmesh)s" \
@@ -4963,19 +4975,23 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
-                'boldimgs'            : boldimgs,
-                'concatfilename'      : concatfilename,
-                'highpass'            : 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass'],
-                'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
+                'boldtargets'         : boldtargets,
+                'groupname'           : groupname,
+                'highpass'            : highpass,
+                'regname'             : regname,
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Test files
-        # TODO TEST FILE
-        #tfile = concatfilename + ".nii.gz"
-        tfile = "testfile.txt"
+        # postfix
+        postfix = "%s_Atlas_hp%s_clean.dtseries.nii" % (groupname, highpass)
+        if regname != "NONE" and regname != "":
+            postfix = "%s_Atlas_%s_hp%s_clean.dtseries.nii" % (groupname, regname, highpass)
+
+        # -- Test files
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, postfix)
         fullTest = None
 
         # -- Run
@@ -4993,9 +5009,9 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ICAFix ' + groupname, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReFix ' + groupname, r)
                 if passed is None:
-                    r += "\n     ... multi HCP ICAFix can be run"
+                    r += "\n     ... multi HCP ReFix can be run"
                     r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(groupname)
                 else:
@@ -5014,6 +5030,9 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
 
+        # log beautify
+        r += "\n\n\n"
+
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
@@ -5025,17 +5044,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
     return {'r': r, 'report': report}
 
 
-def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFix, bold):
-    # extract data
-    _, _, _, boldinfo = bold
-
-    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-        printbold  = boldinfo['boldname']
-        boldtarget = boldinfo['boldname']
-    else:
-        printbold  = str(bold)
-        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
+def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFix, boldtarget, printbold):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -5044,11 +5053,6 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
         boldok = True
 
-        # --- check for bold image
-        # TODO FIX path
-        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
-
         # load parameters or use default values
         highpass = 2000
         if not singleFix:
@@ -5056,20 +5060,23 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         if 'hcp_icafix_highpass' in options:
             highpass = options['hcp_icafix_highpass']
 
+        # --- check for bold image
+        icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
+        r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
+
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
-            --fmri-name="%(boldimg)s" \
+            --fmri-name="%(boldtarget)s" \
             --high-pass="%(highpass)d"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ApplyHandReClassifications.sh'),
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'boldtarget'        : boldimg,
+                'boldtarget'        : boldtarget,
                 'highpass'          : highpass}
 
         # -- Test files
-        # TODO TEST FILE
-        tfile = "testfile.txt"
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s_hp%s.ica" % (boldtarget, highpass), "HandNoise.txt")
         fullTest = None
 
         # -- Run
