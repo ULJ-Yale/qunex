@@ -58,7 +58,7 @@ function [fcmat] = fc_ComputeROICorrelations(bolds, roidef, frames, targetf, opt
 %                                 -> r        ... pearson's r value
 %                                 -> cv       ... covariance estimate
 %                                 ['r']
-%               -> saveformat ... a comma separted list of formats to use to save the data
+%               -> saveind    ... a comma separted list of formats to use to save the data
 %                                 -> txt      ... save the resulting data in a long format txt file
 %                                 -> mat      ... save the resulting data in a matlab .mat file
 %                                 ['']
@@ -180,9 +180,9 @@ if length(options.saveind)
     end
 end
 
-options.saveformat = strtrim(regexp(options.saveformat, ',', 'split'));
-if ~isempty(options.saveformat)
-    sdiff = setdiff(options.saveformat, {'mat', 'txt'});
+options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
+if ~isempty(options.saveind)
+    sdiff = setdiff(options.saveind, {'mat', 'txt'});
     if ~isempty(sdiff)
         error('ERROR: Invalid save format specified: %s', strjoin(sdiff,","));
     end
@@ -296,7 +296,7 @@ end
 
 % ---> save results
 
-if isempty(options.saveformat)
+if isempty(options.saveind)
     if verbose; fprintf(' ... done\n'); end
     return; 
 end
@@ -308,13 +308,13 @@ ftail = ftail{ismember({'r', 'cv'}, options.fcmeasure)};
 
 basefilename = fullfile(targetf, sprintf('%s_%s', name, ftail));
 
-if ismember({'mat'}, options.saveformat)
+if ismember({'mat'}, options.saveind)
     if verbose; fprintf('         ... saving mat file'); end
     save(basefilename, 'fcmat');
     if verbose; fprintf(' ... done\n'); end
 end
 
-if ismember({'txt'}, options.saveformat)
+if ismember({'txt'}, options.saveind)
     
     if verbose; fprintf('         ... saving txt file'); end
 
