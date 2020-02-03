@@ -165,29 +165,10 @@ end
 % ----- What should be saved
 
 options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
-
-if ismember({'none'}, options.saveind)
-    options.saveind = [];
-elseif ismember({'all'}, options.saveind)
-    options.saveind = {'r', 'fz', 'z', 'p', 'cv'};
+sdiff = setdiff(options.saveind, {'mat', 'txt', ''});
+if ~isempty(sdiff)
+    error('ERROR: Invalid save format specified: %s', strjoin(sdiff,","));
 end
-
-if length(options.saveind) 
-    if strcmp(options.fcmeasure, 'r')
-        options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p'});
-    else
-        options.saveind = intersect(options.saveind, {'cv'});
-    end
-end
-
-options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
-if ~isempty(options.saveind)
-    sdiff = setdiff(options.saveind, {'mat', 'txt'});
-    if ~isempty(sdiff)
-        error('ERROR: Invalid save format specified: %s', strjoin(sdiff,","));
-    end
-end
-
 
 % ----- Get the list of files
 
@@ -206,7 +187,7 @@ end
 % ----- Check if the files are there!
 
 go = true;
-if verbose; fprintf('\n\nChecking ...\n'); end
+if verbose; fprintf('\nChecking ...\n'); end
 
 for bold = boldlist
     go = go & g_CheckFile(bold{1}, bold{1}, 'error');
@@ -215,7 +196,9 @@ go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
 if sroifile
     go = go & g_CheckFile(sroifile, 'individual ROI file', 'error');
 end
-g_CheckFolder(targetf, 'results folder', true, verbose);
+if any(ismember({'txt', 'mat'}, options.saveind))
+    g_CheckFolder(targetf, 'results folder', true, verbose);
+end
 
 if ~go
     error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
@@ -296,7 +279,7 @@ end
 
 % ---> save results
 
-if isempty(options.saveind)
+if ~any(ismember({'mat', 'txt'}, options.saveind))
     if verbose; fprintf(' ... done\n'); end
     return; 
 end

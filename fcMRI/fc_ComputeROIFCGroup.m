@@ -51,7 +51,7 @@ function [] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
 %                   -> itargetf  ... where to save the individual data:
 %                                    -> gfolder  ... in the group target folder
 %                                    -> sfolder  ... in the individual session folder
-%                                    ['tfolder']
+%                                    ['gfolder']
 %                   -> verbose   ... whether to be verbose 'true' or not 'false', when running the analysis ['false']
 %                   
 %
@@ -133,7 +133,7 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 
 % ----- parse options
 
-default = 'roimethod=mean|eventdata=all|badframes=none|badevents=use|fcmeasure=r|savegroup=|saveind=|verbose=false';
+default = 'roimethod=mean|eventdata=all|badframes=none|badevents=use|fcmeasure=r|savegroup=|saveind=|itargetf=gfolder|verbose=false';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -143,6 +143,7 @@ if ~ismember(options.fcmeasure, {'r', 'cv'})
 end
 
 cv = strcmp(options.fcmeasure, 'cv');
+verbose = strcmp(options.verbose, 'true');
 
 % ----- Check if the files are there!
 
@@ -180,14 +181,13 @@ fprintf(' ... done.\n');
 %   ------------------------------------------------------------------------------------------
 %                                                The main loop ... go through all the subjects
 
-first = true;
 c = 0;
 
 for n = 1:nsub
 
     go = true;
 
-    if verbose; fprintf(' ... processing %s\n', subject(n).id); end
+    if verbose; fprintf('\n----------------------------------\nprocessing %s\n', subject(n).id); end
 
     % ---> setting up roidef parameter
 
@@ -200,22 +200,33 @@ for n = 1:nsub
 
     % ---> setting up bolds parameter
 
-    for bold = subject(n).files
-        go = go & g_CheckFile(bold{1}, 'bold file', 'error');
-    end
-    if strcmp(options.itargetf, 'sfolder')
-        bolds = [lname '|' strjoin(subject(n).files, '|')];
+    if isfield(subject(n), 'files')
+        for bold = subject(n).files
+            go = go & g_CheckFile(bold{1}, 'bold file', 'error');
+        end
+        if strcmp(options.itargetf, 'sfolder')
+            bolds = [lname '|' strjoin(subject(n).files, '|')];
+        else
+            bolds = [lname '_' subject(n).id '|' strjoin(subject(n).files, '|')];
+        end
+    elseif isfield(subject(n), 'conc')
+        go = go & g_CheckFile(subject(n).conc, 'conc file', 'error');
+        if strcmp(options.itargetf, 'sfolder')
+            bolds = [lname '|' subject(n).conc];
+        else
+            bolds = [lname '_' subject(n).id '|' subject(n).conc];
+        end
     else
-        bolds = [lname '_' subject(n).id '|' strjoin(subject(n).files, '|')];
+        go = false
+        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', subject(n).id);
     end
-
 
     % ---> setting up frames parameter
 
     if isa(frames, 'char')
         if isfield(subject(n), 'fidl')
             go = go & g_CheckFile(subject(n).fidl, [subject(n).id ' fidl file'], 'error');
-            sframes = [g_CheckFile(subject(n).fidl '|' frames];
+            sframes = [subject(n).fidl '|' frames];
         else
             go = false
             fprintf(' ... ERROR: %s missing fidl file specification!\n', subject(n).id);
@@ -254,11 +265,8 @@ for n = 1:nsub
 
     for s = 1:nset
 
-        if first
-            fcset(s).name = fcmat(s).title;            
-            fcset(s).roi  = fcmat(s).roi;                
-            first = false
-        end
+        fcset(s).name = fcmat(s).title;            
+        fcset(s).roi  = fcmat(s).roi;                
 
         % -------> Embedd data
 
@@ -285,24 +293,26 @@ noksub = c;
 if isempty(options.savegroup)
     if verbose; fprintf(' ... done\n'); end
     return; 
+else
+    options.savegroup = strtrim(regexp(options.savegroup, ',', 'split'));
 end
 
-if verbose; fprintf('     ... saving group results\n'); end
+if verbose; fprintf('\n----------------------------------\nSaving group results\n'); end
 
 ftail = {'cor', 'cov'};
 ftail = ftail{ismember({'r', 'cv'}, options.fcmeasure)};
 
-basefilename = fullfile(targetf, sprintf('%s_%s', name, ftail));
+basefilename = fullfile(targetf, sprintf('%s_%s', lname, ftail));
 
-if ismember({'mat'}, options.saveind)
-    if verbose; fprintf('         ... saving mat file'); end
-    save(basefilename, 'fcset');
+if ismember({'mat'}, options.savegroup)
+    if verbose; fprintf('... saving mat file'); end
+    save([basefilename '.mat'], 'fcset');
     if verbose; fprintf(' ... done\n'); end
 end
 
-if ismember({'txt'}, options.saveind)
+if ismember({'txt'}, options.savegroup)
     
-    if verbose; fprintf('         ... saving txt file'); end
+    if verbose; fprintf('... saving txt file'); end
 
     fout = fopen([basefilename '.txt'], 'w');
 
@@ -312,8 +322,8 @@ if ismember({'txt'}, options.saveind)
         fprintf(fout, 'name\ttitle\tsubject\troi1\troi2\tr\tFz\tZ\tp\n');
     end
 
-    for n = 1:nsets
-        if fcmat(n).title, settitle = fcmat(n).title; else settitle = 'ts'; end
+    for n = 1:length(fcset)
+        if fcset(n).name, settitle = fcset(n).name; else settitle = 'ts'; end
 
         % --- set ROI names
 
@@ -338,7 +348,7 @@ if ismember({'txt'}, options.saveind)
             if strcmp(options.fcmeasure, 'cv')            
                 cv = fcset(n).subject(sid).cv(idx);
                 for c = 1:nfc
-                    fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%.5f\n', name, settitle, fcset(n).subject(sid).id, roi1{c}, roi2{c}, cv(c));
+                    fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%.5f\n', lname, settitle, fcset(n).subject(sid).id, roi1{c}, roi2{c}, cv(c));
                 end
             else
                 r  = fcset(n).subject(sid).r(idx);
@@ -346,7 +356,7 @@ if ismember({'txt'}, options.saveind)
                 z  = fcset(n).subject(sid).z(idx);
                 p  = fcset(n).subject(sid).p(idx);
                 for c = 1:nfc
-                    fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%.5f\t%.5f\t%.5f\t%.7f\n', name, settitle, fcset(n).subject(sid).id, roi1{c}, roi2{c}, r(c), fz(c), z(c), p(c));
+                    fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%.5f\t%.5f\t%.5f\t%.7f\n', lname, settitle, fcset(n).subject(sid).id, roi1{c}, roi2{c}, r(c), fz(c), z(c), p(c));
                 end
             end
         end
