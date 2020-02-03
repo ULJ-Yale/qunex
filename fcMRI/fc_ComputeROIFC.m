@@ -246,7 +246,7 @@ if verbose; fprintf(' done.\n'); end
 
 % ---> loop through extraction sets
 
-if verbose; fprintf('     ... computing seedmaps\n'); end
+if verbose; fprintf('     ... computing fc matrices\n'); end
 
 nsets = length(exsets);
 for n = 1:nsets

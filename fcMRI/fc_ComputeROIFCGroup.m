@@ -12,7 +12,7 @@ function [] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
 %                   -> a numeric array mask defining which frames to use (1) and which not (0) 
 %                   -> a single number, specifying the number of frames to skip at start
 %                   -> a string describing which events to extract timeseries for, and the frame offset from 
-%                      the start and end of the event in format: ('fidlfile|title1:event1,event2:2:2|title2:event3,event4:1:2') 
+%                      the start and end of the event in format: ('title1:event1,event2:2:2|title2:event3,event4:1:2') 
 %                   []
 %       tagetf    - The folder to save images in ['.'].
 %       options   - A string specifying additional analysis options formated as pipe separated pairs of colon separated
