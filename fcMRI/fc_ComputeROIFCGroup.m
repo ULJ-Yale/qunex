@@ -329,13 +329,16 @@ if ismember({'txt'}, options.savegroup)
 
         nroi = length(fcset(n).roi);
 
-        idx  = repmat([1:nroi], nroi, 1);
-        idx1 = tril(idx, -1);
+        idx1 = repmat([1:nroi], nroi, 1);
+        idx1 = tril(idx1, -1);
         idx1 = idx1(idx1 > 0);
-        idx2 = triu(idx, 1);
+
+        idx2 = repmat([1:nroi]', 1, nroi);
+        idx2 = tril(idx2, -1);
         idx2 = idx2(idx2 > 0);
-        roi1 = fcmat(n).roi(idx1);
-        roi2 = fcmat(n).roi(idx2);
+
+        roi1 = fcset(n).roi(idx1);
+        roi2 = fcset(n).roi(idx2);
 
         idx  = reshape([1:nroi*nroi], nroi, nroi);
         idx  = tril(idx, -1);
