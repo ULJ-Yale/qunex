@@ -3808,9 +3808,9 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         # -- Test files
 
         if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s_%s_Atlas.dtseries.nii" % (boldtarget, options['hcp_fs_longitudinal']))
+            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s_%s%s.dtseries.nii" % (boldtarget, options['hcp_fs_longitudinal'], options['hcp_cifti_tail']))
         else:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_Atlas.dtseries.nii" % (boldtarget))
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
 
         if hcp['hcp_bold_surf_check']:
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
@@ -5144,9 +5144,9 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
 
             # -- Test files
             # postfix
-            postfix = "%s_Atlas_hp%s_clean.dtseries.nii" % (boldtarget, highpass)
+            postfix = "%s%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], highpass)
             if regname != "NONE" and regname != "":
-                postfix = "%s_Atlas_%s_hp%s_clean.dtseries.nii" % (boldtarget, regname, highpass)
+                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], regname, highpass)
 
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, postfix)
             fullTest = None
@@ -5244,12 +5244,6 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 # add latest image
                 boldtargets = boldtargets + boldtarget
 
-        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
-
-        # check if files for the groups exist and run hand HCP hand reclassification
-        groupica = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s_hp%s_clean.nii.gz" % (groupname, highpass))
-        r, groupok = checkForFile2(r, groupica, '\n     ... group ICA %s present' % groupname, '\n     ... ERROR: group ICA [%s] missing!' % groupica, status=groupok)
-
         # run HCP hand reclassification
         r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
         result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, groupname, groupname)
@@ -5260,93 +5254,97 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
         # check if hand reclassification was OK
         rcReport = result['report']
         if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
+            r += "\n---> %s group ICA %s" % (action("Processing", options['run']), groupname)
             groupok = True
+
+            # matlab run mode, compiled=0, interpreted=1, octave=2
+            matlabrunmode = 2
+            if 'hcp_matlab_mode' in options:
+                if options['hcp_matlab_mode'] == "compiled":
+                    matlabrunmode = 0
+                elif options['hcp_matlab_mode'] == "interpreted":
+                    matlabrunmode = 1
+                elif options['hcp_matlab_mode'] == "octave":
+                    matlabrunmode = 2
+                else:
+                    r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                    groupok = False
+
+            # highpass and regname
+            highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
+            regname = "NONE" if 'hcp_regname' not in options else options['hcp_regname']
+
+            comm = '%(script)s \
+                --path="%(path)s" \
+                --subject="%(subject)s" \
+                --fmri-names="%(boldtargets)s" \
+                --concat-fmri-name="%(groupname)s" \
+                --high-pass="%(highpass)d" \
+                --reg-name="%(regname)s" \
+                --low-res-mesh="%(lowresmesh)s" \
+                --matlab-run-mode="%(matlabrunmode)d" \
+                --motion-regression="%(motionregression)s" \
+                --delete-intermediates"%(deleteintermediates)s"' % {
+                    'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
+                    'path'                : sinfo['hcp'],
+                    'subject'             : sinfo['id'] + options['hcp_suffix'],
+                    'boldtargets'         : boldtargets,
+                    'groupname'           : groupname,
+                    'highpass'            : highpass,
+                    'regname'             : regname,
+                    'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
+                    'matlabrunmode'       : matlabrunmode,
+                    'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                    'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
+
+            # -- Test files
+            # postfix
+            postfix = "%s%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], highpass)
+            if regname != "NONE" and regname != "":
+                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], regname, highpass)
+
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, postfix)
+            fullTest = None
+
+            # -- Run
+            if run and groupok:
+                if options['run'] == "run":
+                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+
+                    if failed:
+                        report['failed'].append(groupname)
+                    else:
+                        report['done'].append(groupname)
+
+                # -- just checking
+                else:
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReFix ' + groupname, r)
+                    if passed is None:
+                        r += "\n     ... multi HCP ReFix can be run"
+                        r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        report['ready'].append(groupname)
+                    else:
+                        report['skipped'].append(groupname)
+
+            elif run:
+                report['not ready'].append(groupname)
+                if options['run'] == "run":
+                    r += "\n     ... ERROR: images missing, skipping this group!"
+                else:
+                    r += "\n     ... ERROR: images missing, this group would be skipped!"
+            else:
+                report['not ready'].append(groupname)
+                if options['run'] == "run":
+                    r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+                else:
+                    r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
+
+            # log beautify
+            r += "\n\n"
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
             groupok = False
-
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        matlabrunmode = 2
-        if 'hcp_matlab_mode' in options:
-            if options['hcp_matlab_mode'] == "compiled":
-                matlabrunmode = 0
-            elif options['hcp_matlab_mode'] == "interpreted":
-                matlabrunmode = 1
-            elif options['hcp_matlab_mode'] == "octave":
-                matlabrunmode = 2
-            else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                groupok = False
-
-        regname = "NONE" if 'hcp_regname' not in options else options['hcp_regname']
-
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --fmri-names="%(boldtargets)s" \
-            --concat-fmri-name="%(groupname)s" \
-            --high-pass="%(highpass)d" \
-            --reg-name="%(regname)s" \
-            --low-res-mesh="%(lowresmesh)s" \
-            --matlab-run-mode="%(matlabrunmode)d" \
-            --motion-regression="%(motionregression)s" \
-            --delete-intermediates"%(deleteintermediates)s"' % {
-                'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
-                'path'                : sinfo['hcp'],
-                'subject'             : sinfo['id'] + options['hcp_suffix'],
-                'boldtargets'         : boldtargets,
-                'groupname'           : groupname,
-                'highpass'            : highpass,
-                'regname'             : regname,
-                'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                'matlabrunmode'       : matlabrunmode,
-                'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
-                'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
-
-        # -- Test files
-        # postfix
-        postfix = "%s_Atlas_hp%s_clean.dtseries.nii" % (groupname, highpass)
-        if regname != "NONE" and regname != "":
-            postfix = "%s_Atlas_%s_hp%s_clean.dtseries.nii" % (groupname, regname, highpass)
-
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, postfix)
-        fullTest = None
-
-        # -- Run
-        if run and groupok:
-            if options['run'] == "run":
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
-
-                if failed:
-                    report['failed'].append(groupname)
-                else:
-                    report['done'].append(groupname)
-
-            # -- just checking
-            else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReFix ' + groupname, r)
-                if passed is None:
-                    r += "\n     ... multi HCP ReFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
-                    report['ready'].append(groupname)
-                else:
-                    report['skipped'].append(groupname)
-
-        elif run:
-            report['not ready'].append(groupname)
-            if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
-            else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
-        else:
-            report['not ready'].append(groupname)
-            if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this group!"
-            else:
-                r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
-
-        # log beautify
-        r += "\n\n"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -5365,7 +5363,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        r += "\n---> %s ICA %s" % (action("Processing", options['run']), printbold)
         boldok = True
 
         # load parameters or use default values
