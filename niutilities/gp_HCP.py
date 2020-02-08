@@ -2482,9 +2482,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                 [batch.txt].
     --subjectsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize [1].
-    --threads               ... How many threads to utilize for bold processing
-                                per session [1].
+    --cores                 ... How many cores to utilize. This Parameter 
+                                determines the parallelization on the subject
+                                level [1].
+    --threads               ... How many threads to utilize This Parameter
+                                determines the parallelization on the bolds 
+                                level [1].
     --bolds                 ... Which bold images (as they are specified in the
                                 batch.txt file) to process. It can be a single
                                 type (e.g. 'task'), a pipe separated list (e.g.
@@ -3496,9 +3499,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --threads         ... How many threads to utilize for bold processing
-                          per session [1].
+    --cores           ... How many cores to utilize. This Parameter determines
+                          the parallelization on the subject level [1].
+    --threads         ... How many threads to utilize This Parameter determines 
+                          the parallelization on the bolds level [1].
     --bolds           ... Which bold images (as they are specified in the
                           batch.txt file) to process. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
@@ -3804,9 +3808,9 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         # -- Test files
 
         if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s_%s_Atlas.dtseries.nii" % (boldtarget, options['hcp_fs_longitudinal']))
+            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s_%s%s.dtseries.nii" % (boldtarget, options['hcp_fs_longitudinal'], options['hcp_cifti_tail']))
         else:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_Atlas.dtseries.nii" % (boldtarget))
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
 
         if hcp['hcp_bold_surf_check']:
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
@@ -3987,13 +3991,118 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the ICAFix step of HCP Pipeline. TODO DESCRIPTION!
+    Runs the ICAFix step of HCP Pipeline. This step attempts to auto-classify
+    ICA components into good and bad components, so that the bad components
+    can be then removed from the 4D FMRI data.
     A short name 'hcp6' can be used for this command.
 
-    TODO DOCUMENTATION!
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the Qu|Nex
+    folder structure. The function will look into folder:
+
+    <session id>/hcp/<session id>
+
+    for files:
+
+    MNINonLinear/Results/<boldname>/<boldname>.nii.gz
+
+    RESULTS
+    =======
+
+    The results of this step will be generated and populated in the
+    MNINonLinear folder inside the same sessions's root hcp folder.
+
+    The final clean ICA file can be found in:
+
+    MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
+
+    where highpass is the used value for the highpass filter.
+    Default highpass values are 2000 for single fix and 0 for multi fix.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    --sessions          ... The batch.txt file with all the sessions information
+                            [batch.txt].
+    --subjectsfolder    ... The path to the study/subjects folder, where the
+                            imaging  data is supposed to go [.].
+    --cores             ... How many cores to utilize. This Parameter
+                            determines the parallelization on the
+                            subject level [1].
+    --threads           ... How many threads to utilize This Parameter
+                            determines the parallelization on the
+                            bolds level [1].
+    --overwrite         ... Whether to overwrite existing data (yes)
+                            or not (no) [no].
+    --logfolder         ... The path to the folder where runlogs and comlogs
+                            are to be stored, if other than default []
+    --log               ... Whether to keep ('keep') or remove ('remove') the
+                            temporary logs once jobs are completed ['keep'].
+                            When a comma separated list is given, the log will
+                            be created at the first provided location and then
+                            linked or copied to other locations. The valid
+                            locations are:
+                            * 'study'   for the default: 
+                                        `<study>/processing/logs/comlogs`
+                                        location,
+                            * 'session' for `<sessionid>/logs/comlogs
+                            * 'hcp'     for `<hcp_folder>/logs/comlogs
+                            * '<path>'  for an arbitrary directory
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    hcp_icafix_bolds                ... specify which bolds for ICAFix.
+                                        For single ICAFix specify a comma
+                                        separated list of bolds, e.g.
+                                        "<boldname>,<boldname>,<boldname>".
+                                        For multi ICAFix specify how to group
+                                        bolds and separate groups with pipes,
+                                        e.g. "<group>:<boldname>,<boldname>|
+                                        <group>:<boldname>,<boldname>". If this
+                                        parameter is not specifed a single
+                                        ICAFix over all bolds will be executed
+                                        [""].
+    hcp_icafix_highpass             ... value for the highpass filter, cannot
+                                        be 0 for single ICAFix. Default values
+                                        are [0] for multi ICAFix and [2000] for
+                                        multi ICAFix.
+    hcp_icafix_domotionreg          ... Whether to regress motion parameters as
+                                        part of the cleaning ["FALSE"].
+    hcp_icafix_traindata            ... Which file to use for training data.
+                                        It can be a file (the file needs to be
+                                        in ${FSL_FIXDIR}/training_files folder)
+                                        or a full path to a file [""].
+    hcp_icafix_threshold            ... ICAFix threshold that controls the
+                                        sensitivity/specificity tradeoff [10].
+    hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
+                                        high-pass filtered and non-filtered 
+                                        timeseries files that are prerequisites
+                                        to FIX cleaning ["FALSE"].
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex hcp_ICAFix
+        # TODO COPY SINGLE FIX EXAMPLE WHEN GRACE GETS ONLINE
+    ```
+
+    ```
+    qunex hcp_ICAFix
+        # TODO COPY MULTI FIX EXAMPLE WHEN GRACE GETS ONLINE
+    ```
 
     ----------------
-    Written by Grega Repovš
+    Written by Jure Demšar
 
     Changelog
     2019-10-09 Jure Demsar
@@ -4330,7 +4439,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+                r += "\n     ... ERROR: NoCreates Workbench scene files that can be used to visually review
+the signal vs. noise classification generated by ICA+FIX. hcp info for session, skipping this group!"
             else:
                 r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
 
@@ -4355,13 +4465,118 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the PostFix step of HCP Pipeline. TODO DESCRIPTION!
+    Runs the PostFix step of HCP Pipeline. This step creates Workbench scene
+    files that can be used to visually review the signal vs. noise
+    classification generated by ICAFix.
     A short name 'hcp7' can be used for this command.
 
-    TODO DOCUMENTATION!
+
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the Qu|Nex
+    folder structure. The function will look into folder:
+
+    <session id>/hcp/<session id>
+
+    for files:
+
+    MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz
+
+    RESULTS
+    =======
+
+    The results of this step will be generated and populated in the
+    MNINonLinear folder inside the same sessions's root hcp folder.
+
+    The final output files are:
+
+    MNINonLinear/Results/<boldname>/
+    <session id>_<boldname>_hp<highpass>_ICA_Classification_singlescreen.scene,
+
+    where highpass is the used value for the highpass filter.
+    Default highpass values are 2000 for single fix and 0 for multi fix.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    --sessions          ... The batch.txt file with all the sessions information
+                            [batch.txt].
+    --subjectsfolder    ... The path to the study/subjects folder, where the
+                            imaging  data is supposed to go [.].
+    --cores             ... How many cores to utilize. This Parameter
+                            determines the parallelization on the
+                            subject level [1].
+    --threads           ... How many threads to utilize This Parameter
+                            determines the parallelization on the
+                            bolds level [1].
+    --overwrite         ... Whether to overwrite existing data (yes)
+                            or not (no) [no].
+    --logfolder         ... The path to the folder where runlogs and comlogs
+                            are to be stored, if other than default []
+    --log               ... Whether to keep ('keep') or remove ('remove') the
+                            temporary logs once jobs are completed ['keep'].
+                            When a comma separated list is given, the log will
+                            be created at the first provided location and then
+                            linked or copied to other locations. The valid
+                            locations are:
+                            * 'study'   for the default: 
+                                        `<study>/processing/logs/comlogs`
+                                        location,
+                            * 'session' for `<sessionid>/logs/comlogs
+                            * 'hcp'     for `<hcp_folder>/logs/comlogs
+                            * '<path>'  for an arbitrary directory
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    hcp_icafix_bolds            ... specify which bolds for ICAFix. For single
+                                    ICAFix specify a comma separated list of
+                                    bolds, e.g. "<boldname>,<boldname>". For
+                                    multi ICAFix specify how to group bolds and
+                                    separate groups with pipes, e.g.
+                                    "<group>:<boldname>,<boldname>|
+                                    <group>:<boldname>,<boldname>". If this
+                                    parameter is not specifed a single ICAFix
+                                    over all bolds will be executed [""].
+    hcp_icafix_highpass         ... value for the highpass filter, cannot be 0
+                                    for single ICAFix. Default values are [0]
+                                    for multi ICAFix and [2000] for multi
+                                    ICAFix.
+    hcp_matlab_mode             ... Specifies the Matlab version, can be
+                                    "interpreted", "compiled" or "octave"
+                                    ["octave"].
+    hcp_postfix_dualscene       ... Path to an alternative template scene, if
+                                    empty HCP default dual scene will be used
+                                    [""].
+    hcp_postfix_singlescene     ... Path to an alternative template scene, if
+                                    empty HCP default single scene will be used
+                                    [""].
+    hcp_postfix_reusehighpass   ... Whether to reuse highpass, the default
+                                    value for single fix is ["NO"], while the
+                                    default value for multi fix is ["YES"].
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex hcp_PostFix
+        # TODO COPY SINGLE POST FIX EXAMPLE WHEN GRACE GETS ONLINE
+    ```
+
+    ```
+    qunex hcp_PostFix
+        # TODO COPY MULTI POST FIX EXAMPLE WHEN GRACE GETS ONLINE
+    ```
 
     ----------------
-    Written by Grega Repovš
+    Written by Jure Demšar
 
     Changelog
     2019-10-11 Jure Demsar
@@ -4614,13 +4829,120 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the ReFix step of HCP Pipeline. TODO DESCRIPTION!
+    Runs the ReFix step of HCP Pipeline. This scrips executs two steps,
+    first it applies the hand reclassifications of noise and signal components
+    from FIX using the ReclassifyAsNoise.txt and ReclassifyAsSignal.txt input
+    files. Next it executes the HCP Pipeline's ReApplyFix or ReApplyFixMulti.
     A short name 'hcp8' can be used for this command.
 
-    TODO DOCUMENTATION!
+
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the Qu|Nex
+    folder structure. The function will look into folder:
+
+    <session id>/hcp/<session id>
+
+    for files:
+
+    MNINonLinear/Results/<boldname>/<boldname>.nii.gz
+
+    RESULTS
+    =======
+
+    The results of this step will be generated and populated in the
+    MNINonLinear folder inside the same sessions's root hcp folder.
+
+    The final clean ICA file can be found in:
+
+    MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
+
+    where highpass is the used value for the highpass filter.
+    Default highpass values are 2000 for single fix and 0 for multi fix.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    --sessions          ... The batch.txt file with all the sessions information
+                            [batch.txt].
+    --subjectsfolder    ... The path to the study/subjects folder, where the
+                            imaging  data is supposed to go [.].
+    --cores             ... How many cores to utilize. This Parameter
+                            determines the parallelization on the
+                            subject level [1].
+    --threads           ... How many threads to utilize This Parameter
+                            determines the parallelization on the
+                            bolds level [1].
+    --overwrite         ... Whether to overwrite existing data (yes)
+                            or not (no) [no].
+    --logfolder         ... The path to the folder where runlogs and comlogs
+                            are to be stored, if other than default []
+    --log               ... Whether to keep ('keep') or remove ('remove') the
+                            temporary logs once jobs are completed ['keep'].
+                            When a comma separated list is given, the log will
+                            be created at the first provided location and then
+                            linked or copied to other locations. The valid
+                            locations are:
+                            * 'study'   for the default: 
+                                        `<study>/processing/logs/comlogs`
+                                        location,
+                            * 'session' for `<sessionid>/logs/comlogs
+                            * 'hcp'     for `<hcp_folder>/logs/comlogs
+                            * '<path>'  for an arbitrary directory
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    hcp_icafix_bolds                ... specify which bolds for ICAFix.
+                                        For single ICAFix specify a comma
+                                        separated list of bolds, e.g.
+                                        "<boldname>,<boldname>,<boldname>".
+                                        For multi ICAFix specify how to group
+                                        bolds and separate groups with pipes,
+                                        e.g. "<group>:<boldname>,<boldname>|
+                                        <group>:<boldname>,<boldname>". If this
+                                        parameter is not specifed a single
+                                        ICAFix over all bolds will be executed
+                                        [""].
+    hcp_icafix_highpass             ... value for the highpass filter, cannot
+                                        be 0 for single ICAFix. Default values
+                                        are [0] for multi ICAFix and [2000] for
+                                        multi ICAFix.
+    hcp_icafix_domotionreg          ... Whether to regress motion parameters as
+                                        part of the cleaning ["FALSE"].
+    hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
+                                        high-pass filtered and non-filtered 
+                                        timeseries files that are prerequisites
+                                        to FIX cleaning ["FALSE"].
+    hcp_matlab_mode                 ... Specifies the Matlab version, can be
+                                        "interpreted", "compiled" or "octave"
+                                        ["octave"].
+    hcp_regname                     ... Specifies surface registration name
+                                        ["NONE"].
+    hcp_lowresmesh                  ... Specifies the low res mesh number [32].
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex hcp_PostFix
+        # TODO COPY SINGLE REFIX EXAMPLE WHEN GRACE GETS ONLINE
+    ```
+
+    ```
+    qunex hcp_PostFix
+        # TODO COPY MULTI REFIX EXAMPLE WHEN GRACE GETS ONLINE
+    ```
 
     ----------------
-    Written by Grega Repovš
+    Written by Jure Demšar
 
     Changelog
     2019-10-15 Jure Demsar
@@ -4822,21 +5144,18 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
-            # postfix
-            postfix = "%s_Atlas_hp%s_clean.dtseries.nii" % (boldtarget, highpass)
-            if regname != "NONE":
-                postfix = "%s_Atlas_%s_hp%s_clean.dtseries.nii" % (boldtarget, regname, highpass)
-
             # -- Test files
+            # postfix
+            postfix = "%s%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], highpass)
+            if regname != "NONE":
+                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], regname, highpass)
+
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, postfix)
             fullTest = None
 
             # -- Run
             if run and boldok:
                 if options['run'] == "run":
-                    if overwrite and os.path.exists(tfile):
-                        os.remove(tfile)
-
                     r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single HCP ReFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
@@ -4927,12 +5246,6 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 # add latest image
                 boldtargets = boldtargets + boldtarget
 
-        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
-
-        # check if files for the groups exist and run hand HCP hand reclassification
-        groupica = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s_hp%s_clean.nii.gz" % (groupname, highpass))
-        r, groupok = checkForFile2(r, groupica, '\n     ... group ICA %s present' % groupname, '\n     ... ERROR: group ICA [%s] missing!' % groupica, status=groupok)
-
         # run HCP hand reclassification
         r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
         result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, groupname, groupname)
@@ -4943,100 +5256,101 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
         # check if hand reclassification was OK
         rcReport = result['report']
         if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
+            r += "\n---> %s group ICA %s" % (action("Processing", options['run']), groupname)
             groupok = True
+
+            # matlab run mode, compiled=0, interpreted=1, octave=2
+            matlabrunmode = 2
+            if 'hcp_matlab_mode' in options:
+                if options['hcp_matlab_mode'] == "compiled":
+                    matlabrunmode = 0
+                elif options['hcp_matlab_mode'] == "interpreted":
+                    matlabrunmode = 1
+                elif options['hcp_matlab_mode'] == "octave":
+                    matlabrunmode = 2
+                else:
+                    r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                    groupok = False
+
+            # regname
+            regname = "NONE"
+            if 'hcp_regname' not in options or options['hcp_regname'] != "":
+                regname = options['hcp_regname']
+
+            # highpass and regname
+            highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
+
+            comm = '%(script)s \
+                --path="%(path)s" \
+                --subject="%(subject)s" \
+                --fmri-names="%(boldtargets)s" \
+                --concat-fmri-name="%(groupname)s" \
+                --high-pass="%(highpass)d" \
+                --reg-name="%(regname)s" \
+                --low-res-mesh="%(lowresmesh)s" \
+                --matlab-run-mode="%(matlabrunmode)d" \
+                --motion-regression="%(motionregression)s" \
+                --delete-intermediates="%(deleteintermediates)s"' % {
+                    'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
+                    'path'                : sinfo['hcp'],
+                    'subject'             : sinfo['id'] + options['hcp_suffix'],
+                    'boldtargets'         : boldtargets,
+                    'groupname'           : groupname,
+                    'highpass'            : highpass,
+                    'regname'             : regname,
+                    'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
+                    'matlabrunmode'       : matlabrunmode,
+                    'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                    'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
+
+            # -- Test files
+            # postfix
+            postfix = "%s%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], highpass)
+            if regname != "NONE" and regname != "":
+                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], regname, highpass)
+
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, postfix)
+            fullTest = None
+
+            # -- Run
+            if run and groupok:
+                if options['run'] == "run":
+                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+
+                    if failed:
+                        report['failed'].append(groupname)
+                    else:
+                        report['done'].append(groupname)
+
+                # -- just checking
+                else:
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReFix ' + groupname, r)
+                    if passed is None:
+                        r += "\n     ... multi HCP ReFix can be run"
+                        r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        report['ready'].append(groupname)
+                    else:
+                        report['skipped'].append(groupname)
+
+            elif run:
+                report['not ready'].append(groupname)
+                if options['run'] == "run":
+                    r += "\n     ... ERROR: images missing, skipping this group!"
+                else:
+                    r += "\n     ... ERROR: images missing, this group would be skipped!"
+            else:
+                report['not ready'].append(groupname)
+                if options['run'] == "run":
+                    r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+                else:
+                    r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
+
+            # log beautify
+            r += "\n\n"
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
             groupok = False
-
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        matlabrunmode = 2
-        if 'hcp_matlab_mode' in options:
-            if options['hcp_matlab_mode'] == "compiled":
-                matlabrunmode = 0
-            elif options['hcp_matlab_mode'] == "interpreted":
-                matlabrunmode = 1
-            elif options['hcp_matlab_mode'] == "octave":
-                matlabrunmode = 2
-            else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                groupok = False
-
-        # regname
-        regname = "NONE"
-        if 'hcp_regname' not in options or options['hcp_regname'] != "":
-            regname = options['hcp_regname']
-
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --fmri-names="%(boldtargets)s" \
-            --concat-fmri-name="%(groupname)s" \
-            --high-pass="%(highpass)d" \
-            --reg-name="%(regname)s" \
-            --low-res-mesh="%(lowresmesh)s" \
-            --matlab-run-mode="%(matlabrunmode)d" \
-            --motion-regression="%(motionregression)s" \
-            --delete-intermediates="%(deleteintermediates)s"' % {
-                'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
-                'path'                : sinfo['hcp'],
-                'subject'             : sinfo['id'] + options['hcp_suffix'],
-                'boldtargets'         : boldtargets,
-                'groupname'           : groupname,
-                'highpass'            : highpass,
-                'regname'             : regname,
-                'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                'matlabrunmode'       : matlabrunmode,
-                'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
-                'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
-
-        # -- Test files
-        # postfix
-        postfix = "%s_Atlas_hp%s_clean.dtseries.nii" % (groupname, highpass)
-        if regname != "NONE" and regname != "":
-            postfix = "%s_Atlas_%s_hp%s_clean.dtseries.nii" % (groupname, regname, highpass)
-
-        # -- Test files
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, postfix)
-        fullTest = None
-
-        # -- Run
-        if run and groupok:
-            if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
-
-                if failed:
-                    report['failed'].append(groupname)
-                else:
-                    report['done'].append(groupname)
-
-            # -- just checking
-            else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReFix ' + groupname, r)
-                if passed is None:
-                    r += "\n     ... multi HCP ReFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
-                    report['ready'].append(groupname)
-                else:
-                    report['skipped'].append(groupname)
-
-        elif run:
-            report['not ready'].append(groupname)
-            if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
-            else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
-        else:
-            report['not ready'].append(groupname)
-            if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this group!"
-            else:
-                r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
-
-        # log beautify
-        r += "\n\n"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -5055,7 +5369,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        r += "\n---> %s ICA %s" % (action("Processing", options['run']), printbold)
         boldok = True
 
         # load parameters or use default values
