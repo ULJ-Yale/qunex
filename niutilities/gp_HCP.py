@@ -4789,9 +4789,6 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
-                # log beautify
-                r += "\n\n"
-
                 if failed:
                     report['failed'].append(printbold)
                 else:
@@ -4819,6 +4816,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
             else:
                 r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+        # log beautify
+        r += "\n\n"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
@@ -5176,9 +5176,6 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                 if options['run'] == "run":
                     r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single HCP ReFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
-                    # log beautify
-                    r += "\n\n"
-
                     if failed:
                         report['failed'].append(printbold)
                     else:
@@ -5206,6 +5203,10 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
                 else:
                     r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+            # log beautify
+            r += "\n\n"
+
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
             report['failed'].append(printbold) 
@@ -5339,9 +5340,6 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 if options['run'] == "run":
                     r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
-                    # log beautify
-                    r += "\n\n"
-
                     if failed:
                         report['failed'].append(groupname)
                     else:
@@ -5372,6 +5370,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
 
             # log beautify
             r += "\n\n"
+
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
             groupok = False
@@ -5432,8 +5431,6 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
                 if failed:
                     report['failed'].append(printbold)
-                    # log beautify
-                    r += "\n\n"
                 else:
                     report['done'].append(printbold)
 
@@ -5459,6 +5456,9 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
             else:
                 r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+        # log beautify
+        r += "\n\n"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
