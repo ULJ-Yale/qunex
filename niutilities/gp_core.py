@@ -740,7 +740,6 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             raise ExternalFailed(r)
 
         # --- run command
-
         try:
             if shell:
                 ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)

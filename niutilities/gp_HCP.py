@@ -4797,7 +4797,9 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     boldok = False
 
             # regname
-            regname = "NONE" if 'hcp_regname' not in options else options['hcp_regname']
+            regname = "NONE"
+            if 'hcp_regname' not in options or options['hcp_regname'] != "":
+                regname = options['hcp_regname']
 
             comm = '%(script)s \
                 --path="%(path)s" \
@@ -4808,7 +4810,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                 --low-res-mesh="%(lowresmesh)d" \
                 --matlab-run-mode="%(matlabrunmode)d" \
                 --motion-regression="%(motionregression)s" \
-                --delete-intermediates"%(deleteintermediates)s"' % {
+                --delete-intermediates="%(deleteintermediates)s"' % {
                     'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixPipeline.sh'),
                     'path'                : sinfo['hcp'],
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -4822,7 +4824,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
 
             # postfix
             postfix = "%s_Atlas_hp%s_clean.dtseries.nii" % (boldtarget, highpass)
-            if regname != "NONE" and regname != "":
+            if regname != "NONE":
                 postfix = "%s_Atlas_%s_hp%s_clean.dtseries.nii" % (boldtarget, regname, highpass)
 
             # -- Test files
@@ -4959,7 +4961,10 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
                 groupok = False
 
-        regname = "NONE" if 'hcp_regname' not in options else options['hcp_regname']
+        # regname
+        regname = "NONE"
+        if 'hcp_regname' not in options or options['hcp_regname'] != "":
+            regname = options['hcp_regname']
 
         comm = '%(script)s \
             --path="%(path)s" \
@@ -4971,7 +4976,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             --low-res-mesh="%(lowresmesh)s" \
             --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
-            --delete-intermediates"%(deleteintermediates)s"' % {
+            --delete-intermediates="%(deleteintermediates)s"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -5076,7 +5081,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 'highpass'          : highpass}
 
         # -- Test files
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s_hp%s.ica" % (boldtarget, highpass), "HandNoise.txt")
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s.ica" % (boldtarget, highpass), "HandNoise.txt")
         fullTest = None
 
         # -- Run
@@ -5085,7 +5090,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP hand reclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP hand reclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
