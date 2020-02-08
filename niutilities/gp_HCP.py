@@ -4092,13 +4092,16 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex hcp_ICAFix
-        # TODO COPY SINGLE FIX EXAMPLE WHEN GRACE GETS ONLINE
+    qunex hcp_ICAFix \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects
     ```
 
     ```
-    qunex hcp_ICAFix
-        # TODO COPY MULTI FIX EXAMPLE WHEN GRACE GETS ONLINE
+    qunex hcp_ICAFix \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     ```
 
     ----------------
@@ -4567,14 +4570,20 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex hcp_PostFix
-        # TODO COPY SINGLE POST FIX EXAMPLE WHEN GRACE GETS ONLINE
+    qunex hcp_PostFix \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_matlab_mode="interpreted"
     ```
 
     ```
-    qunex hcp_PostFix
-        # TODO COPY MULTI POST FIX EXAMPLE WHEN GRACE GETS ONLINE
+    qunex hcp_PostFix \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        --hcp_matlab_mode="interpreted"
     ```
+
 
     ----------------
     Written by Jure Demšar
@@ -4935,13 +4944,18 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex hcp_PostFix
-        # TODO COPY SINGLE REFIX EXAMPLE WHEN GRACE GETS ONLINE
+    qunex hcp_ReFix \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_matlab_mode="interpreted"
     ```
 
     ```
-    qunex hcp_PostFix
-        # TODO COPY MULTI REFIX EXAMPLE WHEN GRACE GETS ONLINE
+    qunex hcp_ReFix \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        --hcp_matlab_mode="interpreted"
     ```
 
     ----------------
