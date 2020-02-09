@@ -3904,8 +3904,6 @@ def parseICAFixBolds(options, bolds, r):
     else:
         r += "\n\n%s multi fix on %d groups" % (action("Processing", options['run']), len(icafixGroups))
 
-    r += "\n----------------------------------------------------------------\n"
-
     # --- Get hcp_icafix_bolds data from bolds
     if icafixBolds is not bolds:
         r += "\n%s bolds with hcp_icafix_bolds\n" % (action("Comparing", options['run']))
@@ -4259,7 +4257,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n----------------------------------------------------------------"
+        r += "\n\n----------------------------------------------------------------"
         r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
         boldok = True
 
@@ -4349,7 +4347,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n----------------------------------------------------------------"
+        r += "\n\n----------------------------------------------------------------"
         r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
         groupok = True
 
@@ -4692,6 +4690,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     # extract data
+    r += "\n\n----------------------------------------------------------------"
     if singleFix:
         # highpass
         highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
@@ -4722,8 +4721,6 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
     try:
         boldok = True
-
-        r += "\n----------------------------------------------------------------"
 
         # --- check for ICA image
         r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
@@ -5117,7 +5114,6 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
         # move on to ReFix
         rcReport = result['report']
         if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
-            r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
             boldok = True
 
             # highpass
@@ -5279,7 +5275,6 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
         # check if hand reclassification was OK
         rcReport = result['report']
         if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
-            r += "\n---> %s group ICA %s" % (action("Processing", options['run']), groupname)
             groupok = True
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
@@ -5458,7 +5453,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
 
         # log beautify
-        r += "\n\n"
+        r += "\n"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
