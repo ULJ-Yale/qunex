@@ -52,7 +52,7 @@ usage() {
    echo ""
    echo " -- DESCRIPTION:"
    echo ""
-   echo " This function calls mri_ROIExtract.m and extracts data from an input file for every ROI in a given template file."
+   echo " This function calls img_ROIExtract.m and extracts data from an input file for every ROI in a given template file."
    echo " The function needs a matching file type for the ROI input and the data input (i.e. both NIFTI or CIFTI)."
    echo " It assumes that the template ROI file indicates each ROI in a single volume via unique scalar values."
    echo ""
@@ -181,8 +181,8 @@ main() {
 # -- Get Command Line Options
 get_options $@
 
-# -- Run mri_ExtractROI.m --> mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
-${QUNEXMCOMMAND} "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
+# -- Run img_ExtractROI.m --> img_ExtractROI(obj, roi, rcodes, method, weights, criterium)
+${QUNEXMCOMMAND} "imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_ExtractROI(roif)); quit"
 
 # -- Completion check
 if [[ -f ${outpath}/${outname}.csv ]]; then
