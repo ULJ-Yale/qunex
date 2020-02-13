@@ -3915,8 +3915,8 @@ def parseICAFixBolds(options, bolds, r):
                 # extract data
                 _, _, _, boldinfo = b
 
-                if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-                    boldtarget = boldinfo['boldname']
+                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                    boldtarget = boldinfo['filename']
                 else:
                     boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
@@ -3947,8 +3947,8 @@ def parseICAFixBolds(options, bolds, r):
                 # extract data
                 _, _, _, boldinfo = b
 
-                if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-                    boldtarget = boldinfo['boldname']
+                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                    boldtarget = boldinfo['filename']
                 else:
                     boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
@@ -4131,7 +4131,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
-                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
@@ -4245,9 +4245,9 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     _, _, _, boldinfo = bold
 
-    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-        printbold  = boldinfo['boldname']
-        boldtarget = boldinfo['boldname']
+    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+        printbold  = boldinfo['filename']
+        boldtarget = boldinfo['filename']
     else:
         printbold  = str(bold)
         boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
@@ -4362,9 +4362,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             # extract data
             _, _, _, boldinfo = b
 
-            if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-                printbold  = boldinfo['boldname']
-                boldtarget = boldinfo['boldname']
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldtarget = boldinfo['filename']
             else:
                 printbold  = str(bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
@@ -4612,7 +4612,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
-                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
@@ -4697,9 +4697,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
         _, _, _, boldinfo = bold
 
-        if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-            printbold  = boldinfo['boldname']
-            boldtarget = boldinfo['boldname']
+        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+            printbold  = boldinfo['filename']
+            boldtarget = boldinfo['filename']
         else:
             printbold  = str(bold)
             boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
@@ -4984,7 +4984,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
-                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
@@ -5091,9 +5091,9 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     _, _, _, boldinfo = bold
 
-    if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-        printbold  = boldinfo['boldname']
-        boldtarget = boldinfo['boldname']
+    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+        printbold  = boldinfo['filename']
+        boldtarget = boldinfo['filename']
     else:
         printbold  = str(bold)
         boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
@@ -5244,9 +5244,9 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             # extract data
             _, _, _, boldinfo = b
 
-            if 'boldname' in boldinfo and options['hcp_filename'] == 'original':
-                printbold  = boldinfo['boldname']
-                boldtarget = boldinfo['boldname']
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldtarget = boldinfo['filename']
             else:
                 printbold  = str(bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
