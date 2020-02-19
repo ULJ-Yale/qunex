@@ -3981,8 +3981,6 @@ def parseICAFixBolds(options, bolds, r):
 
 def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     '''
-    hcpICAFix - full documentation not yet available.
-
     hcp_ICAFix [... processing options]
     hcp6 [... processing options]
 
@@ -4459,8 +4457,6 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
 def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     '''
-    hcpPostFix - full documentation not yet available.
-
     hcp_PostFix [... processing options]
     hcp7 [... processing options]
 
@@ -4830,8 +4826,6 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
 def hcpReFix(sinfo, options, overwrite=False, thread=0):
     '''
-    hcpReFix - full documentation not yet available.
-
     hcp_ReFix [... processing options]
     hcp8 [... processing options]
 
