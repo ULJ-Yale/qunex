@@ -4832,7 +4832,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the ReFix step of HCP Pipeline. This scrips executs two steps,
+    Runs the ReFix step of HCP Pipeline. This function executes two steps,
     first it applies the hand reclassifications of noise and signal components
     from FIX using the ReclassifyAsNoise.txt and ReclassifyAsSignal.txt input
     files. Next it executes the HCP Pipeline's ReApplyFix or ReApplyFixMulti.
