@@ -211,11 +211,13 @@ for n = 1:nexlists
     exmat = [];
 
     for e = 1:length(eventset)
-        eventcode    = find(ismember(elist.events, eventset(e)));
+        eventcode    = find(ismember(elist.events, eventset(e))) -1;
         eventidx     = ismember(elist.event, eventcode);
         eventstarts  = elist.frame(eventidx);
         eventlengths = elist.elength(eventidx);
         nexevents    = sum(eventidx);
+
+        % if verbose; fprintf('... -> eventcodes %s -> eventids %s -> nevents %s\n', num2str(eventcode), num2str(eventidx), num2str(nexevents)); end
         
         if startref == 's'
             exstarts = eventstarts + startoff;
@@ -256,6 +258,9 @@ for n = 1:nexlists
     else
         minok = 1;
     end
+
+    % fprintf('-> obj.use size %s\n', num2str(size(obj.use)));
+    % fprintf('-> exmat size %s\n', num2str(size(exmat)));
 
     if isnumeric(options.badevents) || strcmp(options.badevents, 'use')
         exmat   = bsxfun(@times, exmat, obj.use);
