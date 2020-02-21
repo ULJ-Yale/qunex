@@ -363,6 +363,12 @@ def runCommand(command, args):
                 if not os.path.isdir(runListFolder):
                     os.makedirs(runListFolder)
 
+                runListFolder = os.path.join(runListFolder, "runlistlogs")
+
+                # create folder if it does not exist
+                if not os.path.isdir(runListFolder):
+                    os.makedirs(runListFolder)
+
                 logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
                 logname = os.path.join(runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
