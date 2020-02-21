@@ -3981,8 +3981,6 @@ def parseICAFixBolds(options, bolds, r):
 
 def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     '''
-    hcpICAFix - full documentation not yet available.
-
     hcp_ICAFix [... processing options]
     hcp6 [... processing options]
 
@@ -4058,7 +4056,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds                ... specify which bolds for ICAFix.
+    hcp_icafix_bolds                ... specify a list of bolds for ICAFix.
                                         For single ICAFix specify a comma
                                         separated list of bolds, e.g.
                                         "<boldname>,<boldname>,<boldname>".
@@ -4459,8 +4457,6 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
 def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     '''
-    hcpPostFix - full documentation not yet available.
-
     hcp_PostFix [... processing options]
     hcp7 [... processing options]
 
@@ -4538,19 +4534,19 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds            ... specify which bolds for ICAFix. For single
-                                    ICAFix specify a comma separated list of
+    hcp_icafix_bolds            ... specify a list of bolds for PostFix. For single
+                                    PostFix specify a comma separated list of
                                     bolds, e.g. "<boldname>,<boldname>". For
-                                    multi ICAFix specify how to group bolds and
+                                    multi PostFix specify how to group bolds and
                                     separate groups with pipes, e.g.
                                     "<group>:<boldname>,<boldname>|
                                     <group>:<boldname>,<boldname>". If this
-                                    parameter is not specifed a single ICAFix
+                                    parameter is not specifed a single PostFix
                                     over all bolds will be executed [""].
     hcp_icafix_highpass         ... value for the highpass filter, cannot be 0
-                                    for single ICAFix. Default values are [0]
-                                    for multi ICAFix and [2000] for multi
-                                    ICAFix.
+                                    for single PostFix. Default values are [0]
+                                    for multi PostFix and [2000] for multi
+                                    PostFix.
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["octave"].
@@ -4830,15 +4826,13 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
 def hcpReFix(sinfo, options, overwrite=False, thread=0):
     '''
-    hcpReFix - full documentation not yet available.
-
     hcp_ReFix [... processing options]
     hcp8 [... processing options]
 
     USE
     ===
 
-    Runs the ReFix step of HCP Pipeline. This scrips executs two steps,
+    Runs the ReFix step of HCP Pipeline. This function executes two steps,
     first it applies the hand reclassifications of noise and signal components
     from FIX using the ReclassifyAsNoise.txt and ReclassifyAsSignal.txt input
     files. Next it executes the HCP Pipeline's ReApplyFix or ReApplyFixMulti.
@@ -4909,21 +4903,21 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds                ... specify which bolds for ICAFix.
-                                        For single ICAFix specify a comma
+    hcp_icafix_bolds                ... specify a list of bolds for ReFix.
+                                        For single ReFix specify a comma
                                         separated list of bolds, e.g.
                                         "<boldname>,<boldname>,<boldname>".
-                                        For multi ICAFix specify how to group
+                                        For multi ReFix specify how to group
                                         bolds and separate groups with pipes,
                                         e.g. "<group>:<boldname>,<boldname>|
                                         <group>:<boldname>,<boldname>". If this
                                         parameter is not specifed a single
-                                        ICAFix over all bolds will be executed
+                                        ReFix over all bolds will be executed
                                         [""].
     hcp_icafix_highpass             ... value for the highpass filter, cannot
-                                        be 0 for single ICAFix. Default values
-                                        are [0] for multi ICAFix and [2000] for
-                                        multi ICAFix.
+                                        be 0 for single ReFix. Default values
+                                        are [0] for multi ReFix and [2000] for
+                                        multi ReFix.
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
