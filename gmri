@@ -363,7 +363,7 @@ def runCommand(command, args):
                 if not os.path.isdir(runListFolder):
                     os.makedirs(runListFolder)
 
-                runListFolder = os.path.join(runListFolder, "runlistlogs")
+                runListFolder = os.path.join(runListFolder, "batchlogs")
 
                 # create folder if it does not exist
                 if not os.path.isdir(runListFolder):
