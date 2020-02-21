@@ -4015,7 +4015,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
     where highpass is the used value for the highpass filter.
-    Default highpass values are 2000 for single fix and 0 for multi fix.
+    Default highpass value is 0.
 
     RELEVANT PARAMETERS
     ===================
@@ -4067,10 +4067,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         parameter is not specifed a single
                                         ICAFix over all bolds will be executed
                                         [""].
-    hcp_icafix_highpass             ... value for the highpass filter, cannot
-                                        be 0 for single ICAFix. Default values
-                                        are [0] for multi ICAFix and [2000] for
-                                        multi ICAFix.
+    hcp_icafix_highpass             ... value for the highpass filter [0].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
     hcp_icafix_traindata            ... Which file to use for training data.
@@ -4267,18 +4264,20 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
 
         # bandpass value
-        bandpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+        bandpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         comm = '%(script)s \
                 "%(inputfile)s" \
                 %(bandpass)d \
+                "%(concatfilename)s" \
                 "%(domot)s" \
                 "%(trainingdata)s" \
                 %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
-                'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
+                'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : inputfile,
                 'bandpass'              : bandpass,
+                'concatfilename'        : boldtarget,
                 'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
@@ -4493,7 +4492,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     <session id>_<boldname>_hp<highpass>_ICA_Classification_singlescreen.scene,
 
     where highpass is the used value for the highpass filter.
-    Default highpass values are 2000 for single fix and 0 for multi fix.
+    Default highpass value is 0.
 
     RELEVANT PARAMETERS
     ===================
@@ -4543,10 +4542,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                                     <group>:<boldname>,<boldname>". If this
                                     parameter is not specifed a single PostFix
                                     over all bolds will be executed [""].
-    hcp_icafix_highpass         ... value for the highpass filter, cannot be 0
-                                    for single PostFix. Default values are [0]
-                                    for multi PostFix and [2000] for multi
-                                    PostFix.
+    hcp_icafix_highpass         ... value for the highpass filter [0].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["octave"].
@@ -4689,7 +4685,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     r += "\n\n----------------------------------------------------------------"
     if singleFix:
         # highpass
-        highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         _, _, _, boldinfo = bold
 
@@ -4862,7 +4858,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
     where highpass is the used value for the highpass filter.
-    Default highpass values are 2000 for single fix and 0 for multi fix.
+    Default highpass value is 0.
 
     RELEVANT PARAMETERS
     ===================
@@ -4914,10 +4910,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
                                         parameter is not specifed a single
                                         ReFix over all bolds will be executed
                                         [""].
-    hcp_icafix_highpass             ... value for the highpass filter, cannot
-                                        be 0 for single ReFix. Default values
-                                        are [0] for multi ReFix and [2000] for
-                                        multi ReFix.
+    hcp_icafix_highpass             ... value for the highpass filter [0].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
@@ -5111,7 +5104,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
             boldok = True
 
             # highpass
-            highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+            highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
             matlabrunmode = 2
@@ -5385,7 +5378,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         boldok = True
 
         # load parameters or use default values
-        highpass = 2000
+        highpass = 0
         if not singleFix:
             highpass = 0
         if 'hcp_icafix_highpass' in options:
