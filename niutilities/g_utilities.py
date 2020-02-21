@@ -1586,6 +1586,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
              - Changed subjects to sessions
     2020-01-17 Jure Demšar
              - Optimized log creation and stopping on command fail.
+    2020-21-02 Jure Demšar
+             - Parameter injections.
     """
 
     verbose = verbose.lower() == 'yes'
@@ -1623,6 +1625,14 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     parameters = runList['parameters']
 
+    # -- prepare mapvalues
+    mapvalues = {}
+    if "mapvalues" in eargs:
+        tempmap = eargs["mapvalues"].split("|")
+        for m in tempmap:
+            m = m.split(":")
+            mapvalues[m[0]] = m[1]
+
     with open(listfile, 'r') as file:
         for line in file:
             try:
@@ -1641,6 +1651,18 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                     runList['lists'][listName]['commands'].append({'name': commandName, 'parameters': parameters, 'removed_parameters': removedParameters})
                 elif ':' in line:
                     parameter, value = [stripQuotes(e.strip()) for e in line.split(":", 1)]
+                    # is value something we should inject
+                    if "{{" in value and "}}" in value:
+                        value = value.strip("\{").strip("\}")
+                        # is value in global parameters or environment
+                        if value in mapvalues:
+                            value = mapvalues[value]
+                        elif value in os.environ:
+                            value = os.environ[value]
+                        else:
+                            raise ge.CommandFailed("runList", "Cannot parse line", "Injection value [%s] in line [%s] not provided" % (value, line), "Please provide injection values as input parameters (--mapvalues) or as environmental variables!")
+
+                    # set
                     parameters[parameter] = value
                 elif line.strip() in flags:
                     parameters[line.strip()] = "flag"
