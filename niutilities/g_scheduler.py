@@ -142,7 +142,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     naccesspolicy, epilogue, prologue will be submitted using:
     "#PBS -l <key>=<value>"
 
-    Keys: j, m, o, S, a, A, M, q, t, e, N will be submitted using:
+    Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using:
     "#PBS -<key> <value>"
 
     Key: depend will be submitted using:
