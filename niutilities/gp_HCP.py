@@ -4261,7 +4261,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
 
         # bold in input format
-        inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
+        inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+
+        # construct concat file name
+        concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, boldtarget)
 
         # bandpass value
         bandpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
@@ -4277,7 +4280,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : inputfile,
                 'bandpass'              : bandpass,
-                'concatfilename'        : boldtarget,
+                'concatfilename'        : concatfilename,
                 'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
