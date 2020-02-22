@@ -4395,9 +4395,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     hcp_postfix_singlescene     ... Path to an alternative template scene, if
                                     empty HCP default single scene will be used
                                     [""].
-    hcp_postfix_reusehighpass   ... Whether to reuse highpass, the default
-                                    value for single fix is ["NO"], while the
-                                    default value for multi fix is ["YES"].
+    hcp_postfix_reusehighpass   ... Whether to reuse highpass ["YES"].
 
     EXAMPLE USE
     ===========
