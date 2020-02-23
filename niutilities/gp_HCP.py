@@ -4479,7 +4479,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(threads)
             # process 
-            f = partial(executeHCPPostFix, sinfo, options, overwrite, hcp, run, singleFix)
+            f = partial(executeHCPPostFix, sinfo, options, overwrite, hcp, run)
             results = processPoolExecutor.map(f, icafixBolds)
 
             # merge r and report
@@ -4896,7 +4896,7 @@ def executeHCPReApplyFix(sinfo, options, overwrite, hcp, run, ica):
 
         # run HCP hand reclassification
         r += "\n---> Executing HCP Hand reclassification for ica: %s\n" % icaname
-        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, icaname)
+        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, icaname)
 
         # merge r
         r += result['r']
@@ -5010,7 +5010,7 @@ def executeHCPReApplyFix(sinfo, options, overwrite, hcp, run, ica):
     return {'r': r, 'report': report}
 
 
-def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFix, boldtarget):
+def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, boldtarget):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -5020,11 +5020,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         boldok = True
 
         # load parameters or use default values
-        highpass = 0
-        if not singleFix:
-            highpass = 0
-        if 'hcp_icafix_highpass' in options:
-            highpass = options['hcp_icafix_highpass']
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # --- check for bold image
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
