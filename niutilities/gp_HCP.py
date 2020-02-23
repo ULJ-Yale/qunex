@@ -3894,18 +3894,12 @@ def parseICAFixBolds(options, bolds, r):
         else:
             icafixBolds = str.split(icafixBolds, ",")
             # report
-            r += "\n\n%s ica+fix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+            r += "\n\n%s ICAFix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
 
     # if hcp_icafix_bolds is empty then use all bolds
     else:
-        icafixBolds = bolds
-        # report
-        r += "\n\n%s ica+fix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
-
-    # if icafixGroups create from boldname + "_icafix"
-    if not icafixGroups:
-        icafixGroups = {}
-        for b in icafixBolds:
+        icafixBolds = []
+        for b in bolds:
             # extract data
             _, _, _, boldinfo = b
 
@@ -3914,8 +3908,18 @@ def parseICAFixBolds(options, bolds, r):
             else:
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-            name = boldtarget + "_icafix"
-            icafixGroups[name] = [boldtarget]
+            icafixBolds.append(boldtarget)
+
+        # report
+        r += "\n\n%s ICAFix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+
+    # if icafixGroups create from boldname + "_icafix"
+    if not icafixGroups:
+        icafixGroups = {}
+        for b in icafixBolds:
+            # add postfix and save
+            name = b + "_icafix"
+            icafixGroups[name] = [b]
 
     # --- Get hcp_icafix_bolds data from bolds
     # variable for storing group data
@@ -3923,9 +3927,6 @@ def parseICAFixBolds(options, bolds, r):
     # create empty dict entry for all groups
     for g in icafixGroups:
         groupData[g] = []
-
-    print("!!! icafixGroups: ", icafixGroups)
-    print("!!! bolds: ", bolds)
 
     for b in bolds:
         # extract data
@@ -3953,7 +3954,7 @@ def parseICAFixBolds(options, bolds, r):
 
         # bold not found in bolds
         if not found:
-            r += "     ... skipping %s found in bolds but not in hcp_icafix_bolds\n" % boldtarget
+            r += "\n     ... skipping %s: found in bolds but not in hcp_icafix_bolds" % boldtarget
 
     # cast group data to array of dictionaries (needed for parallel)
     icafixGroups = []
@@ -4163,7 +4164,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
 
-        report = (sinfo['id'], "HCP ICAFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+        report = (sinfo['id'], "HCP ICAFix: icas " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
@@ -4499,7 +4500,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
 
-        report = (sinfo['id'], "HCP PostFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+        report = (sinfo['id'], "HCP PostFix: icas " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
@@ -4834,7 +4835,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
 
-        report = (sinfo['id'], "HCP ReApplyFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+        report = (sinfo['id'], "HCP ReApplyFix: icas " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
