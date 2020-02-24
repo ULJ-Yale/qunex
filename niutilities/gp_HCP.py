@@ -3970,8 +3970,7 @@ def parseICAFixBolds(options, bolds, r):
 
                 # bold not found in bolds
                 if not found:
-                    r += "     ... skipping %s found in bolds but not in hcp_icafix_bolds\n" % boldname
-
+                    r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % boldtarget
             # cast group data to array of dictionaries (needed for parallel)
             icafixGroups = []
             for g in groupData:
