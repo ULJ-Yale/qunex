@@ -10,8 +10,9 @@ consists of functions:
 * hcpDiffusion    ... runs HCP Diffusion weighted image preprocessing
 * hcpfMRIVolume   ... runs HCP BOLD Volume preprocessing
 * hcpfMRISurface  ... runs HCP BOLD Surface preprocessing
-* hcpICAFix       ... runs HCP BOLD ICAFix preprocessing
-* hcpPostFix      ... runs HCP BOLD PostFix preprocessing
+* hcpICAFix       ... runs HCP BOLD ICAFix
+* hcpPostFix      ... runs HCP BOLD PostFix
+* hcpReApplyFix   ... runs HCP BOLD ReApplyFix
 * hcpDTIFit       ... runs DTI Fit
 * hcpBedpostx     ... runs Bedpost X
 * mapHCPData      ... maps results of HCP preprocessing into `images`
@@ -2981,7 +2982,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             # --- set reference
             #
-            # !!!! Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
+            # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
             # - have to keep track of whether an old topup in the same direction exists
             #
             
@@ -4015,7 +4016,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
     where highpass is the used value for the highpass filter.
-    Default highpass values are 2000 for single fix and 0 for multi fix.
+    Default highpass value is 0.
+
 
     RELEVANT PARAMETERS
     ===================
@@ -4057,20 +4059,18 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     processing in this step:
 
     hcp_icafix_bolds                ... specify a list of bolds for ICAFix.
-                                        For single ICAFix specify a comma
-                                        separated list of bolds, e.g.
-                                        "<boldname>,<boldname>,<boldname>".
-                                        For multi ICAFix specify how to group
-                                        bolds and separate groups with pipes,
-                                        e.g. "<group>:<boldname>,<boldname>|
-                                        <group>:<boldname>,<boldname>". If this
-                                        parameter is not specifed a single
-                                        ICAFix over all bolds will be executed
-                                        [""].
-    hcp_icafix_highpass             ... value for the highpass filter, cannot
-                                        be 0 for single ICAFix. Default values
-                                        are [0] for multi ICAFix and [2000] for
-                                        multi ICAFix.
+                                        Specify either a comma separated list
+                                        of bolds, e.g. "<boldname>,<boldname>",
+                                        or specify how to group bolds together,
+                                        e.g. "<group1>:<boldname1>,<boldname2>|
+                                        <group2>:<boldname3>,<boldname4>". If this
+                                        parameter is not provided ICAFix over each
+                                        subject's bold will be executed
+                                        independently [""].
+    hcp_icafix_highpass             ... value for the highpass filter [0].
+    hcp_matlab_mode                 ... Specifies the Matlab version, can be
+                                        "interpreted", "compiled" or "octave"
+                                        ["compiled"].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
     hcp_icafix_traindata            ... Which file to use for training data.
@@ -4142,6 +4142,22 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
             if not os.file.exists(traindata):
                 r += "\n---> ERROR: Could not find specified TrainingData file [%s]." % traindata
                 raise
+
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = "0"
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] == "compiled":
+                matlabrunmode = "0"
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = "1"
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                raise
+
+        # set variable
+        os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
 
         # --- Execute
         # single fix
@@ -4267,7 +4283,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
 
         # bandpass value
-        bandpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+        bandpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         comm = '%(script)s \
                 "%(inputfile)s" \
@@ -4300,6 +4316,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                     report['failed'].append(printbold)
                 else:
                     report['done'].append(printbold)
+
+                # if all ok automatically execute PostFix
+                if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
+                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, bold)
 
             # -- just checking
             else:
@@ -4421,6 +4441,10 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 else:
                     report['done'].append(groupname)
 
+                # if all ok automatically execute PostFix
+                if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
+                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, group)
+
             # -- just checking
             else:
                 passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ICAFix ' + groupname, r)
@@ -4440,9 +4464,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No Workbench scene files that can be used to visually review the signal vs. noise classification generated by ICA+FIX, skipping this group!"
+                r += "\n     ... ERROR: No Workbench scene files that can be used to visually review the signal vs. noise classification generated by ICAFix, skipping this group!"
             else:
-                r += "\n     ... ERROR: No Workbench scene files that can be used to visually review the signal vs. noise classification generated by ICA+FIX, this group would be skipped!"
+                r += "\n     ... ERROR: No Workbench scene files that can be used to visually review the signal vs. noise classification generated by ICAFix, this group would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -4493,7 +4517,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     <session id>_<boldname>_hp<highpass>_ICA_Classification_singlescreen.scene,
 
     where highpass is the used value for the highpass filter.
-    Default highpass values are 2000 for single fix and 0 for multi fix.
+    Default highpass value is 0.
 
     RELEVANT PARAMETERS
     ===================
@@ -4534,31 +4558,27 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds            ... specify a list of bolds for PostFix. For single
-                                    PostFix specify a comma separated list of
-                                    bolds, e.g. "<boldname>,<boldname>". For
-                                    multi PostFix specify how to group bolds and
-                                    separate groups with pipes, e.g.
-                                    "<group>:<boldname>,<boldname>|
-                                    <group>:<boldname>,<boldname>". If this
-                                    parameter is not specifed a single PostFix
-                                    over all bolds will be executed [""].
-    hcp_icafix_highpass         ... value for the highpass filter, cannot be 0
-                                    for single PostFix. Default values are [0]
-                                    for multi PostFix and [2000] for multi
-                                    PostFix.
+    hcp_icafix_bolds            ... specify a list of bolds for ICAFix.
+                                    Specify either a comma separated list
+                                    of bolds, e.g. "<boldname>,<boldname>",
+                                    or specify how to group bolds together,
+                                    e.g. "<group1>:<boldname1>,<boldname2>|
+                                    <group2>:<boldname3>,<boldname4>". If this
+                                    parameter is not provided ICAFix over each
+                                    subject's bold will be executed
+                                    independently [""].
+    hcp_icafix_highpass         ... value for the highpass filter [0].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
-                                    ["octave"].
+                                    ["compiled"].
     hcp_postfix_dualscene       ... Path to an alternative template scene, if
                                     empty HCP default dual scene will be used
                                     [""].
     hcp_postfix_singlescene     ... Path to an alternative template scene, if
                                     empty HCP default single scene will be used
                                     [""].
-    hcp_postfix_reusehighpass   ... Whether to reuse highpass, the default
-                                    value for single fix is ["NO"], while the
-                                    default value for multi fix is ["YES"].
+    hcp_postfix_reusehighpass   ... Whether to reuse highpass ["YES"].
+
 
     EXAMPLE USE
     ===========
@@ -4689,7 +4709,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     r += "\n\n----------------------------------------------------------------"
     if singleFix:
         # highpass
-        highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         _, _, _, boldinfo = bold
 
@@ -4721,11 +4741,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # --- check for ICA image
         r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
 
-        reusehighpass = "NO"
-        if not singleFix:
-            reusehighpass = "YES"
-        if 'hcp_icafix_highpass' in options:
-            reusehighpass = options['hcp_postfix_reusehighpass']
+        reusehighpass = "YES" if 'hcp_postfix_reusehighpass' not in options else options['hcp_postfix_reusehighpass']
 
         singlescene = os.path.join(hcp['hcp_base'], 'ICAFIX/PostFixScenes/', 'ICA_Classification_SingleScreenTemplate.scene')
         if 'hcp_postfix_singlescene' in options:
@@ -4824,15 +4840,15 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     return {'r': r, 'report': report}
 
 
-def hcpReFix(sinfo, options, overwrite=False, thread=0):
+def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     '''
-    hcp_ReFix [... processing options]
+    hcp_ReApplyFix [... processing options]
     hcp8 [... processing options]
 
     USE
     ===
 
-    Runs the ReFix step of HCP Pipeline. This function executes two steps,
+    Runs the ReApplyFix step of HCP Pipeline. This function executes two steps,
     first it applies the hand reclassifications of noise and signal components
     from FIX using the ReclassifyAsNoise.txt and ReclassifyAsSignal.txt input
     files. Next it executes the HCP Pipeline's ReApplyFix or ReApplyFixMulti.
@@ -4862,7 +4878,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
     where highpass is the used value for the highpass filter.
-    Default highpass values are 2000 for single fix and 0 for multi fix.
+    Default highpass value is 0.
 
     RELEVANT PARAMETERS
     ===================
@@ -4903,21 +4919,16 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds                ... specify a list of bolds for ReFix.
-                                        For single ReFix specify a comma
-                                        separated list of bolds, e.g.
-                                        "<boldname>,<boldname>,<boldname>".
-                                        For multi ReFix specify how to group
-                                        bolds and separate groups with pipes,
-                                        e.g. "<group>:<boldname>,<boldname>|
-                                        <group>:<boldname>,<boldname>". If this
-                                        parameter is not specifed a single
-                                        ReFix over all bolds will be executed
-                                        [""].
-    hcp_icafix_highpass             ... value for the highpass filter, cannot
-                                        be 0 for single ReFix. Default values
-                                        are [0] for multi ReFix and [2000] for
-                                        multi ReFix.
+    hcp_icafix_bolds                ... specify a list of bolds for ICAFix.
+                                        Specify either a comma separated list
+                                        of bolds, e.g. "<boldname>,<boldname>",
+                                        or specify how to group bolds together,
+                                        e.g. "<group1>:<boldname1>,<boldname2>|
+                                        <group2>:<boldname3>,<boldname4>". If this
+                                        parameter is not provided ICAFix over each
+                                        subject's bold will be executed
+                                        independently [""].
+    hcp_icafix_highpass             ... value for the highpass filter [0].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
@@ -4926,7 +4937,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
                                         to FIX cleaning ["FALSE"].
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
-                                        ["octave"].
+                                        ["compiled"].
     hcp_regname                     ... Specifies surface registration name
                                         ["NONE"].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
@@ -4935,14 +4946,14 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex hcp_ReFix \
+    qunex hcp_ReApplyFix \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
         --hcp_matlab_mode="interpreted"
     ```
 
     ```
-    qunex hcp_ReFix \
+    qunex hcp_ReApplyFix \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
         --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
@@ -4959,20 +4970,20 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n----------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP ReFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP ReApplyFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_ReFix')
-        doHCPOptionsCheck(options, sinfo, 'hcp_ReFix')
+        doOptionsCheck(options, sinfo, 'hcp_ReApplyFix')
+        doHCPOptionsCheck(options, sinfo, 'hcp_ReApplyFix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Multi threading
         threads = options['threads']
-        r += "\n\n%s ReFix on %d threads" % (action("Processing", options['run']), threads)
+        r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
@@ -4991,7 +5002,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
             if threads == 1: # serial execution
                 for b in icafixBolds:
                     # process
-                    result = executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, b)
+                    result = executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, b)
 
                     # merge r
                     r += result['r']
@@ -5009,7 +5020,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
                 # create a multiprocessing Pool
                 processPoolExecutor = ProcessPoolExecutor(threads)
                 # process 
-                f = partial(executeHCPSingleReFix, sinfo, options, overwrite, hcp, run)
+                f = partial(executeHCPSingleReApplyFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixBolds)
 
                 # merge r and report
@@ -5028,7 +5039,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
             if threads == 1: # serial execution
                 for g in icafixGroups:
                     # process
-                    result = executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, g)
+                    result = executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, g)
 
                     # merge r
                     r += result['r']
@@ -5046,7 +5057,7 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
                 # create a multiprocessing Pool
                 processPoolExecutor = ProcessPoolExecutor(threads)
                 # process 
-                f = partial(executeHCPMultiReFix, sinfo, options, overwrite, hcp, run)
+                f = partial(executeHCPMultiReApplyFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
 
                 # merge r and report
@@ -5066,22 +5077,22 @@ def hcpReFix(sinfo, options, overwrite=False, thread=0):
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
 
-        report = (sinfo['id'], "HCP ReFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+        report = (sinfo['id'], "HCP ReApplyFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
-        report = (sinfo['id'], 'HCP ReFix failed')
+        report = (sinfo['id'], 'HCP ReApplyFix failed')
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
-        report = (sinfo['id'], 'HCP ReFix failed')
+        report = (sinfo['id'], 'HCP ReApplyFix failed')
 
-    r += "\n\nHCP ReFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP ReApplyFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
 
 
-def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
+def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     _, _, _, boldinfo = bold
 
@@ -5105,13 +5116,13 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
         # merge r
         r += result['r']
 
-        # move on to ReFix
+        # move on to ReApplyFix
         rcReport = result['report']
         if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
             boldok = True
 
             # highpass
-            highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+            highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
             matlabrunmode = 2
@@ -5164,7 +5175,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
             # -- Run
             if run and boldok:
                 if options['run'] == "run":
-                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single HCP ReFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(printbold)
@@ -5173,9 +5184,9 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'single HCP ReFix ' + boldtarget, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'single HCP ReApplyFix ' + boldtarget, r)
                     if passed is None:
-                        r += "\n     ... single HCP ReFix can be run"
+                        r += "\n     ... single HCP ReApplyFix can be run"
                         r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(printbold)
                     else:
@@ -5213,7 +5224,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
     return {'r': r, 'report': report}
 
 
-def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
+def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
     # get group data
     groupname = group["name"]
     bolds = group["bolds"]
@@ -5336,9 +5347,9 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReFix ' + groupname, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReApplyFix ' + groupname, r)
                     if passed is None:
-                        r += "\n     ... multi HCP ReFix can be run"
+                        r += "\n     ... multi HCP ReApplyFix can be run"
                         r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(groupname)
                     else:
@@ -5385,11 +5396,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         boldok = True
 
         # load parameters or use default values
-        highpass = 2000
-        if not singleFix:
-            highpass = 0
-        if 'hcp_icafix_highpass' in options:
-            highpass = options['hcp_icafix_highpass']
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # --- check for bold image
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
