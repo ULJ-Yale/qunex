@@ -4047,9 +4047,13 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         or specify how to group bolds together,
                                         e.g. "<group1>:<boldname1>,<boldname2>|
                                         <group2>:<boldname3>,<boldname4>". If this
-                                        parameter is ICAFix over each subject's
-                                        bold will be executed independently [""].
+                                        parameter is not provided ICAFix over each
+                                        subject's bold will be executed
+                                        independently [""].
     hcp_icafix_highpass             ... value for the highpass filter [0].
+    hcp_matlab_mode                 ... Specifies the Matlab version, can be
+                                        "interpreted", "compiled" or "octave"
+                                        ["compiled"].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
     hcp_icafix_traindata            ... Which file to use for training data.
@@ -4231,6 +4235,22 @@ def executeHCPICAFix(sinfo, options, overwrite, hcp, run, ica):
         # bandpass
         bandpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = "0"
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] == "compiled":
+                matlabrunmode = "0"
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = "1"
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                icaok = False
+
+        # set variable
+        os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
+
         comm = '%(script)s \
                 "%(inputfile)s" \
                 %(bandpass)d \
@@ -4384,12 +4404,13 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                                     or specify how to group bolds together,
                                     e.g. "<group1>:<boldname1>,<boldname2>|
                                     <group2>:<boldname3>,<boldname4>". If this
-                                    parameter is ICAFix over each subject's
-                                    bold will be executed independently [""].
+                                    parameter is not provided ICAFix over each
+                                    subject's bold will be executed
+                                    independently [""].
     hcp_icafix_highpass         ... value for the highpass filter [0].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
-                                    ["octave"].
+                                    ["compiled"].
     hcp_postfix_dualscene       ... Path to an alternative template scene, if
                                     empty HCP default dual scene will be used
                                     [""].
@@ -4722,8 +4743,9 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         or specify how to group bolds together,
                                         e.g. "<group1>:<boldname1>,<boldname2>|
                                         <group2>:<boldname3>,<boldname4>". If this
-                                        parameter is ICAFix over each subject's
-                                        bold will be executed independently [""].
+                                        parameter is not provided ICAFix over each
+                                        subject's bold will be executed
+                                        independently [""].
     hcp_icafix_highpass             ... value for the highpass filter [0].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
@@ -4733,7 +4755,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         to FIX cleaning ["FALSE"].
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
-                                        ["octave"].
+                                        ["compiled"].
     hcp_regname                     ... Specifies surface registration name
                                         ["NONE"].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
