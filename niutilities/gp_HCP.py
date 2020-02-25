@@ -3895,9 +3895,11 @@ def parseICAFixBolds(options, bolds, r):
         # else we extract bolds and use single fix
         else:
             icafixBolds = str.split(icafixBolds, ",")
-    # if hcp_icafix_bolds is empty then use all bolds
+    # if hcp_icafix_bolds is empty then bundle all bolds
     else:
         icafixBolds = bolds
+        icafixGroups = []
+        icafixGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":icafixBolds})
 
     # --- Report single fix or multi fix
     if singleFix:
@@ -3989,7 +3991,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
     Runs the ICAFix step of HCP Pipeline. This step attempts to auto-classify
     ICA components into good and bad components, so that the bad components
-    can be then removed from the 4D FMRI data.
+    can be then removed from the 4D FMRI data. If ICAFix step finishes successfully
+    PostFix step will be ran automatically.
     A short name 'hcp6' can be used for this command.
 
     REQUIREMENTS
@@ -4058,14 +4061,18 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     processing in this step:
 
     hcp_icafix_bolds                ... specify a list of bolds for ICAFix.
-                                        Specify either a comma separated list
-                                        of bolds, e.g. "<boldname>,<boldname>",
-                                        or specify how to group bolds together,
+                                        You can specify a comma separated list
+                                        of bolds, e.g. "<boldname1>,<boldname2>",
+                                        in this case single fix will be executed
+                                        over specified bolds. You can also specify
+                                        how to group/concatenate bolds together,
                                         e.g. "<group1>:<boldname1>,<boldname2>|
-                                        <group2>:<boldname3>,<boldname4>". If this
-                                        parameter is not provided ICAFix over each
-                                        subject's bold will be executed
-                                        independently [""].
+                                        <group2>:<boldname3>,<boldname4>", in this
+                                        case multi fix will be executed. If this
+                                        parameter is not provided ICAFix will
+                                        bundle all bolds together and execute
+                                        multi fix, the concatenated file will be
+                                        be named fMRI_CONCAT_ALL [""].
     hcp_icafix_highpass             ... value for the highpass filter [0].
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
@@ -4318,7 +4325,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # if all ok automatically execute PostFix
                 if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, bold)
+                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
 
             # -- just checking
             else:
@@ -4442,7 +4449,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
                 # if all ok automatically execute PostFix
                 if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, group)
+                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, group)
 
             # -- just checking
             else:
@@ -4558,14 +4565,18 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     processing in this step:
 
     hcp_icafix_bolds            ... specify a list of bolds for ICAFix.
-                                    Specify either a comma separated list
-                                    of bolds, e.g. "<boldname>,<boldname>",
-                                    or specify how to group bolds together,
+                                    You can specify a comma separated list
+                                    of bolds, e.g. "<boldname1>,<boldname2>",
+                                    in this case single fix will be executed
+                                    over specified bolds. You can also specify
+                                    how to group/concatenate bolds together,
                                     e.g. "<group1>:<boldname1>,<boldname2>|
-                                    <group2>:<boldname3>,<boldname4>". If this
-                                    parameter is not provided ICAFix over each
-                                    subject's bold will be executed
-                                    independently [""].
+                                    <group2>:<boldname3>,<boldname4>", in this
+                                    case multi fix will be executed. If this
+                                    parameter is not provided ICAFix will
+                                    bundle all bolds together and execute
+                                    multi fix, the concatenated file will be
+                                    be named fMRI_CONCAT_ALL [""].
     hcp_icafix_highpass         ... value for the highpass filter [0].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
@@ -4919,24 +4930,28 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     processing in this step:
 
     hcp_icafix_bolds                ... specify a list of bolds for ICAFix.
-                                        Specify either a comma separated list
-                                        of bolds, e.g. "<boldname>,<boldname>",
-                                        or specify how to group bolds together,
+                                        You can specify a comma separated list
+                                        of bolds, e.g. "<boldname1>,<boldname2>",
+                                        in this case single fix will be executed
+                                        over specified bolds. You can also specify
+                                        how to group/concatenate bolds together,
                                         e.g. "<group1>:<boldname1>,<boldname2>|
-                                        <group2>:<boldname3>,<boldname4>". If this
-                                        parameter is not provided ICAFix over each
-                                        subject's bold will be executed
-                                        independently [""].
+                                        <group2>:<boldname3>,<boldname4>", in this
+                                        case multi fix will be executed. If this
+                                        parameter is not provided ICAFix will
+                                        bundle all bolds together and execute
+                                        multi fix, the concatenated file will be
+                                        be named fMRI_CONCAT_ALL [""].
     hcp_icafix_highpass             ... value for the highpass filter [0].
+    hcp_matlab_mode                 ... Specifies the Matlab version, can be
+                                        "interpreted", "compiled" or "octave"
+                                        ["compiled"].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning ["FALSE"].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
                                         to FIX cleaning ["FALSE"].
-    hcp_matlab_mode                 ... Specifies the Matlab version, can be
-                                        "interpreted", "compiled" or "octave"
-                                        ["compiled"].
     hcp_regname                     ... Specifies surface registration name
                                         ["NONE"].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
