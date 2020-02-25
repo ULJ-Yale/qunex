@@ -3989,10 +3989,17 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
+
     Runs the ICAFix step of HCP Pipeline. This step attempts to auto-classify
     ICA components into good and bad components, so that the bad components
-    can be then removed from the 4D FMRI data. If ICAFix step finishes successfully
-    PostFix step will be ran automatically.
+    can be then removed from the 4D FMRI data. If ICAFix step finishes
+    successfully PostFix step will be ran automatically. 
+    
+    If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
+    all bolds together and execute multi fix, the concatenated file will be be
+    named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such processing
+    requires a lot of computational resources.
+
     A short name 'hcp6' can be used for this command.
 
     REQUIREMENTS
