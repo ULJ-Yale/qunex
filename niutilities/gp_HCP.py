@@ -4645,7 +4645,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Multi threading
-        threads = options['threads']
+        threads = min(options['threads'], len(icafixBolds))
         r += "\n\n%s PostFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Get sorted bold numbers and bold data
@@ -5013,7 +5013,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Multi threading
-        threads = options['threads']
+        threads = min(options['threads'], len(icafixBolds))
         r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Get sorted bold numbers and bold data
