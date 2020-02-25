@@ -3154,7 +3154,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # --- Process
         r += "\n"
 
-        threads = options['threads']
+        threads = min(options['threads'], len(boldsData))
         r += "\n%s BOLD images on %d threads" % (action("Running", options['run']), threads)
 
         if (threads == 1): # serial execution
@@ -3243,8 +3243,11 @@ def executeSingleHCPfMRIVolume(sinfo, options, overwrite, hcp, b, r, report):
     return r, report
 
 def executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, report):
+    # threads
+    threads = min(options['threads'], len(boldsData))
+
     # create a multiprocessing Pool
-    processPoolExecutor = ProcessPoolExecutor(options['threads'])
+    processPoolExecutor = ProcessPoolExecutor(threads)
 
     # partial function
     f = partial(executeHCPfMRIVolume, sinfo, options, overwrite, hcp)
@@ -3706,7 +3709,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        threads = options['threads']
+        threads = min(options['threads'], len(bolds))
         r += "\n\n%s BOLD images on %d threads" % (action("Processing", options['run']), threads)
 
         if threads == 1: # serial execution
@@ -4133,10 +4136,6 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         doHCPOptionsCheck(options, sinfo, 'hcp_ICAFix')
         hcp = getHCPPaths(sinfo, options)
 
-        # --- Multi threading
-        threads = options['threads']
-        r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
-
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
@@ -4147,6 +4146,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
+
+        # --- Multi threading
+        threads = min(options['threads'], len(icafixBolds))
+        r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- if hcp_icafix_traindata parameter is provided check if it exists
         if 'hcp_icafix_traindata' in options:
@@ -4331,7 +4334,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # if all ok automatically execute PostFix
                 if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
+                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, boldtarget)
 
             # -- just checking
             else:
@@ -4455,7 +4458,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
                 # if all ok automatically execute PostFix
                 if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, group)
+                    executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
 
             # -- just checking
             else:
@@ -4728,10 +4731,11 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
     # extract data
     r += "\n\n----------------------------------------------------------------"
-    if singleFix:
-        # highpass
-        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
+    # highpass
+    highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
+    if singleFix:
         _, _, _, boldinfo = bold
 
         if 'filename' in boldinfo and options['hcp_filename'] == 'original':
@@ -4746,9 +4750,6 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         r += "\n---> %s bold ICA %s" % (action("Processing", options['run']), printica)
 
     else:
-        # highpass
-        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
-
         printbold = bold
         boldtarget = bold
 
