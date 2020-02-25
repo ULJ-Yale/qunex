@@ -4027,7 +4027,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
     where highpass is the used value for the highpass filter.
-    Default highpass value is 0.
+    Default highpass value is 0 for multi run and 2000 for single run.
 
 
     RELEVANT PARAMETERS
@@ -4082,7 +4082,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         bundle all bolds together and execute
                                         multi fix, the concatenated file will be
                                         be named fMRI_CONCAT_ALL [""].
-    hcp_icafix_highpass             ... value for the highpass filter [0].
+    hcp_icafix_highpass             ... value for the highpass filter,
+                                        [0] for multi and [2000] for single run.
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
                                         ["compiled"].
@@ -4298,7 +4299,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
 
         # bandpass value
-        bandpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+        bandpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         comm = '%(script)s \
                 "%(inputfile)s" \
@@ -4537,7 +4538,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     <session id>_<boldname>_hp<highpass>_ICA_Classification_singlescreen.scene,
 
     where highpass is the used value for the highpass filter.
-    Default highpass value is 0.
+    Default highpass value is 0 for multi run and 2000 for single run.
 
     RELEVANT PARAMETERS
     ===================
@@ -4591,7 +4592,8 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                                     bundle all bolds together and execute
                                     multi fix, the concatenated file will be
                                     be named fMRI_CONCAT_ALL [""].
-    hcp_icafix_highpass         ... value for the highpass filter [0].
+    hcp_icafix_highpass         ... value for the highpass filter,
+                                    [0] for multi and [2000] for single run.
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["compiled"].
@@ -4732,10 +4734,10 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     # extract data
     r += "\n\n----------------------------------------------------------------"
 
-    # highpass
-    highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
-
     if singleFix:
+        # highpass
+        highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
         _, _, _, boldinfo = bold
 
         if 'filename' in boldinfo and options['hcp_filename'] == 'original':
@@ -4750,6 +4752,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         r += "\n---> %s bold ICA %s" % (action("Processing", options['run']), printica)
 
     else:
+        # highpass
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+
         printbold = bold
         boldtarget = bold
 
@@ -4905,7 +4910,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
     where highpass is the used value for the highpass filter.
-    Default highpass value is 0.
+    Default highpass value is 0 for multi run and 2000 for single run.
 
     RELEVANT PARAMETERS
     ===================
@@ -4959,7 +4964,8 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         bundle all bolds together and execute
                                         multi fix, the concatenated file will be
                                         be named fMRI_CONCAT_ALL [""].
-    hcp_icafix_highpass             ... value for the highpass filter [0].
+    hcp_icafix_highpass             ... value for the highpass filter,
+                                        [0] for multi and [2000] for single run.
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
                                         ["compiled"].
@@ -5153,7 +5159,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             boldok = True
 
             # highpass
-            highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+            highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
             matlabrunmode = 2
@@ -5427,7 +5433,10 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         boldok = True
 
         # load parameters or use default values
-        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+        if singleFix:
+            highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
+        else:
+            highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # --- check for bold image
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
