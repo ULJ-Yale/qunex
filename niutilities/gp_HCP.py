@@ -3911,33 +3911,38 @@ def parseICAFixBolds(options, bolds, r):
         r += "\n\n%s multi fix on %d groups" % (action("Processing", options['run']), len(icafixGroups))
 
     # --- Get hcp_icafix_bolds data from bolds
+    # variable for storing skipped bolds
+    boldSkip = {}
+
     if icafixBolds is not bolds:
         r += "\n%s bolds with hcp_icafix_bolds\n" % (action("Comparing", options['run']))
         # compare
         # single fix
         if singleFix:
+            # variable for storing bold data
             boldData = []
-            for b in bolds:
-                # extract data
-                _, _, _, boldinfo = b
 
-                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                    boldtarget = boldinfo['filename']
-                else:
-                    boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
-                # find the bold in icafixBolds
+            for icaB in icafixBolds:
+                # find the bold in bolds
                 found = False
-                for icaB in icafixBolds:
+                for b in bolds:
+                    # extract data
+                    _, _, _, boldinfo = b
+
+                    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                        boldtarget = boldinfo['filename']
+                    else:
+                        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
                     if icaB == boldtarget:
                         # add to temporary variable boldData
                         boldData.append(b)
                         found = True
+                        boldSkip[boldtarget] = False
                         break
-                
-                # bold not found in bolds
-                if not found:
-                    r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % boldtarget
+
+                    if boldtarget not in boldSkip:
+                        boldSkip[boldtarget] = True
 
             # store data into the icafixBolds variable
             icafixBolds = boldData
@@ -3945,41 +3950,48 @@ def parseICAFixBolds(options, bolds, r):
         else:
             # variable for storing group data
             groupData = {}
-            # create empty dict entry for all groups
+
+            # go over all groups
             for g in icafixGroups:
+                # create empty dict entry for group
                 groupData[g] = []
-
-            for b in bolds:
-                # extract data
-                _, _, _, boldinfo = b
-
-                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                    boldtarget = boldinfo['filename']
-                else:
-                    boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
-                # go over all groups
-                for g in icafixGroups:
-                    # find the bold in group bolds
+                # go over group bolds
+                groupBolds = icafixGroups[g]
+                for groupB in groupBolds:
+                    # look for bold in all bolds
                     found = False
-                    groupBolds = icafixGroups[g]
-                    for groupB in groupBolds:
+                    for b in bolds:
+                        # extract data
+                        _, _, _, boldinfo = b
+
+                        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                            boldtarget = boldinfo['filename']
+                        else:
+                            boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
                         if groupB == boldtarget:
                             # add bold to the group
                             groupData[g].append(b)
                             found = True
+                            boldSkip[boldtarget] = False
                             break
 
-                    if found:
-                        break
+                        if boldtarget not in boldSkip:
+                            boldSkip[boldtarget] = True
 
-                # bold not found in bolds
-                if not found:
-                    r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % boldtarget
             # cast group data to array of dictionaries (needed for parallel)
             icafixGroups = []
             for g in groupData:
                 icafixGroups.append({"name":g, "bolds":groupData[g]})
+
+    # report hcp_icafix_bolds not found in bolds
+    if len(boldSkip) > 0:
+        for b in boldSkip:
+            if boldSkip[b] is True:
+                r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % b
+    else:
+        r += "     ... all bolds specified in the hcp_icafix_bolds parameter are present\n"
+
 
     return (singleFix, icafixBolds, icafixGroups, r)
 
@@ -4403,8 +4415,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 printbold  = str(bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
+            r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s.nii.gz] missing!' % boldimg, status=boldok)
 
             if not boldok:
                 groupok = False
