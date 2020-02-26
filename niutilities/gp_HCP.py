@@ -4348,8 +4348,9 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 # if all ok automatically execute PostFix
                 if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                     options['command_ran'] = "hcp_PostFix"
-                    r_post, report = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, boldtarget)
-                    r += r_post
+                    result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, boldtarget)
+                    r += result['r']
+                    report = result['report']
 
             # -- just checking
             else:
@@ -4473,9 +4474,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
                 # if all ok automatically execute PostFix
                 if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    options['command_ran'] = "hcp_PostFix"
-                    r_post, report = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, boldtarget)
-                    r += r_post
+                    result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
+                    r += result['r']
+                    report = result['report']
 
             # -- just checking
             else:
@@ -4839,7 +4840,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_PostFix", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
