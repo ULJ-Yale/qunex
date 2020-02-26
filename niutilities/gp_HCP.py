@@ -4662,10 +4662,6 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         doHCPOptionsCheck(options, sinfo, 'hcp_PostFix')
         hcp = getHCPPaths(sinfo, options)
 
-        # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
-        r += "\n\n%s PostFix on %d threads" % (action("Processing", options['run']), threads)
-
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
@@ -4676,6 +4672,10 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
+
+        # --- Multi threading
+        threads = min(options['threads'], len(icafixBolds))
+        r += "\n\n%s PostFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Execute
         # single fix
@@ -5034,10 +5034,6 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
         doHCPOptionsCheck(options, sinfo, 'hcp_ReApplyFix')
         hcp = getHCPPaths(sinfo, options)
 
-        # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
-        r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
-
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
@@ -5048,6 +5044,10 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
+
+        # --- Multi threading
+        threads = min(options['threads'], len(icafixBolds))
+        r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Execute
         # single fix
