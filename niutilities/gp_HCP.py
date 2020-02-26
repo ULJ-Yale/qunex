@@ -4347,8 +4347,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # if all ok automatically execute PostFix
                 if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    options['command_ran'] = "hcp_PostFix"
-                    result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, boldtarget)
+                    result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
                     r += result['r']
                     report = result['report']
 
