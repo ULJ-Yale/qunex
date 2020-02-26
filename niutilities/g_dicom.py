@@ -1354,20 +1354,26 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                             jsonsrc = jsonfiles[0]
 
                     if os.path.exists(jsonsrc):
-                        with open(jsonsrc, 'r') as f:
-                            jinf = json.load(f)
-                        os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
+                        try:
+                            with open(jsonsrc, 'r') as f:                            
+                                jinf = json.load(f)
+                            os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
+                            jsonsrc = tfname.replace('.nii.gz', '.json')
 
-                        if 'RepetitionTime' in jinf:
-                            jsoninfo += ": TR(%s)" % (str(jinf['RepetitionTime']))
-                        if 'PhaseEncodingDirection' in jinf:
-                            jsoninfo += ": PEDirection(%-2s)" % (jinf['PhaseEncodingDirection'])    
-                        if 'EffectiveEchoSpacing' in jinf:
-                            jsoninfo += ": EchoSpacing(%s)" % (str(jinf['EffectiveEchoSpacing']))
-                        if 'DwellTime' in jinf:
-                            jsoninfo += ": DwellTime(%s)" % (str(jinf['DwellTime']))
-                        if 'ReadoutDirection' in jinf:
-                            jsoninfo += ": ReadoutDirection(%-2s)" % (jinf['ReadoutDirection'])
+                            if 'RepetitionTime' in jinf:
+                                jsoninfo += ": TR(%s)" % (str(jinf['RepetitionTime']))
+                            if 'PhaseEncodingDirection' in jinf:
+                                jsoninfo += ": PEDirection(%-2s)" % (jinf['PhaseEncodingDirection'])    
+                            if 'EffectiveEchoSpacing' in jinf:
+                                jsoninfo += ": EchoSpacing(%s)" % (str(jinf['EffectiveEchoSpacing']))
+                            if 'DwellTime' in jinf:
+                                jsoninfo += ": DwellTime(%s)" % (str(jinf['DwellTime']))
+                            if 'ReadoutDirection' in jinf:
+                                jsoninfo += ": ReadoutDirection(%-2s)" % (jinf['ReadoutDirection'])
+                        except:
+                            print >> r, "     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc)
+                            if verbose:
+                                print "     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc)
 
                 # --> print the info to subject.txt file
 
