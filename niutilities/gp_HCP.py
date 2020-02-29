@@ -4012,9 +4012,9 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     successfully PostFix step will be ran automatically. 
     
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
-    all bolds together and execute multi fix, the concatenated file will be be
-    named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such processing
-    requires a lot of computational resources.
+    all bolds together and execute multi-run HCP ICAFix, the concatenated file
+    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    processing requires a lot of computational resources.
 
     REQUIREMENTS
     ============
@@ -4038,8 +4038,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
-    where highpass is the used value for the highpass filter.
-    Default highpass value is 0 for multi run and 2000 for single run.
+    where highpass is the used value for the highpass filter. The default highpass
+    value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix .
 
 
     RELEVANT PARAMETERS
@@ -4084,23 +4084,29 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     hcp_icafix_bolds                ... specify a list of bolds for ICAFix.
                                         You can specify a comma separated list
                                         of bolds, e.g. "<boldname1>,<boldname2>",
-                                        in this case single fix will be executed
-                                        over specified bolds. You can also specify
-                                        how to group/concatenate bolds together,
-                                        e.g. "<group1>:<boldname1>,<boldname2>|
-                                        <group2>:<boldname3>,<boldname4>", in this
-                                        case multi fix will be executed. If this
-                                        parameter is not provided ICAFix will
-                                        bundle all bolds together and execute
-                                        multi fix, the concatenated file will be
-                                        be named fMRI_CONCAT_ALL [""].
+                                        in this case single-run HCP ICAFix will be
+                                        executed over specified bolds. You can also
+                                        specify how to group/concatenate bolds
+                                        together, e.g.
+                                        "<group1>:<boldname1>,<boldname2>|
+                                        <group2>:<boldname3>,<boldname4>",
+                                        in this case multi-run HCP ICAFix will be
+                                        executed. If this parameter is not provided
+                                        ICAFix will bundle all bolds together and
+                                        execute multi-run HCP ICAFix, the
+                                        concatenated file will be named
+                                        fMRI_CONCAT_ALL [""].
     hcp_icafix_highpass             ... value for the highpass filter,
-                                        [0] for multi and [2000] for single run.
+                                        [0] for multi-run HCP ICAFix and [2000]
+                                        for single-run HCP ICAFix.
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
                                         ["compiled"].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
-                                        part of the cleaning ["FALSE"].
+                                        part of the cleaning. The default value
+                                        for single-run HCP ICAFix is ["TRUE"],
+                                        while the default for multi-run HCP ICAFix
+                                        is ["FALSE"].
     hcp_icafix_traindata            ... Which file to use for training data.
                                         It can be a file (the file needs to be
                                         in ${FSL_FIXDIR}/training_files folder)
@@ -4323,7 +4329,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
                 'inputfile'             : inputfile,
                 'bandpass'              : bandpass,
-                'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                'domot'                 : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
@@ -4338,7 +4344,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single-run HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -4353,9 +4359,9 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'single HCP ICAFix ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r)
                 if passed is None:
-                    r += "\n     ... single HCP ICAFix can be run"
+                    r += "\n     ... single-run HCP ICAFix can be run"
                     r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
@@ -4464,7 +4470,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi-run HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(groupname)
@@ -4479,9 +4485,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ICAFix ' + groupname, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r)
                 if passed is None:
-                    r += "\n     ... multi HCP ICAFix can be run"
+                    r += "\n     ... multi-run HCP ICAFix can be run"
                     r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(groupname)
                 else:
@@ -4526,9 +4532,9 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     classification generated by ICAFix.
 
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
-    all bolds together and execute multi fix, the concatenated file will be be
-    named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such processing
-    requires a lot of computational resources.
+    all bolds together and execute multi-run HCP ICAFix, the concatenated file
+    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    processing requires a lot of computational resources.
 
     REQUIREMENTS
     ============
@@ -4553,8 +4559,8 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     MNINonLinear/Results/<boldname>/
     <session id>_<boldname>_hp<highpass>_ICA_Classification_singlescreen.scene,
 
-    where highpass is the used value for the highpass filter.
-    Default highpass value is 0 for multi run and 2000 for single run.
+    where highpass is the used value for the highpass filter. The default highpass
+    value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix .
 
     RELEVANT PARAMETERS
     ===================
@@ -4598,18 +4604,21 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     hcp_icafix_bolds            ... specify a list of bolds for ICAFix.
                                     You can specify a comma separated list
                                     of bolds, e.g. "<boldname1>,<boldname2>",
-                                    in this case single fix will be executed
-                                    over specified bolds. You can also specify
-                                    how to group/concatenate bolds together,
-                                    e.g. "<group1>:<boldname1>,<boldname2>|
-                                    <group2>:<boldname3>,<boldname4>", in this
-                                    case multi fix will be executed. If this
-                                    parameter is not provided ICAFix will
-                                    bundle all bolds together and execute
-                                    multi fix, the concatenated file will be
-                                    be named fMRI_CONCAT_ALL [""].
+                                    in this case single-run HCP ICAFix will be
+                                    executed over specified bolds. You can also
+                                    specify how to group/concatenate bolds
+                                    together, e.g.
+                                    "<group1>:<boldname1>,<boldname2>|
+                                    <group2>:<boldname3>,<boldname4>",
+                                    in this case multi-run HCP ICAFix will be
+                                    executed. If this parameter is not provided
+                                    ICAFix will bundle all bolds together and
+                                    execute multi-run HCP ICAFix, the
+                                    concatenated file will be named
+                                    fMRI_CONCAT_ALL [""].
     hcp_icafix_highpass         ... value for the highpass filter,
-                                    [0] for multi and [2000] for single run.
+                                    [0] for multi-run HCP ICAFix and [2000]
+                                    for single-run HCP ICAFix.
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["compiled"].
@@ -4795,7 +4804,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             dualscene = options['hcp_postfix_dualscene']
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
-        matlabrunmode = 2
+        matlabrunmode = 0
         if 'hcp_matlab_mode' in options:
             if options['hcp_matlab_mode'] == "compiled":
                 matlabrunmode = 0
@@ -4899,9 +4908,9 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     files. Next it executes the HCP Pipeline's ReApplyFix or ReApplyFixMulti.
 
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
-    all bolds together and execute multi fix, the concatenated file will be be
-    named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such processing
-    requires a lot of computational resources.
+    all bolds together and execute multi-run HCP ICAFix, the concatenated file
+    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    processing requires a lot of computational resources.
 
     REQUIREMENTS
     ============
@@ -4925,8 +4934,8 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
     MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
-    where highpass is the used value for the highpass filter.
-    Default highpass value is 0 for multi run and 2000 for single run.
+    where highpass is the used value for the highpass filter. The default highpass
+    value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix .
 
     RELEVANT PARAMETERS
     ===================
@@ -4970,23 +4979,29 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     hcp_icafix_bolds                ... specify a list of bolds for ICAFix.
                                         You can specify a comma separated list
                                         of bolds, e.g. "<boldname1>,<boldname2>",
-                                        in this case single fix will be executed
-                                        over specified bolds. You can also specify
-                                        how to group/concatenate bolds together,
-                                        e.g. "<group1>:<boldname1>,<boldname2>|
-                                        <group2>:<boldname3>,<boldname4>", in this
-                                        case multi fix will be executed. If this
-                                        parameter is not provided ICAFix will
-                                        bundle all bolds together and execute
-                                        multi fix, the concatenated file will be
-                                        be named fMRI_CONCAT_ALL [""].
+                                        in this case single-run HCP ICAFix will be
+                                        executed over specified bolds. You can also
+                                        specify how to group/concatenate bolds
+                                        together, e.g.
+                                        "<group1>:<boldname1>,<boldname2>|
+                                        <group2>:<boldname3>,<boldname4>",
+                                        in this case multi-run HCP ICAFix will be
+                                        executed. If this parameter is not provided
+                                        ICAFix will bundle all bolds together and
+                                        execute multi-run HCP ICAFix, the
+                                        concatenated file will be named
+                                        fMRI_CONCAT_ALL [""].
     hcp_icafix_highpass             ... value for the highpass filter,
-                                        [0] for multi and [2000] for single run.
+                                        [0] for multi-run HCP ICAFix and [2000]
+                                        for single-run HCP ICAFix.
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
                                         ["compiled"].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
-                                        part of the cleaning ["FALSE"].
+                                        part of the cleaning. The default value
+                                        for single-run HCP ICAFix is ["TRUE"],
+                                        while the default for multi-run HCP ICAFix
+                                        is ["FALSE"].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
@@ -5178,7 +5193,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
-            matlabrunmode = 2
+            matlabrunmode = 0
             if 'hcp_matlab_mode' in options:
                 if options['hcp_matlab_mode'] == "compiled":
                     matlabrunmode = 0
@@ -5228,7 +5243,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             # -- Run
             if run and boldok:
                 if options['run'] == "run":
-                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(printbold)
@@ -5237,9 +5252,9 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'single HCP ReApplyFix ' + boldtarget, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r)
                     if passed is None:
-                        r += "\n     ... single HCP ReApplyFix can be run"
+                        r += "\n     ... single-run HCP ReApplyFix can be run"
                         r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(printbold)
                     else:
@@ -5336,7 +5351,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             groupok = True
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
-            matlabrunmode = 2
+            matlabrunmode = 0
             if 'hcp_matlab_mode' in options:
                 if options['hcp_matlab_mode'] == "compiled":
                     matlabrunmode = 0
@@ -5391,7 +5406,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options['run'] == "run":
-                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(groupname)
@@ -5400,9 +5415,9 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ReApplyFix ' + groupname, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r)
                     if passed is None:
-                        r += "\n     ... multi HCP ReApplyFix can be run"
+                        r += "\n     ... multi-run HCP ReApplyFix can be run"
                         r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(groupname)
                     else:
@@ -5479,7 +5494,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP hand reclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP HandReclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -5488,9 +5503,9 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP hand reclassification ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r)
                 if passed is None:
-                    r += "\n     ... single HCP hand reclassification can be run"
+                    r += "\n     ... HCP HandReclassification can be run"
                     r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
