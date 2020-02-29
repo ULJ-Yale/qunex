@@ -333,12 +333,15 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     elif scheduler == "SLURM":
         sCommand += "#!/bin/sh\n"
-        sCommand += "#SBATCH --job-name=%s-%s#%s\n" % (jobname, comname, jobnum)
         for key, value in setDict.items():
             if key in ('J', 'job-name') and jobname == 'schedule':
                 jobname = v
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+        
+        if (comname != ""):
+            jobname = "%s-%s" % (jobname, comname)
+        sCommand += "#SBATCH --job-name=%s(%s)\n" % (jobname, jobnum)
         if outputs['stdout'] is not None:
             sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:

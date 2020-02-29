@@ -1280,11 +1280,13 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     CORE PARAMETERS
     ===============
 
-    --listfile     ... The runlist.txt file containing runlists and their 
+    --listfile     ... The runlist file containing runlists and their 
                        parameters.
     --runlists     ... A comma, space or pipe separated list of lists specified 
-                       within runlist.txt to run.
+                       within runlist file to run.
     --logfolder    ... The folder within which to save the log.
+    --mapvalues    ... Names of values of custom variables that will be injected
+                       into specifically marked fields in the runlist file.
     --verbose      ... Whether to record in a log a full verbose report of the 
                        output of each command that was run ('yes') or only a
                        summary success report of each command ran. ['no']
@@ -1337,7 +1339,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     attempts to spawn new cluster jobs when `runList` instance is already 
     running on a cluster node.
 
-    Importantly, if `scheduler` is specified in the `runlist.txt` file, do bear 
+    Importantly, if `scheduler` is specified in the `runlist` file, do bear 
     in mind, that all the commands in the list will be scheduled at the same 
     time, and not in a succession, as `runList` can not track execution of jobs
     on individual cluster nodes.
@@ -1393,10 +1395,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     RUNLIST FILE
     ============
 
-    At the top of the runlist.txt file global settings are defined in the form
+    At the top of the runlist file global settings are defined in the form
     of `<parameter>: <value>` pairs. These are the settings that will be used as 
     defaults throughout the list and individual commands defined in the rest of 
-    the runlist.txt file.
+    the runlist file.
 
     Each list starts with a line that consists of three dashes "---" only. The
     next line should define the name of the list by specifying:
@@ -1404,7 +1406,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     command. After the definition of the list, the default parameters for the
     list can be specified as a <parameter>:<value> pairs. These values will be 
     taken as the default for the list. They have priority over the general 
-    runlist.txt definition in that values that are defined within a specific 
+    runlist file definition in that values that are defined within a specific 
     list will be used rather than values defined at the higher level. It is 
     recommended for readibility purposes for the content of the list to be 
     indented by four spaces.
@@ -1418,7 +1420,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     command in the form of `<parameter>:<value>` pairs. The values provided
     here will take priority over the values specified at the beginning of the
     list as well as over the default values provided at the beginning of the
-    runlist.txt file. For readibility puposes it is advised that the 
+    runlist file. For readibility puposes it is advised that the 
     <parameter>:<value> pairs are further indented for additional four spaces.
 
     If a specific parameter specified at a higher level is not to be used at
@@ -1503,18 +1505,15 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             pignore          : hipass=linear|regress=spline|lopass=linear
             overwrite        : yes
             bolds            : rest
-            image_target     : nifti
-            hcp_cifti_tail   : 
-
-        command: preprocessBold
-            bold_actions     : shrc
-            glm_residuals    : save
-            bold_nuisance    : m,V,WM,WB,1d
-            pignore          : hipass=linear|regress=spline|lopass=linear
-            overwrite        : yes
-            bolds            : rest
             image_target     : cifti
             hcp_cifti_tail   : _Atlas
+
+    ---
+    list: doPreFS
+        sessions  : {{sessions_var}}
+        cores     : 4
+
+        command: hcp1
     ```
 
     EXAMPLE USE
@@ -1550,6 +1549,13 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
       --runlists="runFCPreprocessing"
     ```  
 
+    ```
+    qunex runList
+      --listfile="/data/settings/runlist.txt" \
+      --runlists="doPreFS" \
+      --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt"
+    ```  
+
     The first call will execute all the commands in lists `dataImport` and 
     `prepareHCP` localy.
 
@@ -1565,10 +1571,16 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     processing four sessions at a time (the lower number of `sperlist` and `cores`).
     In this call, the initial steps will be performed on all BOLD images.
 
-    The last, fourth call will start a single `runList` instance localy, however,
+    The fourth call will start a single `runList` instance localy, however,
     this will submit both listed `preprocessBold` commands as jobs to be run with
     six sessions per node in parallel. These two commands will be run only on BOLD
     images tagged as `rest`. 
+
+    The last, fifth call will execute hcp1 (hcp_PreFS), the value of the `sessions`
+    parameter here is set to a placeholder variable `sessions_var`, the value is 
+    then injected from the command call by using the `mapvalues` parameter.
+    Alternatively the value could be injected by setting the environmental variable
+    `$sessions_var`.
 
     ---
     Written by Jure Demšar 2019-02-11.
@@ -1586,6 +1598,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
              - Changed subjects to sessions
     2020-01-17 Jure Demšar
              - Optimized log creation and stopping on command fail.
+    2020-11-02 Jure Demšar
+             - Parameter injections.
+    2020-25-02 Jure Demšar
+             - Parameter injection documentation.
     """
 
     verbose = verbose.lower() == 'yes'
@@ -1596,10 +1612,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
         raise ge.CommandError("runList", "listfile not specified", "No runlist file specified", "Please provide path to the runlist file!")
 
     if runlists is None:
-        raise ge.CommandError("runList", "runlists not specified ", "No runlists specified", "Please provide list of list names to run!")
+        raise ge.CommandError("runList", "runlists not specified", "No runlists specified", "Please provide list of list names to run!")
 
     if not os.path.exists(listfile):
-        raise ge.CommandFailed("runList", "Funlist file does not exist", "Runlist file not found [%s]" % (listfile), "Please check your paths!")
+        raise ge.CommandFailed("runList", "runlist file does not exist", "Runlist file not found [%s]" % (listfile), "Please check your paths!")
 
     # prep log
     if logfolder is None:
@@ -1623,6 +1639,14 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     parameters = runList['parameters']
 
+    # -- prepare mapvalues
+    mapvalues = {}
+    if "mapvalues" in eargs:
+        tempmap = eargs["mapvalues"].split("|")
+        for m in tempmap:
+            m = m.split(":")
+            mapvalues[m[0]] = m[1]
+
     with open(listfile, 'r') as file:
         for line in file:
             try:
@@ -1641,6 +1665,18 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                     runList['lists'][listName]['commands'].append({'name': commandName, 'parameters': parameters, 'removed_parameters': removedParameters})
                 elif ':' in line:
                     parameter, value = [stripQuotes(e.strip()) for e in line.split(":", 1)]
+                    # is value something we should inject
+                    if "{{" in value and "}}" in value:
+                        value = value.strip("\{").strip("\}")
+                        # is value in global parameters or environment
+                        if value in mapvalues:
+                            value = mapvalues[value]
+                        elif value in os.environ:
+                            value = os.environ[value]
+                        else:
+                            raise ge.CommandFailed("runList", "Cannot parse line", "Injection value [%s] in line [%s] not provided" % (value, line), "Please provide injection values as input parameters (--mapvalues) or as environmental variables!")
+
+                    # set
                     parameters[parameter] = value
                 elif line.strip() in flags:
                     parameters[line.strip()] = "flag"
@@ -1711,7 +1747,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             # -- remove parameters that are not allowed
 
             if commandName in niutilities.g_commands.commands:
-                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"]) 
+                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sfolder', 'folder']]):
                     allowedParameters += niutilities.g_commands.extraParameters
                 for param in commandParameters.keys():
@@ -1724,7 +1760,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                 for toIgnore in ignore:
                     if toIgnore in commandParameters:
                         del commandParameters[toIgnore]
-
+                        
             # -- setup command 
 
             command = ["qunex"]
@@ -1750,7 +1786,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             for line in iter(process.stdout.readline, b''):
                 print line,
-                if "ERROR in completing" in line or "ERROR: Execution of qunex command" in line:
+                if "ERROR in completing" in line or "ERROR:" in line or "failed with error" in line:
                     error = True
                 if "Final report" in line:
                     if not verbose:
