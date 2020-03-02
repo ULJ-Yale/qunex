@@ -4108,9 +4108,12 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         while the default for multi-run HCP ICAFix
                                         is ["FALSE"].
     hcp_icafix_traindata            ... Which file to use for training data.
-                                        It can be a file (the file needs to be
-                                        in ${FSL_FIXDIR}/training_files folder)
-                                        or a full path to a file [""].
+                                        You can provide a full path to a file or
+                                        just a filename if the file is in the
+                                        ${FSL_FIXDIR}/training_files folder.
+                                        [""] for single-run HCP ICAFix and
+                                        ["HCP_Style_Single_Multirun_Dedrift.RData"]
+                                        for multi-run HCP ICAFix.
     hcp_icafix_threshold            ... ICAFix threshold that controls the
                                         sensitivity/specificity tradeoff [10].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
@@ -4169,13 +4172,6 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         # --- Multi threading
         threads = min(options['threads'], len(icafixBolds))
         r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
-
-        # --- if hcp_icafix_traindata parameter is provided check if it exists
-        if 'hcp_icafix_traindata' in options:
-            traindata = option['hcp_icafix_traindata']
-            if not os.file.exists(traindata):
-                r += "\n---> ERROR: Could not find specified TrainingData file [%s]." % traindata
-                raise
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = "0"
@@ -4330,7 +4326,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 'inputfile'             : inputfile,
                 'bandpass'              : bandpass,
                 'domot'                 : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
-                'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
+                'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
