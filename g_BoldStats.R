@@ -133,7 +133,7 @@ if (mreport != ""){
     }
     
     # lock movement report file
-    mreportlockfile <- mreport + ".lck"
+    mreportlockfile <- paste0(mreport, ".lck")
     mreportlock <- lock(mreportlockfile)
     
     mrfile <- file(mreport, "a")
