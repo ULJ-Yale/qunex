@@ -698,7 +698,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> Spin-Echo unwarp direction: %s" % (options['hcp_seunwarpdir'])
 
                     if options['hcp_topupconfig'] != 'NONE' and options['hcp_topupconfig']:
-                        toupupconfig = options['hcp_topupconfig']
+                        topupconfig = options['hcp_topupconfig']
                         if not os.path.exists(options['hcp_topupconfig']):
                             topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
                             if not os.path.exists(topupconfig):
