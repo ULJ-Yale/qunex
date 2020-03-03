@@ -158,7 +158,7 @@ if (preport != ""){
     }
     
     # lock post scrubbing report file
-    preportlockfile <- preport + ".lck"
+    preportlockfile <- paste0(preport, ".lck")
     preportlock <- lock(preportlockfile)
     
     prfile <- file(preport, "a")
@@ -183,7 +183,7 @@ if (sreport != ""){
     }
     
     # lock scrubbing report file
-    sreportlockfile <- sreport + ".lck"
+    sreportlockfile <- paste0(sreport, ".lck")
     sreportlock <- lock(sreportlockfile)
     
     srfile <- file(sreport, "a")
