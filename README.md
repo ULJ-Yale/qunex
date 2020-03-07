@@ -27,14 +27,14 @@ Versioning
 ============
 ---
 
-Qu|Nex suite version: 0.49.10
+Qu|Nex suite version: 0.49.11
 
 Submodules:
 
 * connector: 0.49.10
-* library: 0.49.10
+* library: 0.49.11
 * nitools: 0.49.10
-* niutilities: 0.49.10
+* niutilities: 0.49.11
 
 Installation from Source
 =========================
@@ -158,6 +158,7 @@ Change Log
 ============
 ---
 
+* 0.49.11 [library niutilities] HCP ICAFix implementation.
 * 0.49.10 [niutilities] Made SE selection for BOLD more robust and informative, added option to select by sequence number
 * 0.49.09 [qunex] HCPpipelines v4.1.3 
 * 0.49.08 [connector] Corrected parameter name
