@@ -197,6 +197,7 @@ hcp5  hcp_fMRISurface  Run HCP fMRI Surface pipeline.
 hcp6  hcp_ICAFix       Run HCP ICAFix pipeline.
 hcp7  hcp_PostFix      Run HCP PostFix pipeline.
 hcp8  hcp_ReApplyFix   Run HCP ReApplyFix pipeline.
+hcp9  hcp_MSMAll       Run HCP MSMAll pipeline.
 hcpd  hcp_Diffusion    Run HCP DWI pipeline.
 
 Functional connectivity preprocessing commands
