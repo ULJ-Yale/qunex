@@ -4312,7 +4312,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
         # --- check for bold image
         boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+        r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
         # bold in input format
         inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
@@ -4792,7 +4792,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         boldok = True
 
         # --- check for ICA image
-        r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
+        r, boldok = checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         reusehighpass = "YES" if 'hcp_postfix_reusehighpass' not in options else options['hcp_postfix_reusehighpass']
 
@@ -5472,7 +5472,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
         # --- check for bold image
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
-        r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
+        r, boldok = checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
