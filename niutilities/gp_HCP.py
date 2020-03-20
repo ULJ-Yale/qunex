@@ -5770,9 +5770,11 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 printbold  = str(bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-            # TODO FIX INPUT FILES
-            cleandtseries="${ResultsFolder}/${fMRIName}${fMRIProcSTRING}.dtseries.nii"
-            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
+            # fmriprocstring
+            fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
+            # input file check
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
             r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s.nii.gz] missing!' % boldimg, status=boldok)
 
             if not boldok:
@@ -5935,9 +5937,11 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 printbold  = str(bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-            # TODO FIX INPUT FILES
-            cleandtseries="${ResultsFolder}/${fMRIName}${fMRIProcSTRING}.dtseries.nii"
-            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
+            # fmriprocstring
+            fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
+            # input file check
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
             r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s.nii.gz] missing!' % boldimg, status=boldok)
 
             if not boldok:
@@ -5953,8 +5957,6 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
         # highpass
         highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
-
-        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
 
         if 'hcp_msmall_templates' not in options:
           msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
