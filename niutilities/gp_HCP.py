@@ -3939,7 +3939,7 @@ def parseICAFixBolds(options, bolds, r):
                         boldData.append(b)
                         found = True
                         boldSkip[boldtarget] = False
-                        break
+                        continue
 
                     if boldtarget not in boldSkip:
                         boldSkip[boldtarget] = True
@@ -3974,7 +3974,7 @@ def parseICAFixBolds(options, bolds, r):
                             groupData[g].append(b)
                             found = True
                             boldSkip[boldtarget] = False
-                            break
+                            continue
 
                         if boldtarget not in boldSkip:
                             boldSkip[boldtarget] = True
