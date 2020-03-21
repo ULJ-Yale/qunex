@@ -96,7 +96,7 @@ usage() {
 echo ""
 echo "This function implements Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated (e.g. Glasser parcellation)."
 echo ""
-echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.mri_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
+echo "For more detailed documentation run <help fc_ComputeGBC3>, <help nimage.img_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
 echo ""
 echo "-- GENERAL PARMETERS:"
 echo ""
