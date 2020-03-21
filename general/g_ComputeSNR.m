@@ -45,7 +45,7 @@ end
 
 %  ---- loading data
 
-img = gmrimage(filename);
+img = nimage(filename);
 img.data = img.image2D;
 [path, fname] = fileparts(fname);
 
@@ -56,7 +56,7 @@ if fmask
 end
 
 if imask
-	mask = gmrimage(imask);
+	mask = nimage(imask);
 	mask.data = mask.image4D > 0;
 else
 	tm = zeros(img.frames,1);
@@ -102,10 +102,10 @@ sd.data = std(img.image2D,0,2);
 msd = mask;
 msd.data = m.data./sd.data;
 
-m.mri_saveimage(fullfile(target, [fname '_mean']));
-sd.mri_saveimage(fullfile(target, [fname '_sd']));
-msd.mri_saveimage(fullfile(target, [fname '_msd']));
-mask.mri_saveimage(fullfile(target, [fname '_mask']));
+m.img_saveimage(fullfile(target, [fname '_mean']));
+sd.img_saveimage(fullfile(target, [fname '_sd']));
+msd.img_saveimage(fullfile(target, [fname '_msd']));
+mask.img_saveimage(fullfile(target, [fname '_mask']));
 
 slicesnr = snr;
 snr = mean(snr(~isnan(snr)));

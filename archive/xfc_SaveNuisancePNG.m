@@ -15,7 +15,7 @@ function [TS] = fc_SaveNuisancePNG(subjectf, bold)
 nfile    = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) '_nuisance.4dfp.img']);
 nfilepng = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) '_nuisance.png']);
 
-nimg = gmrimage(nfile);
+nimg = nimage(nfile);
 nimg.data = nimg.image2D;
 
 O  = nimg.sliceframes([1 0 0 0 0]);

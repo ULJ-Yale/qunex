@@ -35,7 +35,7 @@ if nargin < 4 || isempty(t), t = 3; end
 if isempty(tname), tname = fname; end
 
 
-img = gmrimage(fname);
+img = nimage(fname);
 img.data(abs(img.data) < t) = 0;
 
 
@@ -53,7 +53,7 @@ mn.data = mn.image4D;
 cn = bwconncomp(mn.data, 18);    % vs 26
 img = zerosmaller(img, cn, csize);
 
-img.mri_saveimage(tname);
+img.img_saveimage(tname);
 
 
 

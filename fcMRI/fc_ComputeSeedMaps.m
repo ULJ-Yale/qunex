@@ -78,7 +78,7 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %
 %   Changelog
 %   2008-01-23 Grega Repovš - Adjusted for a different file list format and an additional ROI mask.
-%   2011-11-10 Grega Repovš - Changed to make use of gmrimage and allow ignoring of bad frames.
+%   2011-11-10 Grega Repovš - Changed to make use of nimage and allow ignoring of bad frames.
 %   2013-12-28 Grega Repovš - Moved to a more general name, added block event extraction and use of 'use' info.
 %   2017-03-19 Grega Repovs - Cleaned code, updated documentation.
 %   2017-04-18 Grega Repovs - Adjusted to use updated g_ReadFileList.
@@ -170,7 +170,7 @@ for n = 1:nsub
         sroifile = [];
     end
 
-    roi  = gmrimage.mri_ReadROI(roiinfo, sroifile);
+    roi  = nimage.img_ReadROI(roiinfo, sroifile);
     nroi = length(roi.roi.roinames);
 
 
@@ -178,9 +178,9 @@ for n = 1:nsub
 
     fprintf('\n     ... reading image file(s)');
 
-    y = gmrimage(subject(n).files{1});
+    y = nimage(subject(n).files{1});
     for f = 2:length(subject(n).files)
-        y = [y gmrimage(subject(n).files{f})];
+        y = [y nimage(subject(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -250,8 +250,8 @@ for n = 1:nsub
         fprintf('%d ', sum(mask));
 
         t  = y.sliceframes(mask);
-        ts = t.mri_ExtractROI(roi, [], method);
-        pr = t.mri_ComputeCorrelations(ts', [], cv);
+        ts = t.img_ExtractROI(roi, [], method);
+        pr = t.img_ComputeCorrelations(ts', [], cv);
 
         % ------> Embedd results
 
@@ -302,10 +302,10 @@ for a = 1:nana
         fprintf('\n    ... for region %s', ana(a).group(r).roi);
 
         if cv
-            [p Z M] = ana(a).group(r).cv.mri_TTestZero();
+            [p Z M] = ana(a).group(r).cv.img_TTestZero();
         else
-            [p Z M] = ana(a).group(r).Fz.mri_TTestZero();
-            pr = M.mri_FisherInv();
+            [p Z M] = ana(a).group(r).Fz.img_TTestZero();
+            pr = M.img_FisherInv();
         end
 
         fprintf('... saving ...');
@@ -316,15 +316,15 @@ for a = 1:nana
         end
 
         if cv
-            M.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_cv'], extra);                  fprintf(' cv');
-            ana(a).group(r).cv.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_cv'], extra);   fprintf(' all cv');
+            M.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_cv'], extra);                  fprintf(' cv');
+            ana(a).group(r).cv.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_cv'], extra);   fprintf(' all cv');
         else
-            pr.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_r'], extra);                  fprintf(' r');
-            M.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Fz'], extra);                  fprintf(' Fz');
-            ana(a).group(r).Fz.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_Fz'], extra);   fprintf(' all Fz');
+            pr.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_r'], extra);                  fprintf(' r');
+            M.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Fz'], extra);                  fprintf(' Fz');
+            ana(a).group(r).Fz.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_Fz'], extra);   fprintf(' all Fz');
         end
 
-        Z.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Z'], extra);                   fprintf(' Z');
+        Z.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Z'], extra);                   fprintf(' Z');
 
         fprintf(' ... done.');
 

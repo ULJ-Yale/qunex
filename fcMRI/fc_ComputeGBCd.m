@@ -38,7 +38,7 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 %   USE
 %   This is a wrapper function for computing GBC for specified ROI across the specified number of
 %   distance bands. The function goes through a list of subjects specified by flist file and runs
-%   mri_ComputeGBCd method on bold files listed for each subject. ROI to compute GBC for are specified
+%   img_ComputeGBCd method on bold files listed for each subject. ROI to compute GBC for are specified
 %   in roi and rcodes parameters, whereas the mask of what voxels to compute GBC over is specified
 %   by target parameter. The values should match rcodes used in subject specific roi file. Usually
 %   this would be a freesurfer segmentation image and if no target values are specified all the gray
@@ -57,7 +57,7 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 %   targetf specifies the folder in which the results will be saved. The file will be named using the
 %   root of the flist with '_GBCd.mat' added to it.
 %
-%   For more specific information on what is computed, see help for gmrimage method mri_ComputeGBCd.
+%   For more specific information on what is computed, see help for nimage method img_ComputeGBCd.
 %
 %   EXAMPLE USE
 %
@@ -133,37 +133,37 @@ for s = 1:nsubjects
 
 	nfiles = length(subject(s).files);
 
-	img = gmrimage(subject(s).files{1});
+	img = nimage(subject(s).files{1});
 
     fprintf('1');
 	if ~isempty(mask),   img = img.sliceframes(mask); end
-    if ~isempty(ignore), img = img.mri_Scrub(ignore); end
+    if ~isempty(ignore), img = img.img_Scrub(ignore); end
 
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = gmrimage(subject(s).files{n});
+    	    new = nimage(subject(s).files{n});
             fprintf(', %d', n);
     	    if ~isempty(mask),   new = new.sliceframes(mask); end
-            if ~isempty(ignore), new = new.mri_Scrub(ignore); end
+            if ~isempty(ignore), new = new.img_Scrub(ignore); end
     	    img = [img new];
         end
     end
 
-    imask = gmrimage(subject(s).roi);
+    imask = nimage(subject(s).roi);
     imask = imask.ismember(target);
 
     if rsmooth
         limit = isempty(rdilate);
-        img = img.mri_Smooth3DMasked(imask, rsmooth, limit, verbose);
+        img = img.img_Smooth3DMasked(imask, rsmooth, limit, verbose);
     end
 
     if rdilate
-        imask = imask.mri_GrowROI(rdilate);
+        imask = imask.img_GrowROI(rdilate);
     end
 
-    roiimg = gmrimage.mri_ReadROI(roi, subject(s).roi);
+    roiimg = nimage.img_ReadROI(roi, subject(s).roi);
 
-    [res, roiinfo, rdata] = img.mri_ComputeGBCd(command, roiimg, rcodes, nbands, [], imask);
+    [res, roiinfo, rdata] = img.img_ComputeGBCd(command, roiimg, rcodes, nbands, [], imask);
 
     data.gbcd(s).gbc = res;
     data.gbcd(s).roiinfo = roiinfo;

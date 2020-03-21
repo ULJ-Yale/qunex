@@ -5,8 +5,8 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %   Computes BOLD run per frame statistics and scrubbing information.
 %
 %   INPUTS
-%       img      ... An gmrimage object or a path to a BOLD file to process.
-%       mask     ... An gmrimage object or a path to a mask file to use.
+%       img      ... An nimage object or a path to a BOLD file to process.
+%       mask     ... An nimage object or a path to a mask file to use.
 %       target   ... A folder to save results into ['']:
 %                    '': where bold image is,
 %                    'none': do not save results in an external file
@@ -16,7 +16,7 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %                    - '': do not save information in an image file
 %       scrub    ... A string describing whether and how to compute scrubbing
 %                    information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or
-%                    'none' for no scrubbing (see mri_ComputeScrub gmrimage
+%                    'none' for no scrubbing (see img_ComputeScrub nimage
 %                    method for more information.
 %       verbose  ... To report the progress or not [false].
 %
@@ -36,11 +36,11 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %   frames is more than 0.
 %
 %   After the voxels were identified, the image is additionally masked if a
-%   mask was specified, and the statistics are computed using mri_StatsTime
-%   gmrimage method.
+%   mask was specified, and the statistics are computed using img_StatsTime
+%   nimage method.
 %
 %   If scrub is not set to 'none', scrubbing information is also computed by
-%   calling mri_ComputeScrub gmrimage method.
+%   calling img_ComputeScrub nimage method.
 %
 %   The results can then be saved either by embedding them into the volume
 %   image (specified in the store parameter) or by saving them in separate
@@ -94,17 +94,17 @@ end
 % --- check mask
 
 if ~isempty(mask)
-    if ~isa(mask, 'gmrimage')
+    if ~isa(mask, 'nimage')
         if verbose, fprintf('\n---> Reading mask [%s]', mask); end
-        mask = gmrimage(mask);
+        mask = nimage(mask);
     end
 end
 
 % --- check bold
 
-if ~isa(img, 'gmrimage')
+if ~isa(img, 'nimage')
     if verbose, fprintf('\n---> Reading bold [%s]', img); end
-    img = gmrimage(img);
+    img = nimage(img);
 end
 
 % --- find all below threshold voxels
@@ -135,7 +135,7 @@ end
 % --- compute stats
 
 if verbose, fprintf(' ... computing stats'); end
-stats = img.mri_StatsTime([], bmask);
+stats = img.img_StatsTime([], bmask);
 
 % --------------------------------------------------------------
 %                                       save in an external file
@@ -178,7 +178,7 @@ img.fstats(:,8) = stats.dvarsme;
 
 if ~strcmp(scrub, 'none')
     if verbose, fprintf(' ... scrubbing'); end
-    [img, parameters] = img.mri_ComputeScrub(scrub);
+    [img, parameters] = img.img_ComputeScrub(scrub);
 end
 
 
@@ -189,10 +189,10 @@ end
 
 % if ~isempty(store)
 %     if strcmp(store, 'same')
-%         img.mri_saveimage();
+%         img.img_saveimage();
 %     else
 %         tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
-%         img.mri_saveimage(tname);
+%         img.img_saveimage(tname);
 %     end
 % end
 

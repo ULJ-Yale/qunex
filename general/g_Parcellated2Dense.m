@@ -12,7 +12,7 @@ function [img] = g_Parcellated2Dense(inimg, outimg, verbose, missingvalues)
 %                          values (numeric or NaN) provided as a string ['0']
 %
 %   OUTPUT
-%       - img : a dense cifti gmrimage image object
+%       - img : a dense cifti nimage image object
 %
 %   USE
 %   This method is used to expand a parcellated cifti data file to a cifti 
@@ -49,8 +49,8 @@ end
 
 
 if verbose, fprintf('\n===> Loading %s', inimg), end
-img = gmrimage(inimg);
-img = img.mri_Parcellated2Dense(verbose, missingvalues);
+img = nimage(inimg);
+img = img.img_Parcellated2Dense(verbose, missingvalues);
 
 % --> save
 if isempty(outimg)
@@ -58,7 +58,7 @@ if isempty(outimg)
 end
 
 if verbose, fprintf('\n===> saving %s', outimg), end
-img.mri_saveimage(outimg);
+img.img_saveimage(outimg);
 
 if verbose, fprintf('\n===> done\n'), end
 

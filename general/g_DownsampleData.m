@@ -56,7 +56,7 @@ end
 % --- check whether the input is cifti or data vector
 if ~isnumeric(input)
     input = g_ParseOptions([],input);
-    img = gmrimage(input.img);
+    img = nimage(input.img);
     if strcmp(input.surf,'CL')
         s = 1;
     elseif strcmp(input.surf,'CR')
