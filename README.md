@@ -27,13 +27,13 @@ Versioning
 ============
 ---
 
-Qu|Nex suite version: 0.49.11
+Qu|Nex suite version: 0.50.0
 
 Submodules:
 
-* connector: 0.49.10
-* library: 0.49.11
-* nitools: 0.49.10
+* connector: 0.50.0
+* library: 0.50.0
+* nitools: 0.50.0
 * niutilities: 0.49.11
 
 Installation from Source
@@ -161,7 +161,7 @@ Change Log
 * 0.50.00 [nitools library connector] Renamed gmrimage class to nimage and methods names from mri_ to img_.
 * 0.49.11 [library niutilities] HCP ICAFix implementation.
 * 0.49.10 [niutilities] Made SE selection for BOLD more robust and informative, added option to select by sequence number
-* 0.49.09 [qunex] HCPpipelines v4.1.3 
+* 0.49.09 [qunex] HCPpipelines v4.1.3
 * 0.49.08 [connector] Corrected parameter name
 * 0.49.07 [library niutilities] Fixed and expanded functionality for PBS scheduler
 * 0.49.06 [library] Added reporting of HCPpipelines version
