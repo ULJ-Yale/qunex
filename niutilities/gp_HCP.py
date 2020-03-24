@@ -4839,10 +4839,10 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = 1
             elif options['hcp_matlab_mode'] == "octave":
-                r += "\n     ... WARNING: ICAFix runs with octave results are unstable!"
+                r += "\nWARNING: ICAFix runs with octave results are unstable!"
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
                 boldok = False
 
         # subject
@@ -5231,10 +5231,10 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                 elif options['hcp_matlab_mode'] == "interpreted":
                     matlabrunmode = 1
                 elif options['hcp_matlab_mode'] == "octave":
-                    r += "\n     ... WARNING: ICAFix runs with octave results are unstable!"
+                    r += "\nWARNING: ICAFix runs with octave results are unstable!"
                     matlabrunmode = 2
                 else:
-                    r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                    r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
                     boldok = False
 
             # regname
@@ -5390,10 +5390,10 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 elif options['hcp_matlab_mode'] == "interpreted":
                     matlabrunmode = 1
                 elif options['hcp_matlab_mode'] == "octave":
-                    r += "\n     ... WARNING: ICAFix runs with octave results are unstable!"
+                    r += "\nWARNING: ICAFix runs with octave results are unstable!"
                     matlabrunmode = 2
                 else:
-                    r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                    r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
                     groupok = False
 
             # regname
