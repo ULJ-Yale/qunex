@@ -27,14 +27,14 @@ Versioning
 ============
 ---
 
-Qu|Nex suite version: 0.50.0
+Qu|Nex suite version: 0.50.01
 
 Submodules:
 
-* connector: 0.50.0
+* connector: 0.50.01
 * library: 0.50.0
 * nitools: 0.50.0
-* niutilities: 0.49.11
+* niutilities: 0.50.03
 
 Installation from Source
 =========================
@@ -158,6 +158,7 @@ Change Log
 ============
 ---
 
+* 0.50.01 [niutilities] ICAFix regname debug and optimized bold comparison.
 * 0.50.00 [nitools library connector] Renamed gmrimage class to nimage and methods names from mri_ to img_.
 * 0.49.11 [library niutilities] HCP ICAFix implementation.
 * 0.49.10 [niutilities] Made SE selection for BOLD more robust and informative, added option to select by sequence number
