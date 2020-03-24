@@ -95,8 +95,10 @@ Change log
 =====================
 ---
 
-* 0.49.12 Added filesort option for HCPLSImport.
-* 0.49.11 HCP ICAFix implementation.
+* 0.50.03 ICAFix regname debug.
+* 0.50.02 Added filesort option for HCPLSImport.
+* 0.50.01 Optimized bold comparison.
+* 0.50.00 HCP ICAFix implementation.
 * 0.49.10 Initial submodule versioning.
 
 [Mind and Brain Lab]: http://mblab.si
