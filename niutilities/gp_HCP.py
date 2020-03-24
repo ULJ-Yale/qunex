@@ -3908,6 +3908,8 @@ def parseICAFixBolds(options, bolds, r):
             icafixBolds = str.split(icafixBolds, ",")
     # if hcp_icafix_bolds is empty then bundle all bolds
     else:
+        # run multi fix
+        singleFix = False
         icafixBolds = bolds
         icafixGroups = []
         icafixGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":icafixBolds})
