@@ -5035,8 +5035,8 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
                                         to FIX cleaning ["FALSE"].
-    hcp_icafix_regname              ... Specifies surface registration name
-                                        ["NONE"].
+    hcp_icafix_regname              ... Specifies surface registration name.
+                                        Use "NONE" for MSMSulc ["NONE"].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
 
     EXAMPLE USE
