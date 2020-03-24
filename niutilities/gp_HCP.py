@@ -5035,7 +5035,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
                                         to FIX cleaning ["FALSE"].
-    hcp_regname                     ... Specifies surface registration name
+    hcp_icafix_regname              ... Specifies surface registration name
                                         ["NONE"].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
 
@@ -5239,8 +5239,8 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
             # regname
             regname = "NONE"
-            if 'hcp_regname' not in options or options['hcp_regname'] != "":
-                regname = options['hcp_regname']
+            if 'hcp_icafix_regname' not in options or options['hcp_icafix_regname'] != "":
+                regname = options['hcp_icafix_regname']
 
             comm = '%(script)s \
                 --path="%(path)s" \
