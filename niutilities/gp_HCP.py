@@ -5398,8 +5398,8 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
             # regname
             regname = "NONE"
-            if 'hcp_regname' not in options or options['hcp_regname'] != "":
-                regname = options['hcp_regname']
+            if 'hcp_icafix_regname' not in options or options['hcp_icafix_regname'] != "":
+                regname = options['hcp_icafix_regname']
 
             # highpass and regname
             highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
