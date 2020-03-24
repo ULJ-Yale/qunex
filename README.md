@@ -95,6 +95,7 @@ Change log
 =====================
 ---
 
+* 0.49.12 Added filesort option for HCPLSImport.
 * 0.49.11 HCP ICAFix implementation.
 * 0.49.10 Initial submodule versioning.
 
