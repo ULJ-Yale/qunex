@@ -5239,7 +5239,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
             # regname
             regname = "NONE"
-            if 'hcp_icafix_regname' not in options or options['hcp_icafix_regname'] != "":
+            if 'hcp_icafix_regname' in options and options['hcp_icafix_regname'] != "":
                 regname = options['hcp_icafix_regname']
 
             comm = '%(script)s \
@@ -5398,7 +5398,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
             # regname
             regname = "NONE"
-            if 'hcp_icafix_regname' not in options or options['hcp_icafix_regname'] != "":
+            if 'hcp_icafix_regname' in options and options['hcp_icafix_regname'] != "":
                 regname = options['hcp_icafix_regname']
 
             # highpass and regname
