@@ -3874,8 +3874,12 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 def parseICAFixBolds(options, bolds, r):
     # --- Use hcp_icafix_bolds parameter to determine if a single fix or a multi fix should be used
     singleFix = True
+
     # variable for storing groups and their bolds
     icafixGroups = {}
+
+    # flag that all is OK
+    boldsOK= True
 
     if 'hcp_icafix_bolds' in options:
         icafixBolds = options['hcp_icafix_bolds']
@@ -3893,7 +3897,11 @@ def parseICAFixBolds(options, bolds, r):
                 split = str.split(g, ":")
 
                 # create group and add to dictionary
-                icafixGroups[split[0]] = str.split(split[1], ",")
+                if split[0] not in icafixGroups:
+                    icafixGroups[split[0]] = str.split(split[1], ",")
+                else:
+                    boldsOK = False
+                    r += "\n\nERROR: multiple concatenations with the same name [%s]!" % split[0]
 
         # else we extract bolds and use single fix
         else:
@@ -3903,81 +3911,95 @@ def parseICAFixBolds(options, bolds, r):
         icafixBolds = bolds
         icafixGroups = []
         icafixGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":icafixBolds})
+        r += "\nConcatenating all bolds\n"
 
     # --- Report single fix or multi fix
     if singleFix:
-        r += "\n\n%s single fix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+        r += "\n\n%s single run on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
     else:
-        r += "\n\n%s multi fix on %d groups" % (action("Processing", options['run']), len(icafixGroups))
+        r += "\n\n%s multi run on %d groups" % (action("Processing", options['run']), len(icafixGroups))
 
     # --- Get hcp_icafix_bolds data from bolds
-    # variable for storing skipped bolds
-    boldSkip = {}
+    # variables for storing unexisting and skipped bolds
+    boldError = []
+    boldSkip = []
 
     if icafixBolds is not bolds:
-        r += "\n%s bolds with hcp_icafix_bolds\n" % (action("Comparing", options['run']))
         # compare
+        r += "\nComparing bolds with hcp_icafix_bolds\n"
+
+        # get all bold targets
+        boldtargets = []
+        for b in bolds:
+            # extract data
+            _, _, _, boldinfo = b
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                boldtarget = boldinfo['filename']
+            else:
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+            boldtargets.append(boldtarget)
+
         # single fix
         if singleFix:
             # variable for storing bold data
             boldData = []
 
+            # find erroneous bolds
             for icaB in icafixBolds:
-                # find the bold in bolds
-                found = False
-                for b in bolds:
-                    # extract data
-                    _, _, _, boldinfo = b
+                # bold does not exist?
+                if icaB not in boldtargets:
+                    boldError.append(icaB)
 
-                    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                        boldtarget = boldinfo['filename']
-                    else:
-                        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
-                    if icaB == boldtarget:
-                        # add to temporary variable boldData
-                        boldData.append(b)
-                        found = True
-                        boldSkip[boldtarget] = False
-                        continue
-
-                    if boldtarget not in boldSkip:
-                        boldSkip[boldtarget] = True
+            # find skipped bolds
+            for i in range(len(boldtargets)):
+                # bold us defined
+                if boldtargets[i] in icafixBolds:
+                    # add to temporary variable boldData
+                    boldData.append(bolds[i])
+                else:
+                    boldSkip.append(boldtargets[i])
 
             # store data into the icafixBolds variable
             icafixBolds = boldData
+
         # multi fix
         else:
             # variable for storing group data
             groupData = {}
 
+            # variable for storing skipped bolds
+            boldSkipDict = {}
+            for b in boldtargets:
+                boldSkipDict[b] = True
+
             # go over all groups
             for g in icafixGroups:
                 # create empty dict entry for group
                 groupData[g] = []
+
                 # go over group bolds
                 groupBolds = icafixGroups[g]
+
+                # find erroneous bolds
                 for groupB in groupBolds:
-                    # look for bold in all bolds
-                    found = False
-                    for b in bolds:
-                        # extract data
-                        _, _, _, boldinfo = b
+                    # bold does not exist?
+                    if groupB not in boldtargets:
+                        boldError.append(groupB)
 
-                        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                            boldtarget = boldinfo['filename']
-                        else:
-                            boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+                # find skipped bolds
+                for i in range(len(boldtargets)):
+                    # bold is defined
+                    if boldtargets[i] in groupBolds:
+                        # append
+                        groupData[g].append(bolds[i])
+                        boldSkipDict[boldtargets[i]] = False
 
-                        if groupB == boldtarget:
-                            # add bold to the group
-                            groupData[g].append(b)
-                            found = True
-                            boldSkip[boldtarget] = False
-                            continue
-
-                        if boldtarget not in boldSkip:
-                            boldSkip[boldtarget] = True
+            # cast boldSkip from dictionary to array
+            for b in boldtargets:
+                if boldSkipDict[b]:
+                    boldSkip.append(b)
 
             # cast group data to array of dictionaries (needed for parallel)
             icafixGroups = []
@@ -3985,15 +4007,18 @@ def parseICAFixBolds(options, bolds, r):
                 icafixGroups.append({"name":g, "bolds":groupData[g]})
 
     # report hcp_icafix_bolds not found in bolds
-    if len(boldSkip) > 0:
+    if len(boldSkip) > 0 or len(boldError) > 0:
         for b in boldSkip:
-            if boldSkip[b] is True:
-                r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % b
+            r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % b
+        for b in boldError:
+            r += "     ... ERROR: %s: specified bold not found in bolds\n" % b
     else:
         r += "     ... all bolds specified in the hcp_icafix_bolds parameter are present\n"
 
+    if (len(boldError) > 0):
+        boldsOK = False
 
-    return (singleFix, icafixBolds, icafixGroups, r)
+    return (singleFix, icafixBolds, icafixGroups, boldsOK, r)
 
 
 def hcpICAFix(sinfo, options, overwrite=False, thread=0):
@@ -4167,7 +4192,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
 
         # --- Multi threading
         threads = min(options['threads'], len(icafixBolds))
@@ -4181,13 +4206,16 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = "1"
             elif options['hcp_matlab_mode'] == "octave":
+                r += "\nWARNING: ICAFix runs with octave results are unstable!\n"
                 matlabrunmode = "2"
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                raise
+                parsOK = False
 
         # set variable
         os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
+
+        if not parsOK:
+            raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
 
         # --- Execute
         # single fix
@@ -4676,7 +4704,9 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
 
         # --- Multi threading
         threads = min(options['threads'], len(icafixBolds))
@@ -4807,6 +4837,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = 1
             elif options['hcp_matlab_mode'] == "octave":
+                r += "\n     ... WARNING: ICAFix runs with octave results are unstable!"
                 matlabrunmode = 2
             else:
                 r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
@@ -5054,7 +5085,9 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
 
         # --- Multi threading
         threads = min(options['threads'], len(icafixBolds))
@@ -5196,6 +5229,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                 elif options['hcp_matlab_mode'] == "interpreted":
                     matlabrunmode = 1
                 elif options['hcp_matlab_mode'] == "octave":
+                    r += "\n     ... WARNING: ICAFix runs with octave results are unstable!"
                     matlabrunmode = 2
                 else:
                     r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
@@ -5354,6 +5388,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 elif options['hcp_matlab_mode'] == "interpreted":
                     matlabrunmode = 1
                 elif options['hcp_matlab_mode'] == "octave":
+                    r += "\n     ... WARNING: ICAFix runs with octave results are unstable!"
                     matlabrunmode = 2
                 else:
                     r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
