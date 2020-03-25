@@ -95,6 +95,7 @@ Change log
 =====================
 ---
 
+* 0.50.04 ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter.
 * 0.50.03 ICAFix regname debug.
 * 0.50.02 Added filesort option for HCPLSImport.
 * 0.50.01 Optimized bold comparison.

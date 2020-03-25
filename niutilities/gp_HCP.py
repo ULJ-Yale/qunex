@@ -3878,8 +3878,29 @@ def parseICAFixBolds(options, bolds, r):
     # variable for storing groups and their bolds
     icafixGroups = {}
 
+    # variable for storing erroneously specified bolds
+    boldError = []
+
     # flag that all is OK
     boldsOK= True
+
+    # get all bold targets and tags
+    boldtargets = []
+    boldtags = []
+
+    for b in bolds:
+        # extract data
+        _, _, _, boldinfo = b
+
+        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+            boldtarget = boldinfo['filename']
+            boldtag = boldinfo['task']
+        else:
+            boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+            boldtag = boldinfo['task']
+
+        boldtargets.append(boldtarget)
+        boldtags.append(boldtag)
 
     if 'hcp_icafix_bolds' in options:
         icafixBolds = options['hcp_icafix_bolds']
@@ -3898,14 +3919,60 @@ def parseICAFixBolds(options, bolds, r):
 
                 # create group and add to dictionary
                 if split[0] not in icafixGroups:
-                    icafixGroups[split[0]] = str.split(split[1], ",")
+                    specifiedBolds = str.split(split[1], ",")
+                    groupBolds = []
+
+                    # iterate over all and add to bolds or inject instead of tags
+                    for sb in specifiedBolds:
+                        if sb not in boldtargets and sb not in boldtags: 
+                            boldError.append(sb)
+                        else:
+                            # counter
+                            i = 0
+
+                            for b in boldtargets:
+                                if sb == boldtargets[i] or sb == boldtags[i]:
+                                    if sb in groupBolds:
+                                        boldsOK = False
+                                        r += "\n\nERROR: there is a duplicate bold [%s] in group [%s]!" % (b, split[0])
+                                    else:
+                                        groupBolds.append(b)
+
+                                # increase counter
+                                i = i + 1
+
+                    icafixGroups[split[0]] = groupBolds
                 else:
                     boldsOK = False
                     r += "\n\nERROR: multiple concatenations with the same name [%s]!" % split[0]
 
         # else we extract bolds and use single fix
         else:
-            icafixBolds = str.split(icafixBolds, ",")
+            # specified bolds
+            specifiedBolds = str.split(icafixBolds, ",")
+
+            # variable for storing bolds
+            icafixBolds = []
+
+            # iterate over all and add to bolds or inject instead of tags
+            for sb in specifiedBolds:
+                if sb not in boldtargets and sb not in boldtags: 
+                    boldError.append(sb)
+                else:
+                    # counter
+                    i = 0
+
+                    for b in boldtargets:
+                        if sb == boldtargets[i] or sb == boldtags[i]:
+                            if sb in icafixBolds:
+                                boldsOK = False
+                                r += "\n\nERROR: the bold [%s] is specified twice!" % b
+                            else:
+                                icafixBolds.append(b)
+
+                        # increase counter
+                        i = i + 1
+
     # if hcp_icafix_bolds is empty then bundle all bolds
     else:
         # run multi fix
@@ -3915,53 +3982,32 @@ def parseICAFixBolds(options, bolds, r):
         icafixGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":icafixBolds})
         r += "\nConcatenating all bolds\n"
 
-    # --- Report single fix or multi fix
-    if singleFix:
-        r += "\n\n%s single run on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
-    else:
-        r += "\n\n%s multi run on %d groups" % (action("Processing", options['run']), len(icafixGroups))
-
     # --- Get hcp_icafix_bolds data from bolds
-    # variables for storing unexisting and skipped bolds
-    boldError = []
+    # variable for storing skipped bolds
     boldSkip = []
 
     if icafixBolds is not bolds:
         # compare
-        r += "\nComparing bolds with hcp_icafix_bolds\n"
-
-        # get all bold targets
-        boldtargets = []
-        for b in bolds:
-            # extract data
-            _, _, _, boldinfo = b
-
-            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                boldtarget = boldinfo['filename']
-            else:
-                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
-            boldtargets.append(boldtarget)
+        r += "\n\nComparing bolds with hcp_icafix_bolds\n"
 
         # single fix
         if singleFix:
             # variable for storing bold data
             boldData = []
 
-            # find erroneous bolds
-            for icaB in icafixBolds:
-                # bold does not exist?
-                if icaB not in boldtargets:
-                    boldError.append(icaB)
+            # add data to list
+            for b in icafixBolds:
+                # get index
+                i = boldtargets.index(b)
 
-            # find skipped bolds
-            for i in range(len(boldtargets)):
-                # bold us defined
-                if boldtargets[i] in icafixBolds:
-                    # add to temporary variable boldData
+                # store data
+                if b in boldtargets:
                     boldData.append(bolds[i])
-                else:
-                    boldSkip.append(boldtargets[i])
+
+            # skipped bolds
+            for b in boldtargets:
+                if b not in icafixBolds:
+                    boldSkip.append(b)
 
             # store data into the icafixBolds variable
             icafixBolds = boldData
@@ -3984,18 +4030,22 @@ def parseICAFixBolds(options, bolds, r):
                 # go over group bolds
                 groupBolds = icafixGroups[g]
 
-                # find erroneous bolds
-                for groupB in groupBolds:
-                    # bold does not exist?
-                    if groupB not in boldtargets:
-                        boldError.append(groupB)
+                # add data to list
+                for b in groupBolds:
+                    # get index
+                    i = boldtargets.index(b)
+
+                    # store data
+                    if b in boldtargets:
+                        groupData[g].append(bolds[i])
+
 
                 # find skipped bolds
                 for i in range(len(boldtargets)):
                     # bold is defined
                     if boldtargets[i] in groupBolds:
                         # append
-                        groupData[g].append(bolds[i])
+
                         boldSkipDict[boldtargets[i]] = False
 
             # cast boldSkip from dictionary to array
@@ -4013,12 +4063,18 @@ def parseICAFixBolds(options, bolds, r):
         for b in boldSkip:
             r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % b
         for b in boldError:
-            r += "     ... ERROR: %s: specified bold not found in bolds\n" % b
+            r += "     ... ERROR: %s specified but not found in bolds\n" % b
     else:
         r += "     ... all bolds specified in the hcp_icafix_bolds parameter are present\n"
 
     if (len(boldError) > 0):
         boldsOK = False
+
+    # --- Report single fix or multi fix
+    if singleFix:
+        r += "\n%s single run on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+    else:
+        r += "\n%s multi run on %d groups" % (action("Processing", options['run']), len(icafixGroups))
 
     return (singleFix, icafixBolds, icafixGroups, boldsOK, r)
 
