@@ -158,6 +158,7 @@ Change Log
 ============
 ---
 
+* 0.50.02 [niutilities] ICAFix ordering of bolds now matched the hcp_icafix_bolds parameter.
 * 0.50.01 [niutilities] ICAFix regname debug and optimized bold comparison.
 * 0.50.00 [nitools library connector] Renamed gmrimage class to nimage and methods names from mri_ to img_.
 * 0.49.11 [library niutilities] HCP ICAFix implementation.
