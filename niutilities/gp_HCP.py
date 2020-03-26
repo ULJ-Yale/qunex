@@ -3913,6 +3913,9 @@ def parseICAFixBolds(options, bolds, r):
             # get all groups
             groups = str.split(icafixBolds, "|")
 
+            # store all bolds in icafixBolds
+            icafixBolds = []
+
             for g in groups:
                 # get group name
                 split = str.split(g, ":")
@@ -3932,11 +3935,12 @@ def parseICAFixBolds(options, bolds, r):
 
                             for b in boldtargets:
                                 if sb == boldtargets[i] or sb == boldtags[i]:
-                                    if sb in groupBolds:
+                                    if sb in icafixBolds:
                                         boldsOK = False
-                                        r += "\n\nERROR: there is a duplicate bold [%s] in group [%s]!" % (b, split[0])
+                                        r += "\n\nERROR: the bold [%s] is specified twice!" % b
                                     else:
                                         groupBolds.append(b)
+                                        icafixBolds.append(b)
 
                                 # increase counter
                                 i = i + 1
@@ -4253,7 +4257,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
 
         # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
+        if singleFix:
+            threads = min(options['threads'], len(icafixBolds))
+        else:
+            threads = min(options['threads'], len(icafixGroups))
         r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
@@ -4767,7 +4774,10 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
             raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
 
         # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
+        if singleFix:
+            threads = min(options['threads'], len(icafixBolds))
+        else:
+            threads = min(options['threads'], len(icafixGroups))
         r += "\n\n%s PostFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Execute
@@ -5148,7 +5158,10 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
             raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
 
         # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
+        if singleFix:
+            threads = min(options['threads'], len(icafixBolds))
+        else:
+            threads = min(options['threads'], len(icafixGroups))
         r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Execute
