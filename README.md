@@ -27,14 +27,14 @@ Versioning
 ============
 ---
 
-Qu|Nex suite version: 0.50.02
+Qu|Nex suite version: 0.50.03
 
 Submodules:
 
 * connector: 0.50.00
 * library: 0.50.01
 * nitools: 0.50.00
-* niutilities: 0.50.04
+* niutilities: 0.50.05
 
 Installation from Source
 =========================
@@ -158,6 +158,7 @@ Change Log
 ============
 ---
 
+* 0.50.03 [niutilities] HCP glob search debug, nicer lookings exceptions in ICAFix.
 * 0.50.02 [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR.
 * 0.50.01 [niutilities] ICAFix regname debug and optimized bold comparison.
 * 0.50.00 [nitools library connector] Renamed gmrimage class to nimage and methods names from mri_ to img_.
