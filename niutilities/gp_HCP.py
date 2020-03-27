@@ -156,13 +156,13 @@ def getHCPPaths(sinfo, options):
     d['fmapphase'] = ''
     d['fmapge']    = ''
     if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_dcmethod'] == 'SiemensFieldMap':
-        d['fmapmag']   = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
-        d['fmapphase'] = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Phase.nii.gz'))
+        d['fmapmag']   = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))[0]
+        d['fmapphase'] = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Phase.nii.gz'))[0]
         d['fmapge']    = ""
     elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_dcmethod'] == 'GeneralElectricFieldMap':
         d['fmapmag']   = ""
         d['fmapphase'] = ""
-        d['fmapge']    = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_GE.nii.gz'))
+        d['fmapge']    = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_GE.nii.gz'))[0]
 
     # --- default check files
 
@@ -663,8 +663,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
             if senum is None:
                 try:
-                    tufolder = glob.glob(os.path.join(hcp['source'], 'SpinEchoFieldMap*'))
-                    tufolder = tufolder[0]
+                    tufolder = glob.glob(os.path.join(hcp['source'], 'SpinEchoFieldMap*'))[0]
                     senum = int(os.path.basename(tufolder).replace('SpinEchoFieldMap', '').replace('_fncb', ''))
                     r += "\n---> TOPUP Correction, no Spin-Echo pair explicitly specified, using pair %d" % (senum)
                 except:
@@ -4280,7 +4279,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
 
         if not parsOK:
-            raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_ICAFix", "Invalid input parameters!")
 
         # --- Execute
         # single fix
@@ -4365,6 +4364,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP ICAFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP ICAFix failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ICAFix failed')
@@ -4771,7 +4774,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -4832,6 +4835,10 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP PostFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP PostFix failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP PostFix failed')
@@ -5155,7 +5162,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed(options['command_ran'], "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_ReApplyFix", "Invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -5247,6 +5254,10 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP ReApplyFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP ReApplyFix failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ReApplyFix failed')
