@@ -95,6 +95,7 @@ Change log
 =====================
 ---
 
+* 0.50.06 Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.05 HCP glob debug, ICAFix exceptions now look nicer.
 * 0.50.04 ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter.
 * 0.50.03 ICAFix regname debug.

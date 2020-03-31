@@ -4177,7 +4177,9 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         "<group1>:<boldname1>,<boldname2>|
                                         <group2>:<boldname3>,<boldname4>",
                                         in this case multi-run HCP ICAFix will be
-                                        executed. If this parameter is not provided
+                                        executed. Instead of full bold names, you
+                                        can also use bold tags from the batch file.
+                                        If this parameter is not provided
                                         ICAFix will bundle all bolds together and
                                         execute multi-run HCP ICAFix, the
                                         concatenated file will be named
@@ -4703,7 +4705,9 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                                     "<group1>:<boldname1>,<boldname2>|
                                     <group2>:<boldname3>,<boldname4>",
                                     in this case multi-run HCP ICAFix will be
-                                    executed. If this parameter is not provided
+                                    executed. Instead of full bold names, you
+                                    can also use bold tags from the batch file.
+                                    If this parameter is not provided
                                     ICAFix will bundle all bolds together and
                                     execute multi-run HCP ICAFix, the
                                     concatenated file will be named
@@ -5088,7 +5092,9 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         "<group1>:<boldname1>,<boldname2>|
                                         <group2>:<boldname3>,<boldname4>",
                                         in this case multi-run HCP ICAFix will be
-                                        executed. If this parameter is not provided
+                                        executed. Instead of full bold names, you
+                                        can also use bold tags from the batch file.
+                                        If this parameter is not provided
                                         ICAFix will bundle all bolds together and
                                         execute multi-run HCP ICAFix, the
                                         concatenated file will be named
