@@ -27,14 +27,14 @@ Versioning
 ============
 ---
 
-Qu|Nex suite version: 0.50.03
+Qu|Nex suite version: 0.50.04
 
 Submodules:
 
 * connector: 0.50.00
 * library: 0.50.01
 * nitools: 0.50.00
-* niutilities: 0.50.05
+* niutilities: 0.50.06
 
 Installation from Source
 =========================
@@ -158,6 +158,7 @@ Change Log
 ============
 ---
 
+* 0.50.04 [niutilities] Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.03 [niutilities] HCP glob search debug, nicer lookings exceptions in ICAFix.
 * 0.50.02 [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR.
 * 0.50.01 [niutilities] ICAFix regname debug and optimized bold comparison.
