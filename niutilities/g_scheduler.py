@@ -140,33 +140,19 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     Keys: mem, walltime, software, file, procs, pmem, feature, host,
     naccesspolicy, epilogue, prologue will be submitted using:
-    "#PBS -l <key>=<value>".
+    "#PBS -l <key>=<value>"
 
-    Keys: j, m, o, S, a, A, M, q, t, e will be submitted using:
+    Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using:
     "#PBS -<key> <value>"
 
     Key: depend will be submitted using:
-
     "#PBS -W depend=<value>"
 
-    Key: nodes is a special case. It can have up to three values separated by
-    colon (":"). If there is only one value e.g. "nodes=4" it will submit:
+    Key: umask will be submitted using:
+    "#PBS -W umask=<value>"
 
-    "#PBS -l nodes=4"
-
-    When there are two values e.g. "nodes=4:2" it will submit:
-
-    "#PBS -l nodes=4:ppn=2"
-
-    When there are three values what is submitted depends on the type of the
-    last value. When it is numeric, e.g. "nodes:8:4:2", it will submit:
-
-    "#PBS -l nodes=8:ppn=4:cpus=2"
-
-    If the last of the three values is a string, e.g. "nodes:8:4:blue", it will
-    submit the last value as a self-standing key:
-
-    "#PBS -l nodes=8:ppn=4:blue"
+    Key: nodes is a special case. It will be submitted as:
+    "#PBS -l <value>"
 
     LSF settings
     ------------
@@ -178,29 +164,27 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     * walltime -> "#BSUB -W <walltime>"
     * cores    -> "#BSUB -n <cores>"
 
-    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo
+    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo, jobName
     will be submitted using:
-
     "#BSUB -<key> <value>"
 
     SLURM settings
     --------------
 
     For SLURM any provided key/value pair will be passed in the form:
-
     "#SBATCH --<key>=<value>"
 
     Some of the possible parameters to set are:
 
-    partition        ... The partition (queue) to use
-    nodes            ... Total number of nodes to run on
-    ntasks           ... Number of tasks
-    cpus-per-task    ... Number of cores per task
-    time             ... Maximum wall time DD-HH:MM:SS
-    constraint       ... Specific node architecture
-    mem-per-cpu      ... Memory requested per CPU in MB
-    mail-user        ... Email address to send notifications to
-    mail-type        ... On what events to send emails
+    * partition        ... The partition (queue) to use
+    * nodes            ... Total number of nodes to run on
+    * ntasks           ... Number of tasks
+    * cpus-per-task    ... Number of cores per task
+    * time             ... Maximum wall time DD-HH:MM:SS
+    * constraint       ... Specific node architecture
+    * mem-per-cpu      ... Memory requested per CPU in MB
+    * mail-user        ... Email address to send notifications to
+    * mail-type        ... On what events to send emails
 
 
     EXAMPLE USE
@@ -231,7 +215,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     2018-10-04 - Grega Repovs
                  Excluded log validity checking for 'return'.
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               - Changed subjects to sessions
+    2019-20-01 Jure Demšar
+               - Upgraded job naming and PBS scheduler
     '''
 
     # --- check inputs
@@ -250,7 +236,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     try:
         setList   = [e.strip() for e in settings.split(",")]
         scheduler = setList.pop(0)
-        setDict   = dict([e.strip().split("=") for e in setList])
+        setDict   = dict([e.strip().split("=", 1) for e in setList])
         jobname   = setDict.pop('jobname', "schedule")
         comname   = setDict.pop('comname', "")
         jobnum    = setDict.pop('jobnum', "1")
@@ -308,20 +294,16 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
                 sCommand += "#PBS -l %s=%s\n" % (k, v)
-            elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e'):
+            elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e', 'l'):
                 sCommand += "#PBS -%s %s\n" % (k, v)
             elif k == 'depend':
                 sCommand += "#PBS -W depend=%s\n" % (v)
+            elif k == 'umask':
+                sCommand += "#PBS -W umask=%s\n" % (v)
+            elif k == 'N' and jobname == 'schedule':
+                jobname = v
             elif k == 'nodes':
-                v = v.split(':')
-                res = 'nodes=%s' % (v.pop(0))
-                if v:
-                    res += ":ppn=%s" % (v.pop(0))
-                if v:
-                    if v[0].isnumeric():
-                        res += ":gpus=%s" % (v.pop(0))
-                    else:
-                        res += ":" + v.pop(0)
+                sCommand += "#PBS -l nodes=%s\n" % v
         sCommand += "#PBS -N %s-%s#%s\n" % (jobname, comname, jobnum)
         if outputs['stdout'] is not None:
             sCommand += "#PBS -o %s\n" % (outputs['stdout'])
@@ -339,6 +321,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
                 sCommand += "#BSUB -%s %s\n" % (k, v)
+            elif k is 'jobName' and jobname == 'schedule':
+                jobname = v
         sCommand += "#BSUB -P %s-%s\n" % (jobname, comname)
         sCommand += "#BSUB -J %s-%s#%d\n" % (jobname, comname, jobnum)
         if outputs['stdout'] is not None:
@@ -349,9 +333,15 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     elif scheduler == "SLURM":
         sCommand += "#!/bin/sh\n"
-        sCommand += "#SBATCH --job-name=%s-%s#%s\n" % (jobname, comname, jobnum)
         for key, value in setDict.items():
-            sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+            if key in ('J', 'job-name') and jobname == 'schedule':
+                jobname = v
+            else:
+                sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+        
+        if (comname != ""):
+            jobname = "%s-%s" % (jobname, comname)
+        sCommand += "#SBATCH --job-name=%s(%s)\n" % (jobname, jobnum)
         if outputs['stdout'] is not None:
             sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:

@@ -113,15 +113,18 @@ def useOrSkipBOLD(sinfo, options, r=""):
     * the dictionary with all the info
 
     Change log
-    2019-06-06 Grega Repovs
+    2019-06-06 Grega Repovš
              - Changed processing to be more explicit and allow also 
                selection by bold name and bold sequence name
+    2020-01-28 Grega Repovš
+             - Added the option to select by sequence name
     """
     bsearch  = re.compile('bold([0-9]+)')
     btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
-    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
+    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
     bskip    = []
     nbolds   = len(bolds)
+
     if "all" not in btargets:
         keep = []
 
@@ -143,10 +146,16 @@ def useOrSkipBOLD(sinfo, options, r=""):
         # check sequence names
         keep += [n for n in range(nbolds) if bolds[n][3].get('ext') in btargets]
 
+        # check sequence number
+        keep += [n for n in range(nbolds) if bolds[n][4] in btargets]
+
         # determine keep and skip
         allb = set(range(nbolds))
         keep = set(keep)
         skip = allb.difference(keep)
+
+        # take out sequence number
+        bolds = [e[:4] for e in bolds]
 
         # set bolds and skips
 
@@ -165,6 +174,10 @@ def useOrSkipBOLD(sinfo, options, r=""):
                 else:
                     r += "\n...  %-6s [%s]" % (b, t)
             r += "\n"
+    else:
+        # take out sequence number
+        bolds = [e[:4] for e in bolds]
+
     bolds.sort()
 
     # if bolds have boldname (legacy) and not filename, copy boldname to filename
@@ -723,11 +736,10 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
 
         if not os.path.exists(tmplogfile):
-            r += "\n\nERROR: could not create a temporary log file %s!" % (tmplogfile)
+            r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
             raise ExternalFailed(r)
 
         # --- run command
-
         try:
             if shell:
                 ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
@@ -737,13 +749,13 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
-        
+
         # --- check results
 
         if ret:
-            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
+            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (description, ret, run)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
-            raise ExternalFailed(r)            
+            raise ExternalFailed(r)
 
         status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf, verbose=verbose)
 

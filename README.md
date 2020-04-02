@@ -91,6 +91,18 @@ External dependencies
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
+Change log
+=====================
+---
+
+* 0.50.06 Revised the documentation for the hcp_icafix_bolds parameter.
+* 0.50.05 HCP glob debug, ICAFix exceptions now look nicer.
+* 0.50.04 ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter.
+* 0.50.03 ICAFix regname debug.
+* 0.50.02 Added filesort option for HCPLSImport.
+* 0.50.01 Optimized bold comparison.
+* 0.50.00 HCP ICAFix implementation.
+* 0.49.10 Initial submodule versioning.
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

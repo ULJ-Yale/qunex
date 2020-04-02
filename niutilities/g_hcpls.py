@@ -50,22 +50,22 @@ hcpls = {
         }
     },
     'folders': {
-        'order': {'T1w': 1, 'T2w': 2, 'rfMRI': 3, 'tfMRI': 4, 'Diffusion': 4},
+        'order': {'T1w': 1, 'T2w': 2, 'rfMRI': 3, 'tfMRI': 4, 'Diffusion': 5},
         'label': ['T1w', 'T2w', 'rfMRI', 'tfMRI', 'Diffusion'],
         'T1w': {
             'info':  [],
-            'check': [
-                        ['T1w'],
+            'check': [  
                         ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA']
+                        ['SpinEchoFieldMap', 'PA'],
+                        ['T1w']                        
                       ]
         },
         'T2w': {
             'info':  [],
             'check': [                        
-                        ['T2w'],
                         ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA']
+                        ['SpinEchoFieldMap', 'PA'],
+                        ['T2w']                        
                      ]
         },
         'rfMRI': {
@@ -268,9 +268,9 @@ def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix,
 
 
 
-def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None):
+def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
     '''
-    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)']
+    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]
     
     USE
     ===
@@ -361,6 +361,26 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                         The default is:
                         '(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'
 
+    --filesort          An optional parameter that specifies how the files should
+                        be sorted before mapping to `nii` folder and inclusion in 
+                        `subject_hcp.txt`. The sorting is specified by a string of
+                        sort keys separated by '_'. The available sort keys are:
+       
+                        * name  ... sort by the name of the file
+                        * type  ... sort by the type of the file (T1w, T2w, rfMRI, 
+                                    tfMRI, Diffusion)
+                        * se    ... sort by the number of the related pair of the
+                                    SE fieldmap images.
+       
+                        The files will be sorted in the order of the listed keys.
+                        The default is: "name_type_se".
+
+                        NOTE: 
+                        1) SE field map pair will allways come before the first image
+                           in the sorted list that references it. 
+                        2) Diffusion images will always be listed jointly in a fixed 
+                           order.
+
 
     PROCESS OF HCPLS MAPPING
     ========================
@@ -450,6 +470,8 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     2019-08-06 Grega Repovš
              - Added sessions option
              - Expanded documentation
+    2020-03-24 Grega Repovš
+             - Addded file sorting parameter
     '''
 
     print "Running HCPLSImport\n=================="
@@ -462,6 +484,12 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
     if archive not in ['leave', 'move', 'copy', 'delete']:
         raise ge.CommandError("HCPLSImport", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+
+    if not filesort:
+        filesort = "name_type_se"
+
+    if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
+        raise ge.CommandError("HCPLSImport", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
     if subjectsfolder is None:
         subjectsfolder = os.path.abspath(".")
@@ -655,7 +683,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
                 try:
                     print
-                    nimg, nmapped = mapHCPLS2nii(os.path.join(subjectsfolder, session), overwrite)
+                    nimg, nmapped = mapHCPLS2nii(os.path.join(subjectsfolder, session), overwrite, filesort=filesort)
                     if nimg == 0:
                         report.append('%s had no images found to be mapped' % (info))
                         allOk = False
@@ -678,7 +706,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
 
 
-def processHCPLS(sfolder):
+def processHCPLS(sfolder, filesort):
     '''
     '''
 
@@ -705,7 +733,8 @@ def processHCPLS(sfolder):
 
         # --- get folder information
 
-        folderTags  = os.path.basename(dfolder).split('_')
+        folderName  = os.path.basename(dfolder)
+        folderTags  = folderName.split('_')
         folderLabel = folderTags.pop(0)
         if folderLabel not in hcpls['folders']:
             continue
@@ -716,7 +745,7 @@ def processHCPLS(sfolder):
 
         # --- Get files list
 
-        files = glob.glob(os.path.join(dfolder, '*'))
+        files = sorted(glob.glob(os.path.join(dfolder, '*')))
         files = [e for e in files if e.endswith('.nii.gz')]
 
         # --- Exclude files
@@ -784,20 +813,29 @@ def processHCPLS(sfolder):
 
         # --- finish up folder
 
-        checkedFolders.append({'senum': senum, 'label': folderLabel, 'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles})
+        checkedFolders.append({'senum': senum, 'name': folderName, 'label': folderLabel, 'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles})
 
     # sort folders
 
-    checkedFolders.sort(key=lambda x: hcpls['folders']['order'][x['label']])
-    checkedFolders.sort(key=lambda x: x['senum'])
+    print "--> filesort:", filesort
+
+    for sortkey in filesort.split('_'):
+        if sortkey == 'name':
+            checkedFolders.sort(key=lambda x: x['name'])
+
+        if sortkey == 'type':
+            checkedFolders.sort(key=lambda x: hcpls['folders']['order'][x['label']])
+
+        if sortkey == 'se':
+            checkedFolders.sort(key=lambda x: x['senum'])
                 
     return checkedFolders
         
 
 
-def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
+def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
     '''
-    mapHCPLS2nii [sfolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt]
+    mapHCPLS2nii [sfolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]
 
     USE
     ===
@@ -840,6 +878,26 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     --report     The path to the file that will hold the information about the
                  images that are relevant for HCP Pipelines. If not provided
                  it will default to 
+
+    --filesort   An optional parameter that specifies how the files should
+                 be sorted before mapping to `nii` folder and inclusion in 
+                 `subject_hcp.txt`. The sorting is specified by a string of
+                 sort keys separated by '_'. The available sort keys are:
+
+                 * name  ... sort by the name of the file
+                 * type  ... sort by the type of the file (T1w, T2w, rfMRI, 
+                             tfMRI, Diffusion)
+                 * se    ... sort by the number of the related pair of the
+                             SE fieldmap images.
+
+                 The files will be sorted in the order of the listed keys.
+                 The default is: "name_type_se".
+
+                 NOTE: 
+                 1) SE field map pair will allways come before the first image
+                    in the sorted list that references it. 
+                 2) Diffusion images will always be listed jointly in a fixed 
+                    order.
 
     RESULTS
     =======
@@ -918,13 +976,6 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     CAVEATS AND MISSING FUNCTIONALITY
     =================================
 
-    File order
-    ----------
-
-    The files are ordered according to best guess sorted primarily by modality. 
-    This can be problematic for further HCP processing when information on the
-    specific order is important.
-
     .bvec and .bval files
     ---------------------
 
@@ -968,7 +1019,15 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
              - Added multiple sessions example
     2019-09-21 Jure Demšar
              - Filename (previously boldname) is now used in all sequences
+    2020-03-24 Grega Repovš
+             - Addded file sorting parameter
     '''
+
+    if not filesort:
+        filesort = "name_type_se"
+
+    if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
+        raise ge.CommandError("HCPLSImport", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
     sfolder = os.path.abspath(sfolder)
     hfolder = os.path.join(sfolder, 'hcpls')
@@ -1014,7 +1073,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
     # --- process hcpls folder
 
-    hcplsData = processHCPLS(hfolder)
+    hcplsData = processHCPLS(hfolder, filesort)
        
     if not hcplsData:
         raise ge.CommandFailed("mapHCPLS2nii", "No image files in hcpls folder!", "There are no image files in the hcpls folder [%s]" % (hfolder), "Please check your data!")
