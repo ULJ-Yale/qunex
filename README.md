@@ -49,7 +49,7 @@ Detailed change log
 
 * 0.50.02 [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR. HCP glob search debug, nicer lookings exceptions in ICAFix. Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.01 [niutilities] ICAFix regname debug and optimized bold comparison.
-* 0.50.00 [nitools library connector] Renamed gmrimage class to nimage and methods names from mri_ to img_.
+* 0.50.00 [nitools library connector] Renamed gmrimage class to nimage and methods names from mri\_ to img\_.
 * 0.49.11 [library niutilities] HCP ICAFix implementation.
 * 0.49.10 [niutilities] Made SE selection for BOLD more robust and informative, added option to select by sequence number
 * 0.49.09 [qunex] HCPpipelines v4.1.3
