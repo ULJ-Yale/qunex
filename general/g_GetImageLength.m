@@ -7,7 +7,7 @@ function [frames] = g_GetImageLength(file)
 %
 %   Input
 %       - file ... it can be a filename, a list of files, a conc file (see
-%                  documentation for gmrimage object constructor).
+%                  documentation for nimage object constructor).
 %
 %   Output
 %       - frames ... A column vector of frame lengths of the files specified.
@@ -16,9 +16,9 @@ function [frames] = g_GetImageLength(file)
 %   Written by Grega Repovš 2008-07-11
 %
 %	Changelog
-%       2017-02-11 Grega Repovš - Updated to work with any files gmrimage can handle
+%       2017-02-11 Grega Repovš - Updated to work with any files nimage can handle
 %
 
-img = gmrimage(file);
+img = nimage(file);
 frames = img.runframes;
 

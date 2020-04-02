@@ -32,7 +32,7 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %   analyses, such as second-level statistical testing using PALM.
 %
 %   To extract the effects of interest, the function calls the
-%   mri_ExtractGLMEstimates gmrimage method.
+%   img_ExtractGLMEstimates nimage method.
 %
 %   NOTICE
 %   The underlying method extracts the effects of interest by removing those
@@ -101,9 +101,9 @@ end
 
 if verbose, fprintf('\n---> processing subject: %s', subjects(1).id); end
 
-glm = gmrimage(subjects(1).glm);
+glm = nimage(subjects(1).glm);
 sef = glm.glm.effects;
-glm = glm.mri_ExtractGLMEstimates(effects, frames, values);
+glm = glm.img_ExtractGLMEstimates(effects, frames, values);
 effect = sef(glm.glm.effect);
 frame  = glm.glm.frame;
 event  = glm.glm.event;
@@ -121,9 +121,9 @@ for s = 2:nsub
 
     if verbose, fprintf('\n---> processing subject: %s', subjects(s).id); end
 
-    glm = gmrimage(subjects(s).glm);
+    glm = nimage(subjects(s).glm);
     sef = glm.glm.effects;
-    glm = glm.mri_ExtractGLMEstimates(effects, frames, values);
+    glm = glm.img_ExtractGLMEstimates(effects, frames, values);
     nb  = size(glm.image2D,2);
     effect  = [effect sef(glm.glm.effect)];
     frame   = [frame glm.glm.frame];
@@ -170,7 +170,7 @@ if ismember(saveoption, {'by effect', 'by subject'})
     out = glm.zeroframes(pt);
     out.data = data;
     out = setMeta(out, subject, effect, frame, event, verbose);
-    out.mri_saveimage(outf);
+    out.img_saveimage(outf);
     if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
         if verbose, fprintf('\n---> saving data in a text file, sorted %s', saveoption); end
         tout = fopen([outf '_long.txt'], 'w');
@@ -191,7 +191,7 @@ else
         out = glm.zeroframes(sum(mask));
         out.data = data(:, mask);
         out = setMeta(out, subject(mask), effect(mask), frame(mask), event(mask), verbose);
-        out.mri_saveimage([outf '_' e{1}]);
+        out.img_saveimage([outf '_' e{1}]);
         if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
             if verbose, fprintf('\n---> saving data in separate text files for each effect'); end
             tout = fopen([outf '_' e{1} '_long.txt'], 'w');
@@ -222,7 +222,7 @@ function [img] = setMeta(img, subject, effect, frame, event, verbose)
     s = [s sprintf('# effect: %s\n', strjoin(effect))];
     s = [s sprintf('# frame:%s\n', sprintf(' %d', frame))];
     s = [s sprintf('# event: %s\n', strjoin(effect))];
-    img = img.mri_EmbedMeta(s, [], 'list', verbose);
+    img = img.img_EmbedMeta(s, [], 'list', verbose);
 
 
 function [parcelnames] = getParcelNames(img)

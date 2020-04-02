@@ -38,7 +38,7 @@ bdata = importdata(datafile);
 
 % ------ read image data
 
-img = gmrimage(imgfile);
+img = nimage(imgfile);
 
 % ===================
 % ------ process data
@@ -46,31 +46,31 @@ img = gmrimage(imgfile);
 % ------------------------> Correlations
 
 if strfind(target, 'r')
-    [r, Z] = img.mri_ComputeCorrelations(bdata.data, true);
+    [r, Z] = img.img_ComputeCorrelations(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
-        r.mri_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_r']);
-        Z.mri_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_Z']);
+        r.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_r']);
+        Z.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_Z']);
     end
     
 end
 
 if strfind(target, 't1')
-    [B, Z] = img.mri_ComputeRTypeI(bdata.data, true);
+    [B, Z] = img.img_ComputeRTypeI(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
-        B.mri_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-I_B']);
-        Z.mri_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-I_Z']);
+        B.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-I_B']);
+        Z.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-I_Z']);
     end
     
 end
 
 if strfind(target, 't3')
-    [B, Z] = img.mri_ComputeRTypeIII(bdata.data, true);
+    [B, Z] = img.img_ComputeRTypeIII(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
-        B.mri_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-III_B']);
-        Z.mri_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-III_Z']);
+        B.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-III_B']);
+        Z.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-III_Z']);
     end
     
 end

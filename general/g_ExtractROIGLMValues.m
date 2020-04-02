@@ -39,8 +39,8 @@ function [data] = g_ExtractROIGLMValues(flist, roif, outf, effects, frames, valu
 %   The function is used to extract per ROI estimates of the effects of interest
 %   for each of the ROI and subjects to enable second level analysis and
 %   visualization of the data. In the background the function first extracts the
-%   relevant volumes using the mri_ExtractGLMEstimates. It then defines the ROI
-%   and uses mri_ExtractROIStats method to get per ROI statistics.
+%   relevant volumes using the img_ExtractGLMEstimates. It then defines the ROI
+%   and uses img_ExtractROIStats method to get per ROI statistics.
 %
 %   EXAMPLE USE
 %   >>> g_ExtractROIGLMValues('wm-glm.list', 'CCN.names', [], 'encoding, delay', [], 'psc', 'long');
@@ -82,7 +82,7 @@ nsub = length(subjects);
 % --------------------------------------------------------------
 %                                                       read roi
 
-roi = gmrimage.mri_ReadROI(roif);
+roi = nimage.img_ReadROI(roif);
 roi.data = roi.image2D;
 nroi = length(roi.roi.roinames);
 
@@ -119,14 +119,14 @@ for s = 1:nsub
 
     if verbose, fprintf('\n---> processing subject: %s', subjects(s).id); end
 
-    % glm = gmrimage(subjects(s).glm, [], [], verbose);
-    glm = gmrimage(subjects(s).glm);
-    glm = glm.mri_ExtractGLMEstimates(effects, frames);
+    % glm = nimage(subjects(s).glm, [], [], verbose);
+    glm = nimage(subjects(s).glm);
+    glm = glm.img_ExtractGLMEstimates(effects, frames);
 
     % ---> update ROI
 
     if isfield(subjects(s), 'roi') && ~isempty(subjects(s).roi)
-        sroi = roi.mri_MaskROI(subjects(s).roi);
+        sroi = roi.img_MaskROI(subjects(s).roi);
     else
         sroi = roi;
     end
@@ -135,7 +135,7 @@ for s = 1:nsub
         glm.data = bsxfun(@rdivide, glm.data, glm.glm.gmean / 100);
     end
 
-    stats   = glm.mri_ExtractROIStats(sroi);
+    stats   = glm.img_ExtractROIStats(sroi);
     data(s).stats = stats;
     data(s).effect = glm.glm.effects(glm.glm.effect);
     data(s).frame = glm.glm.eindex;

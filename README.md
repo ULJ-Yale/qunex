@@ -63,6 +63,12 @@ External dependencies
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
+Change log
+=====================
+---
+
+* 0.50.00 Renamed gmrimage class to nimage and methods names from mri_ to img_.
+* 0.49.10 Initial submodule versioning.
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

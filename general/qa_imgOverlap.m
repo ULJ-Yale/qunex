@@ -5,8 +5,8 @@ function [] = qa_imgOverlap(af, bf, tf, v)
 %	Function that prints the overlap of two images, one in red, another in green.
 %
 %	INPUT
-%		af - Either a gmrimage object or the path to the first image file.
-%		bf - Either a gmrimage object or the path to the second image file.
+%		af - Either a nimage object or the path to the first image file.
+%		bf - Either a nimage object or the path to the second image file.
 %		tf - The path to the file to save the overlap to.
 %		v  - Which slice to show (1, 2, 3) [3]
 %
@@ -37,17 +37,17 @@ end
 if isobject(af)
 	a =	af;
 else
-	a = gmrimage(af);
+	a = nimage(af);
 end
 
 if isobject(bf)
 	b =	bf;
 else
-	b = gmrimage(bf);
+	b = nimage(bf);
 end
 
-am = a.mri_SliceMatrix(v);
-bm = b.mri_SliceMatrix(v);
+am = a.img_SliceMatrix(v);
+bm = b.img_SliceMatrix(v);
 
 am = normalize(am);
 bm = normalize(bm);

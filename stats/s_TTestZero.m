@@ -46,7 +46,7 @@ root = strrep(root, '.conc', '');
 % 	----> read file
 
 if verbose, fprintf('--------------------------\nComputing t-test against zero\n ... reading data (%s) ', dfile), end
-img = gmrimage(dfile);
+img = nimage(dfile);
 img.data = img.image2D;
 
 if ~isempty(exclude)
@@ -58,7 +58,7 @@ end
 % 	----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
-[p Z M SE t] = img.mri_TTestZero(verbose);
+[p Z M SE t] = img.img_TTestZero(verbose);
 if verbose, fprintf(' --- \n'), end
 
 
@@ -67,23 +67,23 @@ if verbose, fprintf(' --- \n'), end
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)
-    M.mri_saveimage([root '_M']);
+    M.img_saveimage([root '_M']);
     if verbose, fprintf('\n ---> mean values [%s] ', [root '_M']),end
 end
 if ismember('e', output)
-    SE.mri_saveimage([root '_SE']);
+    SE.img_saveimage([root '_SE']);
     if verbose, fprintf('\n ---> standard errors [%s] ', [root '_SE']),end
 end
 if ismember('t', output)
-    t.mri_saveimage([root '_t']);
+    t.img_saveimage([root '_t']);
     if verbose, fprintf('\n ---> t-values [%s] ', [root '_t']),end
 end
 if ismember('p', output)
-    p.mri_saveimage([root '_p']);
+    p.img_saveimage([root '_p']);
     if verbose, fprintf('\n ---> p-values [%s] ', [root '_p']),end
 end
 if ismember('z', output)
-    Z.mri_saveimage([root '_Z']);
+    Z.img_saveimage([root '_Z']);
     if verbose, fprintf('\n ---> Z-scores [%s]', [root '_Z']),end
 end
 

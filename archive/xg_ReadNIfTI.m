@@ -1,6 +1,6 @@
-function [img] = mri_ReadNIfTI(img, filename, dtype, frames, verbose)
+function [img] = img_ReadNIfTI(img, filename, dtype, frames, verbose)
 
-%function [img] = mri_ReadNIfTI(img, file, dtype, frames, verbose)
+%function [img] = img_ReadNIfTI(img, file, dtype, frames, verbose)
 %
 %       Reads in a NIfTI image into an image object
 %
@@ -35,7 +35,7 @@ end
 
 % --- read the file
 
-[fhdr fdata fmeta fswap] = gmrimage.mri_ReadNIfTImx(filename, verbose);
+[fhdr fdata fmeta fswap] = nimage.img_ReadNIfTImx(filename, verbose);
 
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;
