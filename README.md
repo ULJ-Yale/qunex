@@ -25,20 +25,21 @@ The `nitools` code is is co-developed and co-maintained by the
 [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
+
 Installation
 ============
 ---
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
+
 Usage and documentation
-===============================
+=======================
 ---
 The Qu|Nex `nitools` are generally used as core functions across 
 various Qu|Nex tools but can be run independently in two ways:
 
-1. 
-A number of `nitools` commands provided as part of QuNex/nitools package can be 
+1. A number of `nitools` commands provided as part of QuNex/nitools package can be 
 run directly through the `qunex` connector wrapper. 
 For more information on each command run `qunex ?<command_name>`. 
 Arguments can be specified in any order. Arguments that are not provided will 
@@ -47,8 +48,8 @@ Take care to embed vectors in square brackets (e.g. "[1 8 6 12]") and cell array
 in curly braces (e.g. "{'DLPFC', 'ACC','FEF'}"). 
 In addition, 'saveOutput' argument can be specified to redirect Matlab
 output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
-2. 
-Directly from inside Matlab by calling each command directly.  
+
+2. Directly from inside Matlab by calling each command directly.  
 
 To obtain a list of all supported `qunex nitools` commands run:
 
@@ -57,14 +58,16 @@ To obtain a list of all supported `qunex nitools` commands run:
 The function-specific help and usage is imbedded in the help call for each command.
 You can acces this by running `help <command_name>` inside the Matlab terminal. 
 
+
 External dependencies
 =====================
 ---
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
+
 Change log
-=====================
+==========
 ---
 
 * 0.50.00 Renamed gmrimage class to nimage and methods names from mri_ to img_.
