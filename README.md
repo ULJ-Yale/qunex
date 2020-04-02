@@ -24,7 +24,7 @@ Quick links
 * [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 
 Versioning
-============
+==========
 ---
 
 Qu|Nex suite version: 0.50.02
@@ -37,7 +37,7 @@ Submodules:
 * niutilities: 0.50.06
 
 Release notes
-===================
+=============
 ---
 
 * 0.50.02 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
