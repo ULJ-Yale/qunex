@@ -30,15 +30,16 @@ The Qu|Nex code is is co-developed and co-maintained by the
 [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
+
 Installation
-===============================
+============
 ---
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
 Usage and documentation
-===============================
+=======================
 ---
 
 List of functions can be obtained by running the following call from the terminal: 
@@ -91,8 +92,9 @@ External dependencies
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
+
 Change log
-=====================
+==========
 ---
 
 * 0.50.06 Revised the documentation for the hcp_icafix_bolds parameter.
