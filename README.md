@@ -13,21 +13,21 @@ The Qu|Nex code is is co-developed and co-maintained by the
 [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
+Quick links
+===========
+---
 
-[Website](http://qunex.yale.edu/)
-=========
-
-[Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
-============
-
-[Quick Start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
-============
+* [Website](http://qunex.yale.edu/)
+* [Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
+* [Qu|Nex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
+* [Qu|Nex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
+* [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 
 Versioning
 ============
 ---
 
-Qu|Nex suite version: 0.50.04
+Qu|Nex suite version: 0.50.02
 
 Submodules:
 
@@ -36,131 +36,18 @@ Submodules:
 * nitools: 0.50.00
 * niutilities: 0.50.06
 
-Installation from Source
-=========================
+Release notes
+===================
 ---
 
-### Step 1. Clone all Qu|Nex repositories and initiate submodules.
-
-* Clone a branch: `git clone -b <BRANCH> git@bitbucket.org:oriadev/qunex.git`
-* Initiate submodules from inside cloned repo folder: `git submodule init`
-* Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
-* Checkout desired branch for each submodule: `git submodule foreach git checkout <BRANCH>`
-* Update submodules to latest commit on the branch: `git submodule foreach git pull origin <BRANCH>`
-
-### Step 2. Configure `niutilities` repository. 
-
-* Make `~/qunex/niutilities/gmri` executable
-* Install latest version of numpy, pydicom, scipy & nibabel
-* (e.g. `pip install numpy pydicom scipy nibabel`)
-
-### Step 3. Configure the Qu|Nex environment script by adding the following lines to your .bash_profile.
-
-```
-TOOLS=<path_to_folder_with_qunex_suite_and_dependencies>
-export TOOLS
-source $TOOLS/library/environment/qunex_environment.sh
-```
-
-### Step 4. Install all necessary dependencies for full Qu|Nex functionality (see below). 
-
-* All relevant dependencies should be inside the `$TOOLS` folder.
-
-* The `qunex_environment.sh` script automatically sets assumptions for dependency paths. These can be changed by the user. 
-
-* For more info on how to define specific Qu|Nex dependencies paths run:
-
-`qunex --envsetup`
+* 0.50.02 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
 
 
-Updating the Qu|Nex Suite from Source
-======================================
+Detailed change log
+===================
 ---
 
-* To update the main Qu|Nex repository and all the submodules run:
-
-`gitqunex --command="pull" --branch="<branch_name>" --branchpath="<absolute_path_to_qunex_repo_folder>" --submodules="all"`
-
-* For this to work you need to have an active git account and read access to the main Qu|Nex repository and all submodules.
-
-
-In-line Usage and documentation
-===============================
----
-
-List of functions can be obtained by running the following call from the terminal: 
-
-* `qunex -help` prints the general help call
-
-The general `qunex` call use form is:
-
-`qunex --command="<command_name>" --option="<value>" --option="<value>" ...`
-
-Or the simplified form with command name first omitting the flag:
-
-* `qunex <command_name> --option="<value>" --option="<value>" ...`
-
-The list of commands and their specific documentation is provided by running `qunex`.
-
-To get help for a specific command use the folowing call:
-
-* `qunex ?<command_name>` prints specific help for the specified command.
-
-Perusing documentation, please note the following conventions used:
-
-* Square brackets `[]` denote an option or argument that is optional. The
-  value listed in the brackets is the default value used, if the argument
-  is not explicitly specified
-* Angle brackets `<>` describe the value that should be provided
-* Dashes or "flags", `-` in the documentation define input variables.
-* Command names, arguments, and option names are either in small or "camel" case.
-* Use descriptions are in regular "sentence" case.
-* Option values are usually specified in capital case (e.g. `YES`, `NONE`).
-
-
-External dependencies
-=====================
----
-For complete Qu|Nex Suite functionality the following dependencies are needed for the latest stable release:
-
-* All Qu|Nex Suite repositories (https://bitbucket.org/oriadev/qunex)
-* Connectome Workbench (v1.0 or above; https://www.humanconnectome.org/software/connectome-workbench)
-* FSL (v5.0.9 or above with GPU-enabled DWI tools; https://fsl.fmrib.ox.ac.uk/fsl/fslwiki)
-* FreeSurfer (v5.3-HCP version for HCP-compatible data; http://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/)
-* FreeSurfer (v6.0 or later stable for all other data; https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall)
-* MATLAB (v2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
-* FIX ICA (if wishing to run FIX de-noising only; https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX/UserGuide)
-* PALM: Permutation Analysis of Linear Models (https://github.com/andersonwinkler/PALM) 
-* Python (v2.7 or above with numpy, pydicom, scipy & nibabel)
-* AFNI: Analysis of Functional NeuroImages (https://github.com/afni/afni) 
-* Human Connectome Pipelines modified for Qu|Nex (https://bitbucket.org/oriadev/hcp)
-* Gradunwarp for HCP workflow (https://github.com/Washington-University/gradunwarp)
-* R Statistical Environment with ggplot (https://www.r-project.org/)
-* dcm2niix (23-June-2017 release; https://github.com/rordenlab/dcm2niix)
-
-Qu|Nex Versioning
-=================
----
-
-The Qu|Nex Suite follows the semantic versioning system (https://semver.org/). 
-Given a version number MAJOR.MINOR.PATCH, increment the:
-
-* MAJOR version when you make incompatible API changes,
-* MINOR version when you add functionality in a backwards-compatible manner, and
-* PATCH version when you make backwards-compatible bug fixes.
-
-The version history and change log is listed below. The Qu|Nex version in the current release 
-is listed in the VERSION file or can be invoked via the command line by running:
-
-* `qunex --version`
-
-Change Log
-============
----
-
-* 0.50.04 [niutilities] Revised the documentation for the hcp_icafix_bolds parameter.
-* 0.50.03 [niutilities] HCP glob search debug, nicer lookings exceptions in ICAFix.
-* 0.50.02 [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR.
+* 0.50.02 [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR. HCP glob search debug, nicer lookings exceptions in ICAFix. Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.01 [niutilities] ICAFix regname debug and optimized bold comparison.
 * 0.50.00 [nitools library connector] Renamed gmrimage class to nimage and methods names from mri_ to img_.
 * 0.49.11 [library niutilities] HCP ICAFix implementation.
