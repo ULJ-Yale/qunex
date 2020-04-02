@@ -1,4 +1,4 @@
-# README File for  Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
+# README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 # Connector Code
 
 Background
@@ -15,15 +15,16 @@ other Qu|Nex suite tools (e.g. `niutilities` or `nitools` Qu|Nex submodules).
 The Qu|Nex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
+
 Installation
-===============================
+============
 ---
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
 Usage and documentation
-===============================
+=======================
 ---
 
 List of functions can be obtained by running the following call from the terminal: 
@@ -63,8 +64,8 @@ Specific Example Usage
 * Here is a specific example usage based on an Qu|Nex call for sorting incoming DICOMs:
 
 
-	`qunex --path='<study_folder>' --function='dicomorganize' --subjects='<comma_separarated_list_of_cases>' --scheduler='<name_of_scheduler_and_options>'`
-	
+  `qunex --path='<study_folder>' --function='dicomorganize' --subjects='<comma_separarated_list_of_cases>' --scheduler='<name_of_scheduler_and_options>'`
+
 
 External dependencies
 =====================
@@ -74,7 +75,7 @@ External dependencies
 
 
 Change log
-=====================
+==========
 ---
 
 * 0.50.00 Renamed gmrimage class to nimage and methods names from mri_ to img_.
