@@ -1,9 +1,5 @@
 # README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 
-Background
-==========
----
-
 The Quantitative Neuroimaging Environment & ToolboX (Qu|Nex) integrates a number of 
 modules that support a flexible and extensible framework for data organization, preprocessing, 
 quality assurance, and various analytics across neuroimaging modalities. The Qu|Nex suite is 
@@ -13,19 +9,20 @@ The Qu|Nex code is is co-developed and co-maintained by the
 [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
+
 Quick links
-===========
----
+-----------
 
 * [Website](http://qunex.yale.edu/)
-* [Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
+* [Qu|Nex Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
+* [SDK Wiki](https://bitbucket.org/oriadev/qunexsdk/wiki/Home)
 * [Qu|Nex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
 * [Qu|Nex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 * [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 
+
 Versioning
-==========
----
+----------
 
 Qu|Nex suite version: 0.50.03
 
@@ -36,16 +33,15 @@ Submodules:
 * nitools: 0.50.00
 * niutilities: 0.50.07
 
+
 Release notes
-=============
----
+-------------
 
 * 0.50.02 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
 
 
 Detailed change log
-===================
----
+-------------------
 
 * 0.50.03 [niutilities] Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
 * 0.50.02 [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR. HCP glob search debug, nicer lookings exceptions in ICAFix. Revised the documentation for the hcp_icafix_bolds parameter.
@@ -477,12 +473,3 @@ Detailed change log
 * 0.1.2 [qunex] Expanded usage and bug fixes
 * 0.1.1 [qunex] Added high performance computing scheduler functionality
 * 0.1 Initial pre-alpha release.
-
-Stable Container Tag Log
-========================
----
-
-* docker.io/qunex/qunex_suite:qunex_dev 0_49_10
-
-[Mind and Brain Lab]: http://mblab.si
-[Anticevic Lab]: http://anticeviclab.yale.edu
