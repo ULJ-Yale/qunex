@@ -1267,12 +1267,15 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         elements = [("subjectDIR",       hcp['T1w_folder']), 
                     ('subject',          sinfo['id'] + options['hcp_suffix']),
-                    ('t1',               os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
-                    ('t1brain',          os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
-                    ('t2',               t2w),
-                    ('seed',             options['hcp_fs_seed']),                    
-                    ('no-conf2hires',    options['hcp_fs_no_conf2hires']),                    
+                    ('seed',             options['hcp_fs_seed']),
+                    ('no-conf2hires',    options['hcp_fs_no_conf2hires']),
                     ('processing-mode',  options['hcp_processing_mode'])]
+
+        # -> add t1, t1brain and t2 only if options['hcp_fs_existing_subject'] is FALSE
+        if (not options['hcp_fs_existing_subject']):
+            elements.append(('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')))
+            elements.append(('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')))
+            elements.append(('t2', t2w))
 
         # -> Additional, reconall parameters
 
@@ -1289,7 +1292,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # --> Pull all together
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
-
         # --> Add flags
 
         for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_subject', '--existing-subject')]:
@@ -1308,8 +1310,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         if run:
             if options['run'] == "run":
 
-                # --> clean up test file if overwrite or if hcp_fs_existing_subject is set to True
-                if (overwrite and os.path.lexists(tfile)) or (options['hcp_fs_existing_subject'] and os.path.lexists(tfile)):
+                # --> clean up test file if overwrite and hcp_fs_existing_subject not set to True
+                if (overwrite and os.path.lexists(tfile)and not options['hcp_fs_existing_subject']):
                     os.remove(tfile)
 
                 # --> clean up only if hcp_fs_existing_subject is not set to True
