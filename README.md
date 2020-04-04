@@ -24,25 +24,27 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.50.3
+Qu|Nex suite version: 0.50.4
 
 Submodules:
 
 * connector: 0.50.0
 * library: 0.50.1
 * nitools: 0.50.0
-* niutilities: 0.50.7
+* niutilities: 0.50.8
 
 
 Release notes
 -------------
 
+* 0.50.4 Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
 * 0.50.2 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
 
 
 Detailed change log
 -------------------
 
+* 0.50.4  [niutilities] Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
 * 0.50.3  [niutilities] Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
 * 0.50.2  [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR. HCP glob search debug, nicer lookings exceptions in ICAFix. Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.1  [niutilities] ICAFix regname debug and optimized bold comparison.
