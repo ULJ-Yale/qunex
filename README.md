@@ -70,8 +70,8 @@ Change log
 ==========
 ---
 
-* 0.50.0 Renamed gmrimage class to nimage and methods names from mri_ to img_.
-* 0.49.10 Initial submodule versioning.
+* 0.50.0 Renamed gmrimage class to nimage and methods names from mri_ to img_.
+* 0.49.10 Initial submodule versioning.
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
