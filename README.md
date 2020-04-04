@@ -97,6 +97,7 @@ Change log
 ==========
 ---
 
+* 0.50.8  hcp_PreFS glob debug.
 * 0.50.7  Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
 * 0.50.6  Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.5  HCP glob debug, ICAFix exceptions now look nicer.
