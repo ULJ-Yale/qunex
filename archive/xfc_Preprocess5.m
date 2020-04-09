@@ -114,7 +114,7 @@ exts = {'_s','_hpss',['_res-' rgss],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
 ext  = '';
 
-img = gmrimage();
+img = nimage();
 
 for current = doIt
 
@@ -138,26 +138,26 @@ for current = doIt
         fprintf(' ... already completed!\n');
     else
         if img.empty
-            img = img.mri_readimage(sfile);
+            img = img.img_readimage(sfile);
         end
         
         switch current
             case 's'
-                img = img.mri_Smooth3D(2, true);
+                img = img.img_Smooth3D(2, true);
             case 'h'
                 hpsigma = ((1/TR)/0.009)/2;
-                img = img.mri_Filter(hpsigma, 0, omit, true);
+                img = img.img_Filter(hpsigma, 0, omit, true);
             case 'l'
                 lpsigma = ((1/TR)/0.08)/2;
-                img = img.mri_Filter(0, lpsigma, omit, true);
+                img = img.img_Filter(0, lpsigma, omit, true);
             case 'r'
                 [img coeff] = regressNuisance(img, omit, file, glm);
                 if docoeff
-                    coeff.mri_saveimage([froot ext '_coeff' tail]);
+                    coeff.img_saveimage([froot ext '_coeff' tail]);
                 end
         end
         
-        img.mri_saveimage(tfile);
+        img.img_saveimage(tfile);
         fprintf(' ... saved!\n');
     end
 
@@ -186,8 +186,8 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
 	%   ----> mask if necessary
 	
 	if ~isempty(file.wbmask)
-	    wbmask = gmrimage.mri_ReadROI(file.wbmask, file.sbjroi);
-	    wbmask = wbmask.mri_GrowROI(2);
+	    wbmask = nimage.img_ReadROI(file.wbmask, file.sbjroi);
+	    wbmask = wbmask.img_GrowROI(2);
         WB.data = WB.image2D;
         WB.data(wbmask.image2D > 0) = 0;
     end
@@ -205,15 +205,15 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
 	end
 	
 	if strfind(glm.rgss, 'v')
-		nuisance = [nuisance img.mri_ExtractROI(V)'];
+		nuisance = [nuisance img.img_ExtractROI(V)'];
 	end
 
 	if strfind(glm.rgss, 'wm')
-		nuisance = [nuisance img.mri_ExtractROI(WM)'];
+		nuisance = [nuisance img.img_ExtractROI(WM)'];
 	end
 
 	if strfind(glm.rgss, 'wb')
-		nuisance = [nuisance img.mri_ExtractROI(WB)'];
+		nuisance = [nuisance img.img_ExtractROI(WB)'];
 	end
 	
     % 	----> if requested, get first derivatives
@@ -251,7 +251,7 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
 	
 	Y = img.sliceframes(omit);
 	
-	[coeff res] = Y.mri_GLMFit(X);
+	[coeff res] = Y.img_GLMFit(X);
 	img.data(:,omit+1:img.frames) = res.image2D;
 
 return
@@ -266,7 +266,7 @@ function [V, WB, WM] = firstBoldNuisanceROI(file, glm);
 
     % set up masks to be used
     
-    O  = gmrimage(file.bold1, 'single', 1);
+    O  = nimage(file.bold1, 'single', 1);
     V  = O.zeroframes(1);
     WB = O.zeroframes(1);
     WM = O.zeroframes(1);
@@ -274,7 +274,7 @@ function [V, WB, WM] = firstBoldNuisanceROI(file, glm);
     %   ----> White matter
     
     if strfind(glm.rgss, 'wm')
-    	WM = gmrimage(file.wmmask); 
+    	WM = nimage(file.wmmask); 
     end
     
     %   ----> Ventricle and Whole Brain
@@ -283,21 +283,21 @@ function [V, WB, WM] = firstBoldNuisanceROI(file, glm);
     
         % 	----> compute WB and V masks
         
-        V = gmrimage(file.ventricleseed); 
-    	E = gmrimage(file.eyeseed);
+        V = nimage(file.ventricleseed); 
+    	E = nimage(file.eyeseed);
     	[V.data WB.data] = NROI_CreateROI(O.data, V.data, E.data);
     	
     	% 	----> shrink WB
     	
     	if strfind(glm.rgss, 'wb')
-    		WB = WB.mri_ShrinkROI();					   
-    		WB = WB.mri_ShrinkROI();					   
+    		WB = WB.img_ShrinkROI();					   
+    		WB = WB.img_ShrinkROI();					   
         end
         
         %   ----> shrink V
 
     	if strfind(glm.rgss, 'v')
-    		V = V.mri_ShrinkROI();						   
+    		V = V.img_ShrinkROI();						   
     	end
 
     end
@@ -312,9 +312,9 @@ return
 
 function [V, WB, WM] = asegNuisanceROI(file, glm);
         
-    fsimg = gmrimage(file.segmask);
-    bmimg = gmrimage(file.boldmask);
-%   WM    = gmrimage(file.wmmask);
+    fsimg = nimage(file.segmask);
+    bmimg = nimage(file.boldmask);
+%   WM    = nimage(file.wmmask);
     V     = fsimg.zeroframes(1);
     WB    = fsimg.zeroframes(1);
     WM    = fsimg.zeroframes(1);
@@ -322,16 +322,16 @@ function [V, WB, WM] = asegNuisanceROI(file, glm);
     bmimg.data = (bmimg.data > 0) & (fsimg.data > 0);
 
     WM.data = (fsimg.data == 2 | fsimg.data == 41) & (bmimg.data > 0);
-    WM      = WM.mri_ShrinkROI();
+    WM      = WM.img_ShrinkROI();
     WM.data = WM.image2D;
     
     V.data  = ismember(fsimg.data, [4 5 14 15 24 43 44 72]) & (bmimg.data > 0);
     WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
 
-    V  		= V.mri_ShrinkROI('surface', 6);
-    WB 		= WB.mri_ShrinkROI('edge', 10); %'edge', 10
-    WM      = WM.mri_ShrinkROI();
-    WM      = WM.mri_ShrinkROI();
+    V  		= V.img_ShrinkROI('surface', 6);
+    WB 		= WB.img_ShrinkROI('edge', 10); %'edge', 10
+    WM      = WM.img_ShrinkROI();
+    WM      = WM.img_ShrinkROI();
     
 
 return
@@ -365,7 +365,7 @@ return
 
 function [] = SaveNuisanceMasks(file, WB, V, WM);
     
-    O = gmrimage(file.bold1);						
+    O = nimage(file.bold1);						
     
     nimg = WB.zeroframes(5);
     nimg.data = nimg.image2D();
@@ -375,7 +375,7 @@ function [] = SaveNuisanceMasks(file, WB, V, WM);
     nimg.data(:,4) = WM.image2D();
     nimg.data(:,5) = (WB.image2D()>0)*1 + (V.image2D()>0)*2 + (WM.image2D()>0)*3;
     
-    nimg.mri_saveimage(file.nfile);
+    nimg.img_saveimage(file.nfile);
     
     O  = RGBReshape(O ,3);
     WB = RGBReshape(WB,3);

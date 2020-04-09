@@ -52,7 +52,7 @@ for n = 1:nfiles
         continue
     end
     fprintf('\n---> processing: %s', files(n).name);
-    img = gmrimage([sfolder '/' files(n).name]);
+    img = nimage([sfolder '/' files(n).name]);
 
     img.data = img.image2D;
     m = mean(img.data);

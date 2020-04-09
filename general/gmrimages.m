@@ -1,18 +1,18 @@
-function img = gmrimages(varone, dtype, frames, verbose)
+function img = nimages(varone, dtype, frames, verbose)
 
-%function img = gmrimages(varone, dtype, frames, verbose)
+%function img = nimages(varone, dtype, frames, verbose)
 %
-%   A wrapper for gmrimage class constructor to be used when an array of images is to be returned
-%   rather than just a single image. It takes the same arguments as gmrimage.
+%   A wrapper for nimage class constructor to be used when an array of images is to be returned
+%   rather than just a single image. It takes the same arguments as nimage.
 %
 %   Input
 %       - varone  ... A number of possible argument types:
-%                     * string       ... File(s) will be read into a gmrimage object.
-%                     * data matrix  ... F gmrimage object will be generated with data
+%                     * string       ... File(s) will be read into a nimage object.
+%                     * data matrix  ... F nimage object will be generated with data
 %                                        from the data matrix.
 %                     * cell array   ... An array of grimage objects will be generated
 %                                        each item dependent on the type of the cell type.
-%                     * gmrimage     ... The image will be copied.
+%                     * nimage     ... The image will be copied.
 %       - dtype   ... The datatype to store the data in. ['single']
 %                     In case of numeric data that matches a standard CIFTI image, this
 %                     variable is interpreted as the type of CIFTI image, one of 'dtseries'
@@ -24,7 +24,7 @@ function img = gmrimages(varone, dtype, frames, verbose)
 %       - verbose ... Whether to be talkative
 %
 %   Output
-%       - obj     ... An array of gmrimage objects.
+%       - obj     ... An array of nimage objects.
 %
 %   Strings
 %   -------
@@ -44,26 +44,26 @@ function img = gmrimages(varone, dtype, frames, verbose)
 %   in the obj.runframes vector.
 %
 %   * a semicolon separated list of files
-%   A semicolon (';') separated list of files will result in an array of gmrimage objects, each
+%   A semicolon (';') separated list of files will result in an array of nimage objects, each
 %   object can be a single image, .conc list of images or pipe separated list of images.
 %
 %   Examples
 %   --------
 %
-%   img1 = gmrimages();
-%   img2 = gmrimages('t1w.nii.gz');
-%   img3 = gmrimages('boldlist.conc');
-%   img4 = gmrimages('bold1.nii.gz|bold2.nii.gz|bold3.nii.gz');
+%   img1 = nimages();
+%   img2 = nimages('t1w.nii.gz');
+%   img3 = nimages('boldlist.conc');
+%   img4 = nimages('bold1.nii.gz|bold2.nii.gz|bold3.nii.gz');
 %   img5 = gmrimahes('boldlist.conc;bold1.nii.gz;bold2.nii.gz|bold3.nii.gz');
-%   img6 = gmrimages(randn(91,191,91));
-%   img7 = gmrimages(randn(91282,5));
-%   img8 = gmrimages(randn(91282,5), 'dscalar', {'A', 'B', 'C', 'D', 'E'});
+%   img6 = nimages(randn(91,191,91));
+%   img7 = nimages(randn(91282,5));
+%   img8 = nimages(randn(91282,5), 'dscalar', {'A', 'B', 'C', 'D', 'E'});
 %
 %   The results will be an array of:
-%   img1 ... an empty gmrimage object.
-%   img2 ... a gmrimage object with the content of a T1w image.
-%   img3 ... a gmrimage object with concatenated files listed in 'boldlist.conc'.
-%   img4 ... a gmrimage object with three bold files concatenated.
+%   img1 ... an empty nimage object.
+%   img2 ... a nimage object with the content of a T1w image.
+%   img3 ... a nimage object with concatenated files listed in 'boldlist.conc'.
+%   img4 ... a nimage object with three bold files concatenated.
 %   img5 ... three image objects, img5(1) a concatenated set of images
 %            as specified in 'boldlist.conc', img5(2) a single bold run, and img5(3)
 %            a two concatenated bold images.
@@ -75,7 +75,7 @@ function img = gmrimages(varone, dtype, frames, verbose)
 %   Written by Grega Repovs
 %
 %   Changelog
-%       2018-08-11 Grega Repovs - First version based on gmrimage code
+%       2018-08-11 Grega Repovs - First version based on nimage code
 
 
 if nargin < 4, verbose = false;  end
@@ -89,18 +89,18 @@ if nargin > 0
             parts = regexp(images{n}, '\|', 'split');
             for p = 1:length(parts)
                 if p == 1
-                    t = gmrimage(parts{p}, dtype, frames, verbose);
+                    t = nimage(parts{p}, dtype, frames, verbose);
                 else
-                    t = [t gmrimage(parts{p}, dtype, frames, verbose)];
+                    t = [t nimage(parts{p}, dtype, frames, verbose)];
                 end
             end
             img(n) = t;
         end
 
     else
-        img(1) = gmrimage(varone, dtype, frames, verbose);
+        img(1) = nimage(varone, dtype, frames, verbose);
     end
 else
-    img(1) = gmrimage();
+    img(1) = nimage();
 end
 

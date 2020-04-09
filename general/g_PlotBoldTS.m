@@ -25,7 +25,7 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %
 %   *images*
 %   images can be either a semicolon separated list of bold files to be used, or an array of
-%   gmrimage objects. The order in which the files are specified is the order in which they 
+%   nimage objects. The order in which the files are specified is the order in which they 
 %   should be referenced in the elements specification.
 % 
 %   Example images parameter: 'bold1.nii.gz;bold1_s_hpss_res.nii.gz'
@@ -44,7 +44,7 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %	data from a NIfTI file and processed data from CIFTI file.
 %
 %   *masks*
-%   masks again can be either a single iamge or a set of images passed either as gmrimage
+%   masks again can be either a single iamge or a set of images passed either as nimage
 %   objects or as paths. If more than one mask is to be used, again a semicolumn separated 
 %   list of paths can be provided. The masks are used to define the part of the image to
 %   display. They can be an ROI mask or a segmentation image.
@@ -215,10 +215,10 @@ dstart = skip + 1;
 
 if verbose, fprintf('\nRunning g_PlotBoldTS\n====================\n ---> reading images and maps'); end
 
-img = gmrimages(images);
+img = nimages(images);
 
 if ~isempty(masks)
-    mask = gmrimages(masks);
+    mask = nimages(masks);
 else
     mask = [];
 end
@@ -308,14 +308,14 @@ for n = 1:nelements
 				end
 				elements(n).stats(s).data = img(id).fstats(:, ismember(img(id).fstats_hdr, 'fd'));
 			elseif ismember(elements(n).stats(s).plotdata, {'dvars', 'dvarsm', 'dvarsme'})
-				stats = img(id).mri_StatsTime('dvars');
+				stats = img(id).img_StatsTime('dvars');
 				elements(n).stats(s).data = stats.(elements(n).stats(s).plotdata);
 			elseif ismember(elements(n).stats(s).plotdata, {'V', 'WM', 'GM', 'WB'})
 				tmask = ismember(mask(elements(n).stats(s).maskindex).image2D, roi.(elements(n).stats(s).plotdata));
-				stats = img(id).mri_StatsTime('m', tmask);
+				stats = img(id).img_StatsTime('m', tmask);
 				elements(n).stats(s).data = stats.mean;
 			elseif ismember(elements(n).stats(s).plotdata, {'GO'})
-				stats = img(id).mri_StatsTime('m');
+				stats = img(id).img_StatsTime('m');
 				elements(n).stats(s).data = stats.mean;
 			elseif strcmp(elements(n).stats(s).plotdata, 'scrub')
 				if isempty(img(id).use)

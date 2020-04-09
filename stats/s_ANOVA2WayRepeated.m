@@ -47,7 +47,7 @@ root = strrep(root, '.conc', '');
 % 	----> read file
 
 if verbose, fprintf('--------------------------\nComputing 2-Way Repeated Measures anova with factors A (%d levels) and B (%d levels)\n ... reading data (%s) ', a, b, dfile), end
-img = gmrimage(dfile);
+img = nimage(dfile);
 img.data = img.image2D;		
 
 
@@ -55,7 +55,7 @@ img.data = img.image2D;
 % 	----> compute ANOVA
 
 if verbose, fprintf('\n ... computing\n --- '), end
-[p F Z M SE] = img.mri_ANOVA2WayRepeated(a, b, verbose);
+[p F Z M SE] = img.img_ANOVA2WayRepeated(a, b, verbose);
 if verbose, fprintf(' --- \n'), end
 
 
@@ -64,23 +64,23 @@ if verbose, fprintf(' --- \n'), end
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)
-    M.mri_saveimage([root '_M']);
+    M.img_saveimage([root '_M']);
     if verbose, fprintf('\n ---> mean values [%s] ', [root '_M']),end
 end
 if ismember('e', output)
-    SE.mri_saveimage([root '_SE']);
+    SE.img_saveimage([root '_SE']);
     if verbose, fprintf('\n ---> standard errors [%s] ', [root '_SE']),end
 end
 if ismember('f', output)
-    F.mri_saveimage([root '_F']);
+    F.img_saveimage([root '_F']);
     if verbose, fprintf('\n ---> F-values [%s] ', [root '_F']),end
 end
 if ismember('p', output)
-    p.mri_saveimage([root '_p']);
+    p.img_saveimage([root '_p']);
     if verbose, fprintf('\n ---> p-values [%s] ', [root '_p']),end
 end
 if ismember('z', output)
-    Z.mri_saveimage([root '_Z']);
+    Z.img_saveimage([root '_Z']);
     if verbose, fprintf('\n ---> Z-scores [%s]', [root '_Z']),end
 end
 

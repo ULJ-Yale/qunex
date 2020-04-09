@@ -65,9 +65,9 @@ for s = 1:nsub
     end
 
     if strcmp(sroifile,'none')
-        roi = gmrimage.mri_ReadROI(roifile);
+        roi = nimage.img_ReadROI(roifile);
     else
-        roi = gmrimage.mri_ReadROI(roifile, sroifile);
+        roi = nimage.img_ReadROI(roifile, sroifile);
     end
     nregions = length(roi.roi.roinames);
 
@@ -81,11 +81,11 @@ for s = 1:nsub
 
         fprintf('\n     ... reading data');
 
-        forig  = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss.4dfp.img', subject(s).folder, b));
-        fnogsr = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvd.4dfp.img', subject(s).folder, b));
-        fgsr   = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvwbd.4dfp.img', subject(s).folder, b));
-        fcoeff = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvwbd_coeff.4dfp.img', subject(s).folder, b));
-        fnuiss = gmrimage(sprintf('%s/images/ROI/nuisance/bold%d_nuisance.4dfp.img', subject(s).folder, b));
+        forig  = nimage(sprintf('%s/images/functional/bold%d_s_hpss.4dfp.img', subject(s).folder, b));
+        fnogsr = nimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvd.4dfp.img', subject(s).folder, b));
+        fgsr   = nimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvwbd.4dfp.img', subject(s).folder, b));
+        fcoeff = nimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvwbd_coeff.4dfp.img', subject(s).folder, b));
+        fnuiss = nimage(sprintf('%s/images/ROI/nuisance/bold%d_nuisance.4dfp.img', subject(s).folder, b));
 
         fcoeff.data = fcoeff.image2D;
         fnuiss.data = fnuiss.image2D;
@@ -98,13 +98,13 @@ for s = 1:nsub
 
         % extract WB and WBd
 
-        data(s).bold(b).WB    = forig.mri_ExtractROI(fnuiss, 2);
+        data(s).bold(b).WB    = forig.img_ExtractROI(fnuiss, 2);
         data(s).bold(b).WBd   = [0 diff(data(s).bold(b).WB)];
 
-        data(s).bold(b).V     = forig.mri_ExtractROI(fnuiss, 3);
+        data(s).bold(b).V     = forig.img_ExtractROI(fnuiss, 3);
         data(s).bold(b).Vd    = [0 diff(data(s).bold(b).WB)];
 
-        data(s).bold(b).WM    = forig.mri_ExtractROI(fnuiss, 4);
+        data(s).bold(b).WM    = forig.img_ExtractROI(fnuiss, 4);
         data(s).bold(b).WMd   = [0 diff(data(s).bold(b).WB)];
 
         % set up Type 1 and Type 2 WBsd extraction
@@ -119,23 +119,23 @@ for s = 1:nsub
             % Type 1
 
             for r = 1:nregions
-                mask = roi.mri_ROIMask(r);
+                mask = roi.img_ROIMask(r);
                 data(s).bold(b).WBsd1(r,:) = data(s).bold(b).WB * mean(fcoeff.data(mask, 11)) + data(s).bold(b).WBd * mean(fcoeff.data(mask, 20));
             end
 
             % Type 2
 
-            data(s).bold(b).WBsd2(1:nregions,:) = fdgsr.mri_ExtractROI(roi);
+            data(s).bold(b).WBsd2(1:nregions,:) = fdgsr.img_ExtractROI(roi);
 
         end
 
         % add data for WB mask Type 1
 
-        data(s).bold(b).WBsd1(nregions+1,:) = data(s).bold(b).WB * mean(fcoeff.data(fnuiss.mri_ROIMask(2), 11)) + data(s).bold(b).WBd * mean(fcoeff.data(fnuiss.mri_ROIMask(2), 20));
+        data(s).bold(b).WBsd1(nregions+1,:) = data(s).bold(b).WB * mean(fcoeff.data(fnuiss.img_ROIMask(2), 11)) + data(s).bold(b).WBd * mean(fcoeff.data(fnuiss.img_ROIMask(2), 20));
 
         % add data for WB mask Type 2
 
-        data(s).bold(b).WBsd2(nregions+1,:) = fdgsr.mri_ExtractROI(fnuiss, 2);
+        data(s).bold(b).WBsd2(nregions+1,:) = fdgsr.img_ExtractROI(fnuiss, 2);
 
     end
 end

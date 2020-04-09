@@ -16,7 +16,7 @@ function  [] = g_ComputeGroupBOLDStats(flist, tfile, stats, inmask, ignore)
 %
 %   USE
 %   The function computes for each subject the specified image statistics across
-%   the BOLD image, using the gmrimage mri_Stats method. Results are saved for
+%   the BOLD image, using the nimage img_Stats method. Results are saved for
 %   each computed statistics in a separate file with one volume for each subject
 %   with order of volumes matching the order in which the subjects are listed in
 %   the flist file. The root of the files in which the results are saved is
@@ -55,7 +55,7 @@ function  [] = g_ComputeGroupBOLDStats(flist, tfile, stats, inmask, ignore)
 %   >>> g_ComputeGroupBOLDStats('scz-wm.list', [], 'm, sd', 'negative:block:3:4', 'fidl');
 %
 %   SEE ALSO
-%   gmrimage.mri_Stats
+%   nimage.img_Stats
 %   g_CreateTaskRegressors
 %
 %   ---
@@ -145,9 +145,9 @@ for n = 1:nsub
 
     fprintf('\n     ... reading image file(s)');
 
-    y = gmrimage(subject(n).files{1});
+    y = nimage(subject(n).files{1});
     for f = 2:length(subject(n).files)
-        y = [y gmrimage(subject(n).files{f})];
+        y = [y nimage(subject(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -196,7 +196,7 @@ for n = 1:nsub
     fprintf('\n     ... computing statistics ');
 
     for s = 1:nstats
-        t = y.mri_Stats(stats{s});
+        t = y.img_Stats(stats{s});
         t.data = t.image2D;
         if first
             r(s) = t.zeroframes(nsub);
@@ -216,7 +216,7 @@ fprintf('\n... saving ');
 
 for s = 1:nstats
     fprintf('\n    ... %s ', stats{s});
-    r(s).mri_saveimage([tfile '_' stats{s}]);
+    r(s).img_saveimage([tfile '_' stats{s}]);
 end
 
 fprintf('\n... DONE\n\n');

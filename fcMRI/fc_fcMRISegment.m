@@ -24,7 +24,7 @@ function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 %   Use the function to segment voxels specified in smask roi file based on the
 %   correlation with ROI specifed in the tmask file. Each voxel is assigned the
 %   code of the target ROI it most correlates with. For more information see
-%   mri_fcMRISegment() gmrimage method.
+%   img_fcMRISegment() nimage method.
 %
 %   If no root is specified, the root of the flist is used.
 %
@@ -105,7 +105,7 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-tROI = gmrimage.mri_ReadROI(tmask, subject(1).roi);
+tROI = nimage.img_ReadROI(tmask, subject(1).roi);
 
 nroi = length(tROI.roi.roinames);
 nsubjects = length(subject);
@@ -131,25 +131,25 @@ for s = 1:nsubjects
 	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
 	if script, fprintf('\n... reading file(s) '), end
 
-    roif = gmrimage(subject(s).roi);
-	tROI = gmrimage.mri_ReadROI(tmask, roif);
-	sROI = gmrimage.mri_ReadROI(smask, roif);
+    roif = nimage(subject(s).roi);
+	tROI = nimage.img_ReadROI(tmask, roif);
+	sROI = nimage.img_ReadROI(smask, roif);
 
 	nfiles = length(subject(s).files);
 
-	img = gmrimage(subject(s).files{1});
+	img = nimage(subject(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = gmrimage(subject(s).files{n});
+    	    new = nimage(subject(s).files{n});
     	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    if script, fprintf(', %d', n), end
         end
     end
 
-    seg = img.mri_fcMRISegment(sROI, tROI, options, method);
+    seg = img.img_fcMRISegment(sROI, tROI, options, method);
     seg = seg.unmaskimg();
     for r = 1:nroi
         corrs(r).data(:,s) = seg.data(:,r+1);
@@ -164,7 +164,7 @@ if script, fprintf('\n------\nSaving results'), end
 for r = 1:nroi
     fname = [root '_corr_' segs.roi.roinames{r}];
     if script, fprintf('\n... %s', fname), end
-    corrs(r).mri_saveimage(fname);
+    corrs(r).img_saveimage(fname);
 
     f = fc_Fisher(corrs(r).data);
     gcorr.data(:,r+1) = fc_FisherInv(mean(f,2));
@@ -186,16 +186,16 @@ gZ.data(G==0) = 0;
 gseg.data(G==0) = 0;
 
 if script, fprintf('\n... %s', [root '_gcorr']), end
-gcorr.mri_saveimage([root '_gcorr']);
+gcorr.img_saveimage([root '_gcorr']);
 
 if script, fprintf('\n... %s', [root '_gZ']), end
-gZ.mri_saveimage([root '_gZ']);
+gZ.img_saveimage([root '_gZ']);
 
 if script, fprintf('\n... %s', [root '_gseg']), end
-gseg.mri_saveimage([root '_gseg']);
+gseg.img_saveimage([root '_gseg']);
 
 if script, fprintf('\n... %s', [root '_segs']), end
-segs.mri_saveimage([root '_segs']);
+segs.img_saveimage([root '_segs']);
 
 if script, fprintf('\nDONE!\n\n'), end
 

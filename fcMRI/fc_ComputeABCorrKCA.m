@@ -40,7 +40,7 @@ function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, 
 %   parameter. If more than one value is specfied, a solution will be computed
 %   for each value.
 %
-%   Correlations are computed using the mri_ComputeABCor gmri method. Clustering
+%   Correlations are computed using the img_ComputeABCor gmri method. Clustering
 %   is computed using kmeans function with dmeasure as distance measure, and
 %   taking the best of nrep replications.
 %
@@ -120,8 +120,8 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-sROI = gmrimage.mri_ReadROI(smask, subject(1).roi);
-tROI = gmrimage.mri_ReadROI(tmask, subject(1).roi);
+sROI = nimage.img_ReadROI(smask, subject(1).roi);
+tROI = nimage.img_ReadROI(tmask, subject(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
     sROIload = false;
@@ -155,27 +155,27 @@ for s = 1:nsubjects
 
     if ~strcmp(subject(s).roi, 'none')
         if tROIload | sROIload
-            roif = gmrimage(subject(s).roi);
+            roif = nimage(subject(s).roi);
         end
     end
 
     if tROIload
-	    tROI = gmrimage.mri_ReadROI(tmask, roif);
+	    tROI = nimage.img_ReadROI(tmask, roif);
     end
     if sROIload
-	    sROI = gmrimage.mri_ReadROI(smask, roif);
+	    sROI = nimage.img_ReadROI(smask, roif);
     end
 
     % --- load bold data
 
 	nfiles = length(subject(s).files);
 
-	img = gmrimage(subject(s).files{1});
+	img = nimage(subject(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = gmrimage(subject(s).files{n});
+    	    new = nimage(subject(s).files{n});
     	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    if script, fprintf(', %d', n), end
@@ -183,7 +183,7 @@ for s = 1:nsubjects
     end
     if script, fprintf('\n... computing ABCor'), end
 
-    ABCor = img.mri_ComputeABCor(sROI, tROI, method);
+    ABCor = img.img_ComputeABCor(sROI, tROI, method);
 
     if indiv
         data = fc_Fisher(ABCor.image2D');
@@ -201,8 +201,8 @@ for s = 1:nsubjects
             Cent.data = Cent.data';
 
             if script, fprintf('\n... saving %s\n', ifile); end
-            CA.mri_saveimage(ifile);
-            Cent.mri_saveimage([ifile '_cent']);
+            CA.img_saveimage(ifile);
+            Cent.img_saveimage([ifile '_cent']);
         end
     end
 
@@ -238,8 +238,8 @@ if group
         Cent.data = Cent.data';
 
         if script, fprintf('\n... saving %s\n', ifile); end
-        CA.mri_saveimage([root '_group_k' num2str(k)]);
-        Cent.mri_saveimage([root '_group_k' num2str(k) '_cent']);
+        CA.img_saveimage([root '_group_k' num2str(k)]);
+        Cent.img_saveimage([root '_group_k' num2str(k) '_cent']);
     end
 end
 

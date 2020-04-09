@@ -49,7 +49,7 @@ if nargin < 1, error('ERROR: No ROI provided for value extraction!');          e
 %                                                       read roi
 
 if isempty(strfind(roif, '.names'))
-    roi    = gmrimage(roif);
+    roi    = nimage(roif);
     roi.roi.roicodes = sort(unique(reshape(roi.data, [], 1)));
     roi.roi.roicodes = roi.roi.roicodes(roi.roi.roicodes ~= 0);
     roi.roi.roinames = {};
@@ -57,7 +57,7 @@ if isempty(strfind(roif, '.names'))
         roi.roi.roinames = [roi.roi.roinames, ['ROI' num2str(roi.roi.roicodes(r))]];
     end
 else
-    roi = gmrimage.mri_ReadROI(roif);
+    roi = nimage.img_ReadROI(roif);
 end
 roi.data = roi.image2D;
 
@@ -124,14 +124,14 @@ end
 
 for n = 1:nfiles
     mfs{n}    = strtrim(mfs{n});
-    mimg(n)   = gmrimage(mfs{n});
+    mimg(n)   = nimage(mfs{n});
     mimg(n).data = mimg(n).image2D;
     frames(n) = mimg(n).frames;
     if vstatsn, vdata{n}  = zeros([nroi, frames(n), vstatsn]); end
     if vlstatsn, vldata{n} = zeros([nroi, frames(n), vstatsn, 3]); end
     if ~isempty(sefs)
         sefs{n}  = strtrim(sefs{n});
-        seimg(n) = gmrimage(sefs{n});
+        seimg(n) = nimage(sefs{n});
         seimg(n).data = seimg(n).image2D;
         if vstatsn, sedata{n} = zeros([roi, frames(n), vstatsn]); end
         if frames(n) ~= seimg(n).frames

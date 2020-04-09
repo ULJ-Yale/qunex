@@ -82,7 +82,7 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %   2008-01-23 Grega Repovs
 %            - Adjusted for a different file list format and an additional ROI mask
 %   2011-02-11 Grega Repovs
-%            - Rewritten to use gmrimage objects and ability for event defined masks
+%            - Rewritten to use nimage objects and ability for event defined masks
 %   2012-07-30 Grega Repovs
 %            - Added option to omit frames specified to be ignored in the fidl file
 %   2013-12-11 Grega Repovs
@@ -171,7 +171,7 @@ nana = length(ana);
 %   ------------------------------------------------------------------------------------------
 %                                                The main loop ... go through all the subjects
 
-groi = gmrimage.mri_ReadROI(roiinfo);
+groi = nimage.img_ReadROI(roiinfo);
 
 for n = 1:nsub
 
@@ -181,9 +181,9 @@ for n = 1:nsub
 
     fprintf('\n     ... reading image file(s)');
 
-    y = gmrimage(subject(n).files{1});
+    y = nimage(subject(n).files{1});
     for f = 2:length(subject(n).files)
-        y = [y gmrimage(subject(n).files{f})];
+        y = [y nimage(subject(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -201,9 +201,9 @@ for n = 1:nsub
 
     if isfield(subject(n), 'roi')
         if isempty(mcodes)
-            roi  = gmrimage.mri_ReadROI(roiinfo, subject(n).roi);
+            roi  = nimage.img_ReadROI(roiinfo, subject(n).roi);
         else
-            sroi = gmrimage(subject(n).roi);
+            sroi = nimage(subject(n).roi);
             imask = imask & ismember(sroi.data, mcodes);
         end
     end
@@ -211,12 +211,12 @@ for n = 1:nsub
     % -- exclude voxels outside the BOLD brain mask
 
     if bmask
-        imask = imask & mri_BOLDBrainMask(subject(n).files);
+        imask = imask & img_BOLDBrainMask(subject(n).files);
     end
 
     % -- exclude voxels with 0 variance
 
-    istat = y.mri_Stats('var');
+    istat = y.img_Stats('var');
     imask = imask & istat.data;
 
     % -- apply mask
@@ -263,13 +263,13 @@ for n = 1:nsub
         % ---> remove additional frames to be ignored
 
         if ~ismember(ignore, {'no', 'fidl'})
-            t = t.mri_Scrub(ignore);
+            t = t.img_Scrub(ignore);
         end
 
         % ---> extracting timeseries
 
         fprintf('%d ', t.frames);
-        data.(ana(a).name).timeseries{n} = t.mri_ExtractROI(roi, rcodes, method);
+        data.(ana(a).name).timeseries{n} = t.img_ExtractROI(roi, rcodes, method);
         data.(ana(a).name).usevec{n}     = t.use;
 
     end
@@ -337,13 +337,13 @@ fprintf('\n\n FINISHED!\n\n');
 %   ------------------------------------------------------------------------------------------
 %                                                                 masking with BOLD brain mask
 
-function [bmask] = mri_BOLDBrainMask(fnames)
+function [bmask] = img_BOLDBrainMask(fnames)
 
     bmasks = [];
     for fname = fnames
         fname = fname{1};
         if ~isempty(strfind(fname, '.conc'))
-            [files boldn sfolder] = gmrimage.mri_ReadConcFile(fname);
+            [files boldn sfolder] = nimage.img_ReadConcFile(fname);
 
             mask = boldn > 0;
             for n = 1:length(boldn)
@@ -358,14 +358,14 @@ function [bmask] = mri_BOLDBrainMask(fnames)
 
             bmask = [];
             for n = 1:nfiles
-                bmask = [bmask gmrimage(sprintf('%s/segmentation/boldmasks/bold%d_frame1_brain_mask.nii.gz', sfolder{n}, boldn(n)))];
+                bmask = [bmask nimage(sprintf('%s/segmentation/boldmasks/bold%d_frame1_brain_mask.nii.gz', sfolder{n}, boldn(n)))];
             end
             bmask = min(bmask.image2D, [], 2) > 0;
         else
             [pathstr name ext] = fileparts(fname);
             boldn = regexp(name, '^.*?([0-9]+).*', 'tokens');
             pathstr = strrep(pathstr, 'functional', '');
-            bmask = gmrimage(sprintf('%ssegmentation/boldmasks/bold%s_frame1_brain_mask.nii.gz', pathstr, boldn{1}{1}));
+            bmask = nimage(sprintf('%ssegmentation/boldmasks/bold%s_frame1_brain_mask.nii.gz', pathstr, boldn{1}{1}));
             bmask = bmask.image2D > 0;
         end
         bmasks = [bmasks bmask];
