@@ -1,9 +1,4 @@
-# README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
-# Connector Code
-
-Background
-==========
----
+# README File for Qu|Nex Connector Component
 
 The `connector` repository as part of the Qu|Nex package serves as the overall wrapper 
 for the Qu|Nex suite. It handles flexible directory inputs and subject lists. 
@@ -16,75 +11,26 @@ The Qu|Nex code is is co-developed and co-maintained by the [Mind and Brain Lab 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
 
-Installation
-============
----
+Quick links
+-----------
 
-### See https://bitbucket.org/oriadev/qunex/src/master/README.md
-
-
-Usage and documentation
-=======================
----
-
-List of functions can be obtained by running the following call from the terminal: 
-
-* `qunex -help` prints the general help call
-
-The general `qunex` call use form is:
-
-`qunex --command="<command_name>" --option="<value>" --option="<value>" ...`
-
-Or the simplified form with command name first omitting the flag:
-
-* `qunex <command_name> --option="<value>" --option="<value>" ...`
-
-The list of functions and their specific documentation is provided by running `qunex`.
-
-To get help for a specific command use the following call:
-
-* `qunex ?<command_name>` prints specific help for the specified function.
-
-Perusing documentation, please note the following conventions used:
-
-* Square brackets `[]` denote an option or argument that is optional. The
-  value listed in the brackets is the default value used, if the argument
-  is not explicitly specified
-* Angle brackets `<>` describe the value that should be provided
-* Dashes or "flags", `-` in the documentation define input variables.
-* command names, arguments, and parameter names are either in small or "camel" case.
-* Use descriptions are in regular "sentence" case.
-* Option values are usually specified in capital case (e.g. `YES`, `NONE`).
+* [Website](http://qunex.yale.edu/)
+* [Qu|Nex Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
+* [SDK Wiki](https://bitbucket.org/oriadev/qunexsdk/wiki/Home)
+* [Qu|Nex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
+* [Qu|Nex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
+* [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 
 
-Specific Example Usage
-======================
----
-
-* Here is a specific example usage based on an Qu|Nex call for sorting incoming DICOMs:
-
-
-  `qunex --path='<study_folder>' --function='dicomorganize' --subjects='<comma_separarated_list_of_cases>' --scheduler='<name_of_scheduler_and_options>'`
-
-
-External dependencies
-=====================
----
-
-### See https://bitbucket.org/oriadev/qunex/src/master/README.md
-
-
-Change log
-==========
----
+Change Log
+----------
 
 * 0.50.0 Renamed gmrimage class to nimage and methods names from mri_ to img_.
 * 0.49.10 Initial submodule versioning.
 
 
 References
-==========
----
+----------
 
 Yang GJ, Murray JD, Repovs G, Cole MW, Savic A, Glasser MF, Pittenger C,
 Krystal JH, Wang XJ, Pearlson GD, Glahn DC, Anticevic A. Altered global brain
