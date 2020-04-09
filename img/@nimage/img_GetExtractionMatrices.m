@@ -1,6 +1,6 @@
-function [exsets] = mri_GetExtractionMatrices(obj, frames, options)
+function [exsets] = img_GetExtractionMatrices(obj, frames, options)
 
-%function [exsets] = mri_GetExtractionMatrices(obj, frames, options)
+%function [exsets] = img_GetExtractionMatrices(obj, frames, options)
 %
 %   Generates a set of matrices for extraction of data, one matrix for each specified
 %   extraction sets, one line for each event to be extracted, coding for each point in

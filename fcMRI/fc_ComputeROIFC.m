@@ -210,21 +210,21 @@ end
 
 if verbose; fprintf('     ... creating ROI mask\n'); end
 
-roi  = gmrimage.mri_ReadROI(roiinfo, sroifile);
+roi  = nimage.img_ReadROI(roiinfo, sroifile);
 nroi = length(roi.roi.roinames);
 
 
 % ---> reading image files
 
 if verbose; fprintf('     ... reading image file(s)'); end
-y = gmrimage(bolds);
+y = nimage(bolds);
 if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 
 
 % ---> create extraction sets
 
 if verbose; fprintf('     ... generating extraction sets ...'); end
-exsets = y.mri_GetExtractionMatrices(frames, options);
+exsets = y.img_GetExtractionMatrices(frames, options);
 if verbose; fprintf(' done.\n'); end
 
 % ---> loop through extraction sets
@@ -238,13 +238,13 @@ for n = 1:nsets
     
     % --> get the extracted timeseries
 
-    ts = y.mri_ExtractTimeseries(exsets(n).exmat, options.eventdata);
+    ts = y.img_ExtractTimeseries(exsets(n).exmat, options.eventdata);
 
     if verbose; fprintf(' ... extracted ts'); end
     
     % --> generate fc matrice
 
-    rs = ts.mri_ExtractROI(roi, [], options.roimethod);
+    rs = ts.img_ExtractROI(roi, [], options.roimethod);
 
     if strcmp(options.fcmeasure, 'cv')
         fc = rs';

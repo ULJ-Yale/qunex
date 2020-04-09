@@ -224,21 +224,21 @@ end
 
 if verbose; fprintf('     ... creating ROI mask\n'); end
 
-roi  = gmrimage.mri_ReadROI(roiinfo, sroifile);
+roi  = nimage.img_ReadROI(roiinfo, sroifile);
 nroi = length(roi.roi.roinames);
 
 
 % ---> reading image files
 
 if verbose; fprintf('     ... reading image file(s)'); end
-y = gmrimage(bolds);
+y = nimage(bolds);
 if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 
 
 % ---> create extraction sets
 
 if verbose; fprintf('     ... generating extraction sets ...'); end
-exsets = y.mri_GetExtractionMatrices(frames, options);
+exsets = y.img_GetExtractionMatrices(frames, options);
 if verbose; fprintf(' done.\n'); end
 
 % ---> loop through extraction sets
@@ -252,14 +252,14 @@ for n = 1:nsets
     
     % --> get the extracted timeseries
 
-    ts = y.mri_ExtractTimeseries(exsets(n).exmat, options.eventdata);
+    ts = y.img_ExtractTimeseries(exsets(n).exmat, options.eventdata);
 
     if verbose; fprintf(' ... extracted ts'); end
     
     % --> generate seedmaps
 
-    rs = ts.mri_ExtractROI(roi, [], options.roimethod);
-    fc = ts.mri_ComputeCorrelations(rs', [], strcmp(options.fcmeasure, 'cv'));
+    rs = ts.img_ExtractROI(roi, [], options.roimethod);
+    fc = ts.img_ComputeCorrelations(rs', [], strcmp(options.fcmeasure, 'cv'));
 
     if verbose; fprintf(' ... computed seedmap'); end
 
@@ -335,23 +335,23 @@ if ~isempty(options.saveind)
                     case 'r'
                         t = fcmaps(n).fc.sliceframes([1:nroi] == r);                                              
                         t.filetype = tfiletype;
-                        t.mri_saveimage(fullfile(targetf, [basefilename '_r']));
+                        t.img_saveimage(fullfile(targetf, [basefilename '_r']));
                     case 'fz'
                         t = fz.sliceframes([1:nroi] == r);
                         t.filetype = tfiletype;
-                        t.mri_saveimage(fullfile(targetf, [basefilename '_Fz']));
+                        t.img_saveimage(fullfile(targetf, [basefilename '_Fz']));
                     case 'z'
                         t = Z.sliceframes([1:nroi] == r);
                         t.filetype = tfiletype;
-                        t.mri_saveimage(fullfile(targetf, [basefilename '_Z']));
+                        t.img_saveimage(fullfile(targetf, [basefilename '_Z']));
                     case 'p'
                         t = p.sliceframes([1:nroi] == r);
                         t.filetype = tfiletype;
-                        t.mri_saveimage(fullfile(targetf, [basefilename '_p']));
+                        t.img_saveimage(fullfile(targetf, [basefilename '_p']));
                     case 'fz'
                         t = fcmaps(n).fc.sliceframes([1:nroi] == r);
                         t.filetype = tfiletype;
-                        t.mri_saveimage(fullfile(targetf, [basefilename '_cov']));
+                        t.img_saveimage(fullfile(targetf, [basefilename '_cov']));
                 end
             end
         end

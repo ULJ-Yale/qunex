@@ -1,6 +1,6 @@
-function [simg] = mri_ExtractTimeseries(obj, exmat, method)
+function [simg] = img_ExtractTimeseries(obj, exmat, method)
 
-%function [simg] = mri_ExtractTimeseries(obj, exmat, method)
+%function [simg] = img_ExtractTimeseries(obj, exmat, method)
 %
 %   Creates a new timeseries based on the specified extraction matrix and
 %   extraction method.
@@ -8,7 +8,7 @@ function [simg] = mri_ExtractTimeseries(obj, exmat, method)
 %   INPUT
 %   =====
 %
-%   obj     - a gmrimage object
+%   obj     - a nimage object
 %   exmat   - an [events x frames] extraction matrix in which each line
 %             codes with 1 or true frames across the timeseries that constitue a single event
 %   method  - a method for extracting frames across events, one of:
@@ -22,7 +22,7 @@ function [simg] = mri_ExtractTimeseries(obj, exmat, method)
 %   RESULT
 %   ======
 %
-%   simg   - a gmrimage object with the new timeseries
+%   simg   - a nimage object with the new timeseries
 %
 %   ---
 %   Written by Grega Repovš 2020-02-01.
