@@ -41,6 +41,16 @@ Release notes
 * 0.50.2 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
 
 
+References
+----------
+
+Yang GJ, Murray JD, Repovs G, Cole MW, Savic A, Glasser MF, Pittenger C,
+Krystal JH, Wang XJ, Pearlson GD, Glahn DC, Anticevic A. Altered global brain
+signal in schizophrenia. Proc Natl Acad Sci U S A. 2014 May 20;111(20):7438-43.
+doi: 10.1073/pnas.1405289111. PubMed PMID: 24799682; PubMed Central PMCID:
+PMC4034208.
+
+
 Detailed change log
 -------------------
 
