@@ -3875,131 +3875,214 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
 def parseHCPBolds(options, bolds, r):
     # --- Use hcp_icafix_bolds parameter to determine if a single fix or a multi fix should be used
-    singleRun = True
+    singleFix = True
+
     # variable for storing groups and their bolds
-    hcpGroups = {}
-    hcpBolds = None
+    icafixGroups = {}
+
+    # variable for storing erroneously specified bolds
+    boldError = []
+
+    # flag that all is OK
+    boldsOK= True
+
+    # get all bold targets and tags
+    boldtargets = []
+    boldtags = []
+
+    for b in bolds:
+        # extract data
+        _, _, _, boldinfo = b
+
+        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+            boldtarget = boldinfo['filename']
+            boldtag = boldinfo['task']
+        else:
+            boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+            boldtag = boldinfo['task']
+
+        boldtargets.append(boldtarget)
+        boldtags.append(boldtag)
 
     if 'hcp_icafix_bolds' in options:
-        hcpBolds = options['hcp_icafix_bolds']
-    elif 'hcp_msmall_bolds' in options:
-        hcpBolds = options['hcp_msmall_bolds']
+        icafixBolds = options['hcp_icafix_bolds']
 
-    if hcpBolds:
-        # if hcpBolds includes : then we have groups and we need multi run
-        if ":" in hcpBolds:
-            # run multi run
-            singleRun = False
+        # if hcp_icafix_bolds includes : then we have groups and we need multi fix
+        if ":" in icafixBolds:
+            # run multi fix
+            singleFix = False
 
             # get all groups
-            groups = str.split(hcpBolds, "|")
+            groups = str.split(icafixBolds, "|")
+
+            # store all bolds in icafixBolds
+            icafixBolds = []
 
             for g in groups:
                 # get group name
                 split = str.split(g, ":")
 
                 # create group and add to dictionary
-                hcpGroups[split[0]] = str.split(split[1], ",")
+                if split[0] not in icafixGroups:
+                    specifiedBolds = str.split(split[1], ",")
+                    groupBolds = []
+
+                    # iterate over all and add to bolds or inject instead of tags
+                    for sb in specifiedBolds:
+                        if sb not in boldtargets and sb not in boldtags: 
+                            boldError.append(sb)
+                        else:
+                            # counter
+                            i = 0
+
+                            for b in boldtargets:
+                                if sb == boldtargets[i] or sb == boldtags[i]:
+                                    if sb in icafixBolds:
+                                        boldsOK = False
+                                        r += "\n\nERROR: the bold [%s] is specified twice!" % b
+                                    else:
+                                        groupBolds.append(b)
+                                        icafixBolds.append(b)
+
+                                # increase counter
+                                i = i + 1
+
+                    icafixGroups[split[0]] = groupBolds
+                else:
+                    boldsOK = False
+                    r += "\n\nERROR: multiple concatenations with the same name [%s]!" % split[0]
 
         # else we extract bolds and use single fix
         else:
-            hcpBolds = str.split(hcpBolds, ",")
-    # if hcp_icafix_bolds or hcp_msmall_bolds is empty then bundle all bolds
-    else:
-        singleRun = False
-        hcpBolds = bolds
-        hcpGroups = []
-        hcpGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":hcpBolds})
+            # specified bolds
+            specifiedBolds = str.split(icafixBolds, ",")
 
-    # --- Report single run or multi run
-    if singleRun:
-        r += "\n\n%s single run on %d bolds" % (action("Processing", options['run']), len(hcpBolds))
-    else:
-        r += "\n\n%s multi run on %d groups" % (action("Processing", options['run']), len(hcpGroups))
+            # variable for storing bolds
+            icafixBolds = []
 
-    # --- Get hcpBolds data from bolds
+            # iterate over all and add to bolds or inject instead of tags
+            for sb in specifiedBolds:
+                if sb not in boldtargets and sb not in boldtags: 
+                    boldError.append(sb)
+                else:
+                    # counter
+                    i = 0
+
+                    for b in boldtargets:
+                        if sb == boldtargets[i] or sb == boldtags[i]:
+                            if sb in icafixBolds:
+                                boldsOK = False
+                                r += "\n\nERROR: the bold [%s] is specified twice!" % b
+                            else:
+                                icafixBolds.append(b)
+
+                        # increase counter
+                        i = i + 1
+
+    # if hcp_icafix_bolds is empty then bundle all bolds
+    else:
+        # run multi fix
+        singleFix = False
+        icafixBolds = bolds
+        icafixGroups = []
+        icafixGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":icafixBolds})
+        r += "\nConcatenating all bolds\n"
+
+    # --- Get hcp_icafix_bolds data from bolds
     # variable for storing skipped bolds
-    boldSkip = {}
+    boldSkip = []
 
-    if hcpBolds is not bolds:
-        r += "\n%s study bolds with the provided bolds parameter \n" % (action("Comparing", options['run']))
+    if icafixBolds is not bolds:
         # compare
-        # single run
-        if singleRun:
+        r += "\n\nComparing bolds with hcp_icafix_bolds\n"
+
+        # single fix
+        if singleFix:
             # variable for storing bold data
             boldData = []
 
-            for icaB in hcpBolds:
-                # find the bold in bolds
-                found = False
-                for b in bolds:
-                    # extract data
-                    _, _, _, boldinfo = b
+            # add data to list
+            for b in icafixBolds:
+                # get index
+                i = boldtargets.index(b)
 
-                    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                        boldtarget = boldinfo['filename']
-                    else:
-                        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+                # store data
+                if b in boldtargets:
+                    boldData.append(bolds[i])
 
-                    if icaB == boldtarget:
-                        # add to temporary variable boldData
-                        boldData.append(b)
-                        found = True
-                        boldSkip[boldtarget] = False
-                        continue
+            # skipped bolds
+            for b in boldtargets:
+                if b not in icafixBolds:
+                    boldSkip.append(b)
 
-                    if boldtarget not in boldSkip:
-                        boldSkip[boldtarget] = True
+            # store data into the icafixBolds variable
+            icafixBolds = boldData
 
-            # store data into the hcpBolds variable
-            hcpBolds = boldData
-        # multi run
+        # multi fix
         else:
             # variable for storing group data
             groupData = {}
 
+            # variable for storing skipped bolds
+            boldSkipDict = {}
+            for b in boldtargets:
+                boldSkipDict[b] = True
+
             # go over all groups
-            for g in hcpGroups:
+            for g in icafixGroups:
                 # create empty dict entry for group
                 groupData[g] = []
+
                 # go over group bolds
-                groupBolds = hcpGroups[g]
-                for groupB in groupBolds:
-                    # look for bold in all bolds
-                    found = False
-                    for b in bolds:
-                        # extract data
-                        _, _, _, boldinfo = b
+                groupBolds = icafixGroups[g]
 
-                        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                            boldtarget = boldinfo['filename']
-                        else:
-                            boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+                # add data to list
+                for b in groupBolds:
+                    # get index
+                    i = boldtargets.index(b)
 
-                        if groupB == boldtarget:
-                            # add bold to the group
-                            groupData[g].append(b)
-                            found = True
-                            boldSkip[boldtarget] = False
-                            continue
+                    # store data
+                    if b in boldtargets:
+                        groupData[g].append(bolds[i])
 
-                        if boldtarget not in boldSkip:
-                            boldSkip[boldtarget] = True
+
+                # find skipped bolds
+                for i in range(len(boldtargets)):
+                    # bold is defined
+                    if boldtargets[i] in groupBolds:
+                        # append
+
+                        boldSkipDict[boldtargets[i]] = False
+
+            # cast boldSkip from dictionary to array
+            for b in boldtargets:
+                if boldSkipDict[b]:
+                    boldSkip.append(b)
 
             # cast group data to array of dictionaries (needed for parallel)
-            hcpGroups = []
+            icafixGroups = []
             for g in groupData:
-                hcpGroups.append({"name":g, "bolds":groupData[g]})
+                icafixGroups.append({"name":g, "bolds":groupData[g]})
 
     # report hcp_icafix_bolds not found in bolds
-    if len(boldSkip) > 0:
+    if len(boldSkip) > 0 or len(boldError) > 0:
         for b in boldSkip:
-            if boldSkip[b] is True:
-                r += "     ... skipping %s: it is not specified in the bolds parameter\n" % b
+            r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % b
+        for b in boldError:
+            r += "     ... ERROR: %s specified but not found in bolds\n" % b
     else:
-        r += "     ... all bolds specified in the bolds parameter are present\n"
+        r += "     ... all bolds specified in the hcp_icafix_bolds parameter are present\n"
 
-    return (singleRun, hcpBolds, hcpGroups, r)
+    if (len(boldError) > 0):
+        boldsOK = False
+
+    # --- Report single fix or multi fix
+    if singleFix:
+        r += "\n%s single run on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+    else:
+        r += "\n%s multi run on %d groups" % (action("Processing", options['run']), len(icafixGroups))
+
+    return (singleFix, icafixBolds, icafixGroups, boldsOK, r)
 
 
 def hcpICAFix(sinfo, options, overwrite=False, thread=0):
