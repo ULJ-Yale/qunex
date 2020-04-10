@@ -158,13 +158,22 @@ def getHCPPaths(sinfo, options):
     d['fmapphase'] = ''
     d['fmapge']    = ''
     if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_dcmethod'] == 'SiemensFieldMap':
-        d['fmapmag']   = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
-        d['fmapphase'] = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Phase.nii.gz'))
+        fmapmag = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
+        if fmapmag:
+            d['fmapmag'] = fmapmag[0]
+
+        fmapphase = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Phase.nii.gz'))
+        if fmapphase:
+            d['fmapphase'] = fmapphase[0]
+        
         d['fmapge']    = ""
     elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_dcmethod'] == 'GeneralElectricFieldMap':
         d['fmapmag']   = ""
         d['fmapphase'] = ""
-        d['fmapge']    = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_GE.nii.gz'))
+
+        fmapge = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_GE.nii.gz'))
+        if fmapge:
+            d['fmapge'] = fmapge[0]
 
     # --- default check files
 
@@ -665,8 +674,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
             if senum is None:
                 try:
-                    tufolder = glob.glob(os.path.join(hcp['source'], 'SpinEchoFieldMap*'))
-                    tufolder = tufolder[0]
+                    tufolder = glob.glob(os.path.join(hcp['source'], 'SpinEchoFieldMap*'))[0]
                     senum = int(os.path.basename(tufolder).replace('SpinEchoFieldMap', '').replace('_fncb', ''))
                     r += "\n---> TOPUP Correction, no Spin-Echo pair explicitly specified, using pair %d" % (senum)
                 except:
@@ -1270,12 +1278,15 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         elements = [("subjectDIR",       hcp['T1w_folder']), 
                     ('subject',          sinfo['id'] + options['hcp_suffix']),
-                    ('t1',               os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
-                    ('t1brain',          os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
-                    ('t2',               t2w),
-                    ('seed',             options['hcp_fs_seed']),                    
-                    ('no-conf2hires',    options['hcp_fs_no_conf2hires']),                    
+                    ('seed',             options['hcp_fs_seed']),
+                    ('no-conf2hires',    options['hcp_fs_no_conf2hires']),
                     ('processing-mode',  options['hcp_processing_mode'])]
+
+        # -> add t1, t1brain and t2 only if options['hcp_fs_existing_subject'] is FALSE
+        if (not options['hcp_fs_existing_subject']):
+            elements.append(('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')))
+            elements.append(('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')))
+            elements.append(('t2', t2w))
 
         # -> Additional, reconall parameters
 
@@ -1292,7 +1303,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # --> Pull all together
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
-
         # --> Add flags
 
         for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_subject', '--existing-subject')]:
@@ -1311,8 +1321,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         if run:
             if options['run'] == "run":
 
-                # --> clean up test file if overwrite or if hcp_fs_existing_subject is set to True
-                if (overwrite and os.path.lexists(tfile)) or (options['hcp_fs_existing_subject'] and os.path.lexists(tfile)):
+                # --> clean up test file if overwrite and hcp_fs_existing_subject not set to True
+                if (overwrite and os.path.lexists(tfile)and not options['hcp_fs_existing_subject']):
                     os.remove(tfile)
 
                 # --> clean up only if hcp_fs_existing_subject is not set to True
@@ -4180,7 +4190,9 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         "<group1>:<boldname1>,<boldname2>|
                                         <group2>:<boldname3>,<boldname4>",
                                         in this case multi-run HCP ICAFix will be
-                                        executed. If this parameter is not provided
+                                        executed. Instead of full bold names, you
+                                        can also use bold tags from the batch file.
+                                        If this parameter is not provided
                                         ICAFix will bundle all bolds together and
                                         execute multi-run HCP ICAFix, the
                                         concatenated file will be named
@@ -4256,10 +4268,13 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, r = parseHCPBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
 
         # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
+        if singleFix:
+            threads = min(options['threads'], len(icafixBolds))
+        else:
+            threads = min(options['threads'], len(icafixGroups))
         r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
@@ -4270,13 +4285,16 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = "1"
             elif options['hcp_matlab_mode'] == "octave":
+                r += "\nWARNING: ICAFix runs with octave results are unstable!\n"
                 matlabrunmode = "2"
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-                raise
+                parsOK = False
 
         # set variable
         os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
+
+        if not parsOK:
+            raise ge.CommandFailed("hcp_ICAFix", "Invalid input parameters!")
 
         # --- Execute
         # single fix
@@ -4361,6 +4379,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP ICAFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP ICAFix failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ICAFix failed')
@@ -4696,7 +4718,9 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                                     "<group1>:<boldname1>,<boldname2>|
                                     <group2>:<boldname3>,<boldname4>",
                                     in this case multi-run HCP ICAFix will be
-                                    executed. If this parameter is not provided
+                                    executed. Instead of full bold names, you
+                                    can also use bold tags from the batch file.
+                                    If this parameter is not provided
                                     ICAFix will bundle all bolds together and
                                     execute multi-run HCP ICAFix, the
                                     concatenated file will be named
@@ -4765,10 +4789,15 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, r = parseHCPBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
 
         # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
+        if singleFix:
+            threads = min(options['threads'], len(icafixBolds))
+        else:
+            threads = min(options['threads'], len(icafixGroups))
         r += "\n\n%s PostFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Execute
@@ -4823,6 +4852,10 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP PostFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP PostFix failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP PostFix failed')
@@ -4896,9 +4929,10 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = 1
             elif options['hcp_matlab_mode'] == "octave":
+                r += "\nWARNING: ICAFix runs with octave results are unstable!"
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
                 boldok = False
 
         # subject
@@ -5071,7 +5105,9 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         "<group1>:<boldname1>,<boldname2>|
                                         <group2>:<boldname3>,<boldname4>",
                                         in this case multi-run HCP ICAFix will be
-                                        executed. If this parameter is not provided
+                                        executed. Instead of full bold names, you
+                                        can also use bold tags from the batch file.
+                                        If this parameter is not provided
                                         ICAFix will bundle all bolds together and
                                         execute multi-run HCP ICAFix, the
                                         concatenated file will be named
@@ -5091,8 +5127,8 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
                                         to FIX cleaning ["FALSE"].
-    hcp_regname                     ... Specifies surface registration name
-                                        ["NONE"].
+    hcp_icafix_regname              ... Specifies surface registration name.
+                                        Use "NONE" for MSMSulc ["NONE"].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
 
     EXAMPLE USE
@@ -5143,10 +5179,15 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, r = parseHCPBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed("hcp_ReApplyFix", "Invalid input parameters!")
 
         # --- Multi threading
-        threads = min(options['threads'], len(icafixBolds))
+        if singleFix:
+            threads = min(options['threads'], len(icafixBolds))
+        else:
+            threads = min(options['threads'], len(icafixGroups))
         r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
 
         # --- Execute
@@ -5232,6 +5273,10 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP ReApplyFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP ReApplyFix failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ReApplyFix failed')
@@ -5285,15 +5330,16 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                 elif options['hcp_matlab_mode'] == "interpreted":
                     matlabrunmode = 1
                 elif options['hcp_matlab_mode'] == "octave":
+                    r += "\nWARNING: ICAFix runs with octave results are unstable!"
                     matlabrunmode = 2
                 else:
-                    r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                    r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
                     boldok = False
 
             # regname
             regname = "NONE"
-            if 'hcp_regname' not in options or options['hcp_regname'] != "":
-                regname = options['hcp_regname']
+            if 'hcp_icafix_regname' in options and options['hcp_icafix_regname'] != "":
+                regname = options['hcp_icafix_regname']
 
             comm = '%(script)s \
                 --path="%(path)s" \
@@ -5443,15 +5489,16 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 elif options['hcp_matlab_mode'] == "interpreted":
                     matlabrunmode = 1
                 elif options['hcp_matlab_mode'] == "octave":
+                    r += "\nWARNING: ICAFix runs with octave results are unstable!"
                     matlabrunmode = 2
                 else:
-                    r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                    r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
                     groupok = False
 
             # regname
             regname = "NONE"
-            if 'hcp_regname' not in options or options['hcp_regname'] != "":
-                regname = options['hcp_regname']
+            if 'hcp_icafix_regname' in options and options['hcp_icafix_regname'] != "":
+                regname = options['hcp_icafix_regname']
 
             # highpass and regname
             highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
