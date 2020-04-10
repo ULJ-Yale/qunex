@@ -3884,11 +3884,11 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
 
 def parseHCPBolds(options, bolds, r):
-    # --- Use hcp_icafix_bolds parameter to determine if a single fix or a multi fix should be used
+    # --- Use hcp_???_bolds parameter to determine if a single fix or a multi fix should be used
     singleFix = True
 
     # variable for storing groups and their bolds
-    icafixGroups = {}
+    hcpGroups = {}
 
     # variable for storing erroneously specified bolds
     boldError = []
@@ -3914,26 +3914,30 @@ def parseHCPBolds(options, bolds, r):
         boldtargets.append(boldtarget)
         boldtags.append(boldtag)
 
+    hcpBolds = None
     if 'hcp_icafix_bolds' in options:
-        icafixBolds = options['hcp_icafix_bolds']
+        hcpBolds = options['hcp_icafix_bolds']
+    else if 'hcp_msmall_bolds' in options:
+        hcpBolds = options['hcp_msmall_bolds']
 
-        # if hcp_icafix_bolds includes : then we have groups and we need multi fix
-        if ":" in icafixBolds:
+    if hcpBolds:
+        # if hcpBolds includes : then we have groups and we need multi fix
+        if ":" in hcpBolds:
             # run multi fix
             singleFix = False
 
             # get all groups
-            groups = str.split(icafixBolds, "|")
+            groups = str.split(hcpBolds, "|")
 
-            # store all bolds in icafixBolds
-            icafixBolds = []
+            # store all bolds in hcpBolds
+            hcpBolds = []
 
             for g in groups:
                 # get group name
                 split = str.split(g, ":")
 
                 # create group and add to dictionary
-                if split[0] not in icafixGroups:
+                if split[0] not in hcpGroups:
                     specifiedBolds = str.split(split[1], ",")
                     groupBolds = []
 
@@ -3947,17 +3951,17 @@ def parseHCPBolds(options, bolds, r):
 
                             for b in boldtargets:
                                 if sb == boldtargets[i] or sb == boldtags[i]:
-                                    if sb in icafixBolds:
+                                    if sb in hcpBolds:
                                         boldsOK = False
                                         r += "\n\nERROR: the bold [%s] is specified twice!" % b
                                     else:
                                         groupBolds.append(b)
-                                        icafixBolds.append(b)
+                                        hcpBolds.append(b)
 
                                 # increase counter
                                 i = i + 1
 
-                    icafixGroups[split[0]] = groupBolds
+                    hcpGroups[split[0]] = groupBolds
                 else:
                     boldsOK = False
                     r += "\n\nERROR: multiple concatenations with the same name [%s]!" % split[0]
@@ -3965,10 +3969,10 @@ def parseHCPBolds(options, bolds, r):
         # else we extract bolds and use single fix
         else:
             # specified bolds
-            specifiedBolds = str.split(icafixBolds, ",")
+            specifiedBolds = str.split(hcpBolds, ",")
 
             # variable for storing bolds
-            icafixBolds = []
+            hcpBolds = []
 
             # iterate over all and add to bolds or inject instead of tags
             for sb in specifiedBolds:
@@ -3980,31 +3984,31 @@ def parseHCPBolds(options, bolds, r):
 
                     for b in boldtargets:
                         if sb == boldtargets[i] or sb == boldtags[i]:
-                            if sb in icafixBolds:
+                            if sb in hcpBolds:
                                 boldsOK = False
                                 r += "\n\nERROR: the bold [%s] is specified twice!" % b
                             else:
-                                icafixBolds.append(b)
+                                hcpBolds.append(b)
 
                         # increase counter
                         i = i + 1
 
-    # if hcp_icafix_bolds is empty then bundle all bolds
+    # if hcp_???_bolds is empty then bundle all bolds
     else:
         # run multi fix
         singleFix = False
-        icafixBolds = bolds
-        icafixGroups = []
-        icafixGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":icafixBolds})
+        hcpBolds = bolds
+        hcpGroups = []
+        hcpGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":hcpBolds})
         r += "\nConcatenating all bolds\n"
 
-    # --- Get hcp_icafix_bolds data from bolds
+    # --- Get hcp_???_bolds data from bolds
     # variable for storing skipped bolds
     boldSkip = []
 
-    if icafixBolds is not bolds:
+    if hcpBolds is not bolds:
         # compare
-        r += "\n\nComparing bolds with hcp_icafix_bolds\n"
+        r += "\n\nComparing bolds with those specifed via parameters\n"
 
         # single fix
         if singleFix:
@@ -4012,7 +4016,7 @@ def parseHCPBolds(options, bolds, r):
             boldData = []
 
             # add data to list
-            for b in icafixBolds:
+            for b in hcpBolds:
                 # get index
                 i = boldtargets.index(b)
 
@@ -4022,11 +4026,11 @@ def parseHCPBolds(options, bolds, r):
 
             # skipped bolds
             for b in boldtargets:
-                if b not in icafixBolds:
+                if b not in hcpBolds:
                     boldSkip.append(b)
 
-            # store data into the icafixBolds variable
-            icafixBolds = boldData
+            # store data into the hcpBolds variable
+            hcpBolds = boldData
 
         # multi fix
         else:
@@ -4039,12 +4043,12 @@ def parseHCPBolds(options, bolds, r):
                 boldSkipDict[b] = True
 
             # go over all groups
-            for g in icafixGroups:
+            for g in hcpGroups:
                 # create empty dict entry for group
                 groupData[g] = []
 
                 # go over group bolds
-                groupBolds = icafixGroups[g]
+                groupBolds = hcpGroups[g]
 
                 # add data to list
                 for b in groupBolds:
@@ -4054,7 +4058,6 @@ def parseHCPBolds(options, bolds, r):
                     # store data
                     if b in boldtargets:
                         groupData[g].append(bolds[i])
-
 
                 # find skipped bolds
                 for i in range(len(boldtargets)):
@@ -4070,29 +4073,29 @@ def parseHCPBolds(options, bolds, r):
                     boldSkip.append(b)
 
             # cast group data to array of dictionaries (needed for parallel)
-            icafixGroups = []
+            hcpGroups = []
             for g in groupData:
-                icafixGroups.append({"name":g, "bolds":groupData[g]})
+                hcpGroups.append({"name":g, "bolds":groupData[g]})
 
-    # report hcp_icafix_bolds not found in bolds
+    # report that some hcp_???_bolds not found in bolds
     if len(boldSkip) > 0 or len(boldError) > 0:
         for b in boldSkip:
-            r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % b
+            r += "     ... skipping %s: it is not specified via the parameters\n" % b
         for b in boldError:
             r += "     ... ERROR: %s specified but not found in bolds\n" % b
     else:
-        r += "     ... all bolds specified in the hcp_icafix_bolds parameter are present\n"
+        r += "     ... all bolds specified via the parameters are present\n"
 
     if (len(boldError) > 0):
         boldsOK = False
 
     # --- Report single fix or multi fix
     if singleFix:
-        r += "\n%s single run on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+        r += "\n%s single run on %d bolds" % (action("Processing", options['run']), len(hcpBolds))
     else:
-        r += "\n%s multi run on %d groups" % (action("Processing", options['run']), len(icafixGroups))
+        r += "\n%s multi run on %d groups" % (action("Processing", options['run']), len(hcpGroups))
 
-    return (singleFix, icafixBolds, icafixGroups, boldsOK, r)
+    return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
 
 def hcpICAFix(sinfo, options, overwrite=False, thread=0):
@@ -5672,7 +5675,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
 def parseMSMAllBolds(options, bolds, r):
     # parse the same way as with icafix first
-    singleRun, hcpBolds, hcpGroups, r = parseHCPBolds(options, bolds, r)
+    singleRun, hcpBolds, hcpGroups, parsOK, r = parseHCPBolds(options, bolds, r)
 
     # if singleRun create a single group from provided bolds
     if singleRun:
@@ -5704,7 +5707,7 @@ def parseMSMAllBolds(options, bolds, r):
         for i in range(len(hcpGroups)):
             hcpGroups[i]["outname"] = outnames[i]
 
-    return (singleRun, hcpGroups, r)
+    return (singleRun, hcpGroups, parsOK, r)
 
 
 def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
@@ -5749,7 +5752,9 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse msmall_bolds
-        singleRun, msmallGroups, r = parseMSMAllBolds(options, bolds, r)
+        singleRun, msmallGroups, parsOK, r = parseMSMAllBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
 
         # --- Execute
         # single run
@@ -5830,6 +5835,10 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP MSMAll: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP MSMAll failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP MSMAll failed')
@@ -6204,7 +6213,9 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse msmall_bolds
-        singleRun, msmallGroups, r = parseMSMAllBolds(options, bolds, r)
+        singleRun, msmallGroups, parsOK, r = parseMSMAllBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
 
         # --- Execute
         # single run
@@ -6248,6 +6259,10 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP DeDriftAndResample: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP DeDriftAndResample failed')
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
