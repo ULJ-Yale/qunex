@@ -289,6 +289,9 @@ def deduceFolders(args):
     sfolder = args.get('sfolder')
     folder = args.get('folder')
 
+    if subjectsfolder:
+        subjectsfolder = os.path.abspath(subjectsfolder)
+
     if basefolder is None:
         if subjectsfolder:
             basefolder = os.path.dirname(subjectsfolder)

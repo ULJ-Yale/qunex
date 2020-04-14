@@ -25,9 +25,9 @@ import os.path
 import g_core
 
 
-def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls'):
+def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcpsuffix=""):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls']
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls'] [hcpsuffix=""]
 
     USE
     ===
@@ -61,6 +61,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                         names ('original') (e.g. rfMRI_REST1_AP). ['standard']
     --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
                         See below for details. ['hcpls'] 
+    --hcpsuffix         Optional suffix to append to session id when creating 
+                        session folder within the hcp folder. The final path
+                        to HCP session is then: <tfolder>/<session id><hcpsuffix>.
+                        []
 
     IMAGE DEFINITION
     ================
@@ -197,6 +201,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
              - Added HCP folder structure specification
     2019-06-18 Grega Repovš
              - Updated documentation with multiple subject runs
+    2020-04-08  Grega Repovš
+             - Added hcpsuffix parameter
     '''
 
     print "Running setupHCP\n================"
@@ -216,11 +222,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     if folderstructure == 'initial':
         fctail = '_fncb'
         fmtail = '_strc'
-        basef = os.path.join(sfolder, tfolder, inf['id'])
+        basef = os.path.join(sfolder, tfolder, inf['id'] + hcpsuffix)
     else:
         fctail = ""
         fmtail = ""
-        basef = os.path.join(sfolder, tfolder, inf['id'], 'unprocessed')
+        basef = os.path.join(sfolder, tfolder, inf['id'] + hcpsuffix, 'unprocessed')
 
     # --- Check session
 

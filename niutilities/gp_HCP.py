@@ -836,7 +836,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         tfile = os.path.join(hcp['hcp_nonlin'], 'T1w_restore_brain.nii.gz')
         if hcp['hcp_prefs_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_prefs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_prefs_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -1310,7 +1310,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # -- Test files
 
         if hcp['hcp_fs_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fs_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -1703,7 +1703,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
        # -- Test files
 
         if hcp['hcp_fslong_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fslong_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fslong_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -2026,13 +2026,13 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
         if False: #  fslongitudinal not supported:
             tfolder = hcp['hcp_long_nonlin']
-            tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+            tfile = os.path.join(tfolder, sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
         else:
             tfolder = hcp['hcp_nonlin']
-            tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+            tfile = os.path.join(tfolder, sinfo['id'] + options['hcp_suffix'] + '.corrThickness.164k_fs_LR.dscalar.nii')
 
         if hcp['hcp_postfs_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_postfs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_postfs_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -2846,7 +2846,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # -> PostFS results
 
         if False:  # Longitudinal processing is currently unavailanle # options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
+            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
         else:
             tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
@@ -3193,7 +3193,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 for b in boldsData:
                     fmriref = b['fmriref']
                     if (fmriref == "NONE"): # if fmriref is "NONE" then process the previous pool followed by this one as single
-                        r, report = executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)
+                        if (len(boldsPool) > 0):
+                            r, report = executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)
                         boldsPool = []
                         r, report = executeSingleHCPfMRIVolume(sinfo, options, overwrite, hcp, b, r, report)
                     else: # else add to pool
@@ -3369,7 +3370,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
 
         if hcp['hcp_bold_vol_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_vol_check'], 'fields': [('sessionid', sinfo['id']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_vol_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -3827,7 +3828,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
 
         if hcp['hcp_bold_surf_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
