@@ -2535,10 +2535,10 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
         raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
 
 
-def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=None, mapaction="link", mapto=None, mapfrom=None, overwrite="no", mapexclude=None, verbose="no"):
+def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=None, mapaction="link", mapto=None, mapfrom=None, overwrite="no", mapexclude=None, hcpsuffix="", verbose="no"):
 
     """
-    mapIO [subjectsfolder="."] [sessions=None] [maptype=<desired mapping>] [sfilter=None] [subjid=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [mapfrom=None|<location to map from>] [overwrite="no"] [mapexclude=None] [verbose="no"]
+    mapIO [subjectsfolder="."] [sessions=None] [maptype=<desired mapping>] [sfilter=None] [subjid=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [mapfrom=None|<location to map from>] [overwrite="no"] [mapexclude=None] [hcpsuffix=""] [verbose="no"] 
 
     The function maps data in or out of Qu|Nex data structure. What specific 
     mapping to conduct is specified by the `maptype` parameter. How to do the 
@@ -2619,6 +2619,12 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
                       specify, which files should be excluded from mapping. The
                       regular expression patterns are matched against the full
                       path of the source files.
+
+    --hcpsuffix       An optional suffix to append to session id when mapping  
+                      data from a hcp session folder. The path from which the 
+                      data will be mapped from each session will be:
+                      <subjectsfolder>/<session id>/hcp/<session id><hcpsuffix>.
+                      []
 
     --verbose         Report details while running function
 
@@ -2796,7 +2802,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
     gc.printAndLog("--> Preparing mapping", file=logfile)
 
     if maptype == 'toHCPLS':
-        toMap = map_toHCPLS(subjectsfolder, sessions, mapto, gopts)
+        toMap = map_toHCPLS(subjectsfolder, sessions, mapto, gopts, hcpsuffix)
 
     if not toMap:
         gc.printAndLog("ERROR: Found nothing to map!", file=logfile, silent=True)
@@ -2959,14 +2965,14 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
 
 
 
-def map_toHCPLS(subjectsfolder, sessions, target, options):
+def map_toHCPLS(subjectsfolder, sessions, target, options, hcpsuffix):
     '''
     Computes mapping from Qu|Nex to HCPLS folders.
     '''
     toMap = []
 
     for session in sessions:
-        hcpfolder = os.path.join(subjectsfolder, session['id'], 'hcp', session['id'])
+        hcpfolder = os.path.join(subjectsfolder, session['id'], 'hcp', session['id'] + hcpsuffix)
         hcpfolders = glob.glob(os.path.join(hcpfolder, '*')) 
         targetfolder = os.path.join(target, session['id'])
 
