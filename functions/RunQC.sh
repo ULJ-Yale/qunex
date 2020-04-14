@@ -123,7 +123,7 @@ usage() {
      echo "                                                                 Note: If --subjects is omitted in favor of --subjectsbatchfile OR if batch file is provided as input for --subjects flag, then all cases from the batch file are processed."
      echo "--overwrite=<clean_prior_run>                                    Delete prior QC run: yes/no [Default: no]"
      echo "--hcp_suffix=<specify_hcp_suffix_folder_name>                    Allows user to specify subject id suffix if running HCP preprocessing variants []"
-     echo "                                                                  e.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' would be specified as --hcp_suffix='run2' "
+     echo "                                                                  e.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' would be specified as --hcp_suffix='-run2' "
      echo "--scenetemplatefolder=<path_for_the_template_folder>             Specify the absolute path name of the template folder (default: $TOOLS/${QUNEXREPO}/library/data/scenes/qc)"
      echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
      echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
@@ -649,7 +649,7 @@ else
     
     # -- Proceed with other QC steps
     if [ ! -z "$HCPSuffix" ]; then 
-        SetHCPSuffix="-${HCPSuffix}"
+        SetHCPSuffix="${HCPSuffix}"
         geho " ===> HCP suffix specified ${HCPSuffix}"; echo ""
         geho "      Setting hcp folder to: ${StudyFolder}/subjects/${CASE}/hcp/${CASE}${SetHCPSuffix}"; echo ""
     fi
