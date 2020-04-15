@@ -5774,11 +5774,6 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
             report['not ready']  += tempReport['not ready']
             report['skipped']    += tempReport['skipped']
 
-            # if all ok automatically execute DeDriftAndResample
-            if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups)
-                r += result['r']
-                report = result['report']
 
         # multi run
         else: 
@@ -5821,11 +5816,11 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                     report['not ready']  += tempReport['not ready']
                     report['skipped']    += tempReport['skipped']
 
-            # if all ok automatically execute DeDriftAndResample
-            if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups)
-                r += result['r']
-                report = result['report']
+        # if all ok automatically execute DeDriftAndResample
+        if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
+            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups)
+            r += result['r']
+            report = result['report']
 
         # report
         rep = []
@@ -6372,6 +6367,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             --low-res-mesh="%(lowresmesh)s" \
             --registration-name="%(regname)s" \
             --dedrift-reg-files="%(dedriftregfiles)s" \
+            --concat-reg-name="%(concatregname)s" \
             --maps="%(maps)s" \
             --myelin-maps="%(myelinmaps)s" \
             --multirun-fix-names="NONE" \
@@ -6389,6 +6385,199 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'regname'             : "MSMAll_InitalReg" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname'],
                 'dedriftregfiles'     : dedriftregfiles,
+                'concatregname'       : "MSMAll_Concat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname'],
+                'maps'                : maps,
+                'myelinmaps'          : myelinmaps,
+                'fixnames'            : boldtargets,
+                'dontfixnames'        : dontfixnames,
+                'smoothingfwhm'       : 2 if 'hcp_msmall_smoothing_fwhm' not in options else options['hcp_msmall_smoothing_fwhm'],
+                'highpass'            : highpass,
+                'matlabrunmode'       : matlabrunmode,
+                'motionregression'    : "TRUE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
+
+        # -- Test file
+        # TODO TEST FILE
+        # construct concat file name
+        #concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupname)
+        #tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
+        tfile = "test.txt"
+        fullTest = None
+
+        # -- Run
+        if run and groupok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], "DeDriftAndResample"], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(boldtargets)
+                else:
+                    report['done'].append(boldtargets)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
+                if passed is None:
+                    r += "\n     ... HCP DeDriftAndResample can be run"
+                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(boldtargets)
+                else:
+                    report['skipped'].append(boldtargets)
+
+        elif run:
+            report['not ready'].append(boldtargets)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this group!"
+            else:
+                r += "\n     ... ERROR: images missing, this group would be skipped!"
+        else:
+            report['not ready'].append(boldtargets)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
+        r += str(errormessage)
+        report['failed'].append(boldtargets)
+    except:
+        r += "\n --- Failed during processing of group %s with error:\n %s\n" % ("DeDriftAndResample", traceback.format_exc())
+        report['failed'].append(boldtargets)
+
+    return {'r': r, 'report': report}
+
+
+def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, groups):
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        r += "\n\n----------------------------------------------------------------"
+        r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
+        groupok = True
+
+        # --- check for bold images and prepare targets parameter
+        boldtargets = ""
+        concatnames = ""
+
+        # highpass
+        highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+
+        # check if files for all bolds exist
+        for g in groups:
+            if not groupok:
+                break
+
+            # get bolds data
+            bolds = g["bolds"]
+
+            # add separators
+            if boldtargets is not "":
+                boldtargets = boldtargets + "%"
+            if concatnames is not "":
+                concatnames = concatnames + "@"
+
+            # concatname
+            concatnames = concatnames + group["name"]
+
+            for b in bolds:
+                # set ok to true for now
+                boldok = True
+
+                # extract data
+                _, _, _, boldinfo = b
+
+                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                    printbold  = boldinfo['filename']
+                    boldtarget = boldinfo['filename']
+                else:
+                    printbold  = str(bold)
+                    boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+                # input file check
+                # TODO input file check
+                boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
+                #r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+                if not boldok:
+                    groupok = False
+                    break
+                else:
+                    # add @ separator
+                    if boldtargets is not "":
+                        boldtargets = boldtargets + "@"
+
+                    # add latest image
+                    boldtargets = boldtargets + boldtarget
+
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = 0
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] == "compiled":
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                raise
+
+        # fix names to use
+        fixnames = boldtargets
+        if 'hcp_msmall_bolds_touse' in options:
+            fixnames = options['hcp_msmall_bolds_touse'].replace(",", "@")
+
+        # dedrift reg files
+        dedriftregfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
+        if 'hcp_msmall_dedrift_reg_files' in options:
+            dedriftregfiles = options['hcp_msmall_dedrift_reg_files'].replace(",", "@")
+
+        # maps
+        maps = "sulc@curvature@corrThickness@thickness"
+        if 'hcp_msmall_maps' in options:
+            maps = options['hcp_msmall_maps'].replace(",", "@")
+
+        # maps
+        myelinmaps = "MyelinMap@SmoothedMyelinMap"
+        if 'hcp_msmall_myelinmaps' in options:
+            myelinmaps = options['hcp_msmall_myelinmaps'].replace(",", "@")
+
+        # dont fix names
+        dontfixnames = "NONE"
+        if 'hcp_msmall_dontixnames' in options:
+            myelinmaps = options['hcp_msmall_dontixnames'].replace(",", "@")
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --high-res-mesh="%(highresmesh)s" \
+            --low-res-mesh="%(lowresmesh)s" \
+            --registration-name="%(regname)s" \
+            --dedrift-reg-files="%(dedriftregfiles)s" \
+            --concat-reg-name="%(concatregname)s" \
+            --maps="%(maps)s" \
+            --myelin-maps="%(myelinmaps)s" \
+            --multirun-fix-names="NONE" \
+            --multirun-fix-concat-name="NONE" \
+            --fix-names="%(fixnames)s" \
+            --dont-fix-names="%(dontfixnames)s" \
+            --smoothing-fwhm="%(smoothingfwhm)d" \
+            --high-pass="%(highpass)d" \
+            --matlab-run-mode="%(matlabrunmode)d" \
+            --motion-regression="%(motionregression)s"' % {
+                'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
+                'path'                : sinfo['hcp'],
+                'subject'             : sinfo['id'] + options['hcp_suffix'],
+                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
+                'regname'             : "MSMAll_InitalReg" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname'],
+                'dedriftregfiles'     : dedriftregfiles,
+                'concatregname'       : "MSMAll_Concat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname'],
                 'maps'                : maps,
                 'myelinmaps'          : myelinmaps,
                 'fixnames'            : boldtargets,
