@@ -6297,8 +6297,8 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
         # dont fix names
         dontfixnames = "NONE"
-        if 'hcp_msmall_dontixnames' in options:
-            myelinmaps = options['hcp_msmall_dontixnames'].replace(",", "@")
+        if 'hcp_msmall_dontfixnames' in options:
+            myelinmaps = options['hcp_msmall_dontfixnames'].replace(",", "@")
 
         comm = '%(script)s \
             --path="%(path)s" \
@@ -6477,8 +6477,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
         # dont fix names
         dontfixnames = "NONE"
-        if 'hcp_msmall_dontixnames' in options:
-            myelinmaps = options['hcp_msmall_dontixnames'].replace(",", "@")
+        if 'hcp_msmall_dontfixnames' in options:
+            myelinmaps = options['hcp_msmall_dontfixnames'].replace(",", "@")
 
         comm = '%(script)s \
             --path="%(path)s" \
