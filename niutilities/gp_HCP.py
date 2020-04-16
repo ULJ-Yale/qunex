@@ -1135,7 +1135,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
 
     ----------------
-    2019-10-20 ToDo
+    2019-10-20 Future tasks:
              - Adjust code to enable running with FreeSurfer 5.3-HCP
              - Enable longitudinal mode
              - Enable using additional parameters
@@ -4297,7 +4297,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
 
         if not parsOK:
-            raise ge.CommandFailed("hcp_ICAFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_ICAFix", "... invalid input parameters!")
 
         # --- Execute
         # single fix
@@ -4794,7 +4794,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_PostFix", "... invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -5184,7 +5184,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_ReApplyFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_ReApplyFix", "... invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -5677,35 +5677,26 @@ def parseMSMAllBolds(options, bolds, r):
     # parse the same way as with icafix first
     singleRun, hcpBolds, msmallGroups, parsOK, r = parseHCPBolds(options, bolds, r)
 
-    # if singleRun create a single group from provided bolds
-    if singleRun:
-        msmallGroups = []
-        group = {}
-        group["bolds"] = hcpBolds
-        msmallGroups.append(group)
-
-    # add outnames to msmallGroups
-    # if not defined create generic names
-    if "hcp_msmall_outboldnames" not in options:
-        r += "     ... hcp_msmall_outboldnames not provided using generic names (MSMAll_OUT) \n"
-        # if only one group do not append index to out name
-        if len(msmallGroups) == 1:
-            msmallGroups[0]["outname"] = "MSMAll_OUT"
-        else:
-            for i in range(len(msmallGroups)):
-                msmallGroups[i]["outname"] = "MSMAll_OUT_%d" % (i + 1)
-    # else use existing
+    # if more than one group is provided error out
+    if (len(msmallGroups) > 1):
+        r += "\n     ... ERROR: multiple groups provided, MSMAll does not support such functionality"
+        parsOK = False
     else:
-        try:
-            outnames = options['hcp_msmall_outboldnames'].split(",")
-            if len(outnames) != len(msmallGroups):
-                r += "     ... ERROR: number of hcp_msmall_outboldnames does not match the number of groups!"
-                raise
-        except:
-            r += "\n --- Failed during parsing of MSMAll bolds\n"
+        # if singleRun create a single group from provided bolds
+        if singleRun:
+            msmallGroups = []
+            group = {}
+            group["bolds"] = hcpBolds
+            msmallGroups.append(group)
 
-        for i in range(len(msmallGroups)):
-            msmallGroups[i]["outname"] = outnames[i]
+        # add outnames to msmallGroup
+        # if not defined create a generic name
+        if "hcp_msmall_outboldname" not in options:
+            r += "\n     ... hcp_msmall_outboldname not provided using generic name (MSMAll_OUT) \n"
+            msmallGroups[0]["outname"] = "MSMAll_OUT"
+        # else use existing
+        else:
+            msmallGroups[0]["outname"] = options['hcp_msmall_outboldname']
 
     return (singleRun, msmallGroups, parsOK, r)
 
@@ -5726,7 +5717,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     Written by Jure Demšar
 
     Changelog
-    2020-16-03 Jure Demsar
+    2020-01-04 Jure Demsar
              - Core functionality.
     '''
 
@@ -5754,71 +5745,33 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
         # --- Parse msmall_bolds
         singleRun, msmallGroups, parsOK, r = parseMSMAllBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_PostFix", "... invalid input parameters!")
 
         # --- Execute
         # single run
         if singleRun:
             # process
-            result = executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, msmallGroups)
-
-            # merge r
-            r += result['r']
-
-            # merge report
-            tempReport            = result['report']
-            report['done']       += tempReport['done']
-            report['incomplete'] += tempReport['incomplete']
-            report['failed']     += tempReport['failed']
-            report['ready']      += tempReport['ready']
-            report['not ready']  += tempReport['not ready']
-            report['skipped']    += tempReport['skipped']
-
-
+            result = executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, msmallGroups[0])
         # multi run
         else: 
-            # --- Multi threading
-            threads = min(options['threads'], len(msmallGroups))
-            r += "\n\n%s MSMAll on %d threads" % (action("Processing", options['run']), threads)
+            # process
+            result = executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, msmallGroups[0])
 
-            if threads == 1: # serial execution
-                for g in msmallGroups:
-                    # process
-                    result = executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, g)
+        # merge r
+        r += result['r']
 
-                    # merge r
-                    r += result['r']
-
-                    # merge report
-                    tempReport            = result['report']
-                    report['done']       += tempReport['done']
-                    report['incomplete'] += tempReport['incomplete']
-                    report['failed']     += tempReport['failed']
-                    report['ready']      += tempReport['ready']
-                    report['not ready']  += tempReport['not ready']
-                    report['skipped']    += tempReport['skipped'] 
-
-            else: # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
-                # process 
-                f = partial(executeHCPMultiMSMAll, sinfo, options, overwrite, hcp, run)
-                results = processPoolExecutor.map(f, msmallGroups)
-
-                # merge r and report
-                for result in results:
-                    r                    += result['r']
-                    tempReport            = result['report']
-                    report['done']       += tempReport['done']
-                    report['failed']     += tempReport['failed']
-                    report['incomplete'] += tempReport['incomplete']
-                    report['ready']      += tempReport['ready']
-                    report['not ready']  += tempReport['not ready']
-                    report['skipped']    += tempReport['skipped']
+        # merge report
+        tempReport            = result['report']
+        report['done']       += tempReport['done']
+        report['incomplete'] += tempReport['incomplete']
+        report['failed']     += tempReport['failed']
+        report['ready']      += tempReport['ready']
+        report['not ready']  += tempReport['not ready']
+        report['skipped']    += tempReport['skipped'] 
 
         # if all ok automatically execute DeDriftAndResample
         if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups)
+            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
             r += result['r']
             report = result['report']
 
@@ -5847,9 +5800,8 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, groups):
+def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
     # get data
-    group = groups[0]
     outboldname = group["outname"]
     bolds = group["bolds"]
 
@@ -6046,7 +5998,6 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
-                groupok = False
                 break
             else:
                 # add @ separator
@@ -6055,6 +6006,12 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
                 # add latest image
                 boldtargets = boldtargets + boldtarget
+
+        if boldok:
+            # check if group file exists
+            groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+            groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
+            r, boldok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
 
         if 'hcp_msmall_templates' not in options:
           msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
@@ -6120,7 +6077,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         fullTest = None
 
         # -- Run
-        if run and groupok:
+        if run and boldok:
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -6182,7 +6139,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     Written by Jure Demšar
 
     Changelog
-    2020-20-03 Jure Demsar
+    2020-10-04 Jure Demsar
              - Core functionality.
     '''
 
@@ -6210,41 +6167,29 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
         # --- Parse msmall_bolds
         singleRun, msmallGroups, parsOK, r = parseMSMAllBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_PostFix", "... invalid input parameters!")
 
         # --- Execute
         # single run
         if singleRun:
             # process
-            result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups)
-
-            # merge r
-            r += result['r']
-
-            # merge report
-            tempReport            = result['report']
-            report['done']       += tempReport['done']
-            report['incomplete'] += tempReport['incomplete']
-            report['failed']     += tempReport['failed']
-            report['ready']      += tempReport['ready']
-            report['not ready']  += tempReport['not ready']
-            report['skipped']    += tempReport['skipped']
+            result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
         # multi run
         else: 
             # process
-            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups)
+            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
 
-            # merge r
-            r += result['r']
+        # merge r
+        r += result['r']
 
-            # merge report
-            tempReport            = result['report']
-            report['done']       += tempReport['done']
-            report['incomplete'] += tempReport['incomplete']
-            report['failed']     += tempReport['failed']
-            report['ready']      += tempReport['ready']
-            report['not ready']  += tempReport['not ready']
-            report['skipped']    += tempReport['skipped'] 
+        # merge report
+        tempReport            = result['report']
+        report['done']       += tempReport['done']
+        report['incomplete'] += tempReport['incomplete']
+        report['failed']     += tempReport['failed']
+        report['ready']      += tempReport['ready']
+        report['not ready']  += tempReport['not ready']
+        report['skipped']    += tempReport['skipped'] 
 
         # report
         rep = []
@@ -6271,9 +6216,8 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, groups):
+def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, group):
     # get group data
-    group = groups[0]
     bolds = group["bolds"]
 
     # prepare return variables
@@ -6291,6 +6235,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         # highpass
         highpass = 2000 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
 
+        # fmriprocstring
+        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
         # check if files for all bolds exist
         for b in bolds:
             # set ok to true for now
@@ -6307,12 +6254,10 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             # input file check
-            # TODO input file check
-            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
-            #r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
-                groupok = False
                 break
             else:
                 # add @ separator
@@ -6334,11 +6279,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             else:
                 r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
-
-        # fix names to use
-        fixnames = boldtargets
-        if 'hcp_msmall_bolds_touse' in options:
-            fixnames = options['hcp_msmall_bolds_touse'].replace(",", "@")
 
         # dedrift reg files
         dedriftregfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
@@ -6367,7 +6307,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             --low-res-mesh="%(lowresmesh)s" \
             --registration-name="%(regname)s" \
             --dedrift-reg-files="%(dedriftregfiles)s" \
-            --concat-reg-name="%(concatregname)s" \
             --maps="%(maps)s" \
             --myelin-maps="%(myelinmaps)s" \
             --multirun-fix-names="NONE" \
@@ -6385,7 +6324,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'regname'             : "MSMAll_InitalReg" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname'],
                 'dedriftregfiles'     : dedriftregfiles,
-                'concatregname'       : "MSMAll_Concat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname'],
                 'maps'                : maps,
                 'myelinmaps'          : myelinmaps,
                 'fixnames'            : boldtargets,
@@ -6404,7 +6342,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         fullTest = None
 
         # -- Run
-        if run and groupok:
+        if run and boldok:
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -6450,7 +6388,11 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     return {'r': r, 'report': report}
 
 
-def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, groups):
+def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group):
+    # get group data
+    groupname = group["name"]
+    bolds = group["bolds"]
+
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -6458,61 +6400,47 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
     try:
         r += "\n\n----------------------------------------------------------------"
         r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
-        groupok = True
 
         # --- check for bold images and prepare targets parameter
         boldtargets = ""
-        concatnames = ""
 
         # highpass
         highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
 
         # check if files for all bolds exist
-        for g in groups:
-            if not groupok:
+        for b in bolds:
+            # set ok to true for now
+            boldok = True
+
+            # extract data
+            _, _, _, boldinfo = b
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldtarget = boldinfo['filename']
+            else:
+                printbold  = str(bold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+            # input file check
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
+            r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+            if not boldok:
                 break
+            else:
+                # add @ separator
+                if boldtargets is not "":
+                    boldtargets = boldtargets + "@"
 
-            # get bolds data
-            bolds = g["bolds"]
+                # add latest image
+                boldtargets = boldtargets + boldtarget
 
-            # add separators
-            if boldtargets is not "":
-                boldtargets = boldtargets + "%"
-            if concatnames is not "":
-                concatnames = concatnames + "@"
-
-            # concatname
-            concatnames = concatnames + group["name"]
-
-            for b in bolds:
-                # set ok to true for now
-                boldok = True
-
-                # extract data
-                _, _, _, boldinfo = b
-
-                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                    printbold  = boldinfo['filename']
-                    boldtarget = boldinfo['filename']
-                else:
-                    printbold  = str(bold)
-                    boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-
-                # input file check
-                # TODO input file check
-                boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
-                #r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
-
-                if not boldok:
-                    groupok = False
-                    break
-                else:
-                    # add @ separator
-                    if boldtargets is not "":
-                        boldtargets = boldtargets + "@"
-
-                    # add latest image
-                    boldtargets = boldtargets + boldtarget
+        if boldok:
+            # check if group file exists
+            groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+            groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
+            r, boldok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = 0
@@ -6562,9 +6490,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             --concat-reg-name="%(concatregname)s" \
             --maps="%(maps)s" \
             --myelin-maps="%(myelinmaps)s" \
-            --multirun-fix-names="NONE" \
-            --multirun-fix-concat-name="NONE" \
-            --fix-names="%(fixnames)s" \
+            --multirun-fix-names="%(mrfixnames)s" \
+            --multirun-fix-concat-name="%(mrfixconcatname)s" \
+            --fix-names="NONE" \
             --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)d" \
             --high-pass="%(highpass)d" \
@@ -6580,12 +6508,13 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'concatregname'       : "MSMAll_Concat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname'],
                 'maps'                : maps,
                 'myelinmaps'          : myelinmaps,
-                'fixnames'            : boldtargets,
+                'mrfixnames'          : boldtargets,
+                'mrfixconcatname'     : groupname,
                 'dontfixnames'        : dontfixnames,
                 'smoothingfwhm'       : 2 if 'hcp_msmall_smoothing_fwhm' not in options else options['hcp_msmall_smoothing_fwhm'],
                 'highpass'            : highpass,
                 'matlabrunmode'       : matlabrunmode,
-                'motionregression'    : "TRUE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
+                'motionregression'    : "FALSE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
 
         # -- Test file
         # TODO TEST FILE
@@ -6596,7 +6525,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         fullTest = None
 
         # -- Run
-        if run and groupok:
+        if run and boldok:
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
