@@ -577,7 +577,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation on SE label specification
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -858,7 +858,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP PreFS can be run"
                     report = "HCP Pre FS can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Due to missing files session can not be processed."
             report = "Files missing, PreFS can not be run"
@@ -877,7 +877,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         report = "PreFS failed"
         failed = 1
 
-    r += "\nHCP PreFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nHCP PreFS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1145,7 +1145,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 -> hcp_autotopofix_off
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -1356,7 +1356,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP FS can be run"
                     report = "HCP FS can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Subject can not be processed."
             report = "FS can not be run"
@@ -1373,7 +1373,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP FS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP FS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1584,7 +1584,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -1760,7 +1760,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nLongitudinal FreeSurfer %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nLongitudinal FreeSurfer %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1947,7 +1947,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PostFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -2054,7 +2054,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP PostFS can be run"
                     report = "HCP PostFS can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Session can not be processed."
             report = "HCP PostFS can not be run"
@@ -2071,7 +2071,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP PostFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP PostFS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -2309,7 +2309,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     """
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -2418,7 +2418,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "---> Session can not be processed."
             report = "HCP Diffusion can not be run"
@@ -2431,7 +2431,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -2798,7 +2798,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Made SE selection more rubust
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Volume registration [%s] ... " % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -3231,7 +3231,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
 
-    r += "\n\nHCP fMRIVolume %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP fMRIVolume %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # rint r
     return (r, report)
@@ -3430,7 +3430,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP fMRIVolume can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -3672,7 +3672,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Surface registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -3773,7 +3773,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP fMRI Surface failed')
 
-    r += "\n\nHCP fMRISurface %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP fMRISurface %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -3852,7 +3852,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP fMRISurface can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -4249,7 +4249,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP ICAFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -4393,7 +4393,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP ICAFix failed')
 
-    r += "\n\nHCP ICAFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP ICAFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -4415,7 +4415,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
         boldok = True
 
@@ -4472,7 +4472,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... single-run HCP ICAFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -4511,7 +4511,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
         groupok = True
 
@@ -4598,7 +4598,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r)
                 if passed is None:
                     r += "\n     ... multi-run HCP ICAFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -4770,7 +4770,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PostFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -4866,7 +4866,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP PostFix failed')
 
-    r += "\n\nHCP PostFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP PostFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -4878,7 +4878,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     # extract data
-    r += "\n\n----------------------------------------------------------------"
+    r += "\n\n------------------------------------------------------------"
 
     if singleFix:
         # highpass
@@ -4982,7 +4982,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP PostFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5160,7 +5160,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP ReApplyFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -5287,7 +5287,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP ReApplyFix failed')
 
-    r += "\n\nHCP ReApplyFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP ReApplyFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -5310,7 +5310,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
     try:
         # run HCP hand reclassification
-        r += "\n----------------------------------------------------------------"
+        r += "\n------------------------------------------------------------"
         r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
         result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, True, boldtarget, printbold)
 
@@ -5389,7 +5389,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                     passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r)
                     if passed is None:
                         r += "\n     ... single-run HCP ReApplyFix can be run"
-                        r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(printbold)
                     else:
                         report['skipped'].append(printbold)
@@ -5436,7 +5436,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n----------------------------------------------------------------"
+        r += "\n------------------------------------------------------------"
         r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
         groupok = True
 
@@ -5553,7 +5553,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                     passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r)
                     if passed is None:
                         r += "\n     ... multi-run HCP ReApplyFix can be run"
-                        r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(groupname)
                     else:
                         report['skipped'].append(groupname)
@@ -5641,7 +5641,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP HandReclassification can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5721,7 +5721,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP MSMAll registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -5771,7 +5771,13 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
         # if all ok automatically execute DeDriftAndResample
         if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+            # single run
+            if singleRun:
+                result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+            # multi run
+            else:
+                result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+
             r += result['r']
             report = result['report']
 
@@ -5794,7 +5800,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP MSMAll failed')
 
-    r += "\n\nHCP MSMAll %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP MSMAll %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -5810,7 +5816,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outboldname)
         groupok = True
 
@@ -5925,7 +5931,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP MSMAll can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5965,7 +5971,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outboldname)
         groupok = True
 
@@ -6094,7 +6100,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r)
                 if passed is None:
                     r += "\n     ... HCP MSMAll can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -6143,7 +6149,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP DeDriftAndResample registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -6210,7 +6216,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
 
-    r += "\n\nHCP DeDriftAndResample %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP DeDriftAndResample %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -6225,7 +6231,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
         groupok = True
 
@@ -6359,7 +6365,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
                 if passed is None:
                     r += "\n     ... HCP DeDriftAndResample can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(boldtargets)
                 else:
                     report['skipped'].append(boldtargets)
@@ -6398,7 +6404,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
 
         # --- check for bold images and prepare targets parameter
@@ -6542,7 +6548,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
                 if passed is None:
                     r += "\n     ... HCP DeDriftAndResample can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n-------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(boldtargets)
                 else:
                     report['skipped'].append(boldtargets)
@@ -6576,7 +6582,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
     hcpDTIFit - documentation not yet available.
     """
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP DTI Fix ..." % (action("Running", options['run']))
 
@@ -6646,7 +6652,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -6657,7 +6663,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
     hcpBedpostx - documentation not yet available.
     """
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP Bedpostx GPU ..." % (action("Running", options['run']))
 
@@ -6727,7 +6733,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
     return (r, (sinfo['id'], report, failed))
@@ -6816,7 +6822,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     """
 
     
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
     r += "\n   The command will map the results of the HCP preprocessing from sessions's hcp\n   to sessions's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bolds'].split("|")), options['hcp_cifti_tail'])
@@ -7020,7 +7026,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
             else:
                 r += "\n ... %s [task: '%s']" % (boldname, boldtask)
 
-    r += "\n\nHCP data mapping completed on %s\n---------------------------------------------------------------- \n" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP data mapping completed on %s\n------------------------------------------------------------\n" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d, bolds skipped: %(boldskipped)d" % (report)
 
     # print r
