@@ -5908,9 +5908,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'matlabrunmode'       : matlabrunmode}
 
         # -- Test file
-        # TODO TEST FILE
-        # tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, bandpass))
-        tfile = "temp.txt"
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outboldname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outboldname, options['hcp_cifti_tail'], highpass))
         fullTest = None
 
         # -- Run
@@ -6075,11 +6073,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'matlabrunmode'       : matlabrunmode}
 
         # -- Test file
-        # TODO TEST FILE
-        # construct concat file name
-        #concatfilename = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupname)
-        #tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
-        tfile = "test.txt"
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outboldname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outboldname, options['hcp_cifti_tail'], highpass))
         fullTest = None
 
         # -- Run
