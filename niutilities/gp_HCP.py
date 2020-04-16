@@ -6413,6 +6413,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         # highpass
         highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
 
+        # fmriprocstring
+        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
         # check if files for all bolds exist
         for b in bolds:
             # set ok to true for now
@@ -6429,8 +6432,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             # input file check
-            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
-            r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
 
             if not boldok:
                 break
