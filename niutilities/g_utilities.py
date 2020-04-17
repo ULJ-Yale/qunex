@@ -1510,7 +1510,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     ---
     list: doPreFS
-        sessions  : {{sessions_var}}
+        sessions  : {sessions_var}
         cores     : 4
 
         command: hcp1
@@ -1643,9 +1643,13 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     mapvalues = {}
     if "mapvalues" in eargs:
         tempmap = eargs["mapvalues"].split("|")
+
         for m in tempmap:
             m = m.split(":")
             mapvalues[m[0]] = m[1]
+        
+        # remove
+        del eargs["mapvalues"]
 
     with open(listfile, 'r') as file:
         for line in file:
@@ -1666,8 +1670,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                 elif ':' in line:
                     parameter, value = [stripQuotes(e.strip()) for e in line.split(":", 1)]
                     # is value something we should inject
-                    if "{{" in value and "}}" in value:
-                        value = value.strip("\{").strip("\}")
+                    if "{" in value and "}" in value:
+                        value = value.strip("{").strip("}")
                         # is value in global parameters or environment
                         if value in mapvalues:
                             value = mapvalues[value]
