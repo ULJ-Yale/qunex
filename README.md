@@ -24,14 +24,14 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.50.5
+Qu|Nex suite version: 0.50.6
 
 Submodules:
 
 * connector: 0.50.1
 * library: 0.50.1
 * nitools: 0.50.0
-* niutilities: 0.50.9
+* niutilities: 0.50.10
 
 
 Release notes
@@ -54,6 +54,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.50.6 [niutilities] Consistent parameter injection notation.
 * 0.50.5 [niutilities] Harmonized the use of hcp_suffix.
 * 0.50.4 [niutilities] Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
 * 0.50.3 [niutilities] Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
