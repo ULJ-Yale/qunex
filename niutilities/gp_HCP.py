@@ -6300,11 +6300,16 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         if 'hcp_msmall_dontfixnames' in options:
             myelinmaps = options['hcp_msmall_dontfixnames'].replace(",", "@")
 
+        # lowresmeshes
+        lowresmeshes = 32
+        if 'hcp_lowresmeshes' in options:
+            lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
             --high-res-mesh="%(highresmesh)s" \
-            --low-res-mesh="%(lowresmesh)s" \
+            --low-res-meshes="%(lowresmeshes)s" \
             --registration-name="%(regname)s" \
             --dedrift-reg-files="%(dedriftregfiles)s" \
             --maps="%(maps)s" \
@@ -6321,7 +6326,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
-                'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
+                'lowresmeshes'          : lowresmeshes,
                 'regname'             : "MSMAll_InitalReg" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname'],
                 'dedriftregfiles'     : dedriftregfiles,
                 'maps'                : maps,
@@ -6484,11 +6489,16 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         if 'hcp_msmall_dontfixnames' in options:
             myelinmaps = options['hcp_msmall_dontfixnames'].replace(",", "@")
 
+        # lowresmeshes
+        lowresmeshes = 32
+        if 'hcp_lowresmeshes' in options:
+            lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
             --high-res-mesh="%(highresmesh)s" \
-            --low-res-mesh="%(lowresmesh)s" \
+            --low-res-meshes="%(lowresmeshes)s" \
             --registration-name="%(regname)s" \
             --dedrift-reg-files="%(dedriftregfiles)s" \
             --concat-reg-name="%(concatregname)s" \
@@ -6506,7 +6516,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
-                'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
+                'lowresmeshes'          : lowresmeshes,
                 'regname'             : "MSMAll_InitalReg" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname'],
                 'dedriftregfiles'     : dedriftregfiles,
                 'concatregname'       : "MSMAll_Concat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname'],
