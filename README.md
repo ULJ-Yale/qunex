@@ -40,6 +40,7 @@ Quick links
 Change log
 ----------
 
+* 0.50.10 Consistent parameter injection notation.
 * 0.50.9  Harmonized use of hcp_suffix.
 * 0.50.8  hcp_PreFS glob debug.
 * 0.50.7  Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
