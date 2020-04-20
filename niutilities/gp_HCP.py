@@ -6197,7 +6197,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
 
-        report = (sinfo['id'], "HCP DeDriftAndResample: bolds" + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+        report = (sinfo['id'], "HCP DeDriftAndResample: " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
     except ge.CommandFailed as e:
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
@@ -6349,12 +6349,12 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         # -- Run
         if run and boldok:
             if options['run'] == "run":
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
-                    report['failed'].append(boldtargets)
+                    report['failed'].append(regname)
                 else:
-                    report['done'].append(boldtargets)
+                    report['done'].append(regname)
 
             # -- just checking
             else:
@@ -6362,18 +6362,18 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 if passed is None:
                     r += "\n     ... HCP DeDriftAndResample can be run"
                     r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
-                    report['ready'].append(boldtargets)
+                    report['ready'].append(regname)
                 else:
-                    report['skipped'].append(boldtargets)
+                    report['skipped'].append(regname)
 
         elif run:
-            report['not ready'].append(boldtargets)
+            report['not ready'].append(regname)
             if options['run'] == "run":
                 r += "\n     ... ERROR: images missing, skipping this group!"
             else:
                 r += "\n     ... ERROR: images missing, this group would be skipped!"
         else:
-            report['not ready'].append(boldtargets)
+            report['not ready'].append(regname)
             if options['run'] == "run":
                 r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
             else:
@@ -6382,10 +6382,10 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
-        report['failed'].append(boldtargets)
+        report['failed'].append(regname)
     except:
         r += "\n --- Failed during processing of group %s with error:\n %s\n" % ("DeDriftAndResample", traceback.format_exc())
-        report['failed'].append(boldtargets)
+        report['failed'].append(regname)
 
     return {'r': r, 'report': report}
 
@@ -6493,6 +6493,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         # regname
         regname = "MSMSulc" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname']
 
+        # concatregname
+        concatregname = "MSMConcat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname']
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
@@ -6518,7 +6521,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'lowresmeshes'        : lowresmeshes,
                 'regname'             : regname,
                 'dedriftregfiles'     : dedriftregfiles,
-                'concatregname'       : "MSMConcat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname'],
+                'concatregname'       : concatregname,
                 'maps'                : maps,
                 'myelinmaps'          : myelinmaps,
                 'mrfixnames'          : boldtargets,
@@ -6529,9 +6532,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "FALSE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
 
-        # -- Test file (currently check only last bold)
-        lastbold = boldtargets.split(",")[-1]
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], regname))
+        # -- Test file
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
         fullTest = None
 
         # -- Run
@@ -6540,12 +6542,12 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
-                    report['failed'].append(boldtargets)
+                    report['failed'].append(groupname)
                 else:
-                    report['done'].append(boldtargets)
+                    report['done'].append(groupname)
 
             # -- just checking
             else:
@@ -6553,18 +6555,18 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 if passed is None:
                     r += "\n     ... HCP DeDriftAndResample can be run"
                     r += "\n------------------------------------------------------------\nCommand to run:\n %s\n-------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
-                    report['ready'].append(boldtargets)
+                    report['ready'].append(groupname)
                 else:
-                    report['skipped'].append(boldtargets)
+                    report['skipped'].append(groupname)
 
         elif run:
-            report['not ready'].append(boldtargets)
+            report['not ready'].append(groupname)
             if options['run'] == "run":
                 r += "\n     ... ERROR: images missing, skipping this group!"
             else:
                 r += "\n     ... ERROR: images missing, this group would be skipped!"
         else:
-            report['not ready'].append(boldtargets)
+            report['not ready'].append(groupname)
             if options['run'] == "run":
                 r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
             else:
@@ -6573,10 +6575,10 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
-        report['failed'].append(boldtargets)
+        report['failed'].append(groupname)
     except:
         r += "\n --- Failed during processing of group %s with error:\n %s\n" % ("DeDriftAndResample", traceback.format_exc())
-        report['failed'].append(boldtargets)
+        report['failed'].append(groupname)
 
     return {'r': r, 'report': report}
 
