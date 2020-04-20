@@ -5711,7 +5711,130 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
     A short name 'hcp9' can also be used for this command.
 
-    TODO DOCUMENTATION!
+    Runs the MSMAll step of the HCP Pipeline. This function executes two steps,
+    first it runs MSMAll and if it completes succesfully it then executes
+    the DeDriftAndResample step.
+
+    If the hcp_msmall_bolds parameter is not provided MSMAll will bundle
+    all bolds together and execute multi-run HCP MSMAll, the concatenated file
+    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    processing requires a lot of computational resources.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the Qu|Nex
+    folder structure. The function will look into folder:
+
+    <session id>/hcp/<session id>
+
+    for files:
+
+    MNINonLinear/Results/<boldname>/
+    <boldname>_<cifti_tail>_hp<highpass>_clean.dtseries.nii
+
+    RESULTS
+    =======
+
+    The results of this step will be generated and populated in the
+    MNINonLinear folder inside the same sessions's root hcp folder.
+
+    The final clean file can be found in:
+
+    MNINonLinear/Results/<outboldname>/
+    <outboldname>_<cifti_tail>_hp<highpass>_clean_vn.dtseries.nii,
+
+    where highpass is the used value for the highpass filter. The default highpass
+    value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix. The
+    default cifti tail is Atlas.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    --sessions          ... The batch.txt file with all the sessions information
+                            [batch.txt].
+    --subjectsfolder    ... The path to the study/subjects folder, where the
+                            imaging  data is supposed to go [.].
+    --cores             ... How many cores to utilize. This Parameter
+                            determines the parallelization on the
+                            subject level [1].
+    --overwrite         ... Whether to overwrite existing data (yes)
+                            or not (no) [no].
+    --logfolder         ... The path to the folder where runlogs and comlogs
+                            are to be stored, if other than default []
+    --log               ... Whether to keep ('keep') or remove ('remove') the
+                            temporary logs once jobs are completed ['keep'].
+                            When a comma separated list is given, the log will
+                            be created at the first provided location and then
+                            linked or copied to other locations. The valid
+                            locations are:
+                            * 'study'   for the default: 
+                                        `<study>/processing/logs/comlogs`
+                                        location,
+                            * 'session' for `<sessionid>/logs/comlogs
+                            * 'hcp'     for `<hcp_folder>/logs/comlogs
+                            * '<path>'  for an arbitrary directory
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    hcp_icafix_bolds            ... specify a list of bolds for MSMAll.
+                                    You can specify a comma separated list
+                                    of bolds, e.g. "<boldname1>,<boldname2>",
+                                    in this case single-run HCP ICAFix will be
+                                    executed over specified bolds. You can also
+                                    specify how to group/concatenate bolds
+                                    together, e.g.
+                                    "<group1>:<boldname1>,<boldname2>",
+                                    in this case multi-run HCP ICAFix will be
+                                    executed. Instead of full bold names, you
+                                    can also use bold tags from the batch file.
+                                    If this parameter is not provided
+                                    MSMAll will bundle all bolds together and
+                                    execute multi-run HCP MSMAll, the
+                                    concatenated file will be named
+                                    fMRI_CONCAT_ALL [""].
+    hcp_msmall_highpass         ... value for the highpass filter,
+                                    [0] for multi-run HCP MSMAll and [2000]
+                                    for single-run HCP MSMAll.
+    hcp_msmall_outboldname      ... the name which will be given to the
+                                    concatenated single subject scan [MSMOut].
+    hcp_msmall_templates        ... path to directory containing MSM All template
+                                    files [<HCPPIPEDIR>/global/templates/MSMAll].
+    hcp_msmall_outregname       ... output registration name [MSMInitalReg].
+    hcp_highresmesh             ... high resolution mesh node count [164].
+    hcp_lowresmesh              ... low resolution mesh node count [32].
+    hcp_msmall_inregname        ... input registration name [MSMSulc]
+    hcp_matlab_mode             ... Specifies the Matlab version, can be
+                                    "interpreted", "compiled" or "octave"
+                                    ["compiled"].
+    hcp_msmall_bolds_touse      ... specifies which runs should be used
+                                    as resting state data
+                                    [same as bold specified in hcp_icafix_bolds].
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex hcp_MSMAll \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_matlab_mode="interpreted"
+    ```
+
+    ```
+    qunex hcp_MSMAll \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        --hcp_matlab_mode="interpreted"
+    ```
 
     ----------------
     Written by Jure Demšar
