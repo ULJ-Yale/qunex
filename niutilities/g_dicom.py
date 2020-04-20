@@ -118,6 +118,7 @@ def readPARInfo(filename):
     info['slices']             = int(info['Max. number of slices/locations'])
     info['datetime']           = info['Examination date/time']
     info['ImageType']          = [""]
+    info['fileid']             = os.path.basename(filename)[:-4].replace('.', '_').replace('-', '_')
 
     return info
 
@@ -254,6 +255,10 @@ def readDICOMInfo(filename):
     # --- dicom header
 
     info['dicom'] = d
+
+    # --- fileid
+
+    info['fileid'], _ = os.path.splitext(os.path.basename(filename))
 
     return info
 
@@ -1217,7 +1222,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         #     pass
 
         if info['seriesNumber']:
-            niinum = info['seriesNumber'] * 10
+            niinum = info['seriesNumber'] * 10            
         else:
             niinum = c * 10
 
@@ -1306,6 +1311,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             if debug:
                 print "     --> found %s nifti file(s): %s" % (nimg, "\n                            ".join(imgs))
 
+            # --> initialize JSON information
+            
+            jsoninfo = ""
+            jinf = {}
+
             for img in imgs:
                 if not os.path.exists(img):
                     continue                
@@ -1325,7 +1335,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 # --> extract any suffices to add to the subject.txt
                 suffix = ""
                 if "_" in imgname:
-                    suffix = " " +"_".join(imgname.replace('.nii.gz','').split('_')[1:])
+                    suffix = " " +"_".join(imgname.replace('.nii.gz','').replace(info['fileid'], '').split('_')[1:])
 
                 # --> generate the actual target file path and move the image
                 tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
@@ -1339,9 +1349,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     if os.path.exists(dwisrc):
                         os.rename(dwisrc, os.path.join(imgf, "%s%s" % (tbasename, dwiextra)))
 
-                # --> check for .json files and extract info if present
-                jsoninfo = ""
-                jinf = {}
+                # --> check for .json files and extract info if present                
 
                 for jsonextra in ['.json', '.JSON']:
                     jsonsrc = img.replace('.gz', '')
@@ -1349,7 +1357,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     jsonsrc += jsonextra
 
                     if not os.path.exists(jsonsrc):
-                        jsonfiles = glob.glob(os.path.join(folder, jsonextra))
+                        jsonfiles = glob.glob(os.path.join(folder, "*" + jsonextra))
                         if len(jsonfiles) == 1:
                             jsonsrc = jsonfiles[0]
 
@@ -1589,6 +1597,10 @@ def sortDicom(folder=".", **kwargs):
                 info = readDICOMInfo(dcm)                
             except:
                 continue
+
+        if info['seriesNumber'] is None:
+            print "---> Skipping file", dcm
+            continue
 
         sqid = str(info['seriesNumber'] * 10)
         sqfl = os.path.join(dcmf, sqid)

@@ -40,6 +40,7 @@ Quick links
 Change log
 ----------
 
+* 0.50.11 Updated extraction of PAR file id.
 * 0.50.10 Consistent parameter injection notation.
 * 0.50.9  Harmonized use of hcp_suffix.
 * 0.50.8  hcp_PreFS glob debug.
