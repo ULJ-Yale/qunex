@@ -5732,8 +5732,8 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
     The final clean file can be found in:
 
-    MNINonLinear/Results/<outboldname>/
-    <outboldname>_<cifti_tail>_hp<highpass>_clean_vn.dtseries.nii,
+    MNINonLinear/Results/<outfmriname>/
+    <outfmriname>_<cifti_tail>_hp<highpass>_clean_vn.dtseries.nii,
 
     where highpass is the used value for the highpass filter. The default highpass
     value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix. The
@@ -5794,7 +5794,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     hcp_msmall_highpass         ... value for the highpass filter,
                                     [0] for multi-run HCP MSMAll and [2000]
                                     for single-run HCP MSMAll.
-    hcp_msmall_outboldname      ... the name which will be given to the
+    hcp_msmall_outfmriname      ... the name which will be given to the
                                     concatenated single subject scan the same as
                                     [<group> in hcp_icafix_bolds] for multi-run
                                     HCP MSMAll and [fMRI_CONCAT_ALL] for single-run
@@ -5932,8 +5932,11 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
+        # outfmriname
+        outfmriname = "fMRI_CONCAT_ALL" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
+
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outboldname)
+        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
         groupok = True
 
         # --- check for bold images and prepare targets parameter
@@ -6000,7 +6003,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             --multirun-fix-names="" \
             --multirun-fix-concat-name="" \
             --multirun-fix-names-to-use="" \
-            --output-fmri-name="%(outfmrinames)s" \
+            --output-fmri-name="%(outfmriname)s" \
             --high-pass="%(highpass)d" \
             --fmri-proc-string="%(fmriprocstring)s" \
             --msm-all-templates="%(msmalltemplates)s" \
@@ -6013,7 +6016,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
                 'boldtargets'         : boldtargets,
-                'outfmrinames'        : "fMRI_CONCAT_ALL" if 'hcp_msmall_outboldname' not in options else options['hcp_msmall_outboldname'],
+                'outfmriname'         : outfmriname,
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
@@ -6024,7 +6027,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'matlabrunmode'       : matlabrunmode}
 
         # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outboldname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outboldname, options['hcp_cifti_tail'], highpass))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
         fullTest = None
 
         # -- Run
@@ -6084,8 +6087,11 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
+        # outfmriname
+        outfmriname = "fMRI_CONCAT_ALL" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
+
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outboldname)
+        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
         groupok = True
 
         # --- check for bold images and prepare targets parameter
@@ -6162,7 +6168,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             --multirun-fix-names="%(fixnames)s" \
             --multirun-fix-concat-name="%(concatname)s" \
             --multirun-fix-names-to-use="%(fixnamestouse)s" \
-            --output-fmri-name="%(outfmrinames)s" \
+            --output-fmri-name="%(outfmriname)s" \
             --high-pass="%(highpass)d" \
             --fmri-proc-string="%(fmriprocstring)s" \
             --msm-all-templates="%(msmalltemplates)s" \
@@ -6177,7 +6183,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'fixnames'            : boldtargets,
                 'concatname'          : groupname,
                 'fixnamestouse'       : fixnamestouse,
-                'outfmrinames'        : groupname if 'hcp_msmall_outboldname' not in options else options['hcp_msmall_outboldname'],
+                'outfmriname'         : outfmriname,
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
@@ -6188,7 +6194,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'matlabrunmode'       : matlabrunmode}
 
         # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outboldname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outboldname, options['hcp_cifti_tail'], highpass))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
         fullTest = None
 
         # -- Run
