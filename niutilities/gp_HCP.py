@@ -4091,9 +4091,9 @@ def parseHCPBolds(options, bolds, r):
 
     # --- Report single fix or multi fix
     if singleFix:
-        r += "\n%s single run on %d bolds" % (action("Processing", options['run']), len(hcpBolds))
+        r += "\n%s single-run on %d bolds" % (action("Processing", options['run']), len(hcpBolds))
     else:
-        r += "\n%s multi run on %d groups" % (action("Processing", options['run']), len(hcpGroups))
+        r += "\n%s multi-run on %d groups" % (action("Processing", options['run']), len(hcpGroups))
 
     return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
@@ -5689,15 +5689,6 @@ def parseMSMAllBolds(options, bolds, r):
             group["bolds"] = hcpBolds
             msmallGroups.append(group)
 
-        # add outnames to msmallGroup
-        # if not defined create a generic name
-        if "hcp_msmall_outboldname" not in options:
-            r += "\n     ... hcp_msmall_outboldname not provided using generic name (MSMOut) \n"
-            msmallGroups[0]["outname"] = "MSMOut"
-        # else use existing
-        else:
-            msmallGroups[0]["outname"] = options['hcp_msmall_outboldname']
-
     return (singleRun, msmallGroups, parsOK, r)
 
 
@@ -5791,7 +5782,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     executed over specified bolds. You can also
                                     specify how to group/concatenate bolds
                                     together, e.g.
-                                    "<group1>:<boldname1>,<boldname2>",
+                                    "<group>:<boldname1>,<boldname2>",
                                     in this case multi-run HCP ICAFix will be
                                     executed. Instead of full bold names, you
                                     can also use bold tags from the batch file.
@@ -5804,8 +5795,11 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     [0] for multi-run HCP MSMAll and [2000]
                                     for single-run HCP MSMAll.
     hcp_msmall_outboldname      ... the name which will be given to the
-                                    concatenated single subject scan [MSMOut].
-    hcp_msmall_templates        ... path to directory containing MSM All template
+                                    concatenated single subject scan the same as
+                                    [<group> in hcp_icafix_bolds] for multi-run
+                                    HCP MSMAll and [fMRI_CONCAT_ALL] for single-run
+                                    HCP MSMAll.
+    hcp_msmall_templates        ... path to directory containing MSMAll template
                                     files [<HCPPIPEDIR>/global/templates/MSMAll].
     hcp_msmall_outregname       ... output registration name [MSMInitalReg].
     hcp_highresmesh             ... high resolution mesh node count [164].
@@ -5871,11 +5865,11 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
             raise ge.CommandFailed("hcp_MSMAll", "... invalid input parameters!")
 
         # --- Execute
-        # single run
+        # single-run
         if singleRun:
             # process
             result = executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, msmallGroups[0])
-        # multi run
+        # multi-run
         else: 
             # process
             result = executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, msmallGroups[0])
@@ -5894,10 +5888,10 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
         # if all ok automatically execute DeDriftAndResample
         if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-            # single run
+            # single-run
             if singleRun:
                 result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
-            # multi run
+            # multi-run
             else:
                 result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
 
@@ -5931,7 +5925,6 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
 def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
     # get data
-    outboldname = group["outname"]
     bolds = group["bolds"]
 
     # prepare return variables
@@ -6020,7 +6013,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
                 'boldtargets'         : boldtargets,
-                'outfmrinames'        : outboldname,
+                'outfmrinames'        : "fMRI_CONCAT_ALL" if 'hcp_msmall_outboldname' not in options else options['hcp_msmall_outboldname'],
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
@@ -6083,7 +6076,6 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
 def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
     # get group data
-    outboldname = group["outname"]
     groupname = group["name"]
     bolds = group["bolds"]
 
@@ -6185,7 +6177,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'fixnames'            : boldtargets,
                 'concatname'          : groupname,
                 'fixnamestouse'       : fixnamestouse,
-                'outfmrinames'        : outboldname,
+                'outfmrinames'        : groupname if 'hcp_msmall_outboldname' not in options else options['hcp_msmall_outboldname'],
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
@@ -6293,11 +6285,11 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
             raise ge.CommandFailed("hcp_DeDriftAndResample", "... invalid input parameters!")
 
         # --- Execute
-        # single run
+        # single-run
         if singleRun:
             # process
             result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
-        # multi run
+        # multi-run
         else: 
             # process
             result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
@@ -6617,7 +6609,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         regname = "MSMSulc" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname']
 
         # concatregname
-        concatregname = "MSMConcat" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname']
+        concatregname = "MSMAll" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname']
 
         comm = '%(script)s \
             --path="%(path)s" \
