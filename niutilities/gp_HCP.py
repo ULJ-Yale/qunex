@@ -5736,8 +5736,8 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     <outfmriname>_<cifti_tail>_hp<highpass>_clean_vn.dtseries.nii,
 
     where highpass is the used value for the highpass filter. The default highpass
-    value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix. The
-    default cifti tail is Atlas.
+    value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix.
+    The default cifti tail (<cifti_tail>) is Atlas.
 
     RELEVANT PARAMETERS
     ===================
@@ -6254,7 +6254,142 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     A short name 'hcp10' can also be used for this command.
 
-    TODO DOCUMENTATION!
+    Runs the DeDriftAndResample step of the HCP Pipeline. If the hcp_msmall_bolds
+    parameter is not provided DeDriftAndResample will bundle all bolds together
+    and execute multi-run HCP DeDriftAndResample, the concatenated file
+    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    processing requires a lot of computational resources.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the Qu|Nex
+    folder structure. The function will look into folder:
+
+    <session id>/hcp/<session id>
+
+    for files:
+
+    MNINonLinear/Results/<boldname>/
+    <boldname>_<cifti_tail>_hp<highpass>_clean.dtseries.nii
+
+    RESULTS
+    =======
+
+    The results of this step will be populated in the MNINonLinear folder inside
+    the same sessions's root hcp folder.
+
+    The final clean files can be found in:
+
+    MNINonLinear/Results/<boldname>/
+    <boldname>_<cifti_tail>_<regname>.dtseries.nii,
+
+    The default cifti tail (<cifti_tail>) is Atlas, while the default regname
+    (<regname)) is MSMSulc.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    --sessions          ... The batch.txt file with all the sessions information
+                            [batch.txt].
+    --subjectsfolder    ... The path to the study/subjects folder, where the
+                            imaging  data is supposed to go [.].
+    --cores             ... How many cores to utilize. This Parameter
+                            determines the parallelization on the
+                            subject level [1].
+    --overwrite         ... Whether to overwrite existing data (yes)
+                            or not (no) [no].
+    --logfolder         ... The path to the folder where runlogs and comlogs
+                            are to be stored, if other than default []
+    --log               ... Whether to keep ('keep') or remove ('remove') the
+                            temporary logs once jobs are completed ['keep'].
+                            When a comma separated list is given, the log will
+                            be created at the first provided location and then
+                            linked or copied to other locations. The valid
+                            locations are:
+                            * 'study'   for the default: 
+                                        `<study>/processing/logs/comlogs`
+                                        location,
+                            * 'session' for `<sessionid>/logs/comlogs
+                            * 'hcp'     for `<hcp_folder>/logs/comlogs
+                            * '<path>'  for an arbitrary directory
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    hcp_icafix_bolds                ... specify a list of bolds for MSMAll.
+                                        You can specify a comma separated list
+                                        of bolds, e.g. "<boldname1>,<boldname2>",
+                                        in this case single-run HCP ICAFix will be
+                                        executed over specified bolds. You can also
+                                        specify how to group/concatenate bolds
+                                        together, e.g.
+                                        "<group>:<boldname1>,<boldname2>",
+                                        in this case multi-run HCP ICAFix will be
+                                        executed. Instead of full bold names, you
+                                        can also use bold tags from the batch file.
+                                        If this parameter is not provided
+                                        MSMAll will bundle all bolds together and
+                                        execute multi-run HCP MSMAll, the
+                                        concatenated file will be named
+                                        fMRI_CONCAT_ALL [""].
+    hcp_msmall_highpass             ... value for the highpass filter,
+                                        [0] for multi-run HCP MSMAll and [2000]
+                                        for single-run HCP MSMAll.
+    hcp_highresmesh                 ... high resolution mesh node count [164].
+    hcp_lowresmeshes                ... low resolution meshes node count [32]. To
+                                        provide more
+    hcp_msmall_regname              ... Registration sphere name [MSMSulc].
+    hcp_msmall_dedrift_reg_files    ... Path to the spheres output from the
+                                        MSMRemoveGroupDrift pipeline
+                                        [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
+                                        <HCPPIPEDIR>/global/templates/MSMAll/<file2>].
+                                        Where <file1> is equal to:
+                                        DeDriftingGroup.L.sphere.DeDriftMSMAll.
+                                        164k_fs_LR.surf.gii and <file2> is equal to
+                                        DeDriftingGroup.R.sphere.DeDriftMSMAll.
+                                        164k_fs_LR.surf.gii
+    hcp_msmall_maps                 ... Paths to maps that are not myelin maps
+                                        [sulc,curvature,corrThickness,thickness].
+    hcp_msmall_myelinmaps           ... Paths to myelin maps
+                                        [MyelinMap,SmoothedMyelinMap].
+    hcp_msmall_smoothing_fwhm       ... Smoothing FWHM that matches what was
+                                        used in the fMRISurface pipeline [2].
+    hcp_matlab_mode                 ... Specifies the Matlab version, can be
+                                        "interpreted", "compiled" or "octave"
+                                        ["compiled"].
+    hcp_msmall_domotionreg          ... Whether to regress motion parameters as
+                                        part of the cleaning. The default value
+                                        for single-run is ["TRUE"], while the
+                                        default for multi-run is ["FALSE"].
+    hcp_msmall_dontfixnames         ... a list of comma sperated bolds that will
+                                        not have HCP ICAFix reapplied to them [].
+    hcp_msmall_concatregname        ... Output name of the dedrifted registration
+                                        [MSMAll].
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex hcp_DeDriftAndResample \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_matlab_mode="interpreted"
+    ```
+
+    ```
+    qunex hcp_DeDriftAndResample \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_msmall_bolds="GROUP_1:BOLD_1,BOLD_2" \
+        --hcp_matlab_mode="interpreted"
+    ```
 
     ----------------
     Written by Jure Demšar
