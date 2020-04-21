@@ -6324,25 +6324,25 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_msmall_bolds                ... specify a list of bolds for MSMAll.
+    hcp_msmall_bolds                ... specify a list of bolds for DeDriftAndResample.
                                         You can specify a comma separated list
                                         of bolds, e.g. "<boldname1>,<boldname2>",
-                                        in this case single-run HCP ICAFix will be
-                                        executed over specified bolds. You can also
-                                        specify how to group/concatenate bolds
+                                        in this case single-run HCP DeDriftAndResample
+                                        will be executed over specified bolds. You can
+                                        also specify how to group/concatenate bolds
                                         together, e.g.
                                         "<group>:<boldname1>,<boldname2>",
-                                        in this case multi-run HCP ICAFix will be
-                                        executed. Instead of full bold names, you
-                                        can also use bold tags from the batch file.
+                                        in this case multi-run HCP DeDriftAndResample
+                                        will be executed. Instead of full bold names,
+                                        you can also use bold tags from the batch file.
                                         If this parameter is not provided
-                                        MSMAll will bundle all bolds together and
-                                        execute multi-run HCP MSMAll, the
-                                        concatenated file will be named
-                                        fMRI_CONCAT_ALL [""].
-    hcp_msmall_highpass             ... value for the highpass filter,
-                                        [0] for multi-run HCP MSMAll and [2000]
-                                        for single-run HCP MSMAll.
+                                        DeDriftAndResample will bundle all bolds
+                                        together and xecute multi-run HCP
+                                        DeDriftAndResample, the concatenated file will
+                                        be named fMRI_CONCAT_ALL [""].
+    hcp_msmall_highpass             ... value for the highpass filter, [0] for
+                                        multi-run HCP DeDriftAndResample and [2000]
+                                        for single-run HCP DeDriftAndResample.
     hcp_highresmesh                 ... high resolution mesh node count [164].
     hcp_lowresmeshes                ... low resolution meshes node count [32]. To
                                         provide more
