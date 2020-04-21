@@ -5776,15 +5776,15 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds            ... specify a list of bolds for MSMAll.
+    hcp_msmall_bolds            ... specify a list of bolds for MSMAll.
                                     You can specify a comma separated list
                                     of bolds, e.g. "<boldname1>,<boldname2>",
-                                    in this case single-run HCP ICAFix will be
+                                    in this case single-run HCP MSMAll will be
                                     executed over specified bolds. You can also
                                     specify how to group/concatenate bolds
                                     together, e.g.
                                     "<group>:<boldname1>,<boldname2>",
-                                    in this case multi-run HCP ICAFix will be
+                                    in this case multi-run HCP MSMAll will be
                                     executed. Instead of full bold names, you
                                     can also use bold tags from the batch file.
                                     If this parameter is not provided
@@ -5797,7 +5797,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     for single-run HCP MSMAll.
     hcp_msmall_outfmriname      ... the name which will be given to the
                                     concatenated single subject scan the same as
-                                    [<group> in hcp_icafix_bolds] for multi-run
+                                    [<group> in hcp_msmall_bolds] for multi-run
                                     HCP MSMAll and [fMRI_CONCAT_ALL] for single-run
                                     HCP MSMAll.
     hcp_msmall_templates        ... path to directory containing MSMAll template
@@ -5811,7 +5811,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     ["compiled"].
     hcp_msmall_bolds_touse      ... specifies which runs should be used
                                     as resting state data
-                                    [same as bold specified in hcp_icafix_bolds].
+                                    [same as bold specified in hcp_msmall_bolds].
 
     EXAMPLE USE
     ===========
@@ -5827,7 +5827,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
-        --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        --hcp_msmall_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
         --hcp_matlab_mode="interpreted"
     ```
 
@@ -6324,7 +6324,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds                ... specify a list of bolds for MSMAll.
+    hcp_msmall_bolds                ... specify a list of bolds for MSMAll.
                                         You can specify a comma separated list
                                         of bolds, e.g. "<boldname1>,<boldname2>",
                                         in this case single-run HCP ICAFix will be
