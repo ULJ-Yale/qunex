@@ -18,13 +18,13 @@ Changelog
 2017-07-10 Grega Repovs
          - Simplified scheduler interface, now uses g_scheduler
 2018-11-14 Jure Demsar
-         - Added threads parameter for bold parallelization
+         - Added parelements parameter for bold parallelization
 2018-12-12 Jure Demsar
          - Added conc_use parameter for absolute or relative path
            interpretation from conc files.
 2019-01-13 Jure Demsar
          - Fixed a bug that disabled cores parameter with the
-           introduction of the threads parameter.
+           introduction of the parelements parameter.
 2019-09-20 Jure Demsar
          - Have all the files listed with the original name
            in subject_hcp.txt.
@@ -242,7 +242,7 @@ arglist = [['# ---- Basic settings'],
            ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
-           ['threads',            '1',                                           int,    'How many threads to use for bold processing.'],
+           ['parelements',        '1',                                           int,    'How many elements to run in parralel.'],
            ['nprocess',           '0',                                           int,    'How many sessions to process (0 - all).'],
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
@@ -433,7 +433,9 @@ tomap = {'bppt':                    'bolds',
          'hcp_bold_correct':        'hcp_bold_dcmethod',
          'hcp_bold_usemask':        'hcp_bold_mask',
          'hcp_bold_boldnamekey':    'hcp_filename',
-         'hcp_dwi_dwelltime':       'hcp_dwi_echospacing'}
+         'hcp_dwi_dwelltime':       'hcp_dwi_echospacing',
+         'cores':                   'parsessions',
+         'threads':                 'parelements'}
 
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
              'hcp_filename': {'name': 'original', 'number': 'standard'}}

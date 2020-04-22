@@ -164,8 +164,8 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --cores            ... How many cores to utilize [1].
-    --threads          ... How many threads to utilize for bold processing
-                           per session [1].
+    --parelements      ... How many elements (e.g bolds) to run in
+                           parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -199,7 +199,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no hcp_cifti_tail=_Atlas bolds=all threads=8
+          overwrite=no hcp_cifti_tail=_Atlas bolds=all parelements=8
     ```
 
     ----------------
@@ -248,10 +248,10 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executeCreateBOLDBrainMasks(sinfo, options, overwrite, b)
@@ -267,7 +267,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
             report['boldmissing'] += tempReport['boldmissing']
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executeCreateBOLDBrainMasks, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
@@ -448,8 +448,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --cores            ... How many cores to utilize [1].
-    --threads          ... How many threads to utilize for bold processing
-                           per session [1].
+    --parelements      ... How many elements (e.g bolds) to run in
+                           parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -591,10 +591,10 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executeComputeBOLDStats(sinfo, options, overwrite, b)
@@ -610,7 +610,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
             report['boldmissing'] += tempReport['boldmissing']     
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executeComputeBOLDStats, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
@@ -1163,8 +1163,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --cores            ... How many cores to utilize [1].
-    --threads          ... How many threads to utilize for bold processing
-                           per session [1].
+    --parelements      ... How many elements (e.g bolds) to run in
+                           parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -1280,10 +1280,10 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executeExtractNuisanceSignal(sinfo, options, overwrite, b)
@@ -1299,7 +1299,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
             report['boldmissing'] += tempReport['boldmissing']   
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executeExtractNuisanceSignal, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
@@ -1443,8 +1443,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
-    --threads         ... How many threads to utilize for bold processing
-                          per session [1].
+    --parelements     ... How many elements (e.g bolds) to run in
+                        parralel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
@@ -1836,10 +1836,10 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     else:
         options['bold_variant'] = '.' + options['hcp_bold_variant'] 
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executePreprocessBold(sinfo, options, overwrite, b)
@@ -1856,7 +1856,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
             report['not ready'] += tempReport['not ready']      
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executePreprocessBold, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)

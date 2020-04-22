@@ -3165,10 +3165,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # --- Process
         r += "\n"
 
-        threads = min(options['threads'], len(boldsData))
-        r += "\n%s BOLD images on %d threads" % (action("Running", options['run']), threads)
+        parelements = min(options['parelements'], len(boldsData))
+        r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
 
-        if (threads == 1): # serial execution
+        if (parelements == 1): # serial execution
             # loop over bolds
             for b in boldsData:
                 # process
@@ -3255,11 +3255,11 @@ def executeSingleHCPfMRIVolume(sinfo, options, overwrite, hcp, b, r, report):
     return r, report
 
 def executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, report):
-    # threads
-    threads = min(options['threads'], len(boldsData))
+    # parelements
+    parelements = min(options['parelements'], len(boldsData))
 
     # create a multiprocessing Pool
-    processPoolExecutor = ProcessPoolExecutor(threads)
+    processPoolExecutor = ProcessPoolExecutor(parelements)
 
     # partial function
     f = partial(executeHCPfMRIVolume, sinfo, options, overwrite, hcp)
@@ -3517,8 +3517,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                           imaging data is supposed to go [.].
     --cores           ... How many cores to utilize. This Parameter determines
                           the parallelization on the subject level [1].
-    --threads         ... How many threads to utilize This Parameter determines 
-                          the parallelization on the bolds level [1].
+    --parelements     ... How many elements (e.g bolds) to run in
+                          parralel [1].
     --bolds           ... Which bold images (as they are specified in the
                           batch.txt file) to process. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
@@ -3721,10 +3721,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        threads = min(options['threads'], len(bolds))
-        r += "\n\n%s BOLD images on %d threads" % (action("Processing", options['run']), threads)
+        parelements = min(options['parelements'], len(bolds))
+        r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
 
-        if threads == 1: # serial execution
+        if parelements == 1: # serial execution
             for b in bolds:
                 # process
                 result = executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, b)
@@ -3743,7 +3743,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         else: # parallel execution
             # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(threads)
+            processPoolExecutor = ProcessPoolExecutor(parelements)
             # process 
             f = partial(executeHCPfMRISurface, sinfo, options, overwrite, hcp, run)
             results = processPoolExecutor.map(f, bolds)
@@ -4157,9 +4157,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     --cores             ... How many cores to utilize. This Parameter
                             determines the parallelization on the
                             subject level [1].
-    --threads           ... How many threads to utilize This Parameter
-                            determines the parallelization on the
-                            bolds level [1].
+    --parelements       ... How many elements (e.g bolds) to run in
+                            parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
     --logfolder         ... The path to the folder where runlogs and comlogs
@@ -4275,10 +4274,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            threads = min(options['threads'], len(icafixBolds))
+            parelements = min(options['parelements'], len(icafixBolds))
         else:
-            threads = min(options['threads'], len(icafixGroups))
-        r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
+            parelements = min(options['parelements'], len(icafixGroups))
+        r += "\n\n%s %d ICAFix images in parallel" % (action("Processing", options['run']), parelements)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = "0"
@@ -4302,7 +4301,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         # --- Execute
         # single fix
         if singleFix:
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for b in icafixBolds:
                     # process
                     result = executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, b)
@@ -4321,7 +4320,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixBolds)
@@ -4339,7 +4338,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         # multi fix
         else:
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for g in icafixGroups:
                     # process
                     result = executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, g)
@@ -4358,7 +4357,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPMultiICAFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
@@ -4685,9 +4684,8 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     --cores             ... How many cores to utilize. This Parameter
                             determines the parallelization on the
                             subject level [1].
-    --threads           ... How many threads to utilize This Parameter
-                            determines the parallelization on the
-                            bolds level [1].
+    --parelements       ... How many elements (e.g bolds) to run in
+                            parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
     --logfolder         ... The path to the folder where runlogs and comlogs
@@ -4798,10 +4796,10 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            threads = min(options['threads'], len(icafixBolds))
+            parelements = min(options['parelements'], len(icafixBolds))
         else:
-            threads = min(options['threads'], len(icafixGroups))
-        r += "\n\n%s PostFix on %d threads" % (action("Processing", options['run']), threads)
+            parelements = min(options['parelements'], len(icafixGroups))
+        r += "\n\n%s %d PostFixes in parallel" % (action("Processing", options['run']), parelements)
 
         # --- Execute
         # single fix
@@ -4812,7 +4810,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                 groupBolds = g["name"]
                 icafixBolds.append(groupBolds)
 
-        if threads == 1: # serial execution
+        if parelements == 1: # serial execution
             for b in icafixBolds:
                 # process
                 result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, b)
@@ -4831,7 +4829,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         else: # parallel execution
             # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(threads)
+            processPoolExecutor = ProcessPoolExecutor(parelements)
             # process 
             f = partial(executeHCPPostFix, sinfo, options, overwrite, hcp, run, singleFix)
             results = processPoolExecutor.map(f, icafixBolds)
@@ -5072,9 +5070,8 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     --cores             ... How many cores to utilize. This Parameter
                             determines the parallelization on the
                             subject level [1].
-    --threads           ... How many threads to utilize This Parameter
-                            determines the parallelization on the
-                            bolds level [1].
+    --parelements       ... How many elements (e.g bolds) to run in
+                            parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
     --logfolder         ... The path to the folder where runlogs and comlogs
@@ -5188,15 +5185,15 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            threads = min(options['threads'], len(icafixBolds))
+            parelements = min(options['parelements'], len(icafixBolds))
         else:
-            threads = min(options['threads'], len(icafixGroups))
-        r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
+            parelements = min(options['parelements'], len(icafixGroups))
+        r += "\n\n%s %d ReApplyFixes in parallel" % (action("Processing", options['run']), parelements)
 
         # --- Execute
         # single fix
         if singleFix:
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for b in icafixBolds:
                     # process
                     result = executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, b)
@@ -5215,7 +5212,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPSingleReApplyFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixBolds)
@@ -5233,7 +5230,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         # multi fix
         else: 
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for g in icafixGroups:
                     # process
                     result = executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, g)
@@ -5252,7 +5249,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPMultiReApplyFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
