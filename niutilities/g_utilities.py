@@ -1352,19 +1352,19 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     in a runList invocation. If the following parameters are listed, they will
     take precedence over parameters specified within the `listfile`: 
 
-    --cores     ... An optional parameter specifying how many cores to utilize 
-                    within a runList invocation. If cores parameter is already 
-                    specified within the `listfile`, then the lower value will 
-                    take precedence.
-    --threads   ... An optional parameter specifying how many threads to utilize
-                    within each of parallel jobs (their number) defined by 
-                    `cores` parameter in a runList invocation. If threads 
-                    parameter is already specified within the `listfile`, then 
-                    the lower value will take precedence.
-    --subjid    ... An optional parameter specifying which sessions are to be 
-                    processed within this runList invocation. If `subjid` is 
-                    specified within the listfile, then the value passed to 
-                    runList will take precedence.
+    --cores         ... An optional parameter specifying how many cores to utilize 
+                        within a runList invocation. If cores parameter is already 
+                        specified within the `listfile`, then the lower value will 
+                        take precedence.
+    --parelements   ... An optional parameter specifying how many elements to run
+                        in paralel within each of the jobs (e.g. how many bolds
+                        when bold processing). If parelements is already specified
+                        within the `listfile`, then the lower value will
+                        take precedence.
+    --subjid        ... An optional parameter specifying which sessions are to be 
+                        processed within this runList invocation. If `subjid` is 
+                        specified within the listfile, then the value passed to 
+                        runList will take precedence.
 
     Sometimes one would wish to ignore a parameter specified in a list when
     running a list. The parameters to ignore can be specified using:
@@ -1467,11 +1467,11 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
         command: hcp4
             cores     : 1
-            threads   : 4
+            parelements : 4
 
         command: hcp5
             cores     : 1
-            threads   : 4
+            parelements : 4
 
     ---
     list: prepareFCPreprocessing
@@ -1742,7 +1742,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                 removedParameters = runCommand['removed_parameters']
                 for k in eargs:
                     if k not in removedParameters:
-                        if k in ['cores', 'threads']:
+                        if k in ['cores', 'parelements']:
                             if k in commandParameters:
                                 commandParameters[k] = str(min([int(e) for e in [eargs[k], commandParameters[k]]]))
                         else:

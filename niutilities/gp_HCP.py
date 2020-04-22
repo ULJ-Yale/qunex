@@ -2498,9 +2498,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --cores                 ... How many cores to utilize. This Parameter 
                                 determines the parallelization on the subject
                                 level [1].
-    --threads               ... How many threads to utilize This Parameter
-                                determines the parallelization on the bolds 
-                                level [1].
+    --parelements           ... How many elements (e.g bolds) to run in
+                                parralel [1].
     --bolds                 ... Which bold images (as they are specified in the
                                 batch.txt file) to process. It can be a single
                                 type (e.g. 'task'), a pipe separated list (e.g.
