@@ -357,7 +357,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 [batch.txt].
     --subjectsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize [1].
+    --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
     --logfolder             ... The path to the folder where runlogs and comlogs
@@ -536,12 +536,12 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex hcp_PreFS sessions=fcMRI/subjects_hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_brainsize=170
+          overwrite=no parsessions=10 hcp_brainsize=170
     ```
 
     ```
     qunex hcp1 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ----------------
@@ -926,7 +926,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 [batch.txt].
     --subjectsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize [1].
+    --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
     --logfolder             ... The path to the folder where runlogs and comlogs
@@ -1078,22 +1078,22 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     ```
     qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+          overwrite=no parsessions=10
     ```
 
     ```
     qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_fs_longitudinal=TemplateA
+          overwrite=no parsessions=10 hcp_fs_longitudinal=TemplateA
     ```
 
     ```
     qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ```
     qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE \\
+          overwrite=no parsessions=10 hcp_t2=NONE \\
           hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
     ```
 
@@ -1437,7 +1437,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -1550,17 +1550,17 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex longitudinalFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+          overwrite=no parsessions=10
     ```
 
     ```
     qunex lfs sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ```
     qunex lsf sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE \\
+          overwrite=no parsessions=10 hcp_t2=NONE \\
           hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
           hcp_freesurfer_module=YES
     ```
@@ -1808,7 +1808,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                                 [batch.txt].
     --subjectsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize [1].
+    --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
     --logfolder             ... The path to the folder where runlogs and comlogs
@@ -1913,12 +1913,12 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex hcp_PostFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+          overwrite=no parsessions=10
     ```
 
     ```
     qunex hcp3 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ----------------
@@ -2124,7 +2124,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -2274,7 +2274,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     qunex hcp_Diffusion \
       --sessions="processing/batch.hcp.txt" \\
       --subjectsfolder="subjects" \\
-      --cores="10" \\
+      --parsessions="10" \\
       --overwrite="no" \\
       --test
     ```
@@ -2286,7 +2286,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     qunex hcpd \
       --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\
       --subjectsfolder="<path_to_study_folder>/subjects" \\
-      --cores="4" \\
+      --parsessions="4" \\
       --overwrite="yes" \\
       --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
     ```
@@ -2495,9 +2495,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                 [batch.txt].
     --subjectsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize. This Parameter 
-                                determines the parallelization on the subject
-                                level [1].
+    --parsessions           ... How many sessions to run in parallel [1].
     --parelements           ... How many elements (e.g bolds) to run in
                                 parralel [1].
     --bolds                 ... Which bold images (as they are specified in the
@@ -2750,12 +2748,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     ```
     qunex hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+          overwrite=no parsessions=10
     ```
 
     ```
     qunex hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
+          overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
           hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     ```
 
@@ -3515,8 +3513,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
-    --cores           ... How many cores to utilize. This Parameter determines
-                          the parallelization on the subject level [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --parelements     ... How many elements (e.g bolds) to run in
                           parralel [1].
     --bolds           ... Which bold images (as they are specified in the
@@ -3638,12 +3635,12 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     ```
     qunex hcp_fMRISurface sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+          overwrite=no parsessions=10
     ```
 
     ```
     qunex hcp5 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+          overwrite=no parsessions=10
     ```
 
     ----------------
@@ -4154,9 +4151,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                             [batch.txt].
     --subjectsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
     --parelements       ... How many elements (e.g bolds) to run in
                             parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
@@ -4681,9 +4676,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                             [batch.txt].
     --subjectsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
     --parelements       ... How many elements (e.g bolds) to run in
                             parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
@@ -5067,9 +5060,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                             [batch.txt].
     --subjectsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
     --parelements       ... How many elements (e.g bolds) to run in
                             parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
@@ -5746,9 +5737,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                             [batch.txt].
     --subjectsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
     --logfolder         ... The path to the folder where runlogs and comlogs
@@ -6294,9 +6283,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                             [batch.txt].
     --subjectsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
     --logfolder         ... The path to the folder where runlogs and comlogs
@@ -7027,7 +7014,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
+    --parsessions      ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --hcp_cifti_tail   ... The tail (see above) that specifies, which version of

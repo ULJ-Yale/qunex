@@ -23,9 +23,9 @@ import g_dicomdeid
 commands = {'listDicom'            : {'com': g_dicom.listDicom,              'args': ('folder', )},
             'splitDicom'           : {'com': g_dicom.splitDicom,             'args': ('folder', )},
             'sortDicom'            : {'com': g_dicom.sortDicom,              'args': ('folder', 'out_dir', 'files', 'copy')},
-            'dicom2nii'            : {'com': g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores', 'debug')},
-            'dicom2niix'           : {'com': g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'cores', 'debug', 'tool', 'options')},
-            'processInbox'         : {'com': g_dicom.processInbox,           'args': ('subjectsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'cores', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose', 'overwrite')},
+            'dicom2nii'            : {'com': g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'parelements', 'debug')},
+            'dicom2niix'           : {'com': g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'parelements', 'debug', 'tool', 'options')},
+            'processInbox'         : {'com': g_dicom.processInbox,           'args': ('subjectsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose', 'overwrite')},
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
             'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite', 'fileinfo')},
@@ -59,7 +59,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'map2HCP'              : {'com': g_4dfp.map2HCP,                 'args': ('volume', 'method')},
             'maskMap'              : {'com': g_palm.maskMap,                 'args': ('image', 'masks', 'output', 'minv', 'maxv', 'join')},
             'joinMaps'             : {'com': g_palm.joinMaps,                'args': ('images', 'output', 'names', 'originals')},
-            'runPALM'              : {'com': g_palm.runPALM,                 'args': ('image', 'design', 'args', 'root', 'options', 'cores', 'overwrite', 'cleanup')},
+            'runPALM'              : {'com': g_palm.runPALM,                 'args': ('image', 'design', 'args', 'root', 'options', 'parelements', 'overwrite', 'cleanup')},
             'createWSPALMDesign'   : {'com': g_palm.createWSPALMDesign,      'args': ('factors', 'nsubjects', 'root')},
             'schedule'             : {'com': g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'getDICOMFields'       : {'com': g_dicomdeid.getDICOMFields,     'args': ('folder', 'tfile', 'limit')},
@@ -67,4 +67,4 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'runList'              : {'com': g_utilities.runList,            'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')}
             }
 
-extraParameters = ['sessions', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder', 'sperlist', 'runinpar', 'ignore']
+extraParameters = ['sessions', 'filter', 'subjid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder', 'sperlist', 'runinpar', 'ignore']

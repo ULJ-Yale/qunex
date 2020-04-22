@@ -1329,8 +1329,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     will be scheduled as a separate job on a cluster. 
 
     When processing is spread across multiple runList invocations, the 
-    `sperlist` parameter will be passed forward as `cores` parameter on each
-    separate invocation (see the next section). Similarly `subjid` will be
+    `sperlist` parameter will be passed forward as `parsessions` parameter on
+    each separate invocation (see the next section). Similarly `subjid` will be
     passed on, adjusted for the sessions to be run with the specific runList
     invocation (see the next section).
 
@@ -1352,9 +1352,9 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     in a runList invocation. If the following parameters are listed, they will
     take precedence over parameters specified within the `listfile`: 
 
-    --cores         ... An optional parameter specifying how many cores to utilize 
-                        within a runList invocation. If cores parameter is already 
-                        specified within the `listfile`, then the lower value will 
+    --parsessions   ... An optional parameter specifying how many sessions to run
+                        in parallel. If parsessions parameter is already specified
+                        within the `listfile`, then the lower value will 
                         take precedence.
     --parelements   ... An optional parameter specifying how many elements to run
                         in paralel within each of the jobs (e.g. how many bolds
@@ -1449,15 +1449,15 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
         command: getHCPReady
 
         command: createBatch
-            tfile : /data/testStudy/processing/batch_baseline.txt
+            tfile: /data/testStudy/processing/batch_baseline.txt
 
         command: setupHCP
 
     ---
     list: doHCP
         
-        sessions  : /data/testStudy/processing/batch_baseline.txt
-        cores     : 4
+        sessions: /data/testStudy/processing/batch_baseline.txt
+        parsessions: 4
 
         command: hcp1
 
@@ -1466,37 +1466,37 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
         command: hcp3
 
         command: hcp4
-            cores     : 1
+            parsessions : 1
             parelements : 4
 
         command: hcp5
-            cores     : 1
+            parsessions : 1
             parelements : 4
 
     ---
     list: prepareFCPreprocessing
-        cores    : 6
-        sessions : /data/testStudy/processing/batch_baseline.txt
-        bolds    : all
+        parsessions : 6
+        sessions    : /data/testStudy/processing/batch_baseline.txt
+        bolds       : all
 
         command: mapHCPData
             
         command: createBOLDBrainMasks
 
         command: computeBOLDStats
-            log : remove
+            log: remove
 
         command : createStatsReport
-            cores : 1
+            parsessions: 1
 
         command: extractNuisanceSignal
 
     ---
     list: runFCPreprocessing
         
-        cores     : 6
-        sessions  : /data/testStudy/processing/batch_baseline.txt
-        scheduler : "SLURM,jobname=doHCP,time=00-02:00:00,ntasks=6,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+        parsessions : 6
+        sessions    : /data/testStudy/processing/batch_baseline.txt
+        scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,ntasks=6,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
         command: preprocessBold
             bold_actions     : shrc
@@ -1510,8 +1510,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     ---
     list: doPreFS
-        sessions  : {sessions_var}
-        cores     : 4
+        sessions    : {sessions_var}
+        parsessions : 4
 
         command: hcp1
     ```
@@ -1567,9 +1567,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     will be executed serially with four BOLDS from each session being processed in
     parallel. 
 
-    The third call will again schedule muultiple `runList` invocations, each 
-    processing four sessions at a time (the lower number of `sperlist` and `cores`).
-    In this call, the initial steps will be performed on all BOLD images.
+    The third call will again schedule multiple `runList` invocations, each 
+    processing four sessions at a time (the lower number of `sperlist`
+    and `parsessions`). In this call, the initial steps will be performed
+    on all BOLD images.
 
     The fourth call will start a single `runList` instance localy, however,
     this will submit both listed `preprocessBold` commands as jobs to be run with
@@ -1742,7 +1743,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                 removedParameters = runCommand['removed_parameters']
                 for k in eargs:
                     if k not in removedParameters:
-                        if k in ['cores', 'parelements']:
+                        if k in ['parsessions', 'parelements']:
                             if k in commandParameters:
                                 commandParameters[k] = str(min([int(e) for e in [eargs[k], commandParameters[k]]]))
                         else:

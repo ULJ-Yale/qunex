@@ -393,7 +393,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 # -----------------------------------------------------------------------
 #                                                  general scheduler code
 
-def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None, logname=None):
+def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None):
 
     jobs = []
 
@@ -465,7 +465,7 @@ def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None
             # ---- get session subset
 
             slist = []
-            [slist.append(sessions.pop(0)['id']) for e in range(cores) if sessions]   # might need to change to id
+            [slist.append(sessions.pop(0)['id']) for e in range(parsessions) if sessions]   # might need to change to id
 
             cStr = cBase + ' --subjid="%s"' % ("|".join(slist))
 

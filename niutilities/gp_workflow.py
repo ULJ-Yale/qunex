@@ -163,7 +163,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
                            parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -447,7 +447,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
                            parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -758,7 +758,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -861,10 +861,10 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     Session statistics are appended to the group level report files as they
     are being computed. To avoid messy group level files, it is recommended
-    to run the command with cores set to 1 (example 1), to enforce sequential
+    to run the command with parsessions set to 1 (example 1), to enforce sequential
     processing and adding of information to group level statistics files.
     Another option is to run the processing in two steps. The first step with
-    multiple cores to speed up generation of session level maps (example 2),
+    multiple parsessions to speed up generation of session level maps (example 2),
     and then the second step with a single core, omitting the slow generation
     of session specific plots.
 
@@ -874,17 +874,17 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     ```
     qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no bolds=all cores=1
+          overwrite=no bolds=all parsessions=1
     ```
 
     ```
     qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no bolds=all cores=10
+          overwrite=no bolds=all parsessions=10
     ```
 
     ```
     qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no bolds=all cores=1 mov_plot=""
+          overwrite=no bolds=all parsessions=1 mov_plot=""
     ```
 
     ----------------
@@ -1162,7 +1162,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
                            parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -1230,7 +1230,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bolds=all cores=10
+         overwrite=no bolds=all parsessions=10
     ```
 
     ----------------
@@ -1442,7 +1442,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --parelements     ... How many elements (e.g bolds) to run in
                         parralel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -1789,7 +1789,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex preprocessBold sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bolds=rest bold_actions="s,h,r,c,l" \\
+         overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
          nprocess=0
@@ -2041,7 +2041,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
@@ -2415,7 +2415,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-M1 \\
+         overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
          bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
          glm_matrix=both glm_residuals=none nprocess=0 \\
@@ -2426,7 +2426,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     
     ```
     qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-FC \\
+         overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
          bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
          glm_matrix=none glm_residuals=save nprocess=0 \\

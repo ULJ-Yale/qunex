@@ -23,7 +23,7 @@ Changelog
          - Added conc_use parameter for absolute or relative path
            interpretation from conc files.
 2019-01-13 Jure Demsar
-         - Fixed a bug that disabled cores parameter with the
+         - Fixed a bug that disabled parsessions parameter with the
            introduction of the parelements parameter.
 2019-09-20 Jure Demsar
          - Have all the files listed with the original name
@@ -156,7 +156,6 @@ def mapDeprecated(options, tomap, mapValues, deprecatedList):
     newvalues  = []
 
     # -> check remapped parameters
-
     for k, v in options.iteritems():
         if k in tomap:
             options[tomap[k]] = v
@@ -241,7 +240,7 @@ arglist = [['# ---- Basic settings'],
            ['logfolder',          '',                                            isNone, 'The path to log folder.'],
            ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
-           ['cores',              '1',                                           int,    'How many processor cores to use.'],
+           ['parsessions',        '1',                                           int,    'How many processor sessions to run in parallel.'],
            ['parelements',        '1',                                           int,    'How many elements to run in parralel.'],
            ['nprocess',           '0',                                           int,    'How many sessions to process (0 - all).'],
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
@@ -645,7 +644,7 @@ def run(command, args):
     # ---- Set key parameters
 
     overwrite    = options['overwrite']
-    cores        = options['cores']
+    parsessions  = options['parsessions']
     nprocess     = options['nprocess']
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
@@ -690,7 +689,7 @@ def run(command, args):
         exit()
 
     elif options['run'] == 'run':
-        sout += "\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n" % (options['sessions'], cores)
+        sout += "\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n" % (options['sessions'], parsessions)
 
     else:
         sout += "\nRunning test on %s ...\n" % (options['sessions'])
@@ -736,7 +735,7 @@ def run(command, args):
 
         print "---- Running local"
         c = 0
-        if cores == 1 or options['run'] == 'test':
+        if parsessions == 1 or options['run'] == 'test':
             if command in plactions:
                 todo = plactions[command]
                 for session in sessions:
@@ -765,7 +764,7 @@ def run(command, args):
 
         else:
             c = 0
-            processPoolExecutor = ProcessPoolExecutor(cores)
+            processPoolExecutor = ProcessPoolExecutor(parsessions)
             futures = []
             if command in plactions:
                 todo = plactions[command]
@@ -832,5 +831,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-        g_scheduler.runThroughScheduler(command, sessions=sessions, args=options, cores=cores, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
+        g_scheduler.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
 

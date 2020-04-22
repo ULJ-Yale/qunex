@@ -950,13 +950,13 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified sessions in the subjectsfolder
+    optionally `subjectsfolder` and `parsessions` parameters. In this case the
+    command will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
-    automatically as each sessions's folder. Commands will run in parallel by
-    utilizing the specified number of cores (1 by default).
+    automatically as each sessions's folder. Commands will run in parallel, where
+    the degree of parallelism is determined by `parsessions` (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `qunex ?schedule` for more information). If set in
