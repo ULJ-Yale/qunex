@@ -556,7 +556,7 @@ fi
 unset CommandToRun
 ComA="cd ${SubjectsFolder}/${CASE}"
 ComB="gmri sortDicom folder=. "
-ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} parelements=${Cores} sessionid=${CASE}"
+ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} parelements=${ParElements} sessionid=${CASE}"
 ComD="slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*"
 QuNexCallToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
 # -- Connector execute function
@@ -586,8 +586,8 @@ echo "--overwrite=<re-run_organizeDicom>    Explicitly force a re-run of organiz
 echo "--unzip=<unzip_dicoms>                If the dicom files are gziped whether to unzip them (yes), leave them be and abort (no) or ask interactively (ask). [ask]"
 echo "--gzip=<zip_dicoms>                   After the dicom files were processed whether to gzip them (yes), leave them ungzipped (no) or ask interactively (ask). [ask]"
 echo "--verbose=<print_verbose_output>      Whether to be report on the progress (True) or not (False). [True]"
-echo "--cores=<number_of_cores>             How many parallel processes to run dcm2nii conversion with. "
-echo "                                      The number is one by defaults, if specified as 'all', the number of available cores is utilized."
+echo "--parelements=<parallel_elements>     Degree of parallelism (number of parallel processes) to run dcm2nii conversion with."
+echo "                                      The number is one by defaults, if specified as 'all', all available resource are utilized."
 echo ""
 echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                       e.g. for SLURM the string would look like this: "
@@ -1694,7 +1694,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Unzip=`opts_GetOpt "${setflag}unzip" $@`
     Gzip=`opts_GetOpt "${setflag}gzip" $@`
     VerboseRun=`opts_GetOpt "${setflag}verbose" $@`
-    Cores=`opts_GetOpt "${setflag}cores" $@`
+    ParElements=`opts_GetOpt "${setflag}parelements" $@`
     # -- Path options for FreeSurfer or Qu|Nex
     FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
     QuNexVersion=`opts_GetOpt "${setflag}version" $@`
@@ -1963,7 +1963,7 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
     if [[ -z ${Unzip} ]]; then Unzip="yes"; echo ""; echo "--unzip not specified explicitly. Setting --unzip=$Unzip."; echo ""; fi
     if [[ -z ${Unzip} ]]; then Gzip="yes"; echo ""; echo "--gzip not specified explicitly. Setting --gzip=$Gzip."; echo ""; fi
     if [[ -z ${VerboseRun} ]]; then VerboseRun="True"; echo ""; echo "--verbose not specified explicitly. Proceeding --verbose=$Verbose"; echo ""; fi
-    if [[ -z ${Cores} ]]; then Cores="4"; echo ""; echo "--cores not specified explicitly. Proceeding --cores=$Cores"; echo ""; fi
+    if [[ -z ${ParElements} ]]; then ParElements="4"; echo ""; echo "--parelements not specified explicitly. Proceeding --parelements=$ParElements"; echo ""; fi
 
     # -- Report parameters
     echo ""
@@ -1988,7 +1988,7 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
     echo "   Unzip DICOM files: ${Unzip}"
     echo "   Gzip DICOM files: ${Gzip}"
     echo "   Report verbose run: ${VerboseRun}"
-    echo "   Cores to use: ${Cores}"
+    echo "   Elements to run in parallel: ${ParElements}"
     echo "   Study log folder: ${LogFolder}"
     echo ""
     echo "--------------------------------------------------------------"
