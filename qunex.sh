@@ -556,7 +556,7 @@ fi
 unset CommandToRun
 ComA="cd ${SubjectsFolder}/${CASE}"
 ComB="gmri sortDicom folder=. "
-ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} sessionid=${CASE}"
+ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} parelements=${Cores} sessionid=${CASE}"
 ComD="slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*"
 QuNexCallToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
 # -- Connector execute function
