@@ -1298,9 +1298,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 print " WARNING: no NIfTI file created!"
             continue
         elif nimg > 9:
-            print >> r, " ERROR: More than 9 images created from this sequence! Skipping. Please check conversion log!"
+            print >> r, " WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!"
             if verbose:
-                print " ERROR: More than 9 images created from this sequence! Skipping. Please check conversion log!"
+                print " WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!"
             continue
         else:
             print >> r, ""

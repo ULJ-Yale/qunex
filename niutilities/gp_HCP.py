@@ -440,11 +440,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 Map (x, y or NONE) [NONE].
     --hcp_topupconfig       ... Path to a configuration file for TOPUP method
                                 or "NONE" if not used [NONE].
-    --hcp_prefs_check       ... Whether to check the results of PreFreeSurfer 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
     --hcp_prefs_custombrain ... Whether to only run the final registration using
                                 either a custom prepared brain mask (MASK) or 
                                 custom prepared brain images (CUSTOM), or to 
@@ -488,48 +483,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     With the information present above, the file `/data/gc/Prisma.conf` would
     be used.
-    
-
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
 
     EXAMPLE USE
     ===========
@@ -575,6 +528,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     2020-01-16 Grega Repovš
              - Updated documentation on SE label specification
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -954,17 +909,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 or the specified original names ('original') are to
                                 be used ['standard']
     
-    specific parameters
-    -------------------
-
-    In addition the following *specific* parameters will be used to guide the
-    processing in this step:
-
-    --hcp_fs_check    ... Whether to check the results of FreeSurfer  pipeline 
-                          by presence of last file generated  ('last'), the 
-                          default list of all files ('all') or using a specific
-                          check file ('<path to file>'). ['last']
-
 
     HCP Pipelines specific parameters
     ---------------------------------
@@ -1030,47 +974,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     * these options are currently not available
 
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
-
 
     EXAMPLE USE
     ===========
@@ -1133,6 +1036,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Added flair option and documentation
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
 
     ----------------
     2019-10-20 Future tasks:
@@ -1498,52 +1403,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     --hcp_fs_longitudinal   ... The name of the FS longitudinal template to
                                 be used for the template resulting from this 
                                 command call.
-    --hcp_fslong_check      ... Whether to check the results of FSLongitudinal 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
-    
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
+   
 
     EXAMPLE USE
     ===========
@@ -1582,6 +1442,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
              - Added full file checking
     2019-06-06 Grega Repovš
              - Enabled multiple log file locations
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -1859,54 +1721,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --hcp_inflatescale      ... Inflate extra scale parameter [1].
     * --hcp_fs_longitudinal ... The name of the FS longitudinal template if one
                                 was created and is to be used in this step.
-    --hcp_postfs_check      ... Whether to check the results of PreFreeSurfer 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
 
     * this option is currently not available
-
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
 
     EXAMPLE USE
     ===========
@@ -1945,6 +1761,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Adjusted parameters, help and processing to use integrated HCPpipelines
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -2190,15 +2008,6 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 DiffPreprocPipeline as a set of --extra-eddy-arg
                                 arguments. ['']
 
-    Additional parameters
-    ---------------------
-
-    --hcp_dwi_check         ... Whether to check the results of the Diffusion 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
-
 
     Gradient Coefficient File Specification:
     ----------------------------------------
@@ -2224,46 +2033,6 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     With the information present above, the file `/data/gc/Prisma.conf` would
     be used.
     
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
     EXAMPLE USE
     ===========
 
@@ -2307,6 +2076,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     """
 
     r = "\n------------------------------------------------------------"
@@ -2554,15 +2325,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     
     (-) This parameter is currently not supported
 
-    processing validation
-    ---------------------
-
-    --hcp_bold_vol_check     ... Whether to check the results of the fMRIVolume 
-                                 pipeline by presence of last file generated 
-                                 ('last'), the default list of all files ('all') 
-                                 or using a specific check file ('<path to file>')
-                                 ['last']
-
     naming options
     --------------
 
@@ -2703,48 +2465,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     With the information present above, the file `/data/gc/Prisma.conf` would
     be used.
 
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. 
-    Where the actual bold name should be used '{scan} should be placed. These
-    will be replaced with the actual session id and bold names at the time of 
-    checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    {scan}
-    {scan} {scan}_gdc_warp.nii.gz
-    {scan} {scan}_gdc.nii.gz 
-    {scan} {scan}_mc.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
 
     EXAMPLE USE
     ===========
@@ -2796,6 +2516,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Introduced bold specific SE options and updated documentation
     2020-01-28 Grega Repovš
              - Made SE selection more rubust
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -3550,15 +3272,6 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
 
-    processing validation
-    ---------------------
-
-    --hcp_bold_surf_check    ... Whether to check the results of the fMRISurface 
-                                 pipeline by presence of last file generated 
-                                 ('last'), the default list of all files ('all') 
-                                 or using a specific check file ('<path to file>')
-                                 ['last']
-
     use of FS longitudinal template
     -------------------------------
 
@@ -3592,46 +3305,6 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --hcp_regname            ... The name of the registration used. []
 
     
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_fMRISurface.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. 
-    Where the actual bold name should be used '{scan} should be placed. These
-    will be replaced with the actual session id and bold names at the time of 
-    checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    MNINonLinear Results {scan} {scan}.L.native.func.gii
-    MNINonLinear Results {scan} {scan}.R.native.func.gii
-    MNINonLinear Results {scan} {scan}_Atlas.dtseries.nii
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
 
 
     EXAMPLE USE
@@ -3671,6 +3344,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Adjusted parameters, help and processing to use integrated HCPpipelines
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
