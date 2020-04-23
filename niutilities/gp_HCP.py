@@ -4,19 +4,21 @@
 This file holds code for running HCP preprocessing and image mapping. It
 consists of functions:
 
-* hcpPreFS        ... runs HCP PreFS preprocessing
-* hcpFS           ... runs HCP FS preprocessing
-* hcpPostFS       ... runs HCP PostFS preprocessing
-* hcpDiffusion    ... runs HCP Diffusion weighted image preprocessing
-* hcpfMRIVolume   ... runs HCP BOLD Volume preprocessing
-* hcpfMRISurface  ... runs HCP BOLD Surface preprocessing
-* hcpICAFix       ... runs HCP BOLD ICAFix
-* hcpPostFix      ... runs HCP BOLD PostFix
-* hcpReApplyFix   ... runs HCP BOLD ReApplyFix
-* hcpDTIFit       ... runs DTI Fit
-* hcpBedpostx     ... runs Bedpost X
-* mapHCPData      ... maps results of HCP preprocessing into `images`
-                      folder
+* hcpPreFS              ... runs HCP PreFS preprocessing
+* hcpFS                 ... runs HCP FS preprocessing
+* hcpPostFS             ... runs HCP PostFS preprocessing
+* hcpDiffusion          ... runs HCP Diffusion weighted image preprocessing
+* hcpfMRIVolume         ... runs HCP BOLD Volume preprocessing
+* hcpfMRISurface        ... runs HCP BOLD Surface preprocessing
+* hcpICAFix             ... runs HCP ICAFix
+* hcpPostFix            ... runs HCP PostFix
+* hcpReApplyFix         ... runs HCP ReApplyFix
+* hcpMSMAll             ... runs HCP MSMAll
+* hcpDeDriftAndResample ... runs HCP DeDriftAndResample
+* hcpDTIFit             ... runs DTI Fit
+* hcpBedpostx           ... runs Bedpost X
+* mapHCPData            ... maps results of HCP preprocessing into `images`
+                            folder
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -575,7 +577,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation on SE label specification
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -836,7 +838,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         tfile = os.path.join(hcp['hcp_nonlin'], 'T1w_restore_brain.nii.gz')
         if hcp['hcp_prefs_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_prefs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_prefs_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -856,7 +858,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP PreFS can be run"
                     report = "HCP Pre FS can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Due to missing files session can not be processed."
             report = "Files missing, PreFS can not be run"
@@ -875,7 +877,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         report = "PreFS failed"
         failed = 1
 
-    r += "\nHCP PreFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nHCP PreFS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1133,7 +1135,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
 
     ----------------
-    2019-10-20 ToDo
+    2019-10-20 Future tasks:
              - Adjust code to enable running with FreeSurfer 5.3-HCP
              - Enable longitudinal mode
              - Enable using additional parameters
@@ -1143,7 +1145,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 -> hcp_autotopofix_off
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -1310,7 +1312,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # -- Test files
 
         if hcp['hcp_fs_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fs_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -1354,7 +1356,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP FS can be run"
                     report = "HCP FS can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Subject can not be processed."
             report = "FS can not be run"
@@ -1371,7 +1373,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP FS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP FS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1582,7 +1584,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -1703,7 +1705,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
        # -- Test files
 
         if hcp['hcp_fslong_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fslong_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fslong_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -1758,7 +1760,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nLongitudinal FreeSurfer %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nLongitudinal FreeSurfer %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1945,7 +1947,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PostFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -2026,13 +2028,13 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
         if False: #  fslongitudinal not supported:
             tfolder = hcp['hcp_long_nonlin']
-            tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+            tfile = os.path.join(tfolder, sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
         else:
             tfolder = hcp['hcp_nonlin']
-            tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+            tfile = os.path.join(tfolder, sinfo['id'] + options['hcp_suffix'] + '.corrThickness.164k_fs_LR.dscalar.nii')
 
         if hcp['hcp_postfs_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_postfs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_postfs_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -2052,7 +2054,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP PostFS can be run"
                     report = "HCP PostFS can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Session can not be processed."
             report = "HCP PostFS can not be run"
@@ -2069,7 +2071,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP PostFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP PostFS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -2307,7 +2309,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     """
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -2416,7 +2418,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
                     failed = 0
-                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "---> Session can not be processed."
             report = "HCP Diffusion can not be run"
@@ -2429,7 +2431,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -2796,7 +2798,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Made SE selection more rubust
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Volume registration [%s] ... " % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -2846,7 +2848,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # -> PostFS results
 
         if False:  # Longitudinal processing is currently unavailanle # options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
+            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
         else:
             tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
@@ -3193,7 +3195,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 for b in boldsData:
                     fmriref = b['fmriref']
                     if (fmriref == "NONE"): # if fmriref is "NONE" then process the previous pool followed by this one as single
-                        r, report = executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)
+                        if (len(boldsPool) > 0):
+                            r, report = executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)
                         boldsPool = []
                         r, report = executeSingleHCPfMRIVolume(sinfo, options, overwrite, hcp, b, r, report)
                     else: # else add to pool
@@ -3229,7 +3232,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
 
-    r += "\n\nHCP fMRIVolume %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP fMRIVolume %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # rint r
     return (r, report)
@@ -3369,7 +3372,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
 
         if hcp['hcp_bold_vol_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_vol_check'], 'fields': [('sessionid', sinfo['id']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_vol_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -3428,7 +3431,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP fMRIVolume can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -3670,7 +3673,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Surface registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -3771,7 +3774,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP fMRI Surface failed')
 
-    r += "\n\nHCP fMRISurface %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP fMRISurface %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -3827,7 +3830,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
 
         if hcp['hcp_bold_surf_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
+            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
         else:
             fullTest = None
 
@@ -3850,7 +3853,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP fMRISurface can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -3881,12 +3884,12 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     return {'r': r, 'report': report}
 
 
-def parseICAFixBolds(options, bolds, r):
-    # --- Use hcp_icafix_bolds parameter to determine if a single fix or a multi fix should be used
+def parseHCPBolds(options, bolds, r):
+    # --- Use hcp_icafix/msmall_bolds parameter to determine if a single fix or a multi fix should be used
     singleFix = True
 
     # variable for storing groups and their bolds
-    icafixGroups = {}
+    hcpGroups = {}
 
     # variable for storing erroneously specified bolds
     boldError = []
@@ -3912,26 +3915,30 @@ def parseICAFixBolds(options, bolds, r):
         boldtargets.append(boldtarget)
         boldtags.append(boldtag)
 
+    hcpBolds = None
     if 'hcp_icafix_bolds' in options:
-        icafixBolds = options['hcp_icafix_bolds']
+        hcpBolds = options['hcp_icafix_bolds']
+    elif 'hcp_msmall_bolds' in options:
+        hcpBolds = options['hcp_msmall_bolds']
 
-        # if hcp_icafix_bolds includes : then we have groups and we need multi fix
-        if ":" in icafixBolds:
+    if hcpBolds:
+        # if hcpBolds includes : then we have groups and we need multi fix
+        if ":" in hcpBolds:
             # run multi fix
             singleFix = False
 
             # get all groups
-            groups = str.split(icafixBolds, "|")
+            groups = str.split(hcpBolds, "|")
 
-            # store all bolds in icafixBolds
-            icafixBolds = []
+            # store all bolds in hcpBolds
+            hcpBolds = []
 
             for g in groups:
                 # get group name
                 split = str.split(g, ":")
 
                 # create group and add to dictionary
-                if split[0] not in icafixGroups:
+                if split[0] not in hcpGroups:
                     specifiedBolds = str.split(split[1], ",")
                     groupBolds = []
 
@@ -3945,17 +3952,17 @@ def parseICAFixBolds(options, bolds, r):
 
                             for b in boldtargets:
                                 if sb == boldtargets[i] or sb == boldtags[i]:
-                                    if sb in icafixBolds:
+                                    if sb in hcpBolds:
                                         boldsOK = False
                                         r += "\n\nERROR: the bold [%s] is specified twice!" % b
                                     else:
                                         groupBolds.append(b)
-                                        icafixBolds.append(b)
+                                        hcpBolds.append(b)
 
                                 # increase counter
                                 i = i + 1
 
-                    icafixGroups[split[0]] = groupBolds
+                    hcpGroups[split[0]] = groupBolds
                 else:
                     boldsOK = False
                     r += "\n\nERROR: multiple concatenations with the same name [%s]!" % split[0]
@@ -3963,10 +3970,10 @@ def parseICAFixBolds(options, bolds, r):
         # else we extract bolds and use single fix
         else:
             # specified bolds
-            specifiedBolds = str.split(icafixBolds, ",")
+            specifiedBolds = str.split(hcpBolds, ",")
 
             # variable for storing bolds
-            icafixBolds = []
+            hcpBolds = []
 
             # iterate over all and add to bolds or inject instead of tags
             for sb in specifiedBolds:
@@ -3978,31 +3985,31 @@ def parseICAFixBolds(options, bolds, r):
 
                     for b in boldtargets:
                         if sb == boldtargets[i] or sb == boldtags[i]:
-                            if sb in icafixBolds:
+                            if sb in hcpBolds:
                                 boldsOK = False
                                 r += "\n\nERROR: the bold [%s] is specified twice!" % b
                             else:
-                                icafixBolds.append(b)
+                                hcpBolds.append(b)
 
                         # increase counter
                         i = i + 1
 
-    # if hcp_icafix_bolds is empty then bundle all bolds
+    # if hcp_icafix/msmall_bolds is empty then bundle all bolds
     else:
         # run multi fix
         singleFix = False
-        icafixBolds = bolds
-        icafixGroups = []
-        icafixGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":icafixBolds})
+        hcpBolds = bolds
+        hcpGroups = []
+        hcpGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":hcpBolds})
         r += "\nConcatenating all bolds\n"
 
-    # --- Get hcp_icafix_bolds data from bolds
+    # --- Get hcp_icafix/msmall_bolds data from bolds
     # variable for storing skipped bolds
     boldSkip = []
 
-    if icafixBolds is not bolds:
+    if hcpBolds is not bolds:
         # compare
-        r += "\n\nComparing bolds with hcp_icafix_bolds\n"
+        r += "\n\nComparing bolds with those specifed via parameters\n"
 
         # single fix
         if singleFix:
@@ -4010,7 +4017,7 @@ def parseICAFixBolds(options, bolds, r):
             boldData = []
 
             # add data to list
-            for b in icafixBolds:
+            for b in hcpBolds:
                 # get index
                 i = boldtargets.index(b)
 
@@ -4020,11 +4027,11 @@ def parseICAFixBolds(options, bolds, r):
 
             # skipped bolds
             for b in boldtargets:
-                if b not in icafixBolds:
+                if b not in hcpBolds:
                     boldSkip.append(b)
 
-            # store data into the icafixBolds variable
-            icafixBolds = boldData
+            # store data into the hcpBolds variable
+            hcpBolds = boldData
 
         # multi fix
         else:
@@ -4037,12 +4044,12 @@ def parseICAFixBolds(options, bolds, r):
                 boldSkipDict[b] = True
 
             # go over all groups
-            for g in icafixGroups:
+            for g in hcpGroups:
                 # create empty dict entry for group
                 groupData[g] = []
 
                 # go over group bolds
-                groupBolds = icafixGroups[g]
+                groupBolds = hcpGroups[g]
 
                 # add data to list
                 for b in groupBolds:
@@ -4052,7 +4059,6 @@ def parseICAFixBolds(options, bolds, r):
                     # store data
                     if b in boldtargets:
                         groupData[g].append(bolds[i])
-
 
                 # find skipped bolds
                 for i in range(len(boldtargets)):
@@ -4068,29 +4074,29 @@ def parseICAFixBolds(options, bolds, r):
                     boldSkip.append(b)
 
             # cast group data to array of dictionaries (needed for parallel)
-            icafixGroups = []
+            hcpGroups = []
             for g in groupData:
-                icafixGroups.append({"name":g, "bolds":groupData[g]})
+                hcpGroups.append({"name":g, "bolds":groupData[g]})
 
-    # report hcp_icafix_bolds not found in bolds
+    # report that some hcp_???_bolds not found in bolds
     if len(boldSkip) > 0 or len(boldError) > 0:
         for b in boldSkip:
-            r += "     ... skipping %s: it is not specified in the hcp_icafix_bolds parameter\n" % b
+            r += "     ... skipping %s: it is not specified via the parameters\n" % b
         for b in boldError:
             r += "     ... ERROR: %s specified but not found in bolds\n" % b
     else:
-        r += "     ... all bolds specified in the hcp_icafix_bolds parameter are present\n"
+        r += "     ... all bolds specified via the parameters are present\n"
 
     if (len(boldError) > 0):
         boldsOK = False
 
     # --- Report single fix or multi fix
     if singleFix:
-        r += "\n%s single run on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+        r += "\n%s single-run on %d bolds" % (action("Processing", options['run']), len(hcpBolds))
     else:
-        r += "\n%s multi run on %d groups" % (action("Processing", options['run']), len(icafixGroups))
+        r += "\n%s multi-run on %d groups" % (action("Processing", options['run']), len(hcpGroups))
 
-    return (singleFix, icafixBolds, icafixGroups, boldsOK, r)
+    return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
 
 def hcpICAFix(sinfo, options, overwrite=False, thread=0):
@@ -4244,7 +4250,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP ICAFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -4266,7 +4272,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
 
         # --- Multi threading
         if singleFix:
@@ -4292,7 +4298,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
 
         if not parsOK:
-            raise ge.CommandFailed("hcp_ICAFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_ICAFix", "... invalid input parameters!")
 
         # --- Execute
         # single fix
@@ -4333,7 +4339,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                     report['skipped']    += tempReport['skipped']
 
         # multi fix
-        else: 
+        else:
             if threads == 1: # serial execution
                 for g in icafixGroups:
                     # process
@@ -4388,7 +4394,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP ICAFix failed')
 
-    r += "\n\nHCP ICAFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP ICAFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -4410,13 +4416,13 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
         boldok = True
 
         # --- check for bold image
         boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+        r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
         # bold in input format
         inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
@@ -4467,7 +4473,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... single-run HCP ICAFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -4506,7 +4512,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n----------------------------------------------------------------"
+        r += "\n\n------------------------------------------------------------"
         r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
         groupok = True
 
@@ -4593,7 +4599,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r)
                 if passed is None:
                     r += "\n     ... multi-run HCP ICAFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -4607,9 +4613,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No Workbench scene files that can be used to visually review the signal vs. noise classification generated by ICAFix, skipping this group!"
+                r += "\n     ... ERROR: No hcp info for session, skipping this group!"
             else:
-                r += "\n     ... ERROR: No Workbench scene files that can be used to visually review the signal vs. noise classification generated by ICAFix, this group would be skipped!"
+                r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -4765,7 +4771,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PostFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -4787,9 +4793,9 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_PostFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_PostFix", "... invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -4861,7 +4867,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP PostFix failed')
 
-    r += "\n\nHCP PostFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP PostFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -4873,7 +4879,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     # extract data
-    r += "\n\n----------------------------------------------------------------"
+    r += "\n\n------------------------------------------------------------"
 
     if singleFix:
         # highpass
@@ -4907,7 +4913,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         boldok = True
 
         # --- check for ICA image
-        r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
+        r, boldok = checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         reusehighpass = "YES" if 'hcp_postfix_reusehighpass' not in options else options['hcp_postfix_reusehighpass']
 
@@ -4977,7 +4983,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP PostFix can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5155,7 +5161,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
              - Core functionality.
     '''
 
-    r = "\n----------------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP ReApplyFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -5177,9 +5183,9 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parseHCPBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_ReApplyFix", "Invalid input parameters!")
+            raise ge.CommandFailed("hcp_ReApplyFix", "... invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -5282,7 +5288,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP ReApplyFix failed')
 
-    r += "\n\nHCP ReApplyFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP ReApplyFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -5305,7 +5311,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
     try:
         # run HCP hand reclassification
-        r += "\n----------------------------------------------------------------"
+        r += "\n------------------------------------------------------------"
         r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
         result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, True, boldtarget, printbold)
 
@@ -5384,7 +5390,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                     passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r)
                     if passed is None:
                         r += "\n     ... single-run HCP ReApplyFix can be run"
-                        r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(printbold)
                     else:
                         report['skipped'].append(printbold)
@@ -5431,7 +5437,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n----------------------------------------------------------------"
+        r += "\n------------------------------------------------------------"
         r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
         groupok = True
 
@@ -5548,7 +5554,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                     passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r)
                     if passed is None:
                         r += "\n     ... multi-run HCP ReApplyFix can be run"
-                        r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                         report['ready'].append(groupname)
                     else:
                         report['skipped'].append(groupname)
@@ -5601,7 +5607,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
         # --- check for bold image
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
-        r, boldok = checkForFile2(r, icaimg, '\n     ... preprocessed ICA present', '\n     ... ERROR: preprocessed ICA missing!', status=boldok)
+        r, boldok = checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
@@ -5636,7 +5642,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP HandReclassification can be run"
-                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5668,12 +5674,1178 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
     return {'r': r, 'report': report}
 
 
+def parseMSMAllBolds(options, bolds, r):
+    # parse the same way as with icafix first
+    singleRun, hcpBolds, msmallGroups, parsOK, r = parseHCPBolds(options, bolds, r)
+
+    # if more than one group is provided error out
+    if (len(msmallGroups) > 1):
+        r += "\n     ... ERROR: multiple groups provided, MSMAll does not support such functionality"
+        parsOK = False
+    else:
+        # if singleRun create a single group from provided bolds
+        if singleRun:
+            msmallGroups = []
+            group = {}
+            group["bolds"] = hcpBolds
+            msmallGroups.append(group)
+
+    return (singleRun, msmallGroups, parsOK, r)
+
+
+def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
+    '''
+    hcp_MSMAll [... processing options]
+    hcp9 [... processing options]
+
+    USE
+    ===
+
+    A short name 'hcp9' can also be used for this command.
+
+    Runs the MSMAll step of the HCP Pipeline. This function executes two steps,
+    first it runs MSMAll and if it completes succesfully it then executes
+    the DeDriftAndResample step.
+
+    If the hcp_msmall_bolds parameter is not provided MSMAll will bundle
+    all bolds together and execute multi-run HCP MSMAll, the concatenated file
+    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    processing requires a lot of computational resources.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the Qu|Nex
+    folder structure. The function will look into folder:
+
+    <session id>/hcp/<session id>
+
+    for files:
+
+    MNINonLinear/Results/<boldname>/
+    <boldname>_<cifti_tail>_hp<highpass>_clean.dtseries.nii
+
+    RESULTS
+    =======
+
+    The results of this step will be generated and populated in the
+    MNINonLinear folder inside the same sessions's root hcp folder.
+
+    The final clean file can be found in:
+
+    MNINonLinear/Results/<outfmriname>/
+    <outfmriname>_<cifti_tail>_hp<highpass>_clean_vn.dtseries.nii,
+
+    where highpass is the used value for the highpass filter. The default highpass
+    value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix.
+    The default cifti tail (<cifti_tail>) is Atlas.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    --sessions          ... The batch.txt file with all the sessions information
+                            [batch.txt].
+    --subjectsfolder    ... The path to the study/subjects folder, where the
+                            imaging  data is supposed to go [.].
+    --cores             ... How many cores to utilize. This Parameter
+                            determines the parallelization on the
+                            subject level [1].
+    --overwrite         ... Whether to overwrite existing data (yes)
+                            or not (no) [no].
+    --logfolder         ... The path to the folder where runlogs and comlogs
+                            are to be stored, if other than default []
+    --log               ... Whether to keep ('keep') or remove ('remove') the
+                            temporary logs once jobs are completed ['keep'].
+                            When a comma separated list is given, the log will
+                            be created at the first provided location and then
+                            linked or copied to other locations. The valid
+                            locations are:
+                            * 'study'   for the default: 
+                                        `<study>/processing/logs/comlogs`
+                                        location,
+                            * 'session' for `<sessionid>/logs/comlogs
+                            * 'hcp'     for `<hcp_folder>/logs/comlogs
+                            * '<path>'  for an arbitrary directory
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    hcp_msmall_bolds            ... specify a list of bolds for MSMAll.
+                                    You can specify a comma separated list
+                                    of bolds, e.g. "<boldname1>,<boldname2>",
+                                    in this case single-run HCP MSMAll will be
+                                    executed over specified bolds. You can also
+                                    specify how to group/concatenate bolds
+                                    together, e.g.
+                                    "<group>:<boldname1>,<boldname2>",
+                                    in this case multi-run HCP MSMAll will be
+                                    executed. Instead of full bold names, you
+                                    can also use bold tags from the batch file.
+                                    If this parameter is not provided
+                                    MSMAll will bundle all bolds together and
+                                    execute multi-run HCP MSMAll, the
+                                    concatenated file will be named
+                                    fMRI_CONCAT_ALL [""].
+    hcp_msmall_highpass         ... value for the highpass filter,
+                                    [0] for multi-run HCP MSMAll and [2000]
+                                    for single-run HCP MSMAll.
+    hcp_msmall_outfmriname      ... the name which will be given to the
+                                    concatenated single subject scan the same as
+                                    [<group> in hcp_msmall_bolds] for multi-run
+                                    HCP MSMAll and [fMRI_CONCAT_ALL] for single-run
+                                    HCP MSMAll.
+    hcp_msmall_templates        ... path to directory containing MSMAll template
+                                    files [<HCPPIPEDIR>/global/templates/MSMAll].
+    hcp_msmall_outregname       ... output registration name [MSMInitalReg].
+    hcp_highresmesh             ... high resolution mesh node count [164].
+    hcp_lowresmesh              ... low resolution mesh node count [32].
+    hcp_msmall_inregname        ... input registration name [MSMSulc]
+    hcp_matlab_mode             ... Specifies the Matlab version, can be
+                                    "interpreted", "compiled" or "octave"
+                                    ["compiled"].
+    hcp_msmall_bolds_touse      ... specifies which runs should be used
+                                    as resting state data
+                                    [same as bold specified in hcp_msmall_bolds].
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex hcp_MSMAll \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_matlab_mode="interpreted"
+    ```
+
+    ```
+    qunex hcp_MSMAll \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_msmall_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        --hcp_matlab_mode="interpreted"
+    ```
+
+    ----------------
+    Written by Jure Demšar
+
+    Changelog
+    2020-01-04 Jure Demsar
+             - Core functionality.
+    '''
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP MSMAll registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+
+    run    = True
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        # --- Base settings
+        doOptionsCheck(options, sinfo, 'hcp_MSMAll')
+        doHCPOptionsCheck(options, sinfo, 'hcp_MSMAll')
+        hcp = getHCPPaths(sinfo, options)
+
+        # --- Get sorted bold numbers and bold data
+        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        if report['boldskipped']:
+            if options['hcp_filename'] == 'original':
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
+            else:
+                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+
+        # --- Parse msmall_bolds
+        singleRun, msmallGroups, parsOK, r = parseMSMAllBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed("hcp_MSMAll", "... invalid input parameters!")
+
+        # --- Execute
+        # single-run
+        if singleRun:
+            # process
+            result = executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+        # multi-run
+        else: 
+            # process
+            result = executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+
+        # merge r
+        r += result['r']
+
+        # merge report
+        tempReport            = result['report']
+        report['done']       += tempReport['done']
+        report['incomplete'] += tempReport['incomplete']
+        report['failed']     += tempReport['failed']
+        report['ready']      += tempReport['ready']
+        report['not ready']  += tempReport['not ready']
+        report['skipped']    += tempReport['skipped'] 
+
+        # if all ok automatically execute DeDriftAndResample
+        if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
+            # single-run
+            if singleRun:
+                result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+            # multi-run
+            else:
+                result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+
+            r += result['r']
+            report = result['report']
+
+        # report
+        rep = []
+        for k in ['done', 'incomplete', 'failed', 'ready', 'not ready', 'skipped']:
+            if len(report[k]) > 0:
+                rep.append("%s %s" % (", ".join(report[k]), k))
+
+        report = (sinfo['id'], "HCP MSMAll: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP MSMAll failed')
+        failed = 1
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = str(errormessage)
+        report = (sinfo['id'], 'HCP MSMAll failed')
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        report = (sinfo['id'], 'HCP MSMAll failed')
+
+    r += "\n\nHCP MSMAll %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, report)
+
+
+def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
+    # get data
+    bolds = group["bolds"]
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        # outfmriname
+        outfmriname = "fMRI_CONCAT_ALL" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
+
+        r += "\n\n------------------------------------------------------------"
+        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
+        groupok = True
+
+        # --- check for bold images and prepare targets parameter
+        boldtargets = ""
+
+        # highpass value
+        highpass = 2000 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+
+        # fmriprocstring
+        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
+        # check if files for all bolds exist
+        for b in bolds:
+            # set ok to true for now
+            boldok = True
+
+            # extract data
+            _, _, _, boldinfo = b
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldtarget = boldinfo['filename']
+            else:
+                printbold  = str(bold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+            # input file check
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+            if not boldok:
+                groupok = False
+                break
+            else:
+                # add @ separator
+                if boldtargets is not "":
+                    boldtargets = boldtargets + "@"
+
+                # add latest image
+                boldtargets = boldtargets + boldtarget
+
+        if 'hcp_msmall_templates' not in options:
+          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+        else:
+          msmalltemplates = options['hcp_msmall_templates']
+
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = 0
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] == "compiled":
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                raise
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --fmri-names-list="%(boldtargets)s" \
+            --multirun-fix-names="" \
+            --multirun-fix-concat-name="" \
+            --multirun-fix-names-to-use="" \
+            --output-fmri-name="%(outfmriname)s" \
+            --high-pass="%(highpass)d" \
+            --fmri-proc-string="%(fmriprocstring)s" \
+            --msm-all-templates="%(msmalltemplates)s" \
+            --output-registration-name="%(outregname)s" \
+            --high-res-mesh="%(highresmesh)s" \
+            --low-res-mesh="%(lowresmesh)s" \
+            --input-registration-name="%(inregname)s" \
+            --matlab-run-mode="%(matlabrunmode)d"' % {
+                'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
+                'path'                : sinfo['hcp'],
+                'subject'             : sinfo['id'] + options['hcp_suffix'],
+                'boldtargets'         : boldtargets,
+                'outfmriname'         : outfmriname,
+                'highpass'            : highpass,
+                'fmriprocstring'      : fmriprocstring,
+                'msmalltemplates'     : msmalltemplates,
+                'outregname'          : "MSMInitalReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
+                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
+                'inregname'           : "MSMSulc" if 'hcp_msmall_inregname' not in options else options['hcp_msmall_inregname'],
+                'matlabrunmode'       : matlabrunmode}
+
+        # -- Test file
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
+        fullTest = None
+
+        # -- Run
+        if run and boldok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(printbold)
+                else:
+                    report['done'].append(printbold)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r)
+                if passed is None:
+                    r += "\n     ... HCP MSMAll can be run"
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(printbold)
+                else:
+                    report['skipped'].append(printbold)
+
+        elif run:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+        else:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
+        r += str(errormessage)
+        report['failed'].append(printbold)
+    except:
+        r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
+        report['failed'].append(printbold)
+
+    return {'r': r, 'report': report}
+
+
+def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
+    # get group data
+    groupname = group["name"]
+    bolds = group["bolds"]
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        # outfmriname
+        outfmriname = "fMRI_CONCAT_ALL" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
+
+        r += "\n\n------------------------------------------------------------"
+        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
+        groupok = True
+
+        # --- check for bold images and prepare targets parameter
+        boldtargets = ""
+
+        # highpass
+        highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+
+        # fmriprocstring
+        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
+        # check if files for all bolds exist
+        for b in bolds:
+            # set ok to true for now
+            boldok = True
+
+            # extract data
+            _, _, _, boldinfo = b
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldtarget = boldinfo['filename']
+            else:
+                printbold  = str(bold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+            # input file check
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+            if not boldok:
+                break
+            else:
+                # add @ separator
+                if boldtargets is not "":
+                    boldtargets = boldtargets + "@"
+
+                # add latest image
+                boldtargets = boldtargets + boldtarget
+
+        if boldok:
+            # check if group file exists
+            groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+            groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
+            r, boldok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
+
+        if 'hcp_msmall_templates' not in options:
+          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+        else:
+          msmalltemplates = options['hcp_msmall_templates']
+
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = 0
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] == "compiled":
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                raise
+
+        # fix names to use
+        fixnamestouse = boldtargets
+        if 'hcp_msmall_bolds_touse' in options:
+            fixnamestouse = options['hcp_msmall_bolds_touse'].replace(",", "@")
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --fmri-names-list="" \
+            --multirun-fix-names="%(fixnames)s" \
+            --multirun-fix-concat-name="%(concatname)s" \
+            --multirun-fix-names-to-use="%(fixnamestouse)s" \
+            --output-fmri-name="%(outfmriname)s" \
+            --high-pass="%(highpass)d" \
+            --fmri-proc-string="%(fmriprocstring)s" \
+            --msm-all-templates="%(msmalltemplates)s" \
+            --output-registration-name="%(outregname)s" \
+            --high-res-mesh="%(highresmesh)s" \
+            --low-res-mesh="%(lowresmesh)s" \
+            --input-registration-name="%(inregname)s" \
+            --matlab-run-mode="%(matlabrunmode)d"' % {
+                'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
+                'path'                : sinfo['hcp'],
+                'subject'             : sinfo['id'] + options['hcp_suffix'],
+                'fixnames'            : boldtargets,
+                'concatname'          : groupname,
+                'fixnamestouse'       : fixnamestouse,
+                'outfmriname'         : outfmriname,
+                'highpass'            : highpass,
+                'fmriprocstring'      : fmriprocstring,
+                'msmalltemplates'     : msmalltemplates,
+                'outregname'          : "MSMInitalReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
+                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
+                'inregname'           : "MSMSulc" if 'hcp_msmall_inregname' not in options else options['hcp_msmall_inregname'],
+                'matlabrunmode'       : matlabrunmode}
+
+        # -- Test file
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
+        fullTest = None
+
+        # -- Run
+        if run and boldok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(groupname)
+                else:
+                    report['done'].append(groupname)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r)
+                if passed is None:
+                    r += "\n     ... HCP MSMAll can be run"
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(groupname)
+                else:
+                    report['skipped'].append(groupname)
+
+        elif run:
+            report['not ready'].append(groupname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this group!"
+            else:
+                r += "\n     ... ERROR: images missing, this group would be skipped!"
+        else:
+            report['not ready'].append(groupname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
+        r += str(errormessage)
+        report['failed'].append(groupname)
+    except:
+        r += "\n --- Failed during processing of group %s with error:\n %s\n" % (groupname, traceback.format_exc())
+        report['failed'].append(groupname)
+
+    return {'r': r, 'report': report}
+
+
+def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
+    '''
+    hcp_DeDriftAndResample [... processing options]
+    hcp10 [... processing options]
+
+    USE
+    ===
+
+    A short name 'hcp10' can also be used for this command.
+
+    Runs the DeDriftAndResample step of the HCP Pipeline. If the hcp_msmall_bolds
+    parameter is not provided DeDriftAndResample will bundle all bolds together
+    and execute multi-run HCP DeDriftAndResample, the concatenated file
+    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    processing requires a lot of computational resources.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the Qu|Nex
+    folder structure. The function will look into folder:
+
+    <session id>/hcp/<session id>
+
+    for files:
+
+    MNINonLinear/Results/<boldname>/
+    <boldname>_<cifti_tail>_hp<highpass>_clean.dtseries.nii
+
+    RESULTS
+    =======
+
+    The results of this step will be populated in the MNINonLinear folder inside
+    the same sessions's root hcp folder.
+
+    The final clean files can be found in:
+
+    MNINonLinear/Results/<boldname>/
+    <boldname>_<cifti_tail>_<regname>.dtseries.nii,
+
+    The default cifti tail (<cifti_tail>) is Atlas, while the default regname
+    (<regname)) is MSMSulc.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    --sessions          ... The batch.txt file with all the sessions information
+                            [batch.txt].
+    --subjectsfolder    ... The path to the study/subjects folder, where the
+                            imaging  data is supposed to go [.].
+    --cores             ... How many cores to utilize. This Parameter
+                            determines the parallelization on the
+                            subject level [1].
+    --overwrite         ... Whether to overwrite existing data (yes)
+                            or not (no) [no].
+    --logfolder         ... The path to the folder where runlogs and comlogs
+                            are to be stored, if other than default []
+    --log               ... Whether to keep ('keep') or remove ('remove') the
+                            temporary logs once jobs are completed ['keep'].
+                            When a comma separated list is given, the log will
+                            be created at the first provided location and then
+                            linked or copied to other locations. The valid
+                            locations are:
+                            * 'study'   for the default: 
+                                        `<study>/processing/logs/comlogs`
+                                        location,
+                            * 'session' for `<sessionid>/logs/comlogs
+                            * 'hcp'     for `<hcp_folder>/logs/comlogs
+                            * '<path>'  for an arbitrary directory
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    hcp_msmall_bolds                ... specify a list of bolds for DeDriftAndResample.
+                                        You can specify a comma separated list
+                                        of bolds, e.g. "<boldname1>,<boldname2>",
+                                        in this case single-run HCP DeDriftAndResample
+                                        will be executed over specified bolds. You can
+                                        also specify how to group/concatenate bolds
+                                        together, e.g.
+                                        "<group>:<boldname1>,<boldname2>",
+                                        in this case multi-run HCP DeDriftAndResample
+                                        will be executed. Instead of full bold names,
+                                        you can also use bold tags from the batch file.
+                                        If this parameter is not provided
+                                        DeDriftAndResample will bundle all bolds
+                                        together and xecute multi-run HCP
+                                        DeDriftAndResample, the concatenated file will
+                                        be named fMRI_CONCAT_ALL [""].
+    hcp_msmall_highpass             ... value for the highpass filter, [0] for
+                                        multi-run HCP DeDriftAndResample and [2000]
+                                        for single-run HCP DeDriftAndResample.
+    hcp_highresmesh                 ... high resolution mesh node count [164].
+    hcp_lowresmeshes                ... low resolution meshes node count [32]. To
+                                        provide more
+    hcp_msmall_regname              ... Registration sphere name [MSMSulc].
+    hcp_msmall_dedrift_reg_files    ... Path to the spheres output from the
+                                        MSMRemoveGroupDrift pipeline
+                                        [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
+                                        <HCPPIPEDIR>/global/templates/MSMAll/<file2>].
+                                        Where <file1> is equal to:
+                                        DeDriftingGroup.L.sphere.DeDriftMSMAll.
+                                        164k_fs_LR.surf.gii and <file2> is equal to
+                                        DeDriftingGroup.R.sphere.DeDriftMSMAll.
+                                        164k_fs_LR.surf.gii
+    hcp_msmall_maps                 ... Paths to maps that are not myelin maps
+                                        [sulc,curvature,corrThickness,thickness].
+    hcp_msmall_myelinmaps           ... Paths to myelin maps
+                                        [MyelinMap,SmoothedMyelinMap].
+    hcp_msmall_smoothing_fwhm       ... Smoothing FWHM that matches what was
+                                        used in the fMRISurface pipeline [2].
+    hcp_matlab_mode                 ... Specifies the Matlab version, can be
+                                        "interpreted", "compiled" or "octave"
+                                        ["compiled"].
+    hcp_msmall_domotionreg          ... Whether to regress motion parameters as
+                                        part of the cleaning. The default value
+                                        for single-run is ["TRUE"], while the
+                                        default for multi-run is ["FALSE"].
+    hcp_msmall_dontfixnames         ... a list of comma sperated bolds that will
+                                        not have HCP ICAFix reapplied to them [].
+    hcp_msmall_concatregname        ... Output name of the dedrifted registration
+                                        [MSMAll].
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex hcp_DeDriftAndResample \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_matlab_mode="interpreted"
+    ```
+
+    ```
+    qunex hcp_DeDriftAndResample \
+        --sessions=processing/batch.txt \
+        --subjectsfolder=subjects \
+        --hcp_msmall_bolds="GROUP_1:BOLD_1,BOLD_2" \
+        --hcp_matlab_mode="interpreted"
+    ```
+
+    ----------------
+    Written by Jure Demšar
+
+    Changelog
+    2020-10-04 Jure Demsar
+             - Core functionality.
+    '''
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP DeDriftAndResample registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+
+    run    = True
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        # --- Base settings
+        doOptionsCheck(options, sinfo, 'hcp_DeDriftAndResample')
+        doHCPOptionsCheck(options, sinfo, 'hcp_DeDriftAndResample')
+        hcp = getHCPPaths(sinfo, options)
+
+        # --- Get sorted bold numbers and bold data
+        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        if report['boldskipped']:
+            if options['hcp_filename'] == 'original':
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
+            else:
+                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+
+        # --- Parse msmall_bolds
+        singleRun, msmallGroups, parsOK, r = parseMSMAllBolds(options, bolds, r)
+        if not parsOK:
+            raise ge.CommandFailed("hcp_DeDriftAndResample", "... invalid input parameters!")
+
+        # --- Execute
+        # single-run
+        if singleRun:
+            # process
+            result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+        # multi-run
+        else: 
+            # process
+            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroups[0])
+
+        # merge r
+        r += result['r']
+
+        # merge report
+        tempReport            = result['report']
+        report['done']       += tempReport['done']
+        report['incomplete'] += tempReport['incomplete']
+        report['failed']     += tempReport['failed']
+        report['ready']      += tempReport['ready']
+        report['not ready']  += tempReport['not ready']
+        report['skipped']    += tempReport['skipped'] 
+
+        # report
+        rep = []
+        for k in ['done', 'incomplete', 'failed', 'ready', 'not ready', 'skipped']:
+            if len(report[k]) > 0:
+                rep.append("%s %s" % (", ".join(report[k]), k))
+
+        report = (sinfo['id'], "HCP DeDriftAndResample: " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
+        report = (sinfo['id'], 'HCP DeDriftAndResample failed')
+        failed = 1
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = str(errormessage)
+        report = (sinfo['id'], 'HCP DeDriftAndResample failed')
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        report = (sinfo['id'], 'HCP DeDriftAndResample failed')
+
+    r += "\n\nHCP DeDriftAndResample %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, report)
+
+
+def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, group):
+    # get group data
+    bolds = group["bolds"]
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        r += "\n\n------------------------------------------------------------"
+        r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
+        groupok = True
+
+        # --- check for bold images and prepare targets parameter
+        boldtargets = ""
+
+        # highpass
+        highpass = 2000 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+
+        # fmriprocstring
+        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
+        # check if files for all bolds exist
+        for b in bolds:
+            # set ok to true for now
+            boldok = True
+
+            # extract data
+            _, _, _, boldinfo = b
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldtarget = boldinfo['filename']
+            else:
+                printbold  = str(bold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+            # input file check
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+            if not boldok:
+                break
+            else:
+                # add @ separator
+                if boldtargets is not "":
+                    boldtargets = boldtargets + "@"
+
+                # add latest image
+                boldtargets = boldtargets + boldtarget
+
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = 0
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] == "compiled":
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                raise
+
+        # dedrift reg files
+        dedriftregfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
+        if 'hcp_msmall_dedrift_reg_files' in options:
+            dedriftregfiles = options['hcp_msmall_dedrift_reg_files'].replace(",", "@")
+
+        # maps
+        maps = "sulc@curvature@corrThickness@thickness"
+        if 'hcp_msmall_maps' in options:
+            maps = options['hcp_msmall_maps'].replace(",", "@")
+
+        # maps
+        myelinmaps = "MyelinMap@SmoothedMyelinMap"
+        if 'hcp_msmall_myelinmaps' in options:
+            myelinmaps = options['hcp_msmall_myelinmaps'].replace(",", "@")
+
+        # dont fix names
+        dontfixnames = "NONE"
+        if 'hcp_msmall_dontfixnames' in options:
+            myelinmaps = options['hcp_msmall_dontfixnames'].replace(",", "@")
+
+        # lowresmeshes
+        lowresmeshes = 32
+        if 'hcp_lowresmeshes' in options:
+            lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
+
+        # regname
+        regname = "MSMSulc" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname']
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --high-res-mesh="%(highresmesh)s" \
+            --low-res-meshes="%(lowresmeshes)s" \
+            --registration-name="%(regname)s" \
+            --dedrift-reg-files="%(dedriftregfiles)s" \
+            --maps="%(maps)s" \
+            --myelin-maps="%(myelinmaps)s" \
+            --multirun-fix-names="NONE" \
+            --multirun-fix-concat-names="NONE" \
+            --fix-names="%(fixnames)s" \
+            --dont-fix-names="%(dontfixnames)s" \
+            --smoothing-fwhm="%(smoothingfwhm)d" \
+            --high-pass="%(highpass)d" \
+            --matlab-run-mode="%(matlabrunmode)d" \
+            --motion-regression="%(motionregression)s"' % {
+                'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
+                'path'                : sinfo['hcp'],
+                'subject'             : sinfo['id'] + options['hcp_suffix'],
+                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'lowresmeshes'        : lowresmeshes,
+                'regname'             : regname,
+                'dedriftregfiles'     : dedriftregfiles,
+                'maps'                : maps,
+                'myelinmaps'          : myelinmaps,
+                'fixnames'            : boldtargets,
+                'dontfixnames'        : dontfixnames,
+                'smoothingfwhm'       : 2 if 'hcp_msmall_smoothing_fwhm' not in options else options['hcp_msmall_smoothing_fwhm'],
+                'highpass'            : highpass,
+                'matlabrunmode'       : matlabrunmode,
+                'motionregression'    : "TRUE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
+
+        # -- Test file (currently check only last bold)
+        lastbold = boldtargets.split(",")[-1]
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], regname))
+        fullTest = None
+
+        # -- Run
+        if run and boldok:
+            if options['run'] == "run":
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(regname)
+                else:
+                    report['done'].append(regname)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
+                if passed is None:
+                    r += "\n     ... HCP DeDriftAndResample can be run"
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(regname)
+                else:
+                    report['skipped'].append(regname)
+
+        elif run:
+            report['not ready'].append(regname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this group!"
+            else:
+                r += "\n     ... ERROR: images missing, this group would be skipped!"
+        else:
+            report['not ready'].append(regname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
+        r += str(errormessage)
+        report['failed'].append(regname)
+    except:
+        r += "\n --- Failed during processing of group %s with error:\n %s\n" % ("DeDriftAndResample", traceback.format_exc())
+        report['failed'].append(regname)
+
+    return {'r': r, 'report': report}
+
+
+def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group):
+    # get group data
+    groupname = group["name"]
+    bolds = group["bolds"]
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        r += "\n\n------------------------------------------------------------"
+        r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
+
+        # --- check for bold images and prepare targets parameter
+        boldtargets = ""
+
+        # highpass
+        highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+
+        # fmriprocstring
+        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+
+        # check if files for all bolds exist
+        for b in bolds:
+            # set ok to true for now
+            boldok = True
+
+            # extract data
+            _, _, _, boldinfo = b
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldtarget = boldinfo['filename']
+            else:
+                printbold  = str(bold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+            # input file check
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+            if not boldok:
+                break
+            else:
+                # add @ separator
+                if boldtargets is not "":
+                    boldtargets = boldtargets + "@"
+
+                # add latest image
+                boldtargets = boldtargets + boldtarget
+
+        if boldok:
+            # check if group file exists
+            groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+            groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
+            r, boldok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
+
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = 0
+        if 'hcp_matlab_mode' in options:
+            if options['hcp_matlab_mode'] == "compiled":
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                raise
+
+        # fix names to use
+        fixnames = boldtargets
+        if 'hcp_msmall_bolds_touse' in options:
+            fixnames = options['hcp_msmall_bolds_touse'].replace(",", "@")
+
+        # dedrift reg files
+        dedriftregfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
+        if 'hcp_msmall_dedrift_reg_files' in options:
+            dedriftregfiles = options['hcp_msmall_dedrift_reg_files'].replace(",", "@")
+
+        # maps
+        maps = "sulc@curvature@corrThickness@thickness"
+        if 'hcp_msmall_maps' in options:
+            maps = options['hcp_msmall_maps'].replace(",", "@")
+
+        # maps
+        myelinmaps = "MyelinMap@SmoothedMyelinMap"
+        if 'hcp_msmall_myelinmaps' in options:
+            myelinmaps = options['hcp_msmall_myelinmaps'].replace(",", "@")
+
+        # dont fix names
+        dontfixnames = "NONE"
+        if 'hcp_msmall_dontfixnames' in options:
+            myelinmaps = options['hcp_msmall_dontfixnames'].replace(",", "@")
+
+        # lowresmeshes
+        lowresmeshes = 32
+        if 'hcp_lowresmeshes' in options:
+            lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
+
+        # regname
+        regname = "MSMSulc" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname']
+
+        # concatregname
+        concatregname = "MSMAll" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname']
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --high-res-mesh="%(highresmesh)s" \
+            --low-res-meshes="%(lowresmeshes)s" \
+            --registration-name="%(regname)s" \
+            --dedrift-reg-files="%(dedriftregfiles)s" \
+            --concat-reg-name="%(concatregname)s" \
+            --maps="%(maps)s" \
+            --myelin-maps="%(myelinmaps)s" \
+            --multirun-fix-names="%(mrfixnames)s" \
+            --multirun-fix-concat-names="%(mrfixconcatnames)s" \
+            --fix-names="NONE" \
+            --dont-fix-names="%(dontfixnames)s" \
+            --smoothing-fwhm="%(smoothingfwhm)d" \
+            --high-pass="%(highpass)d" \
+            --matlab-run-mode="%(matlabrunmode)d" \
+            --motion-regression="%(motionregression)s"' % {
+                'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
+                'path'                : sinfo['hcp'],
+                'subject'             : sinfo['id'] + options['hcp_suffix'],
+                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'lowresmeshes'        : lowresmeshes,
+                'regname'             : regname,
+                'dedriftregfiles'     : dedriftregfiles,
+                'concatregname'       : concatregname,
+                'maps'                : maps,
+                'myelinmaps'          : myelinmaps,
+                'mrfixnames'          : boldtargets,
+                'mrfixconcatnames'    : groupname,
+                'dontfixnames'        : dontfixnames,
+                'smoothingfwhm'       : 2 if 'hcp_msmall_smoothing_fwhm' not in options else options['hcp_msmall_smoothing_fwhm'],
+                'highpass'            : highpass,
+                'matlabrunmode'       : matlabrunmode,
+                'motionregression'    : "FALSE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
+
+        # -- Test file
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
+        fullTest = None
+
+        # -- Run
+        if run and boldok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(groupname)
+                else:
+                    report['done'].append(groupname)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
+                if passed is None:
+                    r += "\n     ... HCP DeDriftAndResample can be run"
+                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n-------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(groupname)
+                else:
+                    report['skipped'].append(groupname)
+
+        elif run:
+            report['not ready'].append(groupname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this group!"
+            else:
+                r += "\n     ... ERROR: images missing, this group would be skipped!"
+        else:
+            report['not ready'].append(groupname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
+        r += str(errormessage)
+        report['failed'].append(groupname)
+    except:
+        r += "\n --- Failed during processing of group %s with error:\n %s\n" % ("DeDriftAndResample", traceback.format_exc())
+        report['failed'].append(groupname)
+
+    return {'r': r, 'report': report}
+
+
 def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
     """
     hcpDTIFit - documentation not yet available.
     """
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP DTI Fix ..." % (action("Running", options['run']))
 
@@ -5743,7 +6915,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -5754,7 +6926,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
     hcpBedpostx - documentation not yet available.
     """
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP Bedpostx GPU ..." % (action("Running", options['run']))
 
@@ -5824,7 +6996,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
     return (r, (sinfo['id'], report, failed))
@@ -5913,7 +7085,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     """
 
     
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
     r += "\n   The command will map the results of the HCP preprocessing from sessions's hcp\n   to sessions's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bolds'].split("|")), options['hcp_cifti_tail'])
@@ -6117,7 +7289,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
             else:
                 r += "\n ... %s [task: '%s']" % (boldname, boldtask)
 
-    r += "\n\nHCP data mapping completed on %s\n---------------------------------------------------------------- \n" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP data mapping completed on %s\n------------------------------------------------------------\n" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d, bolds skipped: %(boldskipped)d" % (report)
 
     # print r
