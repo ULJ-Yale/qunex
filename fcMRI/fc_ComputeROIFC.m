@@ -1,8 +1,8 @@
-function [fcmat] = fc_ComputeROICorrelations(bolds, roidef, frames, targetf, options)
+function [fcmat] = fc_ComputeROIFC(bolds, roidef, frames, targetf, options)
 
-%function [fcmat] = fc_ComputeROICorrelations(bolds, roidef, frames, targetf, options)
+%function [fcmat] = fc_ComputeROIFC(bolds, roidef, frames, targetf, options)
 %
-%   Computes seed based functional connectivity maps for individual subject / session.
+%   Computes ROI functional connectivity matrices for individual subject / session.
 %
 %   INPUT
 %   =====
@@ -10,7 +10,7 @@ function [fcmat] = fc_ComputeROICorrelations(bolds, roidef, frames, targetf, opt
 %   bolds     - A string with a pipe separated list of paths to .conc or bold files. 
 %               The first element has to be the name of the file or group to be used when saving the data. 
 %               E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'
-%   roidef    - A path to the names file specifying group based seeds. Additionaly, separated by a pipe '|'
+%   roidef    - A path to the names file specifying group based ROI. Additionaly, separated by a pipe '|'
 %               symbol, a path to an image file holding subject/session specific ROI definition.
 %   frames    - The definition of which frames to extract, specifically:
 %               ->  a numeric array mask defining which frames to use (1) and which not (0), or 

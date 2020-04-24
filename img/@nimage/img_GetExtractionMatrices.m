@@ -52,11 +52,16 @@ function [exsets] = img_GetExtractionMatrices(obj, frames, options)
 %               -> title   ... title of the computed extraction
 %               -> exdef   ... definition of extraction
 %               -> exmat   ... extraction matrix for each event occurence
+%               -> eind    ... event indeces for each retained row
+%               -> estat   ... statistics (number of good trials) for each event
 %
 %   ---
 %   Written by Grega Repovš 2020-01-31.
 %
 %   Changelog
+%   2020-04-24 Grega Repovš
+%              - Added event indices and event statistics
+%   
 
 if nargin < 3 options = ''; end
 if nargin < 2 error('ERROR: Events string has to be specified!'); end
@@ -262,13 +267,18 @@ for n = 1:nexlists
     % fprintf('-> obj.use size %s\n', num2str(size(obj.use)));
     % fprintf('-> exmat size %s\n', num2str(size(exmat)));
 
+    eind  = [1:size(exmat,1)]';
+    
     if isnumeric(options.badevents) || strcmp(options.badevents, 'use')
-        exmat   = bsxfun(@times, exmat, obj.use);
-        okrows  = sum(exmat, 2) >= minok;
+        exmat  = bsxfun(@times, exmat, obj.use);
+        estat  = sum(exmat, 2);
+        okrows = estat >= minok;
     elseif strcmp(options.badevents, 'ignore')
-        ignore  = ~obj.use;
-        okrows  = sum(bsxfun(@and, exmat, ignore), 2) == 0;
+        estat  = sum(bsxfun(@times, exmat, obj.use), 2);
+        ignore = ~obj.use;
+        okrows = sum(bsxfun(@and, exmat, ignore), 2) == 0;
     end
 
     exsets(n).exmat = exmat(okrows, :);
-end
+    exsets(n).eind  = exmat(okrows);
+    exsets(n).estat = estat;
