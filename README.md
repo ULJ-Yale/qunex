@@ -40,6 +40,7 @@ Quick links
 Change log
 ----------
 
+* 0.51.2  Renamed cores and threads parameters.
 * 0.51.1  Changed dcm2niix ERROR to WARNING, removed full file checking documentation.
 * 0.51.0  Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.11 Updated extraction of PAR file id.
