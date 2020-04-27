@@ -79,9 +79,9 @@ dicom utilities
 listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
-dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
-dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1] [tool=auto]
-processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [verbose=yes]
+dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
+dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [parelements=1] [tool=auto]
+processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
 import utilities
@@ -148,7 +148,7 @@ joinMaps images=<image file list> output=<output file name> [names=<volume names
 PALM utilities
 --------------
 createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
-runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [cores=<number of cores to use in parallel>]  [overwite=no]
+runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of proceeses to run in parallel>]  [overwite=no]
 
 Scheduling utilities
 --------------------
@@ -174,8 +174,7 @@ listed below. The key parameters with their default values are:
     sessions=batch.txt   ... the path to the batch.txt file
     subjectsfolder=.     ... the path to the study subjects folder
     overwrite=no         ... whether to overwrite existing results
-    cores=1              ... how many cores to utilize for those
-                             commands that can be parallelized
+    parsessions=1        ... how many sessions to run in parallel
     nprocess=0           ... how many sessions to process (0=all)
     log=remove           ... whether to remove logs of commands that have
                              ran and finished successfully
@@ -265,7 +264,7 @@ def runCommand(command, args):
         return
     elif command in gn.functions:
         if 'scheduler' in args:
-            niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, cores=1, logfolder=folders['logfolder'])
+            niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
         else:
             gn.run(command, args)
         return
@@ -317,15 +316,15 @@ def runCommand(command, args):
             if 'scheduler' in eargs:
 
                 # -- define number of sessions to run in each runList
-                cores = int(eargs['sperlist'])
-                args['cores'] = eargs['sperlist']
+                parsessions = int(eargs['sperlist'])
+                args['parsessions'] = eargs['sperlist']
                 if 'ignore' in args:
                     args['ignore'] += 'scheduler'
                 else:
                     args['ignore'] = 'scheduler'
                 del args['sperlist']
 
-                niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+                niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
             
             else:
 
@@ -334,8 +333,8 @@ def runCommand(command, args):
                 del args['sperlist']
 
                 # -- define number of runLists to run in parallel
-                cores = eargs.get('runinpar', 1)
-                args['cores'] = cores
+                parsessions = eargs.get('runinpar', 1)
+                args['parsessions'] = parsessions
                 if 'runinpar' in args:
                     del args['runinpar']
 
@@ -384,12 +383,12 @@ def runCommand(command, args):
     # -- all other commands    
     else:
 
-        cores = int(eargs.get('cores', '1'))
+        parsessions = int(eargs.get('parsessions', '1'))
 
         # -- are we using a scheduler
 
         if 'scheduler' in eargs:
-            niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+            niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
         # -- a basic call
 
@@ -420,9 +419,9 @@ def runCommand(command, args):
         callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
         print callInfo
         
-        print "\n===> Running %s through a list of sessions using %d cores" % (command, cores)
+        print "\n===> Running %s through %d sessions in parallel" % (command, parsessions)
 
-        results = gc.runInParallel(calls, cores=cores, prepend="     ... ")
+        results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
         print "\n===> Final report for command", command

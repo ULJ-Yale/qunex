@@ -159,7 +159,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     --script          ... Tha path to the script to be executed.
     --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
 
     The parameters can be specified in command call or batch.txt file.
 

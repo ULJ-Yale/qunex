@@ -344,9 +344,9 @@ def getTRTE(info):
     return float(TR), float(TE)
 
 
-def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, cores=1, debug=False):
+def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, parelements=1, debug=False):
     '''
-    dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
+    dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
 
     USE
     ===
@@ -357,7 +357,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     subfolder. It then converts the images to NIfTI format and places them
     in the nii folder within the subject folder. To reduce the space use it
     can then gzip the dicom files (gzip). To speed the process up, it can
-    run multiple dcm2nii processes in parallel (cores).
+    run multiple dcm2nii processes in parallel (parelements).
 
     Before running, the command check for presence of existing NIfTI files. The
     behavior when finding them is defined by clean parameter. If set to 'ask',
@@ -373,18 +373,18 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     PARAMETERS
     ==========
 
-    --folder    The base subject folder with the dicom subfolder that holds
-                session numbered folders with dicom files. [.]
-    --clean     Whether to remove preexisting NIfTI files (yes), leave them and
-                abort (no) or ask interactively (ask). [ask]
-    --unzip     If the dicom files are gziped whether to unzip them (yes), leave
-                them be and abort (no) or ask interactively (ask). [ask]
-    --gzip      After the dicom files were processed whether to gzip them (yes),
-                leave them ungzipped (no) or ask interactively (ask). [ask]
-    --verbose   Whether to be report on the progress (True) or not (False). [True]
-    --cores     How many parallel processes to run dcm2nii conversion with. The
-                number is one by default, if specified as 'all', the number of
-                available cores is utilized.
+    --folder        The base subject folder with the dicom subfolder that holds
+                    session numbered folders with dicom files. [.]
+    --clean         Whether to remove preexisting NIfTI files (yes), leave them and
+                    abort (no) or ask interactively (ask). [ask]
+    --unzip         If the dicom files are gziped whether to unzip them (yes), leave
+                    them be and abort (no) or ask interactively (ask). [ask]
+    --gzip          After the dicom files were processed whether to gzip them (yes),
+                    leave them ungzipped (no) or ask interactively (ask). [ask]
+    --verbose       Whether to be report on the progress (True) or not (False). [True]
+    --parelements   How many parallel processes to run dcm2nii conversion with. The
+                    number is one by default, if specified as 'all', all available
+                    resources are utilized.
 
     RESULTS
     =======
@@ -453,13 +453,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified sessions in the subjectsfolder
+    optionally `subjectsfolder` and `parelements` parameters. In this case the
+    command will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each sessions's folder. Commands will run in parallel by
-    utilizing the specified number of cores (1 by default).
+    utilizing the specified number of parelements (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `qunex ?schedule` for more information). If set in
@@ -476,7 +476,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     ===========
     
     ```
-    qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes parelements=3
     ```
 
     Multiple sessions example:
@@ -488,7 +488,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
       --clean=yes \\
       --unzip=yes \\
       --gzip=no \\
-      --cores=3
+      --parelements=3
     ```
 
     ----------------
@@ -662,7 +662,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
         files.append([niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices])
         # subprocess.call(call, shell=True, stdout=null, stderr=null)
 
-    done = niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
+    done = niutilities.g_core.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
     for niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices in files:
 
@@ -819,9 +819,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     return
 
 
-def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, cores=1, debug=False, tool='auto', options=""):
+def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', options=""):
     '''
-    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [cores=1] [tool='auto'] [options=""]
+    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [options=""]
 
     USE
     ===
@@ -839,7 +839,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     also PAR/REC files are converted using dcm2niix. If set explicitly, the 
     command will try to use the tool specified. To speed the process up, the 
     command can run it can run multiple conversion processes in parallel. The 
-    number of processes to run in parallel is specified using cores parameter.
+    number of processes to run in parallel is specified using the parelements
+    parameter.
 
     Before running, the command check for presence of existing NIfTI files. The
     behavior when finding them is defined by clean parameter. If set to 'ask',
@@ -855,42 +856,42 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     PARAMETERS
     ==========
 
-    --folder    The base session folder with the dicom subfolder that holds
-                session numbered folders with dicom files. [.]
+    --folder        The base session folder with the dicom subfolder that holds
+                    session numbered folders with dicom files. [.]
 
-    --clean     Whether to remove preexisting NIfTI files (yes), leave them and
-                abort (no) or ask interactively (ask). [ask]
+    --clean         Whether to remove preexisting NIfTI files (yes), leave them and
+                    abort (no) or ask interactively (ask). [ask]
 
-    --unzip     If the dicom files are gziped whether to unzip them (yes), leave
-                them be and abort (no) or ask interactively (ask). [ask]
+    --unzip         If the dicom files are gziped whether to unzip them (yes), leave
+                    them be and abort (no) or ask interactively (ask). [ask]
 
-    --gzip      After the dicom files were processed whether to gzip them (yes),
-                leave them ungzipped (no) or ask interactively (ask). [ask]
+    --gzip          After the dicom files were processed whether to gzip them (yes),
+                    leave them ungzipped (no) or ask interactively (ask). [ask]
 
-    --sessionid The id code to use for this session. If not provided, the
-                session id is extracted from dicom files.
+    --sessionid     The id code to use for this session. If not provided, the
+                    session id is extracted from dicom files.
 
-    --verbose   Whether to be report on the progress (True) or not (False). 
-                [True]
+    --verbose       Whether to be report on the progress (True) or not (False). 
+                    [True]
 
-    --cores     How many parallel processes to run dcm2nii conversion with. The
-                number is one by defaults, if specified as 'all', the number of
-                available cores is utilized.
+    --parelements   How many parallel processes to run dcm2nii conversion with. The
+                    number is one by defaults, if specified as 'all', all available
+                    resources are utilized.
 
-    --tool      What tool to use for the conversion [auto]. It can be one of:
+    --tool          What tool to use for the conversion [auto]. It can be one of:
 
-                * auto     ... determine best tool based on heuristics
-                * dcm2niix
-                * dcm2nii
-                * dicm2nii
+                    * auto     ... determine best tool based on heuristics
+                    * dcm2niix
+                    * dcm2nii
+                    * dicm2nii
 
-    --options   A pipe separated string that lists additional options as a 
-                "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
-                processing dicom or PAR/REC files. Currently it supports:
-                - addImageType  ... Adds image type information to the sequence
-                                    name (Siemens scanners). The value should
-                                    specify how many of the last image type 
-                                    labels to add. [0]
+    --options       A pipe separated string that lists additional options as a 
+                    "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
+                    processing dicom or PAR/REC files. Currently it supports:
+                    - addImageType  ... Adds image type information to the sequence
+                                        name (Siemens scanners). The value should
+                                        specify how many of the last image type 
+                                        labels to add. [0]
 
     RESULTS
     =======
@@ -964,13 +965,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified sessions in the subjectsfolder
+    optionally `subjectsfolder` and `parelements` parameters. In this case the
+    command will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each sessions's folder. Commands will run in parallel by
-    utilizing the specified number of cores (1 by default).
+    utilizing the specified number of parelements (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `qunex ?schedule` for more information). If set in
@@ -987,7 +988,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     ===========
     
     ```
-    qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes parelements=3
     ```
     
     Multiple sessions example
@@ -999,7 +1000,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
       --clean=yes \\
       --unzip=yes \\
       --gzip=no \\
-      --cores=3
+      --parelements=3
     ```
 
     ----------------
@@ -1115,7 +1116,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             gpath = os.path.join(os.path.abspath(dmcf), "*", "*.dcm.gz")
             gpath = gpath.replace(" ", "\\ ")
             calls.append({'name': 'gunzip: ' + dmcf, 'args': 'gunzip %s' % (gpath), 'sout': None, 'shell': True})
-            niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
+            niutilities.g_core.runExternalParallel(calls, cores=parelements, prepend="---> ")
         else:
             raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
@@ -1274,7 +1275,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 os.remove(cleanFile)
         raise ge.CommandFailed("dicom2niix", "No source DICOM files", "No source DICOM files were found to process!", "Please check your data and paths!")
 
-    niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
+    niutilities.g_core.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
     print "\nProcessed sequences:"
     for niinum, folder, info in files:
@@ -1436,7 +1437,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         calls = []
         for folder in folders:
             calls.append({'name': 'gzip: ' + folder, 'args': ['gzip'] + glob.glob(os.path.join(os.path.abspath(folder), "*.dcm")) + glob.glob(os.path.join(os.path.abspath(folder), "*.REC")), 'sout': None})
-        niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
+        niutilities.g_core.runExternalParallel(calls, cores=parelements, prepend="---> ")
 
     return
 
@@ -1467,13 +1468,13 @@ def sortDicom(folder=".", **kwargs):
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified sessions in the subjectsfolder
+    optionally `subjectsfolder` and `parelements` parameters. In this case the
+    command will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each sessions's folder. Commands will run in parallel by
-    utilizing the specified number of cores (1 by default).
+    utilizing the specified number of parelements (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `qunex ?schedule` for more information). If set in
@@ -1784,9 +1785,9 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
+def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
     '''
-    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]  
+    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]  
 
     USE
     ===
@@ -1955,7 +1956,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     conversion can be specified explicitly using the `--tool` parameter or left 
     for the command to decide if set to 'auto' or let to default. The DICOM or 
     PAR/REC files are preserved and gzipped to save space. To speed up the 
-    conversion, the cores parameter is passed to the `dicom2niix` command. 
+    conversion, the parelements parameter is passed to the `dicom2niix` command. 
     `subject.txt` and `DICOM-Report.txt` files are created as well. Please, 
     check the help for `sortDicom` and `dicom2niix` commands for the specifics.
 
@@ -2009,9 +2010,9 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                       * dcm2nii
                       * dicm2nii
 
-    --cores           The number of parallel processes to use when running 
+    --parelements     The number of parallel processes to use when running 
                       converting DICOM images to NIfTI files. If specified as 
-                      'all', all the avaliable cores will be utilized. [1]               
+                      'all', all avaliable resources will be utilized. [1]
 
     --logfile         A string specifying the location of the log file and the 
                       columns in which packetname, subject id and session name
@@ -2615,7 +2616,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
             # ===> run dicom to nii
 
             print
-            dicom2niix(folder=sfolder, clean='no', unzip=unzip, gzip=gzip, sessionid=session['sessionid'], tool=tool, cores=cores, options=options, verbose=True)
+            dicom2niix(folder=sfolder, clean='no', unzip=unzip, gzip=gzip, sessionid=session['sessionid'], tool=tool, parelements=parelements, options=options, verbose=True)
 
             # ===> archive
 
