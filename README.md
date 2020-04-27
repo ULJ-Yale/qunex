@@ -24,14 +24,14 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.0
+Qu|Nex suite version: 0.51.1
 
 Submodules:
 
-* connector: 0.50.1
-* library: 0.50.2
+* connector: 0.50.2
+* library: 0.50.3
 * nitools: 0.50.0
-* niutilities: 0.51.0
+* niutilities: 0.51.2
 
 
 Release notes
@@ -55,6 +55,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.51.1  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
 * 0.51.0  [niutilities] Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.7  [library] qunex_envstatus now reports OS info.
 * 0.50.6  [niutilities] Consistent parameter injection notation.
