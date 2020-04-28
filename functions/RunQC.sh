@@ -1043,7 +1043,7 @@ else
             # -- Get values for plotting GS chart & Compute the GS scalar series file --> TR
             TR=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
             # -- Regenerate outputs
-            wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii MEAN ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
+            wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii MEAN ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
             wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt
             # -- Check skipped frames
             if [ ${SkipFrames} > 0 ]; then 
