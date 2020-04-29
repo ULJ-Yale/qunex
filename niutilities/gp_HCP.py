@@ -6348,7 +6348,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     hcp_highresmesh                 ... high resolution mesh node count [164].
     hcp_lowresmeshes                ... low resolution meshes node count [32]. To
                                         provide more
-    hcp_msmall_regname              ... Registration sphere name [MSMSulc].
+    hcp_regname                     ... Registration sphere name [MSMSulc].
     hcp_msmall_dedrift_reg_files    ... Path to the spheres output from the
                                         MSMRemoveGroupDrift pipeline
                                         [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
@@ -6565,7 +6565,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
 
         # regname
-        regname = "MSMSulc" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname']
+        regname = "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname']
 
         comm = '%(script)s \
             --path="%(path)s" \
@@ -6750,7 +6750,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
 
         # regname
-        regname = "MSMSulc" if 'hcp_msmall_regname' not in options else options['hcp_msmall_regname']
+        regname = "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname']
 
         # concatregname
         concatregname = "MSMAll" if 'hcp_msmall_concatregname' not in options else options['hcp_msmall_concatregname']
