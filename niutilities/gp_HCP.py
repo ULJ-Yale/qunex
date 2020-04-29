@@ -5794,8 +5794,8 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     fMRI_CONCAT_ALL [""].
     hcp_icafix_highpass         ... value for the highpass filter,
                                     [0] for multi-run HCP MSMAll and [2000]
-                                    for single-run HCP MSMAll. Should be the same
-                                    as in the case of HCP ICAFix.
+                                    for single-run HCP MSMAll. Should be the
+                                    same as in the case of HCP ICAFix.
     hcp_msmall_outfmriname      ... the name which will be given to the
                                     concatenated single subject scan the same as
                                     [<group> in hcp_msmall_bolds] for multi-run
@@ -6362,7 +6362,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                         [sulc,curvature,corrThickness,thickness].
     hcp_msmall_myelinmaps           ... Paths to myelin maps
                                         [MyelinMap,SmoothedMyelinMap].
-    hcp_msmall_smoothing_fwhm       ... Smoothing FWHM that matches what was
+    hcp_bold_smoothFWHM             ... Smoothing FWHM that matches what was
                                         used in the fMRISurface pipeline [2].
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
                                         "interpreted", "compiled" or "octave"
@@ -6595,7 +6595,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'myelinmaps'          : myelinmaps,
                 'fixnames'            : boldtargets,
                 'dontfixnames'        : dontfixnames,
-                'smoothingfwhm'       : 2 if 'hcp_msmall_smoothing_fwhm' not in options else options['hcp_msmall_smoothing_fwhm'],
+                'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
                 'highpass'            : highpass,
                 'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "TRUE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
@@ -6786,7 +6786,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'mrfixnames'          : boldtargets,
                 'mrfixconcatnames'    : groupname,
                 'dontfixnames'        : dontfixnames,
-                'smoothingfwhm'       : 2 if 'hcp_msmall_smoothing_fwhm' not in options else options['hcp_msmall_smoothing_fwhm'],
+                'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
                 'highpass'            : highpass,
                 'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "FALSE" if 'hcp_msmall_domotionreg' not in options else options['hcp_msmall_domotionreg']}
