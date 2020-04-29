@@ -5810,8 +5810,9 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["compiled"].
-    hcp_msmall_bolds_touse      ... specifies which runs should be used
-                                    as resting state data
+    hcp_msmall_mr_bolds_touse   ... This parameter is used only in the case of 
+                                    multi-run (mr) HCP MSMAll. It specifies which
+                                    runs should be used as resting state data
                                     [same as bold specified in hcp_msmall_bolds].
 
     EXAMPLE USE
@@ -6160,8 +6161,8 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
         # fix names to use
         fixnamestouse = boldtargets
-        if 'hcp_msmall_bolds_touse' in options:
-            fixnamestouse = options['hcp_msmall_bolds_touse'].replace(",", "@")
+        if 'hcp_msmall_mr_bolds_touse' in options:
+            fixnamestouse = options['hcp_msmall_mr_bolds_touse'].replace(",", "@")
 
         comm = '%(script)s \
             --path="%(path)s" \
@@ -6721,8 +6722,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
         # fix names to use
         fixnames = boldtargets
-        if 'hcp_msmall_bolds_touse' in options:
-            fixnames = options['hcp_msmall_bolds_touse'].replace(",", "@")
+        if 'hcp_msmall_mr_bolds_touse' in options:
+            fixnames = options['hcp_msmall_mr_bolds_touse'].replace(",", "@")
 
         # dedrift reg files
         dedriftregfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
