@@ -5806,7 +5806,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     hcp_msmall_outregname       ... output registration name [MSMInitialReg].
     hcp_highresmesh             ... high resolution mesh node count [164].
     hcp_lowresmesh              ... low resolution mesh node count [32].
-    hcp_regname                 ... input registration name [MSMSulc]
+    hcp_regname                 ... input registration name [MSMSulc].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["compiled"].
