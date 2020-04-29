@@ -5792,9 +5792,10 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     execute multi-run HCP MSMAll, the
                                     concatenated file will be named
                                     fMRI_CONCAT_ALL [""].
-    hcp_msmall_highpass         ... value for the highpass filter,
+    hcp_icafix_highpass         ... value for the highpass filter,
                                     [0] for multi-run HCP MSMAll and [2000]
-                                    for single-run HCP MSMAll.
+                                    for single-run HCP MSMAll. Should be the same
+                                    as in the case of HCP ICAFix.
     hcp_msmall_outfmriname      ... the name which will be given to the
                                     concatenated single subject scan the same as
                                     [<group> in hcp_msmall_bolds] for multi-run
@@ -5802,7 +5803,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     HCP MSMAll.
     hcp_msmall_templates        ... path to directory containing MSMAll template
                                     files [<HCPPIPEDIR>/global/templates/MSMAll].
-    hcp_msmall_outregname       ... output registration name [MSMInitalReg].
+    hcp_msmall_outregname       ... output registration name [MSMInitialReg].
     hcp_highresmesh             ... high resolution mesh node count [164].
     hcp_lowresmesh              ... low resolution mesh node count [32].
     hcp_msmall_inregname        ... input registration name [MSMSulc]
@@ -5944,7 +5945,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         boldtargets = ""
 
         # highpass value
-        highpass = 2000 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+        highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
         fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
@@ -6021,7 +6022,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
-                'outregname'          : "MSMInitalReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
+                'outregname'          : "MSMInitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_msmall_inregname' not in options else options['hcp_msmall_inregname'],
@@ -6099,7 +6100,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         boldtargets = ""
 
         # highpass
-        highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
         fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
@@ -6188,7 +6189,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
-                'outregname'          : "MSMInitalReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
+                'outregname'          : "MSMInitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_msmall_inregname' not in options else options['hcp_msmall_inregname'],
@@ -6340,9 +6341,10 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                         together and xecute multi-run HCP
                                         DeDriftAndResample, the concatenated file will
                                         be named fMRI_CONCAT_ALL [""].
-    hcp_msmall_highpass             ... value for the highpass filter, [0] for
+    hcp_icafix_highpass             ... value for the highpass filter, [0] for
                                         multi-run HCP DeDriftAndResample and [2000]
-                                        for single-run HCP DeDriftAndResample.
+                                        for single-run HCP DeDriftAndResample. Should be
+                                        the same as in the case of HCP ICAFix.
     hcp_highresmesh                 ... high resolution mesh node count [164].
     hcp_lowresmeshes                ... low resolution meshes node count [32]. To
                                         provide more
@@ -6490,7 +6492,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         boldtargets = ""
 
         # highpass
-        highpass = 2000 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+        highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
         fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
@@ -6664,7 +6666,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         boldtargets = ""
 
         # highpass
-        highpass = 0 if 'hcp_msmall_highpass' not in options else options['hcp_msmall_highpass']
+        highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
         fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
