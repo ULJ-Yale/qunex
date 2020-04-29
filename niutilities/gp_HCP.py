@@ -5806,7 +5806,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     hcp_msmall_outregname       ... output registration name [MSMInitialReg].
     hcp_highresmesh             ... high resolution mesh node count [164].
     hcp_lowresmesh              ... low resolution mesh node count [32].
-    hcp_msmall_inregname        ... input registration name [MSMSulc]
+    hcp_regname                 ... input registration name [MSMSulc]
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["compiled"].
@@ -6025,7 +6025,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'outregname'          : "MSMInitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                'inregname'           : "MSMSulc" if 'hcp_msmall_inregname' not in options else options['hcp_msmall_inregname'],
+                'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
         # -- Test file
@@ -6192,7 +6192,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'outregname'          : "MSMInitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                'inregname'           : "MSMSulc" if 'hcp_msmall_inregname' not in options else options['hcp_msmall_inregname'],
+                'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
         # -- Test file
