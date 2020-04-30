@@ -6617,7 +6617,8 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg']}
 
         # -- Test file (currently check only last bold)
-        lastbold = boldtargets.split(",")[-1]
+        # TODO validation
+        lastbold = boldtargets.split("@")[-1]
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], regname))
         fullTest = None
 
