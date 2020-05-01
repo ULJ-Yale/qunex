@@ -4110,7 +4110,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     Runs the ICAFix step of HCP Pipeline. This step attempts to auto-classify
     ICA components into good and bad components, so that the bad components
     can be then removed from the 4D FMRI data. If ICAFix step finishes
-    successfully PostFix step will be ran automatically. 
+    successfully PostFix step will be ran automatically, to disable this
+    set the hcp_icafix_postfix to FALSE.
     
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
     all bolds together and execute multi-run HCP ICAFix, the concatenated file
@@ -4223,6 +4224,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
                                         to FIX cleaning ["FALSE"].
+    hcp_icafix_postfix              ... Whether to automatically run HCP PostFix
+                                        if HCP ICAFix finishes successfully ["TRUE"].
 
     EXAMPLE USE
     ===========
@@ -4460,11 +4463,13 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 else:
                     report['done'].append(printbold)
 
-                # if all ok automatically execute PostFix
-                if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
-                    r += result['r']
-                    report = result['report']
+                # if all ok execute PostFix if enabled
+                # TODO VALIDATE
+                if 'hcp_icafix_postfix' not in options or options['hcp_icafix_postfix'] == "TRUE":
+                    if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
+                        result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
+                        r += result['r']
+                        report = result['report']
 
             # -- just checking
             else:
@@ -4586,11 +4591,13 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 else:
                     report['done'].append(groupname)
 
-                # if all ok automatically execute PostFix
-                if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-                    result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
-                    r += result['r']
-                    report = result['report']
+                # if all ok execute PostFix if enabled
+                # TODO VALIDATE
+                if 'hcp_icafix_postfix' not in options or options['hcp_icafix_postfix'] == "TRUE":
+                    if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
+                        result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
+                        r += result['r']
+                        report = result['report']
 
             # -- just checking
             else:
@@ -5715,13 +5722,14 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     A short name 'hcp9' can also be used for this command.
 
     Runs the MSMAll step of the HCP Pipeline. This function executes two steps,
-    first it runs MSMAll and if it completes succesfully it then executes
-    the DeDriftAndResample step.
+    it first runs MSMAll and if it completes succesfully it then executes
+    the DeDriftAndResample step. To disable this automatic execution of 
+    DeDriftAndResample set hcp_msmall_resample to FALSE.
 
-    If the hcp_icafix_bolds parameter is not provided MSMAll will bundle
-    all bolds together and execute multi-run HCP MSMAll, the concatenated file
-    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
-    processing requires a lot of computational resources.
+    If the hcp_icafix_bolds parameter is not provided MSMAll will assume that
+    in the HCP ICAFix run all bolds were bundled together in a single
+    concatenation called fMRI_CONCAT_ALL (this is the default behavior if
+    hcp_icafix_bolds parameter is not provided in the case of hcp_ICAFix).
 
     REQUIREMENTS
     ============
@@ -5791,8 +5799,8 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     Traditionally this is the same list as was
                                     used in the HCP ICAFix run. If two or more
                                     groups were provided in HCP ICAFix run then
-                                    multi-run HCP MSMAll will be executed over 
-                                    the first specified group [""].
+                                    HCP MSMAll will be executed over the first
+                                    specified group [""].
     hcp_msmall_bolds            ... A comma separated list of bolds for MSMAll.
                                     Specified bolds have to be a subset of bolds
                                     used from the hcp_icafix_bolds parameter.
@@ -5801,29 +5809,29 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     [if not specified all bolds used from
                                     hcp_icafix_bolds will be used here as well].
     hcp_icafix_highpass         ... Value for the highpass filter,
-                                    [0] for multi-run HCP MSMAll and [2000]
-                                    for single-run HCP MSMAll. Should be the
+                                    [0] for multi-run HCP ICAFix and [2000]
+                                    for single-run HCP ICAFix. Should be the
                                     same as in the case of HCP ICAFix.
     hcp_msmall_outfmriname      ... The name which will be given to the
-                                    concatenated single subject scan the same as
-                                    [<group> in hcp_msmall_bolds] for multi-run
-                                    HCP MSMAll and [fMRI_CONCAT_ALL] for single-run
-                                    HCP MSMAll.
+                                    concatenated single subject scan [rfMRI_REST].
     hcp_msmall_templates        ... Path to directory containing MSMAll template
                                     files [<HCPPIPEDIR>/global/templates/MSMAll].
-    hcp_msmall_outregname       ... Output registration name [MSMInitialReg].
+    hcp_msmall_outregname       ... Output registration name [MSMAll_InitialReg].
     hcp_highresmesh             ... High resolution mesh node count [164].
     hcp_lowresmesh              ... Low resolution mesh node count [32].
     hcp_regname                 ... Input registration name [MSMSulc].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     "interpreted", "compiled" or "octave"
                                     ["compiled"].
+    hcp_msmall_resample         ... Whether to automatically run
+                                    HCP DeDriftAndResample if HCP MSMAll
+                                    finishes successfully ["TRUE"].
 
     EXAMPLE USE
     ===========
     
     ```
-    # single-run HCP MSMAll
+    # HCP MSMAll after a single-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -5833,7 +5841,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     ```
 
     ```
-    # multi-run HCP MSMAll
+    # HCP MSMAll after a multi-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -5900,17 +5908,20 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
         report['not ready']  += tempReport['not ready']
         report['skipped']    += tempReport['skipped'] 
 
-        # if all ok automatically execute DeDriftAndResample
-        if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
-            # single-run
-            if singleRun:
-                result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
-            # multi-run
-            else:
-                result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
 
-            r += result['r']
-            report = result['report']
+        # if all ok execute DeDrifAndResample if enabled
+        # TODO VALIDATE
+        if 'hcp_msmall_resample' not in options or options['hcp_msmall_resample'] == "TRUE":
+            if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
+                # single-run
+                if singleRun:
+                    result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+                # multi-run
+                else:
+                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+
+                r += result['r']
+                report = result['report']
 
         # report
         rep = []
@@ -5952,7 +5963,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         if 'hcp_msmall_bolds' in options:
             msmallBolds = options['hcp_icafix_bolds'].split(",")
         # outfmriname
-        outfmriname = "fMRI_CONCAT_ALL" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
+        outfmriname = "rfMRI_REST" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
 
         r += "\n\n------------------------------------------------------------"
         r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
@@ -6041,7 +6052,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
-                'outregname'          : "MSMInitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
+                'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
@@ -6109,7 +6120,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         bolds = group["bolds"]
 
         # outfmriname
-        outfmriname = "fMRI_CONCAT_ALL" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
+        outfmriname = "rfMRI_REST" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
 
         r += "\n\n------------------------------------------------------------"
         r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
@@ -6209,7 +6220,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
-                'outregname'          : "MSMInitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
+                'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
@@ -6276,11 +6287,11 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     A short name 'hcp10' can also be used for this command.
 
-    Runs the DeDriftAndResample step of the HCP Pipeline. If the hcp_msmall_bolds
-    parameter is not provided DeDriftAndResample will bundle all bolds together
-    and execute multi-run HCP DeDriftAndResample, the concatenated file
-    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
-    processing requires a lot of computational resources.
+    Runs the DeDriftAndResample step of the HCP Pipeline.
+    If the hcp_icafix_bolds parameter is not provided MSMAll will assume that
+    in the HCP ICAFix run all bolds were bundled together in a single
+    concatenation called fMRI_CONCAT_ALL (this is the default behavior if
+    hcp_icafix_bolds parameter is not provided in the case of hcp_ICAFix).
 
     REQUIREMENTS
     ============
@@ -6347,17 +6358,14 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     hcp_icafix_bolds            ... A list of bolds on which ICAFix was applied.
                                     Traditionally this is the same list as was
-                                    used in the HCP ICAFix run. If two or more
-                                    groups were provided in HCP ICAFix run then
-                                    multi-run HCP MSMAll will be executed over 
-                                    the first specified group [""].
-    hcp_icafix_highpass         ... Value for the highpass filter, [0] for
-                                    multi-run HCP DeDriftAndResample and [2000]
-                                    for single-run HCP DeDriftAndResample. Should
-                                    be the same as in the case of HCP ICAFix.
+                                    used in the HCP ICAFix run [""].
+    hcp_icafix_highpass         ... Value for the highpass filter,
+                                    [0] for multi-run HCP ICAFix and [2000]
+                                    for single-run HCP ICAFix. Should be the
+                                    same as in the case of HCP ICAFix.
     hcp_highresmesh             ... High resolution mesh node count [164].
     hcp_lowresmeshes            ... Low resolution meshes node count [32]. To
-                                    provide more
+                                    provide more values separate them with commas.
     hcp_resample_regname        ... Registration sphere name
                                     [MSMAll_InitialReg_2_d40_WRN].
     hcp_resample_reg_files      ... Comma separated paths to the spheres output
@@ -6380,18 +6388,25 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                     ["compiled"].
     hcp_icafix_domotionreg      ... Whether to regress motion parameters as
                                     part of the cleaning. The default value
-                                    for single-run is ["TRUE"], while the
-                                    default for multi-run is ["FALSE"].
+                                    after a single-run HCP ICAFix is ["TRUE"],
+                                    while the default after a multi-run HCP
+                                    ICAFix is ["FALSE"].
     hcp_resample_dontfixnames   ... A list of comma sperated bolds that will
                                     not have HCP ICAFix reapplied to them [].
     hcp_resample_concatregname  ... Output name of the dedrifted registration
                                     [MSMAll].
+    hcp_resample_myelintarget   ... A myelin target file is required to run
+                                    this pipeline when using a different mesh
+                                    resolution than the original
+                                    MSMAll registration [].
+    hcp_resample_inregname      ... A string to enable multiple fMRI
+                                    resolutions (e.g._1.6mm) [].
 
     EXAMPLE USE
     ===========
     
     ```
-    # single-run HCP DeDriftAndResample
+    # HCP DeDriftAndResample after a single-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -6400,7 +6415,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     ```
 
     ```
-    # multi-run HCP DeDriftAndResample
+    # HCP DeDriftAndResample after a multi-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -6599,7 +6614,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             --smoothing-fwhm="%(smoothingfwhm)d" \
             --high-pass="%(highpass)d" \
             --matlab-run-mode="%(matlabrunmode)d" \
-            --motion-regression="%(motionregression)s"' % {
+            --motion-regression="%(motionregression)s" \
+            --myelin-target-file="%(myelintargetfile)s" \
+            --input-reg-name="%(inputregname)s"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -6614,7 +6631,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
                 'highpass'            : highpass,
                 'matlabrunmode'       : matlabrunmode,
-                'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg']}
+                'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                'myelintargetfile'    : "" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
+                'inputregname'        : "" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
         # -- Test file (currently check only last bold)
         # TODO validation
@@ -6789,7 +6808,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             --smoothing-fwhm="%(smoothingfwhm)d" \
             --high-pass="%(highpass)d" \
             --matlab-run-mode="%(matlabrunmode)d" \
-            --motion-regression="%(motionregression)s"' % {
+            --motion-regression="%(motionregression)s" \
+            --myelin-target-file="%(myelintargetfile)s" \
+            --input-reg-name="%(inputregname)s"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -6806,7 +6827,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
                 'highpass'            : highpass,
                 'matlabrunmode'       : matlabrunmode,
-                'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg']}
+                'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                'myelintargetfile'    : "" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
+                'inputregname'        : "" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
