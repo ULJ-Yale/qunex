@@ -4110,7 +4110,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     Runs the ICAFix step of HCP Pipeline. This step attempts to auto-classify
     ICA components into good and bad components, so that the bad components
     can be then removed from the 4D FMRI data. If ICAFix step finishes
-    successfully PostFix step will be ran automatically, to disable this
+    successfully PostFix step will execute automatically, to disable this
     set the hcp_icafix_postfix to FALSE.
     
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
