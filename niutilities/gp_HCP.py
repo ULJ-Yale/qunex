@@ -4090,9 +4090,9 @@ def parseICAFixBolds(options, bolds, r):
 
     # --- Report single fix or multi fix
     if singleFix:
-        r += "\n%s single-run on %d bolds" % (action("Processing", options['run']), len(hcpBolds))
+        r += "\nSingle-run HCP ICAFix on %d bolds" % len(hcpBolds)
     else:
-        r += "\n%s multi-run on %d groups" % (action("Processing", options['run']), len(hcpGroups))
+        r += "\nMulti-run HCP ICAFix on %d groups" % len(hcpGroups)
 
     return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
@@ -4464,7 +4464,6 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                     report['done'].append(printbold)
 
                 # if all ok execute PostFix if enabled
-                # TODO VALIDATE
                 if 'hcp_icafix_postfix' not in options or options['hcp_icafix_postfix'] == "TRUE":
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
@@ -4592,7 +4591,6 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                     report['done'].append(groupname)
 
                 # if all ok execute PostFix if enabled
-                # TODO VALIDATE
                 if 'hcp_icafix_postfix' not in options or options['hcp_icafix_postfix'] == "TRUE":
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
@@ -5683,28 +5681,22 @@ def parseMSMAllBolds(options, bolds, r):
     # parse the same way as with icafix first
     singleRun, hcpBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
 
-    # if more than one group is provided report
-    if (len(icafixGroups) > 1):
-        # extract the first group
-        icafixGroup = tempGroups[0]
-        r += "\n     ... WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
+    if singleRun:
+        icafixGroup = {}
+        icafixGroup["bolds"] = hcpBolds
     else:
-        # if singleRun create a single group from provided bolds
-        if singleRun:
-            icafixGroup = []
-            group = {}
-            group["bolds"] = hcpBolds
-            icafixGroup = group
-
-    # TODO VALIDATE
-    print("!!!!! icafixGroup :", icafixGroup)
+        icafixGroup = icafixGroups[0]
+        # if more than one group print a WARNING
+        if (len(icafixGroups) > 1):
+            # extract the first group
+            r += "\n     ... WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
 
     # validate that msmall bolds is a subset of icafixGroups and add to the variable
     if 'hcp_msmall_bolds' in options:
-        msmallBolds = options['hcp_icafix_bolds'].split(",")
+        msmallBolds = options['hcp_msmall_bolds'].split(",")
 
         for b in msmallBolds:
-            if b not in icafixGroup["bolds"]:
+            if b not in hcpBolds:
                 r += "\n     ... ERROR: bold %s defined in hcp_msmall_bolds but not found in the used hcp_icafix_bolds!" % b
                 parsOK = False
 
@@ -5910,7 +5902,6 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
 
         # if all ok execute DeDrifAndResample if enabled
-        # TODO VALIDATE
         if 'hcp_msmall_resample' not in options or options['hcp_msmall_resample'] == "TRUE":
             if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                 # single-run
@@ -5957,7 +5948,6 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         # get data
         bolds = group["bolds"]
 
-        # TODO VALIDATE
         # msmallBolds
         msmallBolds = None
         if 'hcp_msmall_bolds' in options:
@@ -6000,7 +5990,6 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             if not boldok:
                 groupok = False
                 break
-            # TODO VALIDATE
             # if msmallBolds is None or target is msmallBolds add to boldtargets
             elif msmallBolds is None or boldtarget in msmallBolds:
                 # add @ separator
@@ -6189,7 +6178,6 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 raise
 
         # fix names to use
-        # TODO VALIDATE
         fixnamestouse = boldtargets
         if 'hcp_msmall_bolds' in options:
             fixnamestouse = options['hcp_msmall_bolds'].replace(",", "@")
@@ -6636,7 +6624,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'inputregname'        : "" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
         # -- Test file (currently check only last bold)
-        # TODO validation
         lastbold = boldtargets.split("@")[-1]
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], regname))
         fullTest = None
