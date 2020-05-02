@@ -5146,7 +5146,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         timeseries files that are prerequisites
                                         to FIX cleaning ["FALSE"].
     hcp_icafix_regname              ... Specifies surface registration name.
-                                        Use "NONE" for MSMSulc ["NONE"].
+                                        If NONE MSMSulc will be used [NONE].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
 
     EXAMPLE USE
@@ -6394,15 +6394,15 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                     while the default after a multi-run HCP
                                     ICAFix is ["FALSE"].
     hcp_resample_dontfixnames   ... A list of comma sperated bolds that will
-                                    not have HCP ICAFix reapplied to them [].
+                                    not have HCP ICAFix reapplied to them [NONE].
     hcp_resample_concatregname  ... Output name of the dedrifted registration
                                     [MSMAll].
     hcp_resample_myelintarget   ... A myelin target file is required to run
                                     this pipeline when using a different mesh
                                     resolution than the original
-                                    MSMAll registration ["NONE"].
+                                    MSMAll registration [NONE].
     hcp_resample_inregname      ... A string to enable multiple fMRI
-                                    resolutions (e.g._1.6mm) ["NONE"].
+                                    resolutions (e.g._1.6mm) [NONE].
 
     EXAMPLE USE
     ===========
