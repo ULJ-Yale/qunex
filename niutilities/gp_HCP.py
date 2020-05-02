@@ -3884,7 +3884,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     return {'r': r, 'report': report}
 
 
-def parseICAFixBolds(options, bolds, r):
+def parseICAFixBolds(options, bolds, r, msmall=False):
     # --- Use hcp_icafix parameter to determine if a single fix or a multi fix should be used
     singleFix = True
 
@@ -4093,6 +4093,17 @@ def parseICAFixBolds(options, bolds, r):
         r += "\nSingle-run HCP ICAFix on %d bolds" % len(hcpBolds)
     else:
         r += "\nMulti-run HCP ICAFix on %d groups" % len(hcpGroups)
+
+    # different output for msmall and singlefix
+    if msmall and singleFix:
+        # single group
+        hcpGroups = []
+        icafixGroup = {}
+        icafixGroup["bolds"] = hcpBolds
+        hcpGroups.append(icafixGroup)
+
+        # bolds
+        hcpBolds = specifiedBolds
 
     return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
@@ -5679,19 +5690,17 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
 def parseMSMAllBolds(options, bolds, r):
     # parse the same way as with icafix first
-    singleRun, hcpBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+    singleRun, hcpBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r, True)
+
+    icafixGroup = icafixGroups[0]
 
     if singleRun:
-        icafixGroup = {}
-        icafixGroup["bolds"] = hcpBolds
-    else:
-        icafixGroup = icafixGroups[0]
         # if more than one group print a WARNING
         if (len(icafixGroups) > 1):
             # extract the first group
             r += "\n     ... WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
 
-    # validate that msmall bolds is a subset of icafixGroups and add to the variable
+    # validate that msmall bolds is a subset of icafixGroups
     if 'hcp_msmall_bolds' in options:
         msmallBolds = options['hcp_msmall_bolds'].split(",")
 
@@ -5951,9 +5960,10 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         bolds = group["bolds"]
 
         # msmallBolds
-        msmallBolds = None
+        msmallBolds = ""
         if 'hcp_msmall_bolds' in options:
-            msmallBolds = options['hcp_icafix_bolds'].split(",")
+            msmallBolds = options['hcp_msmall_bolds'].replace(",", "@")
+
         # outfmriname
         outfmriname = "rfMRI_REST" if 'hcp_msmall_outfmriname' not in options else options['hcp_msmall_outfmriname']
 
@@ -5962,8 +5972,6 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         groupok = True
 
         # --- check for bold images and prepare targets parameter
-        boldtargets = ""
-
         # highpass value
         highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
@@ -5992,16 +6000,16 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
-                groupok = False
-                break
-            # if msmallBolds is None or target is msmallBolds add to boldtargets
-            elif msmallBolds is None or boldtarget in msmallBolds:
+                boldsok = False
+
+            # if msmallBolds is not defined add all icafix bolds
+            if 'hcp_msmall_bolds' not in options:
                 # add @ separator
-                if boldtargets is not "":
-                    boldtargets = boldtargets + "@"
+                if msmallBolds is not "":
+                    msmallBolds = msmallBolds + "@"
 
                 # add latest image
-                boldtargets = boldtargets + boldtarget
+                msmallBolds = msmallBolds + boldtarget
 
         if 'hcp_msmall_templates' not in options:
           msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
@@ -6024,7 +6032,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
-            --fmri-names-list="%(boldtargets)s" \
+            --fmri-names-list="%(msmallBolds)s" \
             --multirun-fix-names="" \
             --multirun-fix-concat-name="" \
             --multirun-fix-names-to-use="" \
@@ -6040,7 +6048,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
-                'boldtargets'         : boldtargets,
+                'msmallBolds'         : msmallBolds,
                 'outfmriname'         : outfmriname,
                 'highpass'            : highpass,
                 'fmriprocstring'      : fmriprocstring,
@@ -6056,7 +6064,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         fullTest = None
 
         # -- Run
-        if run and boldok:
+        if run and boldsok:
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -6539,14 +6547,14 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
-                break
-            else:
-                # add @ separator
-                if boldtargets is not "":
-                    boldtargets = boldtargets + "@"
+                boldsok = False
+            
+            # add @ separator
+            if boldtargets is not "":
+                boldtargets = boldtargets + "@"
 
-                # add latest image
-                boldtargets = boldtargets + boldtarget
+            # add latest image
+            boldtargets = boldtargets + boldtarget
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = 0
@@ -6602,7 +6610,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             --multirun-fix-concat-names="NONE" \
             --fix-names="%(fixnames)s" \
             --dont-fix-names="%(dontfixnames)s" \
-            --smoothing-fwhm="%(smoothingfwhm)d" \
+            --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
             --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
@@ -6632,7 +6640,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         fullTest = None
 
         # -- Run
-        if run and boldok:
+        if run and boldsok:
             if options['run'] == "run":
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
 
@@ -6792,7 +6800,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             --multirun-fix-concat-names="%(mrfixconcatnames)s" \
             --fix-names="NONE" \
             --dont-fix-names="%(dontfixnames)s" \
-            --smoothing-fwhm="%(smoothingfwhm)d" \
+            --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
             --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
