@@ -6400,9 +6400,9 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     hcp_resample_myelintarget   ... A myelin target file is required to run
                                     this pipeline when using a different mesh
                                     resolution than the original
-                                    MSMAll registration [].
+                                    MSMAll registration ["NONE"].
     hcp_resample_inregname      ... A string to enable multiple fMRI
-                                    resolutions (e.g._1.6mm) [].
+                                    resolutions (e.g._1.6mm) ["NONE"].
 
     EXAMPLE USE
     ===========
@@ -6631,8 +6631,8 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'highpass'            : highpass,
                 'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
-                'myelintargetfile'    : "" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
-                'inputregname'        : "" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
+                'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
+                'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
         # -- Test file (currently check only last bold)
         lastbold = boldtargets.split("@")[-1]
@@ -6823,8 +6823,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'highpass'            : highpass,
                 'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
-                'myelintargetfile'    : "" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
-                'inputregname'        : "" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
+                'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
+                'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
