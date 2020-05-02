@@ -4210,33 +4210,33 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                         ICAFix will bundle all bolds together and
                                         execute multi-run HCP ICAFix, the
                                         concatenated file will be named
-                                        fMRI_CONCAT_ALL [""].
+                                        fMRI_CONCAT_ALL [].
     hcp_icafix_highpass             ... Value for the highpass filter,
                                         [0] for multi-run HCP ICAFix and [2000]
                                         for single-run HCP ICAFix.
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
-                                        "interpreted", "compiled" or "octave"
-                                        ["compiled"].
+                                        interpreted, compiled or octave
+                                        [compiled].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning. The default value
-                                        for single-run HCP ICAFix is ["TRUE"],
+                                        for single-run HCP ICAFix is [TRUE],
                                         while the default for multi-run HCP ICAFix
-                                        is ["FALSE"].
+                                        is [FALSE].
     hcp_icafix_traindata            ... Which file to use for training data.
                                         You can provide a full path to a file or
                                         just a filename if the file is in the
                                         ${FSL_FIXDIR}/training_files folder.
-                                        [""] for single-run HCP ICAFix and
-                                        ["HCP_Style_Single_Multirun_Dedrift.RData"]
+                                        [] for single-run HCP ICAFix and
+                                        [HCP_Style_Single_Multirun_Dedrift.RData]
                                         for multi-run HCP ICAFix.
     hcp_icafix_threshold            ... ICAFix threshold that controls the
                                         sensitivity/specificity tradeoff [10].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
-                                        to FIX cleaning ["FALSE"].
+                                        to FIX cleaning [FALSE].
     hcp_icafix_postfix              ... Whether to automatically run HCP PostFix
-                                        if HCP ICAFix finishes successfully ["TRUE"].
+                                        if HCP ICAFix finishes successfully [TRUE].
 
     EXAMPLE USE
     ===========
@@ -4742,20 +4742,20 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                                     ICAFix will bundle all bolds together and
                                     execute multi-run HCP ICAFix, the
                                     concatenated file will be named
-                                    fMRI_CONCAT_ALL [""].
+                                    fMRI_CONCAT_ALL [].
     hcp_icafix_highpass         ... Value for the highpass filter,
                                     [0] for multi-run HCP ICAFix and [2000]
                                     for single-run HCP ICAFix.
     hcp_matlab_mode             ... Specifies the Matlab version, can be
-                                    "interpreted", "compiled" or "octave"
-                                    ["compiled"].
+                                    interpreted, compiled or octave
+                                    [compiled].
     hcp_postfix_dualscene       ... Path to an alternative template scene, if
                                     empty HCP default dual scene will be used
-                                    [""].
+                                    [].
     hcp_postfix_singlescene     ... Path to an alternative template scene, if
                                     empty HCP default single scene will be used
-                                    [""].
-    hcp_postfix_reusehighpass   ... Whether to reuse highpass ["YES"].
+                                    [].
+    hcp_postfix_reusehighpass   ... Whether to reuse highpass [YES].
 
 
     EXAMPLE USE
@@ -5129,22 +5129,22 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                         ICAFix will bundle all bolds together and
                                         execute multi-run HCP ICAFix, the
                                         concatenated file will be named
-                                        fMRI_CONCAT_ALL [""].
+                                        fMRI_CONCAT_ALL [].
     hcp_icafix_highpass             ... Value for the highpass filter,
                                         [0] for multi-run HCP ICAFix and [2000]
                                         for single-run HCP ICAFix.
     hcp_matlab_mode                 ... Specifies the Matlab version, can be
-                                        "interpreted", "compiled" or "octave"
-                                        ["compiled"].
+                                        interpreted, compiled or octave
+                                        [compiled].
     hcp_icafix_domotionreg          ... Whether to regress motion parameters as
                                         part of the cleaning. The default value
-                                        for single-run HCP ICAFix is ["TRUE"],
+                                        for single-run HCP ICAFix is [TRUE],
                                         while the default for multi-run HCP ICAFix
-                                        is ["FALSE"].
+                                        is [FALSE].
     hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
                                         high-pass filtered and non-filtered 
                                         timeseries files that are prerequisites
-                                        to FIX cleaning ["FALSE"].
+                                        to FIX cleaning [FALSE].
     hcp_icafix_regname              ... Specifies surface registration name.
                                         If NONE MSMSulc will be used [NONE].
     hcp_lowresmesh                  ... Specifies the low res mesh number [32].
@@ -5801,7 +5801,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     used in the HCP ICAFix run. If two or more
                                     groups were provided in HCP ICAFix run then
                                     HCP MSMAll will be executed over the first
-                                    specified group [""].
+                                    specified group [].
     hcp_msmall_bolds            ... A comma separated list of bolds for MSMAll.
                                     Specified bolds have to be a subset of bolds
                                     used from the hcp_icafix_bolds parameter.
@@ -5822,11 +5822,11 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     hcp_lowresmesh              ... Low resolution mesh node count [32].
     hcp_regname                 ... Input registration name [MSMSulc].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
-                                    "interpreted", "compiled" or "octave"
-                                    ["compiled"].
+                                    interpreted, compiled or octave
+                                    [compiled].
     hcp_msmall_resample         ... Whether to automatically run
                                     HCP DeDriftAndResample if HCP MSMAll
-                                    finishes successfully ["TRUE"].
+                                    finishes successfully [TRUE].
     hcp_msmall_procstring       ... Identification for FIX cleaned dtseries to use
                                     [<cifti_tail>_hp<highpass>_clean].
 
@@ -6360,7 +6360,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     hcp_icafix_bolds            ... A list of bolds on which ICAFix was applied.
                                     Traditionally this is the same list as was
-                                    used in the HCP ICAFix run [""].
+                                    used in the HCP ICAFix run [].
     hcp_icafix_highpass         ... Value for the highpass filter,
                                     [0] for multi-run HCP ICAFix and [2000]
                                     for single-run HCP ICAFix. Should be the
@@ -6386,14 +6386,14 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     hcp_bold_smoothFWHM         ... Smoothing FWHM that matches what was
                                     used in the fMRISurface pipeline [2].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
-                                    "interpreted", "compiled" or "octave"
-                                    ["compiled"].
+                                    interpreted, compiled or octave
+                                    [compiled].
     hcp_icafix_domotionreg      ... Whether to regress motion parameters as
                                     part of the cleaning. The default value
-                                    after a single-run HCP ICAFix is ["TRUE"],
+                                    after a single-run HCP ICAFix is [TRUE],
                                     while the default after a multi-run HCP
-                                    ICAFix is ["FALSE"].
-    hcp_resample_dontfixnames   ... A list of comma sperated bolds that will
+                                    ICAFix is [FALSE].
+    hcp_resample_dontfixnames   ... A list of comma separated bolds that will
                                     not have HCP ICAFix reapplied to them [NONE].
     hcp_resample_concatregname  ... Output name of the dedrifted registration
                                     [MSMAll].
