@@ -1834,7 +1834,7 @@ fi
     # -- Diffusion HCP (after hcp1)
     turnkey_hcpd() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcpd (hcp_Diffusion) ..."; echo ""
-        ${QuNexCommand} hcpd --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcpd --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
     # -- Diffusion Legacy (after hcp1)
     turnkey_hcpdLegacy() {

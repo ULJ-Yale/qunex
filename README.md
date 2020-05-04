@@ -25,6 +25,7 @@ Quick links
 Change Log
 ----------
 
+* 0.50.3 Fixed incorrect calling of hcpd.
 * 0.50.2 Renamed cores and threads parameters.
 * 0.50.1 Harmonized the use of hcp_suffix.
 * 0.50.0 Renamed gmrimage class to nimage and methods names from mri_ to img_.
