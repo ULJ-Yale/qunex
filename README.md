@@ -55,7 +55,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
-* 0.51.3  [library] Fixed QC template file names
+* 0.51.3  [library] Fixed QC template files
 * 0.51.2  [connector] Fixed incorrect calling of hcpd
 * 0.51.1  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
 * 0.51.0  [niutilities] Integration of MSMAll and DeDriftAndResample HCP pipelines.
