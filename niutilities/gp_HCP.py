@@ -5856,11 +5856,11 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     hcp_matlab_mode             ... Specifies the Matlab version, can be
                                     interpreted, compiled or octave
                                     [compiled].
+    hcp_msmall_procstring       ... Identification for FIX cleaned dtseries to use
+                                    [<hcp_cifti_tail>_hp<hcp_highpass>_clean].
     hcp_msmall_resample         ... Whether to automatically run
                                     HCP DeDriftAndResample if HCP MSMAll
                                     finishes successfully [TRUE].
-    hcp_msmall_procstring       ... Identification for FIX cleaned dtseries to use
-                                    [<hcp_cifti_tail>_hp<hcp_highpass>_clean].
 
     EXAMPLE USE
     ===========
@@ -6640,6 +6640,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         # regname
         regname = "MSMAll_InitialReg_2_d40_WRN" if 'hcp_resample_regname' not in options else options['hcp_resample_regname']
 
+        # concatregname
+        concatregname = "MSMAll" if 'hcp_resample_concatregname' not in options else options['hcp_resample_concatregname']
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
@@ -6647,6 +6650,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             --low-res-meshes="%(lowresmeshes)s" \
             --registration-name="%(regname)s" \
             --dedrift-reg-files="%(regfiles)s" \
+            --concat-reg-name="%(concatregname)s" \
             --maps="%(maps)s" \
             --myelin-maps="%(myelinmaps)s" \
             --multirun-fix-names="NONE" \
@@ -6666,6 +6670,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'lowresmeshes'        : lowresmeshes,
                 'regname'             : regname,
                 'regfiles'            : regfiles,
+                'concatregname'       : concatregname,
                 'maps'                : maps,
                 'myelinmaps'          : myelinmaps,
                 'fixnames'            : boldtargets,
