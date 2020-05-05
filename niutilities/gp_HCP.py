@@ -5727,10 +5727,30 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     the DeDriftAndResample step. To disable this automatic execution of 
     DeDriftAndResample set hcp_msmall_resample to FALSE.
 
-    If the hcp_icafix_bolds parameter is not provided MSMAll will assume that
-    in the HCP ICAFix run all bolds were bundled together in a single
-    concatenation called fMRI_CONCAT_ALL (this is the default behavior if
-    hcp_icafix_bolds parameter is not provided in the case of hcp_ICAFix).
+    The MSMAll step computes the MSMAll registration based on resting-state
+    connectivity, resting-state topography, and myelin-map architecture.
+    The DeDriftAndResample step applies the MSMAll registration to a specified
+    set of maps and fMRI runs.
+
+    MSMAll is intended for use with fMRI runs cleaned with hcp_ICAFix. Except
+    for specialized/expert-user situations, the hcp_icafix_bolds parameter
+    should be identical to what was used in hcp_ICAFix. If hcp_icafix_bolds
+    is not provided MSMAll/DeDriftAndResample will assume multi-run ICAFix was
+    executed with all bolds bundled together in a single concatenation called
+    fMRI_CONCAT_ALL. (This is the default behavior if hcp_icafix_bolds
+    parameter is not provided in the case of hcp_ICAFix).
+
+    A key parameter in hcp_MSMAll is `hcp_msmall_bolds`, which controls the fMRI
+    runs that enter into the computation of the MSMAll registration. Since MSMAll
+    registration was designed to be computed from resting-state scans, this should
+    be a list of the resting-state fMRI scans that you want to contribute to the
+    computation of the MSMAll registration.
+
+    However, it is perfectly fine to apply the MSMAll registration to task fMRI
+    scans in the DeDriftAndResample step. The fMRI scans to which the MSMAll
+    registration is applied are controlled by the `hcp_icafix_bolds` parameter,
+    since typically one wants to apply the MSMAll registration to the same full
+    set of fMRI scans that were cleaned using hcp_ICAFix.
 
     REQUIREMENTS
     ============
@@ -5743,7 +5763,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     for files:
 
     MNINonLinear/Results/<boldname>/
-    <boldname>_<cifti_tail>_hp<highpass>_clean.dtseries.nii
+    <boldname>_<hcp_cifti_tail>_hp<hcp_highpass>_clean.dtseries.nii
 
     RESULTS
     =======
@@ -5754,11 +5774,11 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     The final clean file can be found in:
 
     MNINonLinear/Results/<outfmriname>/
-    <outfmriname>_<cifti_tail>_hp<highpass>_clean_vn.dtseries.nii,
+    <outfmriname>_<hcp_cifti_tail>_hp<hcp_highpass>_clean_vn.dtseries.nii,
 
     where highpass is the used value for the highpass filter. The default highpass
     value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP ICAFix.
-    The default cifti tail (<cifti_tail>) is Atlas.
+    The default cifti tail (<hcp_cifti_tail>) is Atlas.
 
     RELEVANT PARAMETERS
     ===================
@@ -5796,29 +5816,41 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds            ... A list of bolds on which ICAFix was applied.
-                                    Traditionally this is the same list as was
-                                    used in the HCP ICAFix run. If two or more
-                                    groups were provided in HCP ICAFix run then
-                                    HCP MSMAll will be executed over the first
-                                    specified group [].
-    hcp_msmall_bolds            ... A comma separated list of bolds for MSMAll.
-                                    Specified bolds have to be a subset of bolds
-                                    used from the hcp_icafix_bolds parameter.
-                                    Typically this parameter specifies which runs
-                                    should be used as the resting state data
-                                    [if not specified all bolds used from
-                                    hcp_icafix_bolds will be used here as well].
-    hcp_icafix_highpass         ... Value for the highpass filter,
-                                    [0] for multi-run HCP ICAFix and [2000]
-                                    for single-run HCP ICAFix. Should be the
-                                    same as in the case of HCP ICAFix.
+    hcp_icafix_bolds            ... List of bolds on which ICAFix was applied,
+                                    with the same format as for ICAFix. Typically,
+                                    this should be identical to the list used
+                                    in the ICAFix run. If multi-run ICAFix was
+                                    run with two or more groups then HCP MSMAll
+                                    will be executed over the first specified
+                                    group (and the scans listed for
+                                    hcp_msmall_bolds must be limited to scans
+                                    in the first concatenation group as well).
+                                    If not provided MSMAll will assume multi-run
+                                    ICAFix was executed with all bolds bundled
+                                    together in a single concatenation called
+                                    fMRI_CONCAT_ALL (i.e., same default
+                                    behavior as in ICAFix) [].
+    hcp_msmall_bolds            ... A comma separated list that defines the bolds
+                                    that will be used in the computation of the
+                                    MSMAll registration. Typically, this should
+                                    be limited to resting-state scans. Specified
+                                    bolds have to be a subset of bolds used from
+                                    the hcp_icafix_bolds parameter
+                                    [if not specified all bolds specified in 
+                                    hcp_icafix_bolds will be used, which is probably
+                                    NOT what you want to do if hcp_icafix_bolds
+                                    includes non-resting-state scans].
+    hcp_icafix_highpass         ... Value for the highpass filter, [0] for
+                                    multi-run HCP ICAFix and [2000] for
+                                    single-run HCP ICAFix. Should be identical
+                                    to the value used for ICAFIX.
     hcp_msmall_outfmriname      ... The name which will be given to the
-                                    concatenated single subject scan [rfMRI_REST].
+                                    concatenation of scans specified by the
+                                    hcp_msmall_bold parameter [rfMRI_REST].
     hcp_msmall_templates        ... Path to directory containing MSMAll template
                                     files [<HCPPIPEDIR>/global/templates/MSMAll].
     hcp_msmall_outregname       ... Output registration name [MSMAll_InitialReg].
-    hcp_highresmesh             ... High resolution mesh node count [164].
+    hcp_hiresmesh               ... High resolution mesh node count [164].
     hcp_lowresmesh              ... Low resolution mesh node count [32].
     hcp_regname                 ... Input registration name [MSMSulc].
     hcp_matlab_mode             ... Specifies the Matlab version, can be
@@ -5828,13 +5860,13 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     HCP DeDriftAndResample if HCP MSMAll
                                     finishes successfully [TRUE].
     hcp_msmall_procstring       ... Identification for FIX cleaned dtseries to use
-                                    [<cifti_tail>_hp<highpass>_clean].
+                                    [<hcp_cifti_tail>_hp<hcp_highpass>_clean].
 
     EXAMPLE USE
     ===========
     
     ```
-    # HCP MSMAll after a single-run ICAFix
+    # HCP MSMAll after application of single-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -5844,7 +5876,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     ```
 
     ```
-    # HCP MSMAll after a multi-run ICAFix
+    # HCP MSMAll after application of multi-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -6054,7 +6086,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
                 'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
-                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'highresmesh'         : 164 if 'hcp_hiresmesh' not in options else options['hcp_hiresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
@@ -6223,7 +6255,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
                 'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
-                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'highresmesh'         : 164 if 'hcp_hiresmesh' not in options else options['hcp_hiresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
@@ -6289,11 +6321,16 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     A short name 'hcp10' can also be used for this command.
 
-    Runs the DeDriftAndResample step of the HCP Pipeline.
-    If the hcp_icafix_bolds parameter is not provided MSMAll will assume that
-    in the HCP ICAFix run all bolds were bundled together in a single
-    concatenation called fMRI_CONCAT_ALL (this is the default behavior if
-    hcp_icafix_bolds parameter is not provided in the case of hcp_ICAFix).
+    Runs the DeDriftAndResample step of the HCP Pipeline which applies the
+    MSMAll registration to a specified set of maps and fMRI runs.
+
+    DeDriftAndResample is intended for use with fMRI runs cleaned with hcp_ICAFix.
+    Except for specialized/expert-user situations, the hcp_icafix_bolds parameter
+    should be identical to what was used in hcp_ICAFix. If hcp_icafix_bolds
+    is not provided MSMAll/DeDriftAndResample will assume multi-run ICAFix was
+    executed with all bolds bundled together in a single concatenation called
+    fMRI_CONCAT_ALL. (This is the default behavior if hcp_icafix_bolds
+    parameter is not provided in the case of hcp_ICAFix).
 
     REQUIREMENTS
     ============
@@ -6306,7 +6343,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     for files:
 
     MNINonLinear/Results/<boldname>/
-    <boldname>_<cifti_tail>_hp<highpass>_clean.dtseries.nii
+    <boldname>_<hcp_cifti_tail>_hp<hcp_highpass>_clean.dtseries.nii
 
     RESULTS
     =======
@@ -6317,10 +6354,10 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     The final clean files can be found in:
 
     MNINonLinear/Results/<boldname>/
-    <boldname>_<cifti_tail>_<regname>.dtseries.nii,
+    <boldname>_<hcp_cifti_tail>_<hcp_regname>.dtseries.nii,
 
-    The default cifti tail (<cifti_tail>) is Atlas, while the default regname
-    (<regname)) is MSMSulc.
+    The default cifti tail (<hcp_cifti_tail>) is Atlas, while the default regname
+    (<hcp_regname)) is MSMSulc.
 
     RELEVANT PARAMETERS
     ===================
@@ -6358,18 +6395,22 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds            ... A list of bolds on which ICAFix was applied.
-                                    Traditionally this is the same list as was
-                                    used in the HCP ICAFix run [].
-    hcp_icafix_highpass         ... Value for the highpass filter,
-                                    [0] for multi-run HCP ICAFix and [2000]
-                                    for single-run HCP ICAFix. Should be the
-                                    same as in the case of HCP ICAFix.
-    hcp_highresmesh             ... High resolution mesh node count [164].
-    hcp_lowresmeshes            ... Low resolution meshes node count [32]. To
-                                    provide more values separate them with commas.
+    hcp_icafix_bolds            ... List of bolds on which ICAFix was applied,
+                                    with the same format as for ICAFix. Typically,
+                                    this should be identical to the list used
+                                    in the ICAFix run [same default as for
+                                    hcp_ICAFix and hcp_MSMAll].
+    hcp_resample_concatregname  ... Output name of the dedrifted registration
+                                    [MSMAll].
     hcp_resample_regname        ... Registration sphere name
                                     [MSMAll_InitialReg_2_d40_WRN].
+    hcp_icafix_highpass         ... Value for the highpass filter, [0] for
+                                    multi-run HCP ICAFix and [2000] for
+                                    single-run HCP ICAFix. Should be identical
+                                    to the value used for ICAFIX.
+    hcp_hiresmesh               ... High resolution mesh node count [164].
+    hcp_lowresmeshes            ... Low resolution meshes node count [32]. To
+                                    provide more values separate them with commas.
     hcp_resample_reg_files      ... Comma separated paths to the spheres output
                                     from the MSMRemoveGroupDrift pipeline
                                     [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
@@ -6379,8 +6420,10 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                     164k_fs_LR.surf.gii and <file2> is equal to
                                     DeDriftingGroup.R.sphere.DeDriftMSMAll.
                                     164k_fs_LR.surf.gii
-    hcp_resample_maps           ... Comma separated paths to maps that are not myelin
-                                    maps [sulc,curvature,corrThickness,thickness].
+    hcp_resample_maps           ... Comma separated paths to maps that will have
+                                    the MSMAll registration applied that are not 
+                                    myelin maps
+                                    [sulc,curvature,corrThickness,thickness].
     hcp_resample_myelinmaps     ... Comma separated paths to myelin maps
                                     [MyelinMap,SmoothedMyelinMap].
     hcp_bold_smoothFWHM         ... Smoothing FWHM that matches what was
@@ -6394,9 +6437,9 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                     while the default after a multi-run HCP
                                     ICAFix is [FALSE].
     hcp_resample_dontfixnames   ... A list of comma separated bolds that will
-                                    not have HCP ICAFix reapplied to them [NONE].
-    hcp_resample_concatregname  ... Output name of the dedrifted registration
-                                    [MSMAll].
+                                    not have HCP ICAFix reapplied to them.
+                                    Only applicable if single-run ICAFix was used.
+                                    Generally not recommended [NONE].
     hcp_resample_myelintarget   ... A myelin target file is required to run
                                     this pipeline when using a different mesh
                                     resolution than the original
@@ -6408,7 +6451,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    # HCP DeDriftAndResample after a single-run ICAFix
+    # HCP DeDriftAndResample after application of single-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -6417,7 +6460,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     ```
 
     ```
-    # HCP DeDriftAndResample after a multi-run ICAFix
+    # HCP DeDriftAndResample after application of multi-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
         --subjectsfolder=subjects \
@@ -6809,7 +6852,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
-                'highresmesh'         : 164 if 'hcp_highresmesh' not in options else options['hcp_highresmesh'],
+                'highresmesh'         : 164 if 'hcp_hiresmesh' not in options else options['hcp_hiresmesh'],
                 'lowresmeshes'        : lowresmeshes,
                 'regname'             : regname,
                 'regfiles'            : regfiles,
