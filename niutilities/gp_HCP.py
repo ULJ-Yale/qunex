@@ -6403,7 +6403,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     hcp_resample_concatregname  ... Output name of the dedrifted registration
                                     [MSMAll].
     hcp_resample_regname        ... Registration sphere name
-                                    [MSMAll_InitialReg_2_d40_WRN].
+                                    [<hcp_msmall_outregname>_2_d40_WRN].
     hcp_icafix_highpass         ... Value for the highpass filter, [0] for
                                     multi-run HCP ICAFix and [2000] for
                                     single-run HCP ICAFix. Should be identical
@@ -6638,7 +6638,10 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
 
         # regname
-        regname = "MSMAll_InitialReg_2_d40_WRN" if 'hcp_resample_regname' not in options else options['hcp_resample_regname']
+        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
+        regname = "%s_2_d40_WRN" % outregname
+        if 'hcp_resample_regname' in options:
+            regname = options['hcp_resample_regname']
 
         # concatregname
         concatregname = "MSMAll" if 'hcp_resample_concatregname' not in options else options['hcp_resample_concatregname']
@@ -6829,7 +6832,10 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
 
         # regname
-        regname = "MSMAll_InitialReg_2_d40_WRN" if 'hcp_resample_regname' not in options else options['hcp_resample_regname']
+        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
+        regname = "%s_2_d40_WRN" % outregname
+        if 'hcp_resample_regname' in options:
+            regname = options['hcp_resample_regname']
 
         # concatregname
         concatregname = "MSMAll" if 'hcp_resample_concatregname' not in options else options['hcp_resample_concatregname']
