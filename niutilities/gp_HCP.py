@@ -3589,7 +3589,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                                  cerebellar data in grayordinate space in mm.
                                  [2]
     --hcp_bold_smoothFWHM    ... The size of the smoothing kernel (in mm). [2]
-    --hcp_regname            ... The name of the registration used. []
+    --hcp_regname            ... The name of the registration used. [MSMSulc]
 
     
     Full file checking
@@ -5591,7 +5591,6 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
-            groupok = False
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -6001,7 +6000,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
         r += "\n\n------------------------------------------------------------"
         r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
-        groupok = True
+        boldsok = True
 
         # --- check for bold images and prepare targets parameter
         # highpass value
@@ -6157,7 +6156,6 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
         r += "\n\n------------------------------------------------------------"
         r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
-        groupok = True
 
         # --- check for bold images and prepare targets parameter
         boldtargets = ""
@@ -6562,7 +6560,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
         r += "\n\n------------------------------------------------------------"
         r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
-        groupok = True
+        boldsok = True
 
         # --- check for bold images and prepare targets parameter
         boldtargets = ""
