@@ -24,14 +24,14 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.3
+Qu|Nex suite version: 0.51.5
 
 Submodules:
 
 * connector: 0.50.3
-* library: 0.50.4
+* library: 0.50.6
 * nitools: 0.50.0
-* niutilities: 0.51.2
+* niutilities: 0.51.3
 
 
 Release notes
@@ -55,9 +55,11 @@ PMC4034208.
 Detailed change log
 -------------------
 
-* 0.51.3  [library] Fixed QC template files
-* 0.51.2  [connector] Fixed incorrect calling of hcpd
-* 0.51.1  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
+* 0.51.5  [library] Replaced REMOVED.git-id files.
+* 0.51.4  [library] Fixed QC template files.
+* 0.51.3  [connector] Fixed incorrect calling of hcpd.
+* 0.51.2  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
+* 0.51.1  [niutilities] Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
 * 0.51.0  [niutilities] Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.7  [library] qunex_envstatus now reports OS info.
 * 0.50.6  [niutilities] Consistent parameter injection notation.
