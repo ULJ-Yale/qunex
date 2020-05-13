@@ -360,6 +360,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
@@ -391,8 +393,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
     
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2]. NONE is only valid
@@ -884,9 +884,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
-     --log                  ... Whether to keep ('keep') or remove ('remove') the
+    --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
                                 When a comma or pipe ('|') separated list is given, 
                                 the log will be created at the first provided 
@@ -944,10 +946,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     Please note, that these settings will only be used when LegacyStyleData 
     processing mode is specified!
-
-
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
+    
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2]. NONE is only valid
@@ -1345,6 +1344,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise [].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
      --log            ... Whether to keep ('keep') or remove ('remove') the
@@ -1372,8 +1373,6 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2].
@@ -1673,9 +1672,11 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
-     --log                  ... Whether to keep ('keep') or remove ('remove') the
+    --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
                                 When a comma or pipe ('|') separated list is given, 
                                 the log will be created at the first provided 
@@ -1704,8 +1705,6 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2]. NONE is only valid
@@ -1945,6 +1944,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise [].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
@@ -2275,6 +2276,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                 'WM|Control|rest') or 'all' to process all [all].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
@@ -2325,9 +2328,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     naming options
     --------------
 
-    --hcp_suffix             ... Specifies a suffix to the session id if
-                                 multiple variants of preprocessing are run,
-                                 empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. [BOLD_]
@@ -3244,6 +3244,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                           'WM|Control|rest') or 'all' to process all [all].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise [].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
@@ -3279,9 +3281,6 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     naming options
     --------------
 
-    --hcp_suffix             ... Specifies a suffix to the session id if
-                                 multiple variants of preprocessing are run,
-                                 empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. []
@@ -3841,6 +3840,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                             parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
@@ -4370,6 +4371,8 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                             parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
@@ -4754,6 +4757,8 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                             parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
@@ -5454,6 +5459,8 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
@@ -6030,6 +6037,8 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
@@ -6781,6 +6790,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     --parsessions      ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
+    --hcp_suffix       ... Specifies a suffix to the session id if multiple
+                           variants are run, empty otherwise [].
     --hcp_cifti_tail   ... The tail (see above) that specifies, which version of
                            the cifti files to copy over [].
     --bolds            ... Which bold images (as they are specified in the
