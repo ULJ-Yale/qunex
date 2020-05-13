@@ -40,6 +40,7 @@ Quick links
 Change log
 ----------
 
+* 0.51.4  Updated in-line documentation.
 * 0.51.3  Renamed cores and threads parameters.
 * 0.51.2  Changed dcm2niix ERROR to WARNING, removed full file checking documentation.
 * 0.51.1  Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
