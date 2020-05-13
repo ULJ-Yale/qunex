@@ -24,14 +24,14 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.5
+Qu|Nex suite version: 0.51.6
 
 Submodules:
 
 * connector: 0.50.3
 * library: 0.50.6
 * nitools: 0.50.0
-* niutilities: 0.51.3
+* niutilities: 0.51.4
 
 
 Release notes
@@ -55,6 +55,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.51.6  [niutilities] Updated in-line documentation.
 * 0.51.5  [library] Replaced REMOVED.git-id files.
 * 0.51.4  [library] Fixed QC template files.
 * 0.51.3  [connector] Fixed incorrect calling of hcpd.
