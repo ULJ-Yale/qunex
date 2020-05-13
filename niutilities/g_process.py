@@ -406,7 +406,7 @@ arglist = [['# ---- Basic settings'],
 
            ['# --- Processing options'],
            ['run',                    'run',                                      str,    "run type: run - do the task, test - perform checks"],
-           ['log',                    'keep',                                     str,    "Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed."]
+           ['log',                    'keep',                                     str,    "Whether to remove ('remove') the temporary logs once jobs are completed, keep them in the study level processing/logs/comlogs folder ('keep' or 'study') in the hcp folder ('hcp') or in a <session id>/logs/comlogs folder ('sessions'). Multiple options can be specified separated by '|'."]
           ]
 
 

@@ -182,14 +182,15 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
     The parameters can be specified in command call or subject.txt file.
@@ -466,14 +467,15 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -777,14 +779,15 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -1181,14 +1184,15 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -1444,7 +1448,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements     ... How many elements (e.g bolds) to run in
-                        parralel [1].
+                          parralel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
@@ -1455,14 +1459,15 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
                           * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -2052,14 +2057,15 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
                           * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
 
     specific parameters

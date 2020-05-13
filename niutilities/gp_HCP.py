@@ -364,10 +364,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided 
+                                location and then linked or copied to other 
+                                locations. The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -886,12 +886,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 [no].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
-    --log                   ... Whether to keep ('keep') or remove ('remove') the
+     --log                  ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided 
+                                location and then linked or copied to other 
+                                locations. The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -1347,19 +1347,19 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
+     --log            ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided 
+                          location and then linked or copied to other 
+                          locations. The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
                           * 'session' for `<sessionid>/logs/comlogs
                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
-
+                          
     --hcp_folderstructure   ... Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported ['hcpls']
     --hcp_filename          ... Specifies whether the standard ('standard') filenames
@@ -1675,12 +1675,12 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                                 [no].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
-    --log                   ... Whether to keep ('keep') or remove ('remove') the
+     --log                  ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided 
+                                location and then linked or copied to other 
+                                locations. The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -1949,10 +1949,10 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
@@ -2279,10 +2279,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided location
+                                and then linked or copied to other locations. 
+                                The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -3248,10 +3248,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
@@ -3845,10 +3845,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -4374,10 +4374,10 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -4758,10 +4758,10 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -5458,10 +5458,10 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -6034,10 +6034,10 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
