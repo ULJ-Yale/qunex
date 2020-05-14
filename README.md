@@ -24,19 +24,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.1
+Qu|Nex suite version: 0.51.2
 
 Submodules:
 
 * connector: 0.50.1
 * library: 0.50.2
 * nitools: 0.50.0
-* niutilities: 0.51.1
+* niutilities: 0.51.2
 
 
 Release notes
 -------------
 
+* 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
 * 0.51.0 MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
 * 0.50.4 Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
@@ -56,6 +57,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.51.2  [niutilities] Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1  [niutilities] Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
 * 0.51.0  [niutilities] Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.7  [library] qunex_envstatus now reports OS info.
