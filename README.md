@@ -24,19 +24,21 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.7
+Qu|Nex suite version: 0.51.8
 
 Submodules:
 
 * connector: 0.50.3
 * library: 0.50.6
 * nitools: 0.50.0
-* niutilities: 0.51.5
+* niutilities: 0.51.8
 
 
 Release notes
 -------------
 
+* 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
+* 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
 * 0.51.0 MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
 * 0.50.4 Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
 * 0.50.2 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
@@ -55,12 +57,13 @@ PMC4034208.
 Detailed change log
 -------------------
 
-* 0.51.7  [niutilities] Changed hcpsuffix to hcp_suffix throughout.
-* 0.51.6  [niutilities] Updated in-line documentation.
-* 0.51.5  [library] Replaced REMOVED.git-id files.
-* 0.51.4  [library] Fixed QC template files.
-* 0.51.3  [connector] Fixed incorrect calling of hcpd.
-* 0.51.2  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
+* 0.51.8  [niutilities] Changed hcpsuffix to hcp_suffix throughout.
+* 0.51.7  [niutilities] Updated in-line documentation.
+* 0.51.6  [library] Replaced REMOVED.git-id files.
+* 0.51.5  [library] Fixed QC template files.
+* 0.51.4  [connector] Fixed incorrect calling of hcpd.
+* 0.51.3  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
+* 0.51.2  [niutilities] Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1  [niutilities] Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
 * 0.51.0  [niutilities] Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.7  [library] qunex_envstatus now reports OS info.
