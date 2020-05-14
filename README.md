@@ -24,14 +24,14 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.8
+Qu|Nex suite version: 0.51.9
 
 Submodules:
 
 * connector: 0.50.3
 * library: 0.50.6
 * nitools: 0.50.0
-* niutilities: 0.51.6
+* niutilities: 0.51.7
 
 
 Release notes
@@ -57,6 +57,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.51.9  [niutilities] Fixed reporting when hcp_fs_existing_subject is true.
 * 0.51.8  [niutilities] Changed hcpsuffix to hcp_suffix throughout.
 * 0.51.7  [niutilities] Updated in-line documentation.
 * 0.51.6  [library] Replaced REMOVED.git-id files.
