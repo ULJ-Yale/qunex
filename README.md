@@ -31,7 +31,7 @@ Submodules:
 * connector: 0.50.3
 * library: 0.50.6
 * nitools: 0.50.0
-* niutilities: 0.51.8
+* niutilities: 0.51.6
 
 
 Release notes
