@@ -3669,6 +3669,10 @@ def parseICAFixBolds(options, bolds, r, msmall=False):
         hcpBolds = bolds
         hcpGroups = []
         hcpGroups.append({"name":"fMRI_CONCAT_ALL", "bolds":hcpBolds})
+
+        # create specified bolds
+        specifiedBolds = boldtargets
+
         r += "\nConcatenating all bolds\n"
 
     # --- Get hcp_icafix data from bolds
@@ -3772,6 +3776,9 @@ def parseICAFixBolds(options, bolds, r, msmall=False):
         icafixGroup["bolds"] = hcpBolds
         hcpGroups.append(icafixGroup)
 
+        # bolds
+        hcpBolds = specifiedBolds
+    elif 'hcp_icafix_bolds' not in options:
         # bolds
         hcpBolds = specifiedBolds
 
