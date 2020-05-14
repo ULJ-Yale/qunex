@@ -1123,7 +1123,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 if fstest in reconallfiletxt:
                     break
 
-            if overwrite and options['run'] == "run":
+            if overwrite and options['run'] == "run" and not options['hcp_fs_existing_subject']:
                 r += "\n     ... removing previous files"
             else:
                 if fsversion == efsversion:

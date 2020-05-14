@@ -40,6 +40,7 @@ Quick links
 Change log
 ----------
 
+* 0.51.7  Fixed reporting when hcp_fs_existing_subject is true.
 * 0.51.6  Changed hcpsuffix to hcp_suffix throughout.
 * 0.51.5  Updated in-line documentation.
 * 0.51.4  Renamed cores and threads parameters.
