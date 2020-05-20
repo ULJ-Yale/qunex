@@ -5,9 +5,11 @@ modules that support a flexible and extensible framework for data organization, 
 quality assurance, and various analytics across neuroimaging modalities. The Qu|Nex suite is 
 designed to be flexible and can be developed by adding functions developed around its component tools.
 
-The Qu|Nex code is is co-developed and co-maintained by the 
-[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
-and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+The Qu|Nex code is is co-developed and co-maintained by the:
+
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
+* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
 
 
 Quick links
