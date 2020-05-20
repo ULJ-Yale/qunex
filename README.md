@@ -21,9 +21,11 @@ set of native Matlab functions, methods and utilities, and a modified version
 of HCP (Human Connectome Project) preprocessing tools. They are best utilized as 
 a part of Qu|Nex (Multimodal Neuroimaging Analysis Platform).
 
-The Qu|Nex code is is co-developed and co-maintained by the 
-[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
-and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+The `niutilities` code is is co-developed and co-maintained by:
+
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
+* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
 
 
 Quick links
@@ -40,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.51.8  License and README updates.
 * 0.51.7  Fixed reporting when hcp_fs_existing_subject is true.
 * 0.51.6  Changed hcpsuffix to hcp_suffix throughout.
 * 0.51.5  Updated in-line documentation.
