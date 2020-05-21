@@ -42,6 +42,8 @@ Quick links
 Change log
 ----------
 
+* 0.51.10 External command calls are now printed in stdout and at the beginning of comlogs.
+* 0.51.9  Consistent jobname in scheduling between qunex and qunexContainer.
 * 0.51.8  License and README updates.
 * 0.51.7  Fixed reporting when hcp_fs_existing_subject is true.
 * 0.51.6  Changed hcpsuffix to hcp_suffix throughout.
