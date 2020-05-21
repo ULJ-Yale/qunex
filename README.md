@@ -26,14 +26,14 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.9
+Qu|Nex suite version: 0.51.12
 
 Submodules:
 
-* connector: 0.50.3
-* library: 0.50.6
-* nitools: 0.50.0
-* niutilities: 0.51.7
+* connector: 0.50.4
+* library: 0.50.8
+* nitools: 0.50.1
+* niutilities: 0.51.10
 
 
 Release notes
@@ -59,6 +59,9 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.51.12 [niutilities] External command calls are now printed in stdout and at the beginning of comlogs.
+* 0.51.11 [niutilities] Consistent jobname in scheduling between qunex and qunexContainer.
+* 0.51.10 [connector, library, nitools, niutilities] License and README updates.
 * 0.51.9  [niutilities] Fixed reporting when hcp_fs_existing_subject is true.
 * 0.51.8  [niutilities] Changed hcpsuffix to hcp_suffix throughout.
 * 0.51.7  [niutilities] Updated in-line documentation.
