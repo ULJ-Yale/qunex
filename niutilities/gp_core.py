@@ -579,7 +579,7 @@ def missingReport(missing, message, prefix):
     return r 
    
 
-def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True):
+def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False):
     '''
     The function checks the presence of a test file.
     If specified it runs also full test.
@@ -594,7 +594,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
             fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
 
-    if os.path.exists(tfile):
+    if os.path.exists(tfile) and not overwrite:
         if verbose:
             r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
         report = "%s finished" % (command)
@@ -688,7 +688,6 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         r += '\n---> logfile: %s' % (tfile)
 
         # -- do we have multiple logfolders?
-
         for logfolder in logfolders:
             nfile = os.path.join(logfolder, tname)
             if not os.path.exists(logfolder):
@@ -702,6 +701,16 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         return tfile, r
 
     endlog = None
+
+    # -- Report command
+    printComm = "------------------------------------------------------------\n"
+    printComm += "Running external command via Qu|Nex:\n\n"
+    comm = run.replace("--", "\n    --").replace("             ", "")
+    comm += "\n"
+    printComm += comm
+    if checkfile is not None or checkfile != "":
+        printComm += "\nTest file: %s\n" % checkfile
+    printComm += "------------------------------------------------------------\n"
 
     if overwrite or not os.path.exists(checkfile):
         r += '\n\n%s' % (description)
@@ -731,36 +740,45 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
 
         # --- open log file
-
-        nf = open(tmplogfile, 'w')
-        print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
-
+        nf = open(tmplogfile, 'a')
         if not os.path.exists(tmplogfile):
             r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
             raise ExternalFailed(r)
 
         # --- run command
         try:
+            # add command call to start of the log
+            print >> nf, printComm
+
+            # close and switch to append mode
+            nf.close()
+            nf = open(tmplogfile, 'a')
+
             if shell:
                 ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
             else:
                 ret = subprocess.call(run.split(), stdout=nf, stderr=nf)
+
         except:
-            r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
+            r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
+            r += comm
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
+
 
         # --- check results
 
         if ret:
-            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (description, ret, run)
+            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (description, ret)
+            r += comm
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
         status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf, verbose=verbose)
 
         if status is None:
-            r += "\n\nTry running the command directly for more detailed error information:\n--> %s\n" % (run)
+            r += "\n\nTry running the command directly for more detailed error information:\n"
+            r += comm
 
         # --- End
 

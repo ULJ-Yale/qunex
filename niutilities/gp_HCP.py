@@ -789,6 +789,12 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
 
         tfile = os.path.join(hcp['hcp_nonlin'], 'T1w_restore_brain.nii.gz')
@@ -808,12 +814,11 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PreFS', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PreFS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP PreFS can be run"
                     report = "HCP Pre FS can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Due to missing files session can not be processed."
             report = "Files missing, PreFS can not be run"
@@ -1213,6 +1218,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             if options[optionName]:
                 comm += " %s" % (flag)
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
 
         if hcp['hcp_fs_check']:
@@ -1255,12 +1266,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP FS', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP FS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP FS can be run"
                     report = "HCP FS can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Subject can not be processed."
             report = "FS can not be run"
@@ -1563,6 +1573,12 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                 't2'                : "",
                 'timepoints'        : ",".join(sessionspaths)}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
        # -- Test files
 
         if hcp['hcp_fslong_check']:
@@ -1594,19 +1610,11 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             # -- just checking
             else:
                 r += "\n---> The command was tested for sessions: %s" % (", ".join(sessionsid))
-                r += "\n---> If run, the following command would be executed:\n"
-                rcomm = re.sub(r" +", r" ", comm)
-                rcomm = re.sub(r"--", r"\n  --", rcomm)
-                r += "\n%s\n\n" % rcomm
                 report = "Command can be run"
                 failed = 0
                 
         else:
             r += "\n---> The command could not be run on sessions: %s" % (", ".join(sessionsid))
-            r += "\n---> If run, the following command would be executed:\n"
-            rcomm = re.sub(r" +", r" ", comm)
-            rcomm = re.sub(r"--", r"\n  --", rcomm)
-            r += "\n%s\n\n" % rcomm
             report = "Command can not be run"
             failed = 1
 
@@ -1840,6 +1848,12 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
 
         # -- Test files
 
@@ -1866,12 +1880,11 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PostFS', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PostFS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP PostFS can be run"
                     report = "HCP PostFS can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Session can not be processed."
             report = "HCP PostFS can not be run"
@@ -2166,6 +2179,12 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             for eddyoption in eddyoptions:
                 comm += " --extra-eddy-arg=" + eddyoption
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
 
@@ -2185,12 +2204,12 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP Diffusion', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP Diffusion', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+
         else:
             r += "---> Session can not be processed."
             report = "HCP Diffusion can not be run"
@@ -3083,6 +3102,12 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
 
         if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
@@ -3147,10 +3172,9 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP fMRIVolume can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP fMRIVolume can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -3158,15 +3182,15 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images or data parameters missing, skipping this BOLD!"
+                r += "\n---> ERROR: images or data parameters missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images or data parameters missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images or data parameters missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for subject, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for subject, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
@@ -3175,8 +3199,6 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     except:
         r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
         report['failed'].append(printbold)
-
-    # r += "\n     ... DONE!"
 
     return {'r': r, 'report': report}
 
@@ -3491,6 +3513,11 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -3520,10 +3547,9 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP fMRISurface can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP fMRISurface can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -3531,15 +3557,15 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
@@ -3548,8 +3574,6 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     except:
         r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
         report['failed'].append(printbold)
-
-    # r += "\n     ... DONE!"
 
     return {'r': r, 'report': report}
 
@@ -4133,6 +4157,12 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, bandpass))
         fullTest = None
@@ -4159,10 +4189,9 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... single-run HCP ICAFix can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> single-run HCP ICAFix can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -4170,15 +4199,15 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
@@ -4260,6 +4289,12 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
         fullTest = None
@@ -4286,10 +4321,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... multi-run HCP ICAFix can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> multi-run HCP ICAFix can be run"
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -4297,15 +4331,15 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         elif run:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+                r += "\n---> ERROR: No hcp info for session, skipping this group!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -4650,6 +4684,12 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 'reusehighpass'     : reusehighpass,
                 'matlabrunmode'     : matlabrunmode}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_%s_hp%s_ICA_Classification_singlescreen.scene" % (subject, boldtarget, highpass))
         fullTest = None
@@ -4669,10 +4709,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP PostFix can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP PostFix can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -4680,15 +4719,15 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
         # log beautify
         r += "\n\n"
@@ -5054,6 +5093,12 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+            # -- Report command
+            r += "\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
+
             # -- Test files
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], highpass)
@@ -5075,10 +5120,9 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r, overwrite=overwrite)
                     if passed is None:
-                        r += "\n     ... single-run HCP ReApplyFix can be run"
-                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n---> single-run HCP ReApplyFix can be run"
                         report['ready'].append(printbold)
                     else:
                         report['skipped'].append(printbold)
@@ -5086,15 +5130,15 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             elif run:
                 report['not ready'].append(printbold)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                    r += "\n---> ERROR: images missing, skipping this BOLD!"
                 else:
-                    r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                    r += "\n---> ERROR: images missing, this BOLD would be skipped!"
             else:
                 report['not ready'].append(printbold)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                    r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
                 else:
-                    r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                    r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
             # log beautify
             r += "\n\n"
@@ -5218,6 +5262,12 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+            # -- Report command
+            r += "\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
+
             # -- Test files
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], highpass)
@@ -5239,10 +5289,9 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r, overwrite=overwrite)
                     if passed is None:
-                        r += "\n     ... multi-run HCP ReApplyFix can be run"
-                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n---> multi-run HCP ReApplyFix can be run"
                         report['ready'].append(groupname)
                     else:
                         report['skipped'].append(groupname)
@@ -5250,15 +5299,15 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             elif run:
                 report['not ready'].append(groupname)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: images missing, skipping this group!"
+                    r += "\n---> ERROR: images missing, skipping this group!"
                 else:
-                    r += "\n     ... ERROR: images missing, this group would be skipped!"
+                    r += "\n---> ERROR: images missing, this group would be skipped!"
             else:
                 report['not ready'].append(groupname)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+                    r += "\n---> ERROR: No hcp info for session, skipping this group!"
                 else:
-                    r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
+                    r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
             # log beautify
             r += "\n\n"
@@ -5307,6 +5356,12 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 'boldtarget'        : boldtarget,
                 'highpass'          : highpass}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s.ica" % (boldtarget, highpass), "HandNoise.txt")
         fullTest = None
@@ -5326,10 +5381,9 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP HandReclassification can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP HandReclassification can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5337,15 +5391,15 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
         # log beautify
         r += "\n"
@@ -5371,7 +5425,7 @@ def parseMSMAllBolds(options, bolds, r):
         # if more than one group print a WARNING
         if (len(icafixGroups) > 1):
             # extract the first group
-            r += "\n     ... WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
+            r += "\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
 
     # validate that msmall bolds is a subset of icafixGroups
     if 'hcp_msmall_bolds' in options:
@@ -5379,7 +5433,7 @@ def parseMSMAllBolds(options, bolds, r):
 
         for b in msmallBolds:
             if b not in hcpBolds:
-                r += "\n     ... ERROR: bold %s defined in hcp_msmall_bolds but not found in the used hcp_icafix_bolds!" % b
+                r += "\n---> ERROR: bold %s defined in hcp_msmall_bolds but not found in the used hcp_icafix_bolds!" % b
                 parsOK = False
 
     return (singleRun, icafixGroup, parsOK, r)
@@ -5731,7 +5785,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
 
         comm = '%(script)s \
@@ -5764,6 +5818,12 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
         fullTest = None
@@ -5783,10 +5843,9 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP MSMAll can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5794,15 +5853,15 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
@@ -5892,7 +5951,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
 
         # fix names to use
@@ -5932,6 +5991,12 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
         fullTest = None
@@ -5951,10 +6016,9 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP MSMAll can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -5962,15 +6026,15 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         elif run:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -6357,6 +6421,12 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file (currently check only last bold)
         lastbold = boldtargets.split("@")[-1]
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], concatregname))
@@ -6374,10 +6444,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP DeDriftAndResample can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(regname)
                 else:
                     report['skipped'].append(regname)
@@ -6385,15 +6454,15 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         elif run:
             report['not ready'].append(regname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(regname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
@@ -6470,7 +6539,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
 
         # fix names to use
@@ -6552,6 +6621,12 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
         fullTest = None
@@ -6571,10 +6646,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP DeDriftAndResample can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n-------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -6582,15 +6656,15 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         elif run:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
@@ -6643,6 +6717,12 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                 'bvecs'             : os.path.join(hcp['T1w_folder'], 'Diffusion', 'bvecs'),
                 'bvals'             : os.path.join(hcp['T1w_folder'], 'Diffusion', 'bvals')}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         
         tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'dti_FA.nii.gz')
@@ -6660,7 +6740,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP DTI Fit', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP DTI Fit', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP DTI Fit can be run"
                     report = "HCP DTI Fit FS can be run"
@@ -6726,6 +6806,12 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
                 'nf'                : "3",
                 'model'             : "2"}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- test files
 
         tfile = os.path.join(hcp['T1w_folder'], 'Diffusion.bedpostX', 'mean_fsumsamples.nii.gz')
@@ -6741,7 +6827,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP BedpostX', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP BedpostX', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP BedpostX can be run"
                     report = "HCP BedpostX can be run"
