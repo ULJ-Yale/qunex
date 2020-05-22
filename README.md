@@ -62,7 +62,7 @@ Change log
 * 0.50.5  HCP glob debug, ICAFix exceptions now look nicer.
 * 0.50.4  ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter.
 * 0.50.3  ICAFix regname debug.
-* 0.50.2  Added filesort option for HCPLSImport.
+* 0.50.2  Added filesort option for importHCP.
 * 0.50.1  Optimized bold comparison.
 * 0.50.0  HCP ICAFix implementation.
 * 0.49.10 Initial submodule versioning.

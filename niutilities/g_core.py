@@ -754,4 +754,76 @@ def linkOrCopy(source, target):
             shutil.copy2(source, target)
 
 
+def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
+    """
+    moveLinkOrCopy - documentation not yet available.
+    """
+    if action is None:
+        action = 'link'
+    if status is None:
+        status = True
+    if name is None:
+        name = source
+    if prefix is None:
+        prefix = ""
 
+    if os.path.exists(source):
+
+        if not os.path.exists(os.path.dirname(target)):
+            try:
+                os.makedirs(os.path.dirname(target))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be %sed, target folder could not be created, check permissions! " % (r, prefix, name, action))
+
+        if action == 'link':
+            try:
+                if os.path.exists(target):
+                    if os.path.samefile(source, target):
+                        if r is None:
+                            return status
+                        else:
+                            return (status, "%s%s%s already mapped" % (r, prefix, name))
+                    else:
+                        os.remove(target)
+                os.link(source, target)
+                if r is None:
+                    return status
+                else:
+                    return (status, "%s%s%s mapped" % (r, prefix, name))
+            except:
+                action = 'copy'
+
+        if action == 'copy':
+            try:
+                shutil.copy2(source, target)
+                if r is None:
+                    return status
+                else:
+                    return (status, "%s%s%s copied" % (r, prefix, name))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be copied, check permissions! " % (r, prefix, name))
+
+        if action == 'move':
+            try:
+                shutil.move(source, target)
+                if r is None:
+                    return status
+                else:
+                    return (status, "%s%s%s moved" % (r, prefix, name))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be moved, check permissions! " % (r, prefix, name))
+
+    else:
+        if r is None:
+            return False
+        else:
+            return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))

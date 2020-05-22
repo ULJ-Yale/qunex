@@ -5,7 +5,7 @@ g_hcplifespan.py
 
 Functions for importing HCP Lifespan data to Qu|Nex file structure.
 
-* HCPLSImport      ... maps HCP Lifespan data to Qu|Nex structure
+* importHCP      ... maps HCP Lifespan data to Qu|Nex structure
 
 The commands are accessible from the terminal using gmri utility.
 
@@ -113,81 +113,6 @@ PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
 PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
 
 
-def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
-    """
-    moveLinkOrCopy - documentation not yet available.
-    """
-    if action is None:
-        action = 'link'
-    if status is None:
-        status = True
-    if name is None:
-        name = source
-    if prefix is None:
-        prefix = ""
-
-    if os.path.exists(source):
-
-        if not os.path.exists(os.path.dirname(target)):
-            try:
-                os.makedirs(os.path.dirname(target))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be %sed, target folder could not be created, check permissions! " % (r, prefix, name, action))
-
-        if action == 'link':
-            try:
-                if os.path.exists(target):
-                    if os.path.samefile(source, target):
-                        if r is None:
-                            return status
-                        else:
-                            return (status, "%s%s%s already mapped" % (r, prefix, name))
-                    else:
-                        os.remove(target)
-                os.link(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s mapped" % (r, prefix, name))
-            except:
-                action = 'copy'
-
-        if action == 'copy':
-            try:
-                shutil.copy2(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s copied" % (r, prefix, name))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be copied, check permissions! " % (r, prefix, name))
-
-        if action == 'move':
-            try:
-                shutil.move(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s moved" % (r, prefix, name))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be moved, check permissions! " % (r, prefix, name))
-
-    else:
-        if r is None:
-            return False
-        else:
-            return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
-
-
 def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
     '''
     Identifies and returns the intended location of the file based on its name.
@@ -268,9 +193,9 @@ def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix,
 
 
 
-def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
+def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
     '''
-    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]
+    importHCP [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]
     
     USE
     ===
@@ -385,7 +310,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     PROCESS OF HCPLS MAPPING
     ========================
     
-    The HCPLSImport command consists of two steps:
+    The importHCP command consists of two steps:
     
     ==> Step 1 -- Mapping HCPLS dataset to Qu|Nex Suite folder structure
     
@@ -426,7 +351,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     RESULTS
     =======
 
-    After running the `HCPLSImport` command the HCPLS dataset will be mapped 
+    After running the `importHCP` command the HCPLS dataset will be mapped 
     to the Qu|Nex folder structure and image files will be prepared for further
     processing along with required metadata.
 
@@ -456,7 +381,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     ===========
     
     ```
-    qunex HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
+    qunex importHCP subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
     ```
 
     ----------------
@@ -474,22 +399,22 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
              - Addded file sorting parameter
     '''
 
-    print "Running HCPLSImport\n=================="
+    print "Running importHCP\n=================="
 
     if action not in ['link', 'copy', 'move']:
-        raise ge.CommandError("HCPLSImport", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
+        raise ge.CommandError("importHCP", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
 
     if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("HCPLSImport", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+        raise ge.CommandError("importHCP", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     if archive not in ['leave', 'move', 'copy', 'delete']:
-        raise ge.CommandError("HCPLSImport", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+        raise ge.CommandError("importHCP", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
 
     if not filesort:
         filesort = "name_type_se"
 
     if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("HCPLSImport", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
+        raise ge.CommandError("importHCP", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
     if subjectsfolder is None:
         subjectsfolder = os.path.abspath(".")
@@ -556,12 +481,12 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                     else:
                         sourceFiles.append(filepath)
         else:
-            raise ge.CommandFailed("HCPLSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
+            raise ge.CommandFailed("importHCP", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
-        raise ge.CommandFailed("HCPLSImport", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("importHCP", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
     if not sourceFiles:
-        raise ge.CommandFailed("HCPLSImport", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("importHCP", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
 
     # ---> mapping data to subjects' folders    
@@ -665,7 +590,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
     if not allOk:
         print "\nFinal report\n============"
-        raise ge.CommandFailed("HCPLSImport", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
+        raise ge.CommandFailed("importHCP", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
 
     # ---> mapping data to Qu|Nex nii folder
 
@@ -702,7 +627,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
         print line
 
     if not allOk:
-        raise ge.CommandFailed("HCPLSImport", "Some actions failed", "Please check report!")
+        raise ge.CommandFailed("importHCP", "Some actions failed", "Please check report!")
 
 
 
@@ -1027,7 +952,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
         filesort = "name_type_se"
 
     if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("HCPLSImport", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
+        raise ge.CommandError("importHCP", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
     sfolder = os.path.abspath(sfolder)
     hfolder = os.path.join(sfolder, 'hcpls')

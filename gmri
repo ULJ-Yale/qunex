@@ -88,7 +88,7 @@ import utilities
 ----------------
 BIDSImport   [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
 mapBIDS2nii  [sfolder='.'] [overwrite='no']
-HCPLSImport  [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
+importHCP    [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
 mapHCPLS2nii [sfolder='.'] [overwrite='no']
 
 
