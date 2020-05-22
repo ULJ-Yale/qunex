@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.50.5  Splash screen update, uploaded gpu_binaries.
 * 0.50.4  License and README updates.
 * 0.50.3  Fixed incorrect calling of hcpd.
 * 0.50.2  Renamed cores and threads parameters.
