@@ -1502,15 +1502,15 @@ fi
             if [[ ${INTYPE} == "zip" ]]; then 
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 geho "  --> processing a single ${DATAFormat} formated package [${CASE}.zip]" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QuNexCommand} HCPLSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp} 
+                geho "  ${QuNexCommand} importHCP --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp} 
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QuNexCommand} HCPLSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+                ${QuNexCommand} importHCP --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 geho "  --> processing a single ${DATAFormat} session [${CASE}] from the ${DATAFormat} dataset" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QuNexCommand} HCPLSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} importHCP --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QuNexCommand} HCPLSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+                ${QuNexCommand} importHCP --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
             fi
 
             popd 2> /dev/null
@@ -1528,7 +1528,7 @@ fi
             fi
             if [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho " -- HCPLSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files." 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho " -- importHCP successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files." 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 FILECHECK="pass"
             else
