@@ -98,9 +98,10 @@ geho "        \___███\  \______/       ║      \__|  \__| \_______\__/  \
 geho "            \___|                ║                                   "
 geho ""
 geho "                       DEVELOPED & MAINTAINED BY: "
-geho ""                                
-geho "                            Anticevic Lab                                    " 
-geho "                       MBLab led by Grega Repovs                             "
+geho ""
+geho "                    Anticevic Lab, Yale University                           "
+geho "               Mind & Brain Lab, University of Ljubljana                     "
+geho "                     Murray Lab, Yale University                             "
 geho ""
 geho "                      COPYRIGHT & LICENSE NOTICE:                            "
 geho ""
@@ -118,7 +119,6 @@ geho ""
 # ------------------------------------------------------------------------------
 
 show_usage() {
-show_splash
 echo ""
 echo "                     ===============================                        "
 echo "                           General Qu|Nex Usage                             "
