@@ -540,7 +540,7 @@ def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', ove
         else:
             tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessionsList, overwrite, "    ", nameformat)
             if tfile:
-                status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
+                status, msg = gc.moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
                 allOk = allOk and status
                 if not status:
                     errors += msg
@@ -1071,7 +1071,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
             imgn += 1
             tfile = os.path.join(nfolder, "%02d.nii.gz" % (imgn))
-            status = moveLinkOrCopy(fileInfo['path'], tfile, action='link')
+            status = gc.moveLinkOrCopy(fileInfo['path'], tfile, action='link')
 
             if status:
                 nmapped += 1
@@ -1185,11 +1185,11 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
             status = True
             if ('dMRI' in fileInfo['parts'] or 'DWI' in fileInfo['parts']) and not 'SBRef' in fileInfo['parts']:
-                statusA = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
+                statusA = gc.moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
                 if statusA:
                     print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'))                    
 
-                statusB = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link')
+                statusB = gc.moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link')
                 if statusB:
                     print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'))                    
 

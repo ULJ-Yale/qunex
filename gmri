@@ -255,6 +255,9 @@ def runCommand(command, args):
     if folders['basefolder']:
         niu.g_utilities.checkStudy(folders['basefolder'])
 
+    # --- check if command is deprecated
+    command = gcom.checkDeprecatedCommands(command)
+
     # --- sort commands by type
 
     if command in gcom.commands:

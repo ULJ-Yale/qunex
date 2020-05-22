@@ -8,7 +8,6 @@ Definition of commands used in gmri along with their parameters.
 
 import g_dicom
 import g_bids
-import g_hcpls
 import g_4dfp
 import g_NIfTI
 import g_img
@@ -20,6 +19,8 @@ import g_palm
 import g_scheduler
 import g_dicomdeid
 
+from HCP import gi_HCP
+
 commands = {'listDicom'            : {'com': g_dicom.listDicom,              'args': ('folder', )},
             'splitDicom'           : {'com': g_dicom.splitDicom,             'args': ('folder', )},
             'sortDicom'            : {'com': g_dicom.sortDicom,              'args': ('folder', 'out_dir', 'files', 'copy')},
@@ -29,9 +30,9 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
             'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite', 'fileinfo')},
-            'HCPLSImport'          : {'com': g_hcpls.importHCP,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
-            'importHCP'          : {'com': g_hcpls.importHCP,                'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
-            'mapHCPLS2nii'         : {'com': g_hcpls.mapHCPLS2nii,           'args': ('sfolder', 'overwrite', 'filesort')},
+            'HCPLSImport'          : {'com': gi_HCP.importHCP,               'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
+            'importHCP'            : {'com': gi_HCP.importHCP,               'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
+            'mapHCPLS2nii'         : {'com': gi_HCP.mapHCPLS2nii,            'args': ('sfolder', 'overwrite', 'filesort')},
             'runNILFolder'         : {'com': g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'sfile')},
             'runNIL'               : {'com': g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'sfile')},
             'fz2zf'                : {'com': g_NIfTI.fz2zf,                  'args': ('inf', 'outf')},
@@ -69,3 +70,21 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             }
 
 extraParameters = ['sessions', 'filter', 'subjid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder', 'sperlist', 'runinpar', 'ignore']
+
+deprecated_commands = {'HCPLSImport': 'importHCP'}
+
+def checkDeprecatedCommands(command):
+    '''
+    checkDeprecatedCommands(options, deprecatedCommands)
+    Checks for deprecated commands, remaps deprecated ones
+    and notifes the user.
+    '''
+
+    newCommand = command
+    for deprecatedName, newName in deprecated_commands.items():
+        if command == deprecatedName:
+            newCommand = newName
+            print "\nWARNING: Use of deprecated command!"
+            print "Command %s is now known as %s.\n" % (command, newCommand)
+
+    return newCommand

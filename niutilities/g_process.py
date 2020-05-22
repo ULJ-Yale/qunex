@@ -150,6 +150,11 @@ def updateOptions(session, options):
 
 
 def mapDeprecated(options, tomap, mapValues, deprecatedList):
+    '''
+    mapDeprecated(options, tomap, mapValues, deprecatedList)
+    Checks for deprecated parameters, remaps deprecated ones
+    and notifes the user.
+    '''
 
     remapped   = []
     deprecated = []
@@ -197,7 +202,7 @@ def mapDeprecated(options, tomap, mapValues, deprecatedList):
         print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have new names:"
         for k, v, n in newvalues:
             print "         ... %s (%s) is now %s!" % (str(v), k, n)            
-        print "         Please correct the listed parameter values in command line or batch file!" 
+        print "         Please correct the listed parameter values in command line or batch file!"
 
 
 # =======================================================================
@@ -443,7 +448,7 @@ deprecated = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams',
               'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams',
               'hcp_bold_sequencetype': None,
               'hcp_biascorrect_t1w': None}
-  
+
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -571,6 +576,8 @@ def run(command, args):
 
     # --------------------------------------------------------------------------
     #                                                            Parsing options
+
+    # --- set command
 
     options = {'command_ran': command}
 
