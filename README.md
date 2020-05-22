@@ -59,7 +59,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
-* 0.51.13 [connector, library] Splash screen update, added gpu_binaries and  montage templates.
+* 0.51.13 [connector, library] Splash screen update, added gpu_binaries and montage templates.
 * 0.51.12 [niutilities] External command calls are now printed in stdout and at the beginning of comlogs.
 * 0.51.11 [niutilities] Consistent jobname in scheduling between qunex and qunexContainer.
 * 0.51.10 [connector, library, nitools, niutilities] License and README updates.
