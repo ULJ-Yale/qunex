@@ -103,7 +103,7 @@ weho() {
 # source $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="createStudy mapRawData organizeDicom processInbox getHCPReady setupHCP createBatch mapIO hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy eddyQC runQC_DWIeddyQC RunQC_DWIeddyQC FSLDtifit runQC_DWIDTIFIT RunQC_DWIDTIFIT FSLBedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIBedpostX RunQC_DWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+QuNexTurnkeyWorkflow="createStudy mapRawData organizeDicom importDICOM getHCPReady setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy eddyQC runQC_DWIeddyQC RunQC_DWIeddyQC FSLDtifit runQC_DWIDTIFIT RunQC_DWIDTIFIT FSLBedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIBedpostX RunQC_DWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5"
 QuNexTurnkeyClean="hcp4"
@@ -983,8 +983,8 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
     geho " -- Mapping existing data into place to support the first turnkey step: ${firstStep}"; echo ""
     # --- Work through the mapping steps
     case ${firstStep} in
-        processInbox)
-            # --- rsync relevant dependencies if processInbox is starting point 
+        importDICOM)
+            # --- rsync relevant dependencies if importDICOM is starting point 
             RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
@@ -1418,12 +1418,12 @@ fi
 
             if [[ ${INTYPE} == "zip" ]]; then 
                 geho "  --> processing a single BIDS formated package [${CASE}.zip]" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QuNexCommand} BIDSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QuNexCommand} BIDSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} importBIDS --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                ${QuNexCommand} importBIDS --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
                 geho "  --> processing a single BIDS session [${CASE}] from the BIDS dataset" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QuNexCommand} BIDSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QuNexCommand} BIDSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} importBIDS --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                ${QuNexCommand} importBIDS --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             fi
 
             popd 2> /dev/null
@@ -1441,7 +1441,7 @@ fi
             fi
             if [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho " -- BIDSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files." 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho " -- importBIDS successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files." 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 FILECHECK="pass"
             else
@@ -1580,49 +1580,49 @@ fi
         fi
     }
     
-    # -- processInbox for DICOMs
-    turnkey_processInbox() {
+    # -- importDICOM
+    turnkey_importDICOM() {
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        processInbox_Runlog="${QuNexMasterLogFolder}/runlogs/Log-processInbox_${TimeStamp}.log"
-        processInbox_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
-        processInbox_ComlogError="${QuNexMasterLogFolder}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
-        processInbox_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
+        importDICOM_Runlog="${QuNexMasterLogFolder}/runlogs/Log-importDICOM_${TimeStamp}.log"
+        importDICOM_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_importDICOM_${CASE}_${TimeStamp}.log"; touch ${importDICOM_ComlogTmp}; chmod 777 ${importDICOM_ComlogTmp}
+        importDICOM_ComlogError="${QuNexMasterLogFolder}/comlogs/error_importDICOM_${CASE}_${TimeStamp}.log"
+        importDICOM_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_importDICOM_${CASE}_${TimeStamp}.log"
         if [[ ${DATAFormat} == "DICOM" ]]; then
             # ------------------------------ non-XNAT code
-            echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
-            cyaneho " ===> RunTurnkey ~~~ RUNNING: processInbox ..." 2>&1 | tee -a ${processInbox_ComlogTmp}
-            echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
+            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
+            cyaneho " ===> RunTurnkey ~~~ RUNNING: importDICOM ..." 2>&1 | tee -a ${importDICOM_ComlogTmp}
+            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
 
-            ExecuteCall="${QuNexCommand} processInbox --subjectsfolder='${QuNexSubjectsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QuNexCommand} importDICOM --subjectsfolder='${QuNexSubjectsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"
             echo ""
-            eval ${ExecuteCall} 2>&1 | tee -a ${processInbox_ComlogTmp}
+            eval ${ExecuteCall} 2>&1 | tee -a ${importDICOM_ComlogTmp}
             cd ${QuNexSubjectsFolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done            
 
             # ------------------------------ XNAT code
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
-                echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
-                geho "---> Cleaning up XNAT run working directory and removing inbox folder" 2>&1 | tee -a ${processInbox_ComlogTmp}
-                echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
+                echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
+                geho "---> Cleaning up XNAT run working directory and removing inbox folder" 2>&1 | tee -a ${importDICOM_ComlogTmp}
+                echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
                 rm -rf ${QuNexWorkDir}/inbox &> /dev/null
             fi
             # ------------------------------ END XNAT code
 
-            if [[ ! -z `cat ${processInbox_ComlogTmp} | grep 'Successful completion'` ]]; then processInboxCheck="pass"; else processInboxCheck="fail"; fi
-            if [[ ${processInboxCheck} == "pass" ]]; then
-                mv ${processInbox_ComlogTmp} ${processInbox_ComlogDone}
-                processInbox_Comlog=${processInbox_ComlogDone}
+            if [[ ! -z `cat ${importDICOM_ComlogTmp} | grep 'Successful completion'` ]]; then importDICOMCheck="pass"; else importDICOMCheck="fail"; fi
+            if [[ ${importDICOMCheck} == "pass" ]]; then
+                mv ${importDICOM_ComlogTmp} ${importDICOM_ComlogDone}
+                importDICOM_Comlog=${importDICOM_ComlogDone}
             else
-               mv ${processInbox_ComlogTmp} ${processInbox_ComlogError}
-               processInbox_Comlog=${processInbox_ComlogError}
+               mv ${importDICOM_ComlogTmp} ${importDICOM_ComlogError}
+               importDICOM_Comlog=${importDICOM_ComlogError}
             fi            
         else
-            echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
-            cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format." 2>&1 | tee -a ${processInbox_ComlogTmp}            
-            echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
-            mv "${processInbox_ComlogTmp}" "${processInbox_ComlogDone}"
+            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
+            cyaneho " ===> RunTurnkey ~~~ SKIPPING: importDICOM because data is not in DICOM format." 2>&1 | tee -a ${importDICOM_ComlogTmp}            
+            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
+            mv "${importDICOM_ComlogTmp}" "${importDICOM_ComlogDone}"
         fi
     }
      
