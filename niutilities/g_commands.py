@@ -6,6 +6,7 @@ g_commands.py
 Definition of commands used in gmri along with their parameters.
 """
 
+# general imports
 import g_dicom
 import g_bids
 import g_4dfp
@@ -19,16 +20,20 @@ import g_palm
 import g_scheduler
 import g_dicomdeid
 
-from HCP import gi_HCP
+# pipeline imports
+from HCP import gi_HCP, gs_HCP, ge_HCP
 
+# all command mappings
 commands = {'listDicom'            : {'com': g_dicom.listDicom,              'args': ('folder', )},
             'splitDicom'           : {'com': g_dicom.splitDicom,             'args': ('folder', )},
             'sortDicom'            : {'com': g_dicom.sortDicom,              'args': ('folder', 'out_dir', 'files', 'copy')},
             'dicom2nii'            : {'com': g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'parelements', 'debug')},
             'dicom2niix'           : {'com': g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'parelements', 'debug', 'tool', 'options')},
-            'processInbox'         : {'com': g_dicom.processInbox,           'args': ('subjectsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose', 'overwrite')},
+            'importDICOM'          : {'com': g_dicom.importDICOM,           'args': ('subjectsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose', 'overwrite')},
+            'processInbox'         : {'com': g_dicom.importDICOM,           'args': ('subjectsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose', 'overwrite')},
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
-            'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
+            'importBIDS'           : {'com': g_bids.importBIDS,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
+            'BIDSImport'           : {'com': g_bids.importBIDS,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite', 'fileinfo')},
             'HCPLSImport'          : {'com': gi_HCP.importHCP,               'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
             'importHCP'            : {'com': gi_HCP.importHCP,               'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
@@ -40,7 +45,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'reslice'              : {'com': g_NIfTI.reslice,                'args': ('inf', 'slices', 'outf')},
             'sliceImage'           : {'com': g_img.sliceImage,               'args': ('sfile', 'tfile', 'frames')},
             'nifti24dfp'           : {'com': g_NIfTI.nifti24dfp,             'args': ('inf', 'outf')},
-            'setupHCP'             : {'com': g_HCP.setupHCP,                 'args': ('sfolder', 'tfolder', 'sfile', 'check', 'existing', 'filename', 'folderstructure', 'hcp_suffix')},
+            'setupHCP'             : {'com': gs_HCP.setupHCP,                'args': ('sfolder', 'tfolder', 'sfile', 'check', 'existing', 'filename', 'folderstructure', 'hcp_suffix')},
             'setupHCPFolder'       : {'com': g_HCP.setupHCPFolder,           'args': ('subjectsfolder', 'tfolder', 'sfile', 'check')},
             'getHCPReady'          : {'com': g_HCP.getHCPReady,              'args': ('sessions', 'subjectsfolder', 'sfile', 'tfile', 'mapping', 'sfilter', 'overwrite')},
             'printniftihdr'        : {'com': g_img.printniftihdr,            'args': ('filename', )},
@@ -52,7 +57,8 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'gatherBehavior'       : {'com': g_utilities.gatherBehavior,     'args': ('subjectsfolder', 'sessions', 'sfilter', 'sfile', 'tfile', 'overwrite', 'check', 'report')},
             'pullSequenceNames'    : {'com': g_utilities.pullSequenceNames,  'args': ('subjectsfolder', 'sessions', 'sfilter', 'sfile', 'tfile', 'overwrite', 'check', 'report')},
             'batchTag2NameKey'     : {'com': g_utilities.batchTag2NameKey,   'args': ('filename', 'subjid', 'bolds', 'output', 'prefix')},
-            'mapIO'                : {'com': g_utilities.mapIO,              'args': ('subjectsfolder', 'sessions', 'sfilter', 'subjid', 'maptype', 'mapaction', 'mapfrom', 'mapto', 'overwrite', 'mapexclude', 'hcp_suffix', 'verbose')},
+            'exportHCP'            : {'com': ge_HCP.exportHCP,               'args': ('subjectsfolder', 'sessions', 'sfilter', 'subjid', 'maptype', 'mapaction', 'mapfrom', 'mapto', 'overwrite', 'mapexclude', 'hcp_suffix', 'verbose')},
+            'mapIO'                : {'com': ge_HCP.exportHCP,               'args': ('subjectsfolder', 'sessions', 'sfilter', 'subjid', 'maptype', 'mapaction', 'mapfrom', 'mapto', 'overwrite', 'mapexclude', 'hcp_suffix', 'verbose')},
             'joinFidl'             : {'com': g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
             'joinFidlFolder'       : {'com': g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},
             'splitFidl'            : {'com': g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
@@ -71,7 +77,11 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
 
 extraParameters = ['sessions', 'filter', 'subjid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder', 'sperlist', 'runinpar', 'ignore']
 
-deprecated_commands = {'HCPLSImport': 'importHCP'}
+# a dictonary of deprecated commands ("oldCommand": "newCommand")
+deprecated_commands = {"HCPLSImport": "importHCP",
+                       "BIDSImport": "importBIDS",
+                       "processInbox": "importDICOM",
+                       "mapIO": "exportHCP"}
 
 def checkDeprecatedCommands(command):
     '''
@@ -80,8 +90,11 @@ def checkDeprecatedCommands(command):
     and notifes the user.
     '''
 
+    # store the command
     newCommand = command
+    # is it depreacted?
     for deprecatedName, newName in deprecated_commands.items():
+        # if deprecated warn the user and call the new one
         if command == deprecatedName:
             newCommand = newName
             print "\nWARNING: Use of deprecated command!"

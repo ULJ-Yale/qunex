@@ -1,7 +1,9 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-This file holds code for running HCP preprocessing and image mapping. It
+gp_HCP.py
+
+This file holds code for running HCP preprocessing pipeline. It
 consists of functions:
 
 * hcpPreFS              ... runs HCP PreFS preprocessing
@@ -29,9 +31,10 @@ from the command line using `qunex` command. Help is available through:
 There are additional support functions that are not to be used
 directly.
 
-Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
-Copyright (c) Grega Repovs. All rights reserved.
+
+Copyright (c) Grega Repovs and Jure Demsar.
+All rights reserved.
 """
 
 from gp_core import *

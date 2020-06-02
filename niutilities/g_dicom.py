@@ -11,7 +11,7 @@ Functions for processing dicom images and converting them to NIfTI format:
 * sortDicom       ... sorts the DICOM files into subfolders according to images
 * listDicom       ... list the information on DICOM files
 * splitDicom      ... split files from different sessions
-* processInbox    ... processes incoming data
+* importDICOM     ... processes incoming data
 * getDICOMInfo    ... prints HCP relevant information from a DICOM file
 
 The commands are accessible from the terminal using gmri utility.
@@ -1785,9 +1785,9 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
+def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
     '''
-    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]  
+    importDICOM [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]  
 
     USE
     ===
@@ -2066,7 +2066,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     processed, after the user gives a go-ahead to an interactive prompt:
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="<path_to_studyfolder>/subjects"
     ```
     
@@ -2074,7 +2074,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     found, then the command should be:
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="<path_to_studyfolder>/subjects" \
         --check="any"
     ```
@@ -2083,7 +2083,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     the `sessions` parameter has to be added:
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="<path_to_studyfolder>/subjects" \
         --sessions="AP.*,HQ.*" \
         --check="any"
@@ -2094,7 +2094,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     following `pattern` parameter needs to be added:
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="<path_to_studyfolder>/subjects" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
@@ -2105,7 +2105,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     'Yale-AP4876_Baseline.zip', then a `nameformat` parameter needs to be added:
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="<path_to_studyfolder>/subjects" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
@@ -2121,7 +2121,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     then the command is changed to:
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="<path_to_studyfolder>/subjects" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
@@ -2143,7 +2143,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     Then these are a set of possible commands:
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="/studies/myStudy/subjects" \
         --masterinbox="none" \
         --sessions="S*" 
@@ -2153,7 +2153,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     and (by default) moved to `/studies/myStudy/subjects/archive/MR`.
     
     ```
-    qunex processInbox \
+    qunex importDICOM \
         --subjectsfolder="/studies/myStudy/subjects" \
         --masterinbox="none" \
         --sessions="*baseline" \
@@ -2199,12 +2199,12 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
              - Added ovewrite parameter
     '''
 
-    print "Running processInbox\n===================="
+    print "Running importDICOM\n===================="
 
     # check settings
 
     if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
-        raise ge.CommandError('processInbox', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
+        raise ge.CommandError('importDICOM', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
     verbose = verbose.lower() == 'yes'
 
@@ -2219,7 +2219,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     if masterinbox.lower() == 'none':
         masterinbox = None
         if sessions is None or sessions == "":
-            raise ge.CommandError('processInbox', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
+            raise ge.CommandError('importDICOM', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
 
     if pattern is None:
         pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
@@ -2240,18 +2240,18 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
         log = dict([[f.strip() for f in e.split(':')] for e in logfile.split('|')])
 
         if not all([e in log for e in ['path', 'subject_id', 'packet_name']]):
-            raise ge.CommandFailed("processInbox", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
+            raise ge.CommandFailed("importDICOM", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
 
         try:
             for key in [e for e in log.keys() if e in ['packet_name', 'subject_id', 'session_name']]:
                 log[key] = int(log[key]) - 1
         except:
-            raise ge.CommandFailed("processInbox", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
+            raise ge.CommandFailed("importDICOM", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
 
         sessionname = 'session_name' in log
 
         if not os.path.exists(log['path']):
-            raise ge.CommandFailed("processInbox", "Logfile does not exist", "The specified logfile does not exist:", log['path'], "Please check your paths!")
+            raise ge.CommandFailed("importDICOM", "Logfile does not exist", "The specified logfile does not exist:", log['path'], "Please check your paths!")
 
         print "---> Reading acquisition log [%s]." % (log['path'])
         sessionsInfo = {}
@@ -2291,11 +2291,11 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
         try:
             getop = re.compile(pattern)
         except:
-            raise ge.CommandFailed("processInbox", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
+            raise ge.CommandFailed("importDICOM", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
         try:
             getid = re.compile(nameformat)
         except:
-            raise ge.CommandFailed("processInbox", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
+            raise ge.CommandFailed("importDICOM", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
 
         for file in files:
             m = getop.search(os.path.basename(file))
@@ -2350,7 +2350,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     else:
 
         if not sessions:
-            raise ge.CommandFailed("processInbox", "Input data not specified", "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
+            raise ge.CommandFailed("importDICOM", "Input data not specified", "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
 
         reportSet = [('ok', '---> Found the following folders to process:'),
                      ('invalid', "---> For these folders the folder name could not parsed and they won't be processed:"),
@@ -2433,14 +2433,14 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     else:        
         if check.lower() == 'any':
             if masterinbox:
-                raise ge.CommandFailed("processInbox", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
+                raise ge.CommandFailed("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
             else:
-                raise ge.CommandFailed("processInbox", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder)), "Please check your data!")                
+                raise ge.CommandFailed("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder)), "Please check your data!")                
         else:
             if masterinbox:
-                raise ge.CommandNull("processInbox", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
+                raise ge.CommandNull("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
             else:
-                raise ge.CommandNull("processInbox", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder))) 
+                raise ge.CommandNull("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder))) 
                 
 
     # ---- Ok, now loop through the packets
@@ -2513,7 +2513,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                         z = zipfile.ZipFile(p, 'r')
                     except:
                         e = sys.exc_info()[0]
-                        raise ge.CommandFailed("processInbox", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (p, e), "Please check your data!")                
+                        raise ge.CommandFailed("importDICOM", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (p, e), "Please check your data!")                
 
                     ilist = z.infolist()
                     for sf in ilist:
@@ -2681,7 +2681,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
             print "... %s [%s]" % (session['sessionid'], file)
             for note in notes:
                 print "    %s" % (note)
-        raise ge.CommandFailed("processInbox", "Some packages failed to process", "Please check report!")
+        raise ge.CommandFailed("importDICOM", "Some packages failed to process", "Please check report!")
 
     return
 

@@ -1,7 +1,10 @@
 import sys
 import gi_HCP
+import gs_HCP
+import gp_HCP
+import ge_HCP
 
-__all__ = ["gi_HCP"]
+__all__ = ["gi_HCP", "gs_HCP", "gp_HCP", "ge_HCP"]
 
 class Unbuffered(object):
    def __init__(self, stream):

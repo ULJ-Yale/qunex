@@ -30,20 +30,20 @@ Changelog
            in subject_hcp.txt.
 """
 
+# general imports
 import g_core
-import gp_HCP
 import gp_workflow
 import gp_simple
 import gp_FS
 import g_scheduler
 import os
 import os.path
-
 from datetime import datetime
 import niutilities.g_exceptions as ge
-
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+# pipelines imports
+from HCP import gp_HCP
 
 # =======================================================================
 #                                                                 GLOBALS

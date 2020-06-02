@@ -1,15 +1,16 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_hcplifespan.py
+gi_HCP.py
 
-Functions for importing HCP Lifespan data to Qu|Nex file structure.
+Functions for importing HCP style data into Qu|Nex:
 
-* importHCP      ... maps HCP Lifespan data to Qu|Nex structure
+* importHCP     ... maps HCP style data to Qu|Nex structure
 
-The commands are accessible from the terminal using gmri utility.
+The commands are accessible from the terminal using the gmri utility.
 
-Copyright (c) Grega Repovs. All rights reserved.
+Copyright (c) Grega Repovs and Jure Demsar.
+All rights reserved.
 """
 
 import os
@@ -389,7 +390,7 @@ def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', ove
 
     Changelog
     2019-01-19 Grega Repovš
-             - Initial version adopted from BIDSImport
+             - Initial version adopted from importBIDS
     2019-05-22 Grega Repovš
              - Added nameformat as input
     2019-08-06 Grega Repovš

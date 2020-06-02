@@ -81,12 +81,12 @@ splitDicom   [folder=.]
 sortDicom    [folder=.]
 dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
 dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [parelements=1] [tool=auto]
-processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
+importDICOM  [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
 import utilities
 ----------------
-BIDSImport   [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+importBIDS   [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
 mapBIDS2nii  [sfolder='.'] [overwrite='no']
 importHCP    [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
 mapHCPLS2nii [sfolder='.'] [overwrite='no']
