@@ -115,9 +115,8 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-getHCPReady    sessions=<sessions specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
-setupHCP       [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
-setupHCPFolder [subjectsfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=interactive]
+createSessionInfo sessions=<sessions specification> pipeline=<pipeline specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
+setupHCP          [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
 
 
 Miscellaneous file utilities

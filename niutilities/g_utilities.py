@@ -1444,7 +1444,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     ---
     list: prepareHCP
 
-        command: getHCPReady
+        command: createSessionInfo
+            pipeline: HCP
 
         command: createBatch
             tfile: /data/testStudy/processing/batch_baseline.txt
@@ -2536,3 +2537,301 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
 
     if not processReport['ok']:
         raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
+
+# prepare variables for data export
+def exportPrep(commandName, subjectsfolder, mapto, mapaction, mapexclude):
+    if os.path.exists(subjectsfolder):
+        subjectsfolder = os.path.abspath(subjectsfolder)
+    else:
+        raise ge.CommandFailed(commandName, "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
+
+    if mapto:
+        mapto = os.path.abspath(mapto)
+    else:
+        raise ge.CommandFailed(commandName, "Target not specified", "To execute the specified mapping `mapto` parameter has to be specified!", "Please check your command call!")
+
+    if mapaction not in ['link', 'copy', 'move']:
+        raise ge.CommandFailed(commandName, "Invalid action", "The action specified is not valid!", "Please specify a valid action!")
+
+    # -- prepare exclusion
+    if mapexclude:
+        patterns = [e.strip() for e in re.split(', *', mapexclude)]
+        mapexclude = []
+        for e in patterns:
+            try:
+                mapexclude.append(re.compile(e))
+            except:
+                raise ge.CommandFailed(commandName, "Invalid exclusion" , "Could not parse the exclusion regular expression: '%s'!" % (e), "Please check mapexclude parameter!")
+
+    return subjectsfolder, mapto, mapexclude
+
+# prepares subject.txt files for specific pipeline mapping
+def createSessionInfo(sessions=None, pipeline="HCP", subjectsfolder=".", sfile="subject.txt", tfile=None, mapping=None, sfilter=None, overwrite="no"):
+    '''
+    createSessionInfo sessions=<sessions specification> [pipeline=HCP] [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [sfilter=None] [overwrite=no]
+
+    USE
+    ===
+
+    The command is used to prepare subject.txt files so that they hold the
+    information necessary for correct mapping to a folder structure supporting
+    specific pipeline preprocessing.
+
+    For all the sessions specified, the command checks for the presence of
+    specified source file (sfile). If the source file is found, each sequence
+    name is checked against the source specified in the mapping file (mapping),
+    and the specified label is aded. The results are then saved to the specified
+    target file (tfile). The resulting session infomation files will have
+    "<pipeline>ready: true" key-value pair added.
+
+    PARAMETERS
+    ==========
+
+    --sessions       Either an explicit list (space, comma or pipe separated) of
+                     sessions to process or the path to a batch or list file with
+                     sessions to process. If left unspecified, "*" will be used 
+                     and all folders within subjectfolder will be processed.
+    --pipeline       Specify the pipeline for which the session info will be
+                     be prepared. [HCP].
+    --subjectsfolder The directory that holds sessions' folders. [.]
+    --sfile          The "source" subject.txt file. [subject.txt]
+    --tfile          The "target" subject.txt file. [subject_<pipeline>.txt]
+    --mapping        The path to the text file describing the mapping.
+                     [specs/<pipeline>_mapping.txt]
+    --sfilter        An optional "key:value|key:value" string used as a filter
+                     if a batch file is used. Only sessions for which all the
+                     key:value pairs are true will be processed. All the
+                     sessions will be processed if no filter is provided.
+    --overwrite      Whether to overwrite target files that already exist (yes)
+                     or not (no). [no]
+
+    If an explicit list is provided, each element is treated as a glob pattern
+    and the command will process all matching session ids.
+
+    Mapping specification
+    ---------------------
+
+    The mapping file specifies the mapping between original sequence names and
+    the desired pipeline labels. There are no limits to the number of mappings
+    specified. Each mapping is to be specified in a single line in a form:
+
+    <original_sequence_name>  => <user_specified_label>
+
+    or
+
+    <sequence number> => <user_specified_label>
+
+    BOLD files should be given a compound label after the => separator:
+
+    <original_sequence_name>  => bold:<user_specified_label>
+
+    as this allows for flexible labeling of distinct BOLD runs based on their
+    content. Here the 'bold' part denotes that it is a bold file and the
+    <user_speficied_label> allows for flexibility in naming. createSessionInfo
+    will automatically number bold images in a sequential order, starting with 1.
+
+    Any empty lines, lines starting with #, and lines without the "map to" =>
+    characters in the mapping file will be ingored. In the target file, images
+    with names that do not match any of the specified mappings will be given
+    empty labels. When both sequence number and sequence name match, sequence
+    number will have priority
+
+    Example
+    -------
+
+    Example lines in a mapping file:
+
+    C-BOLD 3mm 48 2.5s FS-P => SE-FM-AP
+    C-BOLD 3mm 48 2.5s FS-A => SE-FM-PA
+
+    T1w 0.7mm N1 => T1w
+    T1w 0.7mm N2 => T1w
+    T2w 0.7mm N1 => T2w
+    T2w 0.7mm N2 => T2w
+
+    RSBOLD 3mm 48 2.5s  => bold:rest
+    BOLD 3mm 48 2.5s    => bold:WM
+
+    5 => bold:sleep
+
+    Example lines in a source subject.txt file:
+
+    01: Scout
+    02: T1w 0.7mm N1
+    03: T2w 0.7mm N1
+    04: RSBOLD 3mm 48 2.5s
+    05: RSBOLD 3mm 48 2.5s
+
+    Resulting lines in target subject_<pipeline>.txt file:
+
+    01:                  :Scout
+    02: T1w              :T1w 0.7mm N1
+    03: T2w              :T2w 0.7mm N1
+    04: bold1:rest       :RSBOLD 3mm 48 2.5s
+    05: bold2:sleep      :RSBOLD 3mm 48 2.5s
+
+    Note, that the old sequence names are perserved.
+
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex createSessionInfo sessions="OP*|AP*" pipeline=HCP subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    ```
+    
+    ```
+    qunex createSessionInfo sessions="processing/batch_new.txt" pipeline=HCP subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    ```
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-07 Grega Repovš
+             - Updated documentation.
+    2017-12-26 Grega Repovš
+             - Set to ignore lines that start with # in mapping file.
+    2017-12-30 Grega Repovš
+             - Added the option to explicitly specify the subjects to process.
+             - Adjusted and expanded help string.
+             - Added the option to map sequence names.
+    2019-04-07 Grega Repovš
+             - Added more detailed report with explicit failure in case of missing source files.
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
+    2020-06-03 Jure Demšar
+             - Renamed getHCPReady to createSessionInfo
+    '''
+
+    print "Running createSessionInfo\n==================="
+
+    if sessions is None:
+        sessions = "*"
+
+    if mapping is None:
+        mapping = os.path.join(subjectsfolder, 'specs', '%s_mapping.txt' % pipeline)
+
+    if tfile is None:
+        tfile = "subject_%s.txt" % pipeline
+
+    # -- get mapping ready
+
+    if not os.path.exists(mapping):
+        raise ge.CommandFailed("createSessionInfo", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
+
+    print " ... Reading pipeline mapping from %s" % (mapping)
+
+    mapping = [line.strip() for line in open(mapping) if line[0] != "#"]
+    mapping = [e.split('=>') for e in mapping]
+    mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
+    mappingNumber = dict([[int(e[0]), e[1]] for e in mapping if e[0].isdigit()])
+    mappingName   = dict([e for e in mapping if not e[0].isdigit()])
+
+    if not mapping:
+        raise ge.CommandFailed("createSessionInfo", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
+
+    # -- get list of session folders
+
+    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False)
+
+    sfolders = []
+    for session in sessions:
+        newSet = glob.glob(os.path.join(subjectsfolder, session['id']))
+        if not newSet:
+            print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, session['id']))
+        sfolders += newSet
+
+    # -- check if we have any
+
+    if not sfolders:
+        raise ge.CommandFailed("createSessionInfo", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
+
+    # -- loop through sessions folders
+
+    report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': []}
+    
+    for sfolder in sfolders:
+
+        ssfile = os.path.join(sfolder, sfile)
+        stfile = os.path.join(sfolder, tfile)
+
+        if not os.path.exists(ssfile):
+            report['missing source'].append(sfolder)
+            continue
+        print " ... Processing folder %s" % (sfolder)
+
+        if os.path.exists(stfile) and overwrite != "yes":
+            print "     ... Target file already exists, skipping! [%s]" % (stfile)
+            report['pre-existing target'].append(sfolder)
+            continue
+
+        lines = [line.strip() for line in open(ssfile)]
+
+        images = False
+        pipelineok = False
+        bold = 0
+        nlines = []
+        hasref = False
+        for line in lines:
+            e = line.split(':')
+            if len(e) > 1:
+                if e[0].strip() == '%sready' % pipeline and e[1].strip() == 'true':
+                    pipelineok = True
+                if e[0].strip().isdigit():
+                    if not images:
+                        nlines.append('%sready: true' % pipeline)
+                        images = True
+
+                    onum = int(e[0].strip())
+                    oimg = e[1].strip()
+                    if onum in mappingNumber:
+                        repl  = mappingNumber[onum]
+                    elif oimg in mappingName:
+                        repl  = mappingName[oimg]
+                    else:
+                        repl  = " "
+
+                    if 'boldref' in repl:
+                        bold += 1
+                        repl = repl.replace('boldref', 'boldref%d' % (bold))
+                        hasref = True
+                    elif 'bold' in repl:
+                        if hasref:
+                            hasref = False
+                        else:
+                            bold += 1
+                        repl = repl.replace('bold', 'bold%d' % (bold))
+
+                    e[1] = " %-16s:%s" % (repl, oimg)
+                    nlines.append(":".join(e))
+                else:
+                    nlines.append(line)
+            else:
+                nlines.append(line)
+
+        if pipelineok:
+            print "     ... %s already pipeline ready" % (sfile)
+            if sfile != tfile:
+                shutil.copyfile(sfile, tfile)
+            report['pre-processed source'].append(sfolder)
+        else:
+            print "     ... writing %s" % (tfile)
+            fout = open(stfile, 'w')
+            for line in nlines:
+                print >> fout, line
+            report['processed'].append(sfolder)
+    
+    print "\n===> Final report"
+
+    for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:
+        if report[status]:
+            print "---> sessions with %s file:" % (status)
+            for session in report[status]:
+                print "     -> %s " % (os.path.basename(session))
+
+    if report['missing source']:
+        raise ge.CommandFailed("createSessionInfo", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sfile), "Please check the data and parameters!")
+
+    return
+
