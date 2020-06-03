@@ -2677,11 +2677,11 @@ def createSessionInfo(sessions=None, pipeline="HCP", subjectsfolder=".", sfile="
     ===========
     
     ```
-    qunex createSessionInfo sessions="OP*|AP*" pipeline=HCP subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    qunex createSessionInfo sessions="OP*|AP*" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
     ```
     
     ```
-    qunex createSessionInfo sessions="processing/batch_new.txt" pipeline=HCP subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    qunex createSessionInfo sessions="processing/batch_new.txt" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
     ```
 
     ----------------
