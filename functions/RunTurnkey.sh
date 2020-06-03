@@ -834,8 +834,8 @@ if [[ `echo ${TURNKEY_STEPS} | grep 'createBatch'` ]]; then
     fi
 fi
 
-# -- Perform checks that mapping file is provided if getHCPReady has been requested
-if [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
+# -- Perform checks that mapping file is provided if createSessionInfo has been requested
+if [[ `echo ${TURNKEY_STEPS} | grep 'createSessionInfo'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "ERROR: --mappingfile flag missing. Mapping parameter file not specified."; echo ''; exit 1;  fi
     fi
@@ -989,14 +989,14 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        getHCPReady|setupHCP)
-            # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
+        createSessionInfo|setupHCP)
+            # --- rsync relevant dependencies if createSessionInfo or setupHCP is starting point 
             RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         createBatch)
-            # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
+            # --- rsync relevant dependencies if createSessionInfo or setupHCP is starting point 
             RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='/processing' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
@@ -1627,41 +1627,41 @@ fi
     }
      
     # -- Generate subject_hcp.txt file
-    turnkey_getHCPReady() {
+    turnkey_createSessionInfo() {
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        getHCPReady_Runlog="${QuNexMasterLogFolder}/runlogs/Log-getHCPReady_${TimeStamp}.log"
-        getHCPReady_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_getHCPReady_${CASE}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
-        getHCPReady_ComlogError="${QuNexMasterLogFolder}/comlogs/error_getHCPReady_${CASE}_${TimeStamp}.log"
-        getHCPReady_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_getHCPReady_${CASE}_${TimeStamp}.log"
+        createSessionInfo_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createSessionInfo_${TimeStamp}.log"
+        createSessionInfo_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createSessionInfo_${CASE}_${TimeStamp}.log"; touch ${createSessionInfo_ComlogTmp}; chmod 777 ${createSessionInfo_ComlogTmp}
+        createSessionInfo_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createSessionInfo_${CASE}_${TimeStamp}.log"
+        createSessionInfo_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createSessionInfo_${CASE}_${TimeStamp}.log"
         
-        echo ""  2>&1 | tee -a ${getHCPReady_ComlogTmp}
-        cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..." 2>&1 | tee -a ${getHCPReady_ComlogTmp}
-        echo "" 2>&1 | tee -a ${getHCPReady_ComlogTmp}
+        echo ""  2>&1 | tee -a ${createSessionInfo_ComlogTmp}
+        cyaneho " ===> RunTurnkey ~~~ RUNNING: createSessionInfo ..." 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
+        echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
         
         if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
             rm -rf ${QuNexSubjectsFolder}/${CASE}/subject_hcp.txt &> /dev/null
         fi
         if [ -f ${QuNexSubjectsFolder}/subject_hcp.txt ]; then
-            echo "" 2>&1 | tee -a ${getHCPReady_ComlogTmp}
-            geho " ===> ${QuNexSubjectsFolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${getHCPReady_ComlogTmp}
-            echo "" 2>&1 | tee -a ${getHCPReady_ComlogTmp}
+            echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
+            geho " ===> ${QuNexSubjectsFolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
+            echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
             return 0
         fi
         # ------------------------------
-        ExecuteCall="${QuNexCommand} getHCPReady --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${CASE}" --mapping="${SpecsMappingFile}""
+        ExecuteCall="${QuNexCommand} createSessionInfo --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${CASE}" --mapping="${SpecsMappingFile}""
         echo ""
         echo " -- Executed call:"
         echo "    $ExecuteCall"
         echo ""
-        eval ${ExecuteCall}  2>&1 | tee -a ${getHCPReady_ComlogTmp}
+        eval ${ExecuteCall}  2>&1 | tee -a ${createSessionInfo_ComlogTmp}
         
-        if [[ ! -z `cat ${getHCPReady_ComlogTmp} | grep 'Successful completion'` ]]; then getHCPReadyCheck="pass"; else getHCPReadyCheck="fail"; fi
-        if [[ ${getHCPReadyCheck} == "pass" ]]; then
-            mv ${getHCPReady_ComlogTmp} ${getHCPReady_ComlogDone}
-            getHCPReady_Comlog=${getHCPReady_ComlogDone}
+        if [[ ! -z `cat ${createSessionInfo_ComlogTmp} | grep 'Successful completion'` ]]; then createSessionInfoCheck="pass"; else createSessionInfoCheck="fail"; fi
+        if [[ ${createSessionInfoCheck} == "pass" ]]; then
+            mv ${createSessionInfo_ComlogTmp} ${createSessionInfo_ComlogDone}
+            createSessionInfo_Comlog=${createSessionInfo_ComlogDone}
         else
-           mv ${getHCPReady_ComlogTmp} ${getHCPReady_ComlogError}
-           getHCPReady_Comlog=${getHCPReady_ComlogError}
+           mv ${createSessionInfo_ComlogTmp} ${createSessionInfo_ComlogError}
+           createSessionInfo_Comlog=${createSessionInfo_ComlogError}
         fi
         # ------------------------------
     }
