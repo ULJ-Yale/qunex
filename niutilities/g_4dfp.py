@@ -61,7 +61,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
     - overwrite: whether to overwrite existing (params and BOLD) files.
     — sfile: the name of the subject.txt file
 
-    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sfile=subject_hcp.txt
+    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sfile=subject.txt
     '''
 
     if pattern is None:

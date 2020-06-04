@@ -62,7 +62,7 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 
-def manageStudy(studyfolder=None, action="create", verbose=False):
+def manageStudy(studyfolder=None, action="create", pipeline="hcp", verbose=False):
     '''
     manageStudy studyfolder=None action="create"
 
@@ -75,6 +75,7 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
     --studyfolder  : the location of the study folder
     --action       : whether to create a new study folder (create) or check
                      an existing study folder (check)
+    --pipeline     : processing pipeline used [hcp]
     '''
 
     create = action == "create"
@@ -123,7 +124,6 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
             print "\nPreparing template files:"
 
         # --> parameter template
-
         paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
         try:
             f = os.open(paramFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
@@ -146,23 +146,24 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
 
         # --> mapping example
-
-        mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping_example.txt')
-        try:
-            f = os.open(mapFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-            mapcontent = open(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), 'r').read()
-            os.write(f, mapcontent)
-            os.close(f)
-            if verbose:
-                print " ... created hcp_mapping_example.txt file" 
-
-        except OSError as e:
-            if e.errno == errno.EEXIST:
+        if pipeline is not None:
+            mappingExample = "%s_mapping_example.txt" % pipeline
+            mapFile = os.path.join(studyfolder, 'subjects', 'specs', mappingExample)
+            try:
+                f = os.open(mapFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+                mapcontent = open(os.path.join(TemplateFolder, 'templates', mappingExample), 'r').read()
+                os.write(f, mapcontent)
+                os.close(f)
                 if verbose:
-                    print " ... hcp_mapping_example.txt file already exists" 
-            else:
-                errstr = os.strerror(e.errno)
-                raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+                    print " ... created %s file" % mappingExample
+
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    if verbose:
+                        print " ... %s file already exists" % mappingExample
+                else:
+                    errstr = os.strerror(e.errno)
+                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
 
         # --> markFile
         markFile = os.path.join(studyfolder, '.qunexstudy')
@@ -211,7 +212,7 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
 
 
-def createStudy(studyfolder=None):
+def createStudy(studyfolder=None, pipeline="hcp"):
     '''
     createStudy studyfolder=<path to study base folder>
 
@@ -264,7 +265,7 @@ def createStudy(studyfolder=None):
 
     Do note that the command will create all the missing subfolders in which the
     specified study is to reside. The command also prepares template
-    batch_parameters_example.txt and hcp_mapping_example.txt files in
+    batch_parameters_example.txt and <pipeline>_mapping_example.txt files in
     <studyfolder>/subjects/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
@@ -272,6 +273,7 @@ def createStudy(studyfolder=None):
     =========
 
     --studyfolder  ... The path to the study folder to be generated
+    --pipeline     ... pipeline which will be used for processing [hcp].
 
 
     EXAMPLE USE
@@ -308,7 +310,7 @@ def createStudy(studyfolder=None):
     if studyfolder is None:
         raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
-    manageStudy(studyfolder=studyfolder, action="create", verbose=True)
+    manageStudy(studyfolder=studyfolder, action="create", pipeline=pipeline, verbose=True)
 
 
 def checkStudy(startfolder="."):
@@ -335,21 +337,22 @@ def checkStudy(startfolder="."):
         testfolder = os.path.dirname(testfolder)
 
     if studyfolder:
-        manageStudy(studyfolder=studyfolder, action="check")
+        manageStudy(studyfolder=studyfolder, action="check", pipeline=None)
 
     return studyfolder  
 
 
-def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, sessions=None, sfilter=None, overwrite="no", paramfile=None):
+def createBatch(subjectsfolder=".", pipeline="hcp", sfile=None, tfile=None, sessions=None, sfilter=None, overwrite="no", paramfile=None):
     '''
-    createBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=no] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+    createBatch [subjectsfolder=.] [pipeline=hcp] [sfile=subject_<pipeline>.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=no] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
     
     PARAMETERS
     =========
 
     --subjectsfolder  ... The location of the <study>/subjects folder
+    --pipeline        ... Name of the used processing pipeline [hcp]
     --sfile           ... The name of the source file to take from each specified 
-                          session folder and add to batch file [subject_hcp.txt]
+                          session folder and add to batch file [subject_<pipeline>.txt]
     --tfile           ... The path to the batch file to be generated. By default
                           it is created as <study>/processing/batch.txt
     --sessions        ... If provided, only the specified sessions from the 
@@ -453,8 +456,11 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
 
     subjectsfolder = os.path.abspath(subjectsfolder)
 
-    # --- prepare target file name and folder
+    # prepare sfile
+    if sfile is None:
+        sfile = "subject_%s.txt" % pipeline
 
+    # --- prepare target file name and folder
     if tfile is None:
         tfile = os.path.join(os.path.dirname(subjectsfolder), 'processing', 'batch.txt')
 
@@ -2566,9 +2572,9 @@ def exportPrep(commandName, subjectsfolder, mapto, mapaction, mapexclude):
     return subjectsfolder, mapto, mapexclude
 
 # prepares subject.txt files for specific pipeline mapping
-def createSessionInfo(sessions=None, pipeline="HCP", subjectsfolder=".", sfile="subject.txt", tfile=None, mapping=None, sfilter=None, overwrite="no"):
+def createSessionInfo(sessions=None, pipeline="hcp", subjectsfolder=".", sfile="subject.txt", tfile=None, mapping=None, sfilter=None, overwrite="no"):
     '''
-    createSessionInfo sessions=<sessions specification> [pipeline=HCP] [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [sfilter=None] [overwrite=no]
+    createSessionInfo sessions=<sessions specification> [pipeline=hcp] [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [sfilter=None] [overwrite=no]
 
     USE
     ===
@@ -2592,7 +2598,7 @@ def createSessionInfo(sessions=None, pipeline="HCP", subjectsfolder=".", sfile="
                      sessions to process. If left unspecified, "*" will be used 
                      and all folders within subjectfolder will be processed.
     --pipeline       Specify the pipeline for which the session info will be
-                     be prepared. [HCP].
+                     be prepared. [hcp]
     --subjectsfolder The directory that holds sessions' folders. [.]
     --sfile          The "source" subject.txt file. [subject.txt]
     --tfile          The "target" subject.txt file. [subject_<pipeline>.txt]

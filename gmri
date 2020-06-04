@@ -115,14 +115,14 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-createSessionInfo sessions=<sessions specification> pipeline=<pipeline specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
-setupHCP          [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
+createSessionInfo sessions=<sessions specification> [pipeline=hcp] [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [sfilter=None] [overwrite=no]
+setupHCP          [sfolder=.] [tfolder=hcp] [sfile=subject_<pipeline>.txt]
 
 
 Miscellaneous file utilities
 ----------------------------
-createStudy  studyfolder=<path to study base folder>
-createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+createStudy  studyfolder=<path to study base folder> [pipelines=hcp]
+createBatch  [subjectsfolder=.] [sfile=subject_<pipeline>.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 createList  [subjectsfolder=.] [sessions=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 createConc  [subjectsfolder=.] [sessions=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
