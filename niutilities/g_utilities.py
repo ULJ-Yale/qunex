@@ -62,7 +62,7 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 
-def manageStudy(studyfolder=None, action="create", pipeline="hcp", verbose=False):
+def manageStudy(studyfolder=None, action="create", verbose=False):
     '''
     manageStudy studyfolder=None action="create"
 
@@ -75,7 +75,6 @@ def manageStudy(studyfolder=None, action="create", pipeline="hcp", verbose=False
     --studyfolder  : the location of the study folder
     --action       : whether to create a new study folder (create) or check
                      an existing study folder (check)
-    --pipeline     : processing pipeline used [hcp]
     '''
 
     create = action == "create"
@@ -146,21 +145,27 @@ def manageStudy(studyfolder=None, action="create", pipeline="hcp", verbose=False
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
 
         # --> mapping example
-        if pipeline is not None:
-            mappingExample = "%s_mapping_example.txt" % pipeline
-            mapFile = os.path.join(studyfolder, 'subjects', 'specs', mappingExample)
+        # get all files that match the pattern
+        examplesFolder = os.path.join(TemplateFolder, 'templates')
+        mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt"))
+        for srcFile in mappingExamples:
             try:
-                f = os.open(mapFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-                mapcontent = open(os.path.join(TemplateFolder, 'templates', mappingExample), 'r').read()
-                os.write(f, mapcontent)
-                os.close(f)
+                # extract filename only
+                fileName = os.path.basename(srcFile)
+                # destination path and file
+                mapFile = os.path.join(studyfolder, fileName)
+                dstFile = os.open(mapFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+                # read src
+                srcContent = open(srcFile, 'r').read()
+                os.write(dstFile, srcContent)
+                os.close(dstFile)
                 if verbose:
-                    print " ... created %s file" % mappingExample
+                    print " ... created %s file" % dstFile
 
             except OSError as e:
                 if e.errno == errno.EEXIST:
                     if verbose:
-                        print " ... %s file already exists" % mappingExample
+                        print " ... %s file already exists" % dstFile
                 else:
                     errstr = os.strerror(e.errno)
                     raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
@@ -212,7 +217,7 @@ def manageStudy(studyfolder=None, action="create", pipeline="hcp", verbose=False
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
 
 
-def createStudy(studyfolder=None, pipeline="hcp"):
+def createStudy(studyfolder=None):
     '''
     createStudy studyfolder=<path to study base folder>
 
@@ -265,7 +270,7 @@ def createStudy(studyfolder=None, pipeline="hcp"):
 
     Do note that the command will create all the missing subfolders in which the
     specified study is to reside. The command also prepares template
-    batch_parameters_example.txt and <pipeline>_mapping_example.txt files in
+    batch_parameters_example.txt and pipeline example mapping files in
     <studyfolder>/subjects/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
@@ -273,8 +278,6 @@ def createStudy(studyfolder=None, pipeline="hcp"):
     =========
 
     --studyfolder  ... The path to the study folder to be generated
-    --pipeline     ... pipeline which will be used for processing [hcp].
-
 
     EXAMPLE USE
     ===========
@@ -310,7 +313,7 @@ def createStudy(studyfolder=None, pipeline="hcp"):
     if studyfolder is None:
         raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
-    manageStudy(studyfolder=studyfolder, action="create", pipeline=pipeline, verbose=True)
+    manageStudy(studyfolder=studyfolder, action="create", verbose=True)
 
 
 def checkStudy(startfolder="."):
@@ -342,17 +345,17 @@ def checkStudy(startfolder="."):
     return studyfolder  
 
 
-def createBatch(subjectsfolder=".", pipeline="hcp", sfile=None, tfile=None, sessions=None, sfilter=None, overwrite="no", paramfile=None):
+def createBatch(subjectsfolder=".", sfile=None, tfile=None, sessions=None, sfilter=None, overwrite="no", paramfile=None):
     '''
-    createBatch [subjectsfolder=.] [pipeline=hcp] [sfile=subject_<pipeline>.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=no] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+    createBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=no] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
     
     PARAMETERS
     =========
 
     --subjectsfolder  ... The location of the <study>/subjects folder
-    --pipeline        ... Name of the used processing pipeline [hcp]
-    --sfile           ... The name of the source file to take from each specified 
-                          session folder and add to batch file [subject_<pipeline>.txt]
+    --sfile           ... Comma separated names of source files to take from
+                          each specified session folder and add to batch file.
+                          [subject_hcp.txt]
     --tfile           ... The path to the batch file to be generated. By default
                           it is created as <study>/processing/batch.txt
     --sessions        ... If provided, only the specified sessions from the 
@@ -456,9 +459,11 @@ def createBatch(subjectsfolder=".", pipeline="hcp", sfile=None, tfile=None, sess
 
     subjectsfolder = os.path.abspath(subjectsfolder)
 
-    # prepare sfile
+    # get sfiles from sfile parameter
     if sfile is None:
-        sfile = "subject_%s.txt" % pipeline
+        sfiles = "subject_hcp.txt"
+    else
+        sfiles = sfile.split(",")
 
     # --- prepare target file name and folder
     if tfile is None:
@@ -509,7 +514,7 @@ def createBatch(subjectsfolder=".", pipeline="hcp", sfile=None, tfile=None, sess
             jfile = open(tfile, 'w')
             print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
             print >> jfile, "# Subjects folder: %s" % (subjectsfolder)
-            print >> jfile, "# Source files: %s" % (sfile)
+            print >> jfile, "# Source files: %s" % (sfiles)
             
         elif overwrite == 'append':
             slist, parameters = gc.getSubjectList(tfile)
@@ -552,14 +557,17 @@ def createBatch(subjectsfolder=".", pipeline="hcp", sfile=None, tfile=None, sess
             sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
             files = []
             for session in sessions:
-                nfiles = glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
-                if nfiles:
-                    files += nfiles
-                else:
-                    print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(subjectsfolder, session['id'], sfile))
-                    missing += 1
+                for sfile in sfiles:
+                    nfiles = glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
+                    if nfiles:
+                        files += nfiles
+                    else:
+                        print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(subjectsfolder, session['id'], sfile))
+                        missing += 1
         else:
-            files = glob.glob(os.path.join(subjectsfolder, '*', sfile))
+            files = []
+            for sfile in sfiles:
+                files.append(glob.glob(os.path.join(subjectsfolder, '*', sfile)))
 
         # --- loop trough session files
 
@@ -577,7 +585,7 @@ def createBatch(subjectsfolder=".", pipeline="hcp", sfile=None, tfile=None, sess
 
         # --- close file
         jfile.close()
-        fl.unlock(tfile)       
+        fl.unlock(tfile)
 
     except:
         if jfile:
@@ -1451,7 +1459,6 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     list: prepareHCP
 
         command: createSessionInfo
-            pipeline: HCP
 
         command: createBatch
             tfile: /data/testStudy/processing/batch_baseline.txt
@@ -2572,9 +2579,9 @@ def exportPrep(commandName, subjectsfolder, mapto, mapaction, mapexclude):
     return subjectsfolder, mapto, mapexclude
 
 # prepares subject.txt files for specific pipeline mapping
-def createSessionInfo(sessions=None, pipeline="hcp", subjectsfolder=".", sfile="subject.txt", tfile=None, mapping=None, sfilter=None, overwrite="no"):
+def createSessionInfo(sessions=None, pipelines="hcp", subjectsfolder=".", sfile="subject.txt", tfile=None, mapping=None, sfilter=None, overwrite="no"):
     '''
-    createSessionInfo sessions=<sessions specification> [pipeline=hcp] [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [sfilter=None] [overwrite=no]
+    createSessionInfo sessions=<sessions specification> [pipelines=hcp] [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [sfilter=None] [overwrite=no]
 
     USE
     ===
@@ -2597,8 +2604,8 @@ def createSessionInfo(sessions=None, pipeline="hcp", subjectsfolder=".", sfile="
                      sessions to process or the path to a batch or list file with
                      sessions to process. If left unspecified, "*" will be used 
                      and all folders within subjectfolder will be processed.
-    --pipeline       Specify the pipeline for which the session info will be
-                     be prepared. [hcp]
+    --pipelines      Specify a comma separted list of pipelines for which the
+                     session info will be be prepared. [hcp]
     --subjectsfolder The directory that holds sessions' folders. [.]
     --sfile          The "source" subject.txt file. [subject.txt]
     --tfile          The "target" subject.txt file. [subject_<pipeline>.txt]
@@ -2712,122 +2719,127 @@ def createSessionInfo(sessions=None, pipeline="hcp", subjectsfolder=".", sfile="
 
     print "Running createSessionInfo\n==================="
 
-    if sessions is None:
-        sessions = "*"
+    # get all pipelines
+    pipelines = pipelines.split(",")
 
-    if mapping is None:
-        mapping = os.path.join(subjectsfolder, 'specs', '%s_mapping.txt' % pipeline)
+    # loop over them
+    for pipeline in pipelines:
+        if sessions is None:
+            sessions = "*"
 
-    if tfile is None:
-        tfile = "subject_%s.txt" % pipeline
+        if mapping is None:
+            mapping = os.path.join(subjectsfolder, 'specs', '%s_mapping.txt' % pipeline)
 
-    # -- get mapping ready
+        if tfile is None:
+            tfile = "subject_%s.txt" % pipeline
 
-    if not os.path.exists(mapping):
-        raise ge.CommandFailed("createSessionInfo", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
+        # -- get mapping ready
 
-    print " ... Reading pipeline mapping from %s" % (mapping)
+        if not os.path.exists(mapping):
+            raise ge.CommandFailed("createSessionInfo", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
 
-    mapping = [line.strip() for line in open(mapping) if line[0] != "#"]
-    mapping = [e.split('=>') for e in mapping]
-    mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
-    mappingNumber = dict([[int(e[0]), e[1]] for e in mapping if e[0].isdigit()])
-    mappingName   = dict([e for e in mapping if not e[0].isdigit()])
+        print " ... Reading pipeline mapping from %s" % (mapping)
 
-    if not mapping:
-        raise ge.CommandFailed("createSessionInfo", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
+        mapping = [line.strip() for line in open(mapping) if line[0] != "#"]
+        mapping = [e.split('=>') for e in mapping]
+        mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
+        mappingNumber = dict([[int(e[0]), e[1]] for e in mapping if e[0].isdigit()])
+        mappingName   = dict([e for e in mapping if not e[0].isdigit()])
 
-    # -- get list of session folders
+        if not mapping:
+            raise ge.CommandFailed("createSessionInfo", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
 
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False)
+        # -- get list of session folders
 
-    sfolders = []
-    for session in sessions:
-        newSet = glob.glob(os.path.join(subjectsfolder, session['id']))
-        if not newSet:
-            print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, session['id']))
-        sfolders += newSet
+        sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False)
 
-    # -- check if we have any
+        sfolders = []
+        for session in sessions:
+            newSet = glob.glob(os.path.join(subjectsfolder, session['id']))
+            if not newSet:
+                print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, session['id']))
+            sfolders += newSet
 
-    if not sfolders:
-        raise ge.CommandFailed("createSessionInfo", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
+        # -- check if we have any
 
-    # -- loop through sessions folders
+        if not sfolders:
+            raise ge.CommandFailed("createSessionInfo", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
 
-    report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': []}
-    
-    for sfolder in sfolders:
+        # -- loop through sessions folders
 
-        ssfile = os.path.join(sfolder, sfile)
-        stfile = os.path.join(sfolder, tfile)
+        report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': []}
+        
+        for sfolder in sfolders:
 
-        if not os.path.exists(ssfile):
-            report['missing source'].append(sfolder)
-            continue
-        print " ... Processing folder %s" % (sfolder)
+            ssfile = os.path.join(sfolder, sfile)
+            stfile = os.path.join(sfolder, tfile)
 
-        if os.path.exists(stfile) and overwrite != "yes":
-            print "     ... Target file already exists, skipping! [%s]" % (stfile)
-            report['pre-existing target'].append(sfolder)
-            continue
+            if not os.path.exists(ssfile):
+                report['missing source'].append(sfolder)
+                continue
+            print " ... Processing folder %s" % (sfolder)
 
-        lines = [line.strip() for line in open(ssfile)]
+            if os.path.exists(stfile) and overwrite != "yes":
+                print "     ... Target file already exists, skipping! [%s]" % (stfile)
+                report['pre-existing target'].append(sfolder)
+                continue
 
-        images = False
-        pipelineok = False
-        bold = 0
-        nlines = []
-        hasref = False
-        for line in lines:
-            e = line.split(':')
-            if len(e) > 1:
-                if e[0].strip() == '%sready' % pipeline and e[1].strip() == 'true':
-                    pipelineok = True
-                if e[0].strip().isdigit():
-                    if not images:
-                        nlines.append('%sready: true' % pipeline)
-                        images = True
+            lines = [line.strip() for line in open(ssfile)]
 
-                    onum = int(e[0].strip())
-                    oimg = e[1].strip()
-                    if onum in mappingNumber:
-                        repl  = mappingNumber[onum]
-                    elif oimg in mappingName:
-                        repl  = mappingName[oimg]
-                    else:
-                        repl  = " "
+            images = False
+            pipelineok = False
+            bold = 0
+            nlines = []
+            hasref = False
+            for line in lines:
+                e = line.split(':')
+                if len(e) > 1:
+                    if e[0].strip() == '%sready' % pipeline and e[1].strip() == 'true':
+                        pipelineok = True
+                    if e[0].strip().isdigit():
+                        if not images:
+                            nlines.append('%sready: true' % pipeline)
+                            images = True
 
-                    if 'boldref' in repl:
-                        bold += 1
-                        repl = repl.replace('boldref', 'boldref%d' % (bold))
-                        hasref = True
-                    elif 'bold' in repl:
-                        if hasref:
-                            hasref = False
+                        onum = int(e[0].strip())
+                        oimg = e[1].strip()
+                        if onum in mappingNumber:
+                            repl  = mappingNumber[onum]
+                        elif oimg in mappingName:
+                            repl  = mappingName[oimg]
                         else:
-                            bold += 1
-                        repl = repl.replace('bold', 'bold%d' % (bold))
+                            repl  = " "
 
-                    e[1] = " %-16s:%s" % (repl, oimg)
-                    nlines.append(":".join(e))
+                        if 'boldref' in repl:
+                            bold += 1
+                            repl = repl.replace('boldref', 'boldref%d' % (bold))
+                            hasref = True
+                        elif 'bold' in repl:
+                            if hasref:
+                                hasref = False
+                            else:
+                                bold += 1
+                            repl = repl.replace('bold', 'bold%d' % (bold))
+
+                        e[1] = " %-16s:%s" % (repl, oimg)
+                        nlines.append(":".join(e))
+                    else:
+                        nlines.append(line)
                 else:
                     nlines.append(line)
-            else:
-                nlines.append(line)
 
-        if pipelineok:
-            print "     ... %s already pipeline ready" % (sfile)
-            if sfile != tfile:
-                shutil.copyfile(sfile, tfile)
-            report['pre-processed source'].append(sfolder)
-        else:
-            print "     ... writing %s" % (tfile)
-            fout = open(stfile, 'w')
-            for line in nlines:
-                print >> fout, line
-            report['processed'].append(sfolder)
-    
+            if pipelineok:
+                print "     ... %s already pipeline ready" % (sfile)
+                if sfile != tfile:
+                    shutil.copyfile(sfile, tfile)
+                report['pre-processed source'].append(sfolder)
+            else:
+                print "     ... writing %s" % (tfile)
+                fout = open(stfile, 'w')
+                for line in nlines:
+                    print >> fout, line
+                report['processed'].append(sfolder)
+
     print "\n===> Final report"
 
     for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:

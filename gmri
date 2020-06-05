@@ -121,7 +121,7 @@ setupHCP          [sfolder=.] [tfolder=hcp] [sfile=subject_<pipeline>.txt]
 
 Miscellaneous file utilities
 ----------------------------
-createStudy  studyfolder=<path to study base folder> [pipelines=hcp]
+createStudy  studyfolder=<path to study base folder>
 createBatch  [subjectsfolder=.] [sfile=subject_<pipeline>.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 createList  [subjectsfolder=.] [sessions=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 createConc  [subjectsfolder=.] [sessions=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
