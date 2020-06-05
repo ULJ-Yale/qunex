@@ -118,7 +118,7 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                     print " ... folder exists:", tfolder
 
     if create:
-        TemplateFolder = os.environ['TemplateFolder']
+        niuTemplateFolder = os.environ['NIUTemplateFolder']
         if verbose:
             print "\nPreparing template files:"
 
@@ -146,7 +146,7 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
 
         # --> mapping example
         # get all files that match the pattern
-        examplesFolder = os.path.join(TemplateFolder, 'templates')
+        examplesFolder = os.path.join(niuTemplateFolder, 'templates')
         mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt"))
         for srcFile in mappingExamples:
             try:
@@ -412,8 +412,8 @@ def createBatch(subjectsfolder=".", sfile=None, tfile=None, sessions=None, sfilt
     Alternatively, if you don't have a parameter file prepared, you can use or
     copy and modify one of the following templates:
 
-    legacy data template: $TemplateFolder/templates/batch_legacy_parameters.txt
-    multiband data template: $TemplateFolder/templates/batch_multiband_parameters.txt
+    legacy data template: qunex/niutilities/templates/batch_legacy_parameters.txt
+    multiband data template: qunex/niutilities/templates/batch_multiband_parameters.txt
 
     Example
     =======

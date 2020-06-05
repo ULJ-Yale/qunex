@@ -1,0 +1,226 @@
+#  Batch parameters file
+#  =====================
+#
+#  This file is used to specify the default parameters used by various qunex commands for
+#  HCP minimal preprocessing pipeline, additional bold preprocessing commands,
+#  and other analytic functions. The content of this file should be prepended to the list
+#  that contains all the subjects that is passed to the commands. It can added manually or 
+#  automatically when making use of the compileLists qunex command.
+#
+#  This template file should be edited to include the parameters relevant for
+#  a given study/analysis and provide the appropriate values. For detailed description of
+#  parameters and their valid values, please consult the qunex documentation
+*  (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
+#  preprocessing) and online help for the relevant qunex commands.
+#
+#
+#  --> For all supported batch parameter options run: 
+#      qunex -o
+# 
+# Please note that if a parameter is specified in the batch file qunex will set it to the value specified. 
+# This is also the case for parameters that are left '' empty (e.g. `_event_file         :`). 
+# This case the `_event_file` parameter is actually being set to an empty string and is being read as such by qunex. 
+# The situation where this would be a misspecification would be, for instance: `_nprocess           :`. 
+# In this case the `_nprocess` parameter checks how many concurrent jobs to run. If it set to an empty string then 
+# the qunex engine cannot set the process number. This behavior is important so that the qunex engine can interpret 
+# all specified parameters based on actual values provided (empty or some value) as opposed to making an assumptions 
+# that the parameter is absent when in fact it is present with an empty string.
+#
+#  File format
+#  -----------
+#
+#  Each parameter is specified in a separate line as a 
+#  "_<parameter_key>: <parameter_value>" pair. For example:
+#
+#  _hcp_brainsize:  170
+#
+#  Empty lines and lines that start with a hash (#) are ignored.
+#
+#
+#  Parameters
+#  ==========
+#
+#  The following is a list of parameters organized by the commands they relate
+#  to. To specify parameters, uncomment the line (it should start with the
+#  underscore before the parameter name) and provide the desired value. In some
+#  cases default values are provided. Do take care to remove the descriptors 
+#  (... <description>) after the values for the parameters to be used.
+#
+# # ---- Basic settings
+# 
+# _sessions                 The file with sessions information. [batch.txt]
+# _subjectsfolder           The path to study subjects folder. []
+# _logfolder                The path to log folder. []
+# _logtag                   An optional additional tag to add to the log file after the command name. []
+# _overwrite                Whether to overwrite existing results. [no]
+# _parsessions              How many sessions to run in parallel. [1]
+# _parelements              How many elements to run in parralel (e.g. how many bolds when bold processing). [1]
+# _nprocess                 How many sessions to process (0 - all). [0]
+# _datainfo                 Whether to print information. [False]
+# _printoptions             Whether to print options. [False]
+# _filter                   Filtering information. []
+# _script                   The script to be executed. [None]
+# _subjid                   list of | separated session ids for which to run the command. []
+# 
+# # ---- Preprocessing options
+# 
+# _bet                      options to be passed to BET in brain extraction [-f 0.5]
+# _fast                     options to be passed to FAST in brain segmentation [-t 1 -n 3 --nopve]
+# _betboldmask              options to be passed to BET when creating bold brain masks [-R -m]
+# _TR                       TR of the bold data [2.5]
+# _omit                     how many frames to omit at the start of each bold run [5]
+# _bold_actions             what processing steps to include in bold preprocessing [shrcl]
+# _bold_nuisance            what regressors to include in nuisance removal [m,V,WM,WB,1d]
+# _bolds                    which bolds to process (can be multiple joind with | ) [all]
+# _boldname                 the default name for the bold files [bold]
+# _bold_prefix              an optional prefix to place in front of processing name extensions in the resulting files []
+# _pignore                  what to do with frames marked as bad []
+# _event_file               the root name of the fidl event file for task regression []
+# _event_string             string specifying what and how of task to regress out []
+# _source_folder            hould we check for source folder (yes/no) [True]
+# _wbmask                   mask specifying what ROI to exclude from WB mask []
+# _sbjroi                   a mask used to specify subject specific WB []
+# _nroi                     additional nuisance regressors ROI and which not to mask by brain mask (e.g. 'nroi.names|eyes,scull') []
+# _shrinknsroi              whether to shrink signal nuisance ROI (V,WM,WB) true or false [true]
+# _path_bold                the mask to use for searching for bold images [bold[N]/*faln_dbnd_xr3d_atl.4dfp.img]
+# _path_mov                 the mask to use for searching for movement files [movement/*_b[N]_faln_dbnd_xr3d.dat]
+# _path_t1                  the mask to use for searching for T1 file [atlas/*_mpr_n*_111_t88.4dfp.img]
+# _image_source             what is the target source file format / structure (4dfp, hcp) [hcp]
+# _image_target             what is the target file format (4dfp, nifti, dtseries, ptseries) [nifti]
+# _image_atlas              what is the target atlas (711, cifti) [cifti]
+# _conc_use                 how the paths in the .conc file will be used (relative, absolute) [relative]
+# 
+# 
+# # ---- GLM related options
+# 
+# _glm_matrix               Whether to save GLM regressor matrix in text (text), image (image) or both (both) formats, or not (none). [none]
+# _glm_residuals            Whether to save GLM residuals (save) or not (none). [save]
+# _glm_name                 Additional name to the residuals and coefficient file to distinguish between different posible models. []
+# 
+# 
+# # ---- Movement thresholding and report options
+# 
+# _mov_dvars                the dvars threshold to use for identifying bad frames [3.0]
+# _mov_dvarsme              the dvarsme threshold to use for identifying bad frames [1.5]
+# _mov_fd                   frame displacement threshold to use for identifying bad frames [0.5]
+# _mov_radius               the assumed radius of the brain [50.0]
+# _mov_scrub                whether to output a scrub file when processing motion statistics (not used in the new scrubbing pipeline) [yes]
+# _mov_fidl                 which scrub column to use when creating fidl ignore file or none [udvarsme]
+# _mov_plot                 root name of the plot file, none to omit plotting [mov_report]
+# _mov_post                 which column to use for generating post-scrubbing movement report or none [udvarsme]
+# _mov_before               how many frames preceeding bad frames to also exclude [0]
+# _mov_after                how many frames following bad frames to also exclude [0]
+# _mov_bad                  what scrub column to use to mark bad frames (one of mov, dvars, dvarsme, idvars, udvars, idvarsme, udvarsme--see documentation on motion scrubbing) [udvarsme]
+# _mov_mreport              the name of the movement report file [movement_report.txt]
+# _mov_preport              the name of the post scrub movement report file [movement_report_post.txt]
+# _mov_sreport              the name of the scrubbing report file [movement_scrubbing_report.txt]
+# _mov_pdf                  the name of the folder that holds movement stats plots [movement_plots]
+# _mov_pref                 the prefix for the movement report files []
+# 
+# 
+# # ---- CIFTI related options
+# 
+# _surface_smooth           sigma for cifti surface smoothing [6.0]
+# _volume_smooth            sigma for cifti volume smoothing [6.0]
+# _voxel_smooth             extent of volume smoothing in voxels [2]
+# _smooth_mask              whether to use masked smoothing and what mask to use [false]
+# _dilate_mask              whether to use dilation after smoothing and what mask to use [false]
+# _hipass_filter            highpass filter to use [0.008]
+# _lopass_filter            lopass filter to use [0.09]
+# _omp_threads              number of cores to be used in wb_command (0 - don't change system settings) [0]
+# _framework_path           the path to framework libraries on mac system []
+# _wb_command_path          the path to wb_command []
+# _print_command            whether to print the command run within the preprocessing steps [no]
+# 
+# 
+# # ---- scheduler options
+# 
+# _scheduler                the scheduler to use (local|PBS|LSF|SLURM) and any additional settings [local]
+# _scheduler_environment    the path to the script setting up the environment to run the commands in [None]
+# _scheduler_workdir        the path to working directory from which to run jobs on the cluster [None]
+# _scheduler_sleep          time in seconds between submission of individual scheduler jobs [1]
+# 
+# 
+# # --- HCP options
+# 
+# _hcp_processing_mode      Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData) ['HCPStyleData']
+# _hcp_folderstructure      Which version of HCP folder structure to use, 'initial' or 'hcpls' [hcpls]
+# _hcp_freesurfer_home      path to FreeSurfer base folder []
+# _hcp_freesurfer_module    Whether to load FreeSurfer as a module on the cluster: YES or NONE []
+# _hcp_Pipeline             path to pipeline base folder []
+# _hcp_suffix               session id suffix if running HCP preprocessing variants []
+# _hcp_brainsize            human brain size in mm [150]
+# _hcp_t2                   whether T2 image is present - anything or NONE [t2]
+# _hcp_fmap                 DEPRECATED!!! whether hi-res structural fieldmap is present - SiemensFieldMap for Siemens Phase/Magnitude pair, GeneralElectricFieldMap for GE single B0 image, or NONE [NONE]
+# _hcp_echodiff             the delta in TE times for the hi-res fieldmap image [NONE]
+# _hcp_sephaseneg           spin echo field map volume with a negative phase encoding direction: LR, RL, NONE [NONE]
+# _hcp_sephasepos           spin echo field map volume with a positive phase encoding direction: LR, RL, NONE [NONE]
+# _hcp_seechospacing        Echo Spacing or Dwelltime of Spin Echo Field Map or 'NONE' if not used [NONE]
+# _hcp_seunwarpdir          Phase encoding direction of the spin echo field map. (Only applies when using a spin echo field map.) [NONE]
+# _hcp_t1samplespacing      0.0000074 ... DICOM field (0019,1018) in s or 'NONE' if not used [NONE]
+# _hcp_t2samplespacing      0.0000021 ... DICOM field (0019,1018) in s or 'NONE' if not used [NONE]
+# _hcp_unwarpdir            Readout direction of the T1w and T2w images (Used with either a regular field map or a spin echo field map) z appears to be best or 'NONE' if not used [NONE]
+# _hcp_gdcoeffs             Location of gradient coefficient file, a string describing mulitiple options, or 'NONE' to skip [NONE]
+# _hcp_avgrdcmethod         'FIELDMAP' ... Averaging and readout distortion correction methods: 'NONE' = average any repeats with no readout correction 'FIELDMAP' or 'SiemensFieldMap' or 'GeneralElectricFieldMap' = average any repeats and use field map for readout correction 'TOPUP' = average and distortion correct at the same time with topup/applytopup only works for 2 images currently [NONE]
+# _hcp_topupconfig          Config for topup or 'NONE' if not used [NONE]
+# _hcp_bfsigma              Bias Field Smoothing Sigma (optional) []
+# _hcp_prefs_check          Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last] [last]
+# _hcp_prefs_brainmask      Whether to use a custom bain mask (MASK) in PreFS or not (NONE) [NONE]
+# _hcp_usejacobian          Not currently in usage (optional) []
+# _hcp_printcom             Print command for the HCP scripts: set to echo to have commands printed and not executed. []
+# _hcp_expert_file          Name of the read-in expert options file for FreeSurfer []
+# _hcp_control_points       Whether to run with manual control points []
+# _hcp_wm_edits             Whether to run with manually edited WM mask file []
+# _hcp_autotopofix_off      YES to turn off the automatic topologic fix step in FS and compute WM surface deterministically from manual WM mask (empty) []
+# _hcp_fs_brainmask         Specify 'original' to keep the masked original brainimage; 'manual' to use the manually edited brainmask file; default 'fs'uses the brainmask generated by mri_watershed [fs]. []
+# _hcp_fs_longitudinal      Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO] []
+# _hcp_fs_seed              Recon-all seed value. If not specified, none will be used. HCP Pipelines specific! []
+# _hcp_fs_existing_subject  Indicates that the command is to be run on top of an already existing analysis/subject. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE or FALSE [FALSE]. HCP Pipelines specific! [FALSE]
+# _hcp_fs_extra_reconall    A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: "-norm3diters|3" []. HCP Pipelines specific! []
+# _hcp_fs_no_conf2hires     Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE] [FALSE]
+# _hcp_fs_check             Whether to check the results of FreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last] [last]
+# _hcp_fslong_check         Whether to check the results of FreeSurferLongitudinal pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last] [last]
+# _hcp_postfs_check         Whether to check the results of PostFreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last] [last]
+# _hcp_grayordinatesres     Usually 2mm [2]
+# _hcp_hiresmesh            Usually 164 vertices [164]
+# _hcp_lowresmesh           Usually 32 vertices [32]
+# _hcp_regname              What registration is used FS, or MSMSulc (default). [MSMSulc]
+# _hcp_mcsigma              Correction sigma used for metric smoothing (default sqrt(200)). []
+# _hcp_inflatescale         Inflate extra scale parameter (default 1). []
+# _hcp_cifti_tail           The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder. []
+# _hcp_filename             "How to name the image files in the hcp structure. The default is to name them by their number ('standard') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('original') (e.g. rfMRI_REST1_AP). ['standard']
+# _hcp_bold_prefix          The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results [BOLD_]
+# _hcp_bold_variant         The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default []
+# _hcp_bold_biascorrection  Whether to perform bias correction for BOLD images. NONE or Legacy. HCP Pipelines only! [NONE]
+# _hcp_bold_usejacobian     Whether to apply the jacobian of the distortion correction to fMRI data. HCP Pipelines only! [FALSE]
+# _hcp_bold_echospacing     Echo Spacing or Dwelltime of fMRI image in seconds [0.00035]
+# _hcp_bold_dcmethod        BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE [TOPUP]
+# _hcp_bold_sephaseneg      Spin echo field map volume to use for BOLD TOPUP with a negative phase encoding direction (AP, PA, LR, RL), []
+# _hcp_bold_sephasepos      Spin echo field map volume to use for BOLD TOPUP with a positive phase encoding direction (AP, PA, LR, RL), []
+# _hcp_bold_topupconfig     A full path to the topup configuration file to use. Set to '' if the default is to be used or of TOPUP distortion correction is not used.
+# _hcp_bold_sbref           Whether BOLD image Reference images should be used - NONE or USE [NONE]
+# _hcp_bold_echodiff        Delta TE in ms for BOLD fieldmap images or NONE if not used [NONE]
+# _hcp_bold_unwarpdir       The direction of unwarping, can be specified separately for LR/RL : 'LR=x|RL=-x|x' [y]
+# _hcp_bold_res             Target image resolution 2mm recommended [2]
+# _hcp_bold_gdcoeffs        Gradient distorsion correction coefficients or NONE [NONE]
+# _hcp_bold_doslicetime     Whether to do slice timing correction TRUE or FALSE (default)
+# _hcp_bold_slicetimerparams A comma or pipe separated string of parameters for FSL slicetimer. []
+# _hcp_bold_movref          What reference to use for movement correction (independent, first) [independent]
+# _hcp_bold_seimg           What image to use for spin-echo distorsion correction (independent, first) [independent]
+# _hcp_bold_smoothFWHM      Whether slices were acquired in an interleaved fashion (odd or even) or not (empty) [2]
+# _hcp_bold_usemask         what mask to use for the bold images (T1: default, BOLD: mask based on bet of the scout, NONE: do not use a mask) [T1]
+# _hcp_bold_preregister     What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt [epi_reg]
+# _hcp_bold_refreg          Whether to use only linaer (default) or also nonlinear registration of motion corrected bold to reference [linear]
+# _hcp_bold_movreg          Whether to use FLIRT or MCFLIRT for motion correction [MCFLIRT]
+# _hcp_bold_vol_check       Whether to check the results of fMRIVolume pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last] [last]
+# _hcp_bold_surf_check      Whether to check the results of fMRISurface pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last] [last]
+# _hcp_dwi_PEdir            Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior [1]
+# _hcp_dwi_gdcoeffs         DWI specific gradient distorsion coefficients file or NONE [NONE]
+# _hcp_dwi_echospacing      Echo spacing in msec. []
+# _hcp_dwi_dof              Degrees of Freedom for post eddy registration to structural images. Defaults to 6. [6]
+# _hcp_dwi_b0maxbval        Volumes with a bvalue smaller than this value will be considered as b0s. Defaults to 50 [50]
+# _hcp_dwi_extraeddyarg     A string specifying additional arguments to pass to eddy processing. Defaults to '' []
+# _hcp_dwi_combinedata      Specified value is passed as the CombineDataFlag value for the eddy_postproc.sh script. If JAC resampling has been used in eddy, this value determines what to do with the output file: 2 - include in the output all volumes uncombined (i.e. output file of eddy); 1 - include in the output and combine only volumes where both LR/RL (or AP/PA) pairs have been acquired; 0 - As 1, but also include uncombined single volumes. Defaults to 1 [1]
+# _hcp_dwi_check            Whether to check the results of Diffusion pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last] [last]
+# 
+# 
