@@ -62,7 +62,7 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 
-def manageStudy(studyfolder=None, action="create", verbose=False):
+def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
     '''
     manageStudy studyfolder=None action="create"
 
@@ -75,22 +75,30 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
     --studyfolder  : the location of the study folder
     --action       : whether to create a new study folder (create) or check
                      an existing study folder (check)
+    --folders      : Path to the file which defines the study folder structure.
+                     [$TOOLS/niutilities/templates/study_folders_default.txt]
     '''
 
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+
+    # default folders file
+    if folders is None:
+        folders = os.path.join(niuTemplateFolder, "templates", "study_folders_default.txt")
+    else:
+        # if not absolute path
+        if not os.path.exists(folders):
+            # check if in templates
+            folders = os.path.join(niuTemplateFolder, "templates", folders)
+            if not os.path.exists(folders):
+                # fail
+                raise ge.CommandFailed("manageStudy", "Folder structure file [%s] not found!" % folders, "Please check the value of the folders parameter.")
+
+    # action
     create = action == "create"
 
-    folders = [['analysis'], ['analysis', 'scripts'], 
-               ['processing'], 
-               ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], ['processing', 'logs', 'runchecks'], 
-               ['processing', 'lists'], 
-               ['processing', 'scripts'],
-               ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
-               ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'], ['info', 'bids'], ['info', 'hcpls'],
-               ['subjects'], 
-               ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'HCPLS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
-               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'HCPLS'], ['subjects', 'archive', 'behavior'], 
-               ['subjects', 'specs'], 
-               ['subjects', 'QC']]
+    # create folders structure from file
+    folders = createStudyFolders(folders)
 
     if create:
         if verbose:
@@ -118,7 +126,6 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                     print " ... folder exists:", tfolder
 
     if create:
-        niuTemplateFolder = os.environ['NIUTemplateFolder']
         if verbose:
             print "\nPreparing template files:"
 
@@ -217,67 +224,127 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
 
 
-def createStudy(studyfolder=None):
+def createStudyFolders(folders_spec):
     '''
-    createStudy studyfolder=<path to study base folder>
+    createStudyFolders folders=None
+
+    A helper function called by manageStudy for creating study folder structure
+    from a .txt file with structure specification.
+    
+    PARAMETERS
+    ==========
+
+    --folders ... Path to the file which defines the study folder structure.
+                  [$TOOLS/niutilities/templates/study_folders_default.txt]
+    '''
+
+    # variable for storing the structure
+    folder_structure = []
+
+    with open('study_folders_default.txt') as f:
+        # track current structure
+        current_structure = []
+        current_indents = []
+
+        for line in f:
+            # ignore empty lines
+            folder = line.strip()
+            if folder != "":
+                # get indent
+                indent = len(line) - len(line.lstrip())
+
+                # if indent is 0 we have a new root folder
+                if indent == 0:
+                    current_structure = [folder]
+                    current_indents = [0]
+
+                # if indent is not 0 find the location in structure
+                else:
+                    i = 0
+                    while indent > current_indents[i]:
+                        i = i+1
+                        if i == len(current_indents):
+                            break
+
+                    # remove at the end of the list
+                    current_structure = current_structure[0:i]
+                    current_indents = current_indents[0:i]
+
+                    # add new info
+                    current_structure.append(folder)
+                    current_indents.append(indent)
+
+                # append to folders
+                folder_structure.append(current_structure)
+    
+    return folder_structure
+
+
+def createStudy(studyfolder=None, folders=None):
+    '''
+    createStudy studyfolder=<path to study base folder> [folders=$TOOLS/niutilities/templates/study_folders_default.txt]
 
     USE
     ===
 
-    Creates the base folder at the provided path location and the key standard
-    study subfolders. Specifically:
+    Creates the base folder at the provided path location and the study folders. 
+    By default $TOOLS/niutilities/templates/study_folders_default.txt will be used
+    for subfolder specification. The default structure is:
 
     <studyfolder>
     ├── analysis
     │   └── scripts
     ├── processing
     │   ├── logs
+    │   │   ├── batchlogs
     │   │   ├── comlogs
     │   │   ├── runchecks
     │   │   └── runlogs
     │   ├── lists
-    │   ├── scenes
-    │   │   └── QC
-    │   │       ├── T1w
-    │   │       ├── T2w
-    │   │       ├── myelin
-    │   │       ├── BOLD
-    │   │       └── DWI
-    │   └── scripts
+    │   ├── scripts
+    │   └── scenes
+    │       └── QC
+    │           ├── T1w
+    │           ├── T2w
+    │           ├── myelin
+    │           ├── BOLD
+    │           └── DWI
     ├── info
-    │   ├── bids
     │   ├── demographics
-    │   ├── hcpls
     │   ├── tasks
-    │   └── stimuli
+    │   ├── stimuli
+    │   ├── bids
+    │   └── hcpls
     └── subjects
         ├── inbox
         │   ├── MR
         │   ├── EEG
         │   ├── BIDS
+        │   ├── HCPLS
         │   ├── behavior
         │   ├── concs
-        │   ├── events
-        │   └── HCPLS
+        │   └── events
         ├── archive
         │   ├── MR
         │   ├── EEG
         │   ├── BIDS
-        │   ├── behavior
-        │   └── HCPLS
+        │   ├── HCPLS
+        │   └── behavior
         ├── specs
         └── QC
 
-    Do note that the command will create all the missing subfolders in which the
+    Do note that the command will create all the missing folders in which the
     specified study is to reside. The command also prepares template
     batch_parameters_example.txt and pipeline example mapping files in
     <studyfolder>/subjects/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
-    PARAMETER
-    =========
+    PARAMETERS
+    ==========
 
     --studyfolder  ... The path to the study folder to be generated
+    --folders      ... Path to the file which defines the subfolder structure.
+                       [$TOOLS/niutilities/templates/study_folders_default.txt]
 
     EXAMPLE USE
     ===========
@@ -306,6 +373,8 @@ def createStudy(studyfolder=None):
              - Changes to qunex.
     2019-12-07 Grega Repovs
              - Changed to a version that is parallel processing safe
+    2020-06-08 Jure Demsar
+             - Added the folders parameter.
     '''
 
     print "Running createStudy\n==================="
@@ -313,12 +382,12 @@ def createStudy(studyfolder=None):
     if studyfolder is None:
         raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
-    manageStudy(studyfolder=studyfolder, action="create", verbose=True)
+    manageStudy(studyfolder=studyfolder, action="create", folders=folders, verbose=True)
 
 
-def checkStudy(startfolder="."):
+def checkStudy(startfolder=".", folders=None):
     '''
-    checkStudy startfolder="."
+    checkStudy startfolder="." [folders=$TOOLS/niutilities/templates/study_folders_default.txt]
 
     The function looks for the path to the study folder in the hierarchy 
     starting from the provided startfolder. If found it checks that all the
@@ -340,7 +409,7 @@ def checkStudy(startfolder="."):
         testfolder = os.path.dirname(testfolder)
 
     if studyfolder:
-        manageStudy(studyfolder=studyfolder, action="check", pipeline=None)
+        manageStudy(studyfolder=studyfolder, action="check", folders=folders, pipeline=None)
 
     return studyfolder  
 

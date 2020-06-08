@@ -50,7 +50,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'printniftihdr'        : {'com': g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': g_gimg.modniftihdr,             'args': ('filename', 's')},
             'createBatch'          : {'com': g_utilities.createBatch,        'args': ('subjectsfolder', 'sfile', 'tfile', 'sessions', 'sfilter', 'overwrite', 'paramfile')},
-            'createStudy'          : {'com': g_utilities.createStudy,        'args': ('studyfolder', )},
+            'createStudy'          : {'com': g_utilities.createStudy,        'args': ('studyfolder', 'folders', )},
             'createList'           : {'com': g_utilities.createList,         'args': ('subjectsfolder', 'sessions', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
             'createConc'           : {'com': g_utilities.createConc,         'args': ('subjectsfolder', 'sessions', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
             'gatherBehavior'       : {'com': g_utilities.gatherBehavior,     'args': ('subjectsfolder', 'sessions', 'sfilter', 'sfile', 'tfile', 'overwrite', 'check', 'report')},
