@@ -24,90 +24,8 @@ import tarfile
 import glob
 import datetime
 import json
+import ast
 
-hcpls = {
-    'files': {
-        'label': ['T1w', 'T2w', 'rfMRI', 'tfMRI', 'dMRI', 'DWI', 'SpinEchoFieldMap'],        
-        'T1w': {
-            'info':  [],
-        },
-        'T2w': {
-            'info':  [],
-        },
-        'rfMRI': {
-            'info':  ['task', 'phenc', 'ref'],
-        },
-        'tfMRI': {
-            'info':  ['task', 'phenc', 'ref']
-        },
-        'dMRI': {
-            'info':  ['dir', 'phenc', 'ref']
-        },
-        'DWI': {
-            'info':  ['dir', 'phenc', 'ref']
-        },
-        'SpinEchoFieldMap': {
-            'info':  ['phenc']
-        }
-    },
-    'folders': {
-        'order': {'T1w': 1, 'T2w': 2, 'rfMRI': 3, 'tfMRI': 4, 'Diffusion': 5},
-        'label': ['T1w', 'T2w', 'rfMRI', 'tfMRI', 'Diffusion'],
-        'T1w': {
-            'info':  [],
-            'check': [  
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['T1w']                        
-                      ]
-        },
-        'T2w': {
-            'info':  [],
-            'check': [                        
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['T2w']                        
-                     ]
-        },
-        'rfMRI': {
-            'info':  ['task', 'phenc'],
-            'check': [
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['rfMRI', 'SBRef'],
-                        ['rfMRI', '-SBRef']
-                     ]
-        },
-        'tfMRI': {
-            'info':  ['task', 'phenc'],
-            'check': [
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['tfMRI', 'SBRef'],
-                        ['tfMRI', '-SBRef']
-                     ]
-        },
-        'Diffusion': {
-            'info':  [],
-            'check': [
-                        ['dMRI', 'dir98', 'AP', 'SBRef'],
-                        ['dMRI', 'dir98', 'AP', '-SBRef'],
-                        ['dMRI', 'dir98', 'PA', 'SBRef'],
-                        ['dMRI', 'dir98', 'PA', '-SBRef'],
-                        ['dMRI', 'dir99', 'AP', 'SBRef'],
-                        ['dMRI', 'dir99', 'AP', '-SBRef'],
-                        ['dMRI', 'dir99', 'PA', 'SBRef'],
-                        ['dMRI', 'dir99', 'PA', '-SBRef'],
-                        ['DWI',  'dir95', 'LR', 'SBRef'],
-                        ['DWI',  'dir95', 'RL', '-SBRef'],
-                        ['DWI',  'dir96', 'LR', 'SBRef'],
-                        ['DWI',  'dir96', 'RL', '-SBRef'],
-                        ['DWI',  'dir97', 'LR', 'SBRef'],
-                        ['DWI',  'dir97', 'RL', '-SBRef']
-                    ]
-        }
-    }    
-}
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
@@ -637,6 +555,18 @@ def processHCPLS(sfolder, filesort):
     sparts    = session.split('_')
     subjectid = sparts.pop(0)
     sessionid = "_".join([e for e in sparts + [""] if e])
+
+    # --- load HCPLS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    hcplsStructure = os.path.join(niuTemplateFolder, "templates", "importHCP.txt")
+
+    if not os.path.exists(hcplsStructure):
+        raise ge.CommandFailed("processHCPLS", "No HCPLS structure file present!", "There is no HCPLS structure file %s" % (hcplsStructure), "Please check your Qu|Nex installation")
+
+    hcpls_file = open(hcplsStructure)
+    content = hcpls_file.read()
+    hcpls = ast.literal_eval(content)
 
     # --- get a list of folders and process them
 

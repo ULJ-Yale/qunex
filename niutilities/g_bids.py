@@ -28,36 +28,6 @@ import sys
 import niutilities.g_filelock as fl
 
 
-bids = {
-    'modalities': ['anat', 'func', 'dwi', 'fmap'],
-    'optional': ['code', 'derivatives', 'stimuli', 'sourcedata', 'phenotype'],
-    'anat': {
-        'label': ['T1w', 'T2w', 'T1rho', 'T1map', 'T2map', 'T2star', 'FLAIR', 'FLASH', 'PD', 'PDMap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio', 'defacemask'],
-        'info':  ['acq', 'run', 'ce', 'rec', 'echo', 'mod', 'ses'],
-        'sort':  ['mod', 'rec', 'ce', 'echo','run', 'acq', 'label'],
-        'tag':   ['label', 'acq', 'ce', 'rec', 'mod', 'echo', 'run'],
-    },
-    'func': {
-        'label': ['bold', 'sbref'],
-        'info':  ['task', 'acq', 'rec', 'run', 'echo', 'ses'],
-        'sort':  ['rec', 'echo', 'acq', 'run', 'task'],
-        'tag':   ['label', 'task', 'acq', 'echo', 'rec', 'run']
-    },
-    'dwi': {
-        'label': ['dwi'],
-        'info':  ['acq', 'run', 'ses'],
-        'sort':  ['run', 'acq'],
-        'tag':   ['label', 'acq', 'run']
-    },
-    'fmap': {
-        'label': ['phasediff', 'magnitude', 'magnitude1', 'magnitude2', 'phase1', 'phase2', 'epi'],
-        'info':  ['acq', 'run', 'ses', 'dir'],
-        'sort':  ['run', 'dir', 'acq' ],
-        'tag':   ['label', 'dir', 'acq', 'run']
-    }
-}
-
-
 def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False):
     """
     moveLinkOrCopy - documentation not yet available.
@@ -151,6 +121,18 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
     session  = ""
     optional = ""
     modality = ""
+
+    # --- load BIDS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    bidsStructure = os.path.join(niuTemplateFolder, "templates", "importBIDS.txt")
+
+    if not os.path.exists(bidsStructure):
+        raise ge.CommandFailed("mapToQUNEXBids", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+
+    bids_file = open(bidsStructure)
+    content = bids_file.read()
+    bids = ast.literal_eval(content)
 
     # -> extract file meta information
 
@@ -513,6 +495,18 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
             print "--> created BIDS archive folder"
         elif io != 'File exists':
             raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS archive [%s]!" % (BIDSArchive), "Please check paths and permissions!")
+
+    # --- load BIDS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    bidsStructure = os.path.join(niuTemplateFolder, "templates", "importBIDS.txt")
+
+    if not os.path.exists(bidsStructure):
+        raise ge.CommandFailed("importBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+
+    bids_file = open(bidsStructure)
+    content = bids_file.read()
+    bids = ast.literal_eval(content)
 
     # ---> identification of files
 
@@ -904,6 +898,18 @@ def processBIDS(bfolder):
     else:
         raise ge.CommandFailed("processBIDS", "No bids folder present!", "There is no bids data in session folder %s" % (bfolder), "Please import BIDS data first!")
     
+    # --- load BIDS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    bidsStructure = os.path.join(niuTemplateFolder, "templates", "importBIDS.txt")
+
+    if not os.path.exists(bidsStructure):
+        raise ge.CommandFailed("processBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+
+    bids_file = open(bidsStructure)
+    content = bids_file.read()
+    bids = ast.literal_eval(content)
+
     # -> map all the files
     
     for sfile in sourceFiles:
