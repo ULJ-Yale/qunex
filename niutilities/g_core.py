@@ -864,3 +864,6 @@ def createSubjectFile(command, sfolder, session, subject)
 
     # empty line
     print >> sout
+
+    # return
+    return sout

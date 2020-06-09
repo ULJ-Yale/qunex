@@ -1013,7 +1013,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
         os.makedirs(nfolder)
 
     # --- create subject.txt file
-    gc.createSubjectFile("mapHCPLS2nii", sfolder, session, subject)
+    sout = gc.createSubjectFile("mapHCPLS2nii", sfolder, session, subject)
 
     # --- create subject_hcp.txt file
     sfile = os.path.join(sfolder, 'subject_hcp.txt')
@@ -1024,14 +1024,14 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
         else:
             raise ge.CommandFailed("mapHCPLS2nii", "subject_hcp.txt file already present!", "A subject_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
-    sout = open(sfile, 'w')
-    print >> sout, 'id:', session
-    print >> sout, 'subject:', subjectid
-    print >> sout, 'hcpfs:', hfolder
-    print >> sout, 'raw_data:', nfolder
-    print >> sout, 'hcp:', os.path.join(sfolder, 'hcp')
-    print >> sout
-    print >> sout, 'hcpready: true'
+    sout_hcp = open(sfile, 'w')
+    print >> sout_hcp, 'id:', session
+    print >> sout_hcp, 'subject:', subjectid
+    print >> sout_hcp, 'hcpfs:', hfolder
+    print >> sout_hcp, 'raw_data:', nfolder
+    print >> sout_hcp, 'hcp:', os.path.join(sfolder, 'hcp')
+    print >> sout_hcp
+    print >> sout_hcp, 'hcpready: true'
 
     # --- open hcpfs2nii log file
 
@@ -1079,27 +1079,41 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                 if firstImage:
                     deviceInfo  = "%s|%s|%s" % (fileInfo['json'].get('Manufacturer', "NA"), fileInfo['json'].get('ManufacturersModelName', "NA"), fileInfo['json'].get('DeviceSerialNumber', "NA"))
                     institution = fileInfo['json'].get('InstitutionName', "NA")
-                    print >> sout, "\ninstitution: %s\ndevice: %s\n" % (institution, deviceInfo)
+                    out = "\ninstitution: %s\ndevice: %s\n" % (institution, deviceInfo)
+                    print >> sout, out
+                    print >> sout_hcp, out
                     firstImage = False
 
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
                     # -29s fol alignment purposes (output generation is slightly different with T1w and T2w)
-                    print >> sout, "%02d: %-20s: %-29s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts'])),
+                    out = "%02d: %-20s: %-29s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']))
+                    print >> sout, out,
+                    print >> sout_hcp, out,
                     if folder['senum']:
-                        print >> sout, ": se(%d)" % (folder['senum']),
+                        out = ": se(%d)" % (folder['senum'])
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     echospacing = 0
                     if fileInfo['json'].get('DwellTime', None):
                         echospacing = fileInfo['json'].get('DwellTime')
-                        print >> sout, ": DwellTime(%.10f)" % (echospacing),
+                        out = ": DwellTime(%.10f)" % (echospacing)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     elif fileInfo['json'].get('EchoSpacing', None):
                         echospacing = fileInfo['json'].get('EchoSpacing')
-                        print >> sout, ": EchoSpacing(%.10f)" % (echospacing),
+                        out = ": EchoSpacing(%.10f)" % (echospacing)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     if fileInfo['json'].get('ReadoutDirection', None):
-                        print >> sout, ": UnwarpDir(%s)" % (unwarp[fileInfo['json'].get('ReadoutDirection')]),
+                        out = ": UnwarpDir(%s)" % (unwarp[fileInfo['json'].get('ReadoutDirection')])
+                        print >> sout, out,
+                        print >> sout_hcp, out,
 
                     # add filename
-                    print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                     print >> rout, "\n" + fileInfo['parts'][0]
                     print >> rout, "".join(['-' for e in range(len(fileInfo['parts'][0]))])
@@ -1117,15 +1131,23 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc),
+                        out = "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     else:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc),
+                        out = "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
 
                     if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                        print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing')),
+                        out = ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing'))
+                        print >> sout, out,
+                        print >> sout_hcp, out,
 
                     # add filename
-                    print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1140,7 +1162,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                     else:
                         phenc = fileInfo['parts'][2]
 
-                    print >> sout, "%02d: %-20s: %-30s: se(%d) : phenc(%s) : EchoSpacing(%.10f) : filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                    out = "%02d: %-20s: %-30s: se(%d) : phenc(%s) : EchoSpacing(%.10f) : filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1157,14 +1181,20 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                         phenc = fileInfo['parts'][2]
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc),
+                        out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                         if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                            print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
+                            print >> sout_hcp, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
 
-                    else:    
-                        print >> sout, "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc),
+                    else:
+                        out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                         if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                            print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
+                            out = ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                            print >> sout, out,
+                            print >> sout_hcp, out,
 
                         print >> rout, "\n" + "_".join(fileInfo['parts'])
                         print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1172,7 +1202,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                         print >> rout, "%-25s : %d" % ("_hcp_dwi_PEdir", PEDir[phenc])
 
                     # add filename
-                    print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                 print >> bout, "%s => %s" % (fileInfo['path'], tfile)
             else:
@@ -1194,8 +1226,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                     print "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn)
                     print "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, fileInfo['name'].replace('.nii.gz', '.bval/.bvec'))
                     allOk = False
-        
+
     sout.close()
+    sout_hcp.close()
     bout.close()
 
     if not allOk:

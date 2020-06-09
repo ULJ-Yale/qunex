@@ -1193,7 +1193,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
         os.makedirs(nfolder)
 
     # --- create subject.txt file
-    gc.createSubjectFile("mapBIDS2nii", sfolder, session, subject)
+    sout = gc.createSubjectFile("mapBIDS2nii", sfolder, session, subject)
 
     # --- open bids2nii log file
     if overwrite == 'yes':
