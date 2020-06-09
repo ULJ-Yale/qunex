@@ -827,3 +827,40 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
             return False
         else:
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
+
+def createSubjectFile(command, sfolder, session, subject)
+    """
+    Creates the generic, non pipeline specific, subject file.
+
+    ---
+    Written by Jure Demšar, 2020-06-09
+    """
+    # open fifle
+    sfile = os.path.join(sfolder, 'subject.txt')
+    if os.path.exists(sfile):
+        if overwrite == 'yes':
+            os.remove(sfile)
+            print "--> removed existing subject.txt file"
+        else:
+            raise ge.CommandFailed(command, "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+
+    sout = open(sfile, 'w')
+    print >> sout, 'id:', session
+    print >> sout, 'subject:', subject
+     
+    # bids
+    bfolder = os.path.join(sfolder, 'bids')
+    if os.path.exist(bfolder):
+        print >> sout, 'bids:', bfolder
+
+    # nii
+    nfolder = os.path.join(sfolder, 'nii')
+    if os.path.exist(bfolder):
+        print >> sout, 'raw_data:', nfolder
+
+    # hcp
+    hfolder = os.path.join(sfolder, 'hcp')
+    print >> sout, 'hcp:', hfolder
+
+    # empty line
+    print >> sout

@@ -1192,26 +1192,10 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
     else:
         os.makedirs(nfolder)
 
-    # --- open subject.txt file
-
-    sfile = os.path.join(sfolder, 'subject.txt')
-    if os.path.exists(sfile):
-        if overwrite == 'yes':
-            os.remove(sfile)
-            print "--> removed existing subject.txt file"
-        else:
-            raise ge.CommandFailed("mapBIDS2nii", "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
-
-    sout = open(sfile, 'w')
-    print >> sout, 'id:', session
-    print >> sout, 'subject:', subject
-    print >> sout, 'bids:', bfolder
-    print >> sout, 'raw_data:', nfolder
-    print >> sout, 'hcp:', os.path.join(sfolder, 'hcp')
-    print >> sout
+    # --- create subject.txt file
+    gc.createSubjectFile("mapBIDS2nii", sfolder, session, subject)
 
     # --- open bids2nii log file
-
     if overwrite == 'yes':
         mode = 'w'
     else:

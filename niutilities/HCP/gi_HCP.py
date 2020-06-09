@@ -436,7 +436,6 @@ def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', ove
     errors       = ""
 
     # ---> Check for folders
-
     if not os.path.exists(os.path.join(subjectsfolder, 'inbox', 'HCPLS')):
         os.makedirs(os.path.join(subjectsfolder, 'inbox', 'HCPLS'))
         print "--> creating inbox HCPLS folder"
@@ -446,7 +445,6 @@ def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', ove
         print "--> creating archive HCPLS folder"
 
     # ---> identification of files
-
     if sessions:
         sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
 
@@ -490,8 +488,7 @@ def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', ove
         raise ge.CommandFailed("importHCP", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
 
-    # ---> mapping data to subjects' folders    
-
+    # ---> mapping data to subjects' folders
     print "--> mapping files to Qu|Nex hcpls folders"
 
     for file in sourceFiles:
@@ -547,7 +544,6 @@ def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', ove
                     errors += msg
 
     # ---> archiving the dataset
-    
     if errors:
         print "   ==> The following errors were encountered when mapping the files:"
         print errors
@@ -588,13 +584,11 @@ def importHCP(subjectsfolder=None, inbox=None, sessions=None, action='link', ove
                     print "==> %s of %s failed!" % (archive, file)
 
     # ---> check status
-
     if not allOk:
         print "\nFinal report\n============"
         raise ge.CommandFailed("importHCP", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
 
     # ---> mapping data to Qu|Nex nii folder
-
     report = []
     for execute in ['map', 'clean']:
         for session in sessionsList[execute]:
@@ -1018,15 +1012,17 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
     else:
         os.makedirs(nfolder)
 
-    # --- open subject.txt file
+    # --- create subject.txt file
+    gc.createSubjectFile("mapHCPLS2nii", sfolder, session, subject)
 
+    # --- create subject_hcp.txt file
     sfile = os.path.join(sfolder, 'subject_hcp.txt')
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
             print "--> removed existing subject.txt file"
         else:
-            raise ge.CommandFailed("mapHCPLS2nii", "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+            raise ge.CommandFailed("mapHCPLS2nii", "subject_hcp.txt file already present!", "A subject_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout = open(sfile, 'w')
     print >> sout, 'id:', session
