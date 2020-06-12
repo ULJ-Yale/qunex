@@ -501,7 +501,7 @@ fi
 runTurnkey() {
 # -- Specify command variable
 unset QuNexCallToRun
-QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
+QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --sessionids=\"${SESSIONIDS}\""
 connectorExec
 }
 
@@ -1517,7 +1517,7 @@ unset ClusterName
 unset setflag
 unset doubleflag
 unset singleflag
-unset SUBJID
+unset SESSIONIDS
 unset SESSIONS
 unset SESSION_LABELS
 
@@ -1646,7 +1646,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- General subject and session flags
     CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
-    SUBJID=`opts_GetOpt "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SUBJID=`echo "$SUBJID" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    SESSIONIDS=`opts_GetOpt "${setflag}sessionids" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     SESSION_LABELS=`opts_GetOpt "--sessionlabel" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
     if [[ -z ${SESSION_LABELS} ]]; then
         SESSION_LABELS=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
@@ -1907,7 +1907,7 @@ if [[ ${CommandToRun} == "runTurnkey" ]]; then
    runTurnkeyArgumentsInput="${runTurnkeyArguments}"
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=.[^-]*||g'`
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjid=.[^-]*||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--sessionids=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolds=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolddata=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--boldruns=.[^-]*||g'`

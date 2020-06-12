@@ -972,8 +972,8 @@ else
              unset BOLDS BOLDLIST
              if [[ -f ${SubjectBatchFile} ]]; then
                  # For debugging
-                 # echo "   gmri batchTag2NameKey filename="${SubjectBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-                 BOLDS=`gmri batchTag2NameKey filename="${SubjectBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'`
+                 # echo "   gmri batchTag2NameKey filename="${SubjectBatchFile}" sessionids="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+                 BOLDS=`gmri batchTag2NameKey filename="${SubjectBatchFile}" sessionids="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'`
                  BOLDLIST="${BOLDS}"
              else
                  reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""

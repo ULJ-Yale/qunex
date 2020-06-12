@@ -126,7 +126,7 @@ usage() {
     echo "                                                              If empty default is set to: [xnat]."
     echo "    --path=<study_path>                                       Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
     echo "    --subjects=<subjects_to_run_turnkey_on>                   Subjects to run locally on the file system if not an XNAT run."
-    echo "    --subjid=<comma_separated_list_of_subject_ids>            Ids to select for a run via gMRI engine from the batch file"
+    echo "    --sessionids=<comma_separated_list_of_session_ids>        Ids to select for a run via gMRI engine from the batch file"
     echo "    --turnkeysteps=<turnkey_worlflow_steps>                   Specify specific turnkey steps you wish to run:"
     echo "                                                              Supported:   ${QuNexTurnkeyWorkflow} "
     echo "    --turnkeycleanstep=<clean_intermediate worlflow_steps>    Specify specific turnkey steps you wish to clean up intermediate files for:"
@@ -369,9 +369,9 @@ fi
 if [ ! -z "$SESSION" ] && [ -z "$CASE" ] ; then
     CASE="${SESSION}"
 fi
-SUBJID=`opts_GetOpt "--subjids" "$@"`
-if [ -z "$SUBJID" ]; then
-    SUBJID=`opts_GetOpt "--subjid" "$@"`
+SESSIONIDS=`opts_GetOpt "--sessionids" "$@"`
+if [ -z "$SESSIONIDS" ]; then
+    SESSIONIDS=`opts_GetOpt "--sessionid" "$@"`
 fi
 
 OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
@@ -790,8 +790,8 @@ getBoldList() {
         geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}' in batch file ${ProcessingBatchFile} ... "; 
         if [[ -f ${ProcessingBatchFile} ]]; then
             # For debugging
-            # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
+            # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionids="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionids="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
             LBOLDRUNS="${LBOLDRUNS}"
         else
             reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
@@ -950,8 +950,8 @@ if [ "$Modality" = "general" ]; then
     echo "  Data input: ${GeneralSceneDataFile}"
 fi
 
-if [[ ! -z "${SUBJID}" ]]; then 
-echo "   Subjid parameter: ${SUBJID}"
+if [[ ! -z "${SESSIONIDS}" ]]; then 
+echo "   Sessionids parameter: ${SESSIONIDS}"
 fi
 
 if [ "$TURNKEY_STEPS" == "all" ]; then
@@ -1751,12 +1751,12 @@ fi
     # -- PreFreeSurfer
     turnkey_hcp1() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp1 (hcp_PreFS) ... "; echo ""
-        ${QuNexCommand} hcp1 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcp1 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --sessionids="${SESSIONIDS}"
     }
     # -- FreeSurfer
     turnkey_hcp2() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp2 (hcp_FS) ... "; echo ""
-        ${QuNexCommand} hcp2 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcp2 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --sessionids="${SESSIONIDS}"
         CleanupFiles=" talairach_with_skull.log lh.white.deformed.out lh.pial.deformed.out rh.white.deformed.out rh.pial.deformed.out"
         for CleanupFile in ${CleanupFiles}; do 
             cp ${QuNexMasterLogFolder}/${CleanupFile} ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${CASE}/scripts/ 2>/dev/null
@@ -1772,7 +1772,7 @@ fi
     # -- PostFreeSurfer
     turnkey_hcp3() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp3 (hcp_PostFS) ... "; echo ""
-        ${QuNexCommand} hcp3 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcp3 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --sessionids="${SESSIONIDS}"
     }
     # -- runQC_T1w (after hcp3)
     turnkey_runQC_T1w() {
@@ -1802,13 +1802,13 @@ fi
     turnkey_hcp4() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRIVolume) ... ${BOLDS:+BOLDS:} ${BOLDS}"; echo ""
         HCPLogName="hcpfMRIVolume"
-        ${QuNexCommand} hcp4 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
+        ${QuNexCommand} hcp4 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}" ${BOLDS:+--bolds=}"$BOLDS"
     }
     # -- fMRISurface
     turnkey_hcp5() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp5 (hcp_fMRISurface) ... ${BOLDS:+BOLDS:} ${BOLDS}"; echo ""
         HCPLogName="hcpfMRISurface"
-        ${QuNexCommand} hcp5 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
+        ${QuNexCommand} hcp5 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}" ${BOLDS:+--bolds=}"$BOLDS"
     }
     # -- runQC_BOLD (after hcp5)
     turnkey_runQC_BOLD() {
@@ -1834,7 +1834,7 @@ fi
     # -- Diffusion HCP (after hcp1)
     turnkey_hcpd() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcpd (hcp_Diffusion) ..."; echo ""
-        ${QuNexCommand} hcpd --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcpd --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}"
     }
     # -- Diffusion Legacy (after hcp1)
     turnkey_hcpdLegacy() {
@@ -2061,7 +2061,7 @@ fi
         --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --subjid="${SUBJID}"
+        --sessionids="${SESSIONIDS}"
     }
     # -- Generate brain masks for de-noising
     turnkey_createBOLDBrainMasks() {
@@ -2071,7 +2071,7 @@ fi
         --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --subjid="${SUBJID}"
+        --sessionids="${SESSIONIDS}"
     }
     # -- Compute BOLD statistics
     turnkey_computeBOLDStats() {
@@ -2081,7 +2081,7 @@ fi
         --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --subjid="${SUBJID}"
+        --sessionids="${SESSIONIDS}"
     }
     # -- Create final BOLD statistics report
     turnkey_createStatsReport() {
@@ -2091,7 +2091,7 @@ fi
         --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --subjid="${SUBJID}"
+        --sessionids="${SESSIONIDS}"
     }
     # -- Extract nuisance signal for further de-noising
     turnkey_extractNuisanceSignal() {
@@ -2101,7 +2101,7 @@ fi
         --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --subjid="${SUBJID}"
+        --sessionids="${SESSIONIDS}"
     }
     # -- Process BOLDs
     turnkey_preprocessBold() {
@@ -2111,7 +2111,7 @@ fi
         --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --subjid="${SUBJID}"
+        --sessionids="${SESSIONIDS}"
     }
     # -- Process via CONC file
     turnkey_preprocessConc() {
@@ -2121,7 +2121,7 @@ fi
         --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --subjid="${SUBJID}"
+        --sessionids="${SESSIONIDS}"
     }
     # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
     turnkey_g_PlotBoldTS() {
@@ -2172,10 +2172,10 @@ fi
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo " -- Command: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+           echo "${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --sessionids="${CASE}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            
-           ${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"
+           ${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --sessionids="${CASE}" --verbose="true"
            echo " -- Copying ${output_folder}/${output_name} to ${QuNexSubjectsFolder}/QC/BOLD/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            cp ${output_folder}/${output_name} ${QuNexSubjectsFolder}/QC/BOLD/
