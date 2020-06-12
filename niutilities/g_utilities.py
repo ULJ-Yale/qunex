@@ -130,7 +130,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
             print "\nPreparing template files:"
 
         # --> parameter template
-        paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
+        paramFile = os.path.join(studyfolder, 'sessions', 'specs', 'batch_parameters_example.txt')
         try:
             f = os.open(paramFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
             os.write(f, parameterTemplateHeader + "\n")
@@ -416,7 +416,7 @@ def checkStudy(startfolder=".", folders=None):
 
 def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
     '''
-    createBatch [sessionsfolder=.] [sourcefiles=subject_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch_parameters.txt]
+    createBatch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch_parameters.txt]
     
     PARAMETERS
     =========
@@ -424,7 +424,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     --sessionsfolder  ... The location of the <study>/subjects folder
     --sourcefiles     ... Comma separated names of source files to take from
                           each specified session folder and add to batch file.
-                          [subject_hcp.txt]
+                          [session_hcp.txt]
     --targetfile      ... The path to the batch file to be generated. By default
                           it is created as <study>/processing/batch.txt
     --sessions        ... If provided, only the specified sessions from the 
@@ -474,7 +474,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramfile
     is specified and the default template does not exist, the command will print
-    a warning and create an empty template (subjects/spec/batch_parameters.txt)
+    a warning and create an empty template (sessions/spec/batch_parameters.txt)
     with all the available parameters. Do note that this file will need to be edited
     with correct parameter values for your study.
 
@@ -488,7 +488,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     =======
     
     ```
-    qunex createBatch sourcefiles="subject.txt" targetfile="fcMRI/subjects_fcMRI.txt"
+    qunex createBatch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
     ```
 
     ----------------
@@ -530,7 +530,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
     # get sfiles from sourcefiles parameter
     if sourcefiles is None:
-        sfiles = "subject_hcp.txt"
+        sfiles = "session_hcp.txt"
     else
         sfiles = sourcefiles.split(",")
 
@@ -681,7 +681,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     PARAMETERS
     ==========
     
-    --sessionsfolder ... The location of the subjects folder where the sessions
+    --sessionsfolder ... The location of the sessions folder where the sessions
                          to create the list reside.
     --sessions       ... Either a comma or pipe separated string of session 
                          names to include (can be glob patterns) or a path
@@ -692,7 +692,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                          the list.
     --listfile       ... The path to the generated list file. If no path is 
                          provided, the list is created as:
-                         <studyfolder>/processing/lists/subjects.list
+                         <studyfolder>/processing/lists/sessions.list
     --bolds          ... If provided the specified bold files will be added to 
                          the list. The value should be a string that lists bold 
                          numbers or bold tags in a space, comma or pipe 
@@ -738,7 +738,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     The file is created at the path specified in `listfile` parameter. If no
     parameter is provided, the resulting list is saved in:
 
-    <studyfolder>/processing/lists/subjects.list
+    <studyfolder>/processing/lists/sessions.list
 
     If a file already exists, depending on the `overwrite` parameter the
     function will:
@@ -814,7 +814,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     roi:<sessionsfolder>/<session id>/images/<roi>
 
     Note that for all the files the function expects the files to be present in
-    the correct places within the Qu|Nex subjects folder structure. For ROI files
+    the correct places within the Qu|Nex sessions folder structure. For ROI files
     provide the relative path from the `images` folder.
 
     Checking for presence of files
@@ -836,14 +836,14 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     qunex createList bolds="1,2,3"
     ```
 
-    The command will create a list file in `../processing/list/subjects.txt` that
+    The command will create a list file in `../processing/list/sessions.list` that
     will list for all the sessions found in the current folder BOLD files 1, 2, 3
     listed as:
 
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
     ```
-    qunex createList sessionsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
             bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
     ```
 
@@ -854,7 +854,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
       file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas_s_hpss_res-mVWMWB1d.dtseries
 
     ```
-    qunex createList sessionsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
             filter="EC:use" listfile="lists/EC.list" \\
             conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
             fidl="EC.fidl" glm="bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
@@ -921,7 +921,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     # --- prepare target file name and folder
 
     if listfile is None:
-        listfile = os.path.join(os.path.dirname(sessionsfolder), 'processing', 'lists', 'subjects.list')
+        listfile = os.path.join(os.path.dirname(sessionsfolder), 'processing', 'lists', 'sessions.list')
         print "WARNING: No target list file name specified.\n         The list will be created as: %s!" % (listfile)
 
     if os.path.exists(listfile):
@@ -953,7 +953,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     # --- check sessions
 
     if sessions is None:
-        print "WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
+        print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
         sessions = glob.glob(os.path.join(sessionsfolder, '*', 'images'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
@@ -968,7 +968,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     lines = []
 
     for session in sessions:
-        lines.append("subject id: %s" % (session['id']))
+        lines.append("session id: %s" % (session['id']))
 
         if boldnums:
             for boldnum in boldnums:
@@ -1169,18 +1169,18 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
     
     ```
-    qunex createConc sessionsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
             bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
     ```
 
     The command will create for each session listed in the `batch.txt` a
-    `<session id>_WM.conc` file in `subjects/inbox/concs` in which it will list
+    `<session id>_WM.conc` file in `sessions/inbox/concs` in which it will list
     all the BOLD files tagged as `WM` as:
 
       file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas.dtseries
 
     ```
-    qunex createConc sessionsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
             filter="EC:use" concfolder="analysis/EC/concs" \\
             concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
             boldtail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
@@ -2307,9 +2307,9 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
 
 
 
-def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefiles="subject.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
+def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefiles="session.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
-    pullSequenceNames [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="subject.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]
+    pullSequenceNames [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]
 
     The function gathers a list of all the sequence names across the sessions 
     and saves it into a specified file.
@@ -2338,7 +2338,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
 
     --sourcefiles     A file or comma or pipe `|` separated list of files or
                       grep patterns that define, which session description 
-                      files to check. ['subject.txt']
+                      files to check. ['session.txt']
 
     --targetfile      The path to the target file, a file that will contain
                       the list of all the session names from all the individual
@@ -2388,7 +2388,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     ------------
 
     The command expects the neuroimaging data to be present in the standard 
-    'subject.txt' files. Please se online documentation for details. 
+    'session.txt' files. Please se online documentation for details. 
     Specifically, it will extract the first information following the sequence
     name.
 
@@ -2407,7 +2407,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     qunex pullSequenceNames sessions="AP*"
     ```
 
-    The command will compile sequence names present in `subject.txt` files 
+    The command will compile sequence names present in `session.txt` files 
     present in all `<session id>` folders that match the "AP*" glob
     pattern in the current working directory. 
 
@@ -2419,13 +2419,13 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     encountered when processing the data, the command will exit with an error.
 
     ```
-    qunex pullSequenceNames sessionsfolder="/data/myStudy/subjects" \\
+    qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
             sessions="AP*|OP*" sourcefiles="subject.txt|session.txt" \\
             check="warn" overwrite="yes" report="no"
     ```
 
-    The command will find all the session folders within `/data/myStudy/subjects`
-    It will then look for presence of either subject.xtx or session.txt files.
+    The command will find all the session folders within `/data/myStudy/sessions`
+    It will then look for presence of either subject.txt or session.txt files.
     The compiled data from the found files will be saved in the default 
     location. If a file already exists, it will be overwritten. If any errors 
     are encountered, the command will not throw an error, however it also won't
@@ -2433,11 +2433,11 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     information on file generation or processing report.
     
     ```
-    qunex pullSequenceNames sessionsfolder="/data/myStudy/subjects" \\
+    qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
             sessions="/data/myStudy/processing/batch.txt" \\           
             filter="group:controls|behavioral:yes" \\
             sourcefiles="*.txt" \\
-            targetfile="/data/myStudy/subjects/specs/hcp_mapping.txt" \\
+            targetfile="/data/myStudy/sessions/specs/hcp_mapping.txt" \\
             check="no" overwrite="yes"
     ```
 
@@ -2647,15 +2647,15 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
 
     return sessionsfolder, mapto, mapexclude
 
-# prepares subject.txt files for specific pipeline mapping
+# prepares session.txt files for specific pipeline mapping
 def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", sourcefile="session.txt", targetfile=None, mapping=None, filter=None, overwrite="no"):
     '''
-    createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=subject_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]
+    createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]
 
     USE
     ===
 
-    The command is used to prepare subject.txt files so that they hold the
+    The command is used to prepare session.txt files so that they hold the
     information necessary for correct mapping to a folder structure supporting
     specific pipeline preprocessing.
 
@@ -2676,8 +2676,8 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
     --pipelines      Specify a comma separted list of pipelines for which the
                      session info will be be prepared. [hcp]
     --sessionsfolder The directory that holds sessions' folders. [.]
-    --sourcefile     The "source" subject.txt file. [subject.txt]
-    --targetfile     The "target" subject.txt file. [subject_<pipeline>.txt]
+    --sourcefile     The "source" session.txt file. [session.txt]
+    --targetfile     The "target" session.txt file. [session_<pipeline>.txt]
     --mapping        The path to the text file describing the mapping.
                      [specs/<pipeline>_mapping.txt]
     --filter         An optional "key:value|key:value" string used as a filter
@@ -2736,7 +2736,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
 
     5 => bold:sleep
 
-    Example lines in a source subject.txt file:
+    Example lines in a source session.txt file:
 
     01: Scout
     02: T1w 0.7mm N1
@@ -2744,7 +2744,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
     04: RSBOLD 3mm 48 2.5s
     05: RSBOLD 3mm 48 2.5s
 
-    Resulting lines in target subject_<pipeline>.txt file:
+    Resulting lines in target session_<pipeline>.txt file:
 
     01:                  :Scout
     02: T1w              :T1w 0.7mm N1
@@ -2759,11 +2759,11 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
     ===========
     
     ```
-    qunex createSessionInfo sessions="OP*|AP*" sessionsfolder=subjects mapping=subjects/hcp_mapping.txt
+    qunex createSessionInfo sessions="OP*|AP*" sessionsfolder=session mapping=session/hcp_mapping.txt
     ```
     
     ```
-    qunex createSessionInfo sessions="processing/batch_new.txt" sessionsfolder=subjects mapping=subjects/hcp_mapping.txt
+    qunex createSessionInfo sessions="processing/batch_new.txt" sessionsfolder=session mapping=session/hcp_mapping.txt
     ```
 
     ----------------
@@ -2775,7 +2775,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
     2017-12-26 Grega Repovš
              - Set to ignore lines that start with # in mapping file.
     2017-12-30 Grega Repovš
-             - Added the option to explicitly specify the subjects to process.
+             - Added the option to explicitly specify the session to process.
              - Adjusted and expanded help string.
              - Added the option to map sequence names.
     2019-04-07 Grega Repovš
@@ -2800,7 +2800,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
             mapping = os.path.join(sessionsfolder, 'specs', '%s_mapping.txt' % pipeline)
 
         if targetfile is None:
-            targetfile = "subject_%s.txt" % pipeline
+            targetfile = "session_%s.txt" % pipeline
 
         # -- get mapping ready
 

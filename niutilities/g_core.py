@@ -836,13 +836,13 @@ def createSubjectFile(command, sfolder, session, subject)
     Written by Jure Demšar, 2020-06-09
     """
     # open fifle
-    sfile = os.path.join(sfolder, 'subject.txt')
+    sfile = os.path.join(sfolder, 'session.txt')
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print "--> removed existing subject.txt file"
+            print "--> removed existing session.txt file"
         else:
-            raise ge.CommandFailed(command, "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+            raise ge.CommandFailed(command, "session.txt file already present!", "A session.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout = open(sfile, 'w')
     print >> sout, 'id:', session

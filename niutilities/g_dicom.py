@@ -391,16 +391,16 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     After running, the command will place all the generated NIfTI files into the
     nii subfolder, named with sequential image number. It will also generate two
-    additional files: a subject.txt file and a DICOM-Report.txt file.
+    additional files: a session.txt file and a DICOM-Report.txt file.
 
-    subject.txt file
+    session.txt file
     ----------------
 
-    The subject.txt will be placed in the subject base folder. It will contain
+    The session.txt will be placed in the subject base folder. It will contain
     the information about the subject id, location of folders and a list of
     created NIfTI images with their description.
 
-    An example subject.txt file would be:
+    An example session.txt file would be:
 
     id: OP169
     subject: OP169
@@ -426,7 +426,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     For each of the listed images there will be a corresponding NIfTI file in
     the nii subfolder (e.g. 7.nii.gz for the first BOLD sequence), if a NIfTI
     file could be generated (Survey images for instance don't convert). The
-    generated subject.txt files form the basis for the following HCP and other
+    generated session.txt files form the basis for the following HCP and other
     processing steps.
 
     DICOM-Report.txt file
@@ -556,7 +556,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     # --- open report files
 
     r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
-    stxt = open(os.path.join(folder, "subject.txt"), 'w')
+    stxt = open(os.path.join(folder, "session.txt"), 'w')
 
     # get a list of folders
 
@@ -592,7 +592,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
             if verbose:
                 print "\n\nProcessing images from %s scanned on %s\n" % (getID(d), time)
 
-            # --- setup subject.txt file
+            # --- setup session.txt file
 
             print >> stxt, "id:", getID(d)
             print >> stxt, "subject:", getID(d)
@@ -898,12 +898,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     After running, the command will place all the generated NIfTI files into the
     nii subfolder, named with sequential image number. It will also generate two
-    additional files: a subject.txt file and a DICOM-Report.txt file.
+    additional files: a session.txt file and a DICOM-Report.txt file.
 
-    subject.txt file
+    session.txt file
     ----------------
 
-    The subject.txt will be placed in the session base folder. It will contain
+    The session.txt will be placed in the session base folder. It will contain
     the information about the session id, subject id, location of folders and a 
     list of created NIfTI images with their description.
 
@@ -912,7 +912,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     session id, the subject id is assumed to equal session id.
     `
 
-    An example subject.txt file would be:
+    An example session.txt file would be:
 
     id: OP169_baseline
     subject: OP169
@@ -938,7 +938,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     For each of the listed images there will be a corresponding NIfTI file in
     the nii subfolder (e.g. 7.nii.gz for the first BOLD sequence), if a NIfTI
     file could be generated (Survey images for instance don't convert). The
-    generated subject.txt files form the basis for the following HCP and other
+    generated session.txt files form the basis for the following HCP and other
     processing steps.
 
     DICOM-Report.txt file
@@ -1123,7 +1123,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     # --- open report files
 
     r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
-    stxt = open(os.path.join(folder, "subject.txt"), 'w')
+    stxt = open(os.path.join(folder, "session.txt"), 'w')
 
     # get a list of folders
 
@@ -1201,7 +1201,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             if verbose:
                 print "\nProcessing images from %s (%s) scanned on %s" % (sessionid, info['subjectid'], info['datetime'])
 
-            # --- setup subject.txt file
+            # --- setup session.txt file
 
             print >> stxt, "id:", sessionid
             print >> stxt, "subject:", subjectid
@@ -1270,7 +1270,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     if not calls:
         r.close()
         stxt.close()
-        for cleanFile in [os.path.join(dmcf, "DICOM-Report.txt"), os.path.join(folder, "subject.txt")]:
+        for cleanFile in [os.path.join(dmcf, "DICOM-Report.txt"), os.path.join(folder, "session.txt")]:
             if os.path.exists(cleanFile):
                 os.remove(cleanFile)
         raise ge.CommandFailed("dicom2niix", "No source DICOM files", "No source DICOM files were found to process!", "Please check your data and paths!")
@@ -1333,7 +1333,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 imgname = os.path.basename(img)
                 tbasename = "%d" % (niinum + imgnum)
 
-                # --> extract any suffices to add to the subject.txt
+                # --> extract any suffices to add to the session.txt
                 suffix = ""
                 if "_" in imgname:
                     suffix = " " +"_".join(imgname.replace('.nii.gz','').replace(info['fileid'], '').split('_')[1:])
@@ -1384,7 +1384,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                             if verbose:
                                 print "     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc)
 
-                # --> print the info to subject.txt file
+                # --> print the info to session.txt file
 
                 numinfo = ""
                 if nimg > 1:
@@ -1957,7 +1957,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     for the command to decide if set to 'auto' or let to default. The DICOM or 
     PAR/REC files are preserved and gzipped to save space. To speed up the 
     conversion, the parelements parameter is passed to the `dicom2niix` command. 
-    `subject.txt` and `DICOM-Report.txt` files are created as well. Please, 
+    `session.txt` and `DICOM-Report.txt` files are created as well. Please, 
     check the help for `sortDicom` and `dicom2niix` commands for the specifics.
 
 

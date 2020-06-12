@@ -600,15 +600,15 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
 
     ```
     qunex changeDICOMFiles \
-         --folder=/data/studies/WM/subjects/inbox/MR \
-         --paramfile=/data/studies/WM/subjects/specs/deid.txt
+         --folder=/data/studies/WM/sessions/inbox/MR \
+         --paramfile=/data/studies/WM/sessions/specs/deid.txt
     ```
     
     ```
     qunex changeDICOMFiles \
-         --folder=/data/studies/WM/subjects/inbox/MR/original \
-         --paramfile=/data/studies/WM/subjects/specs/deidv1.txt \
-         --outputfolder=/data/studies/WM/subjects/MR/deid \
+         --folder=/data/studies/WM/sessions/inbox/MR/original \
+         --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \
+         --outputfolder=/data/studies/WM/sessions/MR/deid \
          --extension="v1"
     ```
 

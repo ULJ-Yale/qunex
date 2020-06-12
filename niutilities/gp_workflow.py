@@ -193,13 +193,13 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                            * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
-    The parameters can be specified in command call or subject.txt file.
+    The parameters can be specified in command call or session.txt file.
 
     EXAMPLE USE
     ===========
     
     ```
-    qunex createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex createBOLDBrainMasks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
           overwrite=no hcp_cifti_tail=_Atlas bolds=all parelements=8
     ```
 
@@ -513,7 +513,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     For more detailed description please see wiki entry on Movement scrubbing.
 
-    The listed parameters can be specified in command call or subject.txt file.
+    The listed parameters can be specified in command call or session.txt file.
 
 
     NOTES AND DEPENDENCIES
@@ -534,14 +534,14 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     Using the defaults:
     
     ```
-    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no bolds=all
     ```
 
     Specifying additional parameters for identification of bad frames:
     
     ```
-    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
     ```
@@ -876,17 +876,17 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     ===========
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
           overwrite=no bolds=all parsessions=1
     ```
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
           overwrite=no bolds=all parsessions=10
     ```
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
           overwrite=no bolds=all parsessions=1 mov_plot=""
     ```
 
@@ -1233,7 +1233,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex extractNuisanceSignal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no bolds=all parsessions=10
     ```
 
@@ -1793,7 +1793,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex preprocessBold sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex preprocessBold sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
@@ -2420,7 +2420,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Activation analysis
     
     ```
-    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
          bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
@@ -2431,7 +2431,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Functional connectivity preprocessing
     
     ```
-    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
          bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\

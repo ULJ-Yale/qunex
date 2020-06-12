@@ -315,7 +315,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                         it will be set to the name of the inbox folder or the 
                         name of the compressed package.
 
-    --fileinfo          What file information to include in the subject.txt file.
+    --fileinfo          What file information to include in the session.txt file.
                         Options are:
                         
                         short   - only provide the short description based on the
@@ -372,7 +372,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     ==> Step 2 -- Mapping image files to Qu|Nex Suite `nii` folder
     
     For each session separately, images from the `bids` folder are 
-    mapped to the `nii` folder and appropriate `subject.txt` file is created per
+    mapped to the `nii` folder and appropriate `session.txt` file is created per
     standard Qu|Nex specification.
 
     The second step is achieved by running `mapBIDS2nii` on each session folder.
@@ -395,19 +395,19 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     
     * The original BIDS session-level data is stored in:
 
-        <sessionsfolder>/<subject_session>/bids
+        <sessionsfolder>/<session>/bids
 
     * Image files mapped to new names for Qu|Nex are stored in:
 
-        <subjects_folder>/<subject_session>/nii
+        <sessionsfolder>/<session>/nii
 
     * The full description of the mapped files is in:
 
-        <subjects_folder>/<subject_session>/subject.txt
+        <sessionsfolder>/<session>/session.txt
 
     * The output log of BIDS mapping is in: 
 
-        <subjects_folder>/<subject_session>/bids/bids2nii.log
+        <sessionsfolder>/<session>/bids/bids2nii.log
 
     * The study-level BIDS files are in:
 
@@ -999,7 +999,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     not copied but rather hard links are created. Only image, bvec and bval 
     files are mapped from the `bids` to `nii` folder. The exact mapping is
     noted in file `bids2nii.log` that is saved to the `bids` folder. The 
-    information on images is also compiled in `subject.txt` file that is 
+    information on images is also compiled in `session.txt` file that is 
     generated in the main session folder. For every image all the information
     present in the bids filename is listed.
 
@@ -1019,7 +1019,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
 
                     The default option is 'no'. 
 
-    --fileinfo      What file information to include in the subject.txt file.
+    --fileinfo      What file information to include in the session.txt file.
                     Options are:
 
                     short   - only provide the short description based on the
@@ -1031,17 +1031,17 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     =======
 
     After running the mapped nifti files will be in the `nii` subfolder, 
-    named with sequential image number. `subject.txt` will be in the base 
+    named with sequential image number. `session.txt` will be in the base 
     session folder and `bids2nii.log` will be in the `bids` folder.
     
-    subject.txt file
+    session.txt file
     ----------------
 
-    The subject.txt will be placed in the subject base folder. It will contain
+    The session.txt will be placed in the subject base folder. It will contain
     the information about the session id, subject id location of folders and a 
     list of created NIfTI images with their description.
 
-    An example subject.txt file would be:
+    An example session.txt file would be:
 
     id: 06_retest
     subject: 06
@@ -1059,7 +1059,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
 
     For each of the listed images there will be a corresponding NIfTI file in
     the nii subfolder (e.g. 04.nii.gz for the line bisection BOLD sequence). 
-    The generated subject.txt files form the basis for the following HCP and 
+    The generated session.txt files form the basis for the following HCP and 
     other processing steps. `id` field will be set to the full session name,
     `subject` will be set to the text preceeding the underscore (`_`) 
     character.
@@ -1198,7 +1198,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     else:
         os.makedirs(nfolder)
 
-    # --- create subject.txt file
+    # --- create session.txt file
     sout = gc.createSubjectFile("mapBIDS2nii", sfolder, session, subject)
 
     # --- open bids2nii log file

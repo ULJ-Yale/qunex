@@ -167,7 +167,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex runShellScript sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
+    qunex runShellScript sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
           overwrite=no script=fcMRI/processdata.sh
     ````
     

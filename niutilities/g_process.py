@@ -27,7 +27,7 @@ Changelog
            introduction of the parelements parameter.
 2019-09-20 Jure Demsar
          - Have all the files listed with the original name
-           in subject_<pipeline>.txt.
+           in session_<pipeline>.txt.
 """
 
 # general imports

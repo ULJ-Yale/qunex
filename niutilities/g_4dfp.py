@@ -83,8 +83,8 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
 
     do = []
     print "\n---=== Running NIL preprocessing on folder %s ===---\n" % (folder)
-    print "List of subjects to process\n"
-    print "%-15s%-15s%-15s%-10s" % ("subject", "subject.txt", "DICOM-Report", "params")
+    print "List of sessions to process\n"
+    print "%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params")
     for subj, stxt, sdicom, sparam in subjs:
         print "%-15s%-15s%-15s%-10s --->" % (os.path.basename(subj), recode[stxt], recode[sdicom], recode[sparam]),
         if not stxt:
@@ -101,7 +101,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
             do.append(subj)
         print ""
 
-    s = raw_input("\n===> Do we process the listed subjects? [y/n]: ")
+    s = raw_input("\n===> Do we process the listed sessions? [y/n]: ")
     if s is not "y":
         print "===> Aborting processing\n\n"
         return
@@ -119,10 +119,10 @@ def runNIL(folder=".", overwrite=None, sessionfile=None):
     '''
     runNIL [folder=.] [overwrite=no] [sessionfile=session.txt]
 
-    Runs NIL preprocessing script on the subject data in specified folder. Uses subject.txt to identify structural and
+    Runs NIL preprocessing script on the session data in specified folder. Uses session.txt to identify structural and
     BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
 
-    - folder: subject's folder with nii and dicom folders and subject.txt file.
+    - folder: session's folder with nii and dicom folders and session.txt file.
     - overwrite: whether to overwrite existing params file or exisiting BOLD data
     — sessionfile: the name of the session file
     '''
@@ -136,11 +136,11 @@ def runNIL(folder=".", overwrite=None, sessionfile=None):
     else:
         overwrite = False
     if sessionfile is None:
-        sessionfile = "subject.txt"
+        sessionfile = "session.txt"
 
     print "\n---> processing subject %s" % (os.path.basename(folder))
 
-    # ---> process subject.txt
+    # ---> process session.txt
 
     rbold = re.compile(r"bold([0-9]+)")
 
@@ -149,7 +149,7 @@ def runNIL(folder=".", overwrite=None, sessionfile=None):
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
     if not info:
-        raise ValueError("ERROR: No data in subject.txt! [%s]!" % (sessionfile))
+        raise ValueError("ERROR: No data in session.txt! [%s]!" % (sessionfile))
 
     for k, v in info[0].iteritems():
         if k == 'raw_data':

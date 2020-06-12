@@ -207,7 +207,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
 
     --filesort          An optional parameter that specifies how the files should
                         be sorted before mapping to `nii` folder and inclusion in 
-                        `subject_hcp.txt`. The sorting is specified by a string of
+                        `session_hcp.txt`. The sorting is specified by a string of
                         sort keys separated by '_'. The available sort keys are:
        
                         * name  ... sort by the name of the file
@@ -257,7 +257,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     ==> Step 2 -- Mapping image files to Qu|Nex Suite `nii` folder
     
     For each session separately, images from the `hcpls` folder are 
-    mapped to the `nii` folder and appropriate `subject.txt` file is created per
+    mapped to the `nii` folder and appropriate `session.txt` file is created per
     standard Qu|Nex specification.
 
     The second step is achieved by running `mapHCPLS2nii` on each session folder.
@@ -276,19 +276,19 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
 
     * The original HCPL session-level data is stored in:
 
-        <sessionsfolder>/<subject_session>/hcpls
+        <sessionsfolder>/<session>/hcpls
 
     * Image files mapped to new names for Qu|Nex are stored in:
 
-        <subjects_folder>/<subject_session>/nii
+        <sessionsfolder>/<session>/nii
 
     * The full description of the mapped files is in:
 
-        <subjects_folder>/<subject_session>/subject.txt
+        <sessionsfolder>/<session>/session.txt
 
     * The output log of HCPLS mapping is in: 
 
-        <subjects_folder>/<subject_session>/hcpls/hcpls2nii.log
+        <sessionsfolder>/<session>/hcpls/hcpls2nii.log
 
 
     NOTES
@@ -300,7 +300,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     ===========
     
     ```
-    qunex importHCP sessionsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
+    qunex importHCP sessionsfolder=myStudy/sessions inbox=HCPLS overwrite=yes hcplsname=hcpls
     ```
 
     ----------------
@@ -705,7 +705,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     not copied but rather hard links are created. Only image, bvec and bval 
     files are mapped from the `hcpls` to `nii` folder. The exact mapping is
     noted in file `hcpls2nii.log` that is saved to the `hcpls` folder. The 
-    information on images is also compiled in `subject.txt` file that is 
+    information on images is also compiled in `session.txt` file that is 
     generated in the main session folder. For every image all the information
     present in the hcpls filename is listed.
 
@@ -731,7 +731,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
     --filesort      An optional parameter that specifies how the files should
                     be sorted before mapping to `nii` folder and inclusion in 
-                    `subject_hcp.txt`. The sorting is specified by a string of
+                    `session_hcp.txt`. The sorting is specified by a string of
                     sort keys separated by '_'. The available sort keys are:
    
                     * name  ... sort by the name of the file
@@ -753,17 +753,17 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     =======
 
     After running the mapped nifti files will be in the `nii` subfolder, 
-    named with sequential image number. `subject.txt` will be in the base 
+    named with sequential image number. `session.txt` will be in the base 
     session folder and `hcpls2nii.log` will be in the `hcpls` folder.
     
-    subject.txt file
+    session.txt file
     ----------------
 
-    The subject.txt will be placed in the subject base folder. It will contain
+    The session.txt will be placed in the subject base folder. It will contain
     the information about the session id, subject id location of folders and a 
     list of created NIfTI images with their description.
 
-    An example subject.txt file would be:
+    An example session.txt file would be:
 
     id: 06_retest
     subject: 06
@@ -783,7 +783,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
     For each of the listed images there will be a corresponding NIfTI file in
     the nii subfolder (e.g. 04.nii.gz for resting state 2 PA). 
-    The generated subject.txt files form the basis for the following HCP and 
+    The generated session.txt files form the basis for the following HCP and 
     other processing steps. `id` field will be set to the full session name,
     `subject` will be set to the text preceeding the first underscore (`_`) 
     character.
@@ -942,17 +942,17 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     else:
         os.makedirs(nfolder)
 
-    # --- create subject.txt file
+    # --- create session.txt file
     sout = gc.createSubjectFile("mapHCPLS2nii", sfolder, session, subject)
 
-    # --- create subject_hcp.txt file
-    sfile = os.path.join(sfolder, 'subject_hcp.txt')
+    # --- create session_hcp.txt file
+    sfile = os.path.join(sfolder, 'session_hcp.txt')
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print "--> removed existing subject.txt file"
+            print "--> removed existing session.txt file"
         else:
-            raise ge.CommandFailed("mapHCPLS2nii", "subject_hcp.txt file already present!", "A subject_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+            raise ge.CommandFailed("mapHCPLS2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout_hcp = open(sfile, 'w')
     print >> sout_hcp, 'id:', session
