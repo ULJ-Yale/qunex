@@ -200,9 +200,9 @@ def readList(filename, verbose=False):
     return slist
 
 
-def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, verbose=False):
+def getSubjectList(listString, filter=None, sessionids=None, subjectsfolder=None, verbose=False):
     '''
-    getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, verbose=False)
+    getSubjectList(listString, filter=None, sessionids=None, subjectsfolder=None, verbose=False)
 
     An internal function for getting a list of subjects as an array of dictionaries in
     the form: [{'id': <subject id>, [... other keys]}, {'id': <subject id>, [... other keys]}].
@@ -217,8 +217,8 @@ def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, v
     other information present in the batch file, in the third lists of specified files, e.g.:
     [{'id': <subject id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
 
-    If sfilter is provided (not None), only subjects that match the filter will be returned.
-    If subjid is provided (not None), only subjects with matching id will be returned.
+    If filter is provided (not None), only subjects that match the filter will be returned.
+    If sessionids is provided (not None), only subjects with matching id will be returned.
     If subjectsfolder is provided (not None), subjects from a listString will be treated as
     glob patterns and all folders that match the pattern in the subjectsfolder will be returned
     as subject ids.
@@ -252,18 +252,18 @@ def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, v
                 nlist += glob.glob(os.path.join(subjectsfolder, s))
             slist = [{'id': os.path.basename(e)} for e in nlist]
 
-    if subjid is not None and subjid.strip() is not "":
-        subjid = re.split(' +|,|\|', subjid)
-        slist = [e for e in slist if e['id'] in subjid]
+    if sessionids is not None and sessionids.strip() is not "":
+        sessionids = re.split(' +|,|\|', sessionids)
+        slist = [e for e in slist if e['id'] in sessionids]
 
-    if sfilter is not None and sfilter.strip() is not "":
+    if filter is not None and filter.strip() is not "":
         try:
-            filters = [[f.strip() for f in e.split(':')] for e in sfilter.split("|")]
+            filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
         except:
-            raise ge.CommandFailed("getSubjectList", "Invalid sfilter parameter", "The provided sfilter parameter is invalid: '%s'" % (sfilter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("getSubjectList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
             
         if any([len(e) != 2 for e in filters]):
-            raise ge.CommandFailed("getSubjectList", "Invalid sfilter parameter", "The provided sfilter parameter is invalid: '%s'" % (sfilter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("getSubjectList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
@@ -286,7 +286,7 @@ def deduceFolders(args):
     logfolder  = args.get('logfolder')
     basefolder = args.get('basefolder')
     subjectsfolder = args.get('subjectsfolder')
-    sfolder = args.get('sfolder')
+    sourcefolder = args.get('sourcefolder')
     folder = args.get('folder')
 
     if subjectsfolder:
@@ -296,7 +296,7 @@ def deduceFolders(args):
         if subjectsfolder:
             basefolder = os.path.dirname(subjectsfolder)
         else:
-            for f in [os.path.abspath(e) for e in [logfolder, sfolder, folder, reference, "."] if e]:
+            for f in [os.path.abspath(e) for e in [logfolder, sourcefolder, folder, reference, "."] if e]:
                 if f and not basefolder:
                     while os.path.dirname(f) and os.path.dirname(f) != '/':
                         f = os.path.dirname(f)

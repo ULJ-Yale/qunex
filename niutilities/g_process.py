@@ -45,164 +45,13 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # pipelines imports
 from HCP import gp_HCP
 
+
 # =======================================================================
 #                                                                 GLOBALS
 
 log     = []
 stati   = []
 logname = ""
-
-
-# =======================================================================
-#                                                       SUPPORT FUNCTIONS
-
-def writelog(item):
-    '''
-    writelog(item)
-    Splits the passed item into two parts and appends the first to the
-    global log list, and the second to the global stati list. It also
-    prints the contents to the file specified in the global logname
-    variable.
-    '''
-    global logname
-    global log
-    global stati
-    r, status = procResponse(item)
-    log.append(r)
-    stati.append(status)
-    f = open(logname, "a")
-    print >> f, r
-    f.close()
-
-
-def procResponse(r):
-    '''
-    procResponse(r)
-    It processes the response returned from the utilities functions
-    called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple. If the 
-    third element is missing, it assumes it ran ok and sets it to
-    0.
-    '''
-    if type(r) is tuple:
-        if len(r) == 2:
-            if len(r[1]) == 2:
-                return (r[0], (r[1][0], r[1][1], None))
-            elif len(r[1]) == 3:
-                return r
-            else:
-                return("Unknown", ("Unknown", "Unknown", None))
-        else:
-            return("Unknown", ("Unknown", "Unknown", None))
-    else:
-        return (r, ("Unknown", "Unknown", None))
-
-
-def torf(s):
-    '''
-    torf(s)
-    First checks if string is "None", 'none', or "NONE" and returns
-    None, then Checks if s is any of the possible true strings: "True", "true",
-    or "TRUE" and retuns a boolean result of the check.
-    '''
-    if s in ['None', 'none', 'NONE']:
-        return None
-    else:
-        return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
-
-
-def isNone(s):
-    '''
-    isNone(s)
-    Check if the string is "None", "none" or "NONE" and returns None, otherwise
-    returns the passed string.
-    '''
-    if s in ['None', 'none', 'NONE', '']:
-        return None
-    else:
-        return s
-
-
-def plist(s):
-    '''
-    plist(s)
-    Processes the string, spliting it by the pipe "|" symbol, trimming
-    any whitespace caracters form start or end of each resulting
-    substring, and retuns an array of substrings of length more than 0.
-    '''
-    s = s.split('|')
-    s = [e.strip() for e in s]
-    s = [e for e in s if len(e) > 0]
-    return s
-
-
-def updateOptions(session, options):
-    '''
-    updateOptions(session, options)
-    Returns an updated copy of options dictionary where all keys from 
-    sessions that started with an underscore '_' are mapped into options.
-    '''
-    soptions = dict(options)
-    for key, value in session.iteritems():
-        if key.startswith('_'):
-            soptions[key[1:]] = value
-    return soptions
-
-
-def mapDeprecated(options, tomap, mapValues, deprecatedList):
-    '''
-    mapDeprecated(options, tomap, mapValues, deprecatedList)
-    Checks for deprecated parameters, remaps deprecated ones
-    and notifes the user.
-    '''
-
-    remapped   = []
-    deprecated = []
-    newvalues  = []
-
-    # -> check remapped parameters
-    for k, v in options.iteritems():
-        if k in tomap:
-            options[tomap[k]] = v
-            remapped.append(k)
-
-    if remapped:
-        print "\nWARNING: Use of parameters with changed name(s)!\n       The following parameters have new names and will be deprecated:"
-        for k in remapped:
-            print "         ... %s is now %s!" % (k, tomap[k])            
-            del options[k]
-        print "         Please correct the listed parameter names in command line or batch file!"     
-
-
-    # -> check deprecated parameters
-
-    for k, v in options.iteritems():
-        if k in deprecatedList:
-            if v:
-                deprecated.append((k, v, deprecatedList[k]))
-
-    if deprecated:
-        print "\nWARNING: Use of deprecated parameter(s)!"
-        for k, v, n in deprecated:
-            if n:
-                print "         ... %s (current value: %s) is replaced by the parameter %s!" % (k, str(v), n)
-            else:
-                print "         ... %s (current value: %s) is being deprecated!" % (k, str(v))
-        print "         Please stop using the listed parameters in command line or batch file, and, when indicated, consider using the replacement parameter!"  
-
-    # -> check new parameter values
-
-    for k, v in options.iteritems():
-        if k in mapValues:
-            if v in mapValues[k]:
-                options[k] = mapValues[k][v]
-                newvalues.append([k, v, mapValues[k][v]])
-
-    if newvalues:
-        print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have new names:"
-        for k, v, n in newvalues:
-            print "         ... %s (%s) is now %s!" % (str(v), k, n)            
-        print "         Please correct the listed parameter values in command line or batch file!"
 
 
 # =======================================================================
@@ -252,7 +101,7 @@ arglist = [['# ---- Basic settings'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
            ['script',             'None',                                        isNone, 'The script to be executed.'],
-           ['subjid',              '',                                           str,  "list of | separated session ids for which to run the command"],
+           ['sessionids',         '',                                            str,  "list of | separated session ids for which to run the command"],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -358,7 +207,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_fs_brainmask',       '',                                         str,    "Specify 'original' to keep the masked original brainimage; 'manual' to use the manually edited brainmask file; default 'fs'uses the brainmask generated by mri_watershed [fs]."],
            ['hcp_fs_longitudinal',    '',                                         str,    "Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO]"],
            ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
-           ['hcp_fs_existing_subject','FALSE',                                    torf,   "Indicates that the command is to be run on top of an already existing analysis/subject. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE or FALSE [FALSE]. HCP Pipelines specific!"],
+           ['hcp_fs_existing_session','FALSE',                                    torf,   "Indicates that the command is to be run on top of an already existing analysis/subject. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE or FALSE [FALSE]. HCP Pipelines specific!"],
            ['hcp_fs_extra_reconall',  '',                                         str,    "A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
            ['hcp_fs_no_conf2hires',   'FALSE',                                    torf,   "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]"],
            ['hcp_fs_flair',           'FALSE',                                    torf,   "If set to TRUE indicates that recon-all is to be run with the -FLAIR/-FLAIRpial options(rather than the -T2/-T2pial options). The FLAIR input image itself should still be provided via the '--t2' argument."],
@@ -439,7 +288,19 @@ tomap = {'bppt':                    'bolds',
          'hcp_bold_boldnamekey':    'hcp_filename',
          'hcp_dwi_dwelltime':       'hcp_dwi_echospacing',
          'cores':                   'parsessions',
-         'threads':                 'parelements'}
+         'threads':                 'parelements',
+         'subjid':                  'sessionids',
+         'sfolder':                 'sourcefolder',
+         'tfolder':                 'targetfolder',
+         'tfile':                   'targetfile',
+         'sfile':                   {
+                                        'sessionfile': ['runNIL', 'runNILFolder'],
+                                        'sourcefiles': ['createBatch', 'pullSequenceNames', 'gatherBehavior'],
+                                        'sourcefile': ['createSessionInfo', 'setupHCP', 'sliceImage']
+                                    },
+         'sfilter':                 'filter',
+         'hcp_fs_existing_subject': 'hcp_fs_existing_session'
+         }
 
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
              'hcp_filename': {'name': 'original', 'number': 'standard'}}
@@ -564,6 +425,173 @@ for line in flaglist:
         flist[line[0]] = [line[1], line[2]]
 
 
+# =======================================================================
+#                                                       SUPPORT FUNCTIONS
+
+def writelog(item):
+    '''
+    writelog(item)
+    Splits the passed item into two parts and appends the first to the
+    global log list, and the second to the global stati list. It also
+    prints the contents to the file specified in the global logname
+    variable.
+    '''
+    global logname
+    global log
+    global stati
+    r, status = procResponse(item)
+    log.append(r)
+    stati.append(status)
+    f = open(logname, "a")
+    print >> f, r
+    f.close()
+
+
+def procResponse(r):
+    '''
+    procResponse(r)
+    It processes the response returned from the utilities functions
+    called. It splits it into the report string and status tuple. If
+    no status tupple is present, it adds an "Unknown" tupple. If the 
+    third element is missing, it assumes it ran ok and sets it to
+    0.
+    '''
+    if type(r) is tuple:
+        if len(r) == 2:
+            if len(r[1]) == 2:
+                return (r[0], (r[1][0], r[1][1], None))
+            elif len(r[1]) == 3:
+                return r
+            else:
+                return("Unknown", ("Unknown", "Unknown", None))
+        else:
+            return("Unknown", ("Unknown", "Unknown", None))
+    else:
+        return (r, ("Unknown", "Unknown", None))
+
+
+def torf(s):
+    '''
+    torf(s)
+    First checks if string is "None", 'none', or "NONE" and returns
+    None, then Checks if s is any of the possible true strings: "True", "true",
+    or "TRUE" and retuns a boolean result of the check.
+    '''
+    if s in ['None', 'none', 'NONE']:
+        return None
+    else:
+        return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
+
+
+def isNone(s):
+    '''
+    isNone(s)
+    Check if the string is "None", "none" or "NONE" and returns None, otherwise
+    returns the passed string.
+    '''
+    if s in ['None', 'none', 'NONE', '']:
+        return None
+    else:
+        return s
+
+
+def plist(s):
+    '''
+    plist(s)
+    Processes the string, spliting it by the pipe "|" symbol, trimming
+    any whitespace caracters form start or end of each resulting
+    substring, and retuns an array of substrings of length more than 0.
+    '''
+    s = s.split('|')
+    s = [e.strip() for e in s]
+    s = [e for e in s if len(e) > 0]
+    return s
+
+
+def updateOptions(session, options):
+    '''
+    updateOptions(session, options)
+    Returns an updated copy of options dictionary where all keys from 
+    sessions that started with an underscore '_' are mapped into options.
+    '''
+    soptions = dict(options)
+    for key, value in session.iteritems():
+        if key.startswith('_'):
+            soptions[key[1:]] = value
+    return soptions
+
+
+def mapDeprecated(options, command):
+    '''
+    mapDeprecated(options, command)
+    Checks for deprecated parameters, remaps deprecated ones
+    and notifes the user.
+    '''
+
+    remapped   = []
+    deprecated = []
+    newvalues  = []
+
+    # -> check remapped parameters
+    # variable for storing new options
+    newOptions = {}
+    # iterate over all options
+    for k, v in options.iteritems():
+        if k in tomap:
+            # if v is a dictionary then
+            # the parameter was remaped to multiple values
+            mapto = tomap[k]
+            if type(mapto) is dict:
+                for k2, v2 in mapto.iteritems():
+                    if command in v2:
+                        mapto = k2
+                        break
+
+            # remap
+            newOptions[mapto] = v
+            remapped.append(k)
+        else:
+            newOptions[k] = v
+
+    # save
+    options = newOptions
+
+    if remapped:
+        print("\nWARNING: Use of parameters with changed name(s)!\n       The following parameters have new names and will be deprecated:")
+        for k in remapped:
+            print("         ... %s is now %s!" % (k, tomap[k]))
+
+        print("         Please correct the listed parameter names in command line or batch file!")
+
+    # -> check deprecated parameters
+    for k, v in options.iteritems():
+        if k in deprecatedList:
+            if v:
+                deprecated.append((k, v, deprecatedList[k]))
+
+    if deprecated:
+        print "\nWARNING: Use of deprecated parameter(s)!"
+        for k, v, n in deprecated:
+            if n:
+                print "         ... %s (current value: %s) is replaced by the parameter %s!" % (k, str(v), n)
+            else:
+                print "         ... %s (current value: %s) is being deprecated!" % (k, str(v))
+        print "         Please stop using the listed parameters in command line or batch file, and, when indicated, consider using the replacement parameter!"  
+
+    # -> check new parameter values
+    for k, v in options.iteritems():
+        if k in mapValues:
+            if v in mapValues[k]:
+                options[k] = mapValues[k][v]
+                newvalues.append([k, v, mapValues[k][v]])
+
+    if newvalues:
+        print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have new names:"
+        for k, v, n in newvalues:
+            print "         ... %s (%s) is now %s!" % (str(v), k, n)            
+        print "         Please correct the listed parameter values in command line or batch file!"
+
+
 # ==============================================================================
 #                                                               RUNNING COMMANDS
 #
@@ -591,12 +619,12 @@ def run(command, args):
 
     if 'sessions' in args:
         options['sessions'] = args['sessions']
-    if 'subjid' in args:
-        options['subjid'] = args['subjid']
+    if 'sessionids' in args:
+        options['sessionids'] = args['sessionids']
     if 'filter' in args:
         options['filter'] = args['filter']
 
-    sessions, gpref = g_core.getSubjectList(options['sessions'], sfilter=options['filter'], subjid=options['subjid'], verbose=False)
+    sessions, gpref = g_core.getSubjectList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
     # --- check if we are running across subjects rather than sessions
 
@@ -619,7 +647,7 @@ def run(command, args):
     for (k, v) in gpref.iteritems():
         options[k] = v
 
-    mapDeprecated(options, tomap, mapValues, deprecated)
+    mapDeprecated(options, command)
 
     # --- parse command line options
 
@@ -629,7 +657,7 @@ def run(command, args):
         else:
             options[k] = v
 
-    mapDeprecated(options, tomap, mapValues, deprecated)
+    mapDeprecated(options, command)
 
     # ---- Recode
 
@@ -690,7 +718,7 @@ def run(command, args):
     # --- check if there are no subjects
 
     if not sessions:
-        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or subjid parameter!"
+        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!"
         print sout
         writelog(sout)
         exit()

@@ -977,9 +977,9 @@ def processBIDS(bfolder):
         
 
 
-def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
+def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     '''
-    mapBIDS2nii [sfolder='.'] [overwrite='no'] [fileinfo='short']
+    mapBIDS2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short']
 
     USE
     ===
@@ -1006,26 +1006,26 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
     PARAMETERS
     ==========
 
-    --sfolder    The base session folder in which bids folder with data and
-                 files for the session is present. [.]
-    
-    --overwrite  Parameter that specifes what should be done in cases where
-                 there are existing data stored in `nii` folder. The options
-                 are:
+    --sourcefolder  The base session folder in which bids folder with data and
+                    files for the session is present. [.]
 
-                 no      - do not overwrite the data, skip session
-                 yes     - remove exising files in `nii` folder and redo the
-                           mapping
+    --overwrite     Parameter that specifes what should be done in cases where
+                    there are existing data stored in `nii` folder. The options
+                    are:
 
-                 The default option is 'no'. 
+                    no      - do not overwrite the data, skip session
+                    yes     - remove exising files in `nii` folder and redo the
+                              mapping
 
-    --fileinfo   What file information to include in the subject.txt file.
-                 Options are:
-                 
-                 short   - only provide the short description based on the
-                           identified BIDS tags
-                 full    - list the full file name excluding the 
-                           participant id, session name and extension
+                    The default option is 'no'. 
+
+    --fileinfo      What file information to include in the subject.txt file.
+                    Options are:
+
+                    short   - only provide the short description based on the
+                              identified BIDS tags
+                    full    - list the full file name excluding the 
+                              participant id, session name and extension
 
     RESULTS
     =======
@@ -1077,9 +1077,9 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
     The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `parsessions` parameters. In this case the
     command will be run for each of the specified sessions in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
+    (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
+    (for more information see online documentation). `sourcefolder` will be filled in
     automatically as each subject's folder. Commands will run in parallel where
     the degree of parallelism is determined by `parsessions` (1 by default).
 
@@ -1152,7 +1152,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
         raise ge.CommandError("mapBIDS2nii", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
 
-    sfolder = os.path.abspath(sfolder)
+    sfolder = os.path.abspath(sourcefolder)
     bfolder = os.path.join(sfolder, 'bids')
     nfolder = os.path.join(sfolder, 'nii')
 

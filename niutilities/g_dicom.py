@@ -455,7 +455,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `parelements` parameters. In this case the
     command will be run for each of the specified sessions in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
+    (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each sessions's folder. Commands will run in parallel by
@@ -967,7 +967,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `parelements` parameters. In this case the
     command will be run for each of the specified sessions in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
+    (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each sessions's folder. Commands will run in parallel by
@@ -1470,7 +1470,7 @@ def sortDicom(folder=".", **kwargs):
     The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `parelements` parameters. In this case the
     command will be run for each of the specified sessions in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
+    (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each sessions's folder. Commands will run in parallel by

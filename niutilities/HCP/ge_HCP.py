@@ -20,10 +20,10 @@ import niutilities.g_exceptions as ge
 import niutilities.g_utilities as gu
 import re
 
-def exportHCP(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
+def exportHCP(subjectsfolder=".", sessions=None, sfilter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
 
     """
-    exportHCP [subjectsfolder="."] [sessions=None] [sfilter=None] [subjid=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"] 
+    exportHCP [subjectsfolder="."] [sessions=None] [sfilter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"] 
 
     The function maps HCP style data out of Qu|Nex data structure. How to do the 
     mapping (move, copy, link) is specified by the `mapaction` parameter. The
@@ -74,7 +74,7 @@ def exportHCP(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapa
                       Only the sessions for which all the specified keys match
                       the specified values will be mapped.
     
-    --subjid          An optional parameter explicitly specifying, which of the 
+    --sessionids      An optional parameter explicitly specifying, which of the 
                       sessions identified by the `sessions` parameter are to be 
                       mapped. If not specified, all sessions will be mapped.
  
@@ -161,7 +161,7 @@ def exportHCP(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapa
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
-        --subjid="AP*,HQ*" \\
+        --sessionids="AP*,HQ*" \\
         --mapaction="move" \\
         --overwrite=yes
     ```
@@ -202,7 +202,7 @@ def exportHCP(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapa
     subjectsfolder, mapto, mapexclude = gu.exportPrep(commandName="exportHCP", subjectsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, subjid=subjid, subjectsfolder=subjectsfolder, verbose=False)
+    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, sessionids=sessionids, subjectsfolder=subjectsfolder, verbose=False)
     if not sessions:
         raise ge.CommandFailed(commandName, "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 

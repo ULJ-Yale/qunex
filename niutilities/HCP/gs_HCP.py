@@ -22,9 +22,9 @@ import niutilities.g_exceptions as ge
 import os.path
 import g_core
 
-def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcp_suffix=""):
+def setupHCP(sourcefolder=".", targetfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcp_suffix=""):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls'] [hcp_suffix=""]
+    setupHCP [sourcefolder=.] [targetfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls'] [hcp_suffix=""]
 
     USE
     ===
@@ -39,9 +39,9 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     PARAMETERS
     ==========
 
-    --sfolder           The base subject folder that contains the nifti images 
-                        and subject.txt file. [.]
-    --tfolder           The folder (within the base folder) to which the data is
+    --sourcefolder      The base session folder that contains the nifti images 
+                        and session.txt file. [.]
+    --targetfolder      The folder (within the base folder) to which the data is
                         to be mapped. [hcp]
     --sfile             The name of the source subject.txt file. 
                         [subject_hcp.txt]
@@ -60,8 +60,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                         See below for details. ['hcpls'] 
     --hcp_suffix        Optional suffix to append to session id when creating 
                         session folder within the hcp folder. The final path
-                        to HCP session is then: <tfolder>/<session id><hcp_suffix>.
-                        []
+                        to HCP session is then:
+                        <targetfolder>/<session id><hcp_suffix>. []
 
     IMAGE DEFINITION
     ================
@@ -150,10 +150,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `parsessions` parameters. In this case the
     command will be run for each of the specified sessions in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
+    (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each sessions's folder. Commands will run in parallel, where
+    (for more information see online documentation). `sourcefolder` will be filled
+    in automatically as each sessions's folder. Commands will run in parallel, where
     the degree of parallelism is determined by `parsessions` (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
@@ -172,7 +172,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     ===========
     
     ```
-    qunex setupHCP sfolder=OP316 sfile=subject.txt
+    qunex setupHCP sourcefolder=OP316 sfile=subject.txt
     ```
 
     ----------------
@@ -204,7 +204,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
     print "Running setupHCP\n================"
 
-    inf   = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
+    inf   = niutilities.g_core.readSubjectData(os.path.join(sourcefolder, sfile))[0][0]
     rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)
@@ -219,11 +219,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     if folderstructure == 'initial':
         fctail = '_fncb'
         fmtail = '_strc'
-        basef = os.path.join(sfolder, tfolder, inf['id'] + hcp_suffix)
+        basef = os.path.join(sourcefolder, targetfolder, inf['id'] + hcp_suffix)
     else:
         fctail = ""
         fmtail = ""
-        basef = os.path.join(sfolder, tfolder, inf['id'] + hcp_suffix, 'unprocessed')
+        basef = os.path.join(sourcefolder, targetfolder, inf['id'] + hcp_suffix, 'unprocessed')
 
     # --- Check session
 
@@ -465,6 +465,6 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
     
     if not mapped:
-        raise ge.CommandFailed("setupHCP", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sfolder), "Please check your data!")     
+        raise ge.CommandFailed("setupHCP", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")     
 
     return

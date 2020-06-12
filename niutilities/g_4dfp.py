@@ -48,9 +48,9 @@ set seq = ""
 
 recode = {True: 'ok', False: 'missing'}
 
-def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
+def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
     '''
-    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sfile=subject.txt]
+    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sessionfile=session.txt]
 
     Goes through the folder and runs runNIL on all the subfolders that match the pattern. Setting overwrite
     to overwrite.
@@ -59,15 +59,15 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
       new packages from the scanner reside,
     - pattern: which subjectfolders to match (default OP*),
     - overwrite: whether to overwrite existing (params and BOLD) files.
-    — sfile: the name of the subject.txt file
+    — sessionfile: the name of the session file
 
-    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sfile=subject.txt
+    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sessionfile=session.txt
     '''
 
     if pattern is None:
         pattern = "OP*"
-    if sfile is None:
-        sfile = "subject.txt"
+    if sessionfile is None:
+        sessionfile = "session.txt"
     if overwrite is None:
         overwrite = False
     elif overwrite:
@@ -79,7 +79,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
 
     subjs = glob.glob(os.path.join(folder, pattern))
 
-    subjs = [(e, os.path.exists(os.path.join(e, 'subject.txt')), os.path.exists(os.path.join(e, 'dicom', 'DICOM-Report.txt')), os.path.exists(os.path.join(e, '4dfp', 'params'))) for e in subjs]
+    subjs = [(e, os.path.exists(os.path.join(e, 'session.txt')), os.path.exists(os.path.join(e, 'dicom', 'DICOM-Report.txt')), os.path.exists(os.path.join(e, '4dfp', 'params'))) for e in subjs]
 
     do = []
     print "\n---=== Running NIL preprocessing on folder %s ===---\n" % (folder)
@@ -108,23 +108,23 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
 
     for s in do:
         try:
-            runNIL(s, overwrite, sfile)
+            runNIL(s, overwrite, sessionfile)
         except:
             print "---> Failed running NIL preprocessing on", s
 
     print "\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder)
 
 
-def runNIL(folder=".", overwrite=None, sfile=None):
+def runNIL(folder=".", overwrite=None, sessionfile=None):
     '''
-    runNIL [folder=.] [overwrite=no] [sfile=subject.txt]
+    runNIL [folder=.] [overwrite=no] [sessionfile=session.txt]
 
     Runs NIL preprocessing script on the subject data in specified folder. Uses subject.txt to identify structural and
     BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
 
     - folder: subject's folder with nii and dicom folders and subject.txt file.
     - overwrite: whether to overwrite existing params file or exisiting BOLD data
-    — sfile: the name of the subject.txt file
+    — sessionfile: the name of the session file
     '''
 
     if overwrite is None:
@@ -135,8 +135,8 @@ def runNIL(folder=".", overwrite=None, sfile=None):
         overwrite = True
     else:
         overwrite = False
-    if sfile is None:
-        sfile = "subject.txt"
+    if sessionfile is None:
+        sessionfile = "subject.txt"
 
     print "\n---> processing subject %s" % (os.path.basename(folder))
 
@@ -144,12 +144,12 @@ def runNIL(folder=".", overwrite=None, sfile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, pref = niutilities.g_core.readSubjectData(os.path.join(folder, sfile))
+    info, pref = niutilities.g_core.readSubjectData(os.path.join(folder, sessionfile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
     if not info:
-        raise ValueError("ERROR: No data in subject.txt! [%s]!" % (sfile))
+        raise ValueError("ERROR: No data in subject.txt! [%s]!" % (sessionfile))
 
     for k, v in info[0].iteritems():
         if k == 'raw_data':

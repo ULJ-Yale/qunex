@@ -451,7 +451,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     cBase = "\ngmri " + command
 
     for (k, v) in nopt:
-        if k not in ['subjid', 'scheduler']:
+        if k not in ['sessionids', 'scheduler']:
             cBase += ' --%s="%s"' % (k, v)
 
     # ---- if sessions is None
@@ -485,7 +485,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
             slist = []
             [slist.append(sessions.pop(0)['id']) for e in range(parsessions) if sessions]   # might need to change to id
 
-            cStr = cBase + ' --subjid="%s"' % ("|".join(slist))
+            cStr = cBase + ' --sessionids="%s"' % ("|".join(slist))
 
             # ---- set sheduler settings
 

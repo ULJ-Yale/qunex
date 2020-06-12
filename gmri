@@ -87,20 +87,20 @@ getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 import utilities
 ----------------
 importBIDS   [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
-mapBIDS2nii  [sfolder='.'] [overwrite='no']
+mapBIDS2nii  [sourcefolder='.'] [overwrite='no']
 importHCP    [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
-mapHCPLS2nii [sfolder='.'] [overwrite='no']
+mapHCPLS2nii [sourcefolder='.'] [overwrite='no']
 
 
 WUSTL NIL pipeline utilities
 ----------------------------
-runNIL       [folder=.] [overwrite=no] [sfile=subject.txt]
-runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sfile=subject.txt]
+runNIL       [folder=.] [overwrite=no] [sessionfile=subject.txt]
+runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sessionfile=subject.txt]
 
 
 General image file utilities
 ----------------------------
-sliceImage    sfile=<source image> tfile=<target image> [frames=1]
+sliceImage    sourcefile=<source image> targetfile=<target image> [frames=1]
 
 
 NIfTI file conversions
@@ -115,16 +115,16 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-createSessionInfo sessions=<sessions specification> [pipelines=hcp] [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_*.txt] [mapping=specs/*_mapping.txt] [sfilter=None] [overwrite=no]
-setupHCP          [sfolder=.] [tfolder=hcp] [sfile=subject_*.txt]
+createSessionInfo sessions=<sessions specification> [pipelines=hcp] [subjectsfolder=.] [sourcefile=session.txt] [targetfile=subject_*.txt] [mapping=specs/*_mapping.txt] [filter=None] [overwrite=no]
+setupHCP      [sourcefolder=.] [targetfolder=hcp] [sourcefile=subject_*.txt]
 
 
 Miscellaneous file utilities
 ----------------------------
 createStudy  studyfolder=<path to study base folder> [subfolders=$TOOLS/niutilities/templates/study_folders_default.txt]
-createBatch  [subjectsfolder=.] [sfile=subject_*.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
-createList  [subjectsfolder=.] [sessions=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-createConc  [subjectsfolder=.] [sessions=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createBatch  [subjectsfolder=.] [sourcefiles=subject_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+createList  [subjectsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createConc  [subjectsfolder=.] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
@@ -300,11 +300,11 @@ def runCommand(command, args):
 
     sessions = None
     if 'sessions' in eargs:
-        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sfolder', 'folder']]):
+        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
             raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple sessions!" % (command))
         if folders['subjectsfolder'] is None:
             folders['subjectsfolder'] = "."
-        sessions, gopts = gc.getSubjectList(eargs['sessions'], sfilter=eargs.get('filter'), subjid=eargs.get('subjid'), subjectsfolder=folders['subjectsfolder'], verbose=False)
+        sessions, gopts = gc.getSubjectList(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get('sessionids'), subjectsfolder=folders['subjectsfolder'], verbose=False)
 
     logname = eargs.get('logname')
 
@@ -348,7 +348,7 @@ def runCommand(command, args):
                     # -- set up a list of sessions to run in each runList
 
                     slist = [sessions.pop(0)['id'] for e in range(sperlist) if sessions]
-                    largs['subjid'] = "|".join(slist)
+                    largs['sessionids'] = "|".join(slist)
 
                     calls.append({'name': 'runList_%d' % (c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
 
@@ -405,12 +405,12 @@ def runCommand(command, args):
             for session in sessions:
                 targs   = dict(bargs)
                 name    = command + ": " + session['id']
-                sfolder = os.path.join(folders['subjectsfolder'], session['id'])
+                sessionsfolder = os.path.join(folders['sessionsfolder'], session['id'])
                 if folders['logfolder']:
                     logfile = os.path.join(folders['logfolder'], 'comlogs', "%s_%s.log" % (command, session['id']))
-                for targ in ['sfolder', 'folder']:
+                for targ in ['sourcefolder', 'folder']:
                     if targ in gcom.commands[command]['args']:
-                        targs[targ] = sfolder
+                        targs[targ] = sessionsfolder
 
                 calls.append({'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
 
