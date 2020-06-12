@@ -161,7 +161,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the sessions information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
@@ -199,7 +199,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no hcp_cifti_tail=_Atlas bolds=all parelements=8
     ```
 
@@ -446,7 +446,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
@@ -534,14 +534,14 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     Using the defaults:
     
     ```
-    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
          overwrite=no bolds=all
     ```
 
     Specifying additional parameters for identification of bad frames:
     
     ```
-    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
          overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
     ```
@@ -725,7 +725,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                                       analysis.
 
     For the group level it creates three report files that are stored in the
-    <subjectsfolder>/QC/movement folder. These files are:
+    <sessionsfolder>/QC/movement folder. These files are:
 
     * <mov_mreport> (bold_movement_report.txt by default)
       This file lists for each session and bold file mean, sd, range, max, min,
@@ -758,7 +758,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -771,7 +771,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed, and the group report will be stored in
-                           `<subjectsfolder>/QC/movement.<hcp_bold_variant>`
+                           `<sessionsfolder>/QC/movement.<hcp_bold_variant>`
                            folder [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
@@ -876,17 +876,17 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     ===========
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no bolds=all parsessions=1
     ```
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no bolds=all parsessions=10
     ```
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no bolds=all parsessions=1 mov_plot=""
     ```
 
@@ -914,7 +914,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per session plots, fidl snippets and group reports. Only\n    images specified using --bolds parameter will be processed. Please\n    see documentation for use of other relevant parameters!"
         r += "\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s" % (options)
         if options['hcp_bold_variant']:
-            r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n    Group results will be stored in <subjectsfolder>/QC/movement.%s." % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])    
+            r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n    Group results will be stored in <sessionsfolder>/QC/movement.%s." % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])    
         r += "\n\n........................................................"
 
         doOptionsCheck(options, sinfo, 'createStatsReport')  
@@ -1163,7 +1163,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
@@ -1233,7 +1233,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
          overwrite=no bolds=all parsessions=10
     ```
 
@@ -1444,7 +1444,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements     ... How many elements (e.g bolds) to run in
@@ -1507,7 +1507,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     [<session id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual sessions's folders, they are
-    searched for in the <subjectsfolder>/inbox/events folder. In that case the
+    searched for in the <sessionsfolder>/inbox/events folder. In that case the
     "<session id>_" is not optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -1793,7 +1793,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex preprocessBold sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex preprocessBold sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
          overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
@@ -2044,7 +2044,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -2097,8 +2097,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     [<session id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual session's folders, they are
-    searched for in the <subjectsfolder>/inbox/events and
-    <subjectsfolder>/inbox/concs folder. In that case the "<session id>_" is not
+    searched for in the <sessionsfolder>/inbox/events and
+    <sessionsfolder>/inbox/concs folder. In that case the "<session id>_" is not
     optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -2420,7 +2420,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Activation analysis
     
     ```
-    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
          overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
          bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
@@ -2431,7 +2431,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Functional connectivity preprocessing
     
     ```
-    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
          overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
          bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
@@ -2561,8 +2561,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     # if absolute path flag use session folder from conc file
                     if (options['conc_use'] == 'absolute'):
                         # extract session folder from conc file
-                        options['subjectsfolder'] = (c[0].split(sinfo['id']))[0]
-                        d['s_base'] = options['subjectsfolder'] + sinfo['id']
+                        options['sessionsfolder'] = (c[0].split(sinfo['id']))[0]
+                        d['s_base'] = options['sessionsfolder'] + sinfo['id']
                         options['bold_tail'] = (c[0].split(boldname))[1].replace(getExtension(options['image_target']), "")
 
                     r += "\n\nLooking up: " + boldname + " ..."

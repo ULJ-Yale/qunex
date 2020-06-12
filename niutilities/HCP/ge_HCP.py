@@ -20,10 +20,10 @@ import niutilities.g_exceptions as ge
 import niutilities.g_utilities as gu
 import re
 
-def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
+def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
 
     """
-    exportHCP [subjectsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"] 
+    exportHCP [sessionsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"] 
 
     The function maps HCP style data out of Qu|Nex data structure. How to do the 
     mapping (move, copy, link) is specified by the `mapaction` parameter. The
@@ -51,10 +51,10 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     PARAMETERS
     ==========
 
-    --subjectsfolder  Specifies the base study subjects folder within the Qu|Nex
+    --sessionsfolder  Specifies the base study subjects folder within the Qu|Nex
                       folder structure to or from which the data are to be 
                       mapped. If not specified explicitly, the current working 
-                      folder will be taken as the location of the subjectsfolder. 
+                      folder will be taken as the location of the sessionsfolder. 
                       [.]
     
     --sessions        Either a string with pipe `|` or comma separated list of 
@@ -105,7 +105,7 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     --hcp_suffix      An optional suffix to append to session id when mapping  
                       data from a hcp session folder. The path from which the 
                       data will be mapped from each session will be:
-                      <subjectsfolder>/<session id>/hcp/<session id><hcp_suffix>.
+                      <sessionsfolder>/<session id>/hcp/<session id><hcp_suffix>.
                       []
 
     --verbose         Report details while running function
@@ -123,7 +123,7 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ```
     qunex exportHCP \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --mapexclude=unprocessed \\
@@ -142,7 +142,7 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ``` 
     qunex exportHCP \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --filter="group:controls|institution:Yale" \\
@@ -158,7 +158,7 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ```
     qunex exportHCP \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --sessionids="AP*,HQ*" \\
@@ -172,7 +172,7 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ```
     qunex exportHCP \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --mapaction="link" \\
@@ -199,15 +199,15 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     verbose   = verbose.lower() == 'yes'
 
     # -- export prep
-    subjectsfolder, mapto, mapexclude = gu.exportPrep(commandName="exportHCP", subjectsfolder, mapto, mapaction, mapexclude)
+    sessionsfolder, mapto, mapexclude = gu.exportPrep(commandName="exportHCP", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
-    sessions, gopts = gc.getSubjectList(sessions, filter=filter, sessionids=sessionids, subjectsfolder=subjectsfolder, verbose=False)
+    sessions, gopts = gc.getSubjectList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
     if not sessions:
         raise ge.CommandFailed(commandName, "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 
     # -- open logfile
-    logfilename, logfile = gc.getLogFile(folders={'subjectsfolder': subjectsfolder}, tags=['exportHCP'])
+    logfilename, logfile = gc.getLogFile(folders={'sessionsfolder': sessionsfolder}, tags=['exportHCP'])
 
     # -- start
     gc.printAndLog(gc.underscore("Running exportHCP"), file=logfile)
@@ -219,7 +219,7 @@ def exportHCP(subjectsfolder=".", sessions=None, filter=None, sessionids=None, m
     toMap = []
 
     for session in sessions:
-        hcpfolder = os.path.join(subjectsfolder, session['id'], 'hcp', session['id'] + hcp_suffix)
+        hcpfolder = os.path.join(sessionsfolder, session['id'], 'hcp', session['id'] + hcp_suffix)
         hcpfolders = glob.glob(os.path.join(hcpfolder, '*')) 
         targetfolder = os.path.join(mapto, session['id'])
 

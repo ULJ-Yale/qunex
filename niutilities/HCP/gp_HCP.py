@@ -131,7 +131,7 @@ def getHCPPaths(sinfo, options):
     if options['hcp_fs_longitudinal']:
         d['FS_long_template'] = os.path.join(hcpbase, 'T1w', options['hcp_fs_longitudinal'])
         d['FS_long_results']  = os.path.join(hcpbase, 'T1w', "%s.long.%s" % (sinfo['id'] + options['hcp_suffix'], options['hcp_fs_longitudinal']))
-        d['FS_long_subject_template'] = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
+        d['FS_long_subject_template'] = os.path.join(options['sessionsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
         d['hcp_long_nonlin']          = os.path.join(hcpbase, 'MNINonLinear_' + options['hcp_fs_longitudinal'])
     else:
         d['FS_long_template']         = ""
@@ -188,7 +188,7 @@ def getHCPPaths(sinfo, options):
                           ('hcp_bold_surf_check', 'check_fMRISurface.txt'),
                           ('hcp_dwi_check',       'check_Diffusion.txt')]:
         if options[pipe] == 'all':
-            d[pipe] = os.path.join(options['subjectsfolder'], 'specs', default)
+            d[pipe] = os.path.join(options['sessionsfolder'], 'specs', default)
         elif options[pipe] == 'last':
             d[pipe] = False
         else:
@@ -358,7 +358,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
@@ -491,12 +491,12 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex hcp_PreFS sessions=fcMRI/subjects_hcp.txt subjectsfolder=subjects \\
+    qunex hcp_PreFS sessions=fcMRI/subjects_hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_brainsize=170
     ```
 
     ```
-    qunex hcp1 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp1 sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
@@ -887,7 +887,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
@@ -987,22 +987,22 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     
 
     ```
-    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_fs_longitudinal=TemplateA
     ```
 
     ```
-    qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp2 sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ```
-    qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp2 sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_t2=NONE \\
           hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
     ```
@@ -1352,7 +1352,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -1421,17 +1421,17 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex longitudinalFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex longitudinalFS sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10
     ```
 
     ```
-    qunex lfs sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex lfs sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ```
-    qunex lsf sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex lsf sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_t2=NONE \\
           hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
           hcp_freesurfer_module=YES
@@ -1563,7 +1563,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             --longitudinal="template"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
                 'subject'           : options['hcp_fs_longitudinal'],
-                'subjectDIR'        : os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id']),
+                'subjectDIR'        : os.path.join(options['sessionsfolder'], 'FSTemplates', sinfo['id']),
                 'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
                 'fsloadhpcmodule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
                 'expertfile'        : options['hcp_expert_file'],
@@ -1678,7 +1678,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
@@ -1738,12 +1738,12 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex hcp_PostFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp_PostFS sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp3 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp3 sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
@@ -1955,7 +1955,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -2059,7 +2059,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_Diffusion \
       --sessions="processing/batch.hcp.txt" \\
-      --subjectsfolder="subjects" \\
+      --sessionsfolder="subjects" \\
       --parsessions="10" \\
       --overwrite="no" \\
       --test
@@ -2071,7 +2071,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcpd \
       --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\
-      --subjectsfolder="<path_to_study_folder>/subjects" \\
+      --sessionsfolder="<path_to_study_folder>/subjects" \\
       --parsessions="4" \\
       --overwrite="yes" \\
       --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
@@ -2287,7 +2287,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/subjects folder, where the
                                 imaging  data is supposed to go [.].
     --parsessions           ... How many sessions to run in parallel [1].
     --parelements           ... How many elements (e.g bolds) to run in
@@ -2489,12 +2489,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     ===========
 
     ```
-    qunex hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp4 sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
           hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     ```
@@ -3258,7 +3258,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements     ... How many elements (e.g bolds) to run in
@@ -3331,12 +3331,12 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     ===========
 
     ```
-    qunex hcp_fMRISurface sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp_fMRISurface sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp5 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex hcp5 sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no parsessions=10
     ```
 
@@ -3867,7 +3867,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
     --parsessions       ... How many sessions to run in parallel [1].
     --parelements       ... How many elements (e.g bolds) to run in
@@ -3947,13 +3947,13 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_ICAFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects
+        --sessionsfolder=subjects
     ```
 
     ```
     qunex hcp_ICAFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     ```
 
@@ -4408,7 +4408,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
     --parsessions       ... How many sessions to run in parallel [1].
     --parelements       ... How many elements (e.g bolds) to run in
@@ -4476,14 +4476,14 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_PostFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_matlab_mode="interpreted"
     ```
 
     ```
     qunex hcp_PostFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -4799,7 +4799,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
     --parsessions       ... How many sessions to run in parallel [1].
     --parelements       ... How many elements (e.g bolds) to run in
@@ -4871,14 +4871,14 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_ReApplyFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_matlab_mode="interpreted"
     ```
 
     ```
     qunex hcp_ReApplyFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -5518,7 +5518,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
     --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
@@ -5599,7 +5599,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     # HCP MSMAll after application of single-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
         --hcp_msmall_bolds="REST_1,REST_2"
         --hcp_matlab_mode="interpreted"
@@ -5609,7 +5609,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     # HCP MSMAll after application of multi-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
         --hcp_msmall_bolds="REST_1,REST_2"
         --hcp_matlab_mode="interpreted"
@@ -6106,7 +6106,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/subjects folder, where the
                             imaging  data is supposed to go [.].
     --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
@@ -6193,7 +6193,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     # HCP DeDriftAndResample after application of single-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -6202,7 +6202,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     # HCP DeDriftAndResample after application of multi-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=subjects \
         --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -6862,7 +6862,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===
 
     mapHCPData maps the results of the HCP preprocessing (in MNINonLinear) to
-    the <subjectsfolder>/<session id>/images folder structure. Specifically, it
+    the <sessionsfolder>/<session id>/images folder structure. Specifically, it
     copies the files and folders:
 
     * T1w.nii.gz                  -> images/structural/T1w.nii.gz
@@ -6881,7 +6881,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/subjects folder, where the
                            imaging data is supposed to go [.].
     --parsessions      ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -6922,7 +6922,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex mapHCPData sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex mapHCPData sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no hcp_cifti_tail=_Atlas bolds=all
     ```
     

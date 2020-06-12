@@ -148,8 +148,8 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="subject_hcp.txt",
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `parsessions` parameters. In this case the
-    command will be run for each of the specified sessions in the subjectsfolder
+    optionally `sessionsfolder` and `parsessions` parameters. In this case the
+    command will be run for each of the specified sessions in the sessionsfolder
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sourcefolder` will be filled

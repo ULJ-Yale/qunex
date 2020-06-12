@@ -49,7 +49,7 @@
 # # ---- Basic settings
 # 
 # _sessions                 The file with sessions information. [batch.txt]
-# _subjectsfolder           The path to study subjects folder. []
+# _sessionsfolder           The path to study subjects folder. []
 # _logfolder                The path to log folder. []
 # _logtag                   An optional additional tag to add to the log file after the command name. []
 # _overwrite                Whether to overwrite existing results. [no]

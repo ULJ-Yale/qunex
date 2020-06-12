@@ -453,8 +453,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `parelements` parameters. In this case the
-    command will be run for each of the specified sessions in the subjectsfolder
+    optionally `sessionsfolder` and `parelements` parameters. In this case the
+    command will be run for each of the specified sessions in the sessionsfolder
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
@@ -483,7 +483,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     ```
     qunex dicom2nii \\
-      --subjectsfolder="/data/my_study/subjects" \\
+      --sessionsfolder="/data/my_study/subjects" \\
       --sessions="OP*" \\
       --clean=yes \\
       --unzip=yes \\
@@ -965,8 +965,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `parelements` parameters. In this case the
-    command will be run for each of the specified sessions in the subjectsfolder
+    optionally `sessionsfolder` and `parelements` parameters. In this case the
+    command will be run for each of the specified sessions in the sessionsfolder
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
@@ -995,7 +995,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     ```
     qunex dicom2niix \\
-      --subjectsfolder="/data/my_study/subjects" \\
+      --sessionsfolder="/data/my_study/subjects" \\
       --sessions="OP*" \\
       --clean=yes \\
       --unzip=yes \\
@@ -1468,8 +1468,8 @@ def sortDicom(folder=".", **kwargs):
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `parelements` parameters. In this case the
-    command will be run for each of the specified sessions in the subjectsfolder
+    optionally `sessionsfolder` and `parelements` parameters. In this case the
+    command will be run for each of the specified sessions in the sessionsfolder
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
@@ -1498,7 +1498,7 @@ def sortDicom(folder=".", **kwargs):
 
     ```
     qunex sortDicom \\
-      --subjectfolder="/data/my_study/subjects" \\
+      --sessionsfolders="/data/my_study/subjects" \\
       --sessions="OP*"
     ```
 
@@ -1785,9 +1785,9 @@ def splitDicom(folder=None):
     return
 
 
-def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
+def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
     '''
-    importDICOM [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]  
+    importDICOM [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]  
 
     USE
     ===
@@ -1798,7 +1798,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     that contains DICOM or PAR/REC files.
 
     The command can import packets either from a dedicated masterinbox folder 
-    and create the necessary session folders within `--subjectsfolder`, or it 
+    and create the necessary session folders within `--sessionsfolder`, or it 
     can process the data already present in the session specific folders. 
 
     The next sections will describe the two use cases in more detail.
@@ -1809,14 +1809,14 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
 
     This is the default operation. In this case the `--masterinbox` parameter 
     has to provide a path to the folder with the incoming packets 
-    (`<subjectsfolder>/inbox/MR` by default). The session id is identified by 
+    (`<sessionsfolder>/inbox/MR` by default). The session id is identified by 
     the use of the `--pattern` parameter, and optionally the `--logfile` 
     parameter. The packages processed can be optionally further filtered by the 
     `--sessions` parameter, so that only the packages that match both with the 
     `--pattern` and `--sessions` list are processed.
 
     The command first looks into the provided master inbox folder 
-    (`--masterinbox`; by default `<subjectsfolder>/inbox/MR`) and finds any 
+    (`--masterinbox`; by default `<sessionsfolder>/inbox/MR`) and finds any 
     packets that match the specified regex pattern (`--pattern`). The 
     `--pattern` has to be prepared so that it returns a named group 'packet_name'. 
     The default pattern is: 
@@ -1907,7 +1907,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
 
     If the `--masterinbox` parameter is set to "none", then the command assumes 
     that the incoming data has already been saved to each session folder within 
-    the `--subjectsfolder`. In this case, the command will look into all folders 
+    the `--sessionsfolder`. In this case, the command will look into all folders 
     that match the list provided in the `--sessions` parameter and process the 
     data in that folder. Each entry in the list can be a glob pattern matching 
     with multitiple session folders.
@@ -1964,10 +1964,10 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     PARAMETERS
     ==========
 
-    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
+    --sessionsfolder  The base study subjects folder (e.g. WM44/subjects) where
                       the inbox and individual subject folders are. If not 
                       specified, the current working folder will be taken as 
-                      the location of the subjectsfolder. [.]
+                      the location of the sessionsfolder. [.]
     
     --sessions        A comma delimited string that lists the sessions to 
                       process. If master inbox folder is used, the parameter 
@@ -1980,10 +1980,10 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     --masterinbox     The master inbox folder with packages to process. By 
                       default masterinbox is in base study folder: 
-                      <subjectsfolder>/inbox/MR. If the packages are elsewhere 
+                      <sessionsfolder>/inbox/MR. If the packages are elsewhere 
                       the location can be specified here. If set to "none", the 
                       data is assumed to already exist in the individual 
-                      sessions folders. [<subjectsfolder>/inbox/MR]
+                      sessions folders. [<sessionsfolder>/inbox/MR]
     
     --check           The type of check to perform when packages or session  
                       folders are identified. The possible values are:
@@ -2067,7 +2067,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="<path_to_studyfolder>/subjects"
+        --sessionsfolder="<path_to_studyfolder>/subjects"
     ```
     
     If the processing should continue automatically if packages to process were 
@@ -2075,7 +2075,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/subjects" \
         --check="any"
     ```
     
@@ -2084,7 +2084,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/subjects" \
         --sessions="AP.*,HQ.*" \
         --check="any"
     ```
@@ -2095,7 +2095,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/subjects" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
         --check="any"
@@ -2106,7 +2106,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/subjects" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
         --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \
@@ -2122,7 +2122,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/subjects" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
         --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_name:2|session_name:3" \
@@ -2144,7 +2144,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="/studies/myStudy/subjects" \
+        --sessionsfolder="/studies/myStudy/subjects" \
         --masterinbox="none" \
         --sessions="S*" 
     ```
@@ -2154,7 +2154,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --subjectsfolder="/studies/myStudy/subjects" \
+        --sessionsfolder="/studies/myStudy/subjects" \
         --masterinbox="none" \
         --sessions="*baseline" \
         --archive="delete"
@@ -2210,11 +2210,11 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
 
     overwrite = overwrite.lower() == 'yes'
 
-    if subjectsfolder is None:
-        subjectsfolder = "."
+    if sessionsfolder is None:
+        sessionsfolder = "."
 
     if masterinbox is None:
-        masterinbox = os.path.join(subjectsfolder, 'inbox', 'MR')
+        masterinbox = os.path.join(sessionsfolder, 'inbox', 'MR')
 
     if masterinbox.lower() == 'none':
         masterinbox = None
@@ -2328,7 +2328,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
                             packets['invalid'].append((file, session))
                             continue
 
-                    sfolder = os.path.join(subjectsfolder, session['sessionid'])
+                    sfolder = os.path.join(sessionsfolder, session['sessionid'])
 
                     if sessions:
                         if not any([matchAll(e, session['sessionid']) for e in sessions]):
@@ -2356,13 +2356,13 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
                      ('invalid', "---> For these folders the folder name could not parsed and they won't be processed:"),
                      ('exist', "---> These folders have existing results:")]
 
-        print "---> Checking for folders to process in '%s'" % (os.path.abspath(subjectsfolder))
+        print "---> Checking for folders to process in '%s'" % (os.path.abspath(sessionsfolder))
 
         getid = re.compile(nameformat)
 
         sfolders = []
         for sessionid in sessions:
-            sfolders += glob.glob(os.path.join(subjectsfolder, sessionid))
+            sfolders += glob.glob(os.path.join(sessionsfolder, sessionid))
         sfolders = list(set(sfolders))
 
         for sfolder in sfolders:
@@ -2435,17 +2435,17 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
             if masterinbox:
                 raise ge.CommandFailed("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
             else:
-                raise ge.CommandFailed("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder)), "Please check your data!")                
+                raise ge.CommandFailed("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(sessionsfolder)), "Please check your data!")                
         else:
             if masterinbox:
                 raise ge.CommandNull("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
             else:
-                raise ge.CommandNull("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder))) 
+                raise ge.CommandNull("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(sessionsfolder))) 
                 
 
     # ---- Ok, now loop through the packets
 
-    afolder = os.path.join(subjectsfolder, "archive", "MR")
+    afolder = os.path.join(sessionsfolder, "archive", "MR")
     if not os.path.exists(afolder):
         os.makedirs(afolder)
         print "---> Created Archive folder for processed packages."
@@ -2458,7 +2458,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
         if packets['exist']:
             print "---> Cleaning exisiting data in folders:"
             for file, session in packets['exist']:                
-                sfolder = os.path.join(subjectsfolder, session['sessionid'])
+                sfolder = os.path.join(sessionsfolder, session['sessionid'])
                 print "     ... %s" % (sfolder)
                 if masterinbox:
                     ifolder = os.path.join(sfolder, 'inbox')
@@ -2480,7 +2480,7 @@ def importDICOM(subjectsfolder=None, sessions=None, masterinbox=None, check="yes
         note = []
         try:
 
-            sfolder = os.path.join(subjectsfolder, session['sessionid'])
+            sfolder = os.path.join(sessionsfolder, session['sessionid'])
             ifolder = os.path.join(sfolder, 'inbox')
             dfolder = os.path.join(sfolder, 'dicom')
 

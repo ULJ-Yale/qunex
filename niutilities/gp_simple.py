@@ -31,7 +31,7 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
     """
     createBoldList - documentation not yet available.
     """
-    bfile = open(os.path.join(options['subjectsfolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
+    bfile = open(os.path.join(options['sessionsfolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
     bsearch = re.compile('bold([0-9]+)')
 
     for session in sinfo:
@@ -58,7 +58,7 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
     createConcList - documentation not yet available.
     """
 
-    bfile = open(os.path.join(options['subjectsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
+    bfile = open(os.path.join(options['sessionsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
     concs = options['bolds'].split("|")
     fidls = options['event_file'].split("|")
@@ -95,7 +95,7 @@ def listSubjectInfo(sinfo, options, overwrite=False, thread=0):
     """
     listSubjectInfo - documentation not yet available.
     """
-    bfile = open(os.path.join(options['subjectsfolder'], 'SubjectInfo.txt'), 'w')
+    bfile = open(os.path.join(options['sessionsfolder'], 'SubjectInfo.txt'), 'w')
 
     for session in sinfo:
         print >> bfile, "subject: %s, group: %s" % (session['id'], session['group'])
@@ -167,7 +167,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex runShellScript sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex runShellScript sessions=fcMRI/subjects.hcp.txt sessionsfolder=subjects \\
           overwrite=no script=fcMRI/processdata.sh
     ````
     

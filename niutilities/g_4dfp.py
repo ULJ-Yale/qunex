@@ -57,7 +57,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
 
     - folder: the base study subjects folder (e.g. WM44/subjects) where OP folders and the inbox folder with the
       new packages from the scanner reside,
-    - pattern: which subjectfolders to match (default OP*),
+    - pattern: which sessionsfolders to match (default OP*),
     - overwrite: whether to overwrite existing (params and BOLD) files.
     — sessionfile: the name of the session file
 

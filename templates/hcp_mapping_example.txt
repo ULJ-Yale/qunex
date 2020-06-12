@@ -7,9 +7,9 @@
 #  background information, please see help for setupHCP commands,
 #  and documentation on Running HCP minimal preprocessing pipeline. 
 #  
-#  This file is used by createSessionInfo command. The command processes subject 
-#  information files (typically subject.txt) and generates a target file 
-#  (default is subject_hcp).txt). The general format for mapping specification is: 
+#  This file is used by createSessionInfo command. The command processes session 
+#  information files (typically session.txt) and generates a target file 
+#  (default is session_hcp).txt). The general format for mapping specification is: 
 #
 #  <original_sequence_name> => <user_speficied_label>
 #
@@ -41,14 +41,14 @@
 #
 #  then the code would label all image sequences named "T1w 0.7mm N1" with "T1w". And all sequences
 #  named "BOLD 3mm" with bold[N]:rest Specifically, the following line in the source file 
-#  (by default subject.txt):
+#  (by default session.txt):
 # 
 #  03: T1w 0.7mm N1
 #  04: T2w 2mm N1
 #  05: BOLD3mm
 #  06: BOLD3mm
 #
-#  would be changed to the following lines in the target file (subject_hcp.txt):
+#  would be changed to the following lines in the target file (session_hcp.txt):
 # 
 #  03: T1w             :T1w 0.7mm N1
 #  04:                 :T2w 2mm N1

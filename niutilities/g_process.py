@@ -90,7 +90,7 @@ logname = ""
 
 arglist = [['# ---- Basic settings'],
            ['sessions',           'batch.txt',                                   str,    "The file with sessions information."],
-           ['subjectsfolder',     '',                                            os.path.abspath, 'The path to study subjects folder.'],
+           ['sessionsfolder',     '',                                            os.path.abspath, 'The path to study subjects folder.'],
            ['logfolder',          '',                                            isNone, 'The path to log folder.'],
            ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
@@ -274,7 +274,7 @@ tomap = {'bppt':                    'bolds',
          'bppn':                    'bold_nuisance',
          'eventstring':             'event_string',
          'eventfile':               'event_file',
-         'basefolder':              'subjectsfolder',
+         'basefolder':              'sessionsfolder',
          'subjects':                'sessions',
          'bold_preprocess':         'bolds',
          'hcp_prefs_brainmask':     'hcp_prefs_custombrain',
@@ -299,7 +299,8 @@ tomap = {'bppt':                    'bolds',
                                         'sourcefile': ['createSessionInfo', 'setupHCP', 'sliceImage']
                                     },
          'sfilter':                 'filter',
-         'hcp_fs_existing_subject': 'hcp_fs_existing_session'
+         'hcp_fs_existing_subject': 'hcp_fs_existing_session',
+         'subjectsfolder':          'sessionsfolder'
          }
 
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
@@ -688,7 +689,7 @@ def run(command, args):
     logfolder    = studyfolders['logfolder']
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
-    specfolder   = os.path.join(studyfolders['subjectsfolder'], 'specs')
+    specfolder   = os.path.join(studyfolders['sessionsfolder'], 'specs')
 
     options['runlogs']    = runlogfolder
     options['comlogs']    = comlogfolder
@@ -753,8 +754,8 @@ def run(command, args):
     # =======================================================================
     #                                               RUN BY SUBJECT PROCESSING
 
-    if not os.path.exists(options['subjectsfolder']):
-        os.mkdir(options['subjectsfolder'])
+    if not os.path.exists(options['sessionsfolder']):
+        os.mkdir(options['sessionsfolder'])
 
     if nprocess > 0:
         nsessions = [sessions.pop(0) for e in range(nprocess) if sessions]

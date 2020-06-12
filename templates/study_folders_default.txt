@@ -24,7 +24,7 @@ info
   bids
   hcpls
 
-subjects
+sessions
   inbox
     MR
     EEG

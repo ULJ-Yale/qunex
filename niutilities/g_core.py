@@ -200,9 +200,9 @@ def readList(filename, verbose=False):
     return slist
 
 
-def getSubjectList(listString, filter=None, sessionids=None, subjectsfolder=None, verbose=False):
+def getSubjectList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
     '''
-    getSubjectList(listString, filter=None, sessionids=None, subjectsfolder=None, verbose=False)
+    getSubjectList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)
 
     An internal function for getting a list of subjects as an array of dictionaries in
     the form: [{'id': <subject id>, [... other keys]}, {'id': <subject id>, [... other keys]}].
@@ -219,8 +219,8 @@ def getSubjectList(listString, filter=None, sessionids=None, subjectsfolder=None
 
     If filter is provided (not None), only subjects that match the filter will be returned.
     If sessionids is provided (not None), only subjects with matching id will be returned.
-    If subjectsfolder is provided (not None), subjects from a listString will be treated as
-    glob patterns and all folders that match the pattern in the subjectsfolder will be returned
+    If sessionsfolder is provided (not None), subjects from a listString will be treated as
+    glob patterns and all folders that match the pattern in the sessionsfolder will be returned
     as subject ids.
 
     ---
@@ -243,13 +243,13 @@ def getSubjectList(listString, filter=None, sessionids=None, subjectsfolder=None
     else:
         slist = [e.strip() for e in re.split(' +|,|\|', listString)]
 
-        if subjectsfolder is None:
+        if sessionsfolder is None:
             slist = [{'id': e} for e in slist]
 
         else:
             nlist = []
             for s in slist:
-                nlist += glob.glob(os.path.join(subjectsfolder, s))
+                nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{'id': os.path.basename(e)} for e in nlist]
 
     if sessionids is not None and sessionids.strip() is not "":
@@ -285,16 +285,16 @@ def deduceFolders(args):
     reference  = args.get('reference')
     logfolder  = args.get('logfolder')
     basefolder = args.get('basefolder')
-    subjectsfolder = args.get('subjectsfolder')
+    sessionsfolder = args.get('sessionsfolder')
     sourcefolder = args.get('sourcefolder')
     folder = args.get('folder')
 
-    if subjectsfolder:
-        subjectsfolder = os.path.abspath(subjectsfolder)
+    if sessionsfolder:
+        sessionsfolder = os.path.abspath(sessionsfolder)
 
     if basefolder is None:
-        if subjectsfolder:
-            basefolder = os.path.dirname(subjectsfolder)
+        if sessionsfolder:
+            basefolder = os.path.dirname(sessionsfolder)
         else:
             for f in [os.path.abspath(e) for e in [logfolder, sourcefolder, folder, reference, "."] if e]:
                 if f and not basefolder:
@@ -312,7 +312,7 @@ def deduceFolders(args):
         if basefolder:
             logfolder = os.path.join(basefolder, 'processing', 'logs')
 
-    return {'basefolder': basefolder, 'subjectsfolder': subjectsfolder, 'logfolder': logfolder}
+    return {'basefolder': basefolder, 'sessionsfolder': sessionsfolder, 'logfolder': logfolder}
 
 
 def runExternalParallel(calls, cores=None, prepend=''):

@@ -106,13 +106,13 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
         return report(False, "WARNING: %s could not be %sed, source file either does not exist or can not be accessed [%s]! " % (name, action, source))
 
 
-def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
+def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
     try:
-        if subjectsfolder[-1] == '/':
-            subjectsfolder = subjectsfolder[:-1]
+        if sessionsfolder[-1] == '/':
+            sessionsfolder = sessionsfolder[:-1]
     except:
         pass
 
@@ -154,7 +154,7 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
 
     session = "_".join([e for e in [subject, session] if e])
     if session:
-        folder = os.path.join(subjectsfolder, session, 'bids')
+        folder = os.path.join(sessionsfolder, session, 'bids')
         if select:
             if session not in select:
                 sessionsList['skip'].append(session)
@@ -236,9 +236,9 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
 
 
 
-def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
+def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
     '''
-    importBIDS [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]
+    importBIDS [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]
     
     USE
     ===
@@ -248,7 +248,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     PARAMETERS
     ==========
 
-    --subjectsfolder    The subjects folder where all the sessions are to be 
+    --sessionsfolder    The subjects folder where all the sessions are to be 
                         mapped to. It should be a folder within the 
                         <study folder>. [.]
 
@@ -261,7 +261,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                         can specify "<path>/<bids_file>.zip" or "<path>" to
                         a folder that contains multiple packages. The default 
                         location where the command will look for a BIDS dataset
-                        is [<subjectsfolder>/inbox/BIDS]
+                        is [<sessionsfolder>/inbox/BIDS]
 
     --sessions          An optional parameter that specifies a comma or pipe
                         separated list of sessions from the inbox folder to be 
@@ -300,9 +300,9 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
                         leave   - leave the specified archive where it is
                         move    - move the specified archive to 
-                                  <subjectsfolder>/archive/BIDS
+                                  <sessionsfolder>/archive/BIDS
                         copy    - copy the specified archive to 
-                                  <subjectsfolder>/archive/BIDS
+                                  <sessionsfolder>/archive/BIDS
                         delete  - delete the archive after processing if no 
                                   errors were identified
 
@@ -395,7 +395,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     
     * The original BIDS session-level data is stored in:
 
-        <subjectsfolder>/<subject_session>/bids
+        <sessionsfolder>/<subject_session>/bids
 
     * Image files mapped to new names for Qu|Nex are stored in:
 
@@ -422,7 +422,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     ===========
     
     ```
-    qunex importBIDS subjectsfolder=myStudy overwrite=yes bidsname=swga
+    qunex importBIDS sessionsfolder=myStudy overwrite=yes bidsname=swga
     ```
 
     ----------------
@@ -464,13 +464,13 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     if fileinfo not in ['short', 'full', None]:
         raise ge.CommandError("importBIDS", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
-    if subjectsfolder is None:
-        subjectsfolder = os.path.abspath(".")
+    if sessionsfolder is None:
+        sessionsfolder = os.path.abspath(".")
 
-    qxfolders = gc.deduceFolders({'subjectsfolder': subjectsfolder})
+    qxfolders = gc.deduceFolders({'sessionsfolder': sessionsfolder})
 
     if inbox is None:
-        inbox = os.path.join(subjectsfolder, 'inbox', 'BIDS')    
+        inbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')    
     
     sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': [], 'bids': False}
     allOk        = True
@@ -480,7 +480,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
     # ---> Check for folders
 
-    BIDSInbox = os.path.join(subjectsfolder, 'inbox', 'BIDS')
+    BIDSInbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')
     if not os.path.exists(BIDSInbox):
         io = fl.makedirs(BIDSInbox)
         if not io:
@@ -488,7 +488,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
         elif io != 'File exists':
             raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS inbox [%s]!" % (BIDSInbox), "Please check paths and permissions!")
 
-    BIDSArchive = os.path.join(subjectsfolder, 'archive', 'BIDS')
+    BIDSArchive = os.path.join(sessionsfolder, 'archive', 'BIDS')
     if not os.path.exists(BIDSArchive):
         io = fl.makedirs(BIDSArchive)
         if not io:
@@ -606,7 +606,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     # ---> definition of paths
 
     if bidsname is None:
-        if os.path.samefile(inbox, os.path.join(subjectsfolder, 'inbox', 'BIDS')):
+        if os.path.samefile(inbox, os.path.join(sessionsfolder, 'inbox', 'BIDS')):
             bidsname = ""
             BIDSInfo = os.path.join(qxfolders['basefolder'], 'info', 'bids')
         else:
@@ -637,7 +637,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile, lock = mapToQUNEXBids(sf.filename, subjectsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
+                        tfile, lock = mapToQUNEXBids(sf.filename, sessionsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
                         if tfile:
                             if lock:
                                 fl.lock(tfile)
@@ -665,7 +665,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile, lock = mapToQUNEXBids(member.name, subjectsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
+                        tfile, lock = mapToQUNEXBids(member.name, sessionsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
                         if tfile:
                             if lock:
                                 fl.lock(tfile)
@@ -688,7 +688,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 errors += "\n    .. Processing of package %s failed!" % (file)
 
         else:
-            tfile, lock = mapToQUNEXBids(file, subjectsfolder, BIDSInfo, sessionsList, overwrite, "    ")
+            tfile, lock = mapToQUNEXBids(file, sessionsfolder, BIDSInfo, sessionsList, overwrite, "    ")
             if tfile:
                 if tfile.endswith('.nii'):
                     tfile += ".gz"
@@ -832,7 +832,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
                 # -- do image mapping
                 try:
-                    mapBIDS2nii(os.path.join(subjectsfolder, session), overwrite=overwrite, fileinfo=fileinfo)
+                    mapBIDS2nii(os.path.join(sessionsfolder, session), overwrite=overwrite, fileinfo=fileinfo)
                     nmapping = True
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
@@ -841,7 +841,7 @@ def importBIDS(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 # -- do behavioral mapping
 
                 try:
-                    bmapping = mapBIDS2behavior(os.path.join(subjectsfolder, session), behavior, overwrite)
+                    bmapping = mapBIDS2behavior(os.path.join(sessionsfolder, session), behavior, overwrite)
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
                     bmapping = False                
@@ -1075,8 +1075,8 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `parsessions` parameters. In this case the
-    command will be run for each of the specified sessions in the subjectsfolder
+    optionally `sessionsfolder` and `parsessions` parameters. In this case the
+    command will be run for each of the specified sessions in the sessionsfolder
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sourcefolder` will be filled in
