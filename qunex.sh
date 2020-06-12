@@ -567,19 +567,19 @@ show_usage_organizeDicom() {
 echo ""
 echo "-- DESCRIPTION for ${UsageInput}"
 echo ""
-echo "This command expects a set of raw DICOMs in <subjects_folder>/<case>/inbox "
+echo "This command expects a set of raw DICOMs in <sessionsfolder>/<case>/inbox "
 echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
-echo "subject.txt files will be generated with id and subject matching the <case>."
+echo "session.txt files will be generated with id and sessions matching the <case>."
 echo ""
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
-echo "--sessionsfolder=<folder_with_subjects>                Path to study folder that contains subjects. If missing then optional paramater --folder needs to be provided."
-echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run. If missing then --folder needs to be provided for a single-session run."
+echo "--sessionsfolder=<folder_with_sessions>                Path to study folder that contains sessions. If missing then optional paramater --folder needs to be provided."
+echo "--sessions=<comma_separated_list_of_cases>             List of sessions to run. If missing then --folder needs to be provided for a single-session run."
 echo ""
 echo "-- OPTIONAL PARAMETERS: "
 echo ""
-echo "--folder=<folder_with_subjects>       The base subject folder with the dicom subfolder that holds session numbered folders with dicom files. [.]"
+echo "--folder=<folder_with_sessions>       The base sessions folder with the dicom subfolder that holds session numbered folders with dicom files. [.]"
 echo "--overwrite=<re-run_organizeDicom>    Explicitly force a re-run of organizeDicom"
 echo "--clean=<clean_NIfTI_files>           Whether to remove preexisting NIfTI files (yes), leave them and abort (no) or ask interactively (ask). [ask]"
 echo "--overwrite=<re-run_organizeDicom>    Explicitly force a re-run of organizeDicom"
@@ -595,8 +595,8 @@ echo "                                                       --scheduler='SLURM,
 echo ""
 echo "-- EXAMPLE:"
 echo ""
-echo "qunex organizeDicom --sessionsfolder='<folder_with_subjects>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' "
+echo "qunex organizeDicom --sessionsfolder='<folder_with_sessions>' \ "
+echo "--sessions='<comma_separarated_list_of_cases>' "
 echo "--scheduler='<name_of_scheduler_and_options>'"
 echo ""
 }
@@ -619,8 +619,8 @@ echo ""
 echo "-- DESCRIPTION for ${UsageInput}"
 echo ""
 echo "This command maps the Human Connectome Project folder structure for preprocessing."
-echo "It should be executed after proper organizeDicom and subject.txt file has been vetted"
-echo "and the subject_hcp.txt file was generated."
+echo "It should be executed after proper organizeDicom and session.txt file has been vetted"
+echo "and the session_hcp.txt file was generated."
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
@@ -2083,8 +2083,8 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
         # - Check if BOLDS parameter is empty:
         if [ -z "$BOLDS" ]; then
             echo ""
-            reho "BOLD input list not specified. Relying on subject_hcp.txt individual information files."
-            BOLDS="subject_hcp.txt"
+            reho "BOLD input list not specified. Relying on session_hcp.txt individual information files."
+            BOLDS="session_hcp.txt"
             echo ""
         fi
         if [ -z "$BOLDPrefix" ]; then BOLDPrefix=""; echo "Input BOLD Prefix not specified. Assuming no BOLD name prefix."; fi
@@ -2284,13 +2284,13 @@ if [ "$CommandToRun" == "mapHCPFiles" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     for CASE in ${CASES}; do
-        echo "--> Ensuring that and correct subjects_hcp.txt files is generated..."; echo ""
-        if [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
-            echo "--> ${SessionsFolder}/${CASE}/subject_hcp.txt found"
+        echo "--> Ensuring that and correct session_hcp.txt files is generated..."; echo ""
+        if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
+            echo "--> ${SessionsFolder}/${CASE}/session_hcp.txt found"
             echo ""
             ${CommandToRun} ${CASE}
         else
-            echo "--> ${SessionsFolder}/${CASE}/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
+            echo "--> ${SessionsFolder}/${CASE}/session_hcp.txt is missing - please setup the session.txt files and re-run function."
         fi
     done
 fi
