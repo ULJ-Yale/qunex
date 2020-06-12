@@ -40,7 +40,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are BOLD from previous processing
-# * These may be stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * These may be stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -107,11 +107,11 @@ echo "      --overwrite=<clean_prior_run>            Delete prior run for a give
 echo ""
 echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP SEED/GBC RUN:"
 echo ""
-echo "      --flist=<subject_list_file>              Specify *.list file of subject information. If specified then --subjectsfolder, --inputfile, --subject and --outname are omitted"
+echo "      --flist=<subject_list_file>              Specify *.list file of subject information. If specified then --sessionsfolder, --inputfile, --subject and --outname are omitted"
 echo ""
 echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT SEED/GBC RUN:"
 echo ""
-echo "      --subjectsfolder=<folder_with_subjects>             Path to study subjects folder"
+echo "      --sessionsfolder=<folder_with_subjects>             Path to study subjects folder"
 echo "      --subjects=<list_of_cases>                          List of subjects to run"
 echo "      --inputfiles=<files_to_compute_connectivity_on>     Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
 echo "      --inputpath=<path_for_input_file>                   Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
@@ -170,7 +170,7 @@ echo "      --mask=<which_frames_to_use>             An array mask defining whic
 echo ""
 echo "-- REQUIRED PARMETERS FOR A DENSE FC RUN:"
 echo ""
-echo "      --subjectsfolder=<folder_with_subjects>             Path to study subjects folder"
+echo "      --sessionsfolder=<folder_with_subjects>             Path to study subjects folder"
 echo "      --subjects=<list_of_cases>                          List of subjects to run"
 echo "      --inputfiles=<files_to_compute_connectivity_on>     Specify the comma separated file names you want to use (e.g. bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
 echo "      --mem-limit=<limit-GB>                              Restrict memory. Memory limit expressed in gigabytes. Default [4]"
@@ -197,7 +197,7 @@ echo ""
 echo ""
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_subjects>' \ "
 echo "--calculation='seed' \ "
 echo "--runtype='individual' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
@@ -214,7 +214,7 @@ echo "--mask='5' \ "
 echo "--covariance='false' "
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_subjects>' \ "
 echo "--runtype='list' \ "
 echo "--flist='subjects.list' \ "
 echo "--extractdata='yes' \ "
@@ -228,7 +228,7 @@ echo "--mask='5' "
 echo "--covariance='false' "
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_subjects>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='individual' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
@@ -249,7 +249,7 @@ echo "--vstep='10000'"
 echo "--covariance='false' "
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_subjects>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='list' \ "
 echo "--flist='subjects.list' \ "
@@ -330,7 +330,7 @@ local arguments=("$@")
 
 # -- Initialize global output variables
 
-unset SubjectsFolder   # --subjectsfolder=
+unset SessionsFolder   # --sessionsfolder=
 unset CASES            # --subjects=
 unset InputFiles       # --inputfile=
 unset InputPath        # --inputpath=
@@ -373,8 +373,8 @@ while [ ${index} -lt ${numArgs} ]; do
             version_show $@
             exit 0
             ;;
-        --subjectsfolder=*)
-            SubjectsFolder=${argument/*=/""}
+        --sessionsfolder=*)
+            SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
         --subjects=*)
@@ -507,7 +507,7 @@ fi
 # -- Check run type (group or individual)
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     # -- Check options for individual run
-    if [ -z ${SubjectsFolder} ]; then
+    if [ -z ${SessionsFolder} ]; then
         echo ""
         reho "ERROR: <subjects-folder-path> not specified>. Check usage."; echo ""
         echo ""
@@ -653,7 +653,7 @@ if [ ${Calculation} == "gbc" ]; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
@@ -671,7 +671,7 @@ if [ ${RunType} == "list" ]; then
     echo "  FileList: ${FileList}"
 fi
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
-    echo "  SubjectsFolder: ${SubjectsFolder}"
+    echo "  SessionsFolder: ${SessionsFolder}"
     echo "  Subjects: ${CASES}"
     echo "  InputFiles: ${InputFiles}"
     echo "  InputPath: ${InputPath}"
@@ -715,20 +715,20 @@ if [ ${RunType} == "individual" ]; then
         geho "--- Establishing paths for all input and output folders:"
         echo ""
         if [ ${OutPath} == "" ]; then
-            OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
+            OutPath=${SessionsFolder}/${INPUTCASE}/${InputPath}
         fi
         # -- Parse input from the InputFiles variable
         InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
         if [ ${Calculation} != "dense" ]; then
             # -- Cleanup prior tmp lists
-            rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
+            rm -rf ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
             # -- Generate output directories
-            mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
+            mkdir ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
             mkdir ${OutPath} > /dev/null 2>&1
             # -- Generate the temp list
-            echo "subject id:${INPUTCASE}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-            for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
-            FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
+            echo "subject id:${INPUTCASE}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
+            for InputFile in ${InputFiles}; do echo "file:${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+            FinalInput="${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
         fi
     done
 fi
@@ -747,7 +747,7 @@ if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
         InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
         # -- Generate the temp list
         echo "subject id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
-        for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+        for InputFile in ${InputFiles}; do echo "file:${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
         FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
     done
 fi
@@ -836,17 +836,17 @@ if [ ${Calculation} == "dense" ]; then
                 #    <limit-GB> - memory limit in gigabytes
                 #
             if [[ ${Covariance} == "false" ]]; then
-                wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
-                ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii \
-                -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+                wb_command -cifti-correlation ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+                ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii \
+                -weights ${SessionsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
                 -fisher-z -mem-limit ${MemLimit}
-                OutDense="${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii"
+                OutDense="${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii"
             else
-                wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
-                ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii \
-                -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+                wb_command -cifti-correlation ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+                ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii \
+                -weights ${SessionsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
                 -mem-limit ${MemLimit} -covariance
-                OutDense="${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii"
+                OutDense="${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii"
             fi
             if [[ -f ${OutDense} ]]; then
                 echo ""

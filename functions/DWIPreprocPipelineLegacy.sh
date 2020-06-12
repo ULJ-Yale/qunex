@@ -70,7 +70,7 @@ usage() {
                 echo ""
                 echo "-- REQUIRED PARMETERS:"
                 echo ""
-                echo "        --subjectsfolder=<study_folder>                        Path to study data folder"
+                echo "        --sessionsfolder=<study_folder>                        Path to study data folder"
                 echo "        --subjects=<list_of_cases>                    List of subjects to run"
                 echo "        --scanner=<scanner_manufacturer>            Name of scanner manufacturer (siemens or ge supported) "
                 echo "        --echospacing=<echo_spacing_value>            EPI Echo Spacing for data [in msec]; e.g. 0.69"
@@ -103,7 +103,7 @@ usage() {
                 echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
                 echo ""
                 echo ""
-                echo "qunex --subjectsfolder='<folder_with_subjects>' \ "
+                echo "qunex --sessionsfolder='<folder_with_subjects>' \ "
                 echo "--subjects='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--PEdir='1' \ "
@@ -117,7 +117,7 @@ usage() {
                 echo ""
                 echo "-- Example with flagged parameters for submission to the scheduler using Siemens FieldMap [ needs GPU-enabled queue ]:"
                 echo ""
-                echo "qunex --subjectsfolder='<folder_with_subjects>' \ "
+                echo "qunex --sessionsfolder='<folder_with_subjects>' \ "
                 echo "--subjects='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--PEdir='1' \ "
@@ -132,7 +132,7 @@ usage() {
                 echo ""
                 echo "-- Example with flagged parameters for submission to the scheduler using GE data w/out FieldMap [ needs GPU-enabled queue ]:"
                 echo ""
-                echo "qunex --subjectsfolder='<folder_with_subjects>' \ "
+                echo "qunex --sessionsfolder='<folder_with_subjects>' \ "
                 echo "--subjects='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--diffdatasuffix='DWI_dir91_LR' \ "
@@ -170,11 +170,11 @@ fi
 ########################################## INPUTS ########################################## 
 
 # DWI Data and T1w data needed in HCP-style format to perform legacy DWI preprocessing
-# The data should be in $DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
-# Also assumes that hcp1 (PreFreeSurfeer) T1 preprocessing has been carried out with results in "$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w
+# The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
+# Also assumes that hcp1 (PreFreeSurfeer) T1 preprocessing has been carried out with results in "$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w
 # Mandatory input parameters:
 
-    # SubjectsFolder
+    # SessionsFolder
     # Subject
     # Scanner
     # UseFieldmap
@@ -190,8 +190,8 @@ fi
 
 ########################################## OUTPUTS #########################################
 
-# DiffFolder=${SubjectsFolder}/${Subject}/Diffusion
-# T1wDiffFolder=${SubjectsFolder}/${Subject}/T1w/Diffusion_"$DiffDataSuffix"
+# DiffFolder=${SessionsFolder}/${Subject}/Diffusion
+# T1wDiffFolder=${SessionsFolder}/${Subject}/T1w/Diffusion_"$DiffDataSuffix"
 #
 #    $DiffFolder/$DiffDataSuffix/rawdata
 #    $DiffFolder/$DiffDataSuffix/eddy
@@ -207,7 +207,7 @@ get_options() {
     local arguments=($@)
     
     # -- initialize global output variables
-    unset SubjectsFolder
+    unset SessionsFolder
     unset Subject
     unset PEdir
     unset EchoSpacing
@@ -234,8 +234,8 @@ get_options() {
                 version_show $@
                 exit 0
                 ;;
-            --subjectsfolder=*)
-                SubjectsFolder=${argument/*=/""}
+            --sessionsfolder=*)
+                SessionsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             --subject=*)
@@ -282,7 +282,7 @@ get_options() {
         esac
     done
     # -- check required parameters
-    if [ -z ${SubjectsFolder} ]; then
+    if [ -z ${SessionsFolder} ]; then
         usage
         echo "ERROR: <study-path> not specified"
         exit 1
@@ -331,7 +331,7 @@ get_options() {
     echo ""
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    echo "   SubjectsFolder: ${SubjectsFolder}"
+    echo "   SessionsFolder: ${SessionsFolder}"
     echo "   Subject: ${CASE}"
     echo "   Scanner: ${Scanner}"
     if [ ${UseFieldmap} == "yes" ]; then
@@ -375,12 +375,12 @@ geho "--- Establishing paths for all input and output folders:"
 echo ""
 
 # -- Establish global directory paths
-T1wFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w
-DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
-T1wDiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w/T1wDiffusion_"$DiffDataSuffix"
-FieldMapFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/FieldMap_strc
-LogFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/Diffusion/"$DiffDataSuffix"/log
-DiffFolderOut="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion_"$DiffDataSuffix"
+T1wFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w
+DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
+T1wDiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/T1wDiffusion_"$DiffDataSuffix"
+FieldMapFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/FieldMap_strc
+LogFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion/"$DiffDataSuffix"/log
+DiffFolderOut="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion_"$DiffDataSuffix"
 
 echo "T1Folder:         $T1wFolder"
 echo "DiffFolder:       $DiffFolder"

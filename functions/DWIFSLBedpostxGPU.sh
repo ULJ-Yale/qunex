@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files: $SubjectsFolder/subjects/$CASE/hcp/$CASE/T1w/Diffusion
+# * The necessary input files: $SessionsFolder/subjects/$CASE/hcp/$CASE/T1w/Diffusion
 #
 #~ND~END~
 
@@ -58,7 +58,7 @@ echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
 echo "--function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
+echo "--sessionsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
 echo "--subjects=<comma_separated_list_of_cases>            List of subjects to run"
 echo "--fibers=<number_of_fibers>                           Number of fibres per voxel, default 3"
 echo "--model=<deconvolution_model>                         Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities <default>, 3: with zeppelins"
@@ -87,7 +87,7 @@ echo ""
 echo ""     
 echo ""
 echo ""
-echo "qunex --subjectsfolder='<path_to_study_subjects_folder>' \ "
+echo "qunex --sessionsfolder='<path_to_study_subjects_folder>' \ "
 echo "--function='FSLBedpostxGPU' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
 echo "--fibers='3' \ "
@@ -130,7 +130,7 @@ fi
 ########################################## OUTPUTS #########################################
 
 # -- Outputs will be *pconn.nii files located here:
-#       DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/T1w/Diffusion/"
+#       DWIOutput="$SessionsFolder/$CASE/hcp/$CASE/T1w/Diffusion/"
 
 # ------------------------------------------------------------------------------
 # -- Check for options
@@ -152,7 +152,7 @@ get_options() {
 local scriptName=$(basename ${0})
 local arguments=($@)
 # -- Initialize global output variables
-unset SubjectsFolder
+unset SessionsFolder
 unset Subject
 runcmd=""
 
@@ -164,10 +164,10 @@ Jumps=`opts_GetOpt "--jumps" $@`
 Rician=`opts_GetOpt "--rician" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
 CASE=`opts_GetOpt "--subject" $@`
-SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
+SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 
 # -- Check required parameters
-if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects Folder"; exit 1; fi
+if [ -z "$SessionsFolder" ]; then reho "Error: Subjects Folder"; exit 1; fi
 if [ -z "$CASE" ]; then reho "Error: Subject missing"; exit 1; fi
 if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
 if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
@@ -175,7 +175,7 @@ if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
 if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
@@ -183,7 +183,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Study Folder: ${StudyFolder}"
-echo "   Subjects Folder: ${SubjectsFolder}"
+echo "   Subjects Folder: ${SessionsFolder}"
 echo "   Subject: ${CASE}"
 echo "   Study Log Folder: ${LogFolder}"
 echo "   Number of Fibers: ${Fibers}"
@@ -205,8 +205,8 @@ main() {
 get_options $@
 
 # -- Establish global directory paths
-T1wDiffFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
-BedPostXFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
+T1wDiffFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
+BedPostXFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
 LogFolder="$BedPostXFolder"/logs
 Overwrite="$Overwrite"
 # -- Check if overwrite flag was set
@@ -238,11 +238,11 @@ fi
 
 checkCompletion() {
 # -- Check if the file exists
-if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
+if [ -f ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
     # -- Set file sizes to check for completion
     minimumfilesize=20000000
-    actualfilesize=`wc -c < ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
-    filecount=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+    actualfilesize=`wc -c < ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
+    filecount=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
 fi
 # -- Then check if run is complete based on file count
 if [ "$filecount" == 9 ]; then > /dev/null 2>&1
@@ -292,12 +292,12 @@ reho "--- Checking outputs..."
 echo ""
 checkCompletion
 if [[ ${RunCompleted} == "yes" ]]; then
-    geho "BedpostX completed: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+    geho "BedpostX completed: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
     echo ""
 else
    echo ""
    reho " -- BedpostX run not found or incomplete for $CASE. Something went wrong." 
-   reho "Check output: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+   reho "Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
    echo ""
    exit 1
 fi

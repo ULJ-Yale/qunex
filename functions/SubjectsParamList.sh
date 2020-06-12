@@ -57,7 +57,7 @@ usage() {
      echo ""
      echo "This script accepts the following mandatory paramaters:"
      echo ""
-     echo "   --subjectsfolder=<folder_with_subjects>        Path to study folder that contains subjects"
+     echo "   --sessionsfolder=<folder_with_subjects>        Path to study folder that contains subjects"
      echo "   --subjects=<comma_separated_list_of_cases>  Subject to run"
      echo "   --outname=<output_name_of_the_batch>        Output name of the batch file to generate. "
      echo "   --outpath=<absolute_path_to_list_folder>    Path for the batch file"
@@ -105,7 +105,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global variables
-unset SubjectsFolder # --subjectsfolder=
+unset SessionsFolder # --sessionsfolder=
 unset CASE           # --subjects=
 unset ListPath       # --outpath=
 unset ListName       # --outname=
@@ -126,8 +126,8 @@ while [ ${index} -lt ${numArgs} ]; do
                 version_show $@
                 exit 0
                 ;;
-            --subjectsfolder=*)
-                SubjectsFolder=${argument/*=/""}
+            --sessionsfolder=*)
+                SessionsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             --subjects=*)
@@ -162,7 +162,7 @@ if [ -z ${CASE} ]; then
     reho "ERROR: <subject_id> not specified."; echo ""
     exit 1
 fi
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
     reho "ERROR: <subjects_folder> not specified."; echo ""
     exit 1
@@ -172,7 +172,7 @@ if [ -z ${Overwrite} ]; then
     echo "Overwrite value not explicitly specified. Using default: ${Overwrite}"; echo ""
 fi
 if [ -z ${ListPath} ]; then
-    ListPath="${SubjectsFolder}/../processing/lists/"
+    ListPath="${SessionsFolder}/../processing/lists/"
     echo "Output folder path value not explicitly specified. Using default: ${ListPath}"; echo ""
 fi
 if [ -z ${ListName} ]; then 
@@ -182,14 +182,14 @@ if [ -z ${ListName} ]; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   SubjectsFolder: ${SubjectsFolder}"
+echo "   SessionsFolder: ${SessionsFolder}"
 echo "   Subject: ${CASE}"
 echo "   Batch file name: ${ListName}"
 echo "   Path to save output: ${ListPath}"
@@ -226,15 +226,15 @@ fi
 # -------------------------------------------------
 		
 # -- Test if subject_hcp.txt is absent
-if (test ! -f ${SubjectsFolder}/${CASE}/subject_hcp.txt); then
+if (test ! -f ${SessionsFolder}/${CASE}/subject_hcp.txt); then
 	# -- Test if subject_hcp.txt is present
-	if (test -f ${SubjectsFolder}/${CASE}/subject.txt); then
+	if (test -f ${SessionsFolder}/${CASE}/subject.txt); then
 		# -- If yes then copy it to subject_hcp.txt
-		cp ${SubjectsFolder}/${CASE}/subject.txt ${SubjectsFolder}/${CASE}/subject_hcp.txt
+		cp ${SessionsFolder}/${CASE}/subject.txt ${SessionsFolder}/${CASE}/subject_hcp.txt
 	else
 		# -- Report error and exit
 		echo ""
-		reho "${SubjectsFolder}/${CASE}/subject_hcp.txt and subject.txt is missing."
+		reho "${SessionsFolder}/${CASE}/subject_hcp.txt and subject.txt is missing."
 		reho "Make sure you have sorted the dicoms and setup subject-specific files."
 		reho "Note: These files are used to populate the batch.${ListName}.list"
 		echo ""
@@ -243,12 +243,12 @@ if (test ! -f ${SubjectsFolder}/${CASE}/subject_hcp.txt); then
 fi
 echo "List path is currently set to $ListPath"
 echo "---" >> ${ListPath}/batch."$ListName".txt
-cat ${SubjectsFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/batch."$ListName".txt
+cat ${SessionsFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/batch."$ListName".txt
 echo "" >> ${ListPath}/batch."$ListName".txt
 # -- Fix paths stale or outdated paths
 DATATYPES="dicom 4dfp hcp nii"
 for DATATYPE in $DATATYPES; do
-	CorrectPath="${SubjectsFolder}/${CASE}/${DATATYPE}"
+	CorrectPath="${SessionsFolder}/${CASE}/${DATATYPE}"
 	GrepInput="/${CASE}/${DATATYPE}"
 	ReplacePath=`more ${ListPath}/batch.${ListName}.txt | grep "$GrepInput" | awk '{print $2}'`
 	sed -i "s@$ReplacePath@$CorrectPath@" ${ListPath}/batch.${ListName}.txt

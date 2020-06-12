@@ -42,7 +42,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are BOLD data from previous processing
-# * These data are stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/T1w/Diffusion/BedpostX 
+# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/T1w/Diffusion/BedpostX 
 #
 #~ND~END~
 
@@ -107,7 +107,7 @@ usage() {
      echo "  -- REQUIRED PARMETERS:"
      echo ""
      echo "    --function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
-     echo "    --subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
+     echo "    --sessionsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
      echo "    --subjects=<comma_separated_list_of_cases>            List of subjects to run"
      echo "    --overwrite=<clean_prior_run>                         Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
      echo "    --omatrix1=<matrix1_model>                            Specify if you wish to run matrix 1 model [yes or omit flag]"
@@ -155,7 +155,7 @@ usage() {
      echo ""     
      echo "-- EXAMPLE with flagged parameters:"
      echo ""
-     echo "qunex ProbtrackxGPUDense --subjectsfolder='<path_to_study_subjects_folder>' \ "
+     echo "qunex ProbtrackxGPUDense --sessionsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subjects='<comma_separarated_list_of_cases>' \ "
      echo "--scheduler='<name_of_scheduler_and_options>' \ "
      echo "--omatrix1='yes' \ "
@@ -193,7 +193,7 @@ done
 }
 
 # -- Initialize global output variables
-unset SubjectsFolder
+unset SessionsFolder
 unset Subjects
 unset Overwrite
 unset ScriptsFolder        
@@ -206,7 +206,7 @@ unset MatrixThree
 unset minimumfilesize      
 
 # -- Parse arguments
-SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
+SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
 ScriptsFolder=`opts_GetOpt "--scriptsfolder" $@`
@@ -217,7 +217,7 @@ MatrixThree=`opts_GetOpt "--omatrix3" $@`
 NsamplesMatrixOne=`opts_GetOpt "--nsamplesmatrix1" $@`
 NsamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
 
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
     reho "ERROR: <folder_with_subjects> not specified"
     echo ""
@@ -243,12 +243,12 @@ fi
 
 # -- Optional parameters
 if [ -z ${ScriptsFolder} ]; then ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/Tractography_gpu_scripts"; fi
-if [ -z ${OutFolder} ]; then OutFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"; fi
-if [ -z ${InFolder} ]; then InFolder="${SubjectsFolder}/${CASE}/hcp"; fi
+if [ -z ${OutFolder} ]; then OutFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"; fi
+if [ -z ${InFolder} ]; then InFolder="${SessionsFolder}/${CASE}/hcp"; fi
 minimumfilesize="100000000"
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 scriptName=$(basename ${0})
@@ -257,7 +257,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Study Folder: ${StudyFolder}"
-echo "   Subjects Folder: ${SubjectsFolder}"
+echo "   Subjects Folder: ${SessionsFolder}"
 echo "   Subjects: ${CASES}"
 echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"
 echo "   Input HCP folder: ${InFolder}"
@@ -288,7 +288,7 @@ mkdir ${OutFolder}  &> /dev/null
 
 for CASE in $CASES; do
     TimeLog=`date '+%Y-%m-%d-%H-%M-%S'`
-    OutputLogProbtrackxGPUDense="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
+    OutputLogProbtrackxGPUDense="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
     
     # -- Echo probtrackX log for each case
             echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}

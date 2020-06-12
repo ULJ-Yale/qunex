@@ -45,7 +45,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are results following eddy. For instance:
-# * For instance, following HCP pipelines: "$SubjectsFolder/$CASE/hcp/$CASE/Diffusion/eddy/ 
+# * For instance, following HCP pipelines: "$SessionsFolder/$CASE/hcp/$CASE/Diffusion/eddy/ 
 #
 #~ND~END~
 
@@ -65,7 +65,7 @@ usage() {
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "--subjectsfolder=<folder_with_subjects>    Path to study folder that contains subjects"
+     echo "--sessionsfolder=<folder_with_subjects>    Path to study folder that contains subjects"
      echo "--subject=<subj_id>                        Subjects ID to run EDDY QC on"
      echo "--eddybase=<eddy_input_base_name>          This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
      echo "--eddyidx=<eddy_index_file>                EDDY index file"
@@ -97,7 +97,7 @@ usage() {
      echo ""
      echo "-- EXAMPLE:"
      echo ""
-     echo "DWIEddyQC.sh --subjectsfolder='<path_to_study_folder_with_subject_directories>' \ "
+     echo "DWIEddyQC.sh --sessionsfolder='<path_to_study_folder_with_subject_directories>' \ "
      echo "--subject='<subj_id>' \ "
      echo "--eddybase='<eddy_base_name>' \ "
      echo "--report='individual'"
@@ -174,7 +174,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global output variables
-unset SubjectsFolder
+unset SessionsFolder
 unset Subject
 unset Report
 unset EddyBase
@@ -210,8 +210,8 @@ while [ ${index} -lt ${numArgs} ]; do
             version_show $@
             exit 0
             ;;
-        --subjectsfolder=*)
-            SubjectsFolder=${argument/*=/""}
+        --sessionsfolder=*)
+            SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
         --subject=*)
@@ -280,7 +280,7 @@ while [ ${index} -lt ${numArgs} ]; do
 done
 
 # -- Check required parameters
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
     reho "ERROR: <subjects-folder-path> not specified>"
     echo ""
@@ -345,7 +345,7 @@ if [ -z ${Overwrite} ]; then
     Overwrite="no"
 fi
 if [ -z ${EddyPath} ]; then
-    EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+    EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
     echo $EddyPath
 fi
 if [ -z ${GroupVar} ]; then
@@ -362,14 +362,14 @@ if [ -z ${BvecsFile} ]; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report parameters
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   SubjectsFolder: ${SubjectsFolder}"
+echo "   SessionsFolder: ${SessionsFolder}"
 echo "   Subject: ${CASE}"
 echo "   Report Type: ${Report}"
 echo "   Eddy QC Input Path: ${EddyPath}"

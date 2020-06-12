@@ -40,7 +40,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are data stored in the following format
-# * These data are stored in: "$SubjectsFolder/$CASE/
+# * These data are stored in: "$SessionsFolder/$CASE/
 #
 #~ND~END~
 
@@ -66,7 +66,7 @@ usage() {
     echo "                                                      Supported: ${SupportedAcceptanceTestSteps}"
     echo ""
     echo "   --studyfolder=<path_to_qunex_study>            Path to study data folder"
-    echo "   --subjectsfolder=<folder_with_subjects_data>  Path to study data folder where the subjects folders reside"
+    echo "   --sessionsfolder=<folder_with_subjects_data>  Path to study data folder where the subjects folders reside"
     echo "   --subjects=<list_of_cases>                    List of subjects to run that are study-specific and correspond to XNAT database subject IDs"
     echo "   --sessionlabels=<imaging_session_labels>      Label for session within project. Note: may be general across multiple subjects (e.g. rest) or for longitudinal runs."
     echo "   --runtype=<local_or_xnat_check>               Default is [], which executes a local file system run, but requires --studyfolder to set"
@@ -194,7 +194,7 @@ fi
 # -- Initialize global output variables
 unset CASES
 unset StudyFolder
-unset SubjectsFolder
+unset SessionsFolder
 unset SESSIONS
 unset SESSION_LABELS
 unset BOLDS # --bolddata
@@ -339,7 +339,7 @@ if [[ ${RUN_TYPE} != "xnat" ]]; then
    if [[ -z ${CASES} ]]; then usage; reho "Error: Requesting local run but --subject flag is missing."; echo ""; exit 1; fi
    if [[ -z ${SESSION_LABELS} ]]; then usage; SESSION_LABELS=""; reho "Note: --sessionlabels are not defined. Assuming no label info."; echo ""; fi
     RunAcceptanceTestDir="${StudyFolder}/processing/logs/acceptTests"
-    if [ -z ${SubjectsFolder} ]; then SubjectsFolder="${StudyFolder}/subjects"; fi
+    if [ -z ${SessionsFolder} ]; then SessionsFolder="${StudyFolder}/subjects"; fi
     echo ""
     reho "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestOut"
     echo ""
@@ -448,7 +448,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     ## -- Setup XNAT log variables
     if [[ -z ${StudyFolder} ]]; then
         XNATInfoPath="${HOME}/acceptTests/xnatlogs"
-        reho "Note: --subjectsfolder flag omitted. Setting logs to $XNATInfoPath"
+        reho "Note: --sessionsfolder flag omitted. Setting logs to $XNATInfoPath"
         echo ""
     else
         XNATInfoPath="${StudyFolder}/processing/logs/acceptTests/xnatlogs"
@@ -467,7 +467,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     
     ## -- Setup acceptance test location
     RunAcceptanceTestDir="$(dirname ${XNATInfoPath})"
-    if [[ -z ${SubjectsFolder} ]]; then SubjectsFolder="${StudyFolder}/subjects"; fi
+    if [[ -z ${SessionsFolder} ]]; then SessionsFolder="${StudyFolder}/subjects"; fi
     
     echo ""
     reho "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestDir"

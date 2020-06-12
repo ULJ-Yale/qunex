@@ -56,7 +56,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are BOLD data from previous processing
-# * These data are stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -105,7 +105,7 @@ usage() {
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "     --subjectsfolder=<folder_with_subjects>           Path to study folder that contains subjects"
+     echo "     --sessionsfolder=<folder_with_subjects>           Path to study folder that contains subjects"
      echo "     --subjects=<subject_ids>                          List of subjects to run"
      echo "     --bolds=<bolds_to_compute_fixica_and_postfix>     Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
      echo ""
@@ -136,7 +136,7 @@ usage() {
      echo ""     
      echo ""
      echo "  ${TOOLS}/${QUNEXREPO}/connector/functions/ICAFIXhcp.sh \ "
-     echo "    --subjectsfolder='<folder_with_subjects>' \ "
+     echo "    --sessionsfolder='<folder_with_subjects>' \ "
      echo "    --subjects='<subject_ids>' \ "
      echo "    --bolds='<bolds_to_compute_fixica_and_postfix>' \ "
      echo "    --overwrite='<clean_prior_run>' \ "
@@ -174,7 +174,7 @@ done
 }
 
 # -- Initialize global output variables
-unset SubjectsFolder
+unset SessionsFolder
 unset Subjects
 unset BOLDS
 unset Overwrite
@@ -183,7 +183,7 @@ unset MovCorr
 unset ICAFIXFunction
 
 # -- Parse arguments
-SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
+SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
 ICAFIXFunction=`opts_GetOpt "--icafixfunction" $@`
@@ -201,7 +201,7 @@ fi
 BOLDRUNS="${BOLDS}"
 BOLDDATA="${BOLDS}"
 
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
     reho "ERROR: <folder_with_subjects> not specified"
     echo ""
@@ -225,7 +225,7 @@ if [ -z ${HPFilter} ]; then Overwrite="2000"; fi
 if [ -z ${MovCorr} ]; then Overwrite="TRUE"; fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 scriptName=$(basename ${0})
@@ -233,7 +233,7 @@ scriptName=$(basename ${0})
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   SubjectsFolder: ${SubjectsFolder}"
+echo "   SessionsFolder: ${SessionsFolder}"
 echo "   Subjects: ${CASES}"
 echo "   BOLDs to work on: ${BOLDS}"
 echo "   Function to run: ${ICAFIXFunction}"
@@ -258,8 +258,8 @@ get_options "$@"
 linkMovement() {
 for BOLD in $BOLDS; do
     echo "Linking scrubbing data - BOLD $BOLD for $CASE..."
-    ln -f ${SubjectsFolder}/${CASE}/images/functional/movement/bold"$BOLD".use ${SubjectsFolder}/../Parcellated/BOLD/${CASE}_bold"$BOLD".use
-    ln -f ${SubjectsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD".use ${SubjectsFolder}/../Parcellated/BOLD/${CASE}_boldFIXICA"$BOLD".use
+    ln -f ${SessionsFolder}/${CASE}/images/functional/movement/bold"$BOLD".use ${SessionsFolder}/../Parcellated/BOLD/${CASE}_bold"$BOLD".use
+    ln -f ${SessionsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD".use ${SessionsFolder}/../Parcellated/BOLD/${CASE}_boldFIXICA"$BOLD".use
 done
 }
 
@@ -285,16 +285,16 @@ for CASE in $CASES; do
         # -- BOLD loop
         for BOLD in ${BOLDS}; do
             TimeLog=`date '+%Y-%m-%d-%H-%M-%S'`
-            OutputLogFIX="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
+            OutputLogFIX="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
             # -- Echo ICA FIX run for each BOLD
             echo "" 2>&1 | tee -a ${OutputLogFIX}
             geho "   --- ICAFIX for subject $CASE and BOLD run $BOLD..." 2>&1 | tee -a ${OutputLogFIX}
             echo "" 2>&1 | tee -a ${OutputLogFIX}
-            CheckBOLD="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas_hp2000_clean.dtseries.nii"
+            CheckBOLD="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas_hp2000_clean.dtseries.nii"
             # -- Overwrite existing run
             if [[ ${Overwrite} == "yes" ]]; then
-                reho "   --- Overwrite requested. Deleting existing ICA FIX run: ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}"; echo ""
-                rm -r ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}*_hp2000* &> /dev/null
+                reho "   --- Overwrite requested. Deleting existing ICA FIX run: ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}"; echo ""
+                rm -r ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}*_hp2000* &> /dev/null
             fi
             # -- Check if run completed
             if [[ -f ${CheckBOLD} ]]; then
@@ -304,7 +304,7 @@ for CASE in $CASES; do
                 if [[ -z ${HPFilter} ]]; then HPFilter="2000"; fi
                 if [[ -z ${MovCorr} ]]; then MovCorr="TRUE"; fi
                 # -- Define command
-                RunCommand="${HCPPIPEDIR}/ICAFIX/hcp_fix ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz ${HPFilter} ${MovCorr} "
+                RunCommand="${HCPPIPEDIR}/ICAFIX/hcp_fix ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz ${HPFilter} ${MovCorr} "
                 # -- Echo the command
                 echo "Running the following ICA FIX command: "; echo ""
                 echo "---------------------------"
@@ -364,7 +364,7 @@ for CASE in $CASES ; do
     # -- BOLD loop
     for BOLD in ${BOLDS} ; do
         TimeLog=`date '+%Y-%m-%d-%H-%M-%S'`
-        OutputLogPostFIX="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/postfix_${CASE}_bold${BOLD}_${TimeLog}.log"
+        OutputLogPostFIX="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/postfix_${CASE}_bold${BOLD}_${TimeLog}.log"
         # -- Echo POSTFIX run for each BOLD
         echo "" 2>&1 | tee -a ${OutputLogPostFIX}
         geho "  --- Post FIX for $CASE and $BOLD..." 2>&1 | tee -a ${OutputLogPostFIX}
@@ -402,29 +402,29 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 #         BOLDCount=$((BOLDCount+1))
 #         echo "Setting up hard links following FIX ICA for BOLD# $BOLD for $CASE... "
 #         # -- Setup folder strucrture if missing
-#         mkdir ${SubjectsFolder}/${CASE}/images    &> /dev/null
-#         mkdir ${SubjectsFolder}/${CASE}/images/functional        &> /dev/null
-#         mkdir ${SubjectsFolder}/${CASE}/images/functional/movement    &> /dev/null
+#         mkdir ${SessionsFolder}/${CASE}/images    &> /dev/null
+#         mkdir ${SessionsFolder}/${CASE}/images/functional        &> /dev/null
+#         mkdir ${SessionsFolder}/${CASE}/images/functional/movement    &> /dev/null
 #         # -- Setup hard links for images
-#         rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii     &> /dev/null
-#         rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz     &> /dev/null
-#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii
-#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_hp2000_clean.nii.gz ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz
-#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas.dtseries.nii ${SubjectsFolder}/${CASE}/images/functional/bold"$BOLD".dtseries.nii
-#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz ${SubjectsFolder}/${CASE}/images/functional/bold"$BOLD".nii.gz
-#         #rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICArfMRI_REST*     &> /dev/null
-#         #rm ${SubjectsFolder}/${CASE}/images/functional/boldrfMRI_REST*     &> /dev/null
+#         rm ${SessionsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii     &> /dev/null
+#         rm ${SessionsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz     &> /dev/null
+#         ln -f ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii ${SessionsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii
+#         ln -f ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_hp2000_clean.nii.gz ${SessionsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz
+#         ln -f ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas.dtseries.nii ${SessionsFolder}/${CASE}/images/functional/bold"$BOLD".dtseries.nii
+#         ln -f ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz ${SessionsFolder}/${CASE}/images/functional/bold"$BOLD".nii.gz
+#         #rm ${SessionsFolder}/${CASE}/images/functional/boldFIXICArfMRI_REST*     &> /dev/null
+#         #rm ${SessionsFolder}/${CASE}/images/functional/boldrfMRI_REST*     &> /dev/null
 #         echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
 #         # -- Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
 #         export PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH     &> /dev/null
-#         rm ${SubjectsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat     &> /dev/null
-#         rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
-#         cp ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
-#         sed -i.bak -E 's/.{67}$//' ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
-#         nl ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt > ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt
-#         sed -i.bak '1i\#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)' ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"//Movement_Regressors_edit_fin.txt
-#         cp ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt ${SubjectsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat
-#         rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
+#         rm ${SessionsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat     &> /dev/null
+#         rm ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
+#         cp ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors.txt ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
+#         sed -i.bak -E 's/.{67}$//' ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
+#         nl ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt > ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt
+#         sed -i.bak '1i\#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)' ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"//Movement_Regressors_edit_fin.txt
+#         cp ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt ${SessionsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat
+#         rm ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
 # done
 # }
 
@@ -434,7 +434,7 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 # 
 # FIXICAInsertMean() {
 # for BOLD in $BOLDS; do
-#     cd ${SubjectsFolder}/${CASE}/images/functional/
+#     cd ${SessionsFolder}/${CASE}/images/functional/
 #     # -- First check if the boldFIXICA file has the mean inserted
 #     3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
 #     ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
@@ -460,7 +460,7 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 
 # FIXICARemoveMean() {
 # for BOLD in $BOLDS; do
-#     cd ${SubjectsFolder}/${CASE}/images/functional/
+#     cd ${SessionsFolder}/${CASE}/images/functional/
 #     # First check if the boldFIXICA file has the mean inserted
 #     #3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
 #     #ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
