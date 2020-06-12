@@ -45,7 +45,7 @@ Change log
 * 0.51.10 External command calls are now printed in stdout and at the beginning of comlogs.
 * 0.51.9  Consistent jobname in scheduling between qunex and qunexContainer.
 * 0.51.8  License and README updates.
-* 0.51.7  Fixed reporting when hcp_fs_existing_subject is true.
+* 0.51.7  Fixed reporting when hcp_fs_existing_session is true.
 * 0.51.6  Changed hcpsuffix to hcp_suffix throughout.
 * 0.51.5  Updated in-line documentation.
 * 0.51.4  Renamed cores and threads parameters.
@@ -57,7 +57,7 @@ Change log
 * 0.50.10 Consistent parameter injection notation.
 * 0.50.9  Harmonized use of hcp_suffix.
 * 0.50.8  hcp_PreFS glob debug.
-* 0.50.7  Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
+* 0.50.7  Debug of hcpFS/hcp2 command when --hcp_fs_existing_session is set to TRUE.
 * 0.50.6  Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.5  HCP glob debug, ICAFix exceptions now look nicer.
 * 0.50.4  ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter.

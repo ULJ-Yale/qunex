@@ -22,9 +22,9 @@ import niutilities.g_exceptions as ge
 import os.path
 import g_core
 
-def setupHCP(sourcefolder=".", targetfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcp_suffix=""):
+def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcp_suffix=""):
     '''
-    setupHCP [sourcefolder=.] [targetfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls'] [hcp_suffix=""]
+    setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=subject_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls'] [hcp_suffix=""]
 
     USE
     ===
@@ -32,7 +32,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sfile="subject_hcp.txt", chec
     The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
     minimal preprocessing workflow. For the mapping to be correct, the
-    command expects the source subject.txt file (sfile) to hold the relevant
+    command expects the source subject.txt file (sourcefile) to hold the relevant
     information on images. To save space, the images are not copied into the new
     folder structure but rather hard-links are created if possible.
 
@@ -43,7 +43,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sfile="subject_hcp.txt", chec
                         and session.txt file. [.]
     --targetfolder      The folder (within the base folder) to which the data is
                         to be mapped. [hcp]
-    --sfile             The name of the source subject.txt file. 
+    --sourcefile        The name of the source subject.txt file. 
                         [subject_hcp.txt]
     --check             Whether to check if session is marked ready for setting 
                         up hcp folder [yes].
@@ -172,7 +172,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sfile="subject_hcp.txt", chec
     ===========
     
     ```
-    qunex setupHCP sourcefolder=OP316 sfile=subject.txt
+    qunex setupHCP sourcefolder=OP316 sourcefile=subject.txt
     ```
 
     ----------------
@@ -204,7 +204,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sfile="subject_hcp.txt", chec
 
     print "Running setupHCP\n================"
 
-    inf   = niutilities.g_core.readSubjectData(os.path.join(sourcefolder, sfile))[0][0]
+    inf   = niutilities.g_core.readSubjectData(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)

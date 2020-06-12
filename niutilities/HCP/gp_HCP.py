@@ -928,7 +928,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     
     --hcp_fs_seed             ... Recon-all seed value. If not specified, none
                                   will be used. []
-    --hcp_fs_existing_subject ... Indicates that the command is to be run on
+    --hcp_fs_existing_session ... Indicates that the command is to be run on
                                   top of an already existing analysis/subject.
                                   This excludes the `-i` flag from the 
                                   invocation of recon-all. If set, the
@@ -1131,7 +1131,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 if fstest in reconallfiletxt:
                     break
 
-            if overwrite and options['run'] == "run" and not options['hcp_fs_existing_subject']:
+            if overwrite and options['run'] == "run" and not options['hcp_fs_existing_session']:
                 r += "\n     ... removing previous files"
             else:
                 if fsversion == efsversion:
@@ -1194,8 +1194,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     ('no-conf2hires',    options['hcp_fs_no_conf2hires']),
                     ('processing-mode',  options['hcp_processing_mode'])]
 
-        # -> add t1, t1brain and t2 only if options['hcp_fs_existing_subject'] is FALSE
-        if (not options['hcp_fs_existing_subject']):
+        # -> add t1, t1brain and t2 only if options['hcp_fs_existing_session'] is FALSE
+        if (not options['hcp_fs_existing_session']):
             elements.append(('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')))
             elements.append(('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')))
             elements.append(('t2', t2w))
@@ -1217,7 +1217,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
         # --> Add flags
 
-        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_subject', '--existing-subject')]:
+        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_session', '--existing-subject')]:
             if options[optionName]:
                 comm += " %s" % (flag)
 
@@ -1239,12 +1239,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         if run:
             if options['run'] == "run":
 
-                # --> clean up test file if overwrite and hcp_fs_existing_subject not set to True
-                if (overwrite and os.path.lexists(tfile)and not options['hcp_fs_existing_subject']):
+                # --> clean up test file if overwrite and hcp_fs_existing_session not set to True
+                if (overwrite and os.path.lexists(tfile)and not options['hcp_fs_existing_session']):
                     os.remove(tfile)
 
-                # --> clean up only if hcp_fs_existing_subject is not set to True
-                if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_subject']:
+                # --> clean up only if hcp_fs_existing_session is not set to True
+                if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_session']:
                     # -> longitudinal mode currently not supported
                     # if options['hcp_fs_longitudinal']:
                     #     if os.path.lexists(hcp['FS_long_results']):
