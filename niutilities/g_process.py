@@ -266,9 +266,9 @@ arglist = [['# ---- Basic settings'],
 
 #   --------------------------------------------------------- PARAMETER MAPPING
 #   For historical reasons and to maintain backward compatibility, some of the
-#   parameters need to be mapped to a parameter with another name. The "tomap"
-#   dictionary specifies what is mapped to what.
+#   parameters need to be mapped to a parameter with another name.
 
+# The "tomap" dictionary specifies what is mapped to what
 tomap = {'bppt':                    'bolds',
          'bppa':                    'bold_actions',
          'bppn':                    'bold_nuisance',
@@ -303,14 +303,30 @@ tomap = {'bppt':                    'bolds',
          'subjectsfolder':          'sessionsfolder'
          }
 
+# The "mapValues" dictionary specifies remapping of values
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
              'hcp_filename': {'name': 'original', 'number': 'standard'}}
 
+# The "deprecated" dictionary specifies parameters that are no longer in use
 deprecated = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
               'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams',
               'hcp_bold_sequencetype': None,
               'hcp_biascorrect_t1w': None}
 
+# The "towarn" dictionary warns users to check the provided values
+# the array for each parameter name has two entries
+# 1 - the value to look for in parameter value
+# 2 - the warning message that gets printer if the value is found
+towarn = {
+          'sessionsfolder': ['subject',
+                             'The sessionfolder parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
+          'sourcefolder': ['subject',
+                           'The sourcefolder parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
+          'sourcefile': ['subject',
+                         'The sourcefile parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
+          'sourcefiles': ['subject',
+                         'The sourcefiles parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.']
+        }
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -587,10 +603,20 @@ def mapDeprecated(options, command):
                 newvalues.append([k, v, mapValues[k][v]])
 
     if newvalues:
-        print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have new names:"
+        print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have changed:"
         for k, v, n in newvalues:
             print "         ... %s (%s) is now %s!" % (str(v), k, n)            
         print "         Please correct the listed parameter values in command line or batch file!"
+
+    # -> warn if some parameter values might be deprecated
+    for k, v in options.iteritems():
+        if k in towarn:
+            # search string
+            s = towarn[k][0]
+            if s in v:
+                # warning message
+                msg = towarn[k][1]
+                print "\nWARNING: %s" % msg
 
 
 # ==============================================================================

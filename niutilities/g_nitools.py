@@ -41,7 +41,7 @@ functions = {
     'g_ExtractROIGLMValues':           [('flist', 'string'), ('roif', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('values', 'string'), ('tformat', 'string'), ('verbose', 'bool')],
     'g_ExtractROIValues':              [('roif', 'string'), ('mfs', 'string'), ('sefs', 'string'), ('vnames', 'string'), ('output', 'string'), ('stats', 'string'), ('verbose', 'bool')],
     'g_FindPeaks':                     [('fin', 'string'), ('fout', 'string'), ('mins', 'numeric'), ('maxs', 'numeric'), ('val', 'string'), ('t', 'numeric'), ('presmooth', 'string'), ('projection', 'string'), ('options', 'string'), ('verbose', 'bool')],
-    'g_PlotBoldTS':                    [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('subjid', 'string'), ('verbose', 'bool')],
+    'g_PlotBoldTS':                    [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('sessionid', 'string'), ('verbose', 'bool')],
     'g_PlotBoldTSList':                [('flist', 'string'), ('elements', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('fformat', 'string'), ('verbose', 'bool')],
     'g_QAConcFile':                    [('file', 'string'), ('do', 'string'), ('target', 'string')],
     'g_ConjunctionG':                  [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string')],
@@ -153,5 +153,3 @@ def run(command, args):
         print "\n\nERROR: %s failed! Please check output / log!\n" % (command)
     else:
         print "\n\n===> Successful completion of task\n"
-
-
