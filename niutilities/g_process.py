@@ -404,7 +404,7 @@ lalist = [['lfs',     'longitudinalFS',              gp_HCP.longitudinalFS,     
 
 salist = [['cbl',     'createBoldList',              gp_simple.createBoldList,                       'createBoldList'],
           ['ccl',     'createConcList',              gp_simple.createConcList,                       'createConcList'],
-          ['lsi',     'listSubjectInfo',             gp_simple.listSubjectInfo,                      'listSubjectInfo']
+          ['lsi',     'listSessionInfo',             gp_simple.listSessionInfo,                      'listSessionInfo']
           ]
 
 

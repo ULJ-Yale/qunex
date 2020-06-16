@@ -6,7 +6,7 @@ It consists of functions:
 
 * createBoldList   ... creates a list with paths to each subject's BOLD files
 * createConcList   ... creates a list with paths to each subject's conc files
-* listSubjectInfo  ... lists session data stored in batch.txt file
+* listSessionInfo  ... lists session data stored in batch.txt file
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -91,9 +91,9 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
 
 
 
-def listSubjectInfo(sinfo, options, overwrite=False, thread=0):
+def listSessionInfo(sinfo, options, overwrite=False, thread=0):
     """
-    listSubjectInfo - documentation not yet available.
+    listSessionInfo - documentation not yet available.
     """
     bfile = open(os.path.join(options['sessionsfolder'], 'SubjectInfo.txt'), 'w')
 

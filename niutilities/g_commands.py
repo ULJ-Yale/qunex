@@ -80,7 +80,8 @@ extraParameters = ['sessions', 'filter', 'sessionids', 'scheduler', 'parelements
 deprecated_commands = {"HCPLSImport": "importHCP",
                        "BIDSImport": "importBIDS",
                        "processInbox": "importDICOM",
-                       "mapIO": "exportHCP"}
+                       "mapIO": "exportHCP",
+                       "listSubjectInfo": "listSessionInfo"}
 
 def checkDeprecatedCommands(command):
     '''
