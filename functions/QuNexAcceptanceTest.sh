@@ -122,7 +122,7 @@ usage() {
     echo ""
     echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma or pipe. E.g. --bolddata='1,2,3,4,5' "
     echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
-    echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
+    echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_sessions_folder>/<session_id>/session_hcp.txt and identify all BOLDs to process"
     echo ""    
     echo "--boldimages=<bold_run_numbers>                                  Specify a list of required BOLD images separated by comma or pipe. Where the number of the bold image would be, indicate by '{N}', e.g:"
     echo "                                                                   --boldimages='bold{N}_Atlas.dtseries.nii|seed_bold{N}_Atlas_s_hpss_res-VWMWB_lpss_LR-Thal.dtseriesnii' "

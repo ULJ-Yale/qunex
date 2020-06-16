@@ -180,7 +180,7 @@ usage() {
     echo "    --hcpfilename=[standard|original]                          Specify how files and folders should be named using HCP processing:"
     echo "                                                               standard - files should be named using Qu|Nex standard naming (e.g. BOLD_1_PA)"
     echo "                                                               original - files should be named using their original names (e.g. rfMRI_REST1_AP)"
-    echo "                                                               Note that the filename to be used has to be provided in the subject_hcp.txt file or"    
+    echo "                                                               Note that the filename to be used has to be provided in the session_hcp.txt file or"    
     echo "                                                               the standard naming will be used. If not provided the default 'standard' will be used."    
     echo ""
     echo "    --bidsformat=<specify_bids_input>                          Note: this parameter is deprecated and is kept for backward compatibility. "
@@ -209,7 +209,7 @@ usage() {
     echo ""
     echo "    --bolds=<list_of_bolds_to_process>                         For commands that work with BOLD images this flag specifies which specific BOLD images to process."
     echo "                                                               The list of BOLDS has to be specified as a comma or pipe '|' separated string of bold numbers or bold tags"
-    echo "                                                               as they are specified in the subject_hcp.txt or batch.txt file. "
+    echo "                                                               as they are specified in the session_hcp.txt or batch.txt file. "
     echo "                                                               EXAMPLE: '--bolds=1,2,rest' would process BOLD run 1, BOLD run 2 and any other BOLD image that is tagged with the string 'rest'."
     echo "                                                               If the parameter is not specified, the default value 'all' will be used. In this scenario every BOLD image that is specified"
     echo "                                                               in the group batch.txt file for that session will be processed."
@@ -1626,7 +1626,7 @@ fi
         fi
     }
      
-    # -- Generate subject_hcp.txt file
+    # -- Generate session_hcp.txt file
     turnkey_createSessionInfo() {
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         createSessionInfo_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createSessionInfo_${TimeStamp}.log"
@@ -1639,11 +1639,11 @@ fi
         echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
         
         if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
-            rm -rf ${QuNexSessionsFolder}/${CASE}/subject_hcp.txt &> /dev/null
+            rm -rf ${QuNexSessionsFolder}/${CASE}/session_hcp.txt &> /dev/null
         fi
-        if [ -f ${QuNexSessionsFolder}/subject_hcp.txt ]; then
+        if [ -f ${QuNexSessionsFolder}/session_hcp.txt ]; then
             echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
-            geho " ===> ${QuNexSessionsFolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
+            geho " ===> ${QuNexSessionsFolder}/session_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
             echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
             return 0
         fi
@@ -1684,7 +1684,7 @@ fi
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${setupHCP_ComlogTmp}
         # geho " -- Generating ${ProcessingBatchFile}"; echo ""
-        # cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${QuNexWorkDir}/subject_hcp.txt >> ${ProcessingBatchFile}
+        # cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${QuNexWorkDir}/session_hcp.txt >> ${ProcessingBatchFile}
         if [[ ! -z `cat ${setupHCP_ComlogTmp} | grep 'Successful completion'` ]]; then setupHCPCheck="pass"; else setupHCPCheck="fail"; fi
         if [[ ${setupHCPCheck} == "pass" ]]; then
             mv ${setupHCP_ComlogTmp} ${setupHCP_ComlogDone}

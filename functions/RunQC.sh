@@ -104,7 +104,7 @@ usage() {
      echo ""
      echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma or pipe. E.g. --bolddata='1,2,3,4,5' "
      echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
-     echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
+     echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/session_hcp.txt and identify all BOLDs to process"
      echo ""
      echo ""
      echo "-- BOLD FC PARMETERS (Requires --boldfc='<pconn or pscalar>',--boldfcinput=<image_input>, --bolddata or --boldruns or --bolds"
@@ -492,8 +492,8 @@ if [ "$Modality" = "BOLD" ]; then
     # - Check if BOLDS parameter is empty:
     if [ -z "$BOLDS" ]; then 
         echo ""
-        echo "Note: BOLD input list not specified. Relying subject_hcp.txt individual information files."
-        BOLDS="subject_hcp.txt"
+        echo "Note: BOLD input list not specified. Relying session_hcp.txt individual information files."
+        BOLDS="session_hcp.txt"
         echo ""
     fi
     
@@ -673,14 +673,14 @@ else
         geho "      ${CustomTemplateSceneFiles}"; echo ""
     fi
     
-    # -- Check if subject_hcp.txt is present:
-    if [[ ${BOLDS} == "subject_hcp.txt" ]]; then
+    # -- Check if session_hcp.txt is present:
+    if [[ ${BOLDS} == "session_hcp.txt" ]]; then
         echo ""
-        echo "--- Using subject_hcp.txt individual information files. Verifying that subject_hcp.txt exists."; echo ""
-        if [[ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]]; then
-            echo "${SessionsFolder}/${CASE}/subject_hcp.txt found. Proceeding..."
+        echo "--- Using session_hcp.txt individual information files. Verifying that session_hcp.txt exists."; echo ""
+        if [[ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]]; then
+            echo "${SessionsFolder}/${CASE}/session_hcp.txt found. Proceeding..."
         else
-            reho "${SessionsFolder}/${CASE}/subject_hcp.txt NOT found. Check BOLD inputs."
+            reho "${SessionsFolder}/${CASE}/session_hcp.txt NOT found. Check BOLD inputs."
             echo ""
             exit 1
         fi
@@ -991,19 +991,19 @@ else
              fi
          fi
          # -- Check if subject_hcp is used
-         if [ "$BOLDS" == "subject_hcp.txt" ]; then
-             geho "--- subject_hcp.txt parameter file specified. Verifying presence of subject_hcp.txt before running QC on all BOLDs..."; echo ""
-             if [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
-                 # -- Stalling on some systems --> BOLDCount=`more ${SessionsFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
-                 BOLDCount=`grep "bold" ${SessionsFolder}/${CASE}/subject_hcp.txt  | grep -v "ref" | wc -l`
+         if [ "$BOLDS" == "session_hcp.txt" ]; then
+             geho "--- session_hcp.txt parameter file specified. Verifying presence of session_hcp.txt before running QC on all BOLDs..."; echo ""
+             if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
+                 # -- Stalling on some systems --> BOLDCount=`more ${SessionsFolder}/${CASE}/session_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
+                 BOLDCount=`grep "bold" ${SessionsFolder}/${CASE}/session_hcp.txt  | grep -v "ref" | wc -l`
                  rm ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
                  COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
                  # -- Stalling on some systems --> BOLDS=`more ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt`
                  BOLDS=`cat ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt`
                  rm ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
-                 geho "--- Information file ${SessionsFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
+                 geho "--- Information file ${SessionsFolder}/${CASE}/session_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
              else
-                 reho "--- ERROR: ${SessionsFolder}/${CASE}/subject_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
+                 reho "--- ERROR: ${SessionsFolder}/${CASE}/session_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
                  exit 1
              fi
          else
@@ -1408,19 +1408,19 @@ else
         
         # -- Perform checks if modality is T2w
         if [ "$Modality" == "T2w" ]; then
-            # -- Check if T2w is found in the subject_hcp.txt mapping file
-            T2wCheck=`cat ${SessionsFolder}/${CASE}/subject_hcp.txt | grep "T2w"`
+            # -- Check if T2w is found in the session_hcp.txt mapping file
+            T2wCheck=`cat ${SessionsFolder}/${CASE}/session_hcp.txt | grep "T2w"`
             if [[ -z $T2wCheck ]]; then
                 echo ""
-                reho "--- ERROR: T2w QC requested but T2w mapping in ${SessionsFolder}/${CASE}/subject_hcp.txt not detected. Check your data and re-run if needed."
+                reho "--- ERROR: T2w QC requested but T2w mapping in ${SessionsFolder}/${CASE}/session_hcp.txt not detected. Check your data and re-run if needed."
                 CompletionCheck="fail"
                 echo ""
                 return 1
             else
                 echo ""
-                geho "--- T2w mapping found: ${SessionsFolder}/${CASE}/subject_hcp.txt. Checking for T2w data next..."
+                geho "--- T2w mapping found: ${SessionsFolder}/${CASE}/session_hcp.txt. Checking for T2w data next..."
                 echo ""
-                # -- If subject_hcp.txt mapping file present check if Preprocessed T2w files are present
+                # -- If session_hcp.txt mapping file present check if Preprocessed T2w files are present
                 if [ -z ${SessionsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/T2w_restore.nii.gz ]; then
                     echo ""
                     reho "--- ERROR: Preprocessed T2w data not found: "

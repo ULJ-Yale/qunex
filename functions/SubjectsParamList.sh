@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files are subject-specific subject.txt param files
+# * The necessary input files are subject-specific session.txt param files
 #
 #~ND~END~
 
@@ -91,7 +91,7 @@ fi
 
 ########### INPUTS ###############
 
-	# -- Subject-specific subject_hcp.txt file 
+	# -- Subject-specific session_hcp.txt file 
 
 ########## OUTPUTS ###############
 
@@ -225,16 +225,16 @@ fi
 # -- Code for generating batch files
 # -------------------------------------------------
 		
-# -- Test if subject_hcp.txt is absent
-if (test ! -f ${SessionsFolder}/${CASE}/subject_hcp.txt); then
-	# -- Test if subject_hcp.txt is present
-	if (test -f ${SessionsFolder}/${CASE}/subject.txt); then
-		# -- If yes then copy it to subject_hcp.txt
-		cp ${SessionsFolder}/${CASE}/subject.txt ${SessionsFolder}/${CASE}/subject_hcp.txt
+# -- Test if session_hcp.txt is absent
+if (test ! -f ${SessionsFolder}/${CASE}/session_hcp.txt); then
+	# -- Test if session_hcp.txt is present
+	if (test -f ${SessionsFolder}/${CASE}/session.txt); then
+		# -- If yes then copy it to session_hcp.txt
+		cp ${SessionsFolder}/${CASE}/session.txt ${SessionsFolder}/${CASE}/session_hcp.txt
 	else
 		# -- Report error and exit
 		echo ""
-		reho "${SessionsFolder}/${CASE}/subject_hcp.txt and subject.txt is missing."
+		reho "${SessionsFolder}/${CASE}/session_hcp.txt and session.txt is missing."
 		reho "Make sure you have sorted the dicoms and setup subject-specific files."
 		reho "Note: These files are used to populate the batch.${ListName}.list"
 		echo ""
@@ -243,7 +243,7 @@ if (test ! -f ${SessionsFolder}/${CASE}/subject_hcp.txt); then
 fi
 echo "List path is currently set to $ListPath"
 echo "---" >> ${ListPath}/batch."$ListName".txt
-cat ${SessionsFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/batch."$ListName".txt
+cat ${SessionsFolder}/${CASE}/session_hcp.txt >> ${ListPath}/batch."$ListName".txt
 echo "" >> ${ListPath}/batch."$ListName".txt
 # -- Fix paths stale or outdated paths
 DATATYPES="dicom 4dfp hcp nii"
