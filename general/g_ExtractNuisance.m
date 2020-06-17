@@ -125,11 +125,11 @@ wbmask = getImage(wbmask, fsimg, verbose);
 % --------------------------------------------------------------
 %                                 define additional nuisance ROI
 
-if ~isempty(sbjroi) && ischar(sbjroi)
-    if strcmp(sbjroi, 'aseg')
-        sbjroi = fsimg;
-    elseif strcmp(sbjroi, 'wb')
-        sbjroi = bimg;
+if ~isempty(sessionroi) && ischar(sessionroi)
+    if strcmp(sessionroi, 'aseg')
+        sessionroi = fsimg;
+    elseif strcmp(sessionroi, 'wb')
+        sessionroi = bimg;
     end
 end
 
@@ -138,7 +138,7 @@ if ~isempty(nroi)
     [fnroi nomask] = processeROI(nroi);
 
     if verbose, verbose = '\n---> Reading additional nuisance roi [%s]'; end
-    nroi = getImage(fnroi, sbjroi, verbose);
+    nroi = getImage(fnroi, sessionroi, verbose);
 
     maskcodes = find(~ismember(nroi.roi.roinames, nomask));
     if ~isempty(maskcodes)
