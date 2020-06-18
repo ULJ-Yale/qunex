@@ -94,8 +94,8 @@ mapHCPLS2nii [sourcefolder='.'] [overwrite='no']
 
 WUSTL NIL pipeline utilities
 ----------------------------
-runNIL       [folder=.] [overwrite=no] [sessionfile=session.txt]
-runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sessionfile=session.txt]
+runNIL       [folder=.] [overwrite=no] [sourcefile=session.txt]
+runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
 
 
 General image file utilities

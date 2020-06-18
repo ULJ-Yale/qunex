@@ -48,9 +48,9 @@ set seq = ""
 
 recode = {True: 'ok', False: 'missing'}
 
-def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
+def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     '''
-    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sessionfile=session.txt]
+    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
 
     Goes through the folder and runs runNIL on all the subfolders that match the pattern. Setting overwrite
     to overwrite.
@@ -59,15 +59,15 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
       new packages from the scanner reside,
     - pattern: which sessionsfolders to match (default OP*),
     - overwrite: whether to overwrite existing (params and BOLD) files.
-    — sessionfile: the name of the session file
+    — sourcefile: the name of the session file
 
-    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sessionfile=session.txt
+    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sourcefile=session.txt
     '''
 
     if pattern is None:
         pattern = "OP*"
-    if sessionfile is None:
-        sessionfile = "session.txt"
+    if sourcefile is None:
+        sourcefile = "session.txt"
     if overwrite is None:
         overwrite = False
     elif overwrite:
@@ -108,23 +108,23 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
 
     for s in do:
         try:
-            runNIL(s, overwrite, sessionfile)
+            runNIL(s, overwrite, sourcefile)
         except:
             print "---> Failed running NIL preprocessing on", s
 
     print "\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder)
 
 
-def runNIL(folder=".", overwrite=None, sessionfile=None):
+def runNIL(folder=".", overwrite=None, sourcefile=None):
     '''
-    runNIL [folder=.] [overwrite=no] [sessionfile=session.txt]
+    runNIL [folder=.] [overwrite=no] [sourcefile=session.txt]
 
     Runs NIL preprocessing script on the session data in specified folder. Uses session.txt to identify structural and
     BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
 
     - folder: session's folder with nii and dicom folders and session.txt file.
     - overwrite: whether to overwrite existing params file or exisiting BOLD data
-    — sessionfile: the name of the session file
+    — sourcefile: the name of the session file
     '''
 
     if overwrite is None:
@@ -135,8 +135,8 @@ def runNIL(folder=".", overwrite=None, sessionfile=None):
         overwrite = True
     else:
         overwrite = False
-    if sessionfile is None:
-        sessionfile = "session.txt"
+    if sourcefile is None:
+        sourcefile = "session.txt"
 
     print "\n---> processing session %s" % (os.path.basename(folder))
 
@@ -144,12 +144,12 @@ def runNIL(folder=".", overwrite=None, sessionfile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, pref = niutilities.g_core.readSessionData(os.path.join(folder, sessionfile))
+    info, pref = niutilities.g_core.readSessionData(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
     if not info:
-        raise ValueError("ERROR: No data in session.txt! [%s]!" % (sessionfile))
+        raise ValueError("ERROR: No data in session.txt! [%s]!" % (sourcefile))
 
     for k, v in info[0].iteritems():
         if k == 'raw_data':

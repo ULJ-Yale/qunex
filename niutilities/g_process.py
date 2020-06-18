@@ -297,9 +297,8 @@ tomap = {'bppt':                    'bolds',
          'tfolder':                 'targetfolder',
          'tfile':                   'targetfile',
          'sfile':                   {
-                                        'sessionfile': ['runNIL', 'runNILFolder'],
                                         'sourcefiles': ['createBatch', 'pullSequenceNames', 'gatherBehavior'],
-                                        'sourcefile': ['createSessionInfo', 'setupHCP', 'sliceImage']
+                                        'sourcefile': ['createSessionInfo', 'setupHCP', 'sliceImage', 'runNIL', 'runNILFolder']
                                     },
          'sfilter':                 'filter',
          'hcp_fs_existing_subject': 'hcp_fs_existing_session',
