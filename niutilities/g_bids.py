@@ -248,7 +248,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     PARAMETERS
     ==========
 
-    --sessionsfolder    The subjects folder where all the sessions are to be 
+    --sessionsfolder    The sessions folder where all the sessions are to be 
                         mapped to. It should be a folder within the 
                         <study folder>. [.]
 
@@ -256,7 +256,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                         following: the BIDS dataset top folder, a folder that 
                         contains the BIDS dataset, a path to the compressed 
                         `.zip` or `.tar.gz` package that can contain a single 
-                        subject or a multi-subject dataset, or a folder that 
+                        session or a multi-session dataset, or a folder that 
                         contains a compressed package. For instance the user 
                         can specify "<path>/<bids_file>.zip" or "<path>" to
                         a folder that contains multiple packages. The default 
@@ -350,7 +350,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     The files identified as belonging to a specific session will be mapped to 
     folder: 
     
-        <subjects_folder>/<subject>_<session>/bids
+        <sessions_folder>/<subject>_<session>/bids
 
     The `<subject>_<session>` string will be used as the identifier for the 
     session in all the following steps. If no session is specified in BIDS,
@@ -365,7 +365,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     '<bids_study>/participants.tsv' and 'phenotype/*.tsv' files, will be parsed
     and split so that data belonging to a specific participant will be mapped to 
     that participant's sessions 'behavior' folder (e.g. 
-    <Qu|Nex study folder>/subjects/s14_01/behavior/masq01.tsv'). In this way the
+    <Qu|Nex study folder>/sessions/s14_01/behavior/masq01.tsv'). In this way the
     session folder contains all the behavioral data relevant fror that 
     participant.
 
@@ -1037,7 +1037,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     session.txt file
     ----------------
 
-    The session.txt will be placed in the subject base folder. It will contain
+    The session.txt will be placed in the session base folder. It will contain
     the information about the session id, subject id location of folders and a 
     list of created NIfTI images with their description.
 
@@ -1045,9 +1045,9 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
 
     id: 06_retest
     subject: 06
-    bids: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/bids
-    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/nii
-    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/hcp
+    bids: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/bids
+    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
     
     01: T1w
     02: bold covertverbgeneration
@@ -1080,7 +1080,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sourcefolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel where
+    automatically as each session's folder. Commands will run in parallel where
     the degree of parallelism is determined by `parsessions` (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
@@ -1199,7 +1199,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSubjectFile("mapBIDS2nii", sfolder, session, subject)
+    sout = gc.createSessionFile("mapBIDS2nii", sfolder, session, subject)
 
     # --- open bids2nii log file
     if overwrite == 'yes':

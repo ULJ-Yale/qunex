@@ -51,7 +51,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     PARAMETERS
     ==========
 
-    --sessionsfolder  Specifies the base study subjects folder within the Qu|Nex
+    --sessionsfolder  Specifies the base study sessions folder within the Qu|Nex
                       folder structure to or from which the data are to be 
                       mapped. If not specified explicitly, the current working 
                       folder will be taken as the location of the sessionsfolder. 
@@ -115,7 +115,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
 
     We will assume the following:
     
-    * data to be mapped is located in the folder `/data/studies/myStudy/subjects`
+    * data to be mapped is located in the folder `/data/studies/myStudy/sessions`
     * a batch file exists in the location `/data/studies/myStudy/processing/batch.txt`
     * we would like to map the data to location `/data/outbox/hcp_formatted/myStudy`
     
@@ -123,7 +123,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ```
     qunex exportHCP \\
-        --sessionsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/sessions \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --mapexclude=unprocessed \\
@@ -132,7 +132,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     ```
 
     Using the above commands the data found in the 
-    `/data/studies/myStudy/subjects/<session id>/hcp/<session id>` folders, 
+    `/data/studies/myStudy/sessions/<session id>/hcp/<session id>` folders, 
     excluding the `unprocessed` folder would be mapped to the 
     `/data/outbox/hcp_formatted/myStudy/<session id>` folder for all the 
     sessions listed in the batch.txt file. Specifically, folders would be 
@@ -142,7 +142,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ``` 
     qunex exportHCP \\
-        --sessionsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/sessions \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --filter="group:controls|institution:Yale" \\
@@ -158,7 +158,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ```
     qunex exportHCP \\
-        --sessionsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/sessions \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --sessionids="AP*,HQ*" \\
@@ -172,7 +172,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ```
     qunex exportHCP \\
-        --sessionsfolder=/data/studies/myStudy/subjects \\
+        --sessionsfolder=/data/studies/myStudy/sessions \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
         --mapto=/data/outbox/hcp_formatted/myStudy \\
         --mapaction="link" \\
@@ -202,7 +202,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     sessionsfolder, mapto, mapexclude = gu.exportPrep(commandName="exportHCP", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
-    sessions, gopts = gc.getSubjectList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
     if not sessions:
         raise ge.CommandFailed(commandName, "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 

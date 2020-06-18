@@ -4,8 +4,8 @@
 This file holds code for running 4dfp NIL preprocessing commands and volume to
 surface mapping. It implements the following commands:
 
-* runNIL        ... Runs NIL preprocessing of a subject.
-* runNILFolder  ... Runs NIL preprocessing of subjects in a folder.
+* runNIL        ... Runs NIL preprocessing of a session.
+* runNILFolder  ... Runs NIL preprocessing of sessins in a folder.
 * map2PALS      ... Maps volume image to PALS Atlas caret image.
 * map2HCP       ... Maps volume image to CIFTI dense scalar image.
 
@@ -55,7 +55,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sessionfile=None):
     Goes through the folder and runs runNIL on all the subfolders that match the pattern. Setting overwrite
     to overwrite.
 
-    - folder: the base study subjects folder (e.g. WM44/subjects) where OP folders and the inbox folder with the
+    - folder: the base study sessions folder (e.g. WM44/sessions) where OP folders and the inbox folder with the
       new packages from the scanner reside,
     - pattern: which sessionsfolders to match (default OP*),
     - overwrite: whether to overwrite existing (params and BOLD) files.
@@ -138,13 +138,13 @@ def runNIL(folder=".", overwrite=None, sessionfile=None):
     if sessionfile is None:
         sessionfile = "session.txt"
 
-    print "\n---> processing subject %s" % (os.path.basename(folder))
+    print "\n---> processing session %s" % (os.path.basename(folder))
 
     # ---> process session.txt
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, pref = niutilities.g_core.readSubjectData(os.path.join(folder, sessionfile))
+    info, pref = niutilities.g_core.readSessionData(os.path.join(folder, sessionfile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
@@ -236,11 +236,11 @@ def runNIL(folder=".", overwrite=None, sessionfile=None):
         else:
             if ismissing:
                 print "...  Some bolds exist [%s], however some are missing [%s]!" % (" ".join(isthere), " ".join(ismissing))
-                print "...  Skipping this subject!"
+                print "...  Skipping this session!"
                 return
             else:
                 print "...  BOLD files are allready processed! [%s]" % (" ".join(isthere))
-                print "...  Skipping this subject!"
+                print "...  Skipping this session!"
                 return
 
     # ---- run avi preprocessing

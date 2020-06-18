@@ -315,7 +315,7 @@ def createStudy(studyfolder=None, folders=None):
     │   ├── stimuli
     │   ├── bids
     │   └── hcpls
-    └── subjects
+    └── sessions
         ├── inbox
         │   ├── MR
         │   ├── EEG
@@ -336,7 +336,7 @@ def createStudy(studyfolder=None, folders=None):
     Do note that the command will create all the missing folders in which the
     specified study is to reside. The command also prepares template
     batch_parameters_example.txt and pipeline example mapping files in
-    <studyfolder>/subjects/specs folder. Finally, it creates a .qunexstudy file in
+    <studyfolder>/sessions/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
     PARAMETERS
@@ -421,7 +421,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     PARAMETERS
     =========
 
-    --sessionsfolder  ... The location of the <study>/subjects folder
+    --sessionsfolder  ... The location of the <study>/sessions folder
     --sourcefiles     ... Comma separated names of source files to take from
                           each specified session folder and add to batch file.
                           [session_hcp.txt]
@@ -499,7 +499,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
              - Renamed to createBatch and batch.txt.
     2018-01-01 Grega Repovš
              - Added append option and changed parameter names.
-             - Added the option to specify subjects to add explicitly.
+             - Added the option to specify sessions to add explicitly.
     2018-07-16 Grega Repovš
              - Renamed to createBatch from compileBatch
     2018-07-20 Grega Repovš
@@ -507,7 +507,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added sessionsfolder to getSubjectList call
+             - Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to add to batch
     2019-05-22 Grega Repovš
@@ -582,11 +582,11 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
             print "---> Creating file %s [%s]" % (os.path.basename(targetfile), targetfile)
             jfile = open(targetfile, 'w')
             print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
-            print >> jfile, "# Subjects folder: %s" % (sessionsfolder)
+            print >> jfile, "# Sessions folder: %s" % (sessionsfolder)
             print >> jfile, "# Source files: %s" % (sfiles)
             
         elif overwrite == 'append':
-            slist, parameters = gc.getSubjectList(targetfile)
+            slist, parameters = gc.getSessionList(targetfile)
             slist = [e['id'] for e in slist]
             print "---> Appending to file %s [%s]" % (os.path.basename(targetfile), targetfile)
             if paramfile and preexist:
@@ -618,12 +618,12 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
             else:
                 print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
-        # -- get list of subject folders
+        # -- get list of sessions folders
 
         missing = 0
 
         if sessions is not None:
-            sessions, gopts = gc.getSubjectList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+            sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
             files = []
             for session in sessions:
                 for sfile in sfiles:
@@ -877,7 +877,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added sessionsfolder to getSubjectList call
+             - Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to add to the list file
     2019-05-30 Grega Repovš
@@ -958,7 +958,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("createList", "No session found", "No sessions found to add to the list file!", "Please check your data!")
@@ -1041,7 +1041,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     PARAMETERS
     ==========
 
-    --sessionsfolder ... The location of the subjects folder where the sessions
+    --sessionsfolder ... The location of the sessions folder where the sessions
                          to create the list reside.
     --sessions       ... Either a comma or pipe separated string of session 
                          names to include (can be glob patterns) or a path
@@ -1140,7 +1140,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
 
     Note that the function expects the files to be present in the correct place
-    within the Qu|Nex subjects folder structure.
+    within the Qu|Nex sessions folder structure.
 
     Checking for presence of files
     ------------------------------
@@ -1200,7 +1200,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added sessionsfolder to getSubjectList call
+             - Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to be processed
     2019-05-30 Grega Repovš
@@ -1262,12 +1262,12 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     # --- check sessions
 
     if sessions is None:
-        print "WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
+        print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
         sessions = glob.glob(os.path.join(sessionsfolder, '*', 'images'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("createConc", "No session found", "No sessions found to add to the list file!", "Please check your data!")
@@ -1512,7 +1512,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     ```
     # global settings
-    sessionsfolder : /data/testStudy/subjects
+    sessionsfolder : /data/testStudy/sessions
     overwrite      : yes
     sessions       : *_baseline
 
@@ -1947,7 +1947,7 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
     if bolds is None:
         raise ge.CommandError("batchTag2Num", "No bolds specified!")
 
-    sessions, _ = gc.getSubjectList(filename, sessionid=sessionid)
+    sessions, _ = gc.getSessionList(filename, sessionid=sessionid)
 
     if not sessions:
         raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (sessionid, filename), "Please check your data!")
@@ -1983,8 +1983,8 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     PARAMETERS
     ==========
 
-    --sessionsfolder  The base study subjects folder (e.g. WM44/subjects) where
-                      the inbox and individual subject folders are. If not 
+    --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
+                      the inbox and individual session folders are. If not 
                       specified, the current working folder will be taken as 
                       the location of the sessionsfolder. [.]
     
@@ -2003,12 +2003,12 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
                       the specified values will be included in the list.
 
     --sourcefiles     A file or comma or pipe `|` separated list of files or
-                      grep patterns that define, which subject specific files 
+                      grep patterns that define, which session specific files 
                       from the behavior folder to gather data from. 
                       ['behavior.txt']
 
     --targetfile      The path to the target file, a file that will contain
-                      the joined data from all the individual subject files.
+                      the joined data from all the individual session files.
                       ['<sessionsfolder>/inbox/behavior.txt']
 
     --overwrite       Whether to overwrite an existing group behavioral file or
@@ -2020,7 +2020,7 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
 
                       * yes   ... Check and report an error if no behavioral
                                   data exists for a session
-                      * warn  ... Warn and list the subjects for which the 
+                      * warn  ... Warn and list the sessions for which the 
                                   behavioral data was not found
                       * no    ... Do not run a check, ignore sessions for which
                                   no behavioral data was found
@@ -2087,12 +2087,12 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     encountered when processing the data, the command will exit with an error.
     
     ```
-    qunex gatherBehavior sessionsfolder="/data/myStudy/subjects" \\
+    qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
             sessions="AP*|OP*" sourcefiles="*test*|*results*" \\
             check="warn" overwrite="yes" report="no"
     ```
 
-    The command will find all the session folders within `/data/myStudy/subjects`
+    The command will find all the session folders within `/data/myStudy/sessions`
     that have a `behavior` subfolder. It will then look for presence of any 
     files that match "*test*" or "*results*" glob pattern. The compiled data 
     will be saved in the default location. If a file already exists, it will be
@@ -2102,7 +2102,7 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     processing report.
 
     ```
-    qunex gatherBehavior sessionsfolder="/data/myStudy/subjects" \\
+    qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
             sessions="/data/myStudy/processing/batch.txt" \\           
             filter="group:controls|behavioral:yes" \\
             sourcefiles="*test*|*results*" \\
@@ -2173,7 +2173,7 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     sessionsfolder = os.path.abspath(sessionsfolder)
 
     if not os.path.exists(sessionsfolder):
-        raise ge.CommandFailed("gatherBehavior", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed("gatherBehavior", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
     # --- check target file
 
@@ -2208,12 +2208,12 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     # --- check sessions
 
     if sessions is None:
-        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
+        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
         sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("gatherBehavior", "No session found" , "No sessions found to process behavioral data from!", "Please check your data!")
@@ -2317,8 +2317,8 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     PARAMETERS
     ==========
 
-    --sessionsfolder  The base study subjects folder (e.g. WM44/subjects) where
-                      the inbox and individual subject folders are. If not 
+    --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
+                      the inbox and individual session folders are. If not 
                       specified, the current working folder will be taken as 
                       the location of the sessionsfolder. [.]
     
@@ -2420,12 +2420,12 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
 
     ```
     qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
-            sessions="AP*|OP*" sourcefiles="subject.txt|session.txt" \\
+            sessions="AP*|OP*" sourcefiles="session.txt|subject.txt" \\
             check="warn" overwrite="yes" report="no"
     ```
 
     The command will find all the session folders within `/data/myStudy/sessions`
-    It will then look for presence of either subject.txt or session.txt files.
+    It will then look for presence of either session.txt or subject.txt files.
     The compiled data from the found files will be saved in the default 
     location. If a file already exists, it will be overwritten. If any errors 
     are encountered, the command will not throw an error, however it also won't
@@ -2495,12 +2495,12 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
 
     print "Running pullSequenceNames\n========================="
 
-    # --- check subjects folder
+    # --- check sessions folder
 
     sessionsfolder = os.path.abspath(sessionsfolder)
 
     if not os.path.exists(sessionsfolder):
-        raise ge.CommandFailed("pullSequenceNames", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed("pullSequenceNames", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
     # --- check target file
 
@@ -2535,12 +2535,12 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     # --- check sessions
 
     if sessions is None:
-        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
+        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
         sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("pullSequenceNames", "No session found" , "No sessions found to process neuroimaging data from!", "Please check your data!")
@@ -2625,7 +2625,7 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
     if os.path.exists(sessionsfolder):
         sessionsfolder = os.path.abspath(sessionsfolder)
     else:
-        raise ge.CommandFailed(commandName, "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed(commandName, "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
     if mapto:
         mapto = os.path.abspath(mapto)
@@ -2820,7 +2820,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
 
         # -- get list of session folders
 
-        sessions, gopts = gc.getSubjectList(sessions, filter=filter, verbose=False)
+        sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False)
 
         sfolders = []
         for session in sessions:

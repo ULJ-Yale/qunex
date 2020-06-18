@@ -116,7 +116,7 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
                         # --- filenames
                         f = getFileNames(sinfo, options)
                         f.update(getBOLDFileNames(sinfo, boldname, options))
-                        d = getSubjectFolders(sinfo, options)
+                        d = getSessionFolders(sinfo, options)
                         # f_conc = os.path.join(d['s_bold_concs'], tconc+".conc")
                         # f_fidl = os.path.join(d['s_bold_events'], tfidl+".fidl")
 
@@ -161,7 +161,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the sessions information
                            [batch.txt].
-    --sessionsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
@@ -235,7 +235,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r += "\n\n........................................................"
 
     doOptionsCheck(options, sinfo, 'createBOLDBrainMasks')    
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     if overwrite:
         ostatus = 'will'
@@ -446,7 +446,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --sessionsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
@@ -579,7 +579,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     r += "\n\n........................................................"
 
     doOptionsCheck(options, sinfo, 'computeBOLDStats')  
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     if overwrite:
         ostatus = 'will'
@@ -652,7 +652,7 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
         if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data availability
 
@@ -732,19 +732,19 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
       median, and squared mean divided by max statistics for each of the 6
       movement correction parameters. It also prints mean, median, maximum, and
       standard deviation of frame displacement statistics. The purpose of this
-      file is to enable easy subject and group level analysis of movement in
+      file is to enable easy session and group level analysis of movement in
       the scanner.
 
     * <mov_preport> (bold_movement_report_post.txt by default)
       This file has the same structure and information as the above, whith
       frames marked as bad excluded from the statistics computation. This
-      enables subject and group level assessment of the effects of scrubbing.
+      enables session and group level assessment of the effects of scrubbing.
 
     * <mov_sreport> (bold_movement_scrubbing_report.txt by default)
       This file lists for each BOLD of each session the number and the
       percentage of frames that would be marked as bad and excluded from the
       analyses when a specific exclusion criteria would be used. Again, the
-      file supports subject and group level analysis of movement scrubing.
+      file supports session and group level analysis of movement scrubing.
 
 
     RELEVANT PARAMETERS
@@ -758,7 +758,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --sessionsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -851,7 +851,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                       frames, and what criterium to use for the definition of
                       bad frames (fd/dvars/dvars/dvarsme/idvars/idvarsme/udvars/
                       udvarsme). Set to none to not generate them [udvarsme].
-    --mov_pdf     ... The name of the folder in subjects/QC/movement in which to
+    --mov_pdf     ... The name of the folder in sessions/QC/movement in which to
                       copy the individuals' movement plots [movement_plots].
 
     NOTES AND DEPENDENCIES
@@ -918,7 +918,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\n........................................................"
 
         doOptionsCheck(options, sinfo, 'createStatsReport')  
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         if overwrite:
             ostatus = 'will'
@@ -932,7 +932,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\nIf already present, existing results %s be overwritten (see --overwrite)." % (ostatus)
 
         procbolds = []
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data
 
@@ -1105,7 +1105,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     the global signal regression, thereby resolving some of the issues taken as
     arguments agains using global signal regression. The file can be either
     a binary mask, or a '.names' file. In the latter case, it is possible to
-    additional mask the ROI to be excluded based on subject specific
+    additional mask the ROI to be excluded based on session specific
     aseg+aparc image (see description of .names file format).
 
     Another option is to include additional independent nuisance regions that
@@ -1114,7 +1114,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     to either a binary image or a '.names' file. In the latter case, it is again
     possible to mask the additional ROI either by the binary whole brain mask or
     the individuals aseg+aparc file. To achieve this, set the additional
-    '--sbjroi' parameter to 'wb' or 'aseg', respectively. If some additional
+    '--sessionroi' parameter to 'wb' or 'aseg', respectively. If some additional
     ROI are to be excluded, even though they fall outside of the brain, then
     these are to be listed as comma separated list of ROI names (that match the
     ROI names in the .names file), separated from the path by a pipe ('|')
@@ -1163,7 +1163,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --sessionsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
@@ -1208,9 +1208,9 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     --nroi         ... The path to additional nuisance regressors file. It can
                        be either a binary mask or a '.names' file that specifies
                        the ROI to be used. Based on other options, the ROI can
-                       be further masked by subject specific files or not masked
+                       be further masked by session specific files or not masked
                        at all (see USE above).
-    --sbjroi       ... A string specifying which subject specific mask to use
+    --sessionroi    ... A string specifying which session specific mask to use
                        for further masking the additional roi. The two options
                        are 'wb' or 'aseg' for whole brain mask or FreeSurfer
                        aseg+aparc mask, respectively.
@@ -1263,14 +1263,14 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\nExtracting BOLD nuisance signal ..."
     r += "\n\n    The command will extract nuisance signal from each of the specifie BOLD files.\n    The results will be saved as *.nuisance files in the images/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal."
-    r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sbjroi: %(sbjroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
+    r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sessionroi: %(sessionroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
     r += "\n\n    when extracting nuisance signal."
     if options['hcp_bold_variant']:
         r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
     doOptionsCheck(options, sinfo, 'extractNuisanceSignal')  
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     if overwrite:
         ostatus = 'will'
@@ -1342,7 +1342,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
         if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data availability
 
@@ -1381,7 +1381,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
             d['s_bold_mov'],            # --- functional/movement subfolder
             d['s_nuisance'],            # --- roi/nuisance subfolder
             options['wbmask'],          # --- mask to exclude ROI from WB
-            options['sbjroi'],          # --- a mask used to specify subject specific WB
+            options['sessionroi'],      # --- a mask used to specify session specific WB
             options['nroi'],            # --- additional nuisance regressors ROI
             options['shrinknsroi'],     # --- shrink nuisance signal ROI
             'true')                     # --- verbosity
@@ -1444,7 +1444,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
-    --sessionsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/sessions folder, where the
                           imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --parelements     ... How many elements (e.g bolds) to run in
@@ -1910,7 +1910,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
         f = getFileNames(sinfo, options)
         f.update(getBOLDFileNames(sinfo, boldname, options))
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data availability
 
@@ -2044,7 +2044,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
-    --sessionsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/sessions folder, where the
                           imaging  data is supposed to go [.].
     --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -2123,7 +2123,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     If `conc_use` is set to relative (the default), then the only information 
     taken from the conc files will be the bold numbers. The actual location of 
     the bold files will be constructed from the information on the location of 
-    the subject's sesion folder present in the batch file, and the 
+    the session's sesion folder present in the batch file, and the 
     `hcp_bold_variant` setting, whereas the specific bold file name and file 
     format (e.g. .nii.gz vs. .dtseries.nii) to use will depend on `boldname`, 
     `image_target`, and `hcp_cifti_tail` settings. This allows flexible use
@@ -2492,7 +2492,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
             try:
                 r += "\n\nConc bundle: %s" % (tconc)
 
-                d = getSubjectFolders(sinfo, options)
+                d = getSessionFolders(sinfo, options)
                 f = {}
                 f_conc = os.path.join(d['s_bold_concs'], concroot + tconc + ".conc")
                 f_fidl = os.path.join(d['s_bold_events'], tfidl + ".fidl")

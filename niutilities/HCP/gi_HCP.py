@@ -124,7 +124,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     PARAMETERS
     ==========
 
-    --sessionsfolder    The subjects folder where all the sessions are to be 
+    --sessionsfolder    The sessions folder where all the sessions are to be 
                         mapped to. It should be a folder within the 
                         <study folder>. [.]
 
@@ -132,7 +132,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                         following: the HCPLS dataset top folder, a folder that 
                         contains the HCPLS dataset, a path to the compressed 
                         `.zip` or `.tar.gz` package that can contain a single 
-                        subject or a multi-subject dataset, or a folder that 
+                        session or a multi-session dataset, or a folder that 
                         contains a compressed package. For instance the user 
                         can specify "<path>/<hcpfs_file>.zip" or "<path>" to
                         a folder that contains multiple packages. The default 
@@ -243,10 +243,10 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     call. If `hcplsname` is not provided, the name will be set to the name of the 
     parent folder or the name of the compressed archive.
 
-    The files identified as belonging to a specific subject will be mapped to 
+    The files identified as belonging to a specific session will be mapped to 
     folder: 
     
-        <subjects_folder>/<subject>_<session>/hcpls
+        <sessions_folder>/<subject>_<session>/hcpls
 
     The `<subject>_<session>` string will be used as the identifier for the 
     session in all the following steps. If the folder for the `session` 
@@ -406,7 +406,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
         raise ge.CommandFailed("importHCP", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
 
-    # ---> mapping data to subjects' folders
+    # ---> mapping data to sessions' folders
     print "--> mapping files to Qu|Nex hcpls folders"
 
     for file in sourceFiles:
@@ -759,7 +759,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     session.txt file
     ----------------
 
-    The session.txt will be placed in the subject base folder. It will contain
+    The session.txt will be placed in the session base folder. It will contain
     the information about the session id, subject id location of folders and a 
     list of created NIfTI images with their description.
 
@@ -767,9 +767,9 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
     id: 06_retest
     subject: 06
-    hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/hcpls
-    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/nii
-    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/hcp
+    hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
+    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
     
     01: T1w
     02: bold1:rest1
@@ -848,7 +848,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
     ```
     qunex mapHCPLS2nii \\
-      --sessionsfolder="/data/my_study/subjects" \\
+      --sessionsfolder="/data/my_study/sessions" \\
       --sessions="AP*" \\
       --overwrite=yes
     ```
@@ -943,7 +943,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSubjectFile("mapHCPLS2nii", sfolder, session, subject)
+    sout = gc.createSessionFile("mapHCPLS2nii", sfolder, session, subject)
 
     # --- create session_hcp.txt file
     sfile = os.path.join(sfolder, 'session_hcp.txt')

@@ -80,7 +80,7 @@ listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
 dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
-dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [parelements=1] [tool=auto]
+dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool=auto]
 importDICOM  [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
@@ -171,7 +171,7 @@ specified at both levels. No options need to be set for any of the commands
 listed below. The key parameters with their default values are:
 
     sessions=batch.txt   ... the path to the batch.txt file
-    sessionsfolder=.     ... the path to the study subjects folder
+    sessionsfolder=.     ... the path to the study sessions folder
     overwrite=no         ... whether to overwrite existing results
     parsessions=1        ... how many sessions to run in parallel
     nprocess=0           ... how many sessions to process (0=all)
@@ -304,7 +304,7 @@ def runCommand(command, args):
             raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple sessions!" % (command))
         if folders['sessionsfolder'] is None:
             folders['sessionsfolder'] = "."
-        sessions, gopts = gc.getSubjectList(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get('sessionids'), sessionsfolder=folders['sessionsfolder'], verbose=False)
+        sessions, gopts = gc.getSessionList(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get('sessionids'), sessionsfolder=folders['sessionsfolder'], verbose=False)
 
     logname = eargs.get('logname')
 

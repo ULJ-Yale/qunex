@@ -4,8 +4,8 @@
 This file holds code for support functions for image preprocessing and analysis.
 It consists of functions:
 
-* createBoldList   ... creates a list with paths to each subject's BOLD files
-* createConcList   ... creates a list with paths to each subject's conc files
+* createBoldList   ... creates a list with paths to each session's BOLD files
+* createConcList   ... creates a list with paths to each session's conc files
 * listSessionInfo  ... lists session data stored in batch.txt file
 
 All the functions are part of the processing suite. They should be called
@@ -44,7 +44,7 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
                         bolds.append(v['name'])
         if len(bolds) > 0:
             f = getFileNames(session, options)
-            print >> bfile, "    subject id:%s" % (session['id'])
+            print >> bfile, "    session id:%s" % (session['id'])
             print >> bfile, "    roi:%s" % (os.path.abspath(f['fs_aparc_bold']))
             for bold in bolds:
                 f = getBOLDFileNames(session, boldname=bold, options=options)
@@ -70,9 +70,9 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
         for session in sinfo:
             try:
                 f = getFileNames(session, options)
-                d = getSubjectFolders(session, options)
+                d = getSessionFolders(session, options)
 
-                print >> bfile, "subject id:%s" % (session['id'])
+                print >> bfile, "session id:%s" % (session['id'])
                 print >> bfile, "    roi:%s" % (f['fs_aparc_bold'])
 
                 tfidl  = fidls[0].strip().replace(".fidl", "")
@@ -95,10 +95,10 @@ def listSessionInfo(sinfo, options, overwrite=False, thread=0):
     """
     listSessionInfo - documentation not yet available.
     """
-    bfile = open(os.path.join(options['sessionsfolder'], 'SubjectInfo.txt'), 'w')
+    bfile = open(os.path.join(options['sessionsfolder'], 'SessionInfo.txt'), 'w')
 
     for session in sinfo:
-        print >> bfile, "subject: %s, group: %s" % (session['id'], session['group'])
+        print >> bfile, "session: %s, group: %s" % (session['id'], session['group'])
 
     bfile.close()
 
@@ -127,9 +127,9 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     ---
     id: OP578
     subject: OP578
-    dicom: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/dicom
-    raw_data: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/nii
-    hcp: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/hcp
+    dicom: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/dicom
+    raw_data: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii
+    hcp: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp
     group: control
 
     If script.sh contains among others:
@@ -143,10 +143,10 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
 
     Before running the function will change that part of the script to:
 
-    ls -l /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/hcp/OP578/MNINonLinear
+    ls -l /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp/OP578/MNINonLinear
     if [ "control" = "control" ]; then
         mkdir /gpfs/project/fas/n3/Studies/tmp/OP578
-        cp /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/nii/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/OP578
+        cp /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/OP578
     fi
     echo "{{nothing}}"
 

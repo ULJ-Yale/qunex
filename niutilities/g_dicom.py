@@ -79,7 +79,7 @@ def readPARInfo(filename):
     Function for reading `.PAR` files. It returns the PAR fields as well as a
     set of standard information. Including:
 
-    - subjectid
+    - sessionid
     - seriesNumber
     - seriesDescription
     - TR
@@ -107,7 +107,7 @@ def readPARInfo(filename):
                 k, v = [e.strip() for e in line.split(':  ')]
                 info[k] = v
 
-    info['subjectid']          = info['Patient name']
+    info['sessionid']          = info['Patient name']
     info['seriesNumber']       = int(info['Acquisition nr']) * 100 + int(info['Reconstruction nr'])
     info['seriesDescription']  = info['Protocol name'].replace("WIP ", "")
     info['TR']                 = float(info['Repetition time [msec]'])
@@ -129,7 +129,7 @@ def readDICOMInfo(filename):
     Function for reading basic information from DICOM files. It tries to extract
     the following standard information:
 
-    - subjectid
+    - sessionid
     - seriesNumber
     - seriesDescription
     - TR
@@ -158,16 +158,16 @@ def readDICOMInfo(filename):
 
     info = {}
 
-    info['subjectid']  = getID(d)
+    info['sessionid']  = getID(d)
 
-    # --- subjectid
+    # --- sessionid
 
-    info['subjectid'] = ""
+    info['sessionid'] = ""
     if "PatientID" in d:
-        info['subjectid'] = d.PatientID
-    if info['subjectid'] == "":
+        info['sessionid'] = d.PatientID
+    if info['sessionid'] == "":
         if "StudyID" in d:
-            info['subjectid'] = d.StudyID
+            info['sessionid'] = d.StudyID
 
     # --- seriesNumber
 
@@ -353,9 +353,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     The command is used to convert MR images from DICOM to NIfTI format. It
     searches for images within the dicom subfolder within the provided
-    subject folder (folder). It expects to find each image within a separate
+    session folder (folder). It expects to find each image within a separate
     subfolder. It then converts the images to NIfTI format and places them
-    in the nii folder within the subject folder. To reduce the space use it
+    in the nii folder within the session folder. To reduce the space use it
     can then gzip the dicom files (gzip). To speed the process up, it can
     run multiple dcm2nii processes in parallel (parelements).
 
@@ -373,7 +373,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     PARAMETERS
     ==========
 
-    --folder        The base subject folder with the dicom subfolder that holds
+    --folder        The base session folder with the dicom subfolder that holds
                     session numbered folders with dicom files. [.]
     --clean         Whether to remove preexisting NIfTI files (yes), leave them and
                     abort (no) or ask interactively (ask). [ask]
@@ -396,18 +396,18 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     session.txt file
     ----------------
 
-    The session.txt will be placed in the subject base folder. It will contain
-    the information about the subject id, location of folders and a list of
-    created NIfTI images with their description.
+    The session.txt will be placed in the session base folder. It will contain
+    the information about the session id, subject id, location of folders and a
+    list of created NIfTI images with their description.
 
     An example session.txt file would be:
 
     id: OP169
     subject: OP169
-    dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/dicom
-    raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/nii
-    data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/4dfp
-    hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/hcp
+    dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
+    raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
+    data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
+    hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
     01: Survey
     02: T1w 0.7mm N1
     03: T2w 0.7mm N1
@@ -449,7 +449,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     that holds the output of the dcm2nii command that was run to convert the
     DICOM files to a NIfTI image.
 
-    MULTIPLE SUBJECTS AND SCHEDULING
+    MULTIPLE SESSIONS AND SCHEDULING
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
@@ -483,7 +483,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     ```
     qunex dicom2nii \\
-      --sessionsfolder="/data/my_study/subjects" \\
+      --sessionsfolder="/data/my_study/sessions" \\
       --sessions="OP*" \\
       --clean=yes \\
       --unzip=yes \\
@@ -499,7 +499,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
              - Updated documentation
     2018-04-01 Grega Repovš
              - Updated documentation with information on running for multiple
-               subjects and scheduling
+               sessions and scheduling
     2018-09-26 Grega Repovš
              - Added checking for existence of dicom folder
     2019-04-25 Grega Repovs
@@ -916,10 +916,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     id: OP169_baseline
     subject: OP169
-    dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/dicom
-    raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/nii
-    data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/4dfp
-    hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/hcp
+    dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
+    raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
+    data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
+    hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
     01: Survey
     02: T1w 0.7mm N1
     03: T2w 0.7mm N1
@@ -995,7 +995,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     ```
     qunex dicom2niix \\
-      --sessionsfolder="/data/my_study/subjects" \\
+      --sessionsfolder="/data/my_study/sessions" \\
       --sessions="OP*" \\
       --clean=yes \\
       --unzip=yes \\
@@ -1015,7 +1015,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
              - Added optional specification of subjectid
     2018-04-01 Grega Repovš
              - Updated documentation with information on running for multiple
-               subjects and scheduling
+               sessions and scheduling
     2018-07-03 Grega Repovš
              - Changed to work with readDICOMInfo and readPARInfo, and to
                support PAR/REC files.
@@ -1190,16 +1190,16 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         if first:
             first = False
             if sessionid is None:
-                sessionid = info['subjectid']
+                sessionid = info['sessionid']
 
             if '_' in sessionid:
                 subjectid = sessionid.split('_')[0]
             else:
                 subjectid = sessionid
 
-            print >> r, "Report for %s (%s) scanned on %s\n" % (sessionid, info['subjectid'], info['datetime'])
+            print >> r, "Report for %s (%s) scanned on %s\n" % (sessionid, info['sessionid'], info['datetime'])
             if verbose:
-                print "\nProcessing images from %s (%s) scanned on %s" % (sessionid, info['subjectid'], info['datetime'])
+                print "\nProcessing images from %s (%s) scanned on %s" % (sessionid, info['sessionid'], info['datetime'])
 
             # --- setup session.txt file
 
@@ -1498,7 +1498,7 @@ def sortDicom(folder=".", **kwargs):
 
     ```
     qunex sortDicom \\
-      --sessionsfolders="/data/my_study/subjects" \\
+      --sessionsfolders="/data/my_study/sessions" \\
       --sessions="OP*"
     ```
 
@@ -1510,7 +1510,7 @@ def sortDicom(folder=".", **kwargs):
              - Updated documentation
     2018-04-01 Grega Repovš
              - Updated documentation with information on running for multiple
-               subjects and scheduling
+               sessions and scheduling
     2018-07-03 Grega Repovš
              - Changed to work with readDICOMInfo and readPARInfo, and to
                support PAR/REC files.
@@ -1565,8 +1565,8 @@ def sortDicom(folder=".", **kwargs):
                 info = readDICOMInfo(dcm)
             except:
                 pass                
-        if info and info['subjectid']:
-                print "---> Sorting dicoms for %s scanned on %s" % (info['subjectid'], info['datetime'])
+        if info and info['sessionid']:
+                print "---> Sorting dicoms for %s scanned on %s" % (info['sessionid'], info['datetime'])
                 break
 
     if not os.path.exists(dcmf):
@@ -1608,7 +1608,7 @@ def sortDicom(folder=".", **kwargs):
 
         if not os.path.exists(sqfl):
             os.makedirs(sqfl)
-            print "---> Created subfolder for sequence %s %s - %s" % (info['subjectid'], sqid, info['seriesDescription'])
+            print "---> Created subfolder for sequence %s %s - %s" % (info['sessionid'], sqid, info['seriesDescription'])
 
         if ext.lower() == 'par':
             tgpar = os.path.join(sqfl, os.path.basename(dcm))
@@ -1641,7 +1641,7 @@ def sortDicom(folder=".", **kwargs):
 
             # --- do the deed
 
-            tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (cleanName(info['subjectid']), sqid, sop, dext))
+            tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (cleanName(info['sessionid']), sqid, sop, dext))
             doFile(dcm, tgf)
 
     print "---> Done"
@@ -1659,7 +1659,7 @@ def listDicom(folder=None):
     in the specified folder and its subfolders it will print:
 
     * location of the file
-    * subject id recorded in the dicom file
+    * session id recorded in the dicom file
     * sequence number and name
     * date and time of acquisition
 
@@ -1765,7 +1765,7 @@ def splitDicom(folder=None):
     if not files:
         raise ge.CommandFailed("splitDicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
 
-    subjects = []
+    sessions = []
 
     for dcm in files:
         try:
@@ -1773,8 +1773,8 @@ def splitDicom(folder=None):
             d    = readDICOMBase(dcm)
             time = getDicomTime(d)
             sid  = getID(d)
-            if sid not in subjects:
-                subjects.append(sid)
+            if sid not in sessions:
+                sessions.append(sid)
                 os.makedirs(os.path.join(folder, sid))
                 print "===> creating subfolder for session %s" % (sid)
             print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
@@ -1890,10 +1890,10 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     The command will then copy, unzip or untar all the files in the packet 
     into an inbox folder created within the session folder. Once all the files 
     are extracted or copied, depending on the archive parameter, the packet is 
-    then either moved or copied to the `study/subjects/archive/MR` folder, left
+    then either moved or copied to the `study/sessions/archive/MR` folder, left
     as is, or deleted. If the archive folder does not yet exist, it is created.
 
-    If a subject folder with an inbox folder already exists, if the overwrite 
+    If a session folder with an inbox folder already exists, if the overwrite 
     parameter is set to yes, it will delete the contents of the dicom and nii
     folders and redo the import process. If the overwrite parameter is set to
     no, then the packet will not be processed so that existing data is not 
@@ -1964,8 +1964,8 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     PARAMETERS
     ==========
 
-    --sessionsfolder  The base study subjects folder (e.g. WM44/subjects) where
-                      the inbox and individual subject folders are. If not 
+    --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
+                      the inbox and individual session folders are. If not 
                       specified, the current working folder will be taken as 
                       the location of the sessionsfolder. [.]
     
@@ -2060,14 +2060,14 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     First the examples for processing packages from `masterinbox` folder.
 
     In the first example, we are assuming that the packages we want to process 
-    are in the default folder (`<path_to_studyfolder>/subjects/inbox/MR`), 
+    are in the default folder (`<path_to_studyfolder>/sessions/inbox/MR`), 
     the file or folder names contain only the packet names to be used, and the 
     subject id is equal to the packet name. All packets found are to be
     processed, after the user gives a go-ahead to an interactive prompt:
     
     ```
     qunex importDICOM \
-        --sessionsfolder="<path_to_studyfolder>/subjects"
+        --sessionsfolder="<path_to_studyfolder>/sessions"
     ```
     
     If the processing should continue automatically if packages to process were 
@@ -2075,7 +2075,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --sessionsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/sessions" \
         --check="any"
     ```
     
@@ -2084,7 +2084,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --sessionsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/sessions" \
         --sessions="AP.*,HQ.*" \
         --check="any"
     ```
@@ -2095,7 +2095,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --sessionsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/sessions" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
         --check="any"
@@ -2106,7 +2106,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --sessionsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/sessions" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
         --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \
@@ -2122,7 +2122,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     
     ```
     qunex importDICOM \
-        --sessionsfolder="<path_to_studyfolder>/subjects" \
+        --sessionsfolder="<path_to_studyfolder>/sessions" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
         --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_name:2|session_name:3" \
@@ -2134,27 +2134,27 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     with no other files in the sessions folders:
     
     ```
-    /studies/myStudy/subjects/S001_baseline/inbox/AYXQ.tar.gz
-    /studies/myStudy/subjects/S001_incentive/inbox/TWGS.tar.gz
-    /studies/myStudy/subjects/S002_baseline/inbox/OHTZ.zip
-    /studies/myStudy/subjects/S002_incentive/inbox/QRTD.zip
+    /studies/myStudy/sessions/S001_baseline/inbox/AYXQ.tar.gz
+    /studies/myStudy/sessions/S001_incentive/inbox/TWGS.tar.gz
+    /studies/myStudy/sessions/S002_baseline/inbox/OHTZ.zip
+    /studies/myStudy/sessions/S002_incentive/inbox/QRTD.zip
     ```
     
     Then these are a set of possible commands:
     
     ```
     qunex importDICOM \
-        --sessionsfolder="/studies/myStudy/subjects" \
+        --sessionsfolder="/studies/myStudy/sessions" \
         --masterinbox="none" \
         --sessions="S*" 
     ```
     
     In the above case all the folders will be processed, the packages will be extracted
-    and (by default) moved to `/studies/myStudy/subjects/archive/MR`.
+    and (by default) moved to `/studies/myStudy/sessions/archive/MR`.
     
     ```
     qunex importDICOM \
-        --sessionsfolder="/studies/myStudy/subjects" \
+        --sessionsfolder="/studies/myStudy/sessions" \
         --masterinbox="none" \
         --sessions="*baseline" \
         --archive="delete"
@@ -2172,7 +2172,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     2017-12-25 Grega Repovš
              - Added the option for arbitrary inbox folder
     2018-03-18 Grega Repovš
-             - Added more detailed informaton on existing subject folders in
+             - Added more detailed informaton on existing session folders in
                documentation
     2018-07-03 Grega Repovš
              - Changed to work with readDICOMInfo and readPARInfo, and to
@@ -2435,12 +2435,12 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
             if masterinbox:
                 raise ge.CommandFailed("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
             else:
-                raise ge.CommandFailed("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(sessionsfolder)), "Please check your data!")                
+                raise ge.CommandFailed("importDICOM", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder)), "Please check your data!")                
         else:
             if masterinbox:
                 raise ge.CommandNull("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
             else:
-                raise ge.CommandNull("importDICOM", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(sessionsfolder))) 
+                raise ge.CommandNull("importDICOM", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder))) 
                 
 
     # ---- Ok, now loop through the packets
@@ -2700,7 +2700,7 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
     * Institution
     * Scanner
     * Sequence
-    * Subject ID
+    * Session ID
     * Sample spacing
     * Bandwidth
     * Acquisition Matrix
@@ -2776,9 +2776,9 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
         print "               Sequence: undefined"
 
     try:
-        print "             Subject ID:", d[0x0010, 0x0020].value
+        print "             Session ID:", d[0x0010, 0x0020].value
     except:
-        print "             Subject ID: undefined"
+        print "             Session ID: undefined"
 
     if scanner == 'siemens':
         try:

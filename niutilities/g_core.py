@@ -21,12 +21,12 @@ import traceback
 import niutilities.g_exceptions as ge
 
 
-def readSubjectData(filename, verbose=False):
+def readSessionData(filename, verbose=False):
     '''
-    readSubjectData(filename, verbose=False)
+    readSessionData(filename, verbose=False)
 
     An internal function for reading batch.txt files. It reads the file and
-    returns a list of subjects with the information on images and the additional
+    returns a list of sessions with the information on images and the additional
     parameters specified in the header.
 
     ---
@@ -144,7 +144,7 @@ def readSubjectData(filename, verbose=False):
                         print "WARNING: There is a record missing an id field and is being omitted from processing."
                 # elif "data" not in dic:
                 #    if verbose:
-                #        print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
+                #        print "WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
 
@@ -169,13 +169,13 @@ def readList(filename, verbose=False):
     readList(filename, verbose=False)
 
     An internal function for reading list files. It reads the file and
-    returns a list of subjects each with the provided list of files.
+    returns a list of sessions each with the provided list of files.
 
     ---
     Written by Grega Repovš.'''
 
     slist   = []
-    subject = None
+    session = None
 
     with open(filename) as f:
         for line in f:
@@ -186,42 +186,42 @@ def readList(filename, verbose=False):
 
             if len(line) == 2:
 
-                if line[0] == "subject id":
-                    if subject is not None:
-                        slist.append(subject)
-                    subject = {'id': line[1]}
+                if line[0] == "session id":
+                    if session is not None:
+                        slist.append(session)
+                    session = {'id': line[1]}
 
                 else:
-                    if line[0] in subject:
-                        subject[line[0]].append(line[1])
+                    if line[0] in session:
+                        session[line[0]].append(line[1])
                     else:
-                        subject[line[0]] = [line[1]]
+                        session[line[0]] = [line[1]]
 
     return slist
 
 
-def getSubjectList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
+def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
     '''
-    getSubjectList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)
+    getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)
 
-    An internal function for getting a list of subjects as an array of dictionaries in
-    the form: [{'id': <subject id>, [... other keys]}, {'id': <subject id>, [... other keys]}].
+    An internal function for getting a list of sessions as an array of dictionaries in
+    the form: [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}].
 
     The provided listString can be:
 
-    * a comma, space or pipe separated list of subject id codes,
+    * a comma, space or pipe separated list of session id codes,
     * a path to a batch file (identified by .txt extension),
     * a path to a *.list file (identified by .list extension).
 
-    In the first cases, the dictionary will include only subject ids, in the second all the
+    In the first cases, the dictionary will include only session ids, in the second all the
     other information present in the batch file, in the third lists of specified files, e.g.:
-    [{'id': <subject id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
+    [{'id': <session id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
 
-    If filter is provided (not None), only subjects that match the filter will be returned.
-    If sessionids is provided (not None), only subjects with matching id will be returned.
-    If sessionsfolder is provided (not None), subjects from a listString will be treated as
+    If filter is provided (not None), only sessions that match the filter will be returned.
+    If sessionids is provided (not None), only sessions with matching id will be returned.
+    If sessionsfolder is provided (not None), sessions from a listString will be treated as
     glob patterns and all folders that match the pattern in the sessionsfolder will be returned
-    as subject ids.
+    as session ids.
 
     ---
     Written by Grega Repovš.
@@ -235,10 +235,10 @@ def getSubjectList(listString, filter=None, sessionids=None, sessionsfolder=None
         slist = readList(listString, verbose=verbose)
 
     elif os.path.isfile(listString):
-        slist, gpref = readSubjectData(listString, verbose=verbose)
+        slist, gpref = readSessionData(listString, verbose=verbose)
 
     elif re.match(".*\.txt$", listString) or '/' in listString:
-        raise ValueError("ERROR: The specified subject file is not found! [%s]!" % listString)
+        raise ValueError("ERROR: The specified session file is not found! [%s]!" % listString)
 
     else:
         slist = [e.strip() for e in re.split(' +|,|\|', listString)]
@@ -260,10 +260,10 @@ def getSubjectList(listString, filter=None, sessionids=None, sessionsfolder=None
         try:
             filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
         except:
-            raise ge.CommandFailed("getSubjectList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
             
         if any([len(e) != 2 for e in filters]):
-            raise ge.CommandFailed("getSubjectList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
@@ -828,9 +828,9 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
         else:
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
-def createSubjectFile(command, sfolder, session, subject)
+def createSessionFile(command, sfolder, session, subject)
     """
-    Creates the generic, non pipeline specific, subject file.
+    Creates the generic, non pipeline specific, session file.
 
     ---
     Written by Jure Demšar, 2020-06-09

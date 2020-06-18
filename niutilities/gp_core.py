@@ -226,7 +226,7 @@ def getFileNames(sinfo, options):
     getFileNames - documentation not yet available.
     """
 
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
     rgss = rgss.translate(None, ' ,;|')
@@ -343,7 +343,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     """
     getBOLDFileNames - documentation not yet available.
     """
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
     f = {}
 
     if 'bold_tail' not in options:
@@ -432,7 +432,7 @@ def findFile(sinfo, options, fname):
     """
     findFile - documentation not yet available.
     """
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     tfile = os.path.join(d['inbox'], "%s_%s" % (sinfo['id'], fname))
     if os.path.exists(tfile):
@@ -459,9 +459,9 @@ def findFile(sinfo, options, fname):
     return False
 
 
-def getSubjectFolders(sinfo, options):
+def getSessionFolders(sinfo, options):
     """
-    getSubjectFolders - documentation not yet available.
+    getSessionFolders - documentation not yet available.
     """
     d = {}
 

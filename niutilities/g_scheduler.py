@@ -90,7 +90,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     to be separated by pipe characted, whereas key and value need to be
     separated by a colon. An example replacement string:
 
-    "subject:AP23791|folder:/studies/WM/Subjects/AP23791"
+    "session:AP23791|folder:/studies/WM/sessions/AP23791"
 
     REDIRECTING OUTPUT
     ==================
@@ -199,7 +199,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     qunex schedule command="bet {{in}} {{out}}" \\
                    replace="in:t1.nii.gz|out:brain.nii.gz" \\
                    settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
-                   workdir="/studies/WM/Subjects/AP23791/images/structural"
+                   workdir="/studies/WM/sessions/AP23791/images/structural"
     ```
     
     ----------------

@@ -144,7 +144,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
                 the '_fncb' and '_strc' extensions, respectively.
 
 
-    MULTIPLE SUBJECTS AND SCHEDULING
+    MULTIPLE SESSIONS AND SCHEDULING
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
@@ -186,7 +186,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
     2018-01-01 Grega Repovš
              - Changed parameter names
     2018-04-01 Grega Repovš
-             - Added options for checking whether the subject is
+             - Added options for checking whether the session is
                hcp ready and what to do with existing files
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
@@ -197,14 +197,14 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
     2019-05-24 Grega Repovš
              - Added HCP folder structure specification
     2019-06-18 Grega Repovš
-             - Updated documentation with multiple subject runs
+             - Updated documentation with multiple session runs
     2020-04-08  Grega Repovš
              - Added hcp_suffix parameter
     '''
 
     print "Running setupHCP\n================"
 
-    inf   = niutilities.g_core.readSubjectData(os.path.join(sourcefolder, sourcefile))[0][0]
+    inf   = niutilities.g_core.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)

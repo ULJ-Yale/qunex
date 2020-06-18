@@ -430,13 +430,13 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
     
     ```
     qunex getDICOMFields \
-         --folder=/data/studies/WM/subjects/inbox/MR 
+         --folder=/data/studies/WM/sessions/inbox/MR 
     ```
     
     ```
     qunex getDICOMFields \
-         --folder=/data/studies/WM/subjects/inbox/MR/original \
-         --targetfile=/data/studies/WM/subjects/specs/dicomFields.csv \
+         --folder=/data/studies/WM/sessions/inbox/MR/original \
+         --targetfile=/data/studies/WM/sessions/specs/dicomFields.csv \
          --limit=10
     ```
 

@@ -41,7 +41,7 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
 
     f = getFileNames(sinfo, options)
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nRunning basic structural segmentation ..."
 
     try:
@@ -164,12 +164,12 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
         return False
 
     try:
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
         f = getFileNames(sinfo, options)
 
         if verbose:
             r = "\n---------------------------------------------------------"
-            r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+            r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
             r += "\nChecking for existing freesurfer data ..."
 
         # check for freesurfer folder
@@ -236,14 +236,14 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
     try:
 
         r = "\n---------------------------------------------------------"
-        r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         r += "\nRunning Full FreeSurfer segmentation ..."
 
         # check if any data already exists
 
         r = checkForFreeSurferData(sinfo, options, overwrite, thread, r)
 
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
         f = getFileNames(sinfo, options)
 
         # --- check if we need to run fsf
@@ -362,14 +362,14 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
     try:
 
         r = "\n---------------------------------------------------------"
-        r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         r += "\nRunning subcortical only FreeSurfer segmentation ..."
 
         # check if any data already exists
 
         r = checkForFreeSurferData(sinfo, options, overwrite, thread, r)
 
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
         f = getFileNames(sinfo, options)
 
         # --- check if we need to run fsf
