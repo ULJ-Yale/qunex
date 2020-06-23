@@ -71,7 +71,7 @@ usage() {
                 echo "-- REQUIRED PARMETERS:"
                 echo ""
                 echo "        --sessionsfolder=<study_folder>                        Path to study data folder"
-                echo "        --subjects=<list_of_cases>                    List of subjects to run"
+                echo "        --sessions=<list_of_cases>                    List of sessions to run"
                 echo "        --scanner=<scanner_manufacturer>            Name of scanner manufacturer (siemens or ge supported) "
                 echo "        --echospacing=<echo_spacing_value>            EPI Echo Spacing for data [in msec]; e.g. 0.69"
                 echo "        --PEdir=<phase_encoding_direction>            Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
@@ -81,7 +81,7 @@ usage() {
                 echo " "
                 echo "-- OPTIONAL PARMETERS:"
                 echo ""
-                echo "        --overwrite=<clean_prior_run>        Delete prior run for a given subject"
+                echo "        --overwrite=<clean_prior_run>        Delete prior run for a given session"
                 echo ""
                 echo "        FIELDMAP-SPECFIC PARAMETERS (these become mandatory if --usefieldmap=yes):"
                 echo ""
@@ -103,8 +103,8 @@ usage() {
                 echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
                 echo ""
                 echo ""
-                echo "qunex --sessionsfolder='<folder_with_subjects>' \ "
-                echo "--subjects='<comma_separarated_list_of_cases>' \ "
+                echo "qunex --sessionsfolder='<folder_with_sessions>' \ "
+                echo "--sessions='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--PEdir='1' \ "
                 echo "--echospacing='0.69' \ "
@@ -117,8 +117,8 @@ usage() {
                 echo ""
                 echo "-- Example with flagged parameters for submission to the scheduler using Siemens FieldMap [ needs GPU-enabled queue ]:"
                 echo ""
-                echo "qunex --sessionsfolder='<folder_with_subjects>' \ "
-                echo "--subjects='<comma_separarated_list_of_cases>' \ "
+                echo "qunex --sessionsfolder='<folder_with_sessions>' \ "
+                echo "--sessions='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--PEdir='1' \ "
                 echo "--echospacing='0.69' \ "
@@ -132,8 +132,8 @@ usage() {
                 echo ""
                 echo "-- Example with flagged parameters for submission to the scheduler using GE data w/out FieldMap [ needs GPU-enabled queue ]:"
                 echo ""
-                echo "qunex --sessionsfolder='<folder_with_subjects>' \ "
-                echo "--subjects='<comma_separarated_list_of_cases>' \ "
+                echo "qunex --sessionsfolder='<folder_with_sessions>' \ "
+                echo "--sessions='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--diffdatasuffix='DWI_dir91_LR' \ "
                 echo "--scheduler='<name_of_scheduler_and_options>' \ "
@@ -238,7 +238,7 @@ get_options() {
                 SessionsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --subject=*)
+            --sessions=*)
                 CASE=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
@@ -289,7 +289,7 @@ get_options() {
     fi
     if [ -z ${CASE} ]; then
         usage
-        echo "ERROR: <subject-id> not specified"
+        echo "ERROR: <session-id> not specified"
         exit 1
     fi
     if [ -z ${Scanner} ]; then
@@ -420,7 +420,7 @@ mkdir -p "$DiffFolder"/"$DiffDataSuffix"/acqparams 2> /dev/null
 
 geho "--- Setting up acquisition parameters:"
 echo ""
-# -- Make subject-specific and acquisition-specific parameter folder
+# -- Make session-specific and acquisition-specific parameter folder
 mkdir "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData" > /dev/null 2>&1
 # -- Create index file - parameter file for number of frames in the DWI image
 sesdimt=`fslval "$DiffFolder"/"$DiffData" dim4` #Number of datapoints per Pos series

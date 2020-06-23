@@ -970,7 +970,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh
 
 ROIExtract() {
 # -- Parse general parameters
-ROIFileSubjectSpecific="$ROIFileSubjectSpecific"
+ROIFileSessionSpecific="$ROIFileSessionSpecific"
 SingleInputFile="$SingleInputFile"
 if [[ -z ${SingleInputFile} ]]; then
     OutPath="${SessionsFolder}/${CASE}/${OutPath}"
@@ -978,7 +978,7 @@ else
     OutPath="${OutPath}"
     InputFile="${SingleInputFile}"
 fi
-if [[ ${ROIFileSubjectSpecific} == "no" ]]; then
+if [[ ${ROIFileSessionSpecific} == "no" ]]; then
     ROIFile="${ROIFile}"
 else
     ROIFile="${SessionsFolder}/${CASE}/${ROIFile}"
@@ -1217,7 +1217,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh \
 --boldfcpath='${BOLDfcPath}' \
 --suffix='${Suffix}' \
 --hcp_suffix='${HCPSuffix}' \
---batchfile='${SubjectBatchFile}' "
+--batchfile='${SessionBatchFile}' "
 # -- Connector execute function
 connectorExec
 }
@@ -1587,7 +1587,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         StudyFolder="$StudyFolderPath"
     fi
 
-    # -- If subjects folder is missing but study folder is defined assume standard Qu|Nex folder structure
+    # -- If sessions folder is missing but study folder is defined assume standard Qu|Nex folder structure
     if [[ -z ${SessionsFolder} ]]; then
         if [[ ! -z ${SubjectFolder} ]]; then
             SessionsFolder="${SubjectFolder}"
@@ -1595,11 +1595,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
         if [[ -z ${StudyFolder} ]]; then
             echo "" &> /dev/null
         else
-            SessionsFolder="$StudyFolder/subjects"
+            SessionsFolder="$StudyFolder/sessions"
         fi
     fi
 
-    # -- If study folder is missing but subjects folder is defined assume standard Qu|Nex folder structure
+    # -- If study folder is missing but sessions folder is defined assume standard Qu|Nex folder structure
     if [[ -z ${StudyFolder} ]]; then
         if [[ -z ${SessionsFolder} ]]; then
         echo "" &> /dev/null
@@ -1622,18 +1622,18 @@ if [[ ${setflag} =~ .*-.* ]]; then
     TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
     WORKDIR=`opts_GetOpt "${setflag}workingdir" $@`
     PROJECT_NAME=`opts_GetOpt "${setflag}projectname" $@`
-    CleanupSubject=`opts_GetOpt "${setflag}cleanupsubject" $@`
+    CleanupSession=`opts_GetOpt "${setflag}cleanupsession" $@`
     CleanupProject=`opts_GetOpt "${setflag}cleanupproject" $@`
     RawDataInputPath=`opts_GetOpt "${setflag}rawdatainput" $@`
     QuNexSessionsFolder=`opts_GetOpt "${setflag}sessionsfolder" $@`
-    OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
+    OVERWRITE_SESSION=`opts_GetOpt "${setflag}overwritesession" $@`
     OVERWRITE_STEP=`opts_GetOpt "${setflag}overwritestep" $@`
     OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
     OVERWRITE_PROJECT_FORCE=`opts_GetOpt "${setflag}overwriteprojectforce" $@`
     OVERWRITE_PROJECT_XNAT=`opts_GetOpt "${setflag}overwriteprojectxnat" $@`
     BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
     LOCAL_BATCH_FILE=`opts_GetOpt "${setflag}local_batchfile" $@`
-    SubjectBatchFile=`opts_GetOpt "${setflag}batchfile" $@`
+    SessionBatchFile=`opts_GetOpt "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
     XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
@@ -1707,7 +1707,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
     FileType=`opts_GetOpt "${setflag}filetype" $@`
     BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
-    SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@`
+    SessionHCPFile=`opts_GetOpt "${setflag}sessionhcpfile" $@`
     ListPath=`opts_GetOpt "${setflag}listpath" $@`
     # -- dataSync input flags
     NetID=`opts_GetOpt "${setflag}netid" $@`
@@ -1716,7 +1716,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ClusterName=`opts_GetOpt "${setflag}cluster" $@`
     # -- ROIExtract input flags
     ROIFile=`opts_GetOpt "${setflag}roifile" $@`
-    ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@`
+    ROIFileSessionSpecific=`opts_GetOpt "${setflag}sessionroifile" $@`
     # -- computeBOLDfc input flags
     InputFiles=`opts_GetOpt "${setflag}inputfiles" $@`
     OutPathFC=`opts_GetOpt "${setflag}targetf" $@`
@@ -1844,11 +1844,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
     
     # -- Check if subject input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
-        SubjectBatchFile="$CASES"
+        SessionBatchFile="$CASES"
         echo ""
-        echo "Using $SubjectBatchFile for input."
+        echo "Using $SessionBatchFile for input."
         echo ""
-        CASES=`more ${SubjectBatchFile} | grep "id:"| cut -d " " -f 2`
+        CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
     fi
     
 fi
@@ -1940,7 +1940,7 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
     fi
     if [[ -z ${SessionsFolder} ]]; then
         if [[ -z ${Folder} ]]; then
-            reho "Error: Subjects folder missing and options parameter --folder not specified"
+            reho "Error: Sesssions folder missing and options parameter --folder not specified"
             exit 1
         fi
     fi
@@ -1973,14 +1973,14 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
     if [[ -z ${Folder} ]]; then
         echo "   Optional --folder parameter not set. Using standard inputs."
         echo "   Study Folder: ${StudyFolder}"
-        echo "   Subjects Folder: ${SessionsFolder}"
+        echo "   Sessions Folder: ${SessionsFolder}"
     else
         echo "Optional --folder parameter set explicitly. "
         echo "   Setting subjects folder and study accordingly."
         echo "   Study Folder: ${StudyFolder}"
-        echo "   Subjects Folder: ${SessionsFolder}"
+        echo "   Sessions Folder: ${SessionsFolder}"
     fi
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions: ${CASES}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
     # -- Report optional parameters
@@ -2012,7 +2012,7 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
     TimeStampRunQC=`date +%Y-%m-%d-%H-%M-%S`
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing."; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing."; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing."; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing."; exit 1; fi
     if [[ -z ${Modality} ]]; then reho "Error:  Modality to perform QC on missing."; exit 1; fi
     if [[ -z ${runQC_Custom} ]]; then runQC_Custom="no"; fi
@@ -2103,8 +2103,8 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   QC Modality: ${Modality}"
     echo "   QC Output Path: ${OutPath}"
     echo "   Study Log Folder: ${LogFolder}"
@@ -2114,12 +2114,12 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
         echo "   Custom QC modalities: ${Modality}"
     fi
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
-        if [[ ! -z ${SubjectBatchFile} ]]; then
-            if [[ ! -f ${SubjectBatchFile} ]]; then
+        if [[ ! -z ${SessionBatchFile} ]]; then
+            if [[ ! -f ${SessionBatchFile} ]]; then
                 reho " ERROR: Requested BOLD modality with a batch file. Batch file not found."
                 exit 1
             else
-                echo "   Subject batch file requested: ${SubjectBatchFile}"
+                echo "   Session batch file requested: ${SessionBatchFile}"
                 BOLDSBATCH="${BOLDRUNS}"
             fi
         fi
@@ -2173,7 +2173,7 @@ if [ "$CommandToRun" == "eddyQC" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
     # -- Perform checks for individual run
     if [ "$Report" == "individual" ]; then
@@ -2217,8 +2217,8 @@ if [ "$CommandToRun" == "eddyQC" ]; then
             echo ""
             echo "--------------------------------------------------------------"
             echo "   StudyFolder: ${StudyFolder}"
-            echo "   Subjects Folder: ${SessionsFolder}"
-            echo "   Subject: ${CASE}"
+            echo "   Sessions Folder: ${SessionsFolder}"
+            echo "   Session: ${CASE}"
             echo "   Study Log Folder: ${LogFolder}"
             echo "   Report Type: ${Report}"
             echo "   Eddy QC Input Path: ${EddyPath}"
@@ -2244,7 +2244,7 @@ if [ "$CommandToRun" == "eddyQC" ]; then
         echo ""
         echo "--------------------------------------------------------------"
         echo "   Study Folder: ${StudyFolder}"
-        echo "   Subjects Folder: ${SessionsFolder}"
+        echo "   Sessions Folder: ${SessionsFolder}"
         echo "   Study Log Folder: ${LogFolder}"
         echo "   Report Type: ${Report}"
         echo "   Eddy QC Input Path: ${EddyPath}"
@@ -2266,7 +2266,7 @@ if [ "$CommandToRun" == "mapHCPFiles" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2278,8 +2278,8 @@ if [ "$CommandToRun" == "mapHCPFiles" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "Study Folder: ${StudyFolder}"
-    echo "Subjects Folder: ${SessionsFolder}"
-    echo "Subjects: ${CASES}"
+    echo "Sessions Folder: ${SessionsFolder}"
+    echo "Sessions: ${CASES}"
     echo "Study Log Folder: ${LogFolder}"
     echo "--------------------------------------------------------------"
     echo ""
@@ -2303,7 +2303,7 @@ if [ "$CommandToRun" == "dataSync" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Specific subjects not provided"; fi
     # -- Report parameters
     echo ""
@@ -2311,8 +2311,8 @@ if [ "$CommandToRun" == "dataSync" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "--------------------------------------------------------------"
     echo ""
@@ -2328,7 +2328,7 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
@@ -2346,8 +2346,8 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   ParcellationFile: ${ParcellationFile}"
     echo "   Parcellated Data Output Name: ${OutName}"
@@ -2368,7 +2368,7 @@ if [ "$CommandToRun" == "FSLDtifit" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2380,8 +2380,8 @@ if [ "$CommandToRun" == "FSLDtifit" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler Name and Options: ${Scheduler}"
     echo "   Overwrite prior run: ${Overwrite}"
@@ -2411,8 +2411,8 @@ if [ "$CommandToRun" == "FSLBedpostxGPU" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Number of Fibers: ${Fibers}"
     echo "   Model Type: ${Model}"
@@ -2436,7 +2436,7 @@ if [ "$CommandToRun" == "hcpdLegacy" ]; then
     if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
     if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
     if [ ${UseFieldmap} == "yes" ]; then
@@ -2454,8 +2454,8 @@ if [ "$CommandToRun" == "hcpdLegacy" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Scanner: ${Scanner}"
     echo "   Using FieldMap: ${UseFieldmap}"
@@ -2479,7 +2479,7 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
@@ -2497,8 +2497,8 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   ParcellationFile: ${ParcellationFile}"
     echo "   Parcellated Data Output Name: ${OutName}"
@@ -2525,7 +2525,7 @@ if [ "$CommandToRun" == "computeBOLDfc" ]; then
     fi
     if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-        if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
         if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
         if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
         if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
@@ -2588,8 +2588,8 @@ if [ "$CommandToRun" == "computeBOLDfc" ]; then
     fi
     if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
         echo "   Study Folder: ${StudyFolder}"
-        echo "   Subjects Folder: ${SessionsFolder}"
-        echo "   Subjects: ${CASES}"
+        echo "   Sessions Folder: ${SessionsFolder}"
+        echo "   Sessions: ${CASES}"
         echo "   Input Files: ${InputFiles}"
         echo "   Input Path for Data: ${SessionsFolder}/<subject_id>/${InputPath}"
         echo "   Output Name: ${OutName}"
@@ -2657,7 +2657,7 @@ if [ "$CommandToRun" == "BOLDParcellation" ]; then
     if [ -z "$ExtractData" ]; then ExtractData="no"; fi
     if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-        if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
         if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
         if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
     fi
@@ -2667,8 +2667,8 @@ if [ "$CommandToRun" == "BOLDParcellation" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Input File: ${InputFile}"
     echo "   Input Path: ${InputPath}"
@@ -2701,7 +2701,7 @@ if [ "$CommandToRun" == "DWIDenseParcellation" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
     if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
@@ -2717,8 +2717,8 @@ if [ "$CommandToRun" == "DWIDenseParcellation" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Matrix version used for input: ${MatrixVersion}"
     echo "   File to use for parcellation: ${ParcellationFile}"
@@ -2746,12 +2746,12 @@ if [ "$CommandToRun" == "ROIExtract" ]; then
             if [[ -z ${Scheduler} ]]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
     fi
     # -- Check optional parameters if not specified
-    if [ -z "$ROIFileSubjectSpecific" ]; then ROIFileSubjectSpecific="no"; fi
+    if [ -z "$ROIFileSessionSpecific" ]; then ROIFileSessionSpecific="no"; fi
     if [ -z "$Overwrite" ]; then Overwrite="no"; fi
     if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
         if [ -z "$InputFile" ]; then reho "Error: Input file path value missing"; exit 1; fi
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-        if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
         if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     fi
     # -- Report parameters
@@ -2760,14 +2760,14 @@ if [ "$CommandToRun" == "ROIExtract" ]; then
     echo ""
     echo "   --------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Input File: ${InputFile}"
     echo "   Output File Name: ${OutName}"
     echo "   Single Input File: ${SingleInputFile}"
     echo "   ROI File: ${ROIFile}"
-    echo "   Subject specific ROI file set: ${ROIFileSubjectSpecific}"
+    echo "   Session specific ROI file set: ${ROIFileSessionSpecific}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "--------------------------------------------------------------"
     echo ""
@@ -2788,7 +2788,7 @@ if [ "$CommandToRun" == "DWIDenseSeedTractography" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
     if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi    
@@ -2804,8 +2804,8 @@ if [ "$CommandToRun" == "DWIDenseSeedTractography" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Matrix version used for input: ${MatrixVersion}"
     echo "   Dense dconn seed reduction: ${SeedFile}"
@@ -2826,7 +2826,7 @@ if [ "$CommandToRun" == "autoPtx" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2840,8 +2840,8 @@ if [ "$CommandToRun" == "autoPtx" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   BedpostX Folder: ${BedPostXFolder} "
     echo "--------------------------------------------------------------"
@@ -2857,7 +2857,7 @@ if [ "$CommandToRun" == "pretractographyDense" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2869,8 +2869,8 @@ if [ "$CommandToRun" == "pretractographyDense" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "--------------------------------------------------------------"
     echo ""
@@ -2885,7 +2885,7 @@ if [ "$CommandToRun" == "ProbtrackxGPUDense" ]; then
     # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
     if [ "$MatrixOne" == "yes" ]; then
@@ -2910,8 +2910,8 @@ if [ "$CommandToRun" == "ProbtrackxGPUDense" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler: ${Scheduler}"
     echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"
@@ -2936,7 +2936,7 @@ if [ "$CommandToRun" == "AWSHCPSync" ]; then
     # Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [[ -z ${Modality} ]]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
     if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
@@ -2945,8 +2945,8 @@ if [ "$CommandToRun" == "AWSHCPSync" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subjects Folder: ${SessionsFolder}"
-    echo "   Subjects: ${CASES}"
+    echo "   Sessions Folder: ${SessionsFolder}"
+    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Run Method: ${RunMethod}"
     echo "   Modality: ${Modality}"
