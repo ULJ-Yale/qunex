@@ -6897,6 +6897,9 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                            specified, the results will be copied/linked from
                            `Results.<hcp_bold_variant>` into 
                            `images/functional.<hcp_bold_variant>. []
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
 
     The parameters can be specified in command call or subject.txt file.
     If possible, the files are not copied but rather hard links are created to
@@ -6933,6 +6936,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     2019-04-25 - Grega Repovš - Changed subjects to sessions
     2019-05-26 - Grega Repovš - Added support for boldnamekey
     2020-01-14 - Grega Repovš - Expanded documentation on use of boldname and hcp_cifti_tail
+    2020-06-23 - Grega Repovš - Fixed use of hcp_suffix and added use of img_suffix
     """
 
     
