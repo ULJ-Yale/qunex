@@ -200,7 +200,7 @@ usage() {
     echo "    --workingdir=<specify_directory_where_study_is_located>    Specify where the study folder is to be created or resides. Default is [/output]."
     echo "    --projectname=<specify_project_name>                       Specify name of the project on local file system if XNAT is not specified."
     echo "    --overwritestep=<specify_step_to_overwrite>                Specify <yes> or <no> for delete of prior workflow step. Default is [no]."
-    echo "    --overwritesubject=<specify_subject_overwrite>             Specify <yes> or <no> for delete of prior subject run. Default is [no]."
+    echo "    --overwritesession=<specify_subject_overwrite>             Specify <yes> or <no> for delete of prior subject run. Default is [no]."
     echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for delete of entire project prior to run. Default is [no]."
     echo "    --overwriteprojectxnat=<specify_xnat_project_overwrite>    Specify <yes> or <no> for delete of entire XNAT project folder prior to run. Default is [no]."
     echo "    --cleanupsubject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of subject folder after steps are done. Default is [no]."
@@ -302,7 +302,7 @@ unset OVERWRITE_STEP
 unset OVERWRITE_PROJECT
 unset OVERWRITE_PROJECT_FORCE
 unset OVERWRITE_PROJECT_XNAT
-unset OVERWRITE_SUBJECT
+unset OVERWRITE_SESSION
 unset SCAN_MAPPING_FILENAME
 
 unset XNAT_HOST_NAME
@@ -374,7 +374,7 @@ if [ -z "$SESSIONIDS" ]; then
     SESSIONIDS=`opts_GetOpt "--sessionid" "$@"`
 fi
 
-OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
+OVERWRITE_SESSION=`opts_GetOpt "--overwritesession" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
 OVERWRITE_PROJECT_FORCE=`opts_GetOpt "--overwriteprojectforce" $@`
@@ -846,7 +846,7 @@ fi
 
 # -- Check and set overwrites
 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
-if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
+if [ -z "$OVERWRITE_SESSION" ]; then OVERWRITE_SESSION="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
 if [[ -z "$OVERWRITE_PROJECT_XNAT" ]]; then OVERWRITE_PROJECT_XNAT="no"; fi
 if [[ -z "$CleanupProject" ]]; then CleanupProject="no"; fi
@@ -921,7 +921,7 @@ echo "   Qu|Nex Study folder: ${QuNexStudyFolder}"
 echo "   Qu|Nex Log folder: ${QuNexMasterLogFolder}"
 echo "   Qu|Nex Subject-specific working folder: ${QuNexRawInboxDir}"
 echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
-echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
+echo "   Overwrite for subject set to: ${OVERWRITE_SESSION}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
 echo "   Overwrite for the entire XNAT project: ${OVERWRITE_PROJECT_XNAT}"
 echo "   Cleanup for subject set to: ${CleanupSubject}"
@@ -1087,8 +1087,8 @@ if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]
         reho "    Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
     fi
 fi
-if [[ ${OVERWRITE_SUBJECT} == "yes" ]]; then
-    reho " -- Removing specific subject: ${QuNexWorkDir}."; echo ""
+if [[ ${OVERWRITE_SESSION} == "yes" ]]; then
+    reho " -- Removing specific session: ${QuNexWorkDir}."; echo ""
     rm -rf ${QuNexWorkDir} &> /dev/null
 fi
 
