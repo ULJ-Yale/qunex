@@ -153,7 +153,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subject
+unset Session
 runcmd=""
 
 # -- Parse arguments
@@ -167,8 +167,8 @@ CASE=`opts_GetOpt "--subject" $@`
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 
 # -- Check required parameters
-if [ -z "$SessionsFolder" ]; then reho "Error: Subjects Folder"; exit 1; fi
-if [ -z "$CASE" ]; then reho "Error: Subject missing"; exit 1; fi
+if [ -z "$SessionsFolder" ]; then reho "Error: Sessions folder"; exit 1; fi
+if [ -z "$CASE" ]; then reho "Error: Session missing"; exit 1; fi
 if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
 if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
 if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
@@ -183,8 +183,8 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Study Folder: ${StudyFolder}"
-echo "   Subjects Folder: ${SessionsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Sessions Folder: ${SessionsFolder}"
+echo "   Session: ${CASE}"
 echo "   Study Log Folder: ${LogFolder}"
 echo "   Number of Fibers: ${Fibers}"
 echo "   Model Type: ${Model}"

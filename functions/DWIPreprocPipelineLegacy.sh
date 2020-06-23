@@ -77,7 +77,7 @@ usage() {
                 echo "        --PEdir=<phase_encoding_direction>            Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
                 echo "        --unwarpdir=<epi_phase_unwarping_direction>    Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
                 echo "        --usefieldmap=<yes/no>                        Whether to use the standard field map. If set to <yes> then the following parameters become mandatory:"
-                echo "        --diffdatasuffix=<diffusion_data_name>        Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
+                echo "        --diffdatasuffix=<diffusion_data_name>        Name of the DWI image; e.g. if the data is called <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
                 echo " "
                 echo "-- OPTIONAL PARMETERS:"
                 echo ""
@@ -175,7 +175,7 @@ fi
 # Mandatory input parameters:
 
     # SessionsFolder
-    # Subject
+    # Session
     # Scanner
     # UseFieldmap
     
@@ -190,8 +190,8 @@ fi
 
 ########################################## OUTPUTS #########################################
 
-# DiffFolder=${SessionsFolder}/${Subject}/Diffusion
-# T1wDiffFolder=${SessionsFolder}/${Subject}/T1w/Diffusion_"$DiffDataSuffix"
+# DiffFolder=${SessionsFolder}/${Session}/Diffusion
+# T1wDiffFolder=${SessionsFolder}/${Session}/T1w/Diffusion_"$DiffDataSuffix"
 #
 #    $DiffFolder/$DiffDataSuffix/rawdata
 #    $DiffFolder/$DiffDataSuffix/eddy
@@ -208,7 +208,7 @@ get_options() {
     
     # -- initialize global output variables
     unset SessionsFolder
-    unset Subject
+    unset Session
     unset PEdir
     unset EchoSpacing
     unset TE
@@ -332,7 +332,7 @@ get_options() {
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     echo "   SessionsFolder: ${SessionsFolder}"
-    echo "   Subject: ${CASE}"
+    echo "   Session: ${CASE}"
     echo "   Scanner: ${Scanner}"
     if [ ${UseFieldmap} == "yes" ]; then
         echo "   Using Fieldmap: ${UseFieldmap}"
@@ -366,7 +366,7 @@ EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
 PEdir="$PEdir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
 TE="$TE" #delta TE in ms for field map or "NONE" if not used
 UnwarpDir="$UnwarpDir" # direction along which to unwarp
-DiffData="$CASE"_"$DiffDataSuffix" # Diffusion data suffix name - e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+DiffData="$CASE"_"$DiffDataSuffix" # Diffusion data suffix name - e.g. if the data is called <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
 DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds
 

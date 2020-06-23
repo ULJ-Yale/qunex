@@ -22,7 +22,7 @@ defaultopt() {
 ################################################## OPTION PARSING ###################################################
 # Input Variables
 StudyFolder=`getopt1 "--path" $@`                # "$1" #Path to Generic Study folder
-Subject=`getopt1 "--subject" $@`                 # "$2" #SubjectID
+Session=`getopt1 "--subject" $@`                 # "$2" #SessionID
 StandardResolution=`getopt1 "--standresol" $@`   # "$3" #MNI space Resolution in mm
 WholeBrainTrajectoryLabels=`getopt1 "--wholebrainlabels" $@`
 LeftCerebralTrajectoryLabels=`getopt1 "--leftcerebrallabels" $@`
@@ -40,7 +40,7 @@ ribbon="ribbon"
 trajectory="Trajectory"
 
 #Make Paths
-MNIFolder="${StudyFolder}/${Subject}/${MNIFolder}"
+MNIFolder="${StudyFolder}/${Session}/${MNIFolder}"
 ROIsFolder="${MNIFolder}/${ROIsFolder}"
 ResultsFolder="${MNIFolder}/Results/Tractography"
 DownSampleFolder="${MNIFolder}/fsaverage_LR${LowResMesh}k"
@@ -137,17 +137,17 @@ for Structure in $ROIStructuresToSeed ; do
 done
 
 
-#Create Subject-specific Greyordinate dense scalar 
-${Caret7_Command} -cifti-create-dense-scalar "$ResultsFolder"/Subject_Greyordinates.dscalar.nii -volume "$ROIsFolder"/ROIs."$StandardResolution".nii.gz "$ROIsFolder"/ROIs."$StandardResolution".nii.gz -left-metric ${DownSampleFolder}/${Subject}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii -roi-left ${DownSampleFolder}/${Subject}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii -right-metric ${DownSampleFolder}/${Subject}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii -roi-right ${DownSampleFolder}/${Subject}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii
+#Create Session-specific Greyordinate dense scalar 
+${Caret7_Command} -cifti-create-dense-scalar "$ResultsFolder"/Session_Greyordinates.dscalar.nii -volume "$ROIsFolder"/ROIs."$StandardResolution".nii.gz "$ROIsFolder"/ROIs."$StandardResolution".nii.gz -left-metric ${DownSampleFolder}/${Session}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii -roi-left ${DownSampleFolder}/${Session}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii -right-metric ${DownSampleFolder}/${Session}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii -roi-right ${DownSampleFolder}/${Session}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii
 
-#Export Subject-specific volume voxel_list
-${Caret7_Command} -cifti-export-dense-mapping "$ResultsFolder"/Subject_Greyordinates.dscalar.nii COLUMN -volume-all $ROIsFolder/ROIs.$StandardResolution.voxel_list.txt -no-cifti-index
+#Export Session-specific volume voxel_list
+${Caret7_Command} -cifti-export-dense-mapping "$ResultsFolder"/Session_Greyordinates.dscalar.nii COLUMN -volume-all $ROIsFolder/ROIs.$StandardResolution.voxel_list.txt -no-cifti-index
 
 
 #Create Probtrackx-Compatible Pial and White-matter Surfaces
-${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Subject}.L.white.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/white.L.asc --outputtype=ASCII --values=${DownSampleFolder}/${Subject}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii
-${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Subject}.R.white.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/white.R.asc --outputtype=ASCII --values=${DownSampleFolder}/${Subject}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii
-${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Subject}.L.pial.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/pial.L.asc --outputtype=ASCII --values=${DownSampleFolder}/${Subject}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii
-${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Subject}.R.pial.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/pial.R.asc --outputtype=ASCII --values=${DownSampleFolder}/${Subject}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii
+${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Session}.L.white.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/white.L.asc --outputtype=ASCII --values=${DownSampleFolder}/${Session}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii
+${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Session}.R.white.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/white.R.asc --outputtype=ASCII --values=${DownSampleFolder}/${Session}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii
+${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Session}.L.pial.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/pial.L.asc --outputtype=ASCII --values=${DownSampleFolder}/${Session}.L.atlasroi.${LowResMesh}k_fs_LR.shape.gii
+${FSLDIR}/bin/surf2surf -i ${DownSampleFolder}/${Session}.R.pial.${LowResMesh}k_fs_LR.surf.gii -o ${ResultsFolder}/pial.R.asc --outputtype=ASCII --values=${DownSampleFolder}/${Session}.R.atlasroi.${LowResMesh}k_fs_LR.shape.gii
 
 echo -e "\n END: MakeTrajectorySpace_MNI"

@@ -6,17 +6,17 @@ Caret7_command=$WORKBENCHDIR/wb_command
 
 if [ "$4" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <GrayOrdinates_Templatedir> <OutFileName>"
+    echo "usage: $0 <StudyFolder> <Session> <GrayOrdinates_Templatedir> <OutFileName>"
     echo "Convert the merged.dot file to .dconn.nii"
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 TemplateFolder=$3
 OutFileName=$4
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
 
 ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix1.dot ${ResultsFolder}/Mat1.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN
 ${Caret7_command} -cifti-transpose ${ResultsFolder}/Mat1.dconn.nii ${ResultsFolder}/Mat1_transp.dconn.nii

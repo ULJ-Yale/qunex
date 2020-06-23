@@ -58,28 +58,28 @@ TemplateFolder=$HCPPIPEDIR/DiffusionTractographyDense/91282_Greyordinates
 # -- Check inputs
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <Number_of_Samples> <Scheduler>"
+    echo "usage: $0 <StudyFolder> <Session> <Number_of_Samples> <Scheduler>"
     echo ""
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 Nsamples=$3				# "$3" #Number of Samples to compute
 
 if [ "$3" == "" ];then Nsamples=10000; fi
 OutFileName="Conn1.dconn.nii"
 
 # -- Generate folder structure
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
-RegFolder="$StudyFolder"/"$Subject"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Subject"/MNINonLinear/ROIs
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
+RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
+ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir -p ${ResultsFolder}
 fi
 
 # -- Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.bedpostX
+BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 # -- Clean prior results
@@ -179,7 +179,7 @@ echo "-- Queueing Post-Matrix 1 Calls"
 echo ""
 
 # -- Clean prior results, specify commands and make executable
-PostProcMatrixCommand="${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Subject} ${TemplateFolder} ${OutFileName}"
+PostProcMatrixCommand="${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}"
 rm -f $ResultsFolder/postcommands_Mat1.sh &> /dev/null
 echo "${PostProcMatrixCommand}" >> $ResultsFolder/postcommands_Mat1.sh
 chmod 770 $ResultsFolder/postcommands_Mat1.sh

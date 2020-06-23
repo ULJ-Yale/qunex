@@ -405,7 +405,7 @@ echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     if [[ -z ${DICOMPath} ]]; then
         echo "   Folder with all subjects: ${SessionsFolder}"
-        echo "   Subjects to process: ${CASES}"
+        echo "   Sessions to process: ${CASES}"
     else
         echo "   Folder DICOMs : ${DICOMPath}"
     fi
@@ -425,7 +425,7 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
         echo "   BIDS format input specified: ${BIDSFormat}"
         echo "   Combined BIDS-formatted subject name: ${CASE}"
     else 
-        echo "   Qu|Nex Subject variable name: ${CASE}" 
+        echo "   Qu|Nex Session variable name: ${CASE}" 
     fi
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""

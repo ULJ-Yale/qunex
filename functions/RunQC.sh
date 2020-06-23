@@ -76,7 +76,7 @@ usage() {
      echo "                                                                Supported ==> rawNII, T1w, T2w, myelin, BOLD, DWI, general, eddyQC"
      echo "                                                                      Note: If selecting 'rawNII' this function performs QC for raw NIFTI images in <sessions_folder>/<case>/nii "
      echo "                                                                            It requires NIFTI images in <sessions_folder>/<case>/nii/ after either BIDS import of DICOM organization. "
-     echo "                                                                            Subject-specific output: <sessions_folder>/<case>/nii/slicesdir "
+     echo "                                                                            Session-specific output: <sessions_folder>/<case>/nii/slicesdir "
      echo "                                                                            Uses FSL's `slicesdir` script to generate PNGs and an HTML file in the above directory. "
      echo ""
      echo "                                                                      Note: If using 'general' modality, then visualization is $TOOLS/$QUNEXREPO/library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
@@ -543,8 +543,8 @@ scriptName=$(basename ${0})
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "  Study Folder: ${StudyFolder}"
-echo "  Subject Folder: ${SessionsFolder}"
-echo "  Subjects: ${CASES}"
+echo "  Session Folder: ${SessionsFolder}"
+echo "  Sessions: ${CASES}"
 echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
 echo "  Custom QC requested: ${RunQCCustom}"
@@ -558,7 +558,7 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
             reho " ERROR: Requested BOLD modality with a batch file. Batch file not found."
             exit 1
         else
-            echo "   Subject batch file requested: ${SessionBatchFile}"
+            echo "   Session batch file requested: ${SessionBatchFile}"
             BOLDSBATCH="${BOLDS}"
         fi
     fi
@@ -896,7 +896,7 @@ else
                     if [ -f ${TSNRReportBOLD} ]; then
                                echo ""
                                geho "---  SNR calculation requested. SNR completed." 
-                               geho "     Subject specific report can be found here: ${TSNRReportBOLD}"
+                               geho "     Session specific report can be found here: ${TSNRReportBOLD}"
                                echo ""
                                CompletionCheck=""
                     else
@@ -911,7 +911,7 @@ else
                    if [ -f ${TSNRReportBOLD} ]; then
                                echo ""
                                geho "---  SNR calculation requested. SNR completed." 
-                               geho "     Subject specific report can be found here: ${TSNRReportBOLD}"
+                               geho "     Session specific report can be found here: ${TSNRReportBOLD}"
                                echo ""
                                CompletionCheck=""
                     else

@@ -194,7 +194,7 @@ done
 
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subjects
+unset Sessions
 unset Overwrite
 unset ScriptsFolder        
 unset OutFolder        
@@ -257,8 +257,8 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Study Folder: ${StudyFolder}"
-echo "   Subjects Folder: ${SessionsFolder}"
-echo "   Subjects: ${CASES}"
+echo "   Sessions Folder: ${SessionsFolder}"
+echo "   Sessions: ${CASES}"
 echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"
 echo "   Input HCP folder: ${InFolder}"
 echo "   Output folder for probtrackX results: ${OutFolder}"

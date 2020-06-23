@@ -134,7 +134,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subject
+unset Session
 runcmd=""
 
 # -- Parse arguments
@@ -143,8 +143,8 @@ SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
 
 # -- Check required parameters
-if [ -z "$SessionsFolder" ]; then reho "Error: Subjects Folder"; exit 1; fi
-if [ -z "$CASE" ]; then reho "Error: Subject missing"; exit 1; fi
+if [ -z "$SessionsFolder" ]; then reho "Error: Sessions Folder"; exit 1; fi
+if [ -z "$CASE" ]; then reho "Error: Session missing"; exit 1; fi
 
 # -- Set StudyFolder
 cd $SessionsFolder/../ &> /dev/null
@@ -155,8 +155,8 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Study Folder: ${StudyFolder}"
-echo "   Subjects Folder: ${SessionsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Sessions Folder: ${SessionsFolder}"
+echo "   Session: ${CASE}"
 echo "   Study Log Folder: ${LogFolder}"
 echo "   Overwrite prior run: ${Overwrite}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"

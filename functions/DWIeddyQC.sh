@@ -66,7 +66,7 @@ usage() {
      echo "-- REQUIRED PARMETERS:"
      echo ""
      echo "--sessionsfolder=<folder_with_subjects>    Path to study folder that contains subjects"
-     echo "--subject=<subj_id>                        Subjects ID to run EDDY QC on"
+     echo "--session=<session_id>                     Session ID to run EDDY QC on"
      echo "--eddybase=<eddy_input_base_name>          This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
      echo "--eddyidx=<eddy_index_file>                EDDY index file"
      echo "--eddyparams=<eddy_param_file>             EDDY parameters file"
@@ -175,7 +175,7 @@ local arguments=($@)
 
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subject
+unset Session
 unset Report
 unset EddyBase
 unset List
@@ -370,7 +370,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SessionsFolder: ${SessionsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Session: ${CASE}"
 echo "   Report Type: ${Report}"
 echo "   Eddy QC Input Path: ${EddyPath}"
 echo "   Eddy QC Output Path: ${OutputDir}"

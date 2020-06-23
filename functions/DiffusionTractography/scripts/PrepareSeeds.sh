@@ -4,7 +4,7 @@ echo -e "\n START: PrepareSeeds"
 
 if [ "$1" == "" ];then
     echo ""
-    echo "PrepareSeeds.sh <Studyfolder> <SubjectID>"
+    echo "PrepareSeeds.sh <Studyfolder> <SessionID>"
     echo ""
     exit 1
 fi

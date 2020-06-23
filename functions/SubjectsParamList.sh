@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-# * SubjectsBatch.sh
+# * SessionsBatch.sh
 #
 # ## LICENSE
 #
-# * The SubjectsBatch.sh = the "Software"
+# * The SessionsBatch.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -48,7 +48,7 @@
 
 usage() {
      echo ""
-     echo "-- DESCRIPTION for SubjectsBatch"
+     echo "-- DESCRIPTION for SessionsBatch"
      echo ""
      echo "This function generates a batch file for processing for a given subject."
      echo "It is designed to be invoked directly via Qu|Nex call:"
@@ -58,7 +58,7 @@ usage() {
      echo "This script accepts the following mandatory paramaters:"
      echo ""
      echo "   --sessionsfolder=<folder_with_subjects>        Path to study folder that contains subjects"
-     echo "   --subjects=<comma_separated_list_of_cases>  Subject to run"
+     echo "   --subjects=<comma_separated_list_of_cases>  Session to run"
      echo "   --outname=<output_name_of_the_batch>        Output name of the batch file to generate. "
      echo "   --outpath=<absolute_path_to_list_folder>    Path for the batch file"
      echo ""
@@ -91,7 +91,7 @@ fi
 
 ########### INPUTS ###############
 
-	# -- Subject-specific session_hcp.txt file 
+	# -- Session-specific session_hcp.txt file 
 
 ########## OUTPUTS ###############
 
@@ -190,7 +190,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SessionsFolder: ${SessionsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Session: ${CASE}"
 echo "   Batch file name: ${ListName}"
 echo "   Path to save output: ${ListPath}"
 echo "   Overwrite: ${Overwrite}"

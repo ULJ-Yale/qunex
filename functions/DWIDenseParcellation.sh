@@ -138,7 +138,7 @@ fi
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
     # SessionsFolder 
-    # Subject        
+    # Session        
     # MatrixVersion     e.g. 1 or 3
     # ParcellationFile  in *.dlabel.nii format
     # OutName  
@@ -153,7 +153,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subject
+unset Session
 unset MatrixVersion
 unset ParcellationFile
 unset OutName
@@ -261,7 +261,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SessionsFolder: ${SessionsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Session: ${CASE}"
 echo "   MatrixVersion: ${MatrixVersion}"
 echo "   ParcellationFile: ${ParcellationFile}"
 echo "   Waytotal normalization: ${WayTotal}"

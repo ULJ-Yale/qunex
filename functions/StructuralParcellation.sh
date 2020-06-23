@@ -137,7 +137,7 @@ local arguments=($@)
 
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subject
+unset Session
 unset InputDataType
 unset ParcellationFile
 unset OutName
@@ -238,7 +238,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SessionsFolder: ${SessionsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Session: ${CASE}"
 echo "   InputDataType: ${InputDataType}"
 echo "   ParcellationFile: ${ParcellationFile}"
 echo "   OutName: ${OutName}"

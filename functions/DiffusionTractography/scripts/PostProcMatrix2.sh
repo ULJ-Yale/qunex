@@ -6,17 +6,17 @@ Caret7_command=${CARET7DIR}/wb_command
 
 if [ "$4" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <GrayOrdinates_Templatedir> <Nrepeats>"
+    echo "usage: $0 <StudyFolder> <Session> <GrayOrdinates_Templatedir> <Nrepeats>"
     echo "Convert the merged.dot file to .dconn.nii"
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 TemplateFolder=$3
 Nrepeats=$4             # How many dot files existed
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
 
 #Save files before deleting 
 if [ -s  $ResultsFolder/merged_matrix2.dot ]; then

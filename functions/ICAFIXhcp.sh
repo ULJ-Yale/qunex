@@ -175,7 +175,7 @@ done
 
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subjects
+unset Sessions
 unset BOLDS
 unset Overwrite
 unset HPFilter
@@ -234,7 +234,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SessionsFolder: ${SessionsFolder}"
-echo "   Subjects: ${CASES}"
+echo "   Sessions: ${CASES}"
 echo "   BOLDs to work on: ${BOLDS}"
 echo "   Function to run: ${ICAFIXFunction}"
 echo "   Filter: ${HPFilter}"
@@ -279,7 +279,7 @@ echo ""
 geho " ===> RUNNING: ICA FIX ..."
 echo ""
 ICAFIXFail=""
-# -- Subjects loop
+# -- Sessions loop
 for CASE in $CASES; do
         FailedBOLDS=""
         # -- BOLD loop
@@ -359,7 +359,7 @@ DualScene="${HCPPIPEDIR}/PostFix/PostFixScenes/ICA_Classification_DualScreenTemp
 SingleScene="${HCPPIPEDIR}/PostFix/PostFixScenes/ICA_Classification_SingleScreenTemplate.scene"
 MatlabMode="1" #Mode=0 compiled Matlab, Mode=1 interpreted Matlab
 
-# -- Subjects loop
+# -- Sessions loop
 for CASE in $CASES ; do
     # -- BOLD loop
     for BOLD in ${BOLDS} ; do

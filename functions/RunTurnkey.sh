@@ -125,7 +125,7 @@ usage() {
     echo "    --turnkeytype=<turnkey_run_type>                          Specify type turnkey run. Options are: local or xnat"
     echo "                                                              If empty default is set to: [xnat]."
     echo "    --path=<study_path>                                       Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
-    echo "    --subjects=<subjects_to_run_turnkey_on>                   Subjects to run locally on the file system if not an XNAT run."
+    echo "    --sessions=<sessions_to_run_turnkey_on>                   Sessions to run locally on the file system if not an XNAT run."
     echo "    --sessionids=<comma_separated_list_of_session_ids>        Ids to select for a run via gMRI engine from the batch file"
     echo "    --turnkeysteps=<turnkey_worlflow_steps>                   Specify specific turnkey steps you wish to run:"
     echo "                                                              Supported:   ${QuNexTurnkeyWorkflow} "
@@ -323,7 +323,7 @@ unset RawDataInputPath
 unset PROJECT_NAME
 unset BIDS_NAME
 unset PlotElements
-unset CleanupSubject
+unset CleanupSession
 unset CleanupProject
 unset STUDY_PATH
 #unset LOCAL_BATCH_FILE -- Deprecated
@@ -348,7 +348,7 @@ STUDY_PATH=`opts_GetOpt "--path" $@`
 WORKDIR=`opts_GetOpt "--workingdir" $@`
 PROJECT_NAME=`opts_GetOpt "--projectname" $@`
 BIDS_NAME=`opts_GetOpt "--bidsname" $@`
-CleanupSubject=`opts_GetOpt "--cleanupsubject" $@`
+CleanupSession=`opts_GetOpt "--cleanupsubject" $@`
 CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 CleanupOldFiles=`opts_GetOpt "--cleanupoldfiles" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
@@ -850,7 +850,7 @@ if [ -z "$OVERWRITE_SESSION" ]; then OVERWRITE_SESSION="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
 if [[ -z "$OVERWRITE_PROJECT_XNAT" ]]; then OVERWRITE_PROJECT_XNAT="no"; fi
 if [[ -z "$CleanupProject" ]]; then CleanupProject="no"; fi
-if [[ -z "$CleanupSubject" ]]; then CleanupSubject="no"; fi
+if [[ -z "$CleanupSession" ]]; then CleanupSession="no"; fi
 
 # -- Check and set runQC_Custom
 if [ -z "$runQC_Custom" ] || [ "$runQC_Custom" == "no" ]; then runQC_Custom=""; QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//runQC_Custom/}"`; fi
@@ -905,13 +905,13 @@ if [ "$TURNKEY_TYPE" == "xnat" ]; then
         echo "   BIDS format input specified!"
         echo "   Combined BIDS-formatted subject name: ${CASE}"
     else 
-        echo "   Qu|Nex Subject variable name: ${CASE}" 
+        echo "   Qu|Nex Session variable name: ${CASE}" 
     fi
 fi
 if [ "$TURNKEY_TYPE" != "xnat" ]; then
     echo "   Local project name: ${PROJECT_NAME}"
     echo "   Raw data input path: ${RawDataInputPath}"
-    echo "   Qu|Nex Subject variable name: ${CASE}" 
+    echo "   Qu|Nex Session variable name: ${CASE}" 
     echo "   Qu|Nex Batch file input: ${BATCH_PARAMETERS_FILENAME}"
     echo "   Qu|Nex Mapping file input: ${SCAN_MAPPING_FILENAME}"
 fi
@@ -919,12 +919,12 @@ fi
 echo "   Qu|Nex Project-specific final Batch file path: ${ProcessingBatchFile}"
 echo "   Qu|Nex Study folder: ${QuNexStudyFolder}"
 echo "   Qu|Nex Log folder: ${QuNexMasterLogFolder}"
-echo "   Qu|Nex Subject-specific working folder: ${QuNexRawInboxDir}"
+echo "   Qu|Nex Session-specific working folder: ${QuNexRawInboxDir}"
 echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for subject set to: ${OVERWRITE_SESSION}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
 echo "   Overwrite for the entire XNAT project: ${OVERWRITE_PROJECT_XNAT}"
-echo "   Cleanup for subject set to: ${CleanupSubject}"
+echo "   Cleanup for subject set to: ${CleanupSession}"
 echo "   Cleanup for project set to: ${CleanupProject}"
 echo "   Custom QC requested: ${runQC_Custom}"
 

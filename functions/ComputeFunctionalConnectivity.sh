@@ -672,7 +672,7 @@ if [ ${RunType} == "list" ]; then
 fi
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     echo "  SessionsFolder: ${SessionsFolder}"
-    echo "  Subjects: ${CASES}"
+    echo "  Sesssions: ${CASES}"
     echo "  InputFiles: ${InputFiles}"
     echo "  InputPath: ${InputPath}"
     echo "  OutName: ${OutName}"

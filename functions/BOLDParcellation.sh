@@ -134,7 +134,7 @@ fi
 # The data should be in the folder relative to the master study folder, specified by the inputfile
 # Mandatory input parameters:
     # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
-    # Subject      # e.g. 100206
+    # Session      # e.g. 100206
     # InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
     # InputPath # e.g. /images/functional/
     # InputDataType # e.g.dtseries
@@ -159,7 +159,7 @@ local arguments=($@)
 
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subject
+unset Session
 unset InputFile
 unset SingleInputFile
 unset InputPath
@@ -328,7 +328,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SessionsFolder: ${SessionsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Session: ${CASE}"
 echo "   InputFile: ${InputFile}"
 echo "   SingleInputFile: ${SingleInputFile}"
 echo "   InputPath: ${InputPath}"

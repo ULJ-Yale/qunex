@@ -136,7 +136,7 @@ fi
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
     # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome/subjects
-    # Subject      # e.g. 100307
+    # Session      # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
     # SeedFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
     # OutName  # e.g. THALAMUS
@@ -155,7 +155,7 @@ local arguments=($@)
 
 # -- Initialize global output variables
 unset SessionsFolder
-unset Subjects
+unset Sessions
 unset MatrixVersion
 unset ParcellationFile
 unset OutName
@@ -264,7 +264,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SessionsFolder: ${SessionsFolder}"
-echo "   Subjects: ${CASE}"
+echo "   Sessions: ${CASE}"
 echo "   MatrixVersion: ${MatrixVersion}"
 echo "   SeedFile: ${SeedFile}"
 echo "   Waytotal normalization: ${WayTotal}"
