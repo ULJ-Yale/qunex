@@ -6,7 +6,7 @@ function [] = s_ANOVA2WayRepeated(dfile, a, b, output, verbose)
 %	
 %	dfile   - the data file to work on - either a single image or a conc file
 %             The images have to be organized as a series of volumes with 
-%             subject, factor A, factor B in the order of faster to slowest 
+%             session, factor A, factor B in the order of faster to slowest 
 %             varying variable. The data has to be fully balanced with no
 %             missing values.
 %   a       - number of levels for factor A

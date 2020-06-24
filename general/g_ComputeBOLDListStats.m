@@ -2,11 +2,11 @@ function [] = g_ComputeBOLDListStats(flist, target, store, scrub, verbose)
 
 %function [] = g_ComputeBOLDListStats(flist, target, store, scrub, verbose)
 %
-%	Computes BOLD run per frame statistics and scrubbing information for a list of subjects.
+%	Computes BOLD run per frame statistics and scrubbing information for a list of sessions.
 %
 %   INPUT
-%       flist  ... A list text file providing a list of subjects' image or conc files:
-%                  subject id:<subject_id>
+%       flist  ... A list text file providing a list of sessions' image or conc files:
+%                  session id:<session_id>
 %                  roi:<path to the individual's brain segmentation file>
 %                  file:<path to a bold file - one bold file per line>
 %       target ... A folder to save results into, default: where bold image is,
@@ -21,7 +21,7 @@ function [] = g_ComputeBOLDListStats(flist, target, store, scrub, verbose)
 %
 %   USE
 %   The function calls g_ComputeBOLDStats on each of the bolds for each of the
-%   subjects specified in the list file. Please see g_ComputeBOLDStats for
+%   sessions specified in the list file. Please see g_ComputeBOLDStats for
 %   more detailed information. If arguments are left empty, the defaults in
 %   g_ComputeBOLDStats will be used.
 %
@@ -57,27 +57,27 @@ end
 
 if verbose, fprintf('\n\nStarting processing of %s...\n\n---> Reading in the file', flist); end
 
-[subject nsubjects nallfiles] = g_ReadFileList(flist, verbose);
+[session nsessions nallfiles] = g_ReadFileList(flist, verbose);
 
-rois = ismember('roi', fields(subject));
+rois = ismember('roi', fields(session));
 
-for s = 1:nsubjects
+for s = 1:nsessions
 
-    if verbose, fprintf('\n\nProcessing subject %s...', subject(s).id); end
+    if verbose, fprintf('\n\nProcessing session %s...', session(s).id); end
     %   --- read in roi file
     mask = [];
     if rois
-        if ~isempty(subject(s).roi)
-            if ~strfind(subject(s).roi, 'none')
+        if ~isempty(session(s).roi)
+            if ~strfind(session(s).roi, 'none')
                 if verbose, fprintf('\n---> Reading mask'); end
-                mask = nimage(strfind(subject(s).roi));
+                mask = nimage(strfind(session(s).roi));
             end
         end
     end
 
-    nfiles = length(subject(s).files);
+    nfiles = length(session(s).files);
 	for n = 1:nfiles
-        g_ComputeBOLDStats(subject(s).files{n}, mask, target, store, scrub, verbose);
+        g_ComputeBOLDStats(session(s).files{n}, mask, target, store, scrub, verbose);
 
     end
 end

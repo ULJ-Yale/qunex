@@ -5,8 +5,8 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 %	Computes GBC averages for each specified ROI for n bands defined as distance from ROI.
 %
 %   INPUT
-%	    flist   	- conc-like style list of subject image files or conc files:
-%                        subject id:<subject_id>
+%	    flist   	- conc-like style list of session image files or conc files:
+%                        session id:<session_id>
 %                        roi:<path to the individual's ROI file>
 %                        file:<path to bold files - one per line>
 %                     or a well strucutured string (see g_ReadFileList).
@@ -37,22 +37,22 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 %
 %   USE
 %   This is a wrapper function for computing GBC for specified ROI across the specified number of
-%   distance bands. The function goes through a list of subjects specified by flist file and runs
-%   img_ComputeGBCd method on bold files listed for each subject. ROI to compute GBC for are specified
+%   distance bands. The function goes through a list of sessions specified by flist file and runs
+%   img_ComputeGBCd method on bold files listed for each session. ROI to compute GBC for are specified
 %   in roi and rcodes parameters, whereas the mask of what voxels to compute GBC over is specified
-%   by target parameter. The values should match rcodes used in subject specific roi file. Usually
+%   by target parameter. The values should match rcodes used in session specific roi file. Usually
 %   this would be a freesurfer segmentation image and if no target values are specified all the gray
 %   matter related values present in aseg files are used.
 %
 %   The results are aggregated and stored in a matlab data file which holds a data structure with the
 %   following fields:
 %
-%   — data.gbcd(s).gbc     ... resulting GBC matrix for each subject
+%   — data.gbcd(s).gbc     ... resulting GBC matrix for each session
 %   — data.gbcd(s).roiinfo ... names of ROI for which the GBC was computed for
 %   — data.gbcd(s).rdata   ... information on center mass and distance bands for each of the ROI
 %   — data.roifile         ... the file used to defined ROI
 %   — data.rcodes          ... codes used to identify ROI
-%   - data.subjects        ... cell array of subject ids
+%   - data.sessions        ... cell array of session ids
 %
 %   targetf specifies the folder in which the results will be saved. The file will be named using the
 %   root of the flist with '_GBCd.mat' added to it.
@@ -109,31 +109,31 @@ commands = regexp(command, '\|', 'split');
 
 fprintf('\n ... listing files to process');
 
-[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
+[session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 
 
 %   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
+%   -------------------------------------------- The main loop ... go through all the sessions
 
 fout = fopen([targetf '/' listname '_GBCd.tab'], 'w');
-fprintf(fout, 'subject\tcommand\troi\tband\tvalue');
+fprintf(fout, 'session\tcommand\troi\tband\tvalue');
 
 %   --- Get variables ready first
 
-for s = 1:nsubjects
+for s = 1:nsessions
 
     %   --- reading in image files
     tic;
-	fprintf('\n ... processing %s', subject(s).id);
+	fprintf('\n ... processing %s', session(s).id);
 	fprintf('\n     ... reading image file(s) ');
 
 	y = [];
 
-	nfiles = length(subject(s).files);
+	nfiles = length(session(s).files);
 
-	img = nimage(subject(s).files{1});
+	img = nimage(session(s).files{1});
 
     fprintf('1');
 	if ~isempty(mask),   img = img.sliceframes(mask); end
@@ -141,7 +141,7 @@ for s = 1:nsubjects
 
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = nimage(subject(s).files{n});
+    	    new = nimage(session(s).files{n});
             fprintf(', %d', n);
     	    if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = new.img_Scrub(ignore); end
@@ -149,7 +149,7 @@ for s = 1:nsubjects
         end
     end
 
-    imask = nimage(subject(s).roi);
+    imask = nimage(session(s).roi);
     imask = imask.ismember(target);
 
     if rsmooth
@@ -161,7 +161,7 @@ for s = 1:nsubjects
         imask = imask.img_GrowROI(rdilate);
     end
 
-    roiimg = nimage.img_ReadROI(roi, subject(s).roi);
+    roiimg = nimage.img_ReadROI(roi, session(s).roi);
 
     [res, roiinfo, rdata] = img.img_ComputeGBCd(command, roiimg, rcodes, nbands, [], imask);
 
@@ -169,12 +169,12 @@ for s = 1:nsubjects
     data.gbcd(s).roiinfo = roiinfo;
     data.gbcd(s).rdata = rdata;
 
-    %  'subject\tcommand\troi\tband\tvalue'
+    %  'session\tcommand\troi\tband\tvalue'
 
     for nc = 1:size(res,3)
         for nr = 1:size(res,2)
             for nb = 1:size(res,1)
-                fprintf(fout, '\n%s\t%s\t%s\t%d\t%.6f', subject(s).id, commands{nc}, roiinfo.roinames{nr}, nb, res(nb, nr, nc));
+                fprintf(fout, '\n%s\t%s\t%s\t%d\t%.6f', session(s).id, commands{nc}, roiinfo.roinames{nr}, nb, res(nb, nr, nc));
             end
         end
     end
@@ -184,7 +184,7 @@ end
 
 data.roifile  = roi;
 data.rcodes   = rcodes;
-data.subjects = subject;
+data.sessions = session;
 
 fclose(fout);
 save([targetf '/' listname '_GBCd'], data);

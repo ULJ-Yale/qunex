@@ -1,11 +1,11 @@
-function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
+function [] = fc_Preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
-%function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
+%function [] = fc_Preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 %
 %  A function for running single BOLD file based functional connectivity preprocessing.
 %
 %  INPUTS
-%       subjectf ... The subject's folder with images and data.
+%       sessionf ... The session's folder with images and data.
 %       bold     ... The number of the bold file to process.
 %       omit     ... The number of frames to omit at the start of each bold [].
 %       doIt     ... A string specifying, which steps to perform and in what
@@ -344,7 +344,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %   EXAMPLE USE
 %   ===========
 %
-%   >>> fc_Preprocess('subjects/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
+%   >>> fc_Preprocess('sessions/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %
@@ -419,12 +419,12 @@ if nargin < 6,  task = [];                                  end
 if nargin < 5 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 4 || isempty(doIt),   doIt = 'shrcl';           end
 if nargin < 3, omit = [];                                   end
-if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
+if nargin < 2, error('ERROR: At least session folder and BOLD number need to be specified for the funtion to run!'); end
 
 
 fprintf('\nRunning preproces script v0.9.15 [%s]\n--------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
-fprintf('\n       subjectf: %s', subjectf);
+fprintf('\n       sessionf: %s', sessionf);
 fprintf('\n           bold: %s', num2str(bold));
 fprintf('\n           omit: %s', num2str(omit));
 fprintf('\n           doIt: %s', doIt);
@@ -473,21 +473,21 @@ doIt = strrep(doIt, ' ', '');
 % ======================================================
 %   ----> prepare paths
 
-froot = strcat(subjectf, ['/images/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
+froot = strcat(sessionf, ['/images/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
 
-file.movdata   = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '_mov.dat']);
-file.oscrub    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.scrub']);
-file.tscrub    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.bold_tail variant '.scrub']);
-file.bstats    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.bstats']);
-file.fidlfile  = strcat(subjectf, ['/images/functional' options.bold_variant '/events/' options.boldname   int2str(bold) efile]);
-file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks' options.bold_variant '/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
+file.movdata   = strcat(sessionf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '_mov.dat']);
+file.oscrub    = strcat(sessionf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.scrub']);
+file.tscrub    = strcat(sessionf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.bold_tail variant '.scrub']);
+file.bstats    = strcat(sessionf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.bstats']);
+file.fidlfile  = strcat(sessionf, ['/images/functional' options.bold_variant '/events/' options.boldname   int2str(bold) efile]);
+file.bmask     = strcat(sessionf, ['/images/segmentation/boldmasks' options.bold_variant '/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
 
 eroot          = strrep(efile, '.fidl', '');
-file.nuisance  = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.nuisance']);
-file.Xroot     = strcat(subjectf, ['/images/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+file.nuisance  = strcat(sessionf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.nuisance']);
+file.Xroot     = strcat(sessionf, ['/images/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
 
-file.lsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
-file.rsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
+file.lsurf     = strcat(sessionf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
+file.rsurf     = strcat(sessionf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
 
 
 % ======================================================

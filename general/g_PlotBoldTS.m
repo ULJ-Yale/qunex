@@ -152,9 +152,9 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, sessionid, v
 %
 %   EXAMPLE USE VIA Qn|Nex FROM TERMINAL
 % 
-%   qunex g_PlotBoldTS --images="<Path_to_Study>/subjects/AP1937/images/functional/bold1.nii.gz" \
+%   qunex g_PlotBoldTS --images="<Path_to_Study>/sessions/AP1937/images/functional/bold1.nii.gz" \
 %   --elements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1" \
-%   --masks="<Path_to_Study>/subjects/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \
+%   --masks="<Path_to_Study>/sessions/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \
 %   --filename='AP1937-BoldTSPlot.pdf' \
 %   --skip="0" \
 %   --sessionid="AP1937" \

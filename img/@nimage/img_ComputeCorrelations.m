@@ -21,10 +21,10 @@ function [correlations, zscores, pvaues] = img_ComputeCorrelations(obj, bdata, v
 %   rows as there are frames in the original image. The first frame of the resulting images
 %   will hold for each voxel the correlation / p-value of its original dataseries across
 %   frames, with the first column of the bdata. In a possible use scenario, each frame of the
-%   original image can hold an activation or functional connectivity seed-map for one subject
+%   original image can hold an activation or functional connectivity seed-map for one session
 %   while each row of the bdata can hold that person's behavioral data, age, diagnostic values
 %   etc. Each frame of the resulting image will hold a map of correlations between activation
-%   maps and behavioral variables across subjects.
+%   maps and behavioral variables across sessions.
 %
 %   If cv is set to true (or non-zero) the computed and reported values will be covariances
 %   instead of correlations.
