@@ -56,10 +56,10 @@ usage() {
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "     --sessionsfolder=<folder_with_subjects>             Path to study folder that contains subjects"
-     echo "     --subjects=<list_of_cases>                           List of subjects to run"
+     echo "     --sessionsfolder=<folder_with_sessions>             Path to study folder that contains sessions"
+     echo "     --sessions=<list_of_cases>                           List of sessions to run"
      echo "     --inputfile=<file_to_compute_parcellation_on>       Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
-     echo "     --inputpath=<path_for_input_file>                   Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
+     echo "     --inputpath=<path_for_input_file>                   Specify path of the file you want to use for parcellation relative to the master study folder and session directory (e.g. /images/functional/)"
      echo "     --inputdatatype=<type_of_dense_data_for_input_file> Specify the type of data for the input file (e.g. dscalar or dtseries)"
      echo "     --parcellationfile=<dlabel_file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
      echo "     --outname=<name_of_output_pconn_file>               Specify the suffix output name of the pconn file"
@@ -67,7 +67,7 @@ usage() {
      echo ""
      echo "-- OPTIONAL PARMETERS:"
      echo ""
-     echo "     --singleinputfile=<parcellate_single_file>          Parcellate only a single file in any location. Individual flags are not needed (--subject, --sessionsfolder, --inputfile)."
+     echo "     --singleinputfile=<parcellate_single_file>          Parcellate only a single file in any location. Individual flags are not needed (--session, --sessionsfolder, --inputfile)."
      echo "     --overwrite=<clean_prior_run>                       Delete prior run"
      echo "     --computepconn=<specify_parcellated_connectivity_calculation>       Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
      echo "     --useweights=<specify_yes_or_no>                    If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
@@ -89,8 +89,8 @@ usage() {
      echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo ""
      echo ""
-     echo "BOLDParcellation.sh --sessionsfolder='<folder_with_subjects>' \ "
-     echo "--subject='<subj_id>' \ "
+     echo "BOLDParcellation.sh --sessionsfolder='<folder_with_sessions>' \ "
+     echo "--session='<session_id>' \ "
      echo "--inputfile='<name_of_input_file' \ "
      echo "--inputpath='<path_for_input_file>' \ "
      echo "--inputdatatype='<type_of_dense_data_for_input_file>' \ "
@@ -197,7 +197,7 @@ while [ ${index} -lt ${numArgs} ]; do
             SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subjects=*)
+        --sessions=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -262,13 +262,13 @@ done
 if [ -z ${SingleInputFile} ]; then
         if [ -z ${SessionsFolder} ]; then
             usage
-            reho "ERROR: <subjects-folder-path> not specified>"
+            reho "ERROR: <sessions-folder-path> not specified>"
             echo ""
             exit 1
         fi
         if [ -z ${CASE} ]; then
             usage
-            reho "ERROR: <subject-id> not specified"
+            reho "ERROR: <session-id> not specified"
             echo ""
             exit 1
         fi

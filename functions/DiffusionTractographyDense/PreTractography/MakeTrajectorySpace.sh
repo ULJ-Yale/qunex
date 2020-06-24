@@ -21,7 +21,7 @@ defaultopt() {
 ################################################## OPTION PARSING ###################################################
 # Input Variables
 StudyFolder=`getopt1 "--path" $@`                # "$1" #Path to Generic Study folder
-Session=`getopt1 "--subject" $@`                 # "$2" #SessionID
+Session=`getopt1 "--session" $@`                 # "$2" #SessionID
 DiffusionResolution=`getopt1 "--diffresol" $@`   # "$3" #Diffusion Resolution in mm
 WholeBrainTrajectoryLabels=`getopt1 "--wholebrainlabels" $@`
 LeftCerebralTrajectoryLabels=`getopt1 "--leftcerebrallabels" $@`

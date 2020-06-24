@@ -40,7 +40,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are DWI data from previous processing
-# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/ 
+# * These data are stored in: "$StudyFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/ 
 #
 #~ND~END~
 

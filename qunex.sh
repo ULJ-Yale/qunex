@@ -362,7 +362,7 @@ if [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
 fi
 
 # -- Check if part of the Qu|Nex file hierarchy is missing
-QuNexFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/hcpls info/tasks info/stimuli info/bids subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
+QuNexFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/hcpls info/tasks info/stimuli info/bids sessions/inbox/MR sessions/inbox/EEG sessions/inbox/BIDS sessions/inbox/behavior sessions/inbox/concs sessions/inbox/events sessions/archive/MR sessions/archive/EEG sessions/archive/BIDS sessions/archive/behavior sessions/specs sessions/QC"
 for QuNexFolder in ${QuNexFolders}; do
     if [[ ! -d ${StudyFolder}/${QuNexFolder} ]]; then
           echo "Qu|Nex folder ${StudyFolder}/${QuNexFolder} not found. Generating now..."; echo ""
@@ -370,7 +370,7 @@ for QuNexFolder in ${QuNexFolders}; do
     fi
 done
 
-# -- Add check in case the subjects folder is distinct from the default name
+# -- Add check in case the sessions folder is distinct from the default name
 QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
 for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
     if [[ ! -d ${QuNexSessionsFolder} ]]; then
@@ -404,9 +404,9 @@ cd ${MasterRunLogFolder}
 Runlog="${MasterRunLogFolder}/Log-${CommandToRun}_${TimeStamp}.log"
 
 # -- Comlog
-#    Specification:  tmp_<command_name>[_B<N>]_<subject code>_<date>_<hour>.<minute>.<microsecond>.log
-#    Specification:  error_<command_name>[_B<N>]_<subject code>_<date>_<hour>.<minute>.<microsecond>.log
-#    Specification:  done_<command_name>[_B<N>]_<subject code>_<date>_<hour>.<minute>.<microsecond>.log
+#    Specification:  tmp_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
+#    Specification:  error_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
+#    Specification:  done_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
 #    Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
 #
 
@@ -501,7 +501,7 @@ fi
 runTurnkey() {
 # -- Specify command variable
 unset QuNexCallToRun
-QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --sessionids=\"${SESSIONIDS}\""
+QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --sessions=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --sessionids=\"${SESSIONIDS}\""
 connectorExec
 }
 
@@ -624,8 +624,8 @@ echo "and the session_hcp.txt file was generated."
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
-echo "--sessionsfolder=<folder_with_subjects>                Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run"
+echo "--sessionsfolder=<folder_with_sessions>                Path to study folder that contains sessions"
+echo "--sessions=<comma_separated_list_of_cases>             List of sessions to run"
 echo""
 geho " * NOTE: scheduler is available via qunex call:"
 echo "         --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
@@ -635,13 +635,13 @@ echo "         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntas
 echo ""
 echo "-- Example with flagged parameters for a local run:"
 echo ""
-echo "  qunex mapHCPFiles --sessionsfolder='<folder_with_subjects>' \ "
-echo "      --subjects='<comma_separarated_list_of_cases>' \ "
+echo "  qunex mapHCPFiles --sessionsfolder='<folder_with_sessions>' \ "
+echo "      --sessions='<comma_separarated_list_of_cases>' \ "
 echo ""
 echo "-- Example with flagged parameters for submission to the scheduler:"
 echo ""
-echo "  qunex mapHCPFiles --sessionsfolder='<folder_with_subjects>' \ "
-echo "      --subjects='<comma_separarated_list_of_cases>' \ "
+echo "  qunex mapHCPFiles --sessionsfolder='<folder_with_sessions>' \ "
+echo "      --sessions='<comma_separarated_list_of_cases>' \ "
 echo "      --scheduler='<name_of_cluster_scheduler_and_options>' \ "
 echo ""
 }
@@ -654,7 +654,7 @@ dataSync() {
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DataSync.sh \
 --syncfolders="${SyncFolders}" \
---subjects="${CASE}" \
+--sessions="${CASE}" \
 --syncserver="${SyncServer}" \
 --synclogfolder="${SyncLogFolder}" \
 --syncdestination="${SyncDestination}""
@@ -675,8 +675,8 @@ echo "   --synclogfolder=<path_to_log_folder>        Set log folder"
 echo ""
 echo "  * Optional Inputs:"
 echo ""
-echo "   --subjects=<lists_specific_subjects>      Set input subjects for backup. "
-echo "                                             If set, then --backupfolders path has to contain input subjects."
+echo "   --sessions=<lists_specific_sessions>      Set input sessions for backup. "
+echo "                                             If set, then --backupfolders path has to contain input sessions."
 echo ""
 echo "* EXAMPLE:"
 echo ""
@@ -699,7 +699,7 @@ hcpdLegacy() {
 # -- Specify command variable
 QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
 --sessionsfolder=${SessionsFolder} \
---subject=${CASE} \
+--session=${CASE} \
 --scanner=${Scanner} \
 --usefieldmap=${UseFieldmap} \
 --PEdir=${PEdir} \
@@ -736,7 +736,7 @@ fi
 # -- Specify command variable
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh \
 --sessionsfolder=${SessionsFolder} \
---subject=${CASE} \
+--session=${CASE} \
 --eddybase=${EddyBase} \
 --eddypath=${EddyPath} \
 --report=${Report} \
@@ -762,7 +762,7 @@ DWIDenseParcellation() {
 #DWIOutput="${SessionsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh \
 --sessionsfolder=${SessionsFolder} \
---subject=${CASE} \
+--session=${CASE} \
 --matrixversion=${MatrixVersion} \
 --parcellationfile=${ParcellationFile} \
 --waytotal=${WayTotal} \
@@ -785,7 +785,7 @@ DWIDenseSeedTractography() {
 # -- Command to run
 QuNexCallToRun="DWIDenseSeedTractography.sh \
 --sessionsfolder="${SessionsFolder}" \
---subjects="${CASE}" \
+--sessions="${CASE}" \
 --matrixversion="${MatrixVersion}" \
 --seedfile="${SeedFile}" \
 --waytotal="${WayTotal}" \
@@ -827,7 +827,7 @@ if [[ ${Calculation} == "seed" ]]; then
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
-    --subjects=${CASE} \
+    --sessions=${CASE} \
     --inputfiles=${InputFiles} \
     --inputpath=${InputPath} \
     --extractdata=${ExtractData} \
@@ -852,7 +852,7 @@ if [[ ${Calculation} == "gbc" ]]; then
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
-    --subjects=${CASE} \
+    --sessions=${CASE} \
     --inputfiles=${InputFiles} \
     --inputpath=${InputPath} \
     --extractdata=${ExtractData} \
@@ -881,7 +881,7 @@ if [[ ${Calculation} == "dense" ]]; then
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
-    --subjects=${CASE} \
+    --sessions=${CASE} \
     --inputfiles=${InputFiles} \
     --inputpath=${InputPath} \
     --outname=${OutName} \
@@ -915,7 +915,7 @@ Overwrite="$Overwrite"
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh \
 --sessionsfolder=${SessionsFolder} \
---subject=${CASE} \
+--session=${CASE} \
 --inputdatatype=${InputDataType} \
 --parcellationfile=${ParcellationFile} \
 --overwrite=${Overwrite} \
@@ -943,7 +943,7 @@ fi
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh \
 --sessionsfolder='${SessionsFolder}' \
---subjects='${CASE}' \
+--sessions='${CASE}' \
 --inputfile='${InputFile}' \
 --singleinputfile='${SingleInputFile}' \
 --inputpath='${InputPath}' \
@@ -1006,7 +1006,7 @@ FSLDtifit() {
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
---subject='${CASE}' \
+--session='${CASE}' \
 --overwrite='${Overwrite}' "
 # -- Connector execute function
 connectorExec
@@ -1024,7 +1024,7 @@ FSLBedpostxGPU() {
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
 --sessionsfolder='${SessionsFolder}' \
---subject='${CASE}' \
+--session='${CASE}' \
 --fibers='${Fibers}' \
 --model='${Model}' \
 --burnin='${Burnin}' \
@@ -1158,15 +1158,15 @@ echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
 echo "--command=<command_name>                      Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags)"
-echo "--sessionsfolder=<folder_with_subjects>       Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>    List of subjects to run"
+echo "--sessionsfolder=<folder_with_sessions>       Path to study folder that contains sessions"
+echo "--sessions=<comma_separated_list_of_cases>    List of sessions to run"
 echo "--modality=<modality_to_sync>                 Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 echo "--awsuri=<aws_uri_location>                   Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 echo ""
 echo "-- Example with flagged parameters for submission to the scheduler:"
 echo ""
-echo "qunex --sessionsfolder='<path_to_study_subjects_folder>' \ "
-echo "      --subjects='<comma_separated_list_of_cases>' \ "
+echo "qunex --sessionsfolder='<path_to_study_sessions_folder>' \ "
+echo "      --sessions='<comma_separated_list_of_cases>' \ "
 echo "      --command='AWSHCPSync' \ "
 echo "      --modality='T1w' \ "
 echo "      --awsuri='/hcp-openaccess/HCP_900'"
@@ -1190,7 +1190,7 @@ fi
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh \
 --sessionsfolder='${SessionsFolder}' \
---subjects='${CASE}' \
+--sessions='${CASE}' \
 --outpath='${OutPath}' \
 --overwrite='${Overwrite}' \
 --scenetemplatefolder='${scenetemplatefolder}' \
@@ -1508,7 +1508,7 @@ fi
 
 # -- Clear variables for new run
 unset CommandToRun
-unset subjects
+unset sessions
 unset StudyFolder
 unset CASES
 unset Overwrite
@@ -1576,8 +1576,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- StudyFolder & SessionsFolder input flags
     StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`        # study folder to work on
     StudyFolderPath=`opts_GetOpt "${setflag}path" $@`           # local folder to work on
-    SessionsFolder=`opts_GetOpt "${setflag}sessionsfolder" $@`  # subjects folder to work on
-    SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@`   # subjects folder to work on
+    SessionsFolder=`opts_GetOpt "${setflag}sessionsfolder" $@`  # sessions folder to work on
+    SubjectFolder=`opts_GetOpt "${setflag}sessionfolder"  $@`   # sessions folder to work on
     STUDY_PATH=${StudyFolderPath}                               # local path for study folder
     
     if [[ ! -z ${STUDY_PATH} ]]; then StudyFolder=${STUDY_PATH}; fi
@@ -1644,8 +1644,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
     XNAT_STUDY_INPUT_PATH=`opts_GetOpt "${setflag}xnatstudyinputpath" $@`
 
-    # -- General subject and session flags
-    CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    # -- General session and session flags
+    CASES=`opts_GetOpt "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     SESSIONIDS=`opts_GetOpt "${setflag}sessionids" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     SESSION_LABELS=`opts_GetOpt "--sessionlabel" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
     if [[ -z ${SESSION_LABELS} ]]; then
@@ -1842,7 +1842,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Suffix=`opts_GetOpt "${setflag}suffix" $@`
     SceneZip=`opts_GetOpt "${setflag}scenezip" $@`
     
-    # -- Check if subject input is a parameter file instead of list of cases
+    # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
         SessionBatchFile="$CASES"
         echo ""
@@ -1881,7 +1881,7 @@ if [[ ${CommandToRun} == "runTurnkey" ]]; then
             CASES="$XNAT_SESSION_LABELS"
         fi
     fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     
     # -- Check for WORKDIR and StudyFolder for an XNAT run
     if [[ -z ${WORKDIR} ]]; then 
@@ -1905,7 +1905,7 @@ if [[ ${CommandToRun} == "runTurnkey" ]]; then
    fi
    # -- Clean up argument flags
    runTurnkeyArgumentsInput="${runTurnkeyArguments}"
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=.[^-]*||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--sessions=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--sessionids=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolds=.[^-]*||g'`
@@ -1944,7 +1944,7 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
             exit 1
         fi
     fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [[ -z ${Overwrite} ]]; then Overwrite="no"; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -1976,7 +1976,7 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
         echo "   Sessions Folder: ${SessionsFolder}"
     else
         echo "Optional --folder parameter set explicitly. "
-        echo "   Setting subjects folder and study accordingly."
+        echo "   Setting sessions folder and study accordingly."
         echo "   Study Folder: ${StudyFolder}"
         echo "   Sessions Folder: ${SessionsFolder}"
     fi
@@ -2013,7 +2013,7 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing."; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing."; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing."; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing."; exit 1; fi
     if [[ -z ${Modality} ]]; then reho "Error:  Modality to perform QC on missing."; exit 1; fi
     if [[ -z ${runQC_Custom} ]]; then runQC_Custom="no"; fi
     if [[ ${runQC_Custom} == "yes" ]]; then scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"; fi
@@ -2177,7 +2177,7 @@ if [ "$CommandToRun" == "eddyQC" ]; then
     if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
     # -- Perform checks for individual run
     if [ "$Report" == "individual" ]; then
-        if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
         if [ -z "$EddyBase" ]; then reho "Eddy base input name missing"; exit 1; fi
         if [ -z "$BvalsFile" ]; then reho "BVALS file missing"; exit 1; fi
         if [ -z "$EddyIdx" ]; then reho "Eddy index missing"; exit 1; fi
@@ -2187,7 +2187,7 @@ if [ "$CommandToRun" == "eddyQC" ]; then
     fi
     # -- Perform checks for group run
     if [ "$Report" == "group" ]; then
-        if [ -z "$List" ]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [ -z "$List" ]; then reho "Error: List of sessions missing"; exit 1; fi
         if [ -z "$Update" ]; then Update="false"; fi
         if [ -z "$GroupVar" ]; then GroupVar=""; fi
     fi
@@ -2251,7 +2251,7 @@ if [ "$CommandToRun" == "eddyQC" ]; then
         echo "   Eddy QC Output Path: ${OutputDir}"
         echo "   List: ${List}"
         echo "   Grouping Variable: ${GroupVar}"
-        echo "   Update single subjects: ${Update}"
+        echo "   Update single sessions: ${Update}"
         echo "   Overwrite: ${EddyPath}/${Overwrite}"
         echo "--------------------------------------------------------------"
         # ---> Add function all here
@@ -2267,7 +2267,7 @@ if [ "$CommandToRun" == "mapHCPFiles" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
             if [[ -z ${Scheduler} ]]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
@@ -2304,7 +2304,7 @@ if [ "$CommandToRun" == "dataSync" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Specific subjects not provided"; fi
+    if [[ -z ${CASES} ]]; then reho "Specific sessions not provided"; fi
     # -- Report parameters
     echo ""
     echo "Running $CommandToRun processing with the following parameters:"
@@ -2329,7 +2329,7 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
     if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
@@ -2369,7 +2369,7 @@ if [ "$CommandToRun" == "FSLDtifit" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
         if [[ -z ${Scheduler} ]]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
@@ -2399,7 +2399,7 @@ if [ "$CommandToRun" == "FSLBedpostxGPU" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study Folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
     if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
     if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
@@ -2437,7 +2437,7 @@ if [ "$CommandToRun" == "hcpdLegacy" ]; then
     if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
     if [ ${UseFieldmap} == "yes" ]; then
         if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
@@ -2480,7 +2480,7 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
     if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
@@ -2526,7 +2526,7 @@ if [ "$CommandToRun" == "computeBOLDfc" ]; then
     if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
         if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-        if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
         if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
         if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
         if [[ ${RunType} == "individual" ]]; then
@@ -2591,7 +2591,7 @@ if [ "$CommandToRun" == "computeBOLDfc" ]; then
         echo "   Sessions Folder: ${SessionsFolder}"
         echo "   Sessions: ${CASES}"
         echo "   Input Files: ${InputFiles}"
-        echo "   Input Path for Data: ${SessionsFolder}/<subject_id>/${InputPath}"
+        echo "   Input Path for Data: ${SessionsFolder}/<session_id>/${InputPath}"
         echo "   Output Name: ${OutName}"
     fi
     if [[ ${Calculation} == "gbc" ]]; then
@@ -2658,7 +2658,7 @@ if [ "$CommandToRun" == "BOLDParcellation" ]; then
     if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
         if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-        if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
         if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
     fi
     # -- Report parameters
@@ -2702,7 +2702,7 @@ if [ "$CommandToRun" == "DWIDenseParcellation" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
     if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then reho "Error: Name of output pconn file missing"; exit 1; fi
@@ -2752,7 +2752,7 @@ if [ "$CommandToRun" == "ROIExtract" ]; then
         if [ -z "$InputFile" ]; then reho "Error: Input file path value missing"; exit 1; fi
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
         if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-        if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     fi
     # -- Report parameters
     echo ""
@@ -2789,7 +2789,7 @@ if [ "$CommandToRun" == "DWIDenseSeedTractography" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
     if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi    
     if [[ -z ${OutName} ]]; then reho "Error: Name of output pconn file missing"; exit 1; fi
@@ -2827,7 +2827,7 @@ if [ "$CommandToRun" == "autoPtx" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
         if [[ -z ${Scheduler} ]]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
@@ -2858,7 +2858,7 @@ if [ "$CommandToRun" == "pretractographyDense" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
         if [[ -z ${Scheduler} ]]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
@@ -2886,7 +2886,7 @@ if [ "$CommandToRun" == "ProbtrackxGPUDense" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
     if [ "$MatrixOne" == "yes" ]; then
         if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
@@ -2937,7 +2937,7 @@ if [ "$CommandToRun" == "AWSHCPSync" ]; then
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "Error: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [[ -z ${CASES} ]]; then reho "Error: List of sessions missing"; exit 1; fi
     if [[ -z ${Modality} ]]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
     if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
     echo ""

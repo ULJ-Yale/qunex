@@ -22,7 +22,7 @@ defaultopt() {
 ################################################## OPTION PARSING ###################################################
 # Input Variables
 StudyFolder=`getopt1 "--path" $@`                # "$1" #Path to Generic Study folder
-Session=`getopt1 "--subject" $@`                 # "$2" #SessionID
+Session=`getopt1 "--session" $@`                 # "$2" #SessionID
 StandardResolution=`getopt1 "--standresol" $@`   # "$3" #MNI space Resolution in mm
 WholeBrainTrajectoryLabels=`getopt1 "--wholebrainlabels" $@`
 LeftCerebralTrajectoryLabels=`getopt1 "--leftcerebrallabels" $@`
@@ -127,7 +127,7 @@ for Structure in $ROIStructuresToSeed ; do
 done
 
 
-#Extract subject-specific, Freesurfer-obtained ROIs that can be used as subcortical volume seeds. 
+#Extract session-specific, Freesurfer-obtained ROIs that can be used as subcortical volume seeds. 
 #Notice that ROIs.2 file has been obtained from wmparc.2 (i.e. Freesurfer pipeline)
 count=0
 for Structure in $ROIStructuresToSeed ; do 

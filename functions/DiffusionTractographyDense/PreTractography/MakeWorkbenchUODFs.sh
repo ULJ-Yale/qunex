@@ -22,7 +22,7 @@ defaultopt() {
 ################################################## OPTION PARSING ###################################################
 # Input Variables
 StudyFolder=`getopt1 "--path" $@`                # "$1" #Path to Generic Study folder
-Session=`getopt1 "--subject" $@`                 # "$2" #SessionID
+Session=`getopt1 "--session" $@`                 # "$2" #SessionID
 LowResMesh=`getopt1 "--lowresmesh" $@`  # "$3" #DownSampled number of CIFTI vertices
 DiffusionResolution=`getopt1 "--diffresol" $@`   # "$4" #Diffusion Resolution in mm
 

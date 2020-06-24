@@ -57,15 +57,15 @@ usage() {
  echo ""
  echo "-- REQUIRED PARMETERS:"
  echo ""
- echo "    --sessionsfolder=<folder_with_subjects>               Path to study data folder"
- echo "    --subject=<list_of_cases>                             List of subjects to run"
+ echo "    --sessionsfolder=<folder_with_sessions>               Path to study data folder"
+ echo "    --session=<list_of_cases>                             List of sessions to run"
  echo "    --inputdatatype=<type_of_dense_data_for_input_file>   Specify the type of data for the input file (e.g. MyelinMap_BC or corrThickness)"
  echo "    --parcellationfile=<dlabel_file_for_parcellation>     Specify the absolute path of the file you want to use for parcellation"
  echo "    --outname=<name_of_output_pconn_file>                 Specify the suffix output name of the pconn file"
  echo ""
  echo "-- OPTIONAL PARMETERS:"
  echo "" 
- echo "    --overwrite=<clean_prior_run>                         Delete prior run for a given subject"
+ echo "    --overwrite=<clean_prior_run>                         Delete prior run for a given session"
  echo "    --extractdata=<save_out_the_data_as_as_csv>           Specify if you want to save out the matrix as a CSV file"
  echo ""
  echo "-- EXAMPLES:"
@@ -84,8 +84,8 @@ usage() {
  echo ""
  echo ""
  echo ""
- echo "qunex structuralParcellation --sessionsfolder='<folder_with_subjects>' \ "
- echo "--subject='<case_id>' \ "
+ echo "qunex structuralParcellation --sessionsfolder='<folder_with_sessions>' \ "
+ echo "--session='<case_id>' \ "
  echo "--inputdatatype='MyelinMap_BC' \ "
  echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
  echo "--overwrite='no' \ "
@@ -165,7 +165,7 @@ while [ ${index} -lt ${numArgs} ]; do
             SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
+        --session=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;                    
@@ -201,13 +201,13 @@ done
 # -- Check required parameters
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects-folder-path> not specified>"
+    reho "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <subject-id> not specified>"
+    reho "ERROR: <session-id> not specified>"
     echo ""
     exit 1
 fi

@@ -77,13 +77,13 @@ usage() {
     echo "-- Local system variables if using Qu|Nex hierarchy:"
     echo ""
     echo "   --studyfolder=<study_folder>                  Path to study on local file system"
-    echo "   --sessionsfolder=<folder_with_subjects_data>  Path to study data folder where the subjects folders reside"
-    echo "   --subjects=<list_of_cases>                    List of subjects to run that are study-specific and correspond to XNAT database subject IDs"
-    echo "   --downloadpath=<path_for_xnat_download>       Specify path to download. Default: <study_folder>/subjects/inbox/ or <study_folder>/subjects/inbox/BIDS"
+    echo "   --sessionsfolder=<folder_with_sessions_data>  Path to study data folder where the sessions folders reside"
+    echo "   --sessions=<list_of_cases>                    List of sessions to run that are study-specific and correspond to XNAT database session IDs"
+    echo "   --downloadpath=<path_for_xnat_download>       Specify path to download. Default: <study_folder>/sessions/inbox/ or <study_folder>/sessions/inbox/BIDS"
     echo ""
     echo "   --bidsformat=<specify_bids_input>            Specify if XNAT data is in BIDS format (yes/no). Default is [no]"
     echo "                                                        If --bidsformat='yes' and XNAT download run is requested then by default"
-    echo "                                                                          BIDS data is placed in --> <subjects_folder/inbox/BIDS"
+    echo "                                                                          BIDS data is placed in --> <sessions_folder/inbox/BIDS"
     echo ""
     echo ""
     echo "-- Local system variables if using generic DICOM location for a single XNAT upload:"
@@ -101,7 +101,7 @@ usage() {
     echo ""
     echo "  -- XNAT SUBJECT AND SESSION PARAMETERS:"
     echo ""
-    echo "    --xnatsubjectlabels=<xnat_subject_label>            Label for subject within a project for the XNAT database. Default assumes it matches --subjects."
+    echo "    --xnatsubjectlabels=<xnat_subject_label>            Label for subject within a project for the XNAT database. Default assumes it matches --sessions."
     echo "                                                        If your XNAT database subject label is distinct from your local server subject id then please supply this flag."
     echo "                                                        Use if your XNAT database has a different set of subject ids."
     echo "    --xnatsessionlabel=<xnat_session_label>             Label for session within XNAT project. Note: may be general across multiple subjects (e.g. rest). * Required."
@@ -115,8 +115,8 @@ usage() {
     echo ""
     echo "    XNATUploadDownload.sh \ "
     echo "    --runtype='upload' \ "
-    echo "    --sessionsfolder='<path_to_subjects_folder>' \ "
-    echo "    --subjects='<subject_label>' \ "
+    echo "    --sessionsfolder='<path_to_sessions_folder>' \ "
+    echo "    --sessions='<session_label>' \ "
     echo "    --xnatcredentialfile='.somefilename' \ "
     echo "    --xnatsessionlabel='<session_label>' \ "
     echo "    --xnatprojectid='<xnat_project>' \ "
@@ -127,8 +127,8 @@ usage() {
     echo "    XNATUploadDownload.sh \ "
     echo "    --runtype='download' \ "
     echo "    --studyfolder='<path_to_study_folder>' \ "
-    echo "    --sessionsfolder='<path_to_subjects_folder>' \ "
-    echo "    --subjects='<xnat_subject_labels>' \ "
+    echo "    --sessionsfolder='<path_to_sessions_folder>' \ "
+    echo "    --sessions='<xnat_subject_labels>' \ "
     echo "    --downloadpath='<optional_download_path>' \ "
     echo "    --xnatcredentialfile='.somefilename' \ "
     echo "    --xnatsessionlabel='<session_label>' \ "
@@ -211,7 +211,7 @@ unset DownloadPath
 StudyFolder=`opts_GetOpt "--studyfolder" $@`
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 ResetCredentials=`opts_GetOpt "--resetcredentials" $@`
-CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
 XNAT_CREDENTIAL_FILE=`opts_GetOpt "--xnatcredentialfile" $@`
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
 XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
@@ -240,10 +240,10 @@ if [[ -z ${XNAT_HOST_NAME} ]]; then
     echo ""
     exit 1
 fi
-## -- Check for subject variables
+## -- Check for session variables
 if [[ -z ${CASES} ]] && [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
     usage
-    reho "ERROR: --subjects flag and --xnatsubjectlabels flag not specified. No cases to work with. Please specify either."
+    reho "ERROR: --sessions flag and --xnatsubjectlabels flag not specified. No cases to work with. Please specify either."
     echo ""
     exit 1
 fi
@@ -258,14 +258,14 @@ fi
 if [[ -z ${CASES} ]]; then
     CASES="$XNAT_SUBJECT_LABELS"
     echo ""
-    reho "Note: --subjects flag omitted. Assuming specified --xnatsubjectlabels names match the subjects folders on the file system."
+    reho "Note: --sessions flag omitted. Assuming specified --xnatsubjectlabels names match the sessions folders on the file system."
     echo ""
 fi
 ## -- Check XNAT_SUBJECT_LABELS
 if [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
     XNAT_SUBJECT_LABELS="$CASES"
     echo ""
-    reho "Note: --xnatsubjectlabels flag omitted. Assuming specified --subjects names match the subject labels in XNAT."
+    reho "Note: --xnatsubjectlabels flag omitted. Assuming specified --sessions names match the subject labels in XNAT."
     echo ""
 fi
 
@@ -286,7 +286,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
             exit 1
         fi
         if [ -z ${SessionsFolder} ]; then
-            SessionsFolder="${StudyFolder}/subjects"
+            SessionsFolder="${StudyFolder}/sessions"
         fi
         DownloadPath="${SessionsFolder}/inbox"
     fi
@@ -309,10 +309,10 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     fi
     ## -- Check if single upload requested
     if [ -z ${DICOMPath} ]; then
-        ## -- Check subject folder if DICOMPath is not set
+        ## -- Check session folder if DICOMPath is not set
         if [ -z ${SessionsFolder} ]; then
             usage
-            reho "ERROR: --sessionsfolder=<folder-with-subjects> not specified."
+            reho "ERROR: --sessionsfolder=<folder-with-sessions> not specified."
             echo ""
             exit 1
         fi
@@ -404,12 +404,12 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     if [[ -z ${DICOMPath} ]]; then
-        echo "   Folder with all subjects: ${SessionsFolder}"
+        echo "   Folder with all sessions: ${SessionsFolder}"
         echo "   Sessions to process: ${CASES}"
     else
         echo "   Folder DICOMs : ${DICOMPath}"
     fi
-    echo "   XNAT Subject labels (should match --subjects): ${XNAT_SUBJECT_LABELS}"
+    echo "   XNAT Subject labels (should match --sessions): ${XNAT_SUBJECT_LABELS}"
     echo "   XNAT Session Label: ${XNAT_SESSION_LABEL}"
     echo "   NIFTI upload: ${NIFTIUPLOAD}"
     echo "   OVERWRITE set to: ${OVERWRITE}"
@@ -423,7 +423,7 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     fi
     if [[ ${BIDSFormat} == "yes" ]]; then
         echo "   BIDS format input specified: ${BIDSFormat}"
-        echo "   Combined BIDS-formatted subject name: ${CASE}"
+        echo "   Combined BIDS-formatted session name: ${CASE}"
     else 
         echo "   Qu|Nex Session variable name: ${CASE}" 
     fi
@@ -446,7 +446,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     ceho "       ********************************************"
     echo ""
     
-    ## -- Function to run on each subject
+    ## -- Function to run on each session
     XNATDownloadFunction() {
     
             # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
@@ -499,9 +499,9 @@ if [[ ${RUN_TYPE} == "download" ]]; then
             fi
             
             echo ""
-            geho " -- Running:    curl -k -b "JSESSIONID=$JSESSION" -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip "
+            geho " -- Running:    curl -k -b "JSESSIONID=$JSESSION" -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip "
             echo ""
-            curl -k -b "JSESSIONID=$JSESSION" -m 3600 -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip
+            curl -k -b "JSESSIONID=$JSESSION" -m 3600 -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip
             
             ## -- Run check that data is in the right location
             if [ -f ${DownloadPath}/${CASE}.zip ]; then
@@ -585,7 +585,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
     
     ## -- Obtain temp info on subjects and experiments in the project
-    curl -k -b "JSESSIONID=$JSESSION" -m 30 -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv
+    curl -k -b "JSESSIONID=$JSESSION" -m 30 -X GET "${XNAT_HOST_NAME}/data/sessions?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv
     curl -k -b "JSESSIONID=$JSESSION" -m 30 -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv
         
     if [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv ] && [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv ]; then
@@ -801,14 +801,14 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             ## -- First check if data is present for upload
             if [ ! -d ${SessionsFolder}/${CASE}/dicom ]; then
                 echo ""
-                reho "-- ERROR: ${SessionsFolder}/${CASE}/dicom is not found on file system! Check your inputs. Proceeding to next subject..."
+                reho "-- ERROR: ${SessionsFolder}/${CASE}/dicom is not found on file system! Check your inputs. Proceeding to next session..."
                 echo ""
                 XNATUploadError="yes"
                 XNATErrorsUpload="${XNATErrorsUpload}\n    --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
             else
                 if [ -n "$(find "${SessionsFolder}/${CASE}/dicom" -maxdepth 0 -type d -empty 2>/dev/null)" ]; then 
                     echo ""
-                    reho "-- ERROR: ${SessionsFolder}/${CASE}/dicom is found but empty! Check your data. Proceeding to next subject..."
+                    reho "-- ERROR: ${SessionsFolder}/${CASE}/dicom is found but empty! Check your data. Proceeding to next session..."
                     echo ""
                     XNATUploadError="yes"
                     XNATErrorsUpload="${XNATErrorsUpload}\n    --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
@@ -898,12 +898,12 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                         echo ""
                         ## -- Clean existing nii session if requested
                         if [ "$OVERWRITE" == "yes" ]; then
-                            curl -k -b "JSESSIONID=${JSESSION}" -X DELETE "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii"
+                            curl -k -b "JSESSIONID=${JSESSION}" -X DELETE "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii"
                         fi
                         ## -- Create a folder for nii scans
-                        curl -k -b "JSESSIONID=${JSESSION}" -X PUT "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii"
+                        curl -k -b "JSESSIONID=${JSESSION}" -X PUT "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii"
                         ## -- Upload a specific nii session
-                        curl -k -b "JSESSIONID=${JSESSION}" -X POST "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
+                        curl -k -b "JSESSIONID=${JSESSION}" -X POST "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
                     done
                     geho "-- NIFTI series $NIFTIFILE upload completed"
                 done

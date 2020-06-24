@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files: $SessionsFolder/subjects/$CASE/hcp/$CASE/T1w/Diffusion
+# * The necessary input files: $SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion
 #
 #~ND~END~
 
@@ -59,9 +59,9 @@ echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
 echo "--function=<function_name>                           Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
-echo "--sessionsfolder=<folder_with_subjects>              Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>           List of subjects to run"
-echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
+echo "--sessionsfolder=<folder_with_sessions>              Path to study folder that contains sessions"
+echo "--sessions=<comma_separated_list_of_cases>           List of sessions to run"
+echo "--overwrite=<clean_prior_run>                        Delete prior run for a given session"
 echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                     e.g. for SLURM the string would look like this: "
 echo "                                                     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
@@ -83,8 +83,8 @@ echo ""
 echo ""     
 echo ""     
 echo ""
-echo "qunex --sessionsfolder='<path_to_study_subjects_folder>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "qunex --sessionsfolder='<path_to_study_sessions_folder>' \ "
+echo "--sessions='<comma_separarated_list_of_cases>' \ "
 echo "--function='FSLDtifit' \ "
 echo "--scheduler='<name_of_scheduler_and_options>' \ "
 echo "--overwrite='yes'"
@@ -138,7 +138,7 @@ unset Session
 runcmd=""
 
 # -- Parse arguments
-CASE=`opts_GetOpt "--subject" $@`
+CASE=`opts_GetOpt "--session" $@`
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
 

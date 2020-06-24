@@ -21,7 +21,7 @@ defaultopt() {
 ################################################## OPTION PARSING ###################################################
 # Input Variables
 StudyFolder=`getopt1 "--path" $@`                # "$1" #Path to Generic Study folder
-Session=`getopt1 "--subject" $@`                 # "$2" #SessionID
+Session=`getopt1 "--session" $@`                 # "$2" #SessionID
 StandardResolution=`getopt1 "--standresol" $@`   # "$3" #MNI space Resolution in mm
 WholeBrainTrajectoryLabels=`getopt1 "--wholebrainlabels" $@`
 LeftCerebralTrajectoryLabels=`getopt1 "--leftcerebrallabels" $@`
@@ -123,7 +123,7 @@ rm -r "$ROIsFolder"/temp
 
 
 
-#Extract subject-specific, Freesurfer-obtained ROIs that could be used as subcortical volume seeds. 
+#Extract session-specific, Freesurfer-obtained ROIs that could be used as subcortical volume seeds. 
 #Notice that ROIs.2 file has been obtained from wmparc.2 (i.e. Freesurfer pipeline)
 ROIStructuresToSeed="26 58 18 54 16 11 50 8 47 28 60 17 53 13 52 12 51 10 49"
 ROINames=("ACCUMBENS_LEFT" "ACCUMBENS_RIGHT" "AMYGDALA_LEFT" "AMYGDALA_RIGHT" "BRAIN_STEM" "CAUDATE_LEFT" "CAUDATE_RIGHT" "CEREBELLUM_LEFT" "CEREBELLUM_RIGHT" "DIENCEPHALON_VENTRAL_LEFT" "DIENCEPHALON_VENTRAL_RIGHT" "HIPPOCAMPUS_LEFT" "HIPPOCAMPUS_RIGHT" "PALLIDUM_LEFT" "PALLIDUM_RIGHT" "PUTAMEN_LEFT" "PUTAMEN_RIGHT" "THALAMUS_LEFT" "THALAMUS_RIGHT")

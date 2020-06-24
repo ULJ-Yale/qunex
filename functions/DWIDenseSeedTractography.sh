@@ -56,20 +56,20 @@ usage() {
     echo "This function implements reduction on the DWI dense connectomes using a given 'seed' structure (e.g. thalamus)."
     echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
     echo ""
-    echo "INPUTS: <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
+    echo "INPUTS: <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
     echo ""
     echo ""
     echo "OUTPUTS: "
-    echo "         <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>.dconn.nii"
+    echo "         <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>.dconn.nii"
     echo "         --> Dense connectivity seed tractography file"
     echo ""
-    echo "         <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>_Avg.dscalar.nii"
+    echo "         <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>_Avg.dscalar.nii"
     echo "         --> Dense scalar seed tractography file"
     echo ""
     echo "-- REQUIRED PARMETERS:"
     echo ""
-    echo "     --sessionsfolder=<folder_with_subjects>     Path to study folder that contains subjects"
-    echo "     --subjects=<list_of_cases>                  List of subjects to run"
+    echo "     --sessionsfolder=<folder_with_sessions>     Path to study folder that contains sessions"
+    echo "     --sessions=<list_of_cases>                  List of sessions to run"
     echo "     --matrixversion=<matrix_version_value>      Matrix solution verion to run parcellation on; e.g. 1 or 3"
     echo "     --seedfile=<file_for_seed_reduction>        Specify the absolute path of the seed file you want to use as a seed for dconn reduction (e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz )"
     echo "                                                 Note: If you specify --seedfile='gbc' then the function computes an average across all streamlines from every greyordinate to all other greyordinates."
@@ -77,7 +77,7 @@ usage() {
     echo ""
     echo "-- OPTIONAL PARMETERS:"
     echo "" 
-    echo "     --overwrite=<clean_prior_run>               Delete prior run for a given subject"
+    echo "     --overwrite=<clean_prior_run>               Delete prior run for a given session"
     echo "     --waytotal=<none,standard,log>   Use the waytotal normalized or log-transformed waytotal normalized version of the DWI dense connectome. Default: [none]"
     echo ""
     echo "-- EXAMPLES:"
@@ -96,10 +96,10 @@ usage() {
     echo ""
     echo ""
     echo ""
-    echo "qunex DWIDenseSeedTractography --sessionsfolder='<folder_with_subjects>' \ "
-    echo "--subject='<case_id>' \ "
+    echo "qunex DWIDenseSeedTractography --sessionsfolder='<folder_with_sessions>' \ "
+    echo "--session='<case_id>' \ "
     echo "--matrixversion='3' \ "
-    echo "--seedfile='<folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
+    echo "--seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
     echo "--overwrite='no' \ "
     echo "--outname='THALAMUS'"
     echo ""
@@ -135,7 +135,7 @@ fi
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
-    # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome/subjects
+    # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome/sessions
     # Session      # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
     # SeedFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
@@ -187,7 +187,7 @@ while [ ${index} -lt ${numArgs} ]; do
             SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subjects=*)
+        --sessions=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -223,13 +223,13 @@ done
 # -- Check required parameters
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects-folder-path> not specified>"
+    reho "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <subject-id> not specified>"
+    reho "ERROR: <session-id> not specified>"
     echo ""
     exit 1
 fi

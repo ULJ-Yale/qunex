@@ -61,11 +61,11 @@ usage() {
      echo "It explicitly assumes the that eddy has been run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
      echo "For full documentation of the EDDY QC please examine the README file."
      echo ""
-     echo "   <folder_with_subjects>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
+     echo "   <folder_with_sessions>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "--sessionsfolder=<folder_with_subjects>    Path to study folder that contains subjects"
+     echo "--sessionsfolder=<folder_with_sessions>    Path to study folder that contains sessions"
      echo "--session=<session_id>                     Session ID to run EDDY QC on"
      echo "--eddybase=<eddy_input_base_name>          This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
      echo "--eddyidx=<eddy_index_file>                EDDY index file"
@@ -81,8 +81,8 @@ usage() {
      echo ""
      echo "-- OPTIONAL PARMETERS:"
      echo "" 
-     echo "   --overwrite=<clean_prior_run>   Delete prior run for a given subject"
-     echo "   --eddypath=<eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs"
+     echo "   --overwrite=<clean_prior_run>   Delete prior run for a given session"
+     echo "   --eddypath=<eddy_folder_relative_to_session_folder>   Specify the relative path of the eddy folder you want to use for inputs"
      echo "                                                           --> Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
      echo "   --bvecsfile=<bvecs_file>                              If specified, the tool will create a bvals_no_outliers.txt "
      echo "                                                         & a bvecs_no_outliers.txt file that contain the bvals and bvecs of"
@@ -92,13 +92,13 @@ usage() {
      echo ""
      echo "   --groupvar=<extra_grouping_variable>   Text file containing extra grouping variable"
      echo "   --outputdir=<name_of_cleaned_eddy_output>   Output directory - default = '<eddyBase>.qc' "
-     echo "   --update=<setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports "
+     echo "   --update=<setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single session qc reports "
      echo ""
      echo ""
      echo "-- EXAMPLE:"
      echo ""
-     echo "DWIEddyQC.sh --sessionsfolder='<path_to_study_folder_with_subject_directories>' \ "
-     echo "--subject='<subj_id>' \ "
+     echo "DWIEddyQC.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \ "
+     echo "--session='<session_id>' \ "
      echo "--eddybase='<eddy_base_name>' \ "
      echo "--report='individual'"
      echo "--bvalsfile='<bvals_file>' \ "
@@ -110,13 +110,13 @@ usage() {
      echo ""	
      echo "-- OUTPUTS FOR INDIVIDUAL RUN: "
      echo "" 
-     echo " - qc.pdf: single subject QC report "
-     echo " - qc.json: single subject QC and data info"
+     echo " - qc.pdf: single session QC report "
+     echo " - qc.json: single session QC and data info"
      echo " - vols_no_outliers.txt: text file that contains the list of the non-outlier volumes (based on eddy residuals)"
      echo ""
      echo "-- OUTPUTS FOR GROUP RUN: "
      echo "" 
-     echo " - group_qc.pdf: single subject QC report "
+     echo " - group_qc.pdf: single session QC report "
      echo " - group_qc.db: database"  
      echo ""
      exit 0
@@ -214,7 +214,7 @@ while [ ${index} -lt ${numArgs} ]; do
             SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
+        --session=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -282,7 +282,7 @@ done
 # -- Check required parameters
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects-folder-path> not specified>"
+    reho "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
@@ -296,7 +296,7 @@ if [ ${Report} == "individual" ]; then
 	# -- Check each individual parameter
 	if [ -z ${CASE} ]; then
 		usage
-		reho "ERROR: <subject-id> not specified>"
+		reho "ERROR: <session-id> not specified>"
 		echo ""
 		exit 1
 	fi
@@ -378,7 +378,7 @@ echo "   Eddy QC Output Path: ${OutputDir}"
 if [ ${Report} == "group" ]; then
 echo "   List: ${List}"
 echo "   Grouping Variable: ${GroupVar}"
-echo "   Update single subjects: ${Update}"
+echo "   Update single sessions: ${Update}"
 echo ""
 fi
 # -- Report individual parameters

@@ -105,8 +105,8 @@ usage() {
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "     --sessionsfolder=<folder_with_subjects>           Path to study folder that contains subjects"
-     echo "     --subjects=<subject_ids>                          List of subjects to run"
+     echo "     --sessionsfolder=<folder_with_sessions>           Path to study folder that contains sessions"
+     echo "     --sessions=<session_ids>                          List of sessions to run"
      echo "     --bolds=<bolds_to_compute_fixica_and_postfix>     Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
      echo ""
      echo "-- OPTIONAL ICA FIX PARMETERS:"
@@ -136,8 +136,8 @@ usage() {
      echo ""     
      echo ""
      echo "  ${TOOLS}/${QUNEXREPO}/connector/functions/ICAFIXhcp.sh \ "
-     echo "    --sessionsfolder='<folder_with_subjects>' \ "
-     echo "    --subjects='<subject_ids>' \ "
+     echo "    --sessionsfolder='<folder_with_sessions>' \ "
+     echo "    --sessions='<session_ids>' \ "
      echo "    --bolds='<bolds_to_compute_fixica_and_postfix>' \ "
      echo "    --overwrite='<clean_prior_run>' \ "
      echo "    --icafixfunction='<select_which_function_to_run>' \ "
@@ -184,7 +184,7 @@ unset ICAFIXFunction
 
 # -- Parse arguments
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
-CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
 ICAFIXFunction=`opts_GetOpt "--icafixfunction" $@`
 HPFilter=`opts_GetOpt "--hpfilter" $@`
@@ -203,7 +203,7 @@ BOLDDATA="${BOLDS}"
 
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <folder_with_subjects> not specified"
+    reho "ERROR: <folder_with_sessions> not specified"
     echo ""
     exit 1
 fi
@@ -215,7 +215,7 @@ fi
 
 if [ -z ${CASES} ]; then
     usage
-    reho "ERROR: <subject_ids> not specified"
+    reho "ERROR: <session_ids> not specified"
     exit 1
 fi
 
@@ -288,7 +288,7 @@ for CASE in $CASES; do
             OutputLogFIX="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
             # -- Echo ICA FIX run for each BOLD
             echo "" 2>&1 | tee -a ${OutputLogFIX}
-            geho "   --- ICAFIX for subject $CASE and BOLD run $BOLD..." 2>&1 | tee -a ${OutputLogFIX}
+            geho "   --- ICAFIX for session $CASE and BOLD run $BOLD..." 2>&1 | tee -a ${OutputLogFIX}
             echo "" 2>&1 | tee -a ${OutputLogFIX}
             CheckBOLD="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas_hp2000_clean.dtseries.nii"
             # -- Overwrite existing run
@@ -370,7 +370,7 @@ for CASE in $CASES ; do
         geho "  --- Post FIX for $CASE and $BOLD..." 2>&1 | tee -a ${OutputLogPostFIX}
         echo "" 2>&1 | tee -a ${OutputLogPostFIX}
         # -- Define the command
-        RunCommand="${HCPPIPEDIR}/PostFix/PostFix.sh --study-folder=${StudyFolder} --subject=${CASE} --fmri-name=${BOLD} --high-pass=${HPFilter} --template-scene-dual-screen=${DualScene} --template-scene-single-screen=${SingleScene} --reuse-high-pass=${ReUseHighPass} --matlab-run-mode=${MatlabMode} "
+        RunCommand="${HCPPIPEDIR}/PostFix/PostFix.sh --study-folder=${StudyFolder} --session=${CASE} --fmri-name=${BOLD} --high-pass=${HPFilter} --template-scene-dual-screen=${DualScene} --template-scene-single-screen=${SingleScene} --reuse-high-pass=${ReUseHighPass} --matlab-run-mode=${MatlabMode} "
         # -- Echo the command
         echo "Running the following POSTFIX command: "; echo ""
         echo "---------------------------"
@@ -439,7 +439,7 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 #     3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
 #     ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
 #     if [ $(echo " $ImgMean > 1000" | bc) -eq 1 ]; then
-#     echo "1st frame mean=$ImgMean Mean inserted OK for subject $CASE and bold# $BOLD. Skipping to next..."
+#     echo "1st frame mean=$ImgMean Mean inserted OK for session $CASE and bold# $BOLD. Skipping to next..."
 #         else
 #         # -- Next check if the boldFIXICA file has the mean inserted twice by accident
 #         if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
@@ -465,7 +465,7 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 #     #3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
 #     #ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
 #     #if [ $(echo " $ImgMean < 1000" | bc) -eq 1 ]; then
-#     #echo "1st frame mean=$ImgMean Mean removed OK for subject $CASE and bold# $BOLD. Skipping to next..."
+#     #echo "1st frame mean=$ImgMean Mean removed OK for session $CASE and bold# $BOLD. Skipping to next..."
 #     #    else
 #         # Next check if the boldFIXICA file has the mean inserted twice by accident
 #     #    if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
@@ -509,7 +509,7 @@ if [[ ${ICAFIXFail} == "True" ]]; then
    echo ""
 else
    echo ""
-   geho " ===> ICA FIX ran OK for the following subjects: ${CASES}"
+   geho " ===> ICA FIX ran OK for the following sessions: ${CASES}"
    echo ""
    geho "------------------------- Successful completion of work --------------------------------"
    echo ""

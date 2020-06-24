@@ -67,8 +67,8 @@ echo "   --synclogfolder=<path_to_log_folder>        Set log folder"
 echo ""
 echo "  * Optional Inputs:"
 echo ""
-echo "   --subjects=<lists_specific_subjects>      Set input subjects for Sync. "
-echo "                                             If set, then '--syncfolders' path has to contain subjects' folders."
+echo "   --sessions=<lists_specific_sessions>      Set input sessions for Sync. "
+echo "                                             If set, then '--syncfolders' path has to contain sessions' folders."
 echo ""
 echo " Written by Alan Anticevic"
 echo ""
@@ -149,7 +149,7 @@ else
 	# -- Parse inputs
 	if [[ "$setflag" =~ .*-.* ]]; then
 		SyncFolders=`opts_GetOpt "${setflag}syncfolders" "$@" | sed 's/,/ /g;s/|/ /g'`; StudyFolders=`echo "$StudyFolders" | sed 's/,/ /g;s/|/ /g'` # list of inputs; removing comma or pipes
-		CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$StudyFolders" | sed 's/,/ /g;s/|/ /g'` # list of inputs; removing comma or pipes
+		CASES=`opts_GetOpt "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$StudyFolders" | sed 's/,/ /g;s/|/ /g'` # list of inputs; removing comma or pipes
 		SyncServer=`opts_GetOpt "${setflag}syncserver" $@` # server to Sync to
 		SyncDestination=`opts_GetOpt "${setflag}syncdestination" $@` # server to Sync to
 		SyncLogFolder=`opts_GetOpt "${setflag}synclogfolder" $@`       # Log folder
@@ -157,7 +157,7 @@ else
 		if [ -z "$SyncServer" ]; then reho "ERROR -- Sync server flag missing"; show_usage; exit 0; fi
 		if [ -z "$SyncDestination" ]; then reho "ERROR -- Sync server path flag missing"; show_usage; exit 0; fi
 		if [ -z "$SyncLogFolder" ]; then reho "ERROR -- Log folder flag missing"; show_usage; exit 0; fi
-		if [ -z "$CASES" ]; then reho "NOTE -- Individual cases flag missing. Not working on specific subjects."; fi
+		if [ -z "$CASES" ]; then reho "NOTE -- Individual cases flag missing. Not working on specific sessions."; fi
 	fi
 fi
 

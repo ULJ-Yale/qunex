@@ -40,7 +40,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP probtrackxgpudense function
-# * These data are stored in: "$SessionsFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
+# * These data are stored in: "$SessionsFolder/sessions/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
 #
 #~ND~END~
 
@@ -54,20 +54,20 @@ usage() {
      echo " (e.g. Glasser parcellation with subcortical labels included)."
      echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
      echo ""
-     echo " <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
+     echo " <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
      echo ""
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "     --sessionsfolder=<folder_with_subjects>             Path to study data folder"
-     echo "     --subject=<list_of_cases>                           List of subjects to run"
+     echo "     --sessionsfolder=<folder_with_sessions>             Path to study data folder"
+     echo "     --session=<list_of_cases>                           List of sessions to run"
      echo "     --matrixversion=<matrix_version_value>              Matrix solution verion to run parcellation on; e.g. 1 or 3"
      echo "     --parcellationfile=<file_for_parcellation>          Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
      echo "     --outname=<name_of_output_pconn_file>               Specify the suffix output name of the pconn file"
      echo ""
      echo "-- OPTIONAL PARMETERS:"
      echo "" 
-     echo "     --overwrite=<clean_prior_run>                       Delete prior run for a given subject"
+     echo "     --overwrite=<clean_prior_run>                       Delete prior run for a given session"
      echo "     --waytotal=<use_waytotal_normalized_data>            Use the waytotal normalized version of the DWI dense connectome. Default: [none]"
      echo "                                                     none: without waytotal normalization [Default]" 
      echo "                                                     standard: standard waytotal normalized"
@@ -88,8 +88,8 @@ usage() {
      echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo ""
      echo ""
-     echo "qunex DWIDenseParcellation --sessionsfolder='<folder_with_subjects>' \ "
-     echo "--subjects='<comma_separarated_list_of_cases>' \ "
+     echo "qunex DWIDenseParcellation --sessionsfolder='<folder_with_sessions>' \ "
+     echo "--sessions='<comma_separarated_list_of_cases>' \ "
      echo "--matrixversion='3' \ "
      echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
      echo "--overwrite='no' \ "
@@ -97,8 +97,8 @@ usage() {
      echo ""
      echo "-- Example with flagged parameters for submission to the scheduler:"
      echo ""
-     echo "qunex DWIDenseParcellation --sessionsfolder='<folder_with_subjects>' \ "
-     echo "--subjects='<comma_separarated_list_of_cases>' \ "
+     echo "qunex DWIDenseParcellation --sessionsfolder='<folder_with_sessions>' \ "
+     echo "--sessions='<comma_separarated_list_of_cases>' \ "
      echo "--matrixversion='3' \ "
      echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
      echo "--overwrite='no' \ "
@@ -183,7 +183,7 @@ while [ ${index} -lt ${numArgs} ]; do
             SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
+        --session=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -219,13 +219,13 @@ done
 # -- Check required parameters
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects-folder-path> not specified>"
+    reho "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <subject-id> not specified>"
+    reho "ERROR: <session-id> not specified>"
     echo ""
     exit 1
 fi

@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files: $SessionsFolder/subjects/$CASE/hcp/$CASE/T1w/Diffusion
+# * The necessary input files: $SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion
 #
 #~ND~END~
 
@@ -58,13 +58,13 @@ echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
 echo "--function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
-echo "--sessionsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>            List of subjects to run"
+echo "--sessionsfolder=<folder_with_sessions>               Path to study folder that contains sessions"
+echo "--sessions=<comma_separated_list_of_cases>            List of sessions to run"
 echo "--fibers=<number_of_fibers>                           Number of fibres per voxel, default 3"
 echo "--model=<deconvolution_model>                         Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities <default>, 3: with zeppelins"
 echo "--burnin=<burnin_period_value>                        Burnin period, default 1000"
 echo "--rician=<set_rician_value>                           <yes> or <no>. Default is yes"
-echo "--overwrite=<clean_prior_run>                         Delete prior run for a given subject"
+echo "--overwrite=<clean_prior_run>                         Delete prior run for a given session"
 echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                        e.g. for SLURM the string would look like this: "
 echo "                                                         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
@@ -87,9 +87,9 @@ echo ""
 echo ""     
 echo ""
 echo ""
-echo "qunex --sessionsfolder='<path_to_study_subjects_folder>' \ "
+echo "qunex --sessionsfolder='<path_to_study_sessions_folder>' \ "
 echo "--function='FSLBedpostxGPU' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "--sessions='<comma_separarated_list_of_cases>' \ "
 echo "--fibers='3' \ "
 echo "--burnin='3000' \ "
 echo "--model='3' \ "
@@ -163,7 +163,7 @@ Burnin=`opts_GetOpt "--burnin" $@`
 Jumps=`opts_GetOpt "--jumps" $@`
 Rician=`opts_GetOpt "--rician" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
-CASE=`opts_GetOpt "--subject" $@`
+CASE=`opts_GetOpt "--session" $@`
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 
 # -- Check required parameters

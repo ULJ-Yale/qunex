@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files are subject-specific session.txt param files
+# * The necessary input files are session-specific session.txt param files
 #
 #~ND~END~
 
@@ -50,15 +50,15 @@ usage() {
      echo ""
      echo "-- DESCRIPTION for SessionsBatch"
      echo ""
-     echo "This function generates a batch file for processing for a given subject."
+     echo "This function generates a batch file for processing for a given session."
      echo "It is designed to be invoked directly via Qu|Nex call:"
      echo ""
      echo "   > qunex createLists"
      echo ""
      echo "This script accepts the following mandatory paramaters:"
      echo ""
-     echo "   --sessionsfolder=<folder_with_subjects>        Path to study folder that contains subjects"
-     echo "   --subjects=<comma_separated_list_of_cases>  Session to run"
+     echo "   --sessionsfolder=<folder_with_sessions>        Path to study folder that contains sessions"
+     echo "   --sessions=<comma_separated_list_of_cases>  Session to run"
      echo "   --outname=<output_name_of_the_batch>        Output name of the batch file to generate. "
      echo "   --outpath=<absolute_path_to_list_folder>    Path for the batch file"
      echo ""
@@ -106,7 +106,7 @@ local arguments=($@)
 
 # -- Initialize global variables
 unset SessionsFolder # --sessionsfolder=
-unset CASE           # --subjects=
+unset CASE           # --sessions=
 unset ListPath       # --outpath=
 unset ListName       # --outname=
 unset Overwrite      # --outname=
@@ -130,7 +130,7 @@ while [ ${index} -lt ${numArgs} ]; do
                 SessionsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --subjects=*)
+            --sessions=*)
                 CASE=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
@@ -159,12 +159,12 @@ echo ""
 # -- Check general required parameters
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <subject_id> not specified."; echo ""
+    reho "ERROR: <session_id> not specified."; echo ""
     exit 1
 fi
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects_folder> not specified."; echo ""
+    reho "ERROR: <sessions_folder> not specified."; echo ""
     exit 1
 fi
 if [ -z ${Overwrite} ]; then
@@ -235,7 +235,7 @@ if (test ! -f ${SessionsFolder}/${CASE}/session_hcp.txt); then
 		# -- Report error and exit
 		echo ""
 		reho "${SessionsFolder}/${CASE}/session_hcp.txt and session.txt is missing."
-		reho "Make sure you have sorted the dicoms and setup subject-specific files."
+		reho "Make sure you have sorted the dicoms and setup session-specific files."
 		reho "Note: These files are used to populate the batch.${ListName}.list"
 		echo ""
 		exit 1
