@@ -26,12 +26,12 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.13
+Qu|Nex suite version: 0.51.15
 
 Submodules:
 
 * connector: 0.50.5
-* library: 0.50.9
+* library: 0.50.11
 * nitools: 0.50.1
 * niutilities: 0.51.10
 
@@ -59,6 +59,8 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.51.15 [library] Updated ColeAnticevicNetPartition with files from most recent release (v1.1.4) of the parcellation.
+* 0.51.14 [library] Updated ColeAnticevicNetPartition with files from most recent release of the parcellation.
 * 0.51.13 [connector, library] Splash screen update, added gpu_binaries and montage templates.
 * 0.51.12 [niutilities] External command calls are now printed in stdout and at the beginning of comlogs.
 * 0.51.11 [niutilities] Consistent jobname in scheduling between qunex and qunexContainer.
