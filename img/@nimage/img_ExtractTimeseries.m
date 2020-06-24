@@ -1,6 +1,6 @@
-function [simg] = img_ExtractTimeseries(obj, exmat, method)
+function [simg] = img_ExtractTimeseries(obj, exmat, method, eind)
 
-%function [simg] = img_ExtractTimeseries(obj, exmat, method)
+%function [simg] = img_ExtractTimeseries(obj, exmat, method, eind)
 %
 %   Creates a new timeseries based on the specified extraction matrix and
 %   extraction method.
@@ -18,15 +18,24 @@ function [simg] = img_ExtractTimeseries(obj, exmat, method)
 %             -> max      ... use the maximum value across frames of each identified event
 %             -> median   ... use the median value across frames of each identified event
 %             ['all']  
+%   eind    - and optional vector with event indeces for each row for the extraction matrix
 %
 %   RESULT
 %   ======
 %
 %   simg   - a nimage object with the new timeseries
+%            simg.events field will list for each frame the index of the row from which the 
+%                        frame was extracted. If eind was provided, that information will be
+%                        used instead of the row index. 
 %
 %   ---
 %   Written by Grega Repovš 2020-02-01.
+%
+%   Changelog
+%   2020-04-24 Grega Repovš
+%              - Row / event indeces are now stored in the event field
 
+if nargin < 4 eind = []; end
 if nargin < 3 || isempty(method), method = 'all'; end
 if nargin < 2 error('ERROR: An extraction matrix needs to be specified!'); end
 
@@ -40,26 +49,42 @@ if size(exmat, 2) ~= obj.frames
    error('ERROR: The extraction matrix length [%d] does not match the number of image frames [%d]!', size(exmat, 2), obj.frames); 
 end
 
+% --- prepare event indeces
+
+nevents = size(exmat, 1);
+
+if isempty(eid)
+    eind = [1:nevents];
+end
+
 % --- run the extraction
 
+exmat = exmat == 1;
+
 if strcmp(method, 'all')
-    exmat = sum(exmat) > 0;
-    simg = obj.sliceframes(exmat);
+    nframes = sum(exmat, 2);
+    simg = obj.zeroframes(nframes);
+    simg.events = zeros(1,nframes);
+    fend = 0;
 else
-    nevents = size(exmat, 1);
+    simg.events = eind(:)';
     simg = obj.zeroframes(nevents);
-    exmat = exmat == 1;
-    
-    for n = 1:nevents
-        switch method
-            case 'mean'
-                simg.data(:,n) = mean(obj.data(:,exmat(n,:)), 2);
-            case 'min'
-                simg.data(:,n) = min(obj.data(:,exmat(n,:)), [], 2);
-            case 'max'
-                simg.data(:,n) = max(obj.data(:,exmat(n,:)), [], 2);
-            case 'median'
-                simg.data(:,n) = median(obj.data(:,exmat(n,:)), 2);
-        end
+end
+
+for n = 1:nevents
+    switch method
+        case 'mean'
+            simg.data(:,n) = mean(obj.data(:,exmat(n,:)), 2);
+        case 'min'
+            simg.data(:,n) = min(obj.data(:,exmat(n,:)), [], 2);
+        case 'max'
+            simg.data(:,n) = max(obj.data(:,exmat(n,:)), [], 2);
+        case 'median'
+            simg.data(:,n) = median(obj.data(:,exmat(n,:)), 2);
+        case 'all'
+            fstart = fend + 1;
+            fend = fend + nframes(n);
+            simg.events(fstart:fend) = eind(n):
+            simg.data(:,fstart:fend) = obj.data(:,exmat(n,:));
     end
 end

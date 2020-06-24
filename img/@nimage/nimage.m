@@ -8,9 +8,10 @@ classdef nimage
 %  methods for extracting data and manipulating image, and
 %  methods for performing basic math with the images.
 %
-%  Methods:
+%  Methods
+%  -------
 %
-%  nimage           - constructor / loader
+%  nimage             - constructor / loader
 %  img_readimage      - reads an image file
 %  img_saveimage      - saves an image file
 %  img_saveimageframe - saves only the specified frame(s) of an image file
@@ -22,6 +23,47 @@ classdef nimage
 %  correlize          - standardizes and divides by sqrt(N-1) to prepare for efficient correlation computation
 %
 %  img_ComputeCorrelations - computes correlations with the provided data matrix
+%
+%  Properties
+%  ----------
+%  
+%  data          - [grayordinates, frames] or [x, y, z, frames] matrix of imaging data
+%  imageformat   - The image format of the source file: 4dfp, NIfTI, CIFTI, CIFTI-1, CIFTI-2
+%  mformat       - The number format of the source file: l - littleendian, b - bigendian
+%  hdrnifti      - The structure with the NIfTI header
+%  hdr4dfp       - The structure with the 4dfp header
+%  dim           - The x, y, z dimensions or grayordinates dimensions of the original image
+%  voxels        - The number of voxels / grayordinates in a single frame
+%  vsizes        - The size of voxels in x, y, z direction
+%  TR            - TR of the image
+%  frames        - Number of frames in the image
+%  runframes     - A vector with the number of frames from each run in the order the images were concatenated
+%  filename      - The original image filename
+%  filetype      - The type of the CIFTI file: .dtseries | .ptseries | .pconn | .pscalar | .dscalar 
+%  rootfilename  - Filename without the file type extension
+%  mask          - Boolean vector specifying the spatial voxel / grayordinate mask used to mask the data
+%  masked        - Has the data been spatially masked: true | false
+%  empty         - Is the image data empty: true | false
+%  standardized  - Has the timeseries been converted to z-scores: true / false
+%  correlized    - Has the standardized values been deleted by sqrt(obj.frames -1) to allow easy computation of correlations: true | false
+%  info          - Information on what operations were completed on the image
+%  roi           - If the image is an ROI mask, a structure with the information about the ROI
+%  glm           - If the image contains results of GLM, the structure with the GLM information
+%  xml           - For CIFTI images, the content of the xml metadata
+%  meta          - A structure that describes metadata
+%  metadata      - uint8 encoded metadata 
+%  list          - S structure with list information
+%  events        - A [2, frames] vector. The first row list index of the event from which the frame originates, the second row lists the frame number from the event.  
+%  use           - A row vector specifying which frame of the timeseries to use (1) and which not (0)
+%  mov           - A [frame, parameter] matrix of movement parameters
+%  mov_hdr       - A cell array providing header information for mov matrix
+%  fstats        - A [frame, statistics] matrix of per frame statistics
+%  fstats_hdr    - A cell array providing header information for fstats matrix
+%  scrub         - A [frame, parameter] matrix of scrubbing parameters
+%  scrub_hdr     - A cell array providing header information for scrub matrix
+%  nuisance      - A [frame, signal] matrix of nuisance signals
+%  nuisance_hdr  - A cell array providing header information for nuisance matrix
+%  cifti         - A structure providing CIFTI information
 %
 %  ---
 %  Written by Grega Repovs, 2009-10-04
@@ -38,12 +80,15 @@ classdef nimage
 %  2018-03-17 Grega Repovs
 %           - nimage now supports creation of dtseries and dscalar standard CIFTI images
 %             from numeric data
+%  2020-04-24 Grega Repovs
+%           - added events field
+%           - added nimage field specifications
 %
 
     properties
         data
         imageformat
-        mformat
+        mformat 
         hdrnifti        = [];
         hdr4dfp         = [];
         dim
@@ -67,6 +112,7 @@ classdef nimage
         meta            = [];
         metadata        = [];
         list            = [];
+        events          = [];
 
         % ---> various statistical data
 
@@ -658,6 +704,10 @@ classdef nimage
                 obj.list     = [];
             end
 
+            % --> combine events data
+
+            obj.events = [obj.events add.events];
+
             % --> combine maps data
             if isfield(obj.cifti, 'maps') && ~isempty(obj.cifti.maps)
                 if isfield(add.cifti, 'maps') && ~isempty(add.cifti.maps)
@@ -814,6 +864,10 @@ classdef nimage
                         obj.list.(l) = obj.list.(l)(fmask);
                     end
                 end
+
+                % ---> mask events data
+
+                obj.events = obj.events(:, fmask);
 
                 % ---> mask glm data
 
