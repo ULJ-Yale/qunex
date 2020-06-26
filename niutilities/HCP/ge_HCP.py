@@ -17,7 +17,7 @@ import time
 import shutil
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
-import niutilities.g_utilities as gu
+#import niutilities.g_utilities as gu
 import re
 
 def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
@@ -199,7 +199,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     verbose   = verbose.lower() == 'yes'
 
     # -- export prep
-    sessionsfolder, mapto, mapexclude = gu.exportPrep(commandName="exportHCP", sessionsfolder, mapto, mapaction, mapexclude)
+    sessionsfolder, mapto, mapexclude = exportPrep("exportHCP", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
     sessions, gopts = gc.getSessionList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)

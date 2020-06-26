@@ -37,9 +37,9 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-from gp_core import *
-from g_img import *
-from g_core import checkFiles
+from niutilities.gp_core import *
+from niutilities.g_img import *
+from niutilities.g_core import checkFiles
 import niutilities.g_exceptions as ge
 import os
 import re

@@ -828,7 +828,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
         else:
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
-def createSessionFile(command, sfolder, session, subject)
+def createSessionFile(command, sfolder, session, subject):
     """
     Creates the generic, non pipeline specific, session file.
 

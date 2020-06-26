@@ -84,12 +84,12 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
 
     # default folders file
     if folders is None:
-        folders = os.path.join(niuTemplateFolder, "templates", "study_folders_default.txt")
+        folders = os.path.join(niuTemplateFolder, "study_folders_default.txt")
     else:
         # if not absolute path
         if not os.path.exists(folders):
             # check if in templates
-            folders = os.path.join(niuTemplateFolder, "templates", folders)
+            folders = os.path.join(niuTemplateFolder, folders)
             if not os.path.exists(folders):
                 # fail
                 raise ge.CommandFailed("manageStudy", "Folder structure file [%s] not found!" % folders, "Please check the value of the folders parameter.")
@@ -154,7 +154,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
         # --> mapping example
         # get all files that match the pattern
         examplesFolder = os.path.join(niuTemplateFolder, 'templates')
-        mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt"))
+        mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt")
         for srcFile in mappingExamples:
             try:
                 # extract filename only
@@ -241,7 +241,7 @@ def createStudyFolders(folders_spec):
     # variable for storing the structure
     folder_structure = []
 
-    with open('study_folders_default.txt') as f:
+    with open(folders_spec) as f:
         # track current structure
         current_structure = []
         current_indents = []
@@ -409,7 +409,7 @@ def checkStudy(startfolder=".", folders=None):
         testfolder = os.path.dirname(testfolder)
 
     if studyfolder:
-        manageStudy(studyfolder=studyfolder, action="check", folders=folders, pipeline=None)
+        manageStudy(studyfolder=studyfolder, action="check", folders=folders)
 
     return studyfolder  
 
@@ -530,8 +530,9 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
     # get sfiles from sourcefiles parameter
     if sourcefiles is None:
-        sfiles = "session_hcp.txt"
-    else
+        sfiles = []
+        sfiles.append("session_hcp.txt")
+    else:
         sfiles = sourcefiles.split(",")
 
     # --- prepare target file name and folder
@@ -549,15 +550,15 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
+                raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
         elif overwrite == 'yes':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
+            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
             print "         Overwriting exisiting file."
         elif overwrite == 'append':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
+            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
             print "         Appending to exisiting file."
         elif overwrite == 'no':
-            raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
+            raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
     else:
         overwrite = 'yes'
 
@@ -566,9 +567,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
         print "---> Creating target folder %s" % (targetFolder)
         os.makedirs(targetFolder)
 
-
     try:
-
         # --- open target file
         preexist = os.path.exists(targetfile)
 
@@ -636,10 +635,11 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
         else:
             files = []
             for sfile in sfiles:
-                files.append(glob.glob(os.path.join(sessionsfolder, '*', sfile)))
+                globres = glob.glob(os.path.join(sessionsfolder, '*', sfile))
+                for gr in globres:
+                    files.append(gr)
 
         # --- loop trough session files
-
         files.sort()
         for file in files:
             sessionid = os.path.basename(os.path.dirname(file))

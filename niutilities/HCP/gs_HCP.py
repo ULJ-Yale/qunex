@@ -20,7 +20,7 @@ import niutilities
 import collections
 import niutilities.g_exceptions as ge
 import os.path
-import g_core
+import niutilities.g_core
 
 def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcp_suffix=""):
     '''

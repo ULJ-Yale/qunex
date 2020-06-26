@@ -125,7 +125,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
     # --- load BIDS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    bidsStructure = os.path.join(niuTemplateFolder, "templates", "importBIDS.txt")
+    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
 
     if not os.path.exists(bidsStructure):
         raise ge.CommandFailed("mapToQUNEXBids", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
@@ -499,7 +499,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     # --- load BIDS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    bidsStructure = os.path.join(niuTemplateFolder, "templates", "importBIDS.txt")
+    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
 
     if not os.path.exists(bidsStructure):
         raise ge.CommandFailed("importBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
@@ -901,7 +901,7 @@ def processBIDS(bfolder):
     # --- load BIDS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    bidsStructure = os.path.join(niuTemplateFolder, "templates", "importBIDS.txt")
+    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
 
     if not os.path.exists(bidsStructure):
         raise ge.CommandFailed("processBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")

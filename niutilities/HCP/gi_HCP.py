@@ -559,7 +559,7 @@ def processHCPLS(sessionfolder, filesort):
     # --- load HCPLS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    hcplsStructure = os.path.join(niuTemplateFolder, "templates", "importHCP.txt")
+    hcplsStructure = os.path.join(niuTemplateFolder, "importHCP.txt")
 
     if not os.path.exists(hcplsStructure):
         raise ge.CommandFailed("processHCPLS", "No HCPLS structure file present!", "There is no HCPLS structure file %s" % (hcplsStructure), "Please check your Qu|Nex installation")

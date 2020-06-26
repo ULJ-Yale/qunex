@@ -13,7 +13,6 @@ import g_4dfp
 import g_NIfTI
 import g_img
 import g_gimg
-import g_HCP
 import g_utilities
 import g_fidl
 import g_palm
@@ -21,7 +20,7 @@ import g_scheduler
 import g_dicomdeid
 
 # pipeline imports
-from HCP import gi_HCP, gs_HCP, ge_HCP
+from HCP import gi_HCP, gs_HCP, gp_HCP, ge_HCP
 
 # all command mappings
 commands = {'listDicom'            : {'com': g_dicom.listDicom,              'args': ('folder', )},

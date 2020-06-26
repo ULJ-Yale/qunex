@@ -1229,8 +1229,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
         info['niinum'] = niinum
 
-        logs.append("%(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
-        reps.append("---> %(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
+        logs.append("%(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s" % (info))
+        reps.append("---> %(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s" % (info))
 
         niiid = str(niinum)
 
@@ -2125,7 +2125,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
         --sessionsfolder="<path_to_studyfolder>/sessions" \
         --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
         --sessions="AP.*,HQ.*" \
-        --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_name:2|session_name:3" \
+        --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \
         --check="any"
     ```
 

@@ -55,6 +55,102 @@ logname = ""
 
 
 # =======================================================================
+#                                                       SUPPORT FUNCTIONS
+
+def writelog(item):
+    '''
+    writelog(item)
+    Splits the passed item into two parts and appends the first to the
+    global log list, and the second to the global stati list. It also
+    prints the contents to the file specified in the global logname
+    variable.
+    '''
+    global logname
+    global log
+    global stati
+    r, status = procResponse(item)
+    log.append(r)
+    stati.append(status)
+    f = open(logname, "a")
+    print >> f, r
+    f.close()
+
+
+def procResponse(r):
+    '''
+    procResponse(r)
+    It processes the response returned from the utilities functions
+    called. It splits it into the report string and status tuple. If
+    no status tupple is present, it adds an "Unknown" tupple. If the 
+    third element is missing, it assumes it ran ok and sets it to
+    0.
+    '''
+    if type(r) is tuple:
+        if len(r) == 2:
+            if len(r[1]) == 2:
+                return (r[0], (r[1][0], r[1][1], None))
+            elif len(r[1]) == 3:
+                return r
+            else:
+                return("Unknown", ("Unknown", "Unknown", None))
+        else:
+            return("Unknown", ("Unknown", "Unknown", None))
+    else:
+        return (r, ("Unknown", "Unknown", None))
+
+
+def torf(s):
+    '''
+    torf(s)
+    First checks if string is "None", 'none', or "NONE" and returns
+    None, then Checks if s is any of the possible true strings: "True", "true",
+    or "TRUE" and retuns a boolean result of the check.
+    '''
+    if s in ['None', 'none', 'NONE']:
+        return None
+    else:
+        return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
+
+
+def isNone(s):
+    '''
+    isNone(s)
+    Check if the string is "None", "none" or "NONE" and returns None, otherwise
+    returns the passed string.
+    '''
+    if s in ['None', 'none', 'NONE', '']:
+        return None
+    else:
+        return s
+
+
+def plist(s):
+    '''
+    plist(s)
+    Processes the string, spliting it by the pipe "|" symbol, trimming
+    any whitespace caracters form start or end of each resulting
+    substring, and retuns an array of substrings of length more than 0.
+    '''
+    s = s.split('|')
+    s = [e.strip() for e in s]
+    s = [e for e in s if len(e) > 0]
+    return s
+
+
+def updateOptions(session, options):
+    '''
+    updateOptions(session, options)
+    Returns an updated copy of options dictionary where all keys from 
+    sessions that started with an underscore '_' are mapped into options.
+    '''
+    soptions = dict(options)
+    for key, value in session.iteritems():
+        if key.startswith('_'):
+            soptions[key[1:]] = value
+    return soptions
+
+
+# =======================================================================
 #                                                              PARAMETERS
 
 # -----------------------------------------------------------------------
@@ -313,10 +409,10 @@ mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacySty
              'hcp_filename': {'name': 'original', 'number': 'standard'}}
 
 # The "deprecated" dictionary specifies parameters that are no longer in use
-deprecated = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
-              'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams',
-              'hcp_bold_sequencetype': None,
-              'hcp_biascorrect_t1w': None}
+deprecatedParameters = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
+                        'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams',
+                        'hcp_bold_sequencetype': None,
+                        'hcp_biascorrect_t1w': None}
 
 # The "towarn" dictionary warns users to check the provided values
 # the array for each parameter name has two entries
@@ -447,101 +543,9 @@ for line in flaglist:
         flist[line[0]] = [line[1], line[2]]
 
 
-# =======================================================================
-#                                                       SUPPORT FUNCTIONS
-
-def writelog(item):
-    '''
-    writelog(item)
-    Splits the passed item into two parts and appends the first to the
-    global log list, and the second to the global stati list. It also
-    prints the contents to the file specified in the global logname
-    variable.
-    '''
-    global logname
-    global log
-    global stati
-    r, status = procResponse(item)
-    log.append(r)
-    stati.append(status)
-    f = open(logname, "a")
-    print >> f, r
-    f.close()
-
-
-def procResponse(r):
-    '''
-    procResponse(r)
-    It processes the response returned from the utilities functions
-    called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple. If the 
-    third element is missing, it assumes it ran ok and sets it to
-    0.
-    '''
-    if type(r) is tuple:
-        if len(r) == 2:
-            if len(r[1]) == 2:
-                return (r[0], (r[1][0], r[1][1], None))
-            elif len(r[1]) == 3:
-                return r
-            else:
-                return("Unknown", ("Unknown", "Unknown", None))
-        else:
-            return("Unknown", ("Unknown", "Unknown", None))
-    else:
-        return (r, ("Unknown", "Unknown", None))
-
-
-def torf(s):
-    '''
-    torf(s)
-    First checks if string is "None", 'none', or "NONE" and returns
-    None, then Checks if s is any of the possible true strings: "True", "true",
-    or "TRUE" and retuns a boolean result of the check.
-    '''
-    if s in ['None', 'none', 'NONE']:
-        return None
-    else:
-        return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
-
-
-def isNone(s):
-    '''
-    isNone(s)
-    Check if the string is "None", "none" or "NONE" and returns None, otherwise
-    returns the passed string.
-    '''
-    if s in ['None', 'none', 'NONE', '']:
-        return None
-    else:
-        return s
-
-
-def plist(s):
-    '''
-    plist(s)
-    Processes the string, spliting it by the pipe "|" symbol, trimming
-    any whitespace caracters form start or end of each resulting
-    substring, and retuns an array of substrings of length more than 0.
-    '''
-    s = s.split('|')
-    s = [e.strip() for e in s]
-    s = [e for e in s if len(e) > 0]
-    return s
-
-
-def updateOptions(session, options):
-    '''
-    updateOptions(session, options)
-    Returns an updated copy of options dictionary where all keys from 
-    sessions that started with an underscore '_' are mapped into options.
-    '''
-    soptions = dict(options)
-    for key, value in session.iteritems():
-        if key.startswith('_'):
-            soptions[key[1:]] = value
-    return soptions
-
+# ==============================================================================
+#                                                  MAPPING DEPRECATED PARAMETERS
+#
 
 def mapDeprecated(options, command):
     '''
@@ -587,9 +591,9 @@ def mapDeprecated(options, command):
 
     # -> check deprecated parameters
     for k, v in options.iteritems():
-        if k in deprecatedList:
+        if k in deprecatedParameters:
             if v:
-                deprecated.append((k, v, deprecatedList[k]))
+                deprecated.append((k, v, deprecatedParameters[k]))
 
     if deprecated:
         print "\nWARNING: Use of deprecated parameter(s)!"
@@ -622,6 +626,7 @@ def mapDeprecated(options, command):
                 # warning message
                 msg = towarn[k][1]
                 print "\nWARNING: %s" % msg
+
 
 
 # ==============================================================================
