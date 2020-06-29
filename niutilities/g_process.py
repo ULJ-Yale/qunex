@@ -622,7 +622,7 @@ def mapDeprecated(options, command):
             if s in v:
                 # warning message
                 msg = towarn[k][1]
-                print "\nWARNING: %s" % msg
+                print "\nWARNING: %s\n" % msg
 
     return newOptions
 
