@@ -1580,6 +1580,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
     SubjectFolder=`opts_GetOpt "${setflag}sessionfolder"  $@`   # sessions folder to work on
     STUDY_PATH=${StudyFolderPath}                               # local path for study folder
     
+    # -- sessionsfolder used to be subjectsfolder
+    if [[ -z ${SessionsFolder} ]]; then
+        SessionsFolder==`opts_GetOpt "${setflag}subjectsfolder" $@`
+    fi
+
     if [[ ! -z ${STUDY_PATH} ]]; then StudyFolder=${STUDY_PATH}; fi
     
     # -- Check StudyFolder and set
@@ -1644,10 +1649,40 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
     XNAT_STUDY_INPUT_PATH=`opts_GetOpt "${setflag}xnatstudyinputpath" $@`
 
+    # -- Backwards comapatibility, sessionsfolder used to be subjectsfolder
+    if [[ -z ${QuNexSessionsFolder} ]]; then
+        QuNexSessionsFolder==`opts_GetOpt "${setflag}subjectsfolder" $@`
+    fi
+
     # -- General session and session flags
     CASES=`opts_GetOpt "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     SESSIONIDS=`opts_GetOpt "${setflag}sessionids" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+
+    # -- Backwards comapatibility, session* used to be subject* 
+    if [[ -z ${CASES} ]]; then
+        CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    fi
+    if [[ -z ${SESSIONIDS} ]]; then
+        SESSIONIDS=`opts_GetOpt "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    fi
+
     SESSION_LABELS=`opts_GetOpt "--sessionlabel" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    if [[ -z ${SESSION_LABELS} ]]; then
+        SESSION_LABELS=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    fi
+    if [[ -z ${SESSION_LABELS} ]]; then
+        SESSION_LABELS=`opts_GetOpt "--sessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    fi
+    if [[ -z ${SESSION_LABELS} ]]; then
+       SESSION_LABELS=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    fi
+    SESSIONS="${SESSION_LABELS}"
+    if [[ -z ${CASES} ]]; then
+        if [[ ! -z ${SESSIONS} ]]; then
+            CASES="$SESSIONS"
+        fi
+    fi
+
     if [[ -z ${SESSION_LABELS} ]]; then
         SESSION_LABELS=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
     fi
