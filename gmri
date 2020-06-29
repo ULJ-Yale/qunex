@@ -122,7 +122,7 @@ setupHCP      [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt]
 Miscellaneous file utilities
 ----------------------------
 createStudy  studyfolder=<path to study base folder> [subfolders=$TOOLS/niutilities/templates/study_folders_default.txt]
-createBatch  [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch_parameters.txt]
+createBatch  [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch.txt]
 createList  [sessionsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 createConc  [sessionsfolder=.] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
