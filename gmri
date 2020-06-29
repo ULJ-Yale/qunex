@@ -407,7 +407,7 @@ def runCommand(command, args):
 
     # -- Have we set up calls to run in parallel?
     if calls:
-        callInfo = "Running %s" % (command)
+        callInfo = "\nRunning %s" % (command)
         callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
         print callInfo
         
