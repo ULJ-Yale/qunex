@@ -130,7 +130,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
             print "\nPreparing template files:"
 
         # --> parameter template
-        paramFile = os.path.join(studyfolder, 'sessions', 'specs', 'batch_parameters_example.txt')
+        paramFile = os.path.join(studyfolder, 'sessions', 'specs', 'batch_example.txt')
         try:
             f = os.open(paramFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
             os.write(f, parameterTemplateHeader + "\n")
@@ -141,12 +141,12 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
                     os.write(f, "#\n# " + line[0] + '\n#\n')
             os.close(f)
             if verbose:
-                print " ... created batch_parameters_example.txt file" 
+                print " ... created batch_example.txt file" 
 
         except OSError as e:
             if e.errno == errno.EEXIST:
                 if verbose:
-                    print " ... batch_parameters_example.txt file already exists" 
+                    print " ... batch_example.txt file already exists" 
             else:
                 errstr = os.strerror(e.errno)
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
@@ -335,7 +335,7 @@ def createStudy(studyfolder=None, folders=None):
 
     Do note that the command will create all the missing folders in which the
     specified study is to reside. The command also prepares template
-    batch_parameters_example.txt and pipeline example mapping files in
+    batch_example.txt and pipeline example mapping files in
     <studyfolder>/sessions/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
@@ -416,7 +416,7 @@ def checkStudy(startfolder=".", folders=None):
 
 def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
     '''
-    createBatch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch_parameters.txt]
+    createBatch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch.txt]
     
     PARAMETERS
     =========
@@ -441,7 +441,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
                           specified sessions to the batch file.
     --paramfile       ... The path to the parameter file header to be used. If 
                           not explicitly provided it defaults to:
-                          <sessionsfolder>/specs/batch_parameters.txt
+                          <sessionsfolder>/specs/batch.txt
 
 
     USE
@@ -474,7 +474,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramfile
     is specified and the default template does not exist, the command will print
-    a warning and create an empty template (sessions/spec/batch_parameters.txt)
+    a warning and create an empty template (sessions/spec/batch.txt)
     with all the available parameters. Do note that this file will need to be edited
     with correct parameter values for your study.
 
@@ -596,7 +596,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
         if overwrite == 'yes' or not preexist:
             if paramfile is None:
-                paramfile = os.path.join(sessionsfolder, 'specs', 'batch_parameters.txt')
+                paramfile = os.path.join(sessionsfolder, 'specs', 'batch.txt')
                 if not os.path.exists(paramfile):
                     print "---> WARNING: Creating empty parameter file!"
                     pfile = open(paramfile, 'w')
