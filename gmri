@@ -257,8 +257,10 @@ def runCommand(command, args):
     # --- check if command is deprecated
     command = gcom.checkDeprecatedCommands(command)
 
-    # --- sort commands by type
+    # -- remap deprecated arguments
+    args = gp.mapDeprecated(args, command)
 
+    # --- sort commands by type
     if command in gcom.commands:
         pass
     elif command in gp.allactions:
@@ -275,9 +277,7 @@ def runCommand(command, args):
         sys.exit(1)
 
     # --- process commands
-
     # -- sort arguments
-
     bargs = {}
     eargs = {}
     for k, v in args.items():
@@ -297,7 +297,6 @@ def runCommand(command, args):
             raise ge.CommandError("gmri", "Invalid arguments", "The extra argument(s) provided is/are not valid! [%s]" % (", ".join(bad)))
 
     # -- process extra arguments
-
     sessions = None
     if 'sessions' in eargs:
         if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
@@ -311,12 +310,10 @@ def runCommand(command, args):
     calls = []
 
     # -- runList specifics
-
     if command == "runList":
         if sessions and 'sperlist' in eargs:
 
             if 'scheduler' in eargs:
-
                 # -- define number of sessions to run in each runList
                 parsessions = int(eargs['sperlist'])
                 args['parsessions'] = eargs['sperlist']
@@ -329,7 +326,6 @@ def runCommand(command, args):
                 niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
             
             else:
-
                 # -- define number of sessions to run in each runList
                 sperlist = args['sperlist']
                 del args['sperlist']
@@ -384,24 +380,19 @@ def runCommand(command, args):
 
     # -- all other commands    
     else:
-
         parsessions = int(eargs.get('parsessions', '1'))
 
         # -- are we using a scheduler
-
         if 'scheduler' in eargs:
             niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
         # -- a basic call
-
         elif sessions is None:
             gcom.commands[command]['com'](**args)
             print "\n===> Successful completion of task"
 
         # -- sessions loop
-
         else:
-
             for session in sessions:
                 targs   = dict(bargs)
                 name    = command + ": " + session['id']
@@ -416,7 +407,6 @@ def runCommand(command, args):
 
     # -- Have we set up calls to run in parallel?
     if calls:
-
         callInfo = "Running %s" % (command)
         callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
         print callInfo

@@ -579,9 +579,6 @@ def mapDeprecated(options, command):
         else:
             newOptions[k] = v
 
-    # save
-    options = newOptions
-
     if remapped:
         print("\nWARNING: Use of parameters with changed name(s)!\n       The following parameters have new names and will be deprecated:")
         for k in remapped:
@@ -590,7 +587,7 @@ def mapDeprecated(options, command):
         print("         Please correct the listed parameter names in command line or batch file!")
 
     # -> check deprecated parameters
-    for k, v in options.iteritems():
+    for k, v in newOptions.iteritems():
         if k in deprecatedParameters:
             if v:
                 deprecated.append((k, v, deprecatedParameters[k]))
@@ -605,10 +602,10 @@ def mapDeprecated(options, command):
         print "         Please stop using the listed parameters in command line or batch file, and, when indicated, consider using the replacement parameter!"  
 
     # -> check new parameter values
-    for k, v in options.iteritems():
+    for k, v in newOptions.iteritems():
         if k in mapValues:
             if v in mapValues[k]:
-                options[k] = mapValues[k][v]
+                newOptions[k] = mapValues[k][v]
                 newvalues.append([k, v, mapValues[k][v]])
 
     if newvalues:
@@ -618,7 +615,7 @@ def mapDeprecated(options, command):
         print "         Please correct the listed parameter values in command line or batch file!"
 
     # -> warn if some parameter values might be deprecated
-    for k, v in options.iteritems():
+    for k, v in newOptions.iteritems():
         if k in towarn:
             # search string
             s = towarn[k][0]
@@ -626,6 +623,8 @@ def mapDeprecated(options, command):
                 # warning message
                 msg = towarn[k][1]
                 print "\nWARNING: %s" % msg
+
+    return newOptions
 
 
 
@@ -679,24 +678,17 @@ def run(command, args):
         sessions = [subjectInfo[e] for e in subjectList]
 
     # --- take parameters from batch file
-
     for (k, v) in gpref.iteritems():
         options[k] = v
 
-    mapDeprecated(options, command)
-
     # --- parse command line options
-
     for (k, v) in args.iteritems():
         if k in flist:
             options[flist[k][0]] = flist[k][1]
         else:
             options[k] = v
 
-    mapDeprecated(options, command)
-
     # ---- Recode
-
     for line in arglist:
         if len(line) == 4:
             try:
