@@ -197,7 +197,8 @@ arglist = [['# ---- Basic settings'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
            ['script',             'None',                                        isNone, 'The script to be executed.'],
-           ['sessionids',         '',                                            str,  "list of | separated session ids for which to run the command"],
+           ['sessionid',          '',                                            str,    "a session id for which to run the command"],
+           ['sessionids',         '',                                            str,    "list of | separated session ids for which to run the command"],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -398,7 +399,10 @@ tomap = {'bppt':                    'bolds',
          'sfilter':                 'filter',
          'hcp_fs_existing_subject': 'hcp_fs_existing_session',
          'subjectsfolder':          'sessionsfolder',
-         'subjid':                  'sessionid',
+         'subjid':                  {
+                                        'sessionid': ['dicom2niix', 'batchTag2NameKey'],
+                                        'sessionids': ['exportHCP', 'mapIO']
+                                    },
          'sbjroi':                  'sessionroi',
          'subjectf':                'sessionf'
          }

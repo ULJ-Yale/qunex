@@ -1947,7 +1947,7 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
     if bolds is None:
         raise ge.CommandError("batchTag2Num", "No bolds specified!")
 
-    sessions, _ = gc.getSessionList(filename, sessionid=sessionid)
+    sessions, _ = gc.getSessionList(filename, sessionids=sessionid)
 
     if not sessions:
         raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (sessionid, filename), "Please check your data!")
