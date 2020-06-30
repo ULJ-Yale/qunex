@@ -1652,6 +1652,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Backwards comapatibility, sessionsfolder used to be subjectsfolder
     if [[ -z ${QuNexSessionsFolder} ]]; then
         QuNexSessionsFolder==`opts_GetOpt "${setflag}subjectsfolder" $@`
+        echo "WARNING: the subjectsfolder parameter is now known as sessionsfolder.";
     fi
 
     # -- General session and session flags
@@ -1661,9 +1662,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Backwards comapatibility, session* used to be subject* 
     if [[ -z ${CASES} ]]; then
         CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+        echo "WARNING: the subjects parameter is now known as sessions.";
     fi
     if [[ -z ${SESSIONIDS} ]]; then
         SESSIONIDS=`opts_GetOpt "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+        echo "WARNING: the subjid parameter is now known as sessionids.";
     fi
 
     SESSION_LABELS=`opts_GetOpt "--sessionlabel" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
