@@ -54,7 +54,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'createConc'           : {'com': g_utilities.createConc,         'args': ('sessionsfolder', 'sessions', 'filter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
             'gatherBehavior'       : {'com': g_utilities.gatherBehavior,     'args': ('sessionsfolder', 'sessions', 'filter', 'sourcefiles', 'targetfile', 'overwrite', 'check', 'report')},
             'pullSequenceNames'    : {'com': g_utilities.pullSequenceNames,  'args': ('sessionsfolder', 'sessions', 'filter', 'sourcefiles', 'targetfile', 'overwrite', 'check', 'report')},
-            'batchTag2NameKey'     : {'com': g_utilities.batchTag2NameKey,   'args': ('filename', 'sessionids', 'bolds', 'output', 'prefix')},
+            'batchTag2NameKey'     : {'com': g_utilities.batchTag2NameKey,   'args': ('filename', 'sessionid', 'bolds', 'output', 'prefix')},
             'exportHCP'            : {'com': ge_HCP.exportHCP,               'args': ('sessionsfolder', 'sessions', 'filter', 'sessionids', 'mapaction', 'mapto', 'overwrite', 'mapexclude', 'hcp_suffix', 'verbose')},
             'mapIO'                : {'com': ge_HCP.exportHCP,               'args': ('sessionsfolder', 'sessions', 'filter', 'sessionids', 'mapaction', 'mapto', 'overwrite', 'mapexclude', 'hcp_suffix', 'verbose')},
             'joinFidl'             : {'com': g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
