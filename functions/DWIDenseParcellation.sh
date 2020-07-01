@@ -40,7 +40,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP probtrackxgpudense function
-# * These data are stored in: "$SubjectsFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
+# * These data are stored in: "$SessionsFolder/sessions/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
 #
 #~ND~END~
 
@@ -54,20 +54,20 @@ usage() {
      echo " (e.g. Glasser parcellation with subcortical labels included)."
      echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
      echo ""
-     echo " <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
+     echo " <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
      echo ""
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "     --subjectsfolder=<folder_with_subjects>             Path to study data folder"
-     echo "     --subject=<list_of_cases>                           List of subjects to run"
+     echo "     --sessionsfolder=<folder_with_sessions>             Path to study data folder"
+     echo "     --session=<list_of_cases>                           List of sessions to run"
      echo "     --matrixversion=<matrix_version_value>              Matrix solution verion to run parcellation on; e.g. 1 or 3"
      echo "     --parcellationfile=<file_for_parcellation>          Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
      echo "     --outname=<name_of_output_pconn_file>               Specify the suffix output name of the pconn file"
      echo ""
      echo "-- OPTIONAL PARMETERS:"
      echo "" 
-     echo "     --overwrite=<clean_prior_run>                       Delete prior run for a given subject"
+     echo "     --overwrite=<clean_prior_run>                       Delete prior run for a given session"
      echo "     --waytotal=<use_waytotal_normalized_data>            Use the waytotal normalized version of the DWI dense connectome. Default: [none]"
      echo "                                                     none: without waytotal normalization [Default]" 
      echo "                                                     standard: standard waytotal normalized"
@@ -88,8 +88,8 @@ usage() {
      echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo ""
      echo ""
-     echo "qunex DWIDenseParcellation --subjectsfolder='<folder_with_subjects>' \ "
-     echo "--subjects='<comma_separarated_list_of_cases>' \ "
+     echo "qunex DWIDenseParcellation --sessionsfolder='<folder_with_sessions>' \ "
+     echo "--sessions='<comma_separarated_list_of_cases>' \ "
      echo "--matrixversion='3' \ "
      echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
      echo "--overwrite='no' \ "
@@ -97,8 +97,8 @@ usage() {
      echo ""
      echo "-- Example with flagged parameters for submission to the scheduler:"
      echo ""
-     echo "qunex DWIDenseParcellation --subjectsfolder='<folder_with_subjects>' \ "
-     echo "--subjects='<comma_separarated_list_of_cases>' \ "
+     echo "qunex DWIDenseParcellation --sessionsfolder='<folder_with_sessions>' \ "
+     echo "--sessions='<comma_separarated_list_of_cases>' \ "
      echo "--matrixversion='3' \ "
      echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
      echo "--overwrite='no' \ "
@@ -135,25 +135,25 @@ fi
 ########################################## INPUTS ########################################## 
 
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
-# The data should be in $DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
+# The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
-    # SubjectsFolder 
-    # Subject        
+    # SessionsFolder 
+    # Session        
     # MatrixVersion     e.g. 1 or 3
     # ParcellationFile  in *.dlabel.nii format
     # OutName  
 ########################################## OUTPUTS #########################################
 
 # -- Outputs will be *pconn.nii files located here:
-#       DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+#       DWIOutput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
 # -- Get the command line options for this script
 get_options() {
 local scriptName=$(basename ${0})
 local arguments=($@)
 # -- Initialize global output variables
-unset SubjectsFolder
-unset Subject
+unset SessionsFolder
+unset Session
 unset MatrixVersion
 unset ParcellationFile
 unset OutName
@@ -179,11 +179,11 @@ while [ ${index} -lt ${numArgs} ]; do
             version_show $@
             exit 0
             ;;
-        --subjectsfolder=*)
-            SubjectsFolder=${argument/*=/""}
+        --sessionsfolder=*)
+            SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
+        --session=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -217,15 +217,15 @@ while [ ${index} -lt ${numArgs} ]; do
 done
 
 # -- Check required parameters
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects-folder-path> not specified>"
+    reho "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <subject-id> not specified>"
+    reho "ERROR: <session-id> not specified>"
     echo ""
     exit 1
 fi
@@ -253,15 +253,15 @@ if [ -z ${OutName} ]; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
    
 # -- Report options
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   SubjectsFolder: ${SubjectsFolder}"
-echo "   Subject: ${CASE}"
+echo "   SessionsFolder: ${SessionsFolder}"
+echo "   Session: ${CASE}"
 echo "   MatrixVersion: ${MatrixVersion}"
 echo "   ParcellationFile: ${ParcellationFile}"
 echo "   Waytotal normalization: ${WayTotal}"
@@ -289,25 +289,25 @@ echo "--- Establishing paths for all input and output folders:"; echo ""
 # -- Define input and check if WayTotal normalization is selected
 if [ "$WayTotal" == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"; echo ""
-	DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
+	DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
 fi
 if [ "$WayTotal" == "standard" ]; then
 	echo "--- Using waytotal normalized dconn file"; echo ""
-	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
+	DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pdconn.nii"
 fi
 if [ "$WayTotal" == "log" ]; then
 	echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
-	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
+	DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
 fi
 
 # -- Define output
-DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+DWIOutput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 echo "      Dense DWI Connectome Input:              ${DWIInput}"; echo ""
 echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePconn}"; echo ""
 

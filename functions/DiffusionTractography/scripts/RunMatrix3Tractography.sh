@@ -1,5 +1,5 @@
 StudyFolder="$1"
-Subject="$2"
+Session="$2"
 DownSampleNameI="$3"
 DiffusionResolution="$4"
 Caret7_Command="$5"
@@ -23,7 +23,7 @@ ResultsFolder="Results"
 HemisphereSTRING=`echo "$HemisphereSTRING" | sed 's/@/ /g'`
 
 #Make Paths
-T1wFolder="${StudyFolder}/${Subject}/${T1wFolder}"
+T1wFolder="${StudyFolder}/${Session}/${T1wFolder}"
 BedpostXFolder="${T1wFolder}/${BedpostXFolder}"
 NativeFolder="${T1wFolder}/${NativeFolder}"
 DownSampleFolder="${T1wFolder}/${DownSampleFolder}"
@@ -56,21 +56,21 @@ if [ ! $HemisphereSTRING = "Whole" ] ; then
     #HemiPaths
     trajectory="${Hemisphere}_Cerebral_Trajectory"
     Mask="--mask=${T1wFolder}/${trajectory}_${DiffusionResolution}.nii.gz"
-    if [ ! -e ${ROIsFolder}/${Subject}.${Hemisphere}.white_${DiffusionResolution}.nii.gz ] ; then
-      fslmaths ${T1wFolder}/${trajectory}_${DiffusionResolution}.nii.gz -thr ${Number} -uthr ${Number} ${ROIsFolder}/${Subject}.${Hemisphere}.white_${DiffusionResolution}.nii.gz
+    if [ ! -e ${ROIsFolder}/${Session}.${Hemisphere}.white_${DiffusionResolution}.nii.gz ] ; then
+      fslmaths ${T1wFolder}/${trajectory}_${DiffusionResolution}.nii.gz -thr ${Number} -uthr ${Number} ${ROIsFolder}/${Session}.${Hemisphere}.white_${DiffusionResolution}.nii.gz
     fi  
-    Seed="--seed=${ROIsFolder}/${Subject}.${Hemisphere}.white_${DiffusionResolution}.nii.gz"
-    Waypoints="--waypoints=${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
-    Stop="--stop=${DownSampleFolder}/${Subject}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii"
-    #echo "${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii" > ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix3_Stop.txt
-    #echo "${DownSampleFolder}/${Subject}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii" >> ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix3_Stop.txt
+    Seed="--seed=${ROIsFolder}/${Session}.${Hemisphere}.white_${DiffusionResolution}.nii.gz"
+    Waypoints="--waypoints=${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
+    Stop="--stop=${DownSampleFolder}/${Session}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii"
+    #echo "${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii" > ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix3_Stop.txt
+    #echo "${DownSampleFolder}/${Session}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii" >> ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix3_Stop.txt
     #Stop="--stop=${ROIsFolder}/${Hemisphere}_Trajectory_Matrix3_Stop.txt"
     #Avoid="--avoid=${ROIsFolder}/${trajectory}_invROI_${DiffusionResolution}.nii.gz"
     DIR="${ResultsFolder}/${Hemisphere}_Trajectory_Matrix1${PDDir}_${StepSize}"
     Dir="--dir=${DIR}"
-    TargetThree="--target3=${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
+    TargetThree="--target3=${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
     TargetFour="--target4=${T1wFolder}/${trajectory}_${DiffusionResolution}.nii.gz"
-    ColMask="--colmask4=${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii" #Colmask is a surface
+    ColMask="--colmask4=${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii" #Colmask is a surface
     SeedRef="--seedref=${T1wFolder}/${trajectory}_${DiffusionResolution}.nii.gz"
     HemiPaths="${Mask} ${Seed} ${Waypoints} ${Stop} ${Avoid} ${Dir} ${TargetThree} ${TargetFour} ${SeedRef} ${ColMask}"
     
@@ -80,7 +80,7 @@ if [ ! $HemisphereSTRING = "Whole" ] ; then
       rm -r $DIR
     fi
     mkdir $DIR    
-    $Caret7_Command -signed-distance-to-surface ${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii ${DownSampleFolder}/${Subject}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii ${DIR}/SeedSpaceMetric.func.gii
+    $Caret7_Command -signed-distance-to-surface ${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii ${DownSampleFolder}/${Session}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii ${DIR}/SeedSpaceMetric.func.gii
     $Caret7_Command -metric-math "(var * 0) + 1" ${DIR}/SeedSpaceMetric.func.gii -var var ${DIR}/SeedSpaceMetric.func.gii
 
     echo "${GlobalBinaries}/probtrackx2 ${probtrackx_args}"

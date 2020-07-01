@@ -6,13 +6,13 @@
 
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject>"
+    echo "usage: $0 <StudyFolder> <Session>"
     echo ""
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 
 bindir=/home/stam/fsldev/ptx2  #Eventually FSLDIR (use custom probtrackx2 and fdt_matrix_merge for now)
 scriptsdir=${HCPPIPEDIR_dMRITract}
@@ -22,18 +22,18 @@ TemplateFolder="${HCPPIPEDIR_Template}/91282_Greyordinates"
 Nsamples=25
 Nrepeats=40
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
-RegFolder="$StudyFolder"/"$Subject"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Subject"/MNINonLinear/ROIs
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
+RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
+ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir ${ResultsFolder}
 fi
 
 #Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.bedpostX
+BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 #Or RubiX samples
-#BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.rubiX
+#BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.rubiX
 #DtiMask=$BedpostxFolder/HRbrain_mask
 
 
@@ -76,7 +76,7 @@ oG=" $oG --xfm=`echo $RegFolder/standard2acpc_dc` --invxfm=`echo $RegFolder/acpc
 #Define Targets
 oG=" $oG --stop=$ResultsFolder/stop"  #Rethink stop mask, should we include an exclusion along the midsagittal plane (without the CC and the commisures).
 Targets="$ResultsFolder/white.L.asc $ResultsFolder/white.R.asc $ResultsFolder/volseeds" 
-Target_Mat4="$StudyFolder"/"$Subject"/T1w/Whole_Brain_Trajectory_1.25 #In diffusion space
+Target_Mat4="$StudyFolder"/"$Session"/T1w/Whole_Brain_Trajectory_1.25 #In diffusion space
 
 
 
@@ -109,11 +109,11 @@ do
 	done
 	echo "Queueing Probtrackx Part${count}" 
 	ptx2_id=`fsl_sub -T 720 -R 12000 -l $ResultsFolder/Mat3_logs -N ptx2_Mat3 -t $ResultsFolder/commands_Mat3_${count}.txt`
-	ptx2_post_id=`fsl_sub -T 720 -R 40000 -j ${ptx2_id} -l $ResultsFolder/Mat3_logs -N Mat3_merge $scriptsdir/MergeDotMat3.sh $StudyFolder $Subject $count $TemplateFolder $Nrepeats`
+	ptx2_post_id=`fsl_sub -T 720 -R 40000 -j ${ptx2_id} -l $ResultsFolder/Mat3_logs -N Mat3_merge $scriptsdir/MergeDotMat3.sh $StudyFolder $Session $count $TemplateFolder $Nrepeats`
     fi
     count=$(($count + 1))
 done
 
 #The following dependency assumes that merging of Mat3_3 will be the last to complete and that Mat3_1 and Mat3_2 merging will have finished by now. It will fail if that is not true
 #To do this correctly ptx2_post_id should be joined in an array. Qsub can do that but not fsl_sub.
-fsl_sub -T 180 -R 35000 -j ${ptx2_post_id} -l $ResultsFolder/Mat3_logs -N Mat3_conn $scriptsdir/PostProcMatrix3.sh $StudyFolder $Subject
+fsl_sub -T 180 -R 35000 -j ${ptx2_post_id} -l $ResultsFolder/Mat3_logs -N Mat3_conn $scriptsdir/PostProcMatrix3.sh $StudyFolder $Session

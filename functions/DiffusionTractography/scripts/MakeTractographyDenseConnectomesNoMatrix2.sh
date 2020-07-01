@@ -1,7 +1,7 @@
 #!/bin/bash
 
 StudyFolder="$1"
-Subject="$2"
+Session="$2"
 DownSampleNameI="$3"
 DiffusionResolution="$4"
 Caret7_Command="$5"
@@ -29,7 +29,7 @@ PDDir=""
 fi
 
 #Make Paths
-T1wFolder="${StudyFolder}/${Subject}/${T1wFolder}"
+T1wFolder="${StudyFolder}/${Session}/${T1wFolder}"
 BedpostXFolder="${T1wFolder}/${BedpostXFolder}"
 NativeFolder="${T1wFolder}/${NativeFolder}"
 DownSampleFolder="${T1wFolder}/${DownSampleFolder}"

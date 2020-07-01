@@ -41,7 +41,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are HCP files from previous processing
-# * These may be stored in: "$SubjectsFolder/$CASE/hcp/$CASE/ 
+# * These may be stored in: "$SessionsFolder/$CASE/hcp/$CASE/ 
 #
 #~ND~END~
 
@@ -59,29 +59,29 @@ usage() {
      echo ""
      echo " This function is compatible with both legacy data [without T2w scans] and HCP-compliant data [with T2w scans and DWI]."
      echo ""
-     echo " With the exception of rawNII, the function generates 3 types of outputs, which are stored within the Study in <path_to_folder_with_subjects>/QC "
+     echo " With the exception of rawNII, the function generates 3 types of outputs, which are stored within the Study in <path_to_folder_with_sessions>/QC "
      echo ""
      echo "                *.scene files that contain all relevant data loadable into Connectome Workbench"
      echo "                *.png images that contain the output of the referenced scene file."
      echo "                *.zip file that contains all relevant files to download and re-generate the scene in Connectome Workbench."
      echo ""
      echo "                Note: For BOLD data there is also an SNR txt output if specified."
-     echo "                Note: For raw NIFTI QC outputs are generated in: <subjects_folder>/<case>/nii/slicesdir"
+     echo "                Note: For raw NIFTI QC outputs are generated in: <sessions_folder>/<case>/nii/slicesdir"
      echo ""
      echo "-- REQUIRED GENERAL PARMETERS:"
      echo ""
-     echo "--subjectsfolder=<folder_with_subjects>                         Path to study folder that contains subjects"
-     echo "--subjects=<list_of_cases>                                      List of subjects to run, separated by commas"
+     echo "--sessionsfolder=<folder_with_sessions>                         Path to study folder that contains sessions"
+     echo "--sessions=<list_of_cases>                                      List of sessions to run, separated by commas"
      echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on. "
      echo "                                                                Supported ==> rawNII, T1w, T2w, myelin, BOLD, DWI, general, eddyQC"
-     echo "                                                                      Note: If selecting 'rawNII' this function performs QC for raw NIFTI images in <subjects_folder>/<case>/nii "
-     echo "                                                                            It requires NIFTI images in <subjects_folder>/<case>/nii/ after either BIDS import of DICOM organization. "
-     echo "                                                                            Subject-specific output: <subjects_folder>/<case>/nii/slicesdir "
+     echo "                                                                      Note: If selecting 'rawNII' this function performs QC for raw NIFTI images in <sessions_folder>/<case>/nii "
+     echo "                                                                            It requires NIFTI images in <sessions_folder>/<case>/nii/ after either BIDS import of DICOM organization. "
+     echo "                                                                            Session-specific output: <sessions_folder>/<case>/nii/slicesdir "
      echo "                                                                            Uses FSL's `slicesdir` script to generate PNGs and an HTML file in the above directory. "
      echo ""
      echo "                                                                      Note: If using 'general' modality, then visualization is $TOOLS/$QUNEXREPO/library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
-     echo "                                                                            * This will work on any input file within the subject-specific data hierarchy."
-     echo "     --datapath=<path_for_general_scene>                                    * Required ==> Specify path for input path relative to the <subjects_folder> if scene is 'general'."
+     echo "                                                                            * This will work on any input file within the session-specific data hierarchy."
+     echo "     --datapath=<path_for_general_scene>                                    * Required ==> Specify path for input path relative to the <sessions_folder> if scene is 'general'."
      echo "     --datafile=<data_input_for_general_scene>                              * Required ==> Specify input data file name"
      echo ""
      echo ""
@@ -104,40 +104,40 @@ usage() {
      echo ""
      echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma or pipe. E.g. --bolddata='1,2,3,4,5' "
      echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
-     echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
+     echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_sessions_folder>/<session_id>/session_hcp.txt and identify all BOLDs to process"
      echo ""
      echo ""
      echo "-- BOLD FC PARMETERS (Requires --boldfc='<pconn or pscalar>',--boldfcinput=<image_input>, --bolddata or --boldruns or --bolds"
      echo ""
      echo "--boldfc=<compute_qc_for_bold_fc>                                Specify if you wish to compute BOLD QC for FC-type BOLD results. Supported: pscalar or pconn. Default is []"
-     echo "--boldfcpath=<path_for_bold_fc>                                  Specify path for input FC data. Default is [ <study_folder>/subjects/<subject_id>/images/functional ]"
-     echo "--boldfcinput=<data_input_for_bold_fc>                           Required. If no --boldfcpath is provided then specify only data input name after bold<Number>_ which is searched for in <subjects_folder>/<subject_id>/images/functional "
+     echo "--boldfcpath=<path_for_bold_fc>                                  Specify path for input FC data. Default is [ <study_folder>/sessions/<session_id>/images/functional ]"
+     echo "--boldfcinput=<data_input_for_bold_fc>                           Required. If no --boldfcpath is provided then specify only data input name after bold<Number>_ which is searched for in <sessions_folder>/<session_id>/images/functional "
      echo "                                                                 ==> pscalar FC: Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii" 
      echo "                                                                 ==> pconn FC:  Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz.pconn.nii"
      echo ""
      echo ""
      echo "-- OPTIONAL PARMETERS:"
      echo "" 
-     echo "--subjectsbatchfile=<subjects_batch_file>                        Absolute path to local batch file with pre-configured processing parameters. " 
-     echo "                                                                 Note: It can be used in combination with --subjects to select only specific cases to work on from the batch file." 
-     echo "                                                                 Note: If --subjects is omitted in favor of --subjectsbatchfile OR if batch file is provided as input for --subjects flag, then all cases from the batch file are processed."
+     echo "--sessionsbatchfile=<sessions_batch_file>                        Absolute path to local batch file with pre-configured processing parameters. " 
+     echo "                                                                 Note: It can be used in combination with --sessions to select only specific cases to work on from the batch file." 
+     echo "                                                                 Note: If --sessions is omitted in favor of --sessionsbatchfile OR if batch file is provided as input for --sessions flag, then all cases from the batch file are processed."
      echo "--overwrite=<clean_prior_run>                                    Delete prior QC run: yes/no [Default: no]"
-     echo "--hcp_suffix=<specify_suffix_for_hcp_folder_name>                Allows user to specify subject id suffix if running HCP preprocessing variants []"
+     echo "--hcp_suffix=<specify_suffix_for_hcp_folder_name>                Allows user to specify session id suffix if running HCP preprocessing variants []"
      echo "                                                                  e.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' would be specified as --hcp_suffix='-run2' "
      echo "--scenetemplatefolder=<path_for_the_template_folder>             Specify the absolute path name of the template folder (default: $TOOLS/${QUNEXREPO}/library/data/scenes/qc)"
      echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
      echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
-     echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
+     echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_sessions_folder>/QC/<input_modality_for_qc>"
      echo "--scenezip=<zip_generate_scene_file>                             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
      echo "                                                                 Note: If scene zip set to yes, then relevant scene files will be zipped with an updated relative base folder." 
-     echo "                                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
+     echo "                                                                       All paths will be relative to this base --> <path_to_study_sessions_folder>/<session_id>/hcp/<session_id>"
      echo "                                                                 The scene zip file will be saved to: "
-     echo "                                                                     /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
+     echo "                                                                     /<path_for_output_file>/<session_id>.<input_modality_for_qc>.QC.wb.zip"
      echo "--userscenefile=<user_specified_scene_file>                      User-specified scene file name. --modality info is still required to ensure correct run. Relevant data needs to be provided. Default []"
      echo "--userscenepath=<user_specified_scene_data_path>                 Path for user-specified scene and relevant data in the same location. --modality info is still required to ensure correct run. Default []"
      echo ""
      echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
-     echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
+     echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <session_id>_<timestamp> ]"
      echo ""
      echo "--batchfile=<batch_file>                                         Batch file with pre-configured BOLD tags for quick filtering of BOLD runs." 
      echo "                                                                 Note: This file needs to be created *manually* prior to starting function and absolute path provided in the function."
@@ -170,14 +170,14 @@ usage() {
      echo ""
      echo "# -- raw NII QC"
      echo "qunex runQC \ "
-     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--sessionsfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separated_list_of_cases>' \ "
      echo "--modality='rawNII' "
      echo ""
      echo "# -- T1w QC"
      echo "qunex runQC \ "
-     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--sessionsfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='T1w' \ "
@@ -185,8 +185,8 @@ usage() {
      echo ""
      echo "# -- T2w QC"
      echo "qunex runQC \ "
-     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--sessionsfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='T2w' \ "
@@ -194,8 +194,8 @@ usage() {
      echo ""
      echo "# -- Myelin QC"
      echo "qunex runQC \ "
-     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--sessionsfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='myelin' \ "
@@ -203,8 +203,8 @@ usage() {
      echo ""
      echo "# -- DWI QC "
      echo "qunex runQC \ "
-     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--sessionsfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separated_list_of_cases>' \ "
      echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='DWI' \ "
      echo "--outpath='<path_for_output_file> \ "
@@ -215,8 +215,8 @@ usage() {
      echo ""
      echo "# -- BOLD QC"
      echo "qunex runQC \ "
-     echo "--subjectssfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--sessionssfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='BOLD' \ "
@@ -227,8 +227,8 @@ usage() {
      echo "# -- BOLD FC QC [pscalar or pconn]"
      echo "qunex runQC \ "
      echo "--overwritestep='yes' \ "
-     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--sessionsfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separated_list_of_cases>' \ "
      echo "--modality='BOLD' \ "
      echo "--boldfc='<pscalar_or_pconn>' \ "
      echo "--boldfcinput='<data_input_for_bold_fc>' \ "
@@ -287,8 +287,8 @@ done
 # -- Get the command line options for this script
 
 # -- Initialize global variables
-unset SubjectsFolder # --subjectssfolder=
-unset CASES # --subjects=
+unset SessionsFolder # --sessionssfolder=
+unset CASES # --sessions=
 unset Overwrite # --overwrite=
 unset OutPath # --outpath
 unset scenetemplatefolder # --scenetemplatefolder
@@ -319,13 +319,13 @@ unset OmitDefaults # --omitdefault
 unset HCPSuffix # --hcp_suffix
 unset GeneralSceneDataFile # --datafile
 unset GeneralSceneDataPath # --datapath
-unset SubjectBatchFile # --subjectsbatchfile
+unset SessionBatchFile # --sessionsbatchfile
 
 runcmd=""
 
 # -- Parse general arguments
-SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
-CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
+CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
 OutPath=`opts_GetOpt "--outpath" $@`
 scenetemplatefolder=`opts_GetOpt "--scenetemplatefolder" $@`
@@ -383,27 +383,27 @@ Suffix=`opts_GetOpt "--suffix" $@`
 SceneZip=`opts_GetOpt "--scenezip" $@`
 
 # -- Parse batch file input
-SubjectBatchFile=`opts_GetOpt "--subjectsbatchfile" $@`
-if [ -z "${SubjectBatchFile}" ]; then
-    SubjectBatchFile=`opts_GetOpt "--batchfile" $@`
+SessionBatchFile=`opts_GetOpt "--sessionsbatchfile" $@`
+if [ -z "${SessionBatchFile}" ]; then
+    SessionBatchFile=`opts_GetOpt "--batchfile" $@`
 fi
 
 # -- Check general required parameters
 if [ -z ${CASES} ]; then
     usage
-    reho "ERROR: <subject_ids> not specified."; echo ""
+    reho "ERROR: <session_ids> not specified."; echo ""
     exit 1
 fi
 if [[ ${CASES} == *.txt ]]; then
-    SubjectBatchFile="$CASES"
+    SessionBatchFile="$CASES"
     echo ""
-    echo "Using $SubjectBatchFile for input."
+    echo "Using $SessionBatchFile for input."
     echo ""
-    CASES=`more ${SubjectBatchFile} | grep "id:"| cut -d " " -f 2`
+    CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
 fi
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects_folder> not specified."; echo ""
+    reho "ERROR: <sessions_folder> not specified."; echo ""
     exit 1
 fi
 if [ -z ${Overwrite} ]; then
@@ -411,7 +411,7 @@ if [ -z ${Overwrite} ]; then
     echo "Overwrite value not explicitly specified. Using default: ${Overwrite}"; echo ""
 fi
 if [ -z ${OutPath} ]; then
-    OutPath="${SubjectsFolder}/QC/${Modality}"
+    OutPath="${SessionsFolder}/QC/${Modality}"
     echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; echo ""
 fi
 if [ -z ${Modality} ]; then 
@@ -505,8 +505,8 @@ if [ "$Modality" = "BOLD" ]; then
     # - Check if BOLDS parameter is empty:
     if [ -z "$BOLDS" ]; then 
         echo ""
-        echo "Note: BOLD input list not specified. Relying subject_hcp.txt individual information files."
-        BOLDS="subject_hcp.txt"
+        echo "Note: BOLD input list not specified. Relying session_hcp.txt individual information files."
+        BOLDS="session_hcp.txt"
         echo ""
     fi
     
@@ -531,8 +531,8 @@ if [ "$Modality" = "BOLD" ]; then
             reho "--> ERROR: Flag --boldfcinput is missing. Check your inputs and re-run."; echo ""; exit 1
         fi
     fi
-    if [[ ! -z ${SubjectBatchFile} ]]; then
-        if [[ ! -f ${SubjectBatchFile} ]]; then
+    if [[ ! -z ${SessionBatchFile} ]]; then
+        if [[ ! -f ${SessionBatchFile} ]]; then
             reho " --> ERROR: Requested BOLD modality with a batch file. Batch file not found."
             exit 1
         else
@@ -548,7 +548,7 @@ if [ "$Modality" = "general" ] ; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 scriptName=$(basename ${0})
 
@@ -556,8 +556,8 @@ scriptName=$(basename ${0})
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "  Study Folder: ${StudyFolder}"
-echo "  Subject Folder: ${SubjectsFolder}"
-echo "  Subjects: ${CASES}"
+echo "  Session Folder: ${SessionsFolder}"
+echo "  Sessions: ${CASES}"
 echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
 echo "  Custom QC requested: ${RunQCCustom}"
@@ -566,12 +566,12 @@ if [ "$RunQCCustom" == "yes" ]; then
     echo "   Custom QC modalities: ${Modality}"
 fi
 if [ "$Modality" == "BOLD" ] ; then
-    if [[ ! -z ${SubjectBatchFile} ]]; then
-        if [[ ! -f ${SubjectBatchFile} ]]; then
+    if [[ ! -z ${SessionBatchFile} ]]; then
+        if [[ ! -f ${SessionBatchFile} ]]; then
             reho " ERROR: Requested BOLD modality with a batch file. Batch file not found."
             exit 1
         else
-            echo "   Subject batch file requested: ${SubjectBatchFile}"
+            echo "   Session batch file requested: ${SessionBatchFile}"
             BOLDSBATCH="${BOLDS}"
         fi
     fi
@@ -778,7 +778,7 @@ completionCheck() {
                 if [ -f ${TSNRReportBOLD} ]; then
                     echo ""
                     geho "---  SNR calculation requested. SNR completed." 
-                    geho "     Subject specific report can be found here: ${TSNRReportBOLD}"
+                    geho "     Session specific report can be found here: ${TSNRReportBOLD}"
                     echo ""
                     CompletionCheck=""
                 else
@@ -793,7 +793,7 @@ completionCheck() {
                if [ -f ${TSNRReportBOLD} ]; then
                     echo ""
                     geho "---  SNR calculation requested. SNR completed." 
-                    geho "     Subject specific report can be found here: ${TSNRReportBOLD}"
+                    geho "     Session specific report can be found here: ${TSNRReportBOLD}"
                     echo ""
                     CompletionCheck=""
                 else
@@ -930,7 +930,7 @@ runsnr_BOLD() {
 # -- Function to run BOLD FC
 runscene_BOLDfc() {
     if [ -z "$BOLDfcPath" ]; then 
-        BOLDfcPath="${SubjectsFolder}/${CASE}/images/functional"
+        BOLDfcPath="${SessionsFolder}/${CASE}/images/functional"
         echo ""
         echo "--- Note: Flag --boldfcpath not provided. Setting now: ${BOLDfcPath}"
         echo ""
@@ -970,7 +970,7 @@ runscene_BOLDfc() {
         echo ""
         RemoveScenePath="${HCPFolder}"
         ComRunBoldfc8="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip &> /dev/null "
-        ComRunBoldfc9="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
+        ComRunBoldfc9="cp ${OutPath}/${WorkingSceneFile} ${SessionsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
         ComRunBoldfc10="mkdir -p ${HCPFolder}/qc &> /dev/null"
         ComRunBoldfc11="cp ${BOLDfcPath}/${BOLDfcInput} ${HCPFolder}/qc"
         ComRunBoldfc12="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingSceneFile}"
@@ -1055,16 +1055,16 @@ main() {
     for CASE in ${CASES}; do
         # -- Set basics
         CASEName="${CASE}${HCPSuffix}"
-        HCPFolder="${StudyFolder}/subjects/${CASE}/hcp/${CASEName}"
+        HCPFolder="${StudyFolder}/sessions/${CASE}/hcp/${CASEName}"
         if [ ! -z "$HCPSuffix" ]; then 
            geho " ===> HCP suffix specified ${HCPSuffix}"; echo ""
-           geho "      Setting hcp folder to: ${StudyFolder}/subjects/${CASE}/hcp/${CASEName}"; echo ""             
+           geho "      Setting hcp folder to: ${StudyFolder}/sessions/${CASE}/hcp/${CASEName}"; echo ""             
         fi 
         # -- Check if raw NIFTI QC is requested and run it first
         if [ "$Modality" == "rawNII" ] ; then 
                unset CompletionCheck
-               slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*
-               if [ ! -f ${SubjectsFolder}/${CASE}/nii/slicesdir/index.html ]; then
+               slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*
+               if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
                   CompletionCheck="fail"
                fi
         else
@@ -1085,14 +1085,14 @@ main() {
                 geho "      ${CustomTemplateSceneFiles}"; echo ""
             fi
             
-            # -- Check if subject_hcp.txt is present:
-            if [[ ${BOLDS} == "subject_hcp.txt" ]]; then
+            # -- Check if session_hcp.txt is present:
+            if [[ ${BOLDS} == "session_hcp.txt" ]]; then
                 echo ""
-                echo "--- Using subject_hcp.txt individual information files. Verifying that subject_hcp.txt exists."; echo ""
-                if [[ -f "${SubjectsFolder}/${CASE}/subject_hcp.txt" ]]; then
-                    echo "${SubjectsFolder}/${CASE}/subject_hcp.txt found. Proceeding..."
+                echo "--- Using session_hcp.txt individual information files. Verifying that session_hcp.txt exists."; echo ""
+                if [[ -f "${SessionsFolder}/${CASE}/session_hcp.txt" ]]; then
+                    echo "${SessionsFolder}/${CASE}/session_hcp.txt found. Proceeding..."
                 else
-                    reho "${SubjectsFolder}/${CASE}/subject_hcp.txt NOT found. Check BOLD inputs."
+                    reho "${SessionsFolder}/${CASE}/session_hcp.txt NOT found. Check BOLD inputs."
                     echo ""
                     exit 1
                 fi
@@ -1129,8 +1129,8 @@ main() {
             geho " --- Checking and generating output folders..."
             echo ""
             # -- Check general output folders for QC
-            if [ ! -d ${SubjectsFolder}/QC ]; then
-                mkdir -p ${SubjectsFolder}/QC &> /dev/null
+            if [ ! -d ${SessionsFolder}/QC ]; then
+                mkdir -p ${SessionsFolder}/QC &> /dev/null
             fi
             # -- Check output folders for QC
             if [ ! -d ${OutPath} ]; then
@@ -1158,20 +1158,20 @@ main() {
                 #
                 #
                 # -- Check if both batch and bolds are specified for QC and if yes read batch explicitly
-                if [[ ! -z ${SubjectBatchFile} ]]; then
-                    geho "  --> For ${CASE} searching for BOLD tags in batch file ${SubjectBatchFile} ... "; echo ""
+                if [[ ! -z ${SessionBatchFile} ]]; then
+                    geho "  --> For ${CASE} searching for BOLD tags in batch file ${SessionBatchFile} ... "; echo ""
                     unset BOLDS BOLDLIST
-                    if [[ -f ${SubjectBatchFile} ]]; then
+                    if [[ -f ${SessionBatchFile} ]]; then
                         # For debugging
-                        # echo "   gmri batchTag2NameKey filename="${SubjectBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-                        BOLDS=`gmri batchTag2NameKey filename="${SubjectBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'`
+                        # echo "   gmri batchTag2NameKey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+                        BOLDS=`gmri batchTag2NameKey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'`
                         BOLDLIST="${BOLDS}"
                     else
                         reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
                         exit 1
                     fi
                     if [[ ! -z ${BOLDLIST} ]]; then
-                        geho "  --> For ${CASE} referencing ${SubjectBatchFile} to select BOLD runs using tag: ${BOLDSBATCH} "
+                        geho "  --> For ${CASE} referencing ${SessionBatchFile} to select BOLD runs using tag: ${BOLDSBATCH} "
                         geho "      ------------------------------------------ "
                         geho "      Selected BOLDs --> ${BOLDS} "
                         geho "      ------------------------------------------ "
@@ -1181,20 +1181,20 @@ main() {
                         return 1
                     fi
                 fi
-                # -- Check if subject_hcp is used
-                if [ "$BOLDS" == "subject_hcp.txt" ]; then
-                    geho "--- subject_hcp.txt parameter file specified. Verifying presence of subject_hcp.txt before running QC on all BOLDs..."; echo ""
-                    if [ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]; then
-                        # -- Stalling on some systems --> BOLDCount=`more ${SubjectsFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
-                        BOLDCount=`grep "bold" ${SubjectsFolder}/${CASE}/subject_hcp.txt  | grep -v "ref" | wc -l`
-                        rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
-                        COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
-                        # -- Stalling on some systems --> BOLDS=`more ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
-                        BOLDS=`cat ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
-                        rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
-                        geho "--- Information file ${SubjectsFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
+                # -- Check if session_hcp is used
+                if [ "$BOLDS" == "session_hcp.txt" ]; then
+                    geho "--- session_hcp.txt parameter file specified. Verifying presence of session_hcp.txt before running QC on all BOLDs..."; echo ""
+                    if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
+                        # -- Stalling on some systems --> BOLDCount=`more ${SessionsFolder}/${CASE}/session_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
+                        BOLDCount=`grep "bold" ${SessionsFolder}/${CASE}/session_hcp.txt  | grep -v "ref" | wc -l`
+                        rm ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
+                        COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
+                        # -- Stalling on some systems --> BOLDS=`more ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt`
+                        BOLDS=`cat ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt`
+                        rm ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
+                        geho "--- Information file ${SessionsFolder}/${CASE}/session_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
                     else
-                        reho "--- ERROR: ${SubjectsFolder}/${CASE}/subject_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
+                        reho "--- ERROR: ${SessionsFolder}/${CASE}/session_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
                         exit 1
                     fi
                 else
@@ -1386,7 +1386,7 @@ main() {
                     
                     # -- Perform checks if modality is general
                     if [ "$Modality" == "general" ]; then
-                        GeneralPathCheck="${SubjectsFolder}/${CASE}/${GeneralSceneDataPath}/${GeneralSceneDataFile}"
+                        GeneralPathCheck="${SessionsFolder}/${CASE}/${GeneralSceneDataPath}/${GeneralSceneDataFile}"
                         # -- Check if Preprocessed T1w files are present
                         if [ ! -f ${GeneralPathCheck} ]; then
                             echo ""
@@ -1402,7 +1402,7 @@ main() {
                             geho "--- Data inputs found: ${GeneralPathCheck}"
                             echo ""
                             # -- Setup naming conventions for general inputs before generating scene
-                            Com4a="sed -i -e 's|DUMMYIMAGEPATH|$SubjectsFolder/$CASE/$GeneralSceneDataPath|g' ${OutPath}/${WorkingSceneFile}"
+                            Com4a="sed -i -e 's|DUMMYIMAGEPATH|$SessionsFolder/$CASE/$GeneralSceneDataPath|g' ${OutPath}/${WorkingSceneFile}"
                             Com4b="sed -i -e 's|DUMMYIMAGEFILE|$GeneralSceneDataFile|g' ${OutPath}/${WorkingSceneFile}"
                             Com4="$Com4; $Com4a; $Com4b"
                         fi
@@ -1437,19 +1437,19 @@ main() {
                     
                     # -- Perform checks if modality is T2w
                     if [ "$Modality" == "T2w" ]; then
-                        # -- Check if T2w is found in the subject_hcp.txt mapping file
-                        T2wCheck=`cat ${SubjectsFolder}/${CASE}/subject_hcp.txt | grep "T2w"`
+                        # -- Check if T2w is found in the session_hcp.txt mapping file
+                        T2wCheck=`cat ${SessionsFolder}/${CASE}/session_hcp.txt | grep "T2w"`
                         if [[ -z $T2wCheck ]]; then
                             echo ""
-                            reho "--- ERROR: T2w QC requested but T2w mapping in ${SubjectsFolder}/${CASE}/subject_hcp.txt not detected. Check your data and re-run if needed."
+                            reho "--- ERROR: T2w QC requested but T2w mapping in ${SessionsFolder}/${CASE}/session_hcp.txt not detected. Check your data and re-run if needed."
                             CompletionCheck="fail"
                             echo ""
                             return 1
                         else
                             echo ""
-                            geho "--- T2w mapping found: ${SubjectsFolder}/${CASE}/subject_hcp.txt. Checking for T2w data next..."
+                            geho "--- T2w mapping found: ${SessionsFolder}/${CASE}/session_hcp.txt. Checking for T2w data next..."
                             echo ""
-                            # -- If subject_hcp.txt mapping file present check if Preprocessed T2w files are present
+                            # -- If session_hcp.txt mapping file present check if Preprocessed T2w files are present
                             if [ -z ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz ]; then
                                 echo ""
                                 reho "--- ERROR: Preprocessed T2w data not found: "
@@ -1675,7 +1675,7 @@ main() {
                         Com5="$Com5; $ComRunPngNameBedpostX; $Com5c; $Com5d"
                     fi
                     
-                    # -- Clean templates and files for next subject
+                    # -- Clean templates and files for next session
                     Com7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
                     Com8="rm ${OutPath}/${TemplateSceneFile} &> /dev/null"
                     Com9="rm -f ${OutPath}/data_split*"
@@ -1695,19 +1695,19 @@ main() {
                         echo ""
                         if [[ ${Modality} == "general" ]]; then
                              geho "--- ${Modality} scene type requested. Outputs will be set relative to: "
-                             geho "    ${SubjectsFolder}/${CASE}"
+                             geho "    ${SessionsFolder}/${CASE}"
                              echo ""
-                             RemoveScenePath="${SubjectsFolder}/${CASE}"
-                             Com10a="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/"
+                             RemoveScenePath="${SessionsFolder}/${CASE}"
+                             Com10a="cp ${OutPath}/${WorkingSceneFile} ${SessionsFolder}/${CASE}/"
                              Com10b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
-                             Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/${WorkingSceneFile}" 
-                             Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip"
+                             Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SessionsFolder}/${CASE}/${WorkingSceneFile}" 
+                             Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SessionsFolder}/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip"
                              echo ""
                              echo "$Com10d"
                              echo ""
-                             Com10e="echo ${SubjectsFolder}/${CASE}/${WorkingSceneFile}"
-                             Com10f="mkdir -p ${SubjectsFolder}/${CASE}/qc &> /dev/null"
-                             Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/qc/"
+                             Com10e="echo ${SessionsFolder}/${CASE}/${WorkingSceneFile}"
+                             Com10f="mkdir -p ${SessionsFolder}/${CASE}/qc &> /dev/null"
+                             Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SessionsFolder}/${CASE}/qc/"
                              Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
                         else
                              geho "--- ${Modality} scene type requested. Outputs will be set relative to: "
@@ -1815,7 +1815,7 @@ main() {
                         ComRunBoldPngNameGSMap="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingSceneFile}"
                         # -- Output image of the scene
                         RunQCCustom6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539"
-                        # -- Clean templates and files for next subject
+                        # -- Clean templates and files for next session
                         RunQCCustom7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
                         RunQCCustom8="rm ${OutPath}/${TemplateSceneFile} &> /dev/null"
                         RunQCCustom9="rm -f ${OutPath}/data_split*"
@@ -1864,7 +1864,7 @@ main() {
                     ComRunBoldPngNameGSMap="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingSceneFile}"
                     # -- Output image of the scene
                     RunQCUser6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539"
-                    # -- Clean templates and files for next subject
+                    # -- Clean templates and files for next session
                     RunQCUser7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
                     RunQCUser8="rm ${OutPath}/${TemplateSceneFile} &> /dev/null"
                     RunQCUser9="rm -f ${OutPath}/data_split*"
@@ -1906,5 +1906,4 @@ main() {
 # ---------------------------------------------------------
 
 main $@
-
 

@@ -46,7 +46,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are data stored in the following format
-# * These data are stored in: "$SubjectsFolder/$CASE/
+# * These data are stored in: "$SessionsFolder/$CASE/
 #
 #~ND~END~
 

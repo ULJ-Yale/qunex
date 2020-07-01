@@ -6,15 +6,15 @@ Caret7_command=${CARET7DIR}/wb_command
 
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject>"
+    echo "usage: $0 <StudyFolder> <Session>"
     echo "Final Merge of the three .dconn blocks"
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
 
 ${Caret7_command} -cifti-merge-dense COLUMN ${ResultsFolder}/Conn3.dconn.nii -cifti ${ResultsFolder}/merged_matrix3_1.dconn.nii -cifti ${ResultsFolder}/merged_matrix3_2.dconn.nii -cifti ${ResultsFolder}/merged_matrix3_3.dconn.nii
 

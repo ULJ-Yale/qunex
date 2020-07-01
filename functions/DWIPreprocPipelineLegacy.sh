@@ -70,18 +70,18 @@ usage() {
                 echo ""
                 echo "-- REQUIRED PARMETERS:"
                 echo ""
-                echo "        --subjectsfolder=<study_folder>                        Path to study data folder"
-                echo "        --subjects=<list_of_cases>                    List of subjects to run"
+                echo "        --sessionsfolder=<study_folder>                        Path to study data folder"
+                echo "        --sessions=<list_of_cases>                    List of sessions to run"
                 echo "        --scanner=<scanner_manufacturer>            Name of scanner manufacturer (siemens or ge supported) "
                 echo "        --echospacing=<echo_spacing_value>            EPI Echo Spacing for data [in msec]; e.g. 0.69"
                 echo "        --PEdir=<phase_encoding_direction>            Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
                 echo "        --unwarpdir=<epi_phase_unwarping_direction>    Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
                 echo "        --usefieldmap=<yes/no>                        Whether to use the standard field map. If set to <yes> then the following parameters become mandatory:"
-                echo "        --diffdatasuffix=<diffusion_data_name>        Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
+                echo "        --diffdatasuffix=<diffusion_data_name>        Name of the DWI image; e.g. if the data is called <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
                 echo " "
                 echo "-- OPTIONAL PARMETERS:"
                 echo ""
-                echo "        --overwrite=<clean_prior_run>        Delete prior run for a given subject"
+                echo "        --overwrite=<clean_prior_run>        Delete prior run for a given session"
                 echo ""
                 echo "        FIELDMAP-SPECFIC PARAMETERS (these become mandatory if --usefieldmap=yes):"
                 echo ""
@@ -103,8 +103,8 @@ usage() {
                 echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
                 echo ""
                 echo ""
-                echo "qunex --subjectsfolder='<folder_with_subjects>' \ "
-                echo "--subjects='<comma_separarated_list_of_cases>' \ "
+                echo "qunex --sessionsfolder='<folder_with_sessions>' \ "
+                echo "--sessions='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--PEdir='1' \ "
                 echo "--echospacing='0.69' \ "
@@ -117,8 +117,8 @@ usage() {
                 echo ""
                 echo "-- Example with flagged parameters for submission to the scheduler using Siemens FieldMap [ needs GPU-enabled queue ]:"
                 echo ""
-                echo "qunex --subjectsfolder='<folder_with_subjects>' \ "
-                echo "--subjects='<comma_separarated_list_of_cases>' \ "
+                echo "qunex --sessionsfolder='<folder_with_sessions>' \ "
+                echo "--sessions='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--PEdir='1' \ "
                 echo "--echospacing='0.69' \ "
@@ -132,8 +132,8 @@ usage() {
                 echo ""
                 echo "-- Example with flagged parameters for submission to the scheduler using GE data w/out FieldMap [ needs GPU-enabled queue ]:"
                 echo ""
-                echo "qunex --subjectsfolder='<folder_with_subjects>' \ "
-                echo "--subjects='<comma_separarated_list_of_cases>' \ "
+                echo "qunex --sessionsfolder='<folder_with_sessions>' \ "
+                echo "--sessions='<comma_separarated_list_of_cases>' \ "
                 echo "--function='hcpdLegacy' \ "
                 echo "--diffdatasuffix='DWI_dir91_LR' \ "
                 echo "--scheduler='<name_of_scheduler_and_options>' \ "
@@ -170,12 +170,12 @@ fi
 ########################################## INPUTS ########################################## 
 
 # DWI Data and T1w data needed in HCP-style format to perform legacy DWI preprocessing
-# The data should be in $DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
-# Also assumes that hcp1 (PreFreeSurfeer) T1 preprocessing has been carried out with results in "$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w
+# The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
+# Also assumes that hcp1 (PreFreeSurfeer) T1 preprocessing has been carried out with results in "$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w
 # Mandatory input parameters:
 
-    # SubjectsFolder
-    # Subject
+    # SessionsFolder
+    # Session
     # Scanner
     # UseFieldmap
     
@@ -190,8 +190,8 @@ fi
 
 ########################################## OUTPUTS #########################################
 
-# DiffFolder=${SubjectsFolder}/${Subject}/Diffusion
-# T1wDiffFolder=${SubjectsFolder}/${Subject}/T1w/Diffusion_"$DiffDataSuffix"
+# DiffFolder=${SessionsFolder}/${Session}/Diffusion
+# T1wDiffFolder=${SessionsFolder}/${Session}/T1w/Diffusion_"$DiffDataSuffix"
 #
 #    $DiffFolder/$DiffDataSuffix/rawdata
 #    $DiffFolder/$DiffDataSuffix/eddy
@@ -207,8 +207,8 @@ get_options() {
     local arguments=($@)
     
     # -- initialize global output variables
-    unset SubjectsFolder
-    unset Subject
+    unset SessionsFolder
+    unset Session
     unset PEdir
     unset EchoSpacing
     unset TE
@@ -234,11 +234,11 @@ get_options() {
                 version_show $@
                 exit 0
                 ;;
-            --subjectsfolder=*)
-                SubjectsFolder=${argument/*=/""}
+            --sessionsfolder=*)
+                SessionsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --subject=*)
+            --sessions=*)
                 CASE=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
@@ -282,14 +282,14 @@ get_options() {
         esac
     done
     # -- check required parameters
-    if [ -z ${SubjectsFolder} ]; then
+    if [ -z ${SessionsFolder} ]; then
         usage
         echo "ERROR: <study-path> not specified"
         exit 1
     fi
     if [ -z ${CASE} ]; then
         usage
-        echo "ERROR: <subject-id> not specified"
+        echo "ERROR: <session-id> not specified"
         exit 1
     fi
     if [ -z ${Scanner} ]; then
@@ -331,8 +331,8 @@ get_options() {
     echo ""
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    echo "   SubjectsFolder: ${SubjectsFolder}"
-    echo "   Subject: ${CASE}"
+    echo "   SessionsFolder: ${SessionsFolder}"
+    echo "   Session: ${CASE}"
     echo "   Scanner: ${Scanner}"
     if [ ${UseFieldmap} == "yes" ]; then
         echo "   Using Fieldmap: ${UseFieldmap}"
@@ -366,7 +366,7 @@ EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
 PEdir="$PEdir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
 TE="$TE" #delta TE in ms for field map or "NONE" if not used
 UnwarpDir="$UnwarpDir" # direction along which to unwarp
-DiffData="$CASE"_"$DiffDataSuffix" # Diffusion data suffix name - e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+DiffData="$CASE"_"$DiffDataSuffix" # Diffusion data suffix name - e.g. if the data is called <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
 DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds
 
@@ -375,12 +375,12 @@ geho "--- Establishing paths for all input and output folders:"
 echo ""
 
 # -- Establish global directory paths
-T1wFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w
-DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
-T1wDiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w/T1wDiffusion_"$DiffDataSuffix"
-FieldMapFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/FieldMap_strc
-LogFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/Diffusion/"$DiffDataSuffix"/log
-DiffFolderOut="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion_"$DiffDataSuffix"
+T1wFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w
+DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
+T1wDiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/T1wDiffusion_"$DiffDataSuffix"
+FieldMapFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/FieldMap_strc
+LogFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion/"$DiffDataSuffix"/log
+DiffFolderOut="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion_"$DiffDataSuffix"
 
 echo "T1Folder:         $T1wFolder"
 echo "DiffFolder:       $DiffFolder"
@@ -420,7 +420,7 @@ mkdir -p "$DiffFolder"/"$DiffDataSuffix"/acqparams 2> /dev/null
 
 geho "--- Setting up acquisition parameters:"
 echo ""
-# -- Make subject-specific and acquisition-specific parameter folder
+# -- Make session-specific and acquisition-specific parameter folder
 mkdir "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData" > /dev/null 2>&1
 # -- Create index file - parameter file for number of frames in the DWI image
 sesdimt=`fslval "$DiffFolder"/"$DiffData" dim4` #Number of datapoints per Pos series
