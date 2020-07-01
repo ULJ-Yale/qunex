@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.51.15
+Qu|Nex suite version: 0.60.0
 
 Submodules:
 
-* connector: 0.50.5
-* library: 0.50.11
-* nitools: 0.50.1
-* niutilities: 0.51.10
+* connector: 0.60.0
+* library: 0.60.0
+* nitools: 0.60.0
+* niutilities: 0.60.0
 
 
 Release notes
 -------------
 
+* 0.60.0 Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
 * 0.51.0 MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
@@ -59,6 +60,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.60.0  [connector, library, nitools, niutilities] Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.15 [library] Updated ColeAnticevicNetPartition with files from most recent release (v1.1.4) of the parcellation.
 * 0.51.14 [library] Updated ColeAnticevicNetPartition with files from most recent release of the parcellation.
 * 0.51.13 [connector, library] Splash screen update, added gpu_binaries and montage templates.
