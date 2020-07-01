@@ -7,13 +7,13 @@ set -e
 
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject>"
+    echo "usage: $0 <StudyFolder> <Session>"
     echo ""
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 
 bindir=/home/stam/fsldev/ptx2  #Eventually FSLDIR (use custom probtrackx2 and fdt_matrix_merge for now)
 scriptsdir=${HCPPIPEDIR_dMRITract}
@@ -23,19 +23,19 @@ TemplateFolder="${HCPPIPEDIR_Template}/91282_Greyordinates"
 Nsamples=100
 Nrepeats=100
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
-BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.bedpostX
-RegFolder="$StudyFolder"/"$Subject"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Subject"/MNINonLinear/ROIs
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
+BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
+RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
+ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir ${ResultsFolder}
 fi
 
 #Use BedpostX samples
-BedpostxFolder="${StudyFolder}"/"${Subject}"/T1w/Diffusion.bedpostX
+BedpostxFolder="${StudyFolder}"/"${Session}"/T1w/Diffusion.bedpostX
 DtiMask=${BedpostxFolder}/nodif_brain_mask
 #Or RubiX samples
-#BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.rubiX
+#BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.rubiX
 #DtiMask=$BedpostxFolder/HRbrain_mask
 
 
@@ -107,4 +107,4 @@ ptx_id=`${FSLDIR}/bin/fsl_sub -T 480 -R 6000 -l ${ResultsFolder}/Mat1_logs -N pt
 ptx_merged_id=`${FSLDIR}/bin/fsl_sub -T 720 -R 30000 -j ${ptx_id} -l ${ResultsFolder}/Mat1_logs -N Mat1_merge ${bindir}/fdt_matrix_merge ${ResultsFolder}/Mat1_list.txt ${ResultsFolder}/merged_matrix1.dot`
 
 #Create CIFTI file=Mat1+Mat1_transp (1.5 hours, 36 GB)
-${FSLDIR}/bin/fsl_sub -T 180 -R 45000 -j ${ptx_merged_id} -l ${ResultsFolder}/Mat1_logs -N Mat1_conn ${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Subject} ${TemplateFolder} ${Nrepeats}
+${FSLDIR}/bin/fsl_sub -T 180 -R 45000 -j ${ptx_merged_id} -l ${ResultsFolder}/Mat1_logs -N Mat1_conn ${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Session} ${TemplateFolder} ${Nrepeats}

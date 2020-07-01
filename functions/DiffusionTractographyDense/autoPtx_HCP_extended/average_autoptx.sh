@@ -3,10 +3,10 @@
 Usage() {
 cat << EOF
 
-Usage: average_autoptx <StudyFolder> <SubjectId_list> <OutputFolder>
+Usage: average_autoptx <StudyFolder> <SessionId_list> <OutputFolder>
 
-    For each SubjectId in the provided list, the autoptx results are summed and averaged and saved in the outputFolder
-    AutoPtx results for each subject are assumed saved in $StudyFolder/SubjectId/MNINonLinear/Results/autoPtx
+    For each SessionId in the provided list, the autoptx results are summed and averaged and saved in the outputFolder
+    AutoPtx results for each session are assumed saved in $StudyFolder/SessionId/MNINonLinear/Results/autoPtx
 
 EOF
     exit 1
@@ -27,7 +27,7 @@ TractsPath="MNINonLinear/Results/autoPtx"
 count=0
 for i in $list; do
     echo $i
-    if [ "$count" -eq "0" ]; then    #If first subject 
+    if [ "$count" -eq "0" ]; then    #If first session 
 	error=0
 	for j in $tracts; do
 	   tmp=$StudyFolder/$i/$TractsPath/$j/tracts/tractsNorm.nii.gz
@@ -62,4 +62,4 @@ for j in $tracts; do
     fslmaths $OutputFolder/$j -div $count $OutputFolder/$j
 done
 
-echo "AutoPtx results from $count subjects averaged"
+echo "AutoPtx results from $count sessions averaged"

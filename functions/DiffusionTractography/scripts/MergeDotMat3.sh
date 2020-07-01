@@ -7,18 +7,18 @@ Caret7_command=${CARET7DIR}/wb_command
 
 if [ "$5" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <count> <GrayOrdinates_Templatedir> <Nrepeats>"
+    echo "usage: $0 <StudyFolder> <Session> <count> <GrayOrdinates_Templatedir> <Nrepeats>"
     echo "Merge dot files and convert the merged.dot file to .dconn.nii"
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 count=$3                # Which Part of Matrix3 to process (1 for LH to All, 2 for RH to All, 3 for Subxortex to All) 
 TemplateFolder=$4
 Nrepeats=$5             # How many dot files to merge
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
 
 #Merge results from individual probtrackx runs 
 $bindir/fdt_matrix_merge $ResultsFolder/Mat3_${count}_list.txt $ResultsFolder/merged_matrix3_${count}.dot

@@ -42,7 +42,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are BOLD data from previous processing
-# * These data are stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/T1w/Diffusion/BedpostX 
+# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/T1w/Diffusion/BedpostX 
 #
 #~ND~END~
 
@@ -86,10 +86,10 @@ usage() {
      echo ""
      echo "  -- Note on waytotal normalization and log transformation of streamline counts:"
      echo ""
-     echo "  waytotal normalization is computed automatically as part of the run prior to any inter-subject or group comparisons"
+     echo "  waytotal normalization is computed automatically as part of the run prior to any inter-session or group comparisons"
      echo "  to account for individual differences in geometry and brain size. The function divides the "
      echo "  dense connectome by the waytotal value, turning absolute streamline counts into relative "
-     echo "  proportions of the total streamline count in each subject. "
+     echo "  proportions of the total streamline count in each session. "
      echo ""
      echo "  Next, a log transformation is computed on the waytotal normalized data, "
      echo "  which will yield stronger connectivity values for longe-range projections. "
@@ -100,16 +100,16 @@ usage() {
      echo ""
      echo "  -- The outputs for these files will be in:"
      echo ""
-     echo "     /<path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii"
-     echo "     /<path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii"
+     echo "     /<path_to_study_sessions_folder>/<session_id>/hcp/<session_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii"
+     echo "     /<path_to_study_sessions_folder>/<session_id>/hcp/<session_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii"
      echo ""
      echo ""
      echo "  -- REQUIRED PARMETERS:"
      echo ""
      echo "    --function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
-     echo "    --subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
-     echo "    --subjects=<comma_separated_list_of_cases>            List of subjects to run"
-     echo "    --overwrite=<clean_prior_run>                         Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
+     echo "    --sessionsfolder=<folder_with_sessions>               Path to study folder that contains sessions"
+     echo "    --sessions=<comma_separated_list_of_cases>            List of sessions to run"
+     echo "    --overwrite=<clean_prior_run>                         Delete a prior run for a given session [Note: this will delete only the Matrix run specified by the -omatrix flag]"
      echo "    --omatrix1=<matrix1_model>                            Specify if you wish to run matrix 1 model [yes or omit flag]"
      echo "    --omatrix3=<matrix3_model>                            Specify if you wish to run matrix 3 model [yes or omit flag]"
      echo ""
@@ -118,9 +118,9 @@ usage() {
      echo "    --nsamplesmatrix1=<Number_of_Samples_for_Matrix1>     Number of samples - default=10000"
      echo "    --nsamplesmatrix3=<Number_of_Samples_for_Matrix3>     Number of samples - default=3000"
      echo "    --infolder=<path_for_hcp_input_folder>                Input HCP folder where minimally preprocessed results reside"
-     echo "                                                          Default: <path_to_study_subjects_folder>/<subject_id>/hcp"
+     echo "                                                          Default: <path_to_study_sessions_folder>/<session_id>/hcp"
      echo "    --outfolder=<probtrackX_output_folder_locaition>      Output folder for probtrackX results."
-     echo "                                                          Default: <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>/MNINonLinear/Results/Tractography"     
+     echo "                                                          Default: <path_to_study_sessions_folder>/<session_id>/hcp/<session_id>/MNINonLinear/Results/Tractography"     
      echo "    --scriptsfolder=<folder_with_probtrackX_GPU_scripts>  Location of the probtrackX GPU scripts"
      echo ""
      echo ""
@@ -155,8 +155,8 @@ usage() {
      echo ""     
      echo "-- EXAMPLE with flagged parameters:"
      echo ""
-     echo "qunex ProbtrackxGPUDense --subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--subjects='<comma_separarated_list_of_cases>' \ "
+     echo "qunex ProbtrackxGPUDense --sessionsfolder='<path_to_study_sessions_folder>' \ "
+     echo "--sessions='<comma_separarated_list_of_cases>' \ "
      echo "--scheduler='<name_of_scheduler_and_options>' \ "
      echo "--omatrix1='yes' \ "
      echo "--nsamplesmatrix1='10000' \ "
@@ -193,8 +193,8 @@ done
 }
 
 # -- Initialize global output variables
-unset SubjectsFolder
-unset Subjects
+unset SessionsFolder
+unset Sessions
 unset Overwrite
 unset ScriptsFolder        
 unset OutFolder        
@@ -206,8 +206,8 @@ unset MatrixThree
 unset minimumfilesize      
 
 # -- Parse arguments
-SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
-CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
+CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
 ScriptsFolder=`opts_GetOpt "--scriptsfolder" $@`
 InFolder=`opts_GetOpt "--infolder" $@`
@@ -217,15 +217,15 @@ MatrixThree=`opts_GetOpt "--omatrix3" $@`
 NsamplesMatrixOne=`opts_GetOpt "--nsamplesmatrix1" $@`
 NsamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
 
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <folder_with_subjects> not specified"
+    reho "ERROR: <folder_with_sessions> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${CASES} ]; then
     usage
-    reho "ERROR: <subject_ids> not specified"
+    reho "ERROR: <session_ids> not specified"
     exit 1
 fi
 
@@ -243,12 +243,12 @@ fi
 
 # -- Optional parameters
 if [ -z ${ScriptsFolder} ]; then ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/Tractography_gpu_scripts"; fi
-if [ -z ${OutFolder} ]; then OutFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"; fi
-if [ -z ${InFolder} ]; then InFolder="${SubjectsFolder}/${CASE}/hcp"; fi
+if [ -z ${OutFolder} ]; then OutFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"; fi
+if [ -z ${InFolder} ]; then InFolder="${SessionsFolder}/${CASE}/hcp"; fi
 minimumfilesize="100000000"
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 scriptName=$(basename ${0})
@@ -257,8 +257,8 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Study Folder: ${StudyFolder}"
-echo "   Subjects Folder: ${SubjectsFolder}"
-echo "   Subjects: ${CASES}"
+echo "   Sessions Folder: ${SessionsFolder}"
+echo "   Sessions: ${CASES}"
 echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"
 echo "   Input HCP folder: ${InFolder}"
 echo "   Output folder for probtrackX results: ${OutFolder}"
@@ -288,11 +288,11 @@ mkdir ${OutFolder}  &> /dev/null
 
 for CASE in $CASES; do
     TimeLog=`date '+%Y-%m-%d-%H-%M-%S'`
-    OutputLogProbtrackxGPUDense="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
+    OutputLogProbtrackxGPUDense="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
     
     # -- Echo probtrackX log for each case
             echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-    geho "   --- probtrackX GPU for subject $CASE..."                 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
+    geho "   --- probtrackX GPU for session $CASE..."                 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
             echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
     
     for MNum in $MNumber; do

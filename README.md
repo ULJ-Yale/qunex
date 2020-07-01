@@ -1,7 +1,7 @@
 # README File for Qu|Nex Connector Component
 
 The `connector` repository as part of the Qu|Nex package serves as the overall wrapper 
-for the Qu|Nex suite. It handles flexible directory inputs and subject lists. 
+for the Qu|Nex suite. It handles flexible directory inputs and session lists. 
 The `connector` code supports various functionality across the Qu|Nex suite, 
 including data organization, QC, preprocessing, various analyses etc. 
 The wrapper code is flexible and can be updated by adding functions developed around 
