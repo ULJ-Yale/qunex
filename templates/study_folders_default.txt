@@ -1,0 +1,43 @@
+analysis
+  scripts
+
+processing
+  logs
+    batchlogs
+    comlogs
+    runlogs
+    runchecks
+  lists
+  scripts
+  scenes
+    QC
+      T1w
+      T2w
+      myelin
+      BOLD
+      DWI
+
+info
+  demographics
+  tasks
+  stimuli
+  bids
+  hcpls
+
+sessions
+  inbox
+    MR
+    EEG
+    BIDS
+    HCPLS
+    behavior
+    concs
+    events
+  archive
+    MR
+    EEG
+    BIDS
+    HCPLS
+    behavior
+  specs
+  QC

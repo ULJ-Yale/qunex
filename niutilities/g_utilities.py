@@ -14,7 +14,6 @@ import errno
 import shutil
 import glob
 import datetime
-import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
 import niutilities.gp_core as gpc
@@ -23,7 +22,6 @@ import niutilities
 import getpass
 import re
 import subprocess
-import sys
 import niutilities.g_filelock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
@@ -64,7 +62,7 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 
-def manageStudy(studyfolder=None, action="create", verbose=False):
+def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
     '''
     manageStudy studyfolder=None action="create"
 
@@ -77,22 +75,30 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
     --studyfolder  : the location of the study folder
     --action       : whether to create a new study folder (create) or check
                      an existing study folder (check)
+    --folders      : Path to the file which defines the study folder structure.
+                     [$TOOLS/niutilities/templates/study_folders_default.txt]
     '''
 
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+
+    # default folders file
+    if folders is None:
+        folders = os.path.join(niuTemplateFolder, "study_folders_default.txt")
+    else:
+        # if not absolute path
+        if not os.path.exists(folders):
+            # check if in templates
+            folders = os.path.join(niuTemplateFolder, folders)
+            if not os.path.exists(folders):
+                # fail
+                raise ge.CommandFailed("manageStudy", "Folder structure file [%s] not found!" % folders, "Please check the value of the folders parameter.")
+
+    # action
     create = action == "create"
 
-    folders = [['analysis'], ['analysis', 'scripts'], 
-               ['processing'], 
-               ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], ['processing', 'logs', 'runchecks'], 
-               ['processing', 'lists'], 
-               ['processing', 'scripts'],
-               ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
-               ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'], ['info', 'bids'], ['info', 'hcpls'],
-               ['subjects'], 
-               ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'HCPLS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
-               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'HCPLS'], ['subjects', 'archive', 'behavior'], 
-               ['subjects', 'specs'], 
-               ['subjects', 'QC']]
+    # create folders structure from file
+    folders = createStudyFolders(folders)
 
     if create:
         if verbose:
@@ -120,13 +126,11 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                     print " ... folder exists:", tfolder
 
     if create:
-        TemplateFolder = os.environ['TemplateFolder']
         if verbose:
             print "\nPreparing template files:"
 
         # --> parameter template
-
-        paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
+        paramFile = os.path.join(studyfolder, 'sessions', 'specs', 'batch_example.txt')
         try:
             f = os.open(paramFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
             os.write(f, parameterTemplateHeader + "\n")
@@ -137,34 +141,41 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                     os.write(f, "#\n# " + line[0] + '\n#\n')
             os.close(f)
             if verbose:
-                print " ... created batch_parameters_example.txt file" 
+                print " ... created batch_example.txt file" 
 
         except OSError as e:
             if e.errno == errno.EEXIST:
                 if verbose:
-                    print " ... batch_parameters_example.txt file already exists" 
+                    print " ... batch_example.txt file already exists" 
             else:
                 errstr = os.strerror(e.errno)
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
 
         # --> mapping example
-
-        mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping_example.txt')
-        try:
-            f = os.open(mapFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-            mapcontent = open(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), 'r').read()
-            os.write(f, mapcontent)
-            os.close(f)
-            if verbose:
-                print " ... created hcp_mapping_example.txt file" 
-
-        except OSError as e:
-            if e.errno == errno.EEXIST:
+        # get all files that match the pattern
+        examplesFolder = os.path.join(niuTemplateFolder, 'templates')
+        mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt")
+        for srcFile in mappingExamples:
+            try:
+                # extract filename only
+                fileName = os.path.basename(srcFile)
+                # destination path and file
+                mapFile = os.path.join(studyfolder, fileName)
+                dstFile = os.open(mapFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+                # read src
+                srcContent = open(srcFile, 'r').read()
+                os.write(dstFile, srcContent)
+                os.close(dstFile)
                 if verbose:
-                    print " ... hcp_mapping_example.txt file already exists" 
-            else:
-                errstr = os.strerror(e.errno)
-                raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+                    print " ... created %s file" % dstFile
+
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    if verbose:
+                        print " ... %s file already exists" % dstFile
+                else:
+                    errstr = os.strerror(e.errno)
+                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
 
         # --> markFile
         markFile = os.path.join(studyfolder, '.qunexstudy')
@@ -213,68 +224,127 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
 
 
-def createStudy(studyfolder=None):
+def createStudyFolders(folders_spec):
     '''
-    createStudy studyfolder=<path to study base folder>
+    createStudyFolders folders=None
+
+    A helper function called by manageStudy for creating study folder structure
+    from a .txt file with structure specification.
+    
+    PARAMETERS
+    ==========
+
+    --folders ... Path to the file which defines the study folder structure.
+                  [$TOOLS/niutilities/templates/study_folders_default.txt]
+    '''
+
+    # variable for storing the structure
+    folder_structure = []
+
+    with open(folders_spec) as f:
+        # track current structure
+        current_structure = []
+        current_indents = []
+
+        for line in f:
+            # ignore empty lines
+            folder = line.strip()
+            if folder != "":
+                # get indent
+                indent = len(line) - len(line.lstrip())
+
+                # if indent is 0 we have a new root folder
+                if indent == 0:
+                    current_structure = [folder]
+                    current_indents = [0]
+
+                # if indent is not 0 find the location in structure
+                else:
+                    i = 0
+                    while indent > current_indents[i]:
+                        i = i+1
+                        if i == len(current_indents):
+                            break
+
+                    # remove at the end of the list
+                    current_structure = current_structure[0:i]
+                    current_indents = current_indents[0:i]
+
+                    # add new info
+                    current_structure.append(folder)
+                    current_indents.append(indent)
+
+                # append to folders
+                folder_structure.append(current_structure)
+    
+    return folder_structure
+
+
+def createStudy(studyfolder=None, folders=None):
+    '''
+    createStudy studyfolder=<path to study base folder> [folders=$TOOLS/niutilities/templates/study_folders_default.txt]
 
     USE
     ===
 
-    Creates the base folder at the provided path location and the key standard
-    study subfolders. Specifically:
+    Creates the base folder at the provided path location and the study folders. 
+    By default $TOOLS/niutilities/templates/study_folders_default.txt will be used
+    for subfolder specification. The default structure is:
 
     <studyfolder>
     ├── analysis
     │   └── scripts
     ├── processing
     │   ├── logs
+    │   │   ├── batchlogs
     │   │   ├── comlogs
     │   │   ├── runchecks
     │   │   └── runlogs
     │   ├── lists
-    │   ├── scenes
-    │   │   └── QC
-    │   │       ├── T1w
-    │   │       ├── T2w
-    │   │       ├── myelin
-    │   │       ├── BOLD
-    │   │       └── DWI
-    │   └── scripts
+    │   ├── scripts
+    │   └── scenes
+    │       └── QC
+    │           ├── T1w
+    │           ├── T2w
+    │           ├── myelin
+    │           ├── BOLD
+    │           └── DWI
     ├── info
-    │   ├── bids
     │   ├── demographics
-    │   ├── hcpls
     │   ├── tasks
-    │   └── stimuli
-    └── subjects
+    │   ├── stimuli
+    │   ├── bids
+    │   └── hcpls
+    └── sessions
         ├── inbox
         │   ├── MR
         │   ├── EEG
         │   ├── BIDS
+        │   ├── HCPLS
         │   ├── behavior
         │   ├── concs
-        │   ├── events
-        │   └── HCPLS
+        │   └── events
         ├── archive
         │   ├── MR
         │   ├── EEG
         │   ├── BIDS
-        │   ├── behavior
-        │   └── HCPLS
+        │   ├── HCPLS
+        │   └── behavior
         ├── specs
         └── QC
 
-    Do note that the command will create all the missing subfolders in which the
+    Do note that the command will create all the missing folders in which the
     specified study is to reside. The command also prepares template
-    batch_parameters_example.txt and hcp_mapping_example.txt files in
-    <studyfolder>/subjects/specs folder. Finally, it creates a .qunexstudy file in
+    batch_example.txt and pipeline example mapping files in
+    <studyfolder>/sessions/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
-    PARAMETER
-    =========
+    PARAMETERS
+    ==========
 
     --studyfolder  ... The path to the study folder to be generated
-
+    --folders      ... Path to the file which defines the subfolder structure.
+                       [$TOOLS/niutilities/templates/study_folders_default.txt]
 
     EXAMPLE USE
     ===========
@@ -303,6 +373,8 @@ def createStudy(studyfolder=None):
              - Changes to qunex.
     2019-12-07 Grega Repovs
              - Changed to a version that is parallel processing safe
+    2020-06-08 Jure Demsar
+             - Added the folders parameter.
     '''
 
     print "Running createStudy\n==================="
@@ -310,12 +382,12 @@ def createStudy(studyfolder=None):
     if studyfolder is None:
         raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
-    manageStudy(studyfolder=studyfolder, action="create", verbose=True)
+    manageStudy(studyfolder=studyfolder, action="create", folders=folders, verbose=True)
 
 
-def checkStudy(startfolder="."):
+def checkStudy(startfolder=".", folders=None):
     '''
-    checkStudy startfolder="."
+    checkStudy startfolder="." [folders=$TOOLS/niutilities/templates/study_folders_default.txt]
 
     The function looks for the path to the study folder in the hierarchy 
     starting from the provided startfolder. If found it checks that all the
@@ -337,28 +409,29 @@ def checkStudy(startfolder="."):
         testfolder = os.path.dirname(testfolder)
 
     if studyfolder:
-        manageStudy(studyfolder=studyfolder, action="check")
+        manageStudy(studyfolder=studyfolder, action="check", folders=folders)
 
     return studyfolder  
 
 
-def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, sessions=None, sfilter=None, overwrite="no", paramfile=None):
+def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
     '''
-    createBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=no] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+    createBatch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch.txt]
     
     PARAMETERS
     =========
 
-    --subjectsfolder  ... The location of the <study>/subjects folder
-    --sfile           ... The name of the source file to take from each specified 
-                          session folder and add to batch file [subject_hcp.txt]
-    --tfile           ... The path to the batch file to be generated. By default
+    --sessionsfolder  ... The location of the <study>/sessions folder
+    --sourcefiles     ... Comma separated names of source files to take from
+                          each specified session folder and add to batch file.
+                          [session_hcp.txt]
+    --targetfile      ... The path to the batch file to be generated. By default
                           it is created as <study>/processing/batch.txt
     --sessions        ... If provided, only the specified sessions from the 
-                          subjectsfolder will be processed. They are to be 
+                          sessionsfolder will be processed. They are to be 
                           specified as a pipe or comma separated list, grob 
                           patterns are valid session specifiers.
-    --sfilter         ... An optional parameter given as "key:value|key:value"
+    --filter          ... An optional parameter given as "key:value|key:value"
                           string. Only sessions with the specified key-value
                           pairs in their source files will be added to the
                           batch file.
@@ -368,24 +441,24 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
                           specified sessions to the batch file.
     --paramfile       ... The path to the parameter file header to be used. If 
                           not explicitly provided it defaults to:
-                          <subjectsfolder>/specs/batch_parameters.txt
+                          <sessionsfolder>/specs/batch.txt
 
 
     USE
     ===
 
-    The command combines all the sfile in all session folders in subjectsfolder 
-    to generate a joint batch file and save it as tfile. If only specific 
+    The command combines all the sourcefiles in all session folders in sessionsfolder 
+    to generate a joint batch file and save it as targetfile. If only specific 
     sessions are to be added or appended, "sessions" parameter can be used. This 
     can be a pipe, comma or space separated list of session ids, another batch 
     file or a list file. If a string is provided, grob patterns can be used (e.g.
     sessions="AP*|OR*") and all matching sessions will be processed.
 
-    If no tfile is specified, it will save the file as batch.txt in a
-    processing folder parallel to the subjectsfolder. If the folder does not yet
+    If no targetfile is specified, it will save the file as batch.txt in a
+    processing folder parallel to the sessionsfolder. If the folder does not yet
     exist, it will create it.
 
-    If tfile already exists, depending on "overwrite" parameter it will:
+    If targetfile already exists, depending on "overwrite" parameter it will:
 
     - ask:    ask interactively
     - yes:    overwrite the existing file
@@ -401,21 +474,21 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramfile
     is specified and the default template does not exist, the command will print
-    a warning and create an empty template (subjects/spec/batch_parameters.txt)
+    a warning and create an empty template (sessions/spec/batch.txt)
     with all the available parameters. Do note that this file will need to be edited
     with correct parameter values for your study.
 
     Alternatively, if you don't have a parameter file prepared, you can use or
     copy and modify one of the following templates:
 
-    legacy data template: $TemplateFolder/templates/batch_legacy_parameters.txt
-    multiband data template: $TemplateFolder/templates/batch_multiband_parameters.txt
+    legacy data template: qunex/niutilities/templates/batch_legacy_parameters.txt
+    multiband data template: qunex/niutilities/templates/batch_multiband_parameters.txt
 
     Example
     =======
     
     ```
-    qunex createBatch sfile="subject.txt" tfile="fcMRI/subjects_fcMRI.txt"
+    qunex createBatch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
     ```
 
     ----------------
@@ -426,7 +499,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
              - Renamed to createBatch and batch.txt.
     2018-01-01 Grega Repovš
              - Added append option and changed parameter names.
-             - Added the option to specify subjects to add explicitly.
+             - Added the option to specify sessions to add explicitly.
     2018-07-16 Grega Repovš
              - Renamed to createBatch from compileBatch
     2018-07-20 Grega Repovš
@@ -434,7 +507,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added subjectsfolder to getSubjectList call
+             - Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to add to batch
     2019-05-22 Grega Repovš
@@ -450,19 +523,25 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter and sfilter.lower() == 'none':
-        sfilter = None
+    if filter and filter.lower() == 'none':
+        filter = None
 
-    subjectsfolder = os.path.abspath(subjectsfolder)
+    sessionsfolder = os.path.abspath(sessionsfolder)
+
+    # get sfiles from sourcefiles parameter
+    if sourcefiles is None:
+        sfiles = []
+        sfiles.append("session_hcp.txt")
+    else:
+        sfiles = sourcefiles.split(",")
 
     # --- prepare target file name and folder
+    if targetfile is None:
+        targetfile = os.path.join(os.path.dirname(sessionsfolder), 'processing', 'batch.txt')
 
-    if tfile is None:
-        tfile = os.path.join(os.path.dirname(subjectsfolder), 'processing', 'batch.txt')
-
-    if os.path.exists(tfile):
+    if os.path.exists(targetfile):
         if overwrite == 'ask':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
+            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
             s = raw_input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
             if s == 'o':
                 print "         Overwriting exisiting file."
@@ -471,55 +550,53 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
+                raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
         elif overwrite == 'yes':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
+            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
             print "         Overwriting exisiting file."
         elif overwrite == 'append':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
+            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
             print "         Appending to exisiting file."
         elif overwrite == 'no':
-            raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
+            raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
     else:
         overwrite = 'yes'
 
-    targetFolder = os.path.dirname(tfile)
+    targetFolder = os.path.dirname(targetfile)
     if not os.path.exists(targetFolder):
         print "---> Creating target folder %s" % (targetFolder)
         os.makedirs(targetFolder)
 
-
     try:
-
         # --- open target file
-        preexist = os.path.exists(tfile)
+        preexist = os.path.exists(targetfile)
 
         # lock file
-        fl.lock(tfile)
+        fl.lock(targetfile)
 
         # --- initalize slist
         slist = []
         
         if overwrite == 'yes':
-            print "---> Creating file %s [%s]" % (os.path.basename(tfile), tfile)
-            jfile = open(tfile, 'w')
+            print "---> Creating file %s [%s]" % (os.path.basename(targetfile), targetfile)
+            jfile = open(targetfile, 'w')
             print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
-            print >> jfile, "# Subjects folder: %s" % (subjectsfolder)
-            print >> jfile, "# Source files: %s" % (sfile)
+            print >> jfile, "# Sessions folder: %s" % (sessionsfolder)
+            print >> jfile, "# Source files: %s" % (sfiles)
             
         elif overwrite == 'append':
-            slist, parameters = gc.getSubjectList(tfile)
+            slist, parameters = gc.getSessionList(targetfile)
             slist = [e['id'] for e in slist]
-            print "---> Appending to file %s [%s]" % (os.path.basename(tfile), tfile)
+            print "---> Appending to file %s [%s]" % (os.path.basename(targetfile), targetfile)
             if paramfile and preexist:
                 print "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
-            jfile = open(tfile, 'a')
+            jfile = open(targetfile, 'a')
 
         # --- check for param file
 
         if overwrite == 'yes' or not preexist:
             if paramfile is None:
-                paramfile = os.path.join(subjectsfolder, 'specs', 'batch_parameters.txt')
+                paramfile = os.path.join(sessionsfolder, 'specs', 'batch.txt')
                 if not os.path.exists(paramfile):
                     print "---> WARNING: Creating empty parameter file!"
                     pfile = open(paramfile, 'w')
@@ -540,25 +617,29 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
             else:
                 print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
-        # -- get list of subject folders
+        # -- get list of sessions folders
 
         missing = 0
 
         if sessions is not None:
-            sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+            sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
             files = []
             for session in sessions:
-                nfiles = glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
-                if nfiles:
-                    files += nfiles
-                else:
-                    print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(subjectsfolder, session['id'], sfile))
-                    missing += 1
+                for sfile in sfiles:
+                    nfiles = glob.glob(os.path.join(sessionsfolder, session['id'], sfile))
+                    if nfiles:
+                        files += nfiles
+                    else:
+                        print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(sessionsfolder, session['id'], sfile))
+                        missing += 1
         else:
-            files = glob.glob(os.path.join(subjectsfolder, '*', sfile))
+            files = []
+            for sfile in sfiles:
+                globres = glob.glob(os.path.join(sessionsfolder, '*', sfile))
+                for gr in globres:
+                    files.append(gr)
 
         # --- loop trough session files
-
         files.sort()
         for file in files:
             sessionid = os.path.basename(os.path.dirname(file))
@@ -573,12 +654,12 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
 
         # --- close file
         jfile.close()
-        fl.unlock(tfile)       
+        fl.unlock(targetfile)
 
     except:
         if jfile:
             jfile.close()
-            fl.unlock(tfile)
+            fl.unlock(targetfile)
         raise
 
     if not files:
@@ -589,9 +670,9 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
 
 
 
-def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
+def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
     """
-    createList [subjectsfolder="."] [sessions=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+    createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 
     The function creates a .list formated file that can be used as input to a
     number of processing and analysis functions. The function is fairly flexible,
@@ -600,18 +681,18 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     PARAMETERS
     ==========
     
-    --subjectsfolder ... The location of the subjects folder where the sessions
+    --sessionsfolder ... The location of the sessions folder where the sessions
                          to create the list reside.
     --sessions       ... Either a comma or pipe separated string of session 
                          names to include (can be glob patterns) or a path
                          to a batch.txt file.
-    --sfilter        ... If a batch.txt file is provided a string of key-value
+    --filter         ... If a batch.txt file is provided a string of key-value
                          pairs ("<key>:<value>|<key>:<value>"). Only sessions
                          that match all the key-value pairs will be added to 
                          the list.
     --listfile       ... The path to the generated list file. If no path is 
                          provided, the list is created as:
-                         <studyfolder>/processing/lists/subjects.list
+                         <studyfolder>/processing/lists/sessions.list
     --bolds          ... If provided the specified bold files will be added to 
                          the list. The value should be a string that lists bold 
                          numbers or bold tags in a space, comma or pipe 
@@ -657,7 +738,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     The file is created at the path specified in `listfile` parameter. If no
     parameter is provided, the resulting list is saved in:
 
-    <studyfolder>/processing/lists/subjects.list
+    <studyfolder>/processing/lists/sessions.list
 
     If a file already exists, depending on the `overwrite` parameter the
     function will:
@@ -675,7 +756,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     file or another list file. If a string is provided, grob patterns can be
     used (e.g. sessions="AP*|OR*") and all matching sessions will be included.
 
-    If a batch file is provided, sessions can be filtered using the `sfilter`
+    If a batch file is provided, sessions can be filtered using the `filter`
     parameter. The parameter should be provided as a string in the format:
 
     "<key>:<value>|<key>:<value>"
@@ -683,7 +764,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     Only the sessions for which all the specified keys match the specified values
     will be included in the list.
 
-    If no sessions are specified, the function will inspect the `subjectsfolder`
+    If no sessions are specified, the function will inspect the `sessionsfolder`
     and include all the sessions for which an `images` folder exists as a
     subfolder in the sessions's folder.
 
@@ -706,34 +787,34 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
     The bolds will be listed in the list file as:
 
-    file:<subjectsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
+    file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
 
     *conc files*
     To include conc files, provide a `conc` parameter. In the parameter list the
     name of the conc file to be include. Conc files will be listed as:
 
-    conc:<subjectsfolder>/<session id>/images/functional/concs/<conc>
+    conc:<sessionsfolder>/<session id>/images/functional/concs/<conc>
 
     *fidl files*
     To include fidl files, provide a `fidl` parameter. In the parameter list the
     name of the fidl file to include. Fidl files will be listed as:
 
-    fidl:<subjectsfolder>/<session id>/images/functional/events/<fidl>
+    fidl:<sessionsfolder>/<session id>/images/functional/events/<fidl>
 
     *GLM files*
     To include GLM files, provide a `glm` parameter. In the parameter list the
     name of the GLM file to include. GLM files will be listed as:
 
-    glm:<subjectsfolder>/<session id>/images/functional/<glm>
+    glm:<sessionsfolder>/<session id>/images/functional/<glm>
 
     *ROI files*
     To include ROI files, provide a `roi` parameter. In the parameter list the
     name of the ROI file to include. ROI files will be listed as:
 
-    roi:<subjectsfolder>/<session id>/images/<roi>
+    roi:<sessionsfolder>/<session id>/images/<roi>
 
     Note that for all the files the function expects the files to be present in
-    the correct places within the Qu|Nex subjects folder structure. For ROI files
+    the correct places within the Qu|Nex sessions folder structure. For ROI files
     provide the relative path from the `images` folder.
 
     Checking for presence of files
@@ -755,14 +836,14 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     qunex createList bolds="1,2,3"
     ```
 
-    The command will create a list file in `../processing/list/subjects.txt` that
+    The command will create a list file in `../processing/list/sessions.list` that
     will list for all the sessions found in the current folder BOLD files 1, 2, 3
     listed as:
 
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
     ```
-    qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
             bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
     ```
 
@@ -770,11 +851,11 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     sessions specified in the `batch.txt` it will list all the BOLD files tagged
     as rest runs and include them as:
 
-      file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas_s_hpss_res-mVWMWB1d.dtseries
+      file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas_s_hpss_res-mVWMWB1d.dtseries
 
     ```
-    qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
-            sfilter="EC:use" listfile="lists/EC.list" \\
+    qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+            filter="EC:use" listfile="lists/EC.list" \\
             conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
             fidl="EC.fidl" glm="bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
             roi="segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii"
@@ -784,10 +865,10 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     all the sessions in the conc file, that have the key:value pair "EC:use" the
     following files:
 
-      conc:<subjectsfolder>/<session id>/images/functional/concs/bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc
-      fidl:<subjectsfolder>/<session id>/images/functional/events/EC.fidl
-      glm:<subjectsfolder>/<session id>/images/functional/bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz
-      roi:<subjectsfolder>/<session id>/images/segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii
+      conc:<sessionsfolder>/<session id>/images/functional/concs/bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc
+      fidl:<sessionsfolder>/<session id>/images/functional/events/EC.fidl
+      glm:<sessionsfolder>/<session id>/images/functional/bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz
+      roi:<sessionsfolder>/<session id>/images/segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii
 
     ----------------
     Written by Grega Repovš 2018-06-26
@@ -796,7 +877,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added subjectsfolder to getSubjectList call
+             - Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to add to the list file
     2019-05-30 Grega Repovš
@@ -818,13 +899,13 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
     # --- check sessions
 
-    subjectsfolder = os.path.abspath(subjectsfolder)
+    sessionsfolder = os.path.abspath(sessionsfolder)
 
     if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter and sfilter.lower() == 'none':
-        sfilter = None
+    if filter and filter.lower() == 'none':
+        filter = None
 
     # --- prepare parameters
 
@@ -840,7 +921,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     # --- prepare target file name and folder
 
     if listfile is None:
-        listfile = os.path.join(os.path.dirname(subjectsfolder), 'processing', 'lists', 'subjects.list')
+        listfile = os.path.join(os.path.dirname(sessionsfolder), 'processing', 'lists', 'sessions.list')
         print "WARNING: No target list file name specified.\n         The list will be created as: %s!" % (listfile)
 
     if os.path.exists(listfile):
@@ -872,12 +953,12 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     # --- check sessions
 
     if sessions is None:
-        print "WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
-        sessions = glob.glob(os.path.join(subjectsfolder, '*', 'images'))
+        print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'images'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("createList", "No session found", "No sessions found to add to the list file!", "Please check your data!")
@@ -887,11 +968,11 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     lines = []
 
     for session in sessions:
-        lines.append("subject id: %s" % (session['id']))
+        lines.append("session id: %s" % (session['id']))
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
                 checkFile(tfile)
                 lines.append("    file:" + tfile)
 
@@ -906,27 +987,27 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
                 checkFile(tfile)
                 lines.append("    file:" + tfile)
 
         if roi:
-            tfile = os.path.join(subjectsfolder, session['id'], 'images', roi)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images', roi)
             checkFile(tfile)
             lines.append("    roi:" + tfile)
 
         if glm:
-            tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', glm)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', glm)
             checkFile(tfile)
             lines.append("    glm:" + tfile)
 
         if conc:
-            tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', 'concs', conc)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'concs', conc)
             checkFile(tfile)
             lines.append("    conc:" + tfile)
 
         if fidl:
-            tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', 'events', fidl)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'events', fidl)
             checkFile(tfile)
             lines.append("    fidl:" + tfile)
 
@@ -949,9 +1030,9 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
 
 
-def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
+def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
     """
-    createConc [subjectsfolder="."] [sessions=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+    createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 
     The function creates a set of .conc formated files that can be used as input
     to a number of processing and analysis functions. The function is fairly
@@ -960,12 +1041,12 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     PARAMETERS
     ==========
 
-    --subjectsfolder ... The location of the subjects folder where the sessions
+    --sessionsfolder ... The location of the sessions folder where the sessions
                          to create the list reside.
     --sessions       ... Either a comma or pipe separated string of session 
                          names to include (can be glob patterns) or a path
                          to a batch.txt file.
-    --sfilter        ... If a batch.txt file is provided a string of key-value
+    --filter        ... If a batch.txt file is provided a string of key-value
                          pairs ("<key>:<value>|<key>:<value>"). Only sessions
                          that match all the key-value pairs will be added to 
                          the list.
@@ -1027,7 +1108,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     grob patterns can be used (e.g. sessions="AP*|OR*") and all matching
     sessions will be included.
 
-    If a batch file is provided, sessions can be filtered using the `sfilter`
+    If a batch file is provided, sessions can be filtered using the `filter`
     parameter. The parameter should be provided as a string in the format:
 
     "<key>:<value>|<key>:<value>"
@@ -1035,7 +1116,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     The conc files will be generated only for the sessions for which all the
     specified keys match the specified values.
 
-    If no sessions are specified, the function will inspect the `subjectsfolder`
+    If no sessions are specified, the function will inspect the `sessionsfolder`
     and generate conc files for all the sessions for which an `images` folder
     exists as a subfolder in the sessions's folder.
 
@@ -1056,10 +1137,10 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
 
     The bolds will be listed in the list file as:
 
-    file:<subjectsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
+    file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
 
     Note that the function expects the files to be present in the correct place
-    within the Qu|Nex subjects folder structure.
+    within the Qu|Nex sessions folder structure.
 
     Checking for presence of files
     ------------------------------
@@ -1088,19 +1169,19 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
     
     ```
-    qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
             bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
     ```
 
     The command will create for each session listed in the `batch.txt` a
-    `<session id>_WM.conc` file in `subjects/inbox/concs` in which it will list
+    `<session id>_WM.conc` file in `sessions/inbox/concs` in which it will list
     all the BOLD files tagged as `WM` as:
 
-      file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas.dtseries
+      file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas.dtseries
 
     ```
-    qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
-            sfilter="EC:use" concfolder="analysis/EC/concs" \\
+    qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+            filter="EC:use" concfolder="analysis/EC/concs" \\
             concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
             boldtail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
     ```
@@ -1110,7 +1191,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     folder. The conc files will be named `<session id>_EC_s_hpss_res-mVWMWB1de.conc`
     and will list all the bold files that are marked as `EC` runs as:
 
-      file:<subjectsfolder>/<session id>/images/functional/bold[N]_s_hpss_res-mVWMWB1deEC.dtseries.nii
+      file:<sessionsfolder>/<session id>/images/functional/bold[N]_s_hpss_res-mVWMWB1deEC.dtseries.nii
 
     ----------------
     Written by Grega Repovš 2018-06-30
@@ -1119,7 +1200,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added subjectsfolder to getSubjectList call
+             - Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to be processed
     2019-05-30 Grega Repovš
@@ -1150,10 +1231,10 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter and sfilter.lower() == 'none':
-        sfilter = None
+    if filter and filter.lower() == 'none':
+        filter = None
 
-    subjectsfolder = os.path.abspath(subjectsfolder)
+    sessionsfolder = os.path.abspath(sessionsfolder)
 
     # --- prepare parameters
 
@@ -1171,7 +1252,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     # --- prepare target file name and folder
 
     if concfolder is None:
-        concfolder = os.path.join(subjectsfolder, 'inbox', 'concs')
+        concfolder = os.path.join(sessionsfolder, 'inbox', 'concs')
         print "WARNING: No target conc folder specified.\n         The conc files will be created in folder: %s!" % (concfolder)
 
     if not os.path.exists(concfolder):
@@ -1181,12 +1262,12 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     # --- check sessions
 
     if sessions is None:
-        print "WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
-        sessions = glob.glob(os.path.join(subjectsfolder, '*', 'images'))
+        print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'images'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("createConc", "No session found", "No sessions found to add to the list file!", "Please check your data!")
@@ -1203,7 +1284,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
@@ -1218,7 +1299,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + str(boldnum) + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + str(boldnum) + boldtail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
@@ -1306,7 +1387,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                             (use of grep patterns is possible), e.g. 
                             "OP128,OP139,ER*", or a path to a batch.txt or
                             *list file with a list of session ids.
-    --subjid            ... An optional parameter explicitly specifying, which
+    --sessionids        ... An optional parameter explicitly specifying, which
                             of the sessions from the list provided by the 
                             `sessions` parameter are to be processed in this
                             call. If not specified, all sessions will be 
@@ -1330,8 +1411,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     When processing is spread across multiple runList invocations, the 
     `sperlist` parameter will be passed forward as `parsessions` parameter on
-    each separate invocation (see the next section). Similarly `subjid` will be
-    passed on, adjusted for the sessions to be run with the specific runList
+    each separate invocation (see the next section). Similarly `sessionids` will
+    be passed on, adjusted for the sessions to be run with the specific runList
     invocation (see the next section).
 
     Please take note that if `runList` command is ran using a scheduler, any
@@ -1361,8 +1442,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                         when bold processing). If parelements is already specified
                         within the `listfile`, then the lower value will
                         take precedence.
-    --subjid        ... An optional parameter specifying which sessions are to be 
-                        processed within this runList invocation. If `subjid` is 
+    --sessionids    ... An optional parameter specifying which sessions are to be 
+                        processed within this runList invocation. If `sessionids` is 
                         specified within the listfile, then the value passed to 
                         runList will take precedence.
 
@@ -1431,7 +1512,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     ```
     # global settings
-    subjectsfolder : /data/testStudy/subjects
+    sessionsfolder : /data/testStudy/sessions
     overwrite      : yes
     sessions       : *_baseline
 
@@ -1439,14 +1520,14 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     ---
     list: dataImport
 
-        command: BIDSImport
+        command: importBIDS
             inbox   : /data/datalake/EMBARC/inbox/BIDS
             archive : leave
 
     ---
     list: prepareHCP
 
-        command: getHCPReady
+        command: createSessionInfo
 
         command: createBatch
             tfile: /data/testStudy/processing/batch_baseline.txt
@@ -1753,7 +1834,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             if commandName in niutilities.g_commands.commands:
                 allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"])
-                if any([e in allowedParameters for e in ['sfolder', 'folder']]):
+                if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
                     allowedParameters += niutilities.g_commands.extraParameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
@@ -1832,9 +1913,9 @@ def stripQuotes(string):
     return string
 
 
-def batchTag2NameKey(filename=None, subjid=None, bolds=None, output='number', prefix="BOLD_"):
+def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number', prefix="BOLD_"):
     """
-    batchTag2NameKey filename=<path to batch file> subjid=<session id> bolds=<bold specification string> output=<keytype> prefix=<prefix to use>
+    batchTag2NameKey filename=<path to batch file> sessionid=<session id> bolds=<bold specification string> output=<keytype> prefix=<prefix to use>
 
     The function reads the batch file, extracts the data for the specified 
     session and returns the list of bold numbers or names that correspond to bolds
@@ -1844,7 +1925,7 @@ def batchTag2NameKey(filename=None, subjid=None, bolds=None, output='number', pr
     ==========
 
     --filename      ... Path to batch.txt file.
-    --subjid        ... Session id to look up.
+    --sessionid     ... Session id to look up.
     --bolds         ... Which bold images (as they are specified in the
                         batch.txt file) to process. It can be a single
                         type (e.g. 'task'), a pipe separated list (e.g.
@@ -1860,19 +1941,19 @@ def batchTag2NameKey(filename=None, subjid=None, bolds=None, output='number', pr
     if filename is None:
         raise ge.CommandError("batchTag2Num", "No batch file specified!")
 
-    if subjid is None:
+    if sessionid is None:
         raise ge.CommandError("batchTag2Num", "No session id specified!")
 
     if bolds is None:
         raise ge.CommandError("batchTag2Num", "No bolds specified!")
 
-    sessions, _ = gc.getSubjectList(filename, subjid=subjid)
+    sessions, _ = gc.getSessionList(filename, sessionids=sessionid)
 
     if not sessions:
-        raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (subjid, filename), "Please check your data!")
+        raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (sessionid, filename), "Please check your data!")
 
     if len(sessions) > 1:
-        raise ge.CommandFailed("batchTag2Num", "More than one session id found", "More than one [%s] instance of session id [%s] is present in the batch file [%s]" % (len(sessions), subjid, filename), "Please check your data!")
+        raise ge.CommandFailed("batchTag2Num", "More than one session id found", "More than one [%s] instance of session id [%s] is present in the batch file [%s]" % (len(sessions), sessionid, filename), "Please check your data!")
 
     session = sessions[0]
 
@@ -1891,9 +1972,9 @@ def batchTag2NameKey(filename=None, subjid=None, bolds=None, output='number', pr
     print "BOLDS:%s" % (",".join(boldlist))
 
 
-def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behavior.txt", tfile=None, overwrite="no", check="yes", report="yes"):
+def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="behavior.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
-    gatherBehavior [subjectsfolder="."] [sessions=None] [sfilter=None] [sfile="behavior.txt"] [tfile="<subjectsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]
+    gatherBehavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]
 
     The function gathers specified individual behavioral data from each 
     session's behavior folder and compiles it into a specified group behavioral
@@ -1902,10 +1983,10 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     PARAMETERS
     ==========
 
-    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
-                      the inbox and individual subject folders are. If not 
+    --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
+                      the inbox and individual session folders are. If not 
                       specified, the current working folder will be taken as 
-                      the location of the subjectsfolder. [.]
+                      the location of the sessionsfolder. [.]
     
     --sessions        Either a string with pipe `|` or comma separated list of 
                       sessions (sessions ids) to be processed (use of grep 
@@ -1913,7 +1994,7 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
                       to a batch.txt or *list file with a list of session ids.
                       [*]
 
-    --sfilter         Optional parameter used to filter sessions to include. It
+    --filter          Optional parameter used to filter sessions to include. It
                       is specifed as a string in format:
     
                       "<key>:<value>|<key>:<value>"
@@ -1921,14 +2002,14 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
                       Only the sessions for which all the specified keys match
                       the specified values will be included in the list.
 
-    --sfile           A file or comma or pipe `|` separated list of files or
-                      grep patterns that define, which subject specific files 
+    --sourcefiles     A file or comma or pipe `|` separated list of files or
+                      grep patterns that define, which session specific files 
                       from the behavior folder to gather data from. 
                       ['behavior.txt']
 
-    --tfile           The path to the target file, a file that will contain
-                      the joined data from all the individual subject files.
-                      ['<subjectsfolder>/inbox/behavior.txt']
+    --targetfile      The path to the target file, a file that will contain
+                      the joined data from all the individual session files.
+                      ['<sessionsfolder>/inbox/behavior.txt']
 
     --overwrite       Whether to overwrite an existing group behavioral file or
                       not. ['no']
@@ -1939,7 +2020,7 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
                       * yes   ... Check and report an error if no behavioral
                                   data exists for a session
-                      * warn  ... Warn and list the subjects for which the 
+                      * warn  ... Warn and list the sessions for which the 
                                   behavioral data was not found
                       * no    ... Do not run a check, ignore sessions for which
                                   no behavioral data was found
@@ -1951,9 +2032,9 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     USE DESCRIPTION
     ===============
     
-    The command will use the `subjectfolder`, `sessions` and `sfilter` 
+    The command will use the `sessionsfolders`, `sessions` and `filter` 
     parameters to create a list of sessions to process. For each session, the
-    command will use the `sfile` parameter to identify behavioral files from
+    command will use the `sourcefiles` parameter to identify behavioral files from
     which to compile the data from. If no file is found for a session and the
     `check` parameter is set to `yes`, the command will exit with an error.
 
@@ -1963,10 +2044,10 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     all the values encountered across sessions. If any session is missing data,
     the missing data will be identified as 'NA'
 
-    Group data will be saved to a file specified using `tfile` parameter. If no
+    Group data will be saved to a file specified using `targetfile` parameter. If no
     path is specified, the default location will be used:
 
-    <subjectsfolder>/inbox/behavior/behavior.txt
+    <sessionsfolder>/inbox/behavior/behavior.txt
 
     If a target file exists, it will be deleted and replaced, if the `overwrite`
     parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
@@ -2006,12 +2087,12 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     encountered when processing the data, the command will exit with an error.
     
     ```
-    qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
-            sessions="AP*|OP*" sfile="*test*|*results*" \\
+    qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
+            sessions="AP*|OP*" sourcefiles="*test*|*results*" \\
             check="warn" overwrite="yes" report="no"
     ```
 
-    The command will find all the session folders within `/data/myStudy/subjects`
+    The command will find all the session folders within `/data/myStudy/sessions`
     that have a `behavior` subfolder. It will then look for presence of any 
     files that match "*test*" or "*results*" glob pattern. The compiled data 
     will be saved in the default location. If a file already exists, it will be
@@ -2021,11 +2102,11 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     processing report.
 
     ```
-    qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
+    qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
             sessions="/data/myStudy/processing/batch.txt" \\           
-            sfilter="group:controls|behavioral:yes" \\
-            sfile="*test*|*results*" \\
-            tfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
+            filter="group:controls|behavioral:yes" \\
+            sourcefiles="*test*|*results*" \\
+            targetfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
             check="no" overwrite="yes"
     ```
 
@@ -2089,50 +2170,50 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
     # --- check subjects folder
 
-    subjectsfolder = os.path.abspath(subjectsfolder)
+    sessionsfolder = os.path.abspath(sessionsfolder)
 
-    if not os.path.exists(subjectsfolder):
-        raise ge.CommandFailed("gatherBehavior", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
+    if not os.path.exists(sessionsfolder):
+        raise ge.CommandFailed("gatherBehavior", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
     # --- check target file
 
-    if tfile is None:
-        tfile = os.path.join(subjectsfolder, 'inbox', 'behavior', 'behavior.txt')
+    if targetfile is None:
+        targetfile = os.path.join(sessionsfolder, 'inbox', 'behavior', 'behavior.txt')
 
     overwrite = overwrite.lower() == 'yes'
 
-    if os.path.exists(tfile):
+    if os.path.exists(targetfile):
         if overwrite:
             try:
-                os.remove(tfile)
+                os.remove(targetfile)
             except:
-                raise ge.CommandFailed("gatherBehavior", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (tfile), "Please check your paths and authorizations!")        
+                raise ge.CommandFailed("gatherBehavior", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (targetfile), "Please check your paths and authorizations!")        
         else:
-            raise ge.CommandFailed("gatherBehavior", "Target file exists", "The specified target file already exists [%s]" % (tfile), "Please check your paths or set overwrite to 'yes'!")        
+            raise ge.CommandFailed("gatherBehavior", "Target file exists", "The specified target file already exists [%s]" % (targetfile), "Please check your paths or set overwrite to 'yes'!")        
 
     # --- check sessions
 
     if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter and sfilter.lower() == 'none':
-        sfilter = None
+    if filter and filter.lower() == 'none':
+        filter = None
 
     report = report.lower() == 'yes'
 
-    # --- check sfile
+    # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sfile)]
+    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sourcefiles)]
 
     # --- check sessions
 
     if sessions is None:
-        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
-        sessions = glob.glob(os.path.join(subjectsfolder, '*', 'behavior'))
+        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("gatherBehavior", "No session found" , "No sessions found to process behavioral data from!", "Please check your data!")
@@ -2147,7 +2228,7 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
         files = []
         for sfile in sfiles:
-            files += glob.glob(os.path.join(subjectsfolder, session['id'], 'behavior', sfile))
+            files += glob.glob(os.path.join(sessionsfolder, session['id'], 'behavior', sfile))
 
         if not files:
             processReport['missing'].append(session['id'])
@@ -2170,9 +2251,9 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     # --- save group data
 
     try:
-        fout = open(tfile, 'w')
+        fout = open(targetfile, 'w')
     except:
-        raise ge.CommandFailed("gatherBehavior", "Could not create target file", "Target file could not be created at the specified location [%s]" % (tfile), "Please check your paths and authorizations!")        
+        raise ge.CommandFailed("gatherBehavior", "Could not create target file", "Target file could not be created at the specified location [%s]" % (targetfile), "Please check your paths and authorizations!")        
 
     header = ['session id'] + keys
     if report:
@@ -2226,9 +2307,9 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
 
 
-def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="subject.txt", tfile=None, overwrite="no", check="yes", report="yes"):
+def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefiles="session.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
-    pullSequenceNames [subjectsfolder="."] [sessions=None] [sfilter=None] [sfile="subject.txt"] [tfile="<subjectsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]
+    pullSequenceNames [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]
 
     The function gathers a list of all the sequence names across the sessions 
     and saves it into a specified file.
@@ -2236,10 +2317,10 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     PARAMETERS
     ==========
 
-    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
-                      the inbox and individual subject folders are. If not 
+    --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
+                      the inbox and individual session folders are. If not 
                       specified, the current working folder will be taken as 
-                      the location of the subjectsfolder. [.]
+                      the location of the sessionsfolder. [.]
     
     --sessions        Either a string with pipe `|` or comma separated list of 
                       sessions (sessions ids) to be processed (use of grep 
@@ -2247,7 +2328,7 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
                       to a batch.txt or *list file with a list of session ids.
                       [*]
 
-    --sfilter         Optional parameter used to filter sessions to include. It
+    --filter          Optional parameter used to filter sessions to include. It
                       is specifed as a string in format:
     
                       "<key>:<value>|<key>:<value>"
@@ -2255,14 +2336,14 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
                       Only the sessions for which all the specified keys match
                       the specified values will be included in the list.
 
-    --sfile           A file or comma or pipe `|` separated list of files or
+    --sourcefiles     A file or comma or pipe `|` separated list of files or
                       grep patterns that define, which session description 
-                      files to check. ['subject.txt']
+                      files to check. ['session.txt']
 
-    --tfile           The path to the target file, a file that will contain
+    --targetfile      The path to the target file, a file that will contain
                       the list of all the session names from all the individual
                       session information files.
-                      ['<subjectsfolder>/inbox/MR/sequences.txt']
+                      ['<sessionsfolder>/inbox/MR/sequences.txt']
 
     --overwrite       Whether to overwrite an existing file or not. ['no']
 
@@ -2284,19 +2365,19 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     USE DESCRIPTION
     ===============
     
-    The command will use the `subjectfolder`, `sessions` and `sfilter` 
+    The command will use the `sessionsfolders`, `sessions` and `filter` 
     parameters to create a list of sessions to process. For each session, the
-    command will use the `sfile` parameter to identify neuroimaging information 
-    files from which to genrate the list from. If no file is found for a session 
-    and the `check` parameter is set to `yes`, the command will exit with an 
-    error.
+    command will use the `sourcefiles` parameter to identify neuroimaging
+    information files from which to genrate the list from. If no file is found
+    for a session and the `check` parameter is set to `yes`, the command will
+    exit with an error.
 
     Once the files for each session are identified, the command will inspect the
     files for imaging data and create a list of sequence names across all 
-    sessions. The list will be saved to a file specified using `tfile` 
+    sessions. The list will be saved to a file specified using `targetfile` 
     parameter. If no path is specified, the default location will be used:
 
-    <subjectsfolder>/inbox/MR/sequences.txt
+    <sessionsfolder>/inbox/MR/sequences.txt
 
     If a target file exists, it will be deleted and replaced, if the `overwrite`
     parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
@@ -2307,7 +2388,7 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     ------------
 
     The command expects the neuroimaging data to be present in the standard 
-    'subject.txt' files. Please se online documentation for details. 
+    'session.txt' files. Please se online documentation for details. 
     Specifically, it will extract the first information following the sequence
     name.
 
@@ -2326,7 +2407,7 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     qunex pullSequenceNames sessions="AP*"
     ```
 
-    The command will compile sequence names present in `subject.txt` files 
+    The command will compile sequence names present in `session.txt` files 
     present in all `<session id>` folders that match the "AP*" glob
     pattern in the current working directory. 
 
@@ -2338,13 +2419,13 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     encountered when processing the data, the command will exit with an error.
 
     ```
-    qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
-            sessions="AP*|OP*" sfile="subject.txt|session.txt" \\
+    qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
+            sessions="AP*|OP*" sourcefiles="session.txt|subject.txt" \\
             check="warn" overwrite="yes" report="no"
     ```
 
-    The command will find all the session folders within `/data/myStudy/subjects`
-    It will then look for presence of either subject.xtx or session.txt files.
+    The command will find all the session folders within `/data/myStudy/sessions`
+    It will then look for presence of either session.txt or subject.txt files.
     The compiled data from the found files will be saved in the default 
     location. If a file already exists, it will be overwritten. If any errors 
     are encountered, the command will not throw an error, however it also won't
@@ -2352,11 +2433,11 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     information on file generation or processing report.
     
     ```
-    qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
+    qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
             sessions="/data/myStudy/processing/batch.txt" \\           
-            sfilter="group:controls|behavioral:yes" \\
-            sfile="*.txt" \\
-            tfile="/data/myStudy/subjects/specs/hcp_mapping.txt" \\
+            filter="group:controls|behavioral:yes" \\
+            sourcefiles="*.txt" \\
+            targetfile="/data/myStudy/sessions/specs/hcp_mapping.txt" \\
             check="no" overwrite="yes"
     ```
 
@@ -2414,52 +2495,52 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
 
     print "Running pullSequenceNames\n========================="
 
-    # --- check subjects folder
+    # --- check sessions folder
 
-    subjectsfolder = os.path.abspath(subjectsfolder)
+    sessionsfolder = os.path.abspath(sessionsfolder)
 
-    if not os.path.exists(subjectsfolder):
-        raise ge.CommandFailed("pullSequenceNames", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
+    if not os.path.exists(sessionsfolder):
+        raise ge.CommandFailed("pullSequenceNames", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
     # --- check target file
 
-    if tfile is None:
-        tfile = os.path.join(subjectsfolder, 'inbox', 'MR', 'sequences.txt')
+    if targetfile is None:
+        targetfile = os.path.join(sessionsfolder, 'inbox', 'MR', 'sequences.txt')
 
     overwrite = overwrite.lower() == 'yes'
 
-    if os.path.exists(tfile):
+    if os.path.exists(targetfile):
         if overwrite:
             try:
-                os.remove(tfile)
+                os.remove(targetfile)
             except:
-                raise ge.CommandFailed("pullSequenceNames", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (tfile), "Please check your paths and authorizations!")        
+                raise ge.CommandFailed("pullSequenceNames", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (targetfile), "Please check your paths and authorizations!")        
         else:
-            raise ge.CommandFailed("pullSequenceNames", "Target file exists", "The specified target file already exists [%s]" % (tfile), "Please check your paths or set overwrite to 'yes'!")        
+            raise ge.CommandFailed("pullSequenceNames", "Target file exists", "The specified target file already exists [%s]" % (targetfile), "Please check your paths or set overwrite to 'yes'!")        
 
     # --- check sessions
 
     if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter and sfilter.lower() == 'none':
-        sfilter = None
+    if filter and filter.lower() == 'none':
+        filter = None
 
     report = report.lower() == 'yes'
 
-    # --- check sfile
+    # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sfile)]
+    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sourcefiles)]
 
     # --- check sessions
 
     if sessions is None:
-        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
-        sessions = glob.glob(os.path.join(subjectsfolder, '*', 'behavior'))
+        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("pullSequenceNames", "No session found" , "No sessions found to process neuroimaging data from!", "Please check your data!")
@@ -2473,7 +2554,7 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
 
         files = []
         for sfile in sfiles:
-            files += glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
+            files += glob.glob(os.path.join(sessionsfolder, session['id'], sfile))
 
         if not files:
             processReport['missing'].append(session['id'])
@@ -2494,9 +2575,9 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     # --- save group data
 
     try:
-        fout = open(tfile, 'w')
+        fout = open(targetfile, 'w')
     except:
-        raise ge.CommandFailed("pullSequenceNames", "Could not create target file", "Target file could not be created at the specified location [%s]" % (tfile), "Please check your paths and authorizations!")        
+        raise ge.CommandFailed("pullSequenceNames", "Could not create target file", "Target file could not be created at the specified location [%s]" % (targetfile), "Please check your paths and authorizations!")        
 
     if report:
         print >> fout, "# Data compiled using pullSequenceNames on %s" % (datetime.datetime.today())
@@ -2539,254 +2620,22 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     if not processReport['ok']:
         raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
 
-
-def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=None, mapaction="link", mapto=None, mapfrom=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
-
-    """
-    mapIO [subjectsfolder="."] [sessions=None] [maptype=<desired mapping>] [sfilter=None] [subjid=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [mapfrom=None|<location to map from>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"] 
-
-    The function maps data in or out of Qu|Nex data structure. What specific 
-    mapping to conduct is specified by the `maptype` parameter. How to do the 
-    mapping (move, copy, link) is specified by the `mapaction` parameter. The
-    `overwrite` parameter specifies whether to replace any existing data at the
-    target location if it already exist.
-
-    If the function is to map out from the Qu|Nex data structure, then the target
-    location has to be provided by the `mapto` parameter. If the function is to 
-    map into the Qu|Nex data structure, then the source location has to be 
-    provided by the `mapfrom` parameter.
-
-    The function first prepares the mapping. Next it checks that the mapping can
-    be conducted as specified by the parameters given. If the check identifies 
-    any potential issues, no mapping is conducted to avoid an incomplete mapping. 
-    Do note that the check only investigates the presence of source and target 
-    files, it does not check, whether the user has permission on the filesystem 
-    to execute the actions.
-
-
-    PARAMETERS
-    ==========
-
-    --subjectsfolder  Specifies the base study subjects folder within the Qu|Nex
-                      folder structure to or from which the data are to be 
-                      mapped. If not specified explicitly, the current working 
-                      folder will be taken as the location of the subjectsfolder. 
-                      [.]
-    
-    --sessions        Either a string with pipe `|` or comma separated list of 
-                      sessions (sessions ids) to be mapped (use of grep patterns
-                      is possible), e.g. "AP128,OP139,ER*". When mapping out of 
-                      Qu|Nex it is best (or even required) to provide a path to 
-                      a batch.txt file with information on the sessions. [*]
-
-    --sfilter         And optional parameter used in combination with a 
-                      batch.txt file used to filter sessions to include in the 
-                      mapping. It is specified as a string in format:
-    
-                      "<key>:<value>|<key>:<value>"
-
-                      The keys and values refer to information provided by the
-                      batch.txt file referenced in the `sessions` parameter. 
-                      Only the sessions for which all the specified keys match
-                      the specified values will be mapped.
-    
-    --subjid          An optional parameter explicitly specifying, which of the 
-                      sessions identified by the `sessions` parameter are to be 
-                      mapped. If not specified, all sessions will be mapped.
- 
-    --maptype         The specific mapping type to be performed (see the section on
-                      implemented mappings).
-
-    --mapaction       How to map the data. The following actions are supported:
-                      * 'copy'  ... the data is copied from source to target
-                      * 'link'  ... if possible, hard links are created for the 
-                                    files, if not, the data is copied
-                      * 'move'  ... the data is moved from source to target 
-                                    location
-                      ['link']
-
-    --mapfrom         The source of the mapping when mapping into Qu|Nex. 
-                      This flag is optional and has to be specified when mapping 
-                      into the Qu|Nex folder structure from an external location.
-
-    --mapto           The external target of the mapping when starting with the 
-                      Qu|Nex. This flag is optional and only has to be specified 
-                      when mapping out of the Qu|Nex folder structure.
-
-    --overwrite       Whether existing files at the target location should be
-                      overwritten. Possible options are:
-                      * yes  ... any existing files should be replaced
-                      * no   ... no existing files should be replaced and the
-                                 mapping should be aborted if any are found
-                      * skip ... skip files that already exist, process others
-
-    --mapexclude      A comma separated list of regular expression patterns that
-                      specify, which files should be excluded from mapping. The
-                      regular expression patterns are matched against the full
-                      path of the source files.
-
-    --hcp_suffix      An optional suffix to append to session id when mapping  
-                      data from a hcp session folder. The path from which the 
-                      data will be mapped from each session will be:
-                      <subjectsfolder>/<session id>/hcp/<session id><hcp_suffix>.
-                      []
-
-    --verbose         Report details while running function
-
-
-
-    Implemented mapping types
-    -------------------------
-
-    The following mappings are implemented, as they can be specified by the
-    `maptype` parameter:
-
-    * 'toHCPLS'         This mapping supports the the data preprocessed using
-                        the HCP Pipelines following the Life Span (LS) 
-                        convention. The processed derivatives from the HCP 
-                        pipelines are mapped into the specified target location
-                        on the file system to comply with the HCPLS output 
-                        expectations. The mapping expects that HCPLS folder 
-                        structure was used for the processing. The function will
-                        map all the content of the session's hcp directory 
-                        to a corresponding session directory in the indicated 
-                        target location. If any part of the unprocessed data 
-                        or the results are not to be mapped, they can be 
-                        specified using the `mapexclude` parameter.
-
-
-    Examples
-    --------
-    
-    toHCPLS mapping
-    
-    We will assume the following:
-    
-    * data to be mapped is located in the folder `/data/studies/myStudy/subjects`
-    * a batch file exists in the location `/data/studies/myStudy/processing/batch.txt`
-    * we would like to map the data to location `/data/outbox/hcp_formatted/myStudy`
-    
-    given the above assumptions the following example commands can be run:
-    
-    ```
-    qunex mapIO \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
-        --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --mapto=/data/outbox/hcp_formatted/myStudy \\
-        --maptype=toHCPLS \\
-        --mapexclude=unprocessed \\
-        --mapaction=link \\
-        --overwrite=skip
-    ```
-
-    Using the above commands the data found in the 
-    `/data/studies/myStudy/subjects/<session id>/hcp/<session id>` folders, 
-    excluding the `unprocessed` folder would be mapped to the 
-    `/data/outbox/hcp_formatted/myStudy/<session id>` folder for all the 
-    sessions listed in the batch.txt file. Specifically, folders would be 
-    recreated as needed and hard-links would be created for all the files to be 
-    mapped. If any target files already exist, they would be skipped, but 
-    the processing of other files would take place anyway.
-    
-    ``` 
-    qunex mapIO \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
-        --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --mapto=/data/outbox/hcp_formatted/myStudy \\
-        --sfilter="group:controls|institution:Yale" \\
-        --maptype="toHCPLS" \\
-        --mapaction="copy" \\
-        --overwrite=no
-    ```
-
-    Using the above commands, only data from the sessions that are marked in the
-    batch.txt file to be from the control group and acquired at Yale would be 
-    mapped. In this case, the files would be copied and if any files would 
-    already exist in the target location, the mapping would be aborted 
-    altogether.
-    
-    ```
-    qunex mapIO \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
-        --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --mapto=/data/outbox/hcp_formatted/myStudy \\
-        --subjid="AP*,HQ*" \\
-        --maptype="toHCPLS" \\
-        --mapaction="move" \\
-        --overwrite=yes
-    ```
-
-    Using the above commands, only the sessions that start with either "AP" or 
-    "HQ" would be mapped, the files would be moved and any existing files at the 
-    target location would be overwritten.
-    
-    ```
-    qunex mapIO \\
-        --subjectsfolder=/data/studies/myStudy/subjects \\
-        --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --mapto=/data/outbox/hcp_formatted/myStudy \\
-        --maptype="toHCPLS" \\
-        --mapaction="link" \\
-        --mapexclude="unprocessed,MotionMatrices,MotionCorrection" \\
-        --overwrite=skip
-    ```
-    
-    Using the above commands, all the sessions specified in the batch.txt would 
-    be processed, files would be linked, files that already exist would be 
-    skipped, and any files for which the path include 'unprocessed', '
-    MotionMatrices' or 'MotionCorrection' would be excluded from the mapping.
-
-    ----------------
-    Written by Grega Repovš 2019-05-29
-
-    Change log
-    2019-05-30 Grega Repovš
-             - Modified documentation
-             - Excluding 'unprocessed' is now an explicit option
-    2019-09-22 Grega Repovš
-             - Folder timestamps are now kept when moving files.
-    """
-
-    verbose   = verbose.lower() == 'yes'
-
-    # -- check input
-
-    if os.path.exists(subjectsfolder):
-        subjectsfolder = os.path.abspath(subjectsfolder)
+# prepare variables for data export
+def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
+    if os.path.exists(sessionsfolder):
+        sessionsfolder = os.path.abspath(sessionsfolder)
     else:
-        raise ge.CommandFailed("mapIO", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
+        raise ge.CommandFailed(commandName, "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
-    if not maptype :
-        raise ge.CommandFailed("mapIO", "No mapping specified", "A mapping has to be specified to be executed!", "Please check your command call!")
-
-    if maptype not in ['toHCPLS']:
-        raise ge.CommandFailed("mapIO", "Mapping not supported", "The specified mapping is not supported [%s]" % (maptype), "Please check your command call!")
-
-    if maptype in ['toHCPLS']:
-        direction = 'out'
-        if mapto:
-            mapto = os.path.abspath(mapto)
-        else:
-            raise ge.CommandFailed("mapIO", "Target not specified", "To execute the specified mapping (%s), a target, `mapto` parameter has to be specified!" % (maptype), "Please check your command call!")
+    if mapto:
+        mapto = os.path.abspath(mapto)
     else:
-        direction = 'in'
-        if mapfrom:
-            mapfrom = os.path.abspath(mapfrom)
-        else:
-            raise ge.CommandFailed("mapIO", "Source not specified", "To execute the specified mapping (%s), a source, using `mapfrom` parameter has to be specified!" % (maptype), "Please check your command call!")
+        raise ge.CommandFailed(commandName, "Target not specified", "To execute the specified mapping `mapto` parameter has to be specified!", "Please check your command call!")
 
     if mapaction not in ['link', 'copy', 'move']:
-        raise ge.CommandFailed("mapIO", "Invalid action", "The action specified for the mapping is not valid [%s]!" % (maptype), "Please specify a valid mapping!")
-
-    # -- prepare sessions to work with
-
-    if direction == 'out':
-        sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, subjid=subjid, subjectsfolder=subjectsfolder, verbose=False)
-        if not sessions:
-            raise ge.CommandFailed("mapIO", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
+        raise ge.CommandFailed(commandName, "Invalid action", "The action specified is not valid!", "Please specify a valid action!")
 
     # -- prepare exclusion
-
     if mapexclude:
         patterns = [e.strip() for e in re.split(', *', mapexclude)]
         mapexclude = []
@@ -2794,199 +2643,282 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
             try:
                 mapexclude.append(re.compile(e))
             except:
-                raise ge.CommandFailed("mapIO", "Invalid exclusion" , "Could not parse the exclusion regular expression: '%s'!" % (e), "Please check mapexclude parameter!")
+                raise ge.CommandFailed(commandName, "Invalid exclusion" , "Could not parse the exclusion regular expression: '%s'!" % (e), "Please check mapexclude parameter!")
 
-    # -- open logfile
+    return sessionsfolder, mapto, mapexclude
 
-    logfilename, logfile = gc.getLogFile(folders={'subjectsfolder': subjectsfolder}, tags=['mapIO', maptype])
-    
-    gc.printAndLog(gc.underscore("Running mapIO: %s" % (maptype)), file=logfile)
-    
-    # -- prepare mapping
-
-    gc.printAndLog("--> Preparing mapping", file=logfile)
-
-    if maptype == 'toHCPLS':
-        toMap = map_toHCPLS(subjectsfolder, sessions, mapto, gopts, hcp_suffix)
-
-    if not toMap:
-        gc.printAndLog("ERROR: Found nothing to map!", file=logfile, silent=True)
-        endlog = gc.closeLogFile(logfile, logfilename, status="error")
-        raise ge.CommandFailed("mapIO", "Nothing to map" , "No files were found to map!", "Please check your data!")
-
-    # -- check mapping
-
-    missing   = []
-    existing  = []
-    failed    = []
-    process   = []
-    toexclude = []
-
-    for sfile, tfile in toMap:
-        if not os.path.exists(sfile):
-            missing.append((sfile, tifile))
-        elif os.path.isfile(tfile):
-            existing.append((sfile, tfile))
-        else:
-            if mapexclude:
-                if any([e.search(sfile) is not None for e in mapexclude]):
-                    toexclude.append((sfile, tfile))
-                    continue
-            process.append((sfile, tfile))
-
-    if missing:
-        gc.printAndLog("==> ERROR: A number of source files are missing", file=logfile, silent=not verbose)
-        for sfile, tfile in missing:
-            gc.printAndLog("           --> " + sfile, file=logfile)
-        gc.printAndLog("\nMapping Aborted!", file=logfile)
-        endlog = gc.closeLogFile(logfile, logfilename, status="error")
-        raise ge.CommandFailed("mapIO", "Source files missing" , "Mapping could not be run as some source files were missing!", "Please check your data and log [%s!" % (endlog))
-    
-    if existing:
-        s = 'Some files already exist'
-        if overwrite.lower() == 'yes':
-            s = "==> WARNING: " + s + " and will be overwritten"
-            pre = "             "
-            process += existing
-        if overwrite.lower() == 'skip':
-            s = "==> WARNING: " + s + " and will be skipped"
-            pre = "             "
-        else:
-            s = "==> ERROR: " + s 
-            pre = "           "
-        gc.printAndLog(s, file=logfile)
-
-        for sfile, tfile in existing:
-            gc.printAndLog(pre + "--> " + sfile, file=logfile, silent=not verbose)
-
-        if overwrite.lower() == 'no':
-            gc.printAndLog("==> Mapping Aborted!", file=logfile)
-            endlog = gc.closeLogFile(logfile, logfilename, status="error")
-            raise ge.CommandFailed("mapIO", "Target files exist" , "Mapping could not be run as some target file already exist!", "Please check your data and log [%s]!" % (endlog))
-
-    if toexclude:
-        gc.printAndLog("==> WARNING: Some files will be excluded from mapping", file=logfile)
-
-        for sfile, tfile in toexclude:
-            gc.printAndLog("             --> " + sfile, file=logfile, silent=not verbose)
-
-    if not process:
-        gc.printAndLog("==> Nothing left to map!", file=logfile, silent=True)
-        endlog = gc.closeLogFile(logfile, logfilename, status="done")
-        raise ge.CommandNull("mapIO", "Nothing left to map" , "After skipping and exclusion, no files were left to map!", "Please check your data!")
-
-    # -- execute mapping
-
-    # -> clean destination
-
-    if overwrite.lower() == 'yes':
-        for tfile in existing:
-            os.remove(tfile)
-
-    # -> map
-
-    mapactions = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
-    descriptions = {'copy': 'copying', 'move': 'moving', 'link': 'linking'}
-    
-    do   = mapactions[mapaction]
-    desc = descriptions[mapaction]
-
-    gc.printAndLog("--> Mapping files", file=logfile)
-
-    failed = []
-
-    # variable for storing folders that need their timestamps amended
-    timemapping = []
-
-    for sfile, tfile in process:
-
-        # split to file and folder
-        tfolder, _ = os.path.split(tfile)
-        sfolder, _ = os.path.split(sfile)
-
-        # create each fodler in the structure independenlty
-        # get all folders in the structure
-        tparentfolders = tfolder.split("/")
-        sparentfolders = sfolder.split("/")
-
-        currentpath = ""
-
-        # go over all folders
-        tpath = ""
-        for f in tparentfolders:
-            tpath = tpath + f + "/"
-
-            # does not exist yet
-            if not os.path.exists(tpath):
-                try:
-                    # makedir
-                    os.makedirs(tpath)
-
-                    # is folder also in source file's folder structure
-                    if f in sparentfolders:
-                        # create paths
-                        spath = "/".join(sparentfolders[0:sparentfolders.index(f)+1])
-                        # get source timestamp
-                        stime = os.path.getctime(spath)
-
-                        # store folder and timestamp
-                        timemapping.append([tpath, stime])
-
-                except:
-                    failed.append((sfile, tfile))
-                    continue
-                gc.printAndLog("    --> creating folder: %s" % (tfolder), file=logfile, silent=not verbose)
-
-        try:
-            do(sfile, tfile)
-        except:
-            raise
-            failed.append((sfile, tfile))
-            continue
-
-        gc.printAndLog("    --> %s: %s --> %s" % (desc, sfile, tfile), file=logfile, silent=not verbose)
-
-    # -- once files are copied set timestamps
-    for mapping in timemapping:
-        try:
-            # set target subfolder timestamp
-            os.utime(mapping[0], (mapping[1], mapping[1]))
-        except:
-            gc.printAndLog("    --> Setting time stamp of folder %s to %s failed" % (mapping[0], time.ctime(mapping[1])), file=logfile)
-            continue
-
-    # -- check success
-    
-    if failed:
-        gc.printAndLog("\n" + gc.underscore("ERROR: The following files could not be mapped"), file=logfile)
-        for sfile, tfile in failed:
-            gc.printAndLog("--> %s --> %s" % (sfile, tfile), file=logfile)
-
-        endlog = gc.closeLogFile(logfile, logfilename, status="error")
-        raise ge.CommandFailed("mapIO", "Some files not mapped" , "Some files could not be mapped!", "Please see log and check your data [%s]!" % (endlog))
-
-    gc.printAndLog("--> Mapping completed", file=logfile)
-    endlog = gc.closeLogFile(logfile, logfilename, status="done")
-
-
-
-def map_toHCPLS(subjectsfolder, sessions, target, options, hcp_suffix):
+# prepares session.txt files for specific pipeline mapping
+def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", sourcefile="session.txt", targetfile=None, mapping=None, filter=None, overwrite="no"):
     '''
-    Computes mapping from Qu|Nex to HCPLS folders.
+    createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]
+
+    USE
+    ===
+
+    The command is used to prepare session.txt files so that they hold the
+    information necessary for correct mapping to a folder structure supporting
+    specific pipeline preprocessing.
+
+    For all the sessions specified, the command checks for the presence of
+    specified source file (sourcefile). If the source file is found, each sequence
+    name is checked against the source specified in the mapping file (mapping),
+    and the specified label is aded. The results are then saved to the specified
+    target file (targetfile). The resulting session infomation files will have
+    "<pipeline>ready: true" key-value pair added.
+
+    PARAMETERS
+    ==========
+
+    --sessions       Either an explicit list (space, comma or pipe separated) of
+                     sessions to process or the path to a batch or list file with
+                     sessions to process. If left unspecified, "*" will be used 
+                     and all folders within sessionsfolders will be processed.
+    --pipelines      Specify a comma separted list of pipelines for which the
+                     session info will be be prepared. [hcp]
+    --sessionsfolder The directory that holds sessions' folders. [.]
+    --sourcefile     The "source" session.txt file. [session.txt]
+    --targetfile     The "target" session.txt file. [session_<pipeline>.txt]
+    --mapping        The path to the text file describing the mapping.
+                     [specs/<pipeline>_mapping.txt]
+    --filter         An optional "key:value|key:value" string used as a filter
+                     if a batch file is used. Only sessions for which all the
+                     key:value pairs are true will be processed. All the
+                     sessions will be processed if no filter is provided.
+    --overwrite      Whether to overwrite target files that already exist (yes)
+                     or not (no). [no]
+
+    If an explicit list is provided, each element is treated as a glob pattern
+    and the command will process all matching session ids.
+
+    Mapping specification
+    ---------------------
+
+    The mapping file specifies the mapping between original sequence names and
+    the desired pipeline labels. There are no limits to the number of mappings
+    specified. Each mapping is to be specified in a single line in a form:
+
+    <original_sequence_name>  => <user_specified_label>
+
+    or
+
+    <sequence number> => <user_specified_label>
+
+    BOLD files should be given a compound label after the => separator:
+
+    <original_sequence_name>  => bold:<user_specified_label>
+
+    as this allows for flexible labeling of distinct BOLD runs based on their
+    content. Here the 'bold' part denotes that it is a bold file and the
+    <user_speficied_label> allows for flexibility in naming. createSessionInfo
+    will automatically number bold images in a sequential order, starting with 1.
+
+    Any empty lines, lines starting with #, and lines without the "map to" =>
+    characters in the mapping file will be ingored. In the target file, images
+    with names that do not match any of the specified mappings will be given
+    empty labels. When both sequence number and sequence name match, sequence
+    number will have priority
+
+    Example
+    -------
+
+    Example lines in a mapping file:
+
+    C-BOLD 3mm 48 2.5s FS-P => SE-FM-AP
+    C-BOLD 3mm 48 2.5s FS-A => SE-FM-PA
+
+    T1w 0.7mm N1 => T1w
+    T1w 0.7mm N2 => T1w
+    T2w 0.7mm N1 => T2w
+    T2w 0.7mm N2 => T2w
+
+    RSBOLD 3mm 48 2.5s  => bold:rest
+    BOLD 3mm 48 2.5s    => bold:WM
+
+    5 => bold:sleep
+
+    Example lines in a source session.txt file:
+
+    01: Scout
+    02: T1w 0.7mm N1
+    03: T2w 0.7mm N1
+    04: RSBOLD 3mm 48 2.5s
+    05: RSBOLD 3mm 48 2.5s
+
+    Resulting lines in target session_<pipeline>.txt file:
+
+    01:                  :Scout
+    02: T1w              :T1w 0.7mm N1
+    03: T2w              :T2w 0.7mm N1
+    04: bold1:rest       :RSBOLD 3mm 48 2.5s
+    05: bold2:sleep      :RSBOLD 3mm 48 2.5s
+
+    Note, that the old sequence names are perserved.
+
+
+    EXAMPLE USE
+    ===========
+    
+    ```
+    qunex createSessionInfo sessions="OP*|AP*" sessionsfolder=session mapping=session/hcp_mapping.txt
+    ```
+    
+    ```
+    qunex createSessionInfo sessions="processing/batch_new.txt" sessionsfolder=session mapping=session/hcp_mapping.txt
+    ```
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-07 Grega Repovš
+             - Updated documentation.
+    2017-12-26 Grega Repovš
+             - Set to ignore lines that start with # in mapping file.
+    2017-12-30 Grega Repovš
+             - Added the option to explicitly specify the session to process.
+             - Adjusted and expanded help string.
+             - Added the option to map sequence names.
+    2019-04-07 Grega Repovš
+             - Added more detailed report with explicit failure in case of missing source files.
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
+    2020-06-03 Jure Demšar
+             - Renamed getHCPReady to createSessionInfo
     '''
-    toMap = []
 
-    for session in sessions:
-        hcpfolder = os.path.join(subjectsfolder, session['id'], 'hcp', session['id'] + hcp_suffix)
-        hcpfolders = glob.glob(os.path.join(hcpfolder, '*')) 
-        targetfolder = os.path.join(target, session['id'])
+    print "Running createSessionInfo\n==================="
 
-        for datafolder in hcpfolders:
-            for dirpath, dirnames, filenames in os.walk(datafolder):
-                for filename in filenames:
-                        toMap.append((os.path.join(datafolder, dirpath, filename), os.path.join(targetfolder, os.path.relpath(dirpath, hcpfolder), filename)))
+    # get all pipelines
+    pipelines = pipelines.split(",")
 
-    return toMap
+    # loop over them
+    for pipeline in pipelines:
+        if sessions is None:
+            sessions = "*"
 
+        if mapping is None:
+            mapping = os.path.join(sessionsfolder, 'specs', '%s_mapping.txt' % pipeline)
 
+        if targetfile is None:
+            targetfile = "session_%s.txt" % pipeline
+
+        # -- get mapping ready
+
+        if not os.path.exists(mapping):
+            raise ge.CommandFailed("createSessionInfo", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
+
+        print " ... Reading pipeline mapping from %s" % (mapping)
+
+        mapping = [line.strip() for line in open(mapping) if line[0] != "#"]
+        mapping = [e.split('=>') for e in mapping]
+        mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
+        mappingNumber = dict([[int(e[0]), e[1]] for e in mapping if e[0].isdigit()])
+        mappingName   = dict([e for e in mapping if not e[0].isdigit()])
+
+        if not mapping:
+            raise ge.CommandFailed("createSessionInfo", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
+
+        # -- get list of session folders
+
+        sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False)
+
+        sfolders = []
+        for session in sessions:
+            newSet = glob.glob(os.path.join(sessionsfolder, session['id']))
+            if not newSet:
+                print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(sessionsfolder, session['id']))
+            sfolders += newSet
+
+        # -- check if we have any
+
+        if not sfolders:
+            raise ge.CommandFailed("createSessionInfo", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
+
+        # -- loop through sessions folders
+
+        report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': []}
+        
+        for sfolder in sfolders:
+
+            ssfile = os.path.join(sfolder, sourcefile)
+            stfile = os.path.join(sfolder, targetfile)
+
+            if not os.path.exists(ssfile):
+                report['missing source'].append(sfolder)
+                continue
+            print " ... Processing folder %s" % (sfolder)
+
+            if os.path.exists(stfile) and overwrite != "yes":
+                print "     ... Target file already exists, skipping! [%s]" % (stfile)
+                report['pre-existing target'].append(sfolder)
+                continue
+
+            lines = [line.strip() for line in open(ssfile)]
+
+            images = False
+            pipelineok = False
+            bold = 0
+            nlines = []
+            hasref = False
+            for line in lines:
+                e = line.split(':')
+                if len(e) > 1:
+                    if e[0].strip() == '%sready' % pipeline and e[1].strip() == 'true':
+                        pipelineok = True
+                    if e[0].strip().isdigit():
+                        if not images:
+                            nlines.append('%sready: true' % pipeline)
+                            images = True
+
+                        onum = int(e[0].strip())
+                        oimg = e[1].strip()
+                        if onum in mappingNumber:
+                            repl  = mappingNumber[onum]
+                        elif oimg in mappingName:
+                            repl  = mappingName[oimg]
+                        else:
+                            repl  = " "
+
+                        if 'boldref' in repl:
+                            bold += 1
+                            repl = repl.replace('boldref', 'boldref%d' % (bold))
+                            hasref = True
+                        elif 'bold' in repl:
+                            if hasref:
+                                hasref = False
+                            else:
+                                bold += 1
+                            repl = repl.replace('bold', 'bold%d' % (bold))
+
+                        e[1] = " %-16s:%s" % (repl, oimg)
+                        nlines.append(":".join(e))
+                    else:
+                        nlines.append(line)
+                else:
+                    nlines.append(line)
+
+            if pipelineok:
+                print "     ... %s already pipeline ready" % (sourcefile)
+                if sourcefile != targetfile:
+                    shutil.copyfile(sourcefile, targetfile)
+                report['pre-processed source'].append(sfolder)
+            else:
+                print "     ... writing %s" % (targetfile)
+                fout = open(stfile, 'w')
+                for line in nlines:
+                    print >> fout, line
+                report['processed'].append(sfolder)
+
+    print "\n===> Final report"
+
+    for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:
+        if report[status]:
+            print "---> sessions with %s file:" % (status)
+            for session in report[status]:
+                print "     -> %s " % (os.path.basename(session))
+
+    if report['missing source']:
+        raise ge.CommandFailed("createSessionInfo", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sfile), "Please check the data and parameters!")
+
+    return
 

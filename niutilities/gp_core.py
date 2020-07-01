@@ -199,7 +199,7 @@ def doOptionsCheck(options, sinfo, command):
         if log in ['keep', 'study']:
             comlogs.append(studyComlogs)
         elif log == 'session':
-            comlogs.append(os.path.join(options['subjectsfolder'], sinfo['id'], 'logs', 'comlogs'))
+            comlogs.append(os.path.join(options['sessionsfolder'], sinfo['id'], 'logs', 'comlogs'))
         elif log == 'hcp':
             if 'hcp' in sinfo:
                 comlogs.append(os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'], 'logs', 'comlogs'))
@@ -226,7 +226,7 @@ def getFileNames(sinfo, options):
     getFileNames - documentation not yet available.
     """
 
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
     rgss = rgss.translate(None, ' ,;|')
@@ -343,7 +343,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     """
     getBOLDFileNames - documentation not yet available.
     """
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
     f = {}
 
     if 'bold_tail' not in options:
@@ -398,7 +398,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     if 'e' in options['bold_nuisance']:
         f['bold_event_o']       = os.path.join(d['s_source'], boldname + options['event_file'])
-        f['bold_event_a']       = os.path.join(options['subjectsfolder'], 'inbox', sinfo['id'] + "_" + boldname + options['event_file'])
+        f['bold_event_a']       = os.path.join(options['sessionsfolder'], 'inbox', sinfo['id'] + "_" + boldname + options['event_file'])
         f['bold_event']         = os.path.join(d['s_bold_events'], boldname + options['event_file'])
 
     # --- bold preprocessed files
@@ -432,7 +432,7 @@ def findFile(sinfo, options, fname):
     """
     findFile - documentation not yet available.
     """
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     tfile = os.path.join(d['inbox'], "%s_%s" % (sinfo['id'], fname))
     if os.path.exists(tfile):
@@ -459,9 +459,9 @@ def findFile(sinfo, options, fname):
     return False
 
 
-def getSubjectFolders(sinfo, options):
+def getSessionFolders(sinfo, options):
     """
-    getSubjectFolders - documentation not yet available.
+    getSessionFolders - documentation not yet available.
     """
     d = {}
 
@@ -478,7 +478,7 @@ def getSubjectFolders(sinfo, options):
     if "hcp" in sinfo:
         d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'])
 
-    d['s_base']             = os.path.join(options['subjectsfolder'], sinfo['id'])
+    d['s_base']             = os.path.join(options['sessionsfolder'], sinfo['id'])
     d['s_images']           = os.path.join(d['s_base'], 'images')
     d['s_struc']            = os.path.join(d['s_images'], 'structural')
     d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
@@ -496,9 +496,9 @@ def getSubjectFolders(sinfo, options):
     d['s_fs_mri']           = os.path.join(d['s_fs'], 'mri')
     d['s_fs_orig']          = os.path.join(d['s_fs'], 'mri/orig')
     d['s_fs_surf']          = os.path.join(d['s_fs'], 'surf')
-    d['inbox']              = os.path.join(options['subjectsfolder'], 'inbox')
+    d['inbox']              = os.path.join(options['sessionsfolder'], 'inbox')
 
-    d['qc']                 = os.path.join(options['subjectsfolder'], 'QC')
+    d['qc']                 = os.path.join(options['sessionsfolder'], 'QC')
     d['qc_mov']             = os.path.join(d['qc'], 'movement' + bvar)
 
     if not os.path.exists(d['s_source']) and options['source_folder']:

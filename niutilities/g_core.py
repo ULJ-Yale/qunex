@@ -21,12 +21,12 @@ import traceback
 import niutilities.g_exceptions as ge
 
 
-def readSubjectData(filename, verbose=False):
+def readSessionData(filename, verbose=False):
     '''
-    readSubjectData(filename, verbose=False)
+    readSessionData(filename, verbose=False)
 
     An internal function for reading batch.txt files. It reads the file and
-    returns a list of subjects with the information on images and the additional
+    returns a list of sessions with the information on images and the additional
     parameters specified in the header.
 
     ---
@@ -144,7 +144,7 @@ def readSubjectData(filename, verbose=False):
                         print "WARNING: There is a record missing an id field and is being omitted from processing."
                 # elif "data" not in dic:
                 #    if verbose:
-                #        print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
+                #        print "WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
 
@@ -169,13 +169,13 @@ def readList(filename, verbose=False):
     readList(filename, verbose=False)
 
     An internal function for reading list files. It reads the file and
-    returns a list of subjects each with the provided list of files.
+    returns a list of sessions each with the provided list of files.
 
     ---
     Written by Grega Repovš.'''
 
     slist   = []
-    subject = None
+    session = None
 
     with open(filename) as f:
         for line in f:
@@ -186,42 +186,42 @@ def readList(filename, verbose=False):
 
             if len(line) == 2:
 
-                if line[0] == "subject id":
-                    if subject is not None:
-                        slist.append(subject)
-                    subject = {'id': line[1]}
+                if line[0] == "session id":
+                    if session is not None:
+                        slist.append(session)
+                    session = {'id': line[1]}
 
                 else:
-                    if line[0] in subject:
-                        subject[line[0]].append(line[1])
+                    if line[0] in session:
+                        session[line[0]].append(line[1])
                     else:
-                        subject[line[0]] = [line[1]]
+                        session[line[0]] = [line[1]]
 
     return slist
 
 
-def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, verbose=False):
+def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
     '''
-    getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, verbose=False)
+    getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)
 
-    An internal function for getting a list of subjects as an array of dictionaries in
-    the form: [{'id': <subject id>, [... other keys]}, {'id': <subject id>, [... other keys]}].
+    An internal function for getting a list of sessions as an array of dictionaries in
+    the form: [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}].
 
     The provided listString can be:
 
-    * a comma, space or pipe separated list of subject id codes,
+    * a comma, space or pipe separated list of session id codes,
     * a path to a batch file (identified by .txt extension),
     * a path to a *.list file (identified by .list extension).
 
-    In the first cases, the dictionary will include only subject ids, in the second all the
+    In the first cases, the dictionary will include only session ids, in the second all the
     other information present in the batch file, in the third lists of specified files, e.g.:
-    [{'id': <subject id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
+    [{'id': <session id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
 
-    If sfilter is provided (not None), only subjects that match the filter will be returned.
-    If subjid is provided (not None), only subjects with matching id will be returned.
-    If subjectsfolder is provided (not None), subjects from a listString will be treated as
-    glob patterns and all folders that match the pattern in the subjectsfolder will be returned
-    as subject ids.
+    If filter is provided (not None), only sessions that match the filter will be returned.
+    If sessionids is provided (not None), only sessions with matching id will be returned.
+    If sessionsfolder is provided (not None), sessions from a listString will be treated as
+    glob patterns and all folders that match the pattern in the sessionsfolder will be returned
+    as session ids.
 
     ---
     Written by Grega Repovš.
@@ -235,35 +235,35 @@ def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, v
         slist = readList(listString, verbose=verbose)
 
     elif os.path.isfile(listString):
-        slist, gpref = readSubjectData(listString, verbose=verbose)
+        slist, gpref = readSessionData(listString, verbose=verbose)
 
     elif re.match(".*\.txt$", listString) or '/' in listString:
-        raise ValueError("ERROR: The specified subject file is not found! [%s]!" % listString)
+        raise ValueError("ERROR: The specified session file is not found! [%s]!" % listString)
 
     else:
         slist = [e.strip() for e in re.split(' +|,|\|', listString)]
 
-        if subjectsfolder is None:
+        if sessionsfolder is None:
             slist = [{'id': e} for e in slist]
 
         else:
             nlist = []
             for s in slist:
-                nlist += glob.glob(os.path.join(subjectsfolder, s))
+                nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{'id': os.path.basename(e)} for e in nlist]
 
-    if subjid is not None and subjid.strip() is not "":
-        subjid = re.split(' +|,|\|', subjid)
-        slist = [e for e in slist if e['id'] in subjid]
+    if sessionids is not None and sessionids.strip() is not "":
+        sessionids = re.split(' +|,|\|', sessionids)
+        slist = [e for e in slist if e['id'] in sessionids]
 
-    if sfilter is not None and sfilter.strip() is not "":
+    if filter is not None and filter.strip() is not "":
         try:
-            filters = [[f.strip() for f in e.split(':')] for e in sfilter.split("|")]
+            filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
         except:
-            raise ge.CommandFailed("getSubjectList", "Invalid sfilter parameter", "The provided sfilter parameter is invalid: '%s'" % (sfilter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
             
         if any([len(e) != 2 for e in filters]):
-            raise ge.CommandFailed("getSubjectList", "Invalid sfilter parameter", "The provided sfilter parameter is invalid: '%s'" % (sfilter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
@@ -285,18 +285,18 @@ def deduceFolders(args):
     reference  = args.get('reference')
     logfolder  = args.get('logfolder')
     basefolder = args.get('basefolder')
-    subjectsfolder = args.get('subjectsfolder')
-    sfolder = args.get('sfolder')
+    sessionsfolder = args.get('sessionsfolder')
+    sourcefolder = args.get('sourcefolder')
     folder = args.get('folder')
 
-    if subjectsfolder:
-        subjectsfolder = os.path.abspath(subjectsfolder)
+    if sessionsfolder:
+        sessionsfolder = os.path.abspath(sessionsfolder)
 
     if basefolder is None:
-        if subjectsfolder:
-            basefolder = os.path.dirname(subjectsfolder)
+        if sessionsfolder:
+            basefolder = os.path.dirname(sessionsfolder)
         else:
-            for f in [os.path.abspath(e) for e in [logfolder, sfolder, folder, reference, "."] if e]:
+            for f in [os.path.abspath(e) for e in [logfolder, sourcefolder, folder, reference, "."] if e]:
                 if f and not basefolder:
                     while os.path.dirname(f) and os.path.dirname(f) != '/':
                         f = os.path.dirname(f)
@@ -312,7 +312,7 @@ def deduceFolders(args):
         if basefolder:
             logfolder = os.path.join(basefolder, 'processing', 'logs')
 
-    return {'basefolder': basefolder, 'subjectsfolder': subjectsfolder, 'logfolder': logfolder}
+    return {'basefolder': basefolder, 'sessionsfolder': sessionsfolder, 'logfolder': logfolder}
 
 
 def runExternalParallel(calls, cores=None, prepend=''):
@@ -754,4 +754,116 @@ def linkOrCopy(source, target):
             shutil.copy2(source, target)
 
 
+def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
+    """
+    moveLinkOrCopy - documentation not yet available.
+    """
+    if action is None:
+        action = 'link'
+    if status is None:
+        status = True
+    if name is None:
+        name = source
+    if prefix is None:
+        prefix = ""
 
+    if os.path.exists(source):
+
+        if not os.path.exists(os.path.dirname(target)):
+            try:
+                os.makedirs(os.path.dirname(target))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be %sed, target folder could not be created, check permissions! " % (r, prefix, name, action))
+
+        if action == 'link':
+            try:
+                if os.path.exists(target):
+                    if os.path.samefile(source, target):
+                        if r is None:
+                            return status
+                        else:
+                            return (status, "%s%s%s already mapped" % (r, prefix, name))
+                    else:
+                        os.remove(target)
+                os.link(source, target)
+                if r is None:
+                    return status
+                else:
+                    return (status, "%s%s%s mapped" % (r, prefix, name))
+            except:
+                action = 'copy'
+
+        if action == 'copy':
+            try:
+                shutil.copy2(source, target)
+                if r is None:
+                    return status
+                else:
+                    return (status, "%s%s%s copied" % (r, prefix, name))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be copied, check permissions! " % (r, prefix, name))
+
+        if action == 'move':
+            try:
+                shutil.move(source, target)
+                if r is None:
+                    return status
+                else:
+                    return (status, "%s%s%s moved" % (r, prefix, name))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be moved, check permissions! " % (r, prefix, name))
+
+    else:
+        if r is None:
+            return False
+        else:
+            return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
+
+def createSessionFile(command, sfolder, session, subject):
+    """
+    Creates the generic, non pipeline specific, session file.
+
+    ---
+    Written by Jure Demšar, 2020-06-09
+    """
+    # open fifle
+    sfile = os.path.join(sfolder, 'session.txt')
+    if os.path.exists(sfile):
+        if overwrite == 'yes':
+            os.remove(sfile)
+            print "--> removed existing session.txt file"
+        else:
+            raise ge.CommandFailed(command, "session.txt file already present!", "A session.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+
+    sout = open(sfile, 'w')
+    print >> sout, 'id:', session
+    print >> sout, 'subject:', subject
+     
+    # bids
+    bfolder = os.path.join(sfolder, 'bids')
+    if os.path.exist(bfolder):
+        print >> sout, 'bids:', bfolder
+
+    # nii
+    nfolder = os.path.join(sfolder, 'nii')
+    if os.path.exist(bfolder):
+        print >> sout, 'raw_data:', nfolder
+
+    # hcp
+    hfolder = os.path.join(sfolder, 'hcp')
+    print >> sout, 'hcp:', hfolder
+
+    # empty line
+    print >> sout
+
+    # return
+    return sout

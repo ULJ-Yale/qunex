@@ -4,8 +4,8 @@
 This file holds code for running 4dfp NIL preprocessing commands and volume to
 surface mapping. It implements the following commands:
 
-* runNIL        ... Runs NIL preprocessing of a subject.
-* runNILFolder  ... Runs NIL preprocessing of subjects in a folder.
+* runNIL        ... Runs NIL preprocessing of a session.
+* runNILFolder  ... Runs NIL preprocessing of sessins in a folder.
 * map2PALS      ... Maps volume image to PALS Atlas caret image.
 * map2HCP       ... Maps volume image to CIFTI dense scalar image.
 
@@ -48,26 +48,26 @@ set seq = ""
 
 recode = {True: 'ok', False: 'missing'}
 
-def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
+def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     '''
-    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sfile=subject.txt]
+    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
 
     Goes through the folder and runs runNIL on all the subfolders that match the pattern. Setting overwrite
     to overwrite.
 
-    - folder: the base study subjects folder (e.g. WM44/subjects) where OP folders and the inbox folder with the
+    - folder: the base study sessions folder (e.g. WM44/sessions) where OP folders and the inbox folder with the
       new packages from the scanner reside,
-    - pattern: which subjectfolders to match (default OP*),
+    - pattern: which sessionsfolders to match (default OP*),
     - overwrite: whether to overwrite existing (params and BOLD) files.
-    — sfile: the name of the subject.txt file
+    — sourcefile: the name of the session file
 
-    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sfile=subject_hcp.txt
+    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sourcefile=session.txt
     '''
 
     if pattern is None:
         pattern = "OP*"
-    if sfile is None:
-        sfile = "subject.txt"
+    if sourcefile is None:
+        sourcefile = "session.txt"
     if overwrite is None:
         overwrite = False
     elif overwrite:
@@ -79,12 +79,12 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
 
     subjs = glob.glob(os.path.join(folder, pattern))
 
-    subjs = [(e, os.path.exists(os.path.join(e, 'subject.txt')), os.path.exists(os.path.join(e, 'dicom', 'DICOM-Report.txt')), os.path.exists(os.path.join(e, '4dfp', 'params'))) for e in subjs]
+    subjs = [(e, os.path.exists(os.path.join(e, 'session.txt')), os.path.exists(os.path.join(e, 'dicom', 'DICOM-Report.txt')), os.path.exists(os.path.join(e, '4dfp', 'params'))) for e in subjs]
 
     do = []
     print "\n---=== Running NIL preprocessing on folder %s ===---\n" % (folder)
-    print "List of subjects to process\n"
-    print "%-15s%-15s%-15s%-10s" % ("subject", "subject.txt", "DICOM-Report", "params")
+    print "List of sessions to process\n"
+    print "%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params")
     for subj, stxt, sdicom, sparam in subjs:
         print "%-15s%-15s%-15s%-10s --->" % (os.path.basename(subj), recode[stxt], recode[sdicom], recode[sparam]),
         if not stxt:
@@ -101,30 +101,30 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
             do.append(subj)
         print ""
 
-    s = raw_input("\n===> Do we process the listed subjects? [y/n]: ")
+    s = raw_input("\n===> Do we process the listed sessions? [y/n]: ")
     if s is not "y":
         print "===> Aborting processing\n\n"
         return
 
     for s in do:
         try:
-            runNIL(s, overwrite, sfile)
+            runNIL(s, overwrite, sourcefile)
         except:
             print "---> Failed running NIL preprocessing on", s
 
     print "\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder)
 
 
-def runNIL(folder=".", overwrite=None, sfile=None):
+def runNIL(folder=".", overwrite=None, sourcefile=None):
     '''
-    runNIL [folder=.] [overwrite=no] [sfile=subject.txt]
+    runNIL [folder=.] [overwrite=no] [sourcefile=session.txt]
 
-    Runs NIL preprocessing script on the subject data in specified folder. Uses subject.txt to identify structural and
+    Runs NIL preprocessing script on the session data in specified folder. Uses session.txt to identify structural and
     BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
 
-    - folder: subject's folder with nii and dicom folders and subject.txt file.
+    - folder: session's folder with nii and dicom folders and session.txt file.
     - overwrite: whether to overwrite existing params file or exisiting BOLD data
-    — sfile: the name of the subject.txt file
+    — sourcefile: the name of the session file
     '''
 
     if overwrite is None:
@@ -135,21 +135,21 @@ def runNIL(folder=".", overwrite=None, sfile=None):
         overwrite = True
     else:
         overwrite = False
-    if sfile is None:
-        sfile = "subject.txt"
+    if sourcefile is None:
+        sourcefile = "session.txt"
 
-    print "\n---> processing subject %s" % (os.path.basename(folder))
+    print "\n---> processing session %s" % (os.path.basename(folder))
 
-    # ---> process subject.txt
+    # ---> process session.txt
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, pref = niutilities.g_core.readSubjectData(os.path.join(folder, sfile))
+    info, pref = niutilities.g_core.readSessionData(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
     if not info:
-        raise ValueError("ERROR: No data in subject.txt! [%s]!" % (sfile))
+        raise ValueError("ERROR: No data in session.txt! [%s]!" % (sourcefile))
 
     for k, v in info[0].iteritems():
         if k == 'raw_data':
@@ -236,11 +236,11 @@ def runNIL(folder=".", overwrite=None, sfile=None):
         else:
             if ismissing:
                 print "...  Some bolds exist [%s], however some are missing [%s]!" % (" ".join(isthere), " ".join(ismissing))
-                print "...  Skipping this subject!"
+                print "...  Skipping this session!"
                 return
             else:
                 print "...  BOLD files are allready processed! [%s]" % (" ".join(isthere))
-                print "...  Skipping this subject!"
+                print "...  Skipping this session!"
                 return
 
     # ---- run avi preprocessing

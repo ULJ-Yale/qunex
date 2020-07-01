@@ -234,7 +234,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
         for concfile, error in failed:
             print "       - %s [%s]" % (concfile, error)
 
-        raise ge.CommandFailed("joinFidlFolder", "Processing of %d subject(s) failed" % (len(failed)), "Please check report!")
+        raise ge.CommandFailed("joinFidlFolder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
 
 
 def splitFidl(concfile, fidlfile, outfolder=None):
