@@ -2907,7 +2907,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # --- Process
         r += "\n"
 
-        parelements = min(options['parelements'], len(boldsData))
+        parelements = max(1, min(options['parelements'], len(boldsData)))
         r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
 
         if (parelements == 1): # serial execution
@@ -2998,7 +2998,7 @@ def executeSingleHCPfMRIVolume(sinfo, options, overwrite, hcp, b, r, report):
 
 def executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, report):
     # parelements
-    parelements = min(options['parelements'], len(boldsData))
+    parelements = max(1, min(options['parelements'], len(boldsData)))
 
     # create a multiprocessing Pool
     processPoolExecutor = ProcessPoolExecutor(parelements)
@@ -3417,7 +3417,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        parelements = min(options['parelements'], len(bolds))
+        parelements = max(1, min(options['parelements'], len(bolds)))
         r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
 
         if parelements == 1: # serial execution
@@ -3991,9 +3991,9 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            parelements = min(options['parelements'], len(icafixBolds))
+            parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
-            parelements = min(options['parelements'], len(icafixGroups))
+            parelements = max(1, min(options['parelements'], len(icafixGroups)))
         r += "\n\n%s %d ICAFix images in parallel" % (action("Processing", options['run']), parelements)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
@@ -4525,9 +4525,9 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            parelements = min(options['parelements'], len(icafixBolds))
+            parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
-            parelements = min(options['parelements'], len(icafixGroups))
+            parelements = max(1, min(options['parelements'], len(icafixGroups)))
         r += "\n\n%s %d PostFixes in parallel" % (action("Processing", options['run']), parelements)
 
         # --- Execute
@@ -4919,9 +4919,9 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            parelements = min(options['parelements'], len(icafixBolds))
+            parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
-            parelements = min(options['parelements'], len(icafixGroups))
+            parelements = max(1, min(options['parelements'], len(icafixGroups)))
         r += "\n\n%s %d ReApplyFixes in parallel" % (action("Processing", options['run']), parelements)
 
         # --- Execute
