@@ -6,7 +6,7 @@ function [p F Z M SE] = img_ANOVA2WayRepeated(obj, a, b, verbose)
 %
 %	obj     - the images to work on
 %             The images have to be organized as a series of volumes with
-%             subject, factor A, factor B in the order of faster to slowest
+%             session, factor A, factor B in the order of faster to slowest
 %             varying variable. The data has to be fully balanced with no
 %             missing values.
 %   a       - number of levels for factor A

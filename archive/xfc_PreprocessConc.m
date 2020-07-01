@@ -1,6 +1,6 @@
-function [TS] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
+function [TS] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sessionroi, overwrite, tail, nroi, ignores)
 
-%function [TS] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
+%function [TS] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sessionroi, overwrite, tail, nroi, ignores)
 %   (c) Copyright Grega Repovš, 2011-01-24
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -35,7 +35,7 @@ function [TS] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, e
 %       eventstring - a string specifying the events to regress and the regressors to use [none]
 %       variant     - a string to be prepended to files [none]
 %       wbmask      - a mask used to exclude ROI from the whole-brain nuisance regressor [none]
-%       sbjroi      - a mask used to create subject specific wbmask [none]
+%       sessionroi   - a mask used to create session specific wbmask [none]
 %       overwrite   - whether old files should be overwritten [false]
 %       tail        - what file extension to expect and use for images [.4dfp.img]
 %       nroi        - ROI.names file to use to define additional nuisance ROI to regress out
@@ -77,7 +77,7 @@ if nargin < 16, ignores = [];                               end
 if nargin < 15, nroi = [];                                  end
 if nargin < 14 || isempty(tail), tail = '.4dfp.img';        end
 if nargin < 13 || isempty(overwrite), overwrite = false;    end
-if nargin < 12, sbjroi = '';                                end
+if nargin < 12, sessionroi = '';                                end
 if nargin < 11, wbmask = '';                                end
 if nargin < 10, variant = '';                               end
 if nargin < 9,  eventstring = '';                           end
@@ -156,12 +156,12 @@ for b = 1:nbolds
 
     % --- aseg stuff
 
-    if strcmp(sbjroi, 'aseg')
-        file(b).sbjroi = file.segmask;
-    elseif strcmp(sbjroi, 'wb')
-        file(b).sbjroi = file.boldmask;
+    if strcmp(sessionroi, 'aseg')
+        file(b).sessionroi = file.segmask;
+    elseif strcmp(sessionroi, 'wb')
+        file(b).sessionroi = file.boldmask;
     else
-        file(b).sbjroi = sbjroi;
+        file(b).sessionroi = sessionroi;
     end
 end
 
@@ -337,7 +337,7 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
             eROI = [];
             if ~isempty(file(b).nroi)
                 [fnroi nomask] = processeROI(file(b).nroi);
-                eROI      = nimage.img_ReadROI(fnroi, file(b).sbjroi);
+                eROI      = nimage.img_ReadROI(fnroi, file(b).sessionroi);
                 bmimg     = nimage(file(b).boldmask);
                 eROI.data = eROI.image2D;
 
@@ -355,7 +355,7 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
             fprintf('.');
 
             if ~isempty(file(b).wbmask)
-                wbmask = nimage.img_ReadROI(file(b).wbmask, file(b).sbjroi);
+                wbmask = nimage.img_ReadROI(file(b).wbmask, file(b).sessionroi);
                 wbmask = wbmask.img_GrowROI(2);
                 WB.data = WB.image2D;
                 WB.data(wbmask.image2D > 0) = 0;

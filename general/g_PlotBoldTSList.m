@@ -12,14 +12,14 @@ function [] = g_PlotBoldTSList(flist, elements, filename, skip, fformat, verbose
 %   verbose     - whether to be talkative
 %
 %   USE
-%   This function runs g_PlotBoldTS function on a list of subjects making it
-%   simpler to generate BOLD timeseries plots for a set subjects. For more 
+%   This function runs g_PlotBoldTS function on a list of sessionss making it
+%   simpler to generate BOLD timeseries plots for a set sessionss. For more 
 %   information on generation of plots, please see documentation for g_PlotBoldTS.
 %
 %   PARAMETERS
 %
 %   *flist*
-%   A path to the standard list file. The list has to provide for each subject as
+%   A path to the standard list file. The list has to provide for each sessions as
 %   many 'file:' entries as there are images refered to by the element specification,
 %   and one 'roi:' entry to be used as a mask. For typical use the first file would 
 %   be a raw bold image, the second file a preprocessed bold image, and roi file an
@@ -48,7 +48,7 @@ function [] = g_PlotBoldTSList(flist, elements, filename, skip, fformat, verbose
 %   same scale as the first image.
 %
 %   *filename*
-%   The root filename for the generated plot. The plots are saved in the subject's
+%   The root filename for the generated plot. The plots are saved in the sessions's
 %   images/functional/movement folder and named using the following formula:
 % 
 %   <filename parameter><the filename of the first specified file>_tsplot.<fformat>
@@ -95,22 +95,22 @@ if nargin < 1, error('ERROR: Please specify at least file list!'); end
 if verbose, fprintf('\n\nChecking ...\n'); end
 g_CheckFile(flist, 'image file list', 'error');
 
-subject = g_ReadFileList(flist);
-nsub = length(subject);
+sessions = g_ReadFileList(flist);
+nsub = length(sessions);
 
 for n = 1:nsub
-	if verbose, fprintf('\n ---> processing %s', subject(n).id); end
+	if verbose, fprintf('\n ---> processing %s', sessions(n).id); end
 
-	[tpath tfile] = fileparts(subject(n).files{1});
+	[tpath tfile] = fileparts(sessions(n).files{1});
 	tfile = regexp(tfile, '(^.*?)[._]', 'tokens');
 	tfile = tfile{1};
 	tfile = tfile{1};
 	tfile = [tpath filesep 'movement' filesep filename tfile '_tsplot.' fformat];
 
-	imgfiles = strjoin(subject(n).files, ';');
-	maskfiles = subject(n).roi;
+	imgfiles = strjoin(sessions(n).files, ';');
+	maskfiles = sessions(n).roi;
 
-	g_PlotBoldTS(imgfiles, elements, maskfiles, tfile, skip, subject(n).id, false);
+	g_PlotBoldTS(imgfiles, elements, maskfiles, tfile, skip, sessions(n).id, false);
 end
 
 if verbose, fprintf('\n ===> DONE\n'); end
