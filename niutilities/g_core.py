@@ -828,7 +828,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
         else:
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
-def createSessionFile(command, sfolder, session, subject):
+def createSessionFile(command, sfolder, session, subject, overwrite):
     """
     Creates the generic, non pipeline specific, session file.
 
@@ -850,12 +850,12 @@ def createSessionFile(command, sfolder, session, subject):
      
     # bids
     bfolder = os.path.join(sfolder, 'bids')
-    if os.path.exist(bfolder):
+    if os.path.exists(bfolder):
         print >> sout, 'bids:', bfolder
 
     # nii
     nfolder = os.path.join(sfolder, 'nii')
-    if os.path.exist(bfolder):
+    if os.path.exists(bfolder):
         print >> sout, 'raw_data:', nfolder
 
     # hcp
