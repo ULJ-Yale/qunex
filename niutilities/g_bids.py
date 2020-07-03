@@ -1199,7 +1199,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSessionFile("mapBIDS2nii", sfolder, session, subject)
+    sout = gc.createSessionFile("mapBIDS2nii", sfolder, session, subject, overwrite)
 
     # --- open bids2nii log file
     if overwrite == 'yes':

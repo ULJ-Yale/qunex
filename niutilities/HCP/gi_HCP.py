@@ -944,7 +944,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSessionFile("mapHCPLS2nii", sfolder, session, subjectid)
+    sout = gc.createSessionFile("mapHCPLS2nii", sfolder, session, subjectid, overwrite)
 
     # --- create session_hcp.txt file
     sfile = os.path.join(sfolder, 'session_hcp.txt')
