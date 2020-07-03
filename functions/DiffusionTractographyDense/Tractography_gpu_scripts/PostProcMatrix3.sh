@@ -6,17 +6,17 @@ Caret7_command=$WORKBENCHDIR/wb_command
 
 if [ "$3" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <GrayOrdinates_Templatedir> <OutFileName>"
+    echo "usage: $0 <StudyFolder> <Session> <GrayOrdinates_Templatedir> <OutFileName>"
     echo "Final Merge of the three .dconn /wbsparse blocks"
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 TemplateFolder=$3
 OutFileName=$4
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
 
 ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3.dot ${ResultsFolder}/${OutFileName} -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
 

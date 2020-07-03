@@ -1,5 +1,5 @@
 StudyFolder="$1"
-Subject="$2"
+Session="$2"
 DownSampleNameI="$3"
 DiffusionResolution="$4"
 Caret7_Command="$5"
@@ -23,7 +23,7 @@ ResultsFolder="Results"
 HemisphereSTRING=`echo "$HemisphereSTRING" | sed 's/@/ /g'`
 
 #Make Paths
-T1wFolder="${StudyFolder}/${Subject}/${T1wFolder}"
+T1wFolder="${StudyFolder}/${Session}/${T1wFolder}"
 BedpostXFolder="${T1wFolder}/${BedpostXFolder}"
 NativeFolder="${T1wFolder}/${NativeFolder}"
 DownSampleFolder="${T1wFolder}/${DownSampleFolder}"
@@ -51,11 +51,11 @@ if [ ! $HemisphereSTRING = "Whole" ] ; then
     #HemiPaths
     trajectory="${Hemisphere}_Cerebral_Trajectory"
     Mask="--mask=${T1wFolder}/${trajectory}_${DiffusionResolution}.nii.gz"
-    Seed="--seed=${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
-    Waypoints="--waypoints=${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
-    Stop="--stop=${DownSampleFolder}/${Subject}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii"
-    #echo "${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii" > ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix1_Stop.txt
-    #echo "${DownSampleFolder}/${Subject}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii" >> ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix1_Stop.txt
+    Seed="--seed=${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
+    Waypoints="--waypoints=${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii"
+    Stop="--stop=${DownSampleFolder}/${Session}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii"
+    #echo "${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii" > ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix1_Stop.txt
+    #echo "${DownSampleFolder}/${Session}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii" >> ${ROIsFolder}/${Hemisphere}_Trajectory_Matrix1_Stop.txt
     #Stop="--stop=${ROIsFolder}/${Hemisphere}_Trajectory_Matrix1_Stop.txt"
     #Avoid="--avoid=${ROIsFolder}/${trajectory}_invROI_${DiffusionResolution}.nii.gz"
     DIR="${ResultsFolder}/${Hemisphere}_Trajectory_Matrix1${PDDir}_${StepSize}"
@@ -71,7 +71,7 @@ if [ ! $HemisphereSTRING = "Whole" ] ; then
       rm -r $DIR
     fi
     mkdir $DIR    
-    $Caret7_Command -signed-distance-to-surface ${DownSampleFolder}/${Subject}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii ${DownSampleFolder}/${Subject}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii ${DIR}/SeedSpaceMetric.func.gii
+    $Caret7_Command -signed-distance-to-surface ${DownSampleFolder}/${Session}.${Hemisphere}.white.${DownSampleNameI}k_fs_LR.surf.gii ${DownSampleFolder}/${Session}.${Hemisphere}.pial.${DownSampleNameI}k_fs_LR.surf.gii ${DIR}/SeedSpaceMetric.func.gii
     $Caret7_Command -metric-math "(var * 0) + 1" ${DIR}/SeedSpaceMetric.func.gii -var var ${DIR}/SeedSpaceMetric.func.gii
 
     echo "${GlobalBinaries}/probtrackx2 ${probtrackx_args}"

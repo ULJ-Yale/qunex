@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-# * SubjectsBatch.sh
+# * SessionsBatch.sh
 #
 # ## LICENSE
 #
-# * The SubjectsBatch.sh = the "Software"
+# * The SessionsBatch.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files are subject-specific subject.txt param files
+# * The necessary input files are session-specific session.txt param files
 #
 #~ND~END~
 
@@ -48,17 +48,17 @@
 
 usage() {
      echo ""
-     echo "-- DESCRIPTION for SubjectsBatch"
+     echo "-- DESCRIPTION for SessionsBatch"
      echo ""
-     echo "This function generates a batch file for processing for a given subject."
+     echo "This function generates a batch file for processing for a given session."
      echo "It is designed to be invoked directly via Qu|Nex call:"
      echo ""
      echo "   > qunex createLists"
      echo ""
      echo "This script accepts the following mandatory paramaters:"
      echo ""
-     echo "   --subjectsfolder=<folder_with_subjects>        Path to study folder that contains subjects"
-     echo "   --subjects=<comma_separated_list_of_cases>  Subject to run"
+     echo "   --sessionsfolder=<folder_with_sessions>        Path to study folder that contains sessions"
+     echo "   --sessions=<comma_separated_list_of_cases>  Session to run"
      echo "   --outname=<output_name_of_the_batch>        Output name of the batch file to generate. "
      echo "   --outpath=<absolute_path_to_list_folder>    Path for the batch file"
      echo ""
@@ -91,7 +91,7 @@ fi
 
 ########### INPUTS ###############
 
-	# -- Subject-specific subject_hcp.txt file 
+	# -- Session-specific session_hcp.txt file 
 
 ########## OUTPUTS ###############
 
@@ -105,8 +105,8 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global variables
-unset SubjectsFolder # --subjectsfolder=
-unset CASE           # --subjects=
+unset SessionsFolder # --sessionsfolder=
+unset CASE           # --sessions=
 unset ListPath       # --outpath=
 unset ListName       # --outname=
 unset Overwrite      # --outname=
@@ -126,11 +126,11 @@ while [ ${index} -lt ${numArgs} ]; do
                 version_show $@
                 exit 0
                 ;;
-            --subjectsfolder=*)
-                SubjectsFolder=${argument/*=/""}
+            --sessionsfolder=*)
+                SessionsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --subjects=*)
+            --sessions=*)
                 CASE=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
@@ -159,12 +159,12 @@ echo ""
 # -- Check general required parameters
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <subject_id> not specified."; echo ""
+    reho "ERROR: <session_id> not specified."; echo ""
     exit 1
 fi
-if [ -z ${SubjectsFolder} ]; then
+if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <subjects_folder> not specified."; echo ""
+    reho "ERROR: <sessions_folder> not specified."; echo ""
     exit 1
 fi
 if [ -z ${Overwrite} ]; then
@@ -172,7 +172,7 @@ if [ -z ${Overwrite} ]; then
     echo "Overwrite value not explicitly specified. Using default: ${Overwrite}"; echo ""
 fi
 if [ -z ${ListPath} ]; then
-    ListPath="${SubjectsFolder}/../processing/lists/"
+    ListPath="${SessionsFolder}/../processing/lists/"
     echo "Output folder path value not explicitly specified. Using default: ${ListPath}"; echo ""
 fi
 if [ -z ${ListName} ]; then 
@@ -182,15 +182,15 @@ if [ -z ${ListName} ]; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   SubjectsFolder: ${SubjectsFolder}"
-echo "   Subject: ${CASE}"
+echo "   SessionsFolder: ${SessionsFolder}"
+echo "   Session: ${CASE}"
 echo "   Batch file name: ${ListName}"
 echo "   Path to save output: ${ListPath}"
 echo "   Overwrite: ${Overwrite}"
@@ -225,17 +225,17 @@ fi
 # -- Code for generating batch files
 # -------------------------------------------------
 		
-# -- Test if subject_hcp.txt is absent
-if (test ! -f ${SubjectsFolder}/${CASE}/subject_hcp.txt); then
-	# -- Test if subject_hcp.txt is present
-	if (test -f ${SubjectsFolder}/${CASE}/subject.txt); then
-		# -- If yes then copy it to subject_hcp.txt
-		cp ${SubjectsFolder}/${CASE}/subject.txt ${SubjectsFolder}/${CASE}/subject_hcp.txt
+# -- Test if session_hcp.txt is absent
+if (test ! -f ${SessionsFolder}/${CASE}/session_hcp.txt); then
+	# -- Test if session_hcp.txt is present
+	if (test -f ${SessionsFolder}/${CASE}/session.txt); then
+		# -- If yes then copy it to session_hcp.txt
+		cp ${SessionsFolder}/${CASE}/session.txt ${SessionsFolder}/${CASE}/session_hcp.txt
 	else
 		# -- Report error and exit
 		echo ""
-		reho "${SubjectsFolder}/${CASE}/subject_hcp.txt and subject.txt is missing."
-		reho "Make sure you have sorted the dicoms and setup subject-specific files."
+		reho "${SessionsFolder}/${CASE}/session_hcp.txt and session.txt is missing."
+		reho "Make sure you have sorted the dicoms and setup session-specific files."
 		reho "Note: These files are used to populate the batch.${ListName}.list"
 		echo ""
 		exit 1
@@ -243,12 +243,12 @@ if (test ! -f ${SubjectsFolder}/${CASE}/subject_hcp.txt); then
 fi
 echo "List path is currently set to $ListPath"
 echo "---" >> ${ListPath}/batch."$ListName".txt
-cat ${SubjectsFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/batch."$ListName".txt
+cat ${SessionsFolder}/${CASE}/session_hcp.txt >> ${ListPath}/batch."$ListName".txt
 echo "" >> ${ListPath}/batch."$ListName".txt
 # -- Fix paths stale or outdated paths
 DATATYPES="dicom 4dfp hcp nii"
 for DATATYPE in $DATATYPES; do
-	CorrectPath="${SubjectsFolder}/${CASE}/${DATATYPE}"
+	CorrectPath="${SessionsFolder}/${CASE}/${DATATYPE}"
 	GrepInput="/${CASE}/${DATATYPE}"
 	ReplacePath=`more ${ListPath}/batch.${ListName}.txt | grep "$GrepInput" | awk '{print $2}'`
 	sed -i "s@$ReplacePath@$CorrectPath@" ${ListPath}/batch.${ListName}.txt

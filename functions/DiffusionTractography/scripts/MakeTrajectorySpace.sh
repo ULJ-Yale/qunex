@@ -22,7 +22,7 @@ defaultopt() {
 ################################################## OPTION PARSING ###################################################
 # Input Variables
 StudyFolder=`getopt1 "--path" $@`                # "$1" #Path to Generic Study folder
-Subject=`getopt1 "--subject" $@`                 # "$2" #SubjectID
+Session=`getopt1 "--session" $@`                 # "$2" #SessionID
 DiffusionResolution=`getopt1 "--diffresol" $@`   # "$3" #Diffusion Resolution in mm
 WholeBrainTrajectoryLabels=`getopt1 "--wholebrainlabels" $@`
 LeftCerebralTrajectoryLabels=`getopt1 "--leftcerebrallabels" $@`
@@ -42,7 +42,7 @@ ribbon="ribbon"
 trajectory="Trajectory"
 
 #Make Paths
-T1wFolder="${StudyFolder}/${Subject}/${T1wFolder}"
+T1wFolder="${StudyFolder}/${Session}/${T1wFolder}"
 ROIsFolder="${T1wFolder}/${ROIsFolder}"
 ResultsFolder="${T1wFolder}/${ResultsFolder}"
 
@@ -80,23 +80,23 @@ for Hemisphere in L R ; do
     GreyRibbonValue="$RightGreyRibbonValue"
     WhiteMaskValue="$RightWhiteMaskValue"
   fi    
-  ${Caret7_Command} -create-signed-distance-volume "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white.native.surf.gii "$T1wFolder"/"$T1wImage"_"$DiffusionResolution".nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white.native.nii.gz
-  ${Caret7_Command} -create-signed-distance-volume "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial.native.surf.gii "$T1wFolder"/"$T1wImage"_"$DiffusionResolution".nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white.native.nii.gz -thr 0 -bin -mul 255 "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_thr0.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_thr0.native.nii.gz -bin "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_thr0.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial.native.nii.gz -uthr 0 -abs -bin -mul 255 "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial_uthr0.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial_uthr0.native.nii.gz -bin "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial_uthr0.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial_uthr0.native.nii.gz -mas "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_thr0.native.nii.gz -mul 255 "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".ribbon.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".ribbon.nii.gz -bin -mul $GreyRibbonValue "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".ribbon.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white.native.nii.gz -uthr 0 -abs -bin -mul 255 "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_uthr0.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_uthr0.native.nii.gz -bin "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_uthr0.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_uthr0.native.nii.gz -mul $WhiteMaskValue "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_mask.native.nii.gz
-  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".ribbon.nii.gz -add "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_mask.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".ribbon.nii.gz
-  rm "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_thr0.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".pial_uthr0.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_uthr0.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject"."$Hemisphere".white_mask.native.nii.gz
+  ${Caret7_Command} -create-signed-distance-volume "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white.native.surf.gii "$T1wFolder"/"$T1wImage"_"$DiffusionResolution".nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white.native.nii.gz
+  ${Caret7_Command} -create-signed-distance-volume "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial.native.surf.gii "$T1wFolder"/"$T1wImage"_"$DiffusionResolution".nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white.native.nii.gz -thr 0 -bin -mul 255 "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_thr0.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_thr0.native.nii.gz -bin "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_thr0.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial.native.nii.gz -uthr 0 -abs -bin -mul 255 "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial_uthr0.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial_uthr0.native.nii.gz -bin "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial_uthr0.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial_uthr0.native.nii.gz -mas "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_thr0.native.nii.gz -mul 255 "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".ribbon.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".ribbon.nii.gz -bin -mul $GreyRibbonValue "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".ribbon.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white.native.nii.gz -uthr 0 -abs -bin -mul 255 "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_uthr0.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_uthr0.native.nii.gz -bin "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_uthr0.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_uthr0.native.nii.gz -mul $WhiteMaskValue "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_mask.native.nii.gz
+  ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".ribbon.nii.gz -add "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_mask.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".ribbon.nii.gz
+  rm "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_thr0.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".pial_uthr0.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_uthr0.native.nii.gz "$T1wFolder"/"$NativeFolder"/"$Session"."$Hemisphere".white_mask.native.nii.gz
 done
 
-${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Subject".L.ribbon.nii.gz -add "$T1wFolder"/"$NativeFolder"/"$Subject".R.ribbon.nii.gz "$T1wFolder"/ribbon_"$DiffusionResolution".nii.gz
-rm "$T1wFolder"/"$NativeFolder"/"$Subject".L.ribbon.nii.gz "$T1wFolder"/"$NativeFolder"/"$Subject".R.ribbon.nii.gz
+${FSLDIR}/bin/fslmaths "$T1wFolder"/"$NativeFolder"/"$Session".L.ribbon.nii.gz -add "$T1wFolder"/"$NativeFolder"/"$Session".R.ribbon.nii.gz "$T1wFolder"/ribbon_"$DiffusionResolution".nii.gz
+rm "$T1wFolder"/"$NativeFolder"/"$Session".L.ribbon.nii.gz "$T1wFolder"/"$NativeFolder"/"$Session".R.ribbon.nii.gz
 ${Caret7_Command} -volume-label-import "$T1wFolder"/ribbon_"$DiffusionResolution".nii.gz "$FreeSurferLabels" "$T1wFolder"/ribbon_"$DiffusionResolution".nii.gz 
 
 ${FSLDIR}/bin/fslmaths "$T1wFolder"/"$ribbon"_"$DiffusionResolution" -sub "$T1wFolder"/"$ribbon"_"$DiffusionResolution" "$ROIsFolder"/temp/trajectory
