@@ -38,6 +38,7 @@ Quick links
 Change Log
 ----------
 
+* 0.60.1  Full support for hcp_suffix in runQC.
 * 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.50.1  License and README updates.
 * 0.50.0  Renamed gmrimage class to nimage and methods names from mri_ to img_.
