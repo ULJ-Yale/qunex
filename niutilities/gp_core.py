@@ -476,10 +476,10 @@ def getSessionFolders(sinfo, options):
         bvar = '.' + options['hcp_bold_variant']
 
     if "hcp" in sinfo:
-        d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'])
+        d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
 
     d['s_base']             = os.path.join(options['sessionsfolder'], sinfo['id'])
-    d['s_images']           = os.path.join(d['s_base'], 'images')
+    d['s_images']           = os.path.join(d['s_base'], 'images' + options['img_suffix'])
     d['s_struc']            = os.path.join(d['s_images'], 'structural')
     d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
     d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks' + bvar)

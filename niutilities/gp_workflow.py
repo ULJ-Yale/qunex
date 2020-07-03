@@ -163,7 +163,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --parsessions     ... How many sessions to run in parallel [1].
+    --parsessions      ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
                            parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -178,6 +178,9 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                            processed [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
@@ -448,7 +451,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --parsessions     ... How many sessions to run in parallel [1].
+    --parsessions      ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
                            parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -461,6 +464,9 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
     --logfolder        ... The path to the folder where runlogs and comlogs
@@ -760,7 +766,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --parsessions     ... How many sessions to run in parallel [1].
+    --parsessions      ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -773,6 +779,9 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            processed, and the group report will be stored in
                            `<sessionsfolder>/QC/movement.<hcp_bold_variant>`
                            folder [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
     --logfolder        ... The path to the folder where runlogs and comlogs
@@ -1165,7 +1174,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            [batch.txt].
     --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --parsessions     ... How many sessions to run in parallel [1].
+    --parsessions      ... How many sessions to run in parallel [1].
     --parelements      ... How many elements (e.g bolds) to run in
                            parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
@@ -1178,6 +1187,9 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
     --logfolder        ... The path to the folder where runlogs and comlogs
@@ -1483,10 +1495,13 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
-                           processed [].
+                           processed [].    
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
                            bold3<bold_prefix>_s_hpss.nii.gz [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
 
     List of bold files specify, which types of bold files are to be processed,
     as they are specified in the batch.txt file. An example of a list of
@@ -1962,7 +1977,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldow = 'false'
 
         scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
+        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
         mcomm = 'fc_Preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
             d['s_base'],                        # --- sessions folder
@@ -2050,7 +2065,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
-                          folder [bold].
+                          folder [bold].    
     --image_target    ... The target format to work with, one of 4dfp, nifti,
                           dtseries or ptseries [nifti].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -2083,6 +2098,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
                            bold3<bold_prefix>_s_hpss.nii.gz [].
@@ -2641,7 +2659,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
+                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- session folder
