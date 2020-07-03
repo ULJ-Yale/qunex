@@ -80,7 +80,8 @@ deprecated_commands = {"HCPLSImport": "importHCP",
                        "BIDSImport": "importBIDS",
                        "processInbox": "importDICOM",
                        "mapIO": "exportHCP",
-                       "listSubjectInfo": "listSessionInfo"}
+                       "listSubjectInfo": "listSessionInfo",
+                       "getHCPReady": "createSesssionInfo"}
 
 def checkDeprecatedCommands(command):
     '''
