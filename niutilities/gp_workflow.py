@@ -1977,7 +1977,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldow = 'false'
 
         scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
+        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
         mcomm = 'fc_Preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
             d['s_base'],                        # --- sessions folder
@@ -2659,7 +2659,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
+                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- session folder
