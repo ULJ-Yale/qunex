@@ -724,9 +724,9 @@ class niftihdr:
 
 
 
-def sliceImage(sfile, tfile, frames=1):
+def sliceImage(sourcefile, targetfile, frames=1):
     '''
-    sliceImage sfile=<source image> tfile=<target image> [frames=1]
+    sliceImage sourcefile=<source image> targetfile=<target image> [frames=1]
 
     Takes the source volume image file, removes all but the first N frames, and
     saves the resulting image to target volume image file.
@@ -734,14 +734,14 @@ def sliceImage(sfile, tfile, frames=1):
     PARAMETERS
     ==========
 
-    --sfile:   Source volume file (.4dfp, .nii, or .nii.gz)
-    --tfile:   Target volume file of the same format
-    --frames:  Optional number of initial frames to retain [1]
+    --sourcefile:   Source volume file (.4dfp, .nii, or .nii.gz)
+    --targetfile:   Target volume file of the same format
+    --frames:       Optional number of initial frames to retain [1]
 
     EXAMPLE USE
     ===========
 
-    qunex sliceImage sfile=bold1.nii.gz tfile=bold1_f10.nii.gz frames=10
+    qunex sliceImage sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
     
     ---
     Written by Grega Repovš
@@ -751,15 +751,15 @@ def sliceImage(sfile, tfile, frames=1):
                                 dofcMRIp package, added documentation.
     '''
     frames = int(frames)
-    if 'nii' in getImgFormat(sfile):
-        sliceNIfTI(sfile, tfile, frames)
+    if 'nii' in getImgFormat(sourcefile):
+        sliceNIfTI(sourcefile, targetfile, frames)
     else:
-        slice4dfp(sfile, tfile, frames)
+        slice4dfp(sourcefile, targetfile, frames)
 
 
 
-def slice4dfp(sfile, tfile, frames=1):
-    hdr = ifhhdr(sfile.replace('.img', '.ifh'))
+def slice4dfp(sourcefile, targetfile, frames=1):
+    hdr = ifhhdr(sourcefile.replace('.img', '.ifh'))
     x = int(hdr.ifh['matrix size [1]'])
     y = int(hdr.ifh['matrix size [2]'])
     z = int(hdr.ifh['matrix size [3]'])
@@ -767,10 +767,10 @@ def slice4dfp(sfile, tfile, frames=1):
     voxels = x * y * z
 
     hdr.ifh['matrix size [4]'] = str(frames)
-    hdr.writeHeader(tfile.replace('.img', '.ifh'))
+    hdr.writeHeader(targetfile.replace('.img', '.ifh'))
 
-    sf = open(sfile, 'r')
-    df = open(tfile, 'w')
+    sf = open(sourcefile, 'r')
+    df = open(targetfile, 'w')
 
     df.write(sf.read(voxels * frames * 4))
 
@@ -780,19 +780,19 @@ def slice4dfp(sfile, tfile, frames=1):
     df.close
 
 
-def sliceNIfTI(sfile, tfile, frames=1):
-    sform = getImgFormat(sfile)
-    tform = getImgFormat(tfile)
+def sliceNIfTI(sourcefile, targetfile, frames=1):
+    sform = getImgFormat(sourcefile)
+    tform = getImgFormat(targetfile)
 
     if sform == '.nii.gz':
-        sf = gzip.open(sfile, 'r')
+        sf = gzip.open(sourcefile, 'r')
     else:
-        sf = open(sfile, 'r')
+        sf = open(sourcefile, 'r')
 
     if tform == '.nii.gz':
-        tf = gzip.open(tfile, 'w')
+        tf = gzip.open(targetfile, 'w')
     else:
-        tf = open(tfile, 'w')
+        tf = open(targetfile, 'w')
 
     hdr = niftihdr()
     hdr.unpackHdr(sf)

@@ -1,15 +1,16 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_hcplifespan.py
+gi_HCP.py
 
-Functions for importing HCP Lifespan data to Qu|Nex file structure.
+Functions for importing HCP style data into Qu|Nex:
 
-* HCPLSImport      ... maps HCP Lifespan data to Qu|Nex structure
+* importHCP     ... maps HCP style data to Qu|Nex structure
 
-The commands are accessible from the terminal using gmri utility.
+The commands are accessible from the terminal using the gmri utility.
 
-Copyright (c) Grega Repovs. All rights reserved.
+Copyright (c) Grega Repovs and Jure Demsar.
+All rights reserved.
 """
 
 import os
@@ -23,183 +24,26 @@ import tarfile
 import glob
 import datetime
 import json
+import ast
 
-hcpls = {
-    'files': {
-        'label': ['T1w', 'T2w', 'rfMRI', 'tfMRI', 'dMRI', 'DWI', 'SpinEchoFieldMap'],        
-        'T1w': {
-            'info':  [],
-        },
-        'T2w': {
-            'info':  [],
-        },
-        'rfMRI': {
-            'info':  ['task', 'phenc', 'ref'],
-        },
-        'tfMRI': {
-            'info':  ['task', 'phenc', 'ref']
-        },
-        'dMRI': {
-            'info':  ['dir', 'phenc', 'ref']
-        },
-        'DWI': {
-            'info':  ['dir', 'phenc', 'ref']
-        },
-        'SpinEchoFieldMap': {
-            'info':  ['phenc']
-        }
-    },
-    'folders': {
-        'order': {'T1w': 1, 'T2w': 2, 'rfMRI': 3, 'tfMRI': 4, 'Diffusion': 5},
-        'label': ['T1w', 'T2w', 'rfMRI', 'tfMRI', 'Diffusion'],
-        'T1w': {
-            'info':  [],
-            'check': [  
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['T1w']                        
-                      ]
-        },
-        'T2w': {
-            'info':  [],
-            'check': [                        
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['T2w']                        
-                     ]
-        },
-        'rfMRI': {
-            'info':  ['task', 'phenc'],
-            'check': [
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['rfMRI', 'SBRef'],
-                        ['rfMRI', '-SBRef']
-                     ]
-        },
-        'tfMRI': {
-            'info':  ['task', 'phenc'],
-            'check': [
-                        ['SpinEchoFieldMap', 'AP'],
-                        ['SpinEchoFieldMap', 'PA'],
-                        ['tfMRI', 'SBRef'],
-                        ['tfMRI', '-SBRef']
-                     ]
-        },
-        'Diffusion': {
-            'info':  [],
-            'check': [
-                        ['dMRI', 'dir98', 'AP', 'SBRef'],
-                        ['dMRI', 'dir98', 'AP', '-SBRef'],
-                        ['dMRI', 'dir98', 'PA', 'SBRef'],
-                        ['dMRI', 'dir98', 'PA', '-SBRef'],
-                        ['dMRI', 'dir99', 'AP', 'SBRef'],
-                        ['dMRI', 'dir99', 'AP', '-SBRef'],
-                        ['dMRI', 'dir99', 'PA', 'SBRef'],
-                        ['dMRI', 'dir99', 'PA', '-SBRef'],
-                        ['DWI',  'dir95', 'LR', 'SBRef'],
-                        ['DWI',  'dir95', 'RL', '-SBRef'],
-                        ['DWI',  'dir96', 'LR', 'SBRef'],
-                        ['DWI',  'dir96', 'RL', '-SBRef'],
-                        ['DWI',  'dir97', 'LR', 'SBRef'],
-                        ['DWI',  'dir97', 'RL', '-SBRef']
-                    ]
-        }
-    }    
-}
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
 PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
 
 
-def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
-    """
-    moveLinkOrCopy - documentation not yet available.
-    """
-    if action is None:
-        action = 'link'
-    if status is None:
-        status = True
-    if name is None:
-        name = source
-    if prefix is None:
-        prefix = ""
-
-    if os.path.exists(source):
-
-        if not os.path.exists(os.path.dirname(target)):
-            try:
-                os.makedirs(os.path.dirname(target))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be %sed, target folder could not be created, check permissions! " % (r, prefix, name, action))
-
-        if action == 'link':
-            try:
-                if os.path.exists(target):
-                    if os.path.samefile(source, target):
-                        if r is None:
-                            return status
-                        else:
-                            return (status, "%s%s%s already mapped" % (r, prefix, name))
-                    else:
-                        os.remove(target)
-                os.link(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s mapped" % (r, prefix, name))
-            except:
-                action = 'copy'
-
-        if action == 'copy':
-            try:
-                shutil.copy2(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s copied" % (r, prefix, name))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be copied, check permissions! " % (r, prefix, name))
-
-        if action == 'move':
-            try:
-                shutil.move(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s moved" % (r, prefix, name))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be moved, check permissions! " % (r, prefix, name))
-
-    else:
-        if r is None:
-            return False
-        else:
-            return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
-
-
-def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
+def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
 
     try:
-        if subjectsfolder[-1] == '/':
-            subjectsfolder = subjectsfolder[:-1]
+        if sessionsfolder[-1] == '/':
+            sessionsfolder = sessionsfolder[:-1]
     except:
         pass
 
-    folder   = os.path.join(os.path.dirname(subjectsfolder), 'info', 'hcpls', hcplsname)
+    folder   = os.path.join(os.path.dirname(sessionsfolder), 'info', 'hcpls', hcplsname)
 
     if '\\' in file:
         pathsep = "\\"
@@ -222,7 +66,7 @@ def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix,
 
     sessionid = subjid + "_" + session
 
-    tfolder = os.path.join(subjectsfolder, sessionid, 'hcpls')
+    tfolder = os.path.join(sessionsfolder, sessionid, 'hcpls')
     tfile = os.path.join(tfolder, os.sep.join(data))
 
     if sessionid in sessions['skip']:
@@ -268,9 +112,9 @@ def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix,
 
 
 
-def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
+def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
     '''
-    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]
+    importHCP [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]
     
     USE
     ===
@@ -280,7 +124,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     PARAMETERS
     ==========
 
-    --subjectsfolder    The subjects folder where all the sessions are to be 
+    --sessionsfolder    The sessions folder where all the sessions are to be 
                         mapped to. It should be a folder within the 
                         <study folder>. [.]
 
@@ -288,12 +132,12 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                         following: the HCPLS dataset top folder, a folder that 
                         contains the HCPLS dataset, a path to the compressed 
                         `.zip` or `.tar.gz` package that can contain a single 
-                        subject or a multi-subject dataset, or a folder that 
+                        session or a multi-session dataset, or a folder that 
                         contains a compressed package. For instance the user 
                         can specify "<path>/<hcpfs_file>.zip" or "<path>" to
                         a folder that contains multiple packages. The default 
                         location where the command will look for a HCPLS dataset
-                        is [<subjectsfolder>/inbox/HCPLS]
+                        is [<sessionsfolder>/inbox/HCPLS]
 
     --sessions          An optional parameter that specifies a comma or pipe
                         separated list of sessions from the inbox folder to be 
@@ -334,9 +178,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
                         leave   - leave the specified archive where it is
                         move    - move the specified archive to 
-                                  <subjectsfolder>/archive/HCPLS
+                                  <sessionsfolder>/archive/HCPLS
                         copy    - copy the specified archive to 
-                                  <subjectsfolder>/archive/HCPLS
+                                  <sessionsfolder>/archive/HCPLS
                         delete  - delete the archive after processing if no 
                                   errors were identified
 
@@ -363,7 +207,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
     --filesort          An optional parameter that specifies how the files should
                         be sorted before mapping to `nii` folder and inclusion in 
-                        `subject_hcp.txt`. The sorting is specified by a string of
+                        `session_hcp.txt`. The sorting is specified by a string of
                         sort keys separated by '_'. The available sort keys are:
        
                         * name  ... sort by the name of the file
@@ -385,7 +229,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     PROCESS OF HCPLS MAPPING
     ========================
     
-    The HCPLSImport command consists of two steps:
+    The importHCP command consists of two steps:
     
     ==> Step 1 -- Mapping HCPLS dataset to Qu|Nex Suite folder structure
     
@@ -399,10 +243,10 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     call. If `hcplsname` is not provided, the name will be set to the name of the 
     parent folder or the name of the compressed archive.
 
-    The files identified as belonging to a specific subject will be mapped to 
+    The files identified as belonging to a specific session will be mapped to 
     folder: 
     
-        <subjects_folder>/<subject>_<session>/hcpls
+        <sessions_folder>/<subject>_<session>/hcpls
 
     The `<subject>_<session>` string will be used as the identifier for the 
     session in all the following steps. If the folder for the `session` 
@@ -413,7 +257,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     ==> Step 2 -- Mapping image files to Qu|Nex Suite `nii` folder
     
     For each session separately, images from the `hcpls` folder are 
-    mapped to the `nii` folder and appropriate `subject.txt` file is created per
+    mapped to the `nii` folder and appropriate `session.txt` file is created per
     standard Qu|Nex specification.
 
     The second step is achieved by running `mapHCPLS2nii` on each session folder.
@@ -426,25 +270,25 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     RESULTS
     =======
 
-    After running the `HCPLSImport` command the HCPLS dataset will be mapped 
+    After running the `importHCP` command the HCPLS dataset will be mapped 
     to the Qu|Nex folder structure and image files will be prepared for further
     processing along with required metadata.
 
     * The original HCPL session-level data is stored in:
 
-        <subjectsfolder>/<subject_session>/hcpls
+        <sessionsfolder>/<session>/hcpls
 
     * Image files mapped to new names for Qu|Nex are stored in:
 
-        <subjects_folder>/<subject_session>/nii
+        <sessionsfolder>/<session>/nii
 
     * The full description of the mapped files is in:
 
-        <subjects_folder>/<subject_session>/subject.txt
+        <sessionsfolder>/<session>/session.txt
 
     * The output log of HCPLS mapping is in: 
 
-        <subjects_folder>/<subject_session>/hcpls/hcpls2nii.log
+        <sessionsfolder>/<session>/hcpls/hcpls2nii.log
 
 
     NOTES
@@ -456,7 +300,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     ===========
     
     ```
-    qunex HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
+    qunex importHCP sessionsfolder=myStudy/sessions inbox=HCPLS overwrite=yes hcplsname=hcpls
     ```
 
     ----------------
@@ -464,7 +308,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
     Changelog
     2019-01-19 Grega Repovš
-             - Initial version adopted from BIDSImport
+             - Initial version adopted from importBIDS
     2019-05-22 Grega Repovš
              - Added nameformat as input
     2019-08-06 Grega Repovš
@@ -474,28 +318,28 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
              - Addded file sorting parameter
     '''
 
-    print "Running HCPLSImport\n=================="
+    print "Running importHCP\n=================="
 
     if action not in ['link', 'copy', 'move']:
-        raise ge.CommandError("HCPLSImport", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
+        raise ge.CommandError("importHCP", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
 
     if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("HCPLSImport", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+        raise ge.CommandError("importHCP", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     if archive not in ['leave', 'move', 'copy', 'delete']:
-        raise ge.CommandError("HCPLSImport", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+        raise ge.CommandError("importHCP", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
 
     if not filesort:
         filesort = "name_type_se"
 
     if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("HCPLSImport", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
+        raise ge.CommandError("importHCP", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
-    if subjectsfolder is None:
-        subjectsfolder = os.path.abspath(".")
+    if sessionsfolder is None:
+        sessionsfolder = os.path.abspath(".")
 
     if inbox is None:
-        inbox = os.path.join(subjectsfolder, 'inbox', 'HCPLS')
+        inbox = os.path.join(sessionsfolder, 'inbox', 'HCPLS')
         hcplsname = ""
     else:
         hcplsname = os.path.basename(inbox)
@@ -510,17 +354,15 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
     errors       = ""
 
     # ---> Check for folders
-
-    if not os.path.exists(os.path.join(subjectsfolder, 'inbox', 'HCPLS')):
-        os.makedirs(os.path.join(subjectsfolder, 'inbox', 'HCPLS'))
+    if not os.path.exists(os.path.join(sessionsfolder, 'inbox', 'HCPLS')):
+        os.makedirs(os.path.join(sessionsfolder, 'inbox', 'HCPLS'))
         print "--> creating inbox HCPLS folder"
 
-    if not os.path.exists(os.path.join(subjectsfolder, 'archive', 'HCPLS')):
-        os.makedirs(os.path.join(subjectsfolder, 'archive', 'HCPLS'))
+    if not os.path.exists(os.path.join(sessionsfolder, 'archive', 'HCPLS')):
+        os.makedirs(os.path.join(sessionsfolder, 'archive', 'HCPLS'))
         print "--> creating archive HCPLS folder"
 
     # ---> identification of files
-
     if sessions:
         sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
 
@@ -556,16 +398,15 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                     else:
                         sourceFiles.append(filepath)
         else:
-            raise ge.CommandFailed("HCPLSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
+            raise ge.CommandFailed("importHCP", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
-        raise ge.CommandFailed("HCPLSImport", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("importHCP", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
     if not sourceFiles:
-        raise ge.CommandFailed("HCPLSImport", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("importHCP", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
 
-    # ---> mapping data to subjects' folders    
-
+    # ---> mapping data to sessions' folders
     print "--> mapping files to Qu|Nex hcpls folders"
 
     for file in sourceFiles:
@@ -576,7 +417,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile = mapToQUNEXcpls(sf.filename, subjectsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(sf.filename, sessionsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
                         if tfile:
                             fdata = z.read(sf)
                             fout = open(tfile, 'wb')
@@ -597,7 +438,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile = mapToQUNEXcpls(member.name, subjectsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(member.name, sessionsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
                         if tfile:
                             fobj  = tar.extractfile(member)
                             fdata = fobj.read()
@@ -613,27 +454,26 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                 allOk = False
 
         else:
-            tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessionsList, overwrite, "    ", nameformat)
+            tfile = mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessionsList, overwrite, "    ", nameformat)
             if tfile:
-                status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
+                status, msg = gc.moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
                 allOk = allOk and status
                 if not status:
                     errors += msg
 
     # ---> archiving the dataset
-    
     if errors:
         print "   ==> The following errors were encountered when mapping the files:"
         print errors
     else:
-        if os.path.isfile(inbox) or not os.path.samefile(inbox, os.path.join(subjectsfolder, 'inbox', 'HCPLS')):
+        if os.path.isfile(inbox) or not os.path.samefile(inbox, os.path.join(sessionsfolder, 'inbox', 'HCPLS')):
             try:
                 if archive == 'move':
                     print "--> moving dataset to archive" 
-                    shutil.move(inbox, os.path.join(subjectsfolder, 'archive', 'HCPLS'))
+                    shutil.move(inbox, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                 elif archive == 'copy':
                     print "--> copying dataset to archive"
-                    shutil.copy2(inbox, os.path.join(subjectsfolder, 'archive', 'HCPLS'))
+                    shutil.copy2(inbox, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                 elif archive == 'delete':
                     print "--> deleting dataset"
                     if os.path.isfile(inbox):
@@ -648,10 +488,10 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                 try:
                     if archive == 'move':
                         print "--> moving dataset to archive" 
-                        shutil.move(file, os.path.join(subjectsfolder, 'archive', 'HCPLS'))
+                        shutil.move(file, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                     elif archive == 'copy':
                         print "--> copying dataset to archive"
-                        shutil.copy2(file, os.path.join(subjectsfolder, 'archive', 'HCPLS'))
+                        shutil.copy2(file, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                     elif archive == 'delete':
                         print "--> deleting dataset"
                         if os.path.isfile(file):
@@ -662,13 +502,11 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
                     print "==> %s of %s failed!" % (archive, file)
 
     # ---> check status
-
     if not allOk:
         print "\nFinal report\n============"
-        raise ge.CommandFailed("HCPLSImport", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
+        raise ge.CommandFailed("importHCP", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
 
     # ---> mapping data to Qu|Nex nii folder
-
     report = []
     for execute in ['map', 'clean']:
         for session in sessionsList[execute]:
@@ -683,7 +521,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
 
                 try:
                     print
-                    nimg, nmapped = mapHCPLS2nii(os.path.join(subjectsfolder, session), overwrite, filesort=filesort)
+                    nimg, nmapped = mapHCPLS2nii(os.path.join(sessionsfolder, session), overwrite, filesort=filesort)
                     if nimg == 0:
                         report.append('%s had no images found to be mapped' % (info))
                         allOk = False
@@ -702,25 +540,37 @@ def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', o
         print line
 
     if not allOk:
-        raise ge.CommandFailed("HCPLSImport", "Some actions failed", "Please check report!")
+        raise ge.CommandFailed("importHCP", "Some actions failed", "Please check report!")
 
 
 
-def processHCPLS(sfolder, filesort):
+def processHCPLS(sessionfolder, filesort):
     '''
     '''
 
-    if not os.path.exists(sfolder):
-        raise ge.CommandFailed("processHCPLS", "No hcpls folder present!", "There is no hcpls data in session folder %s" % (sfolder), "Please import HCPLS data first!")
+    if not os.path.exists(sessionfolder):
+        raise ge.CommandFailed("processHCPLS", "No hcpls folder present!", "There is no hcpls data in session folder %s" % (sessionfolder), "Please import HCPLS data first!")
 
-    session   = os.path.basename(os.path.dirname(sfolder))
+    session   = os.path.basename(os.path.dirname(sessionfolder))
     sparts    = session.split('_')
     subjectid = sparts.pop(0)
     sessionid = "_".join([e for e in sparts + [""] if e])
 
+    # --- load HCPLS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    hcplsStructure = os.path.join(niuTemplateFolder, "importHCP.txt")
+
+    if not os.path.exists(hcplsStructure):
+        raise ge.CommandFailed("processHCPLS", "No HCPLS structure file present!", "There is no HCPLS structure file %s" % (hcplsStructure), "Please check your Qu|Nex installation")
+
+    hcpls_file = open(hcplsStructure)
+    content = hcpls_file.read()
+    hcpls = ast.literal_eval(content)
+
     # --- get a list of folders and process them
 
-    dfolders = glob.glob(os.path.join(sfolder, '*'))
+    dfolders = glob.glob(os.path.join(sessionfolder, '*'))
 
     # -- data: SE number, label, fodlerInfo, folderFiles, status
     checkedFolders = []
@@ -833,9 +683,9 @@ def processHCPLS(sfolder, filesort):
         
 
 
-def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
+def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     '''
-    mapHCPLS2nii [sfolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]
+    mapHCPLS2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]
 
     USE
     ===
@@ -855,71 +705,71 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
     not copied but rather hard links are created. Only image, bvec and bval 
     files are mapped from the `hcpls` to `nii` folder. The exact mapping is
     noted in file `hcpls2nii.log` that is saved to the `hcpls` folder. The 
-    information on images is also compiled in `subject.txt` file that is 
+    information on images is also compiled in `session.txt` file that is 
     generated in the main session folder. For every image all the information
     present in the hcpls filename is listed.
 
     PARAMETERS
     ==========
 
-    --sfolder    The base subject folder in which bids folder with data and
-                 files for the session is present. [.]
+    --sourcefolder  The base session folder in which bids folder with data and
+                    files for the session are present. [.]
     
-    --overwrite  Parameter that specifes what should be done in cases where
-                 there are existing data stored in `nii` folder. The options
-                 are:
+    --overwrite     Parameter that specifes what should be done in cases where
+                    there are existing data stored in `nii` folder. The options
+                    are:
 
-                 no      - do not overwrite the data, skip session
-                 yes     - remove exising files in `nii` folder and redo the
-                           mapping
+                    no      - do not overwrite the data, skip session
+                    yes     - remove exising files in `nii` folder and redo the
+                              mapping
 
-                 The default option is 'no'. 
+                    The default option is 'no'. 
 
-    --report     The path to the file that will hold the information about the
-                 images that are relevant for HCP Pipelines. If not provided
-                 it will default to 
+    --report        The path to the file that will hold the information about the
+                    images that are relevant for HCP Pipelines. If not provided
+                    it will default to 
 
-    --filesort   An optional parameter that specifies how the files should
-                 be sorted before mapping to `nii` folder and inclusion in 
-                 `subject_hcp.txt`. The sorting is specified by a string of
-                 sort keys separated by '_'. The available sort keys are:
-
-                 * name  ... sort by the name of the file
-                 * type  ... sort by the type of the file (T1w, T2w, rfMRI, 
-                             tfMRI, Diffusion)
-                 * se    ... sort by the number of the related pair of the
-                             SE fieldmap images.
-
-                 The files will be sorted in the order of the listed keys.
-                 The default is: "name_type_se".
-
-                 NOTE: 
-                 1) SE field map pair will allways come before the first image
-                    in the sorted list that references it. 
-                 2) Diffusion images will always be listed jointly in a fixed 
-                    order.
+    --filesort      An optional parameter that specifies how the files should
+                    be sorted before mapping to `nii` folder and inclusion in 
+                    `session_hcp.txt`. The sorting is specified by a string of
+                    sort keys separated by '_'. The available sort keys are:
+   
+                    * name  ... sort by the name of the file
+                    * type  ... sort by the type of the file (T1w, T2w, rfMRI, 
+                                tfMRI, Diffusion)
+                    * se    ... sort by the number of the related pair of the
+                                SE fieldmap images.
+   
+                    The files will be sorted in the order of the listed keys.
+                    The default is: "name_type_se".
+   
+                    NOTE: 
+                    1) SE field map pair will allways come before the first image
+                       in the sorted list that references it. 
+                    2) Diffusion images will always be listed jointly in a fixed 
+                       order.
 
     RESULTS
     =======
 
     After running the mapped nifti files will be in the `nii` subfolder, 
-    named with sequential image number. `subject.txt` will be in the base 
+    named with sequential image number. `session.txt` will be in the base 
     session folder and `hcpls2nii.log` will be in the `hcpls` folder.
     
-    subject.txt file
+    session.txt file
     ----------------
 
-    The subject.txt will be placed in the subject base folder. It will contain
+    The session.txt will be placed in the session base folder. It will contain
     the information about the session id, subject id location of folders and a 
     list of created NIfTI images with their description.
 
-    An example subject.txt file would be:
+    An example session.txt file would be:
 
     id: 06_retest
     subject: 06
-    hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/hcpls
-    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/nii
-    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/hcp
+    hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
+    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
     
     01: T1w
     02: bold1:rest1
@@ -933,7 +783,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
     For each of the listed images there will be a corresponding NIfTI file in
     the nii subfolder (e.g. 04.nii.gz for resting state 2 PA). 
-    The generated subject.txt files form the basis for the following HCP and 
+    The generated session.txt files form the basis for the following HCP and 
     other processing steps. `id` field will be set to the full session name,
     `subject` will be set to the text preceeding the first underscore (`_`) 
     character.
@@ -950,12 +800,12 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `parsessions` parameters. In this case the
-    command will be run for each of the specified sessions in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
+    optionally `sessionsfolder` and `parsessions` parameters. In this case the
+    command will be run for each of the specified sessions in the sessionsfolder
+    (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each sessions's folder. Commands will run in parallel, where
+    (for more information see online documentation). `sourcefolder` will be filled
+    in automatically as each sessions's folder. Commands will run in parallel, where
     the degree of parallelism is determined by `parsessions` (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
@@ -998,7 +848,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
     ```
     qunex mapHCPLS2nii \\
-      --subjectsfolder="/data/my_study/subjects" \\
+      --sessionsfolder="/data/my_study/sessions" \\
       --sessions="AP*" \\
       --overwrite=yes
     ```
@@ -1027,16 +877,16 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
         filesort = "name_type_se"
 
     if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("HCPLSImport", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
+        raise ge.CommandError("importHCP", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
-    sfolder = os.path.abspath(sfolder)
-    hfolder = os.path.join(sfolder, 'hcpls')
-    nfolder = os.path.join(sfolder, 'nii')
+    sfolder = os.path.abspath(sourcefolder)
+    hfolder = os.path.join(sourcefolder, 'hcpls')
+    nfolder = os.path.join(sourcefolder, 'nii')
 
     # --- report file
 
     if report is None:
-        study = gc.deduceFolders({'sfolder': sfolder})
+        study = gc.deduceFolders({'sourcefolder': sfolder})
         basefolder = study.get('basefolder')
         if basefolder:
             report = os.path.join(basefolder, 'info', 'hcpls', 'parameters.txt')
@@ -1092,24 +942,26 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
     else:
         os.makedirs(nfolder)
 
-    # --- open subject.txt file
+    # --- create session.txt file
+    sout = gc.createSessionFile("mapHCPLS2nii", sfolder, session, subject)
 
-    sfile = os.path.join(sfolder, 'subject_hcp.txt')
+    # --- create session_hcp.txt file
+    sfile = os.path.join(sfolder, 'session_hcp.txt')
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print "--> removed existing subject.txt file"
+            print "--> removed existing session.txt file"
         else:
-            raise ge.CommandFailed("mapHCPLS2nii", "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+            raise ge.CommandFailed("mapHCPLS2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
-    sout = open(sfile, 'w')
-    print >> sout, 'id:', session
-    print >> sout, 'subject:', subjectid
-    print >> sout, 'hcpfs:', hfolder
-    print >> sout, 'raw_data:', nfolder
-    print >> sout, 'hcp:', os.path.join(sfolder, 'hcp')
-    print >> sout
-    print >> sout, 'hcpready: true'
+    sout_hcp = open(sfile, 'w')
+    print >> sout_hcp, 'id:', session
+    print >> sout_hcp, 'subject:', subjectid
+    print >> sout_hcp, 'hcpfs:', hfolder
+    print >> sout_hcp, 'raw_data:', nfolder
+    print >> sout_hcp, 'hcp:', os.path.join(sfolder, 'hcp')
+    print >> sout_hcp
+    print >> sout_hcp, 'hcpready: true'
 
     # --- open hcpfs2nii log file
 
@@ -1146,7 +998,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
             imgn += 1
             tfile = os.path.join(nfolder, "%02d.nii.gz" % (imgn))
-            status = moveLinkOrCopy(fileInfo['path'], tfile, action='link')
+            status = gc.moveLinkOrCopy(fileInfo['path'], tfile, action='link')
 
             if status:
                 nmapped += 1
@@ -1157,27 +1009,41 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                 if firstImage:
                     deviceInfo  = "%s|%s|%s" % (fileInfo['json'].get('Manufacturer', "NA"), fileInfo['json'].get('ManufacturersModelName', "NA"), fileInfo['json'].get('DeviceSerialNumber', "NA"))
                     institution = fileInfo['json'].get('InstitutionName', "NA")
-                    print >> sout, "\ninstitution: %s\ndevice: %s\n" % (institution, deviceInfo)
+                    out = "\ninstitution: %s\ndevice: %s\n" % (institution, deviceInfo)
+                    print >> sout, out
+                    print >> sout_hcp, out
                     firstImage = False
 
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
                     # -29s fol alignment purposes (output generation is slightly different with T1w and T2w)
-                    print >> sout, "%02d: %-20s: %-29s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts'])),
+                    out = "%02d: %-20s: %-29s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']))
+                    print >> sout, out,
+                    print >> sout_hcp, out,
                     if folder['senum']:
-                        print >> sout, ": se(%d)" % (folder['senum']),
+                        out = ": se(%d)" % (folder['senum'])
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     echospacing = 0
                     if fileInfo['json'].get('DwellTime', None):
                         echospacing = fileInfo['json'].get('DwellTime')
-                        print >> sout, ": DwellTime(%.10f)" % (echospacing),
+                        out = ": DwellTime(%.10f)" % (echospacing)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     elif fileInfo['json'].get('EchoSpacing', None):
                         echospacing = fileInfo['json'].get('EchoSpacing')
-                        print >> sout, ": EchoSpacing(%.10f)" % (echospacing),
+                        out = ": EchoSpacing(%.10f)" % (echospacing)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     if fileInfo['json'].get('ReadoutDirection', None):
-                        print >> sout, ": UnwarpDir(%s)" % (unwarp[fileInfo['json'].get('ReadoutDirection')]),
+                        out = ": UnwarpDir(%s)" % (unwarp[fileInfo['json'].get('ReadoutDirection')])
+                        print >> sout, out,
+                        print >> sout_hcp, out,
 
                     # add filename
-                    print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                     print >> rout, "\n" + fileInfo['parts'][0]
                     print >> rout, "".join(['-' for e in range(len(fileInfo['parts'][0]))])
@@ -1195,15 +1061,23 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc),
+                        out = "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     else:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc),
+                        out = "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
 
                     if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                        print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing')),
+                        out = ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing'))
+                        print >> sout, out,
+                        print >> sout_hcp, out,
 
                     # add filename
-                    print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1218,7 +1092,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                     else:
                         phenc = fileInfo['parts'][2]
 
-                    print >> sout, "%02d: %-20s: %-30s: se(%d) : phenc(%s) : EchoSpacing(%.10f) : filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                    out = "%02d: %-20s: %-30s: se(%d) : phenc(%s) : EchoSpacing(%.10f) : filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1235,14 +1111,20 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                         phenc = fileInfo['parts'][2]
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc),
+                        out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                         if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                            print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
+                            print >> sout_hcp, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
 
-                    else:    
-                        print >> sout, "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc),
+                    else:
+                        out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc)
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                         if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                            print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
+                            out = ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                            print >> sout, out,
+                            print >> sout_hcp, out,
 
                         print >> rout, "\n" + "_".join(fileInfo['parts'])
                         print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1250,7 +1132,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                         print >> rout, "%-25s : %d" % ("_hcp_dwi_PEdir", PEDir[phenc])
 
                     # add filename
-                    print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    print >> sout, out
+                    print >> sout_hcp, out
 
                 print >> bout, "%s => %s" % (fileInfo['path'], tfile)
             else:
@@ -1260,11 +1144,11 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
 
             status = True
             if ('dMRI' in fileInfo['parts'] or 'DWI' in fileInfo['parts']) and not 'SBRef' in fileInfo['parts']:
-                statusA = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
+                statusA = gc.moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
                 if statusA:
                     print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'))                    
 
-                statusB = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link')
+                statusB = gc.moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link')
                 if statusB:
                     print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'))                    
 
@@ -1272,8 +1156,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None, filesort=None):
                     print "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn)
                     print "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, fileInfo['name'].replace('.nii.gz', '.bval/.bvec'))
                     allOk = False
-        
+
     sout.close()
+    sout_hcp.close()
     bout.close()
 
     if not allOk:

@@ -386,9 +386,9 @@ def write_field_dict(output_file, limit):
             writer.writerow(row)
 
 
-def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
+def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
     '''
-    getDICOMFields [folder=.] [tfile=dicomFields.csv] [limit=20]
+    getDICOMFields [folder=.] [targetfile=dicomFields.csv] [limit=20]
 
     USE
     ===
@@ -400,13 +400,13 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     PARAMETERS
     ==========
 
-    --folder    The base folder to search for DICOM files. 
-                The command will try to locate all valid DICOM files
-                within the specified folder and its subfolders. [.]
-    --tfile     The name (and path) of the file to store the information
-                in. [dicomFields.csv]
-    --limit     The maximum number of example values to provide for each of the
-                DICOM fields. [20]
+    --folder        The base folder to search for DICOM files. 
+                    The command will try to locate all valid DICOM files
+                    within the specified folder and its subfolders. [.]
+    --targetfile    The name (and path) of the file to store the information
+                    in. [dicomFields.csv]
+    --limit         The maximum number of example values to provide for each of the
+                    DICOM fields. [20]
 
     RESULTS
     =======
@@ -430,13 +430,13 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     
     ```
     qunex getDICOMFields \
-         --folder=/data/studies/WM/subjects/inbox/MR 
+         --folder=/data/studies/WM/sessions/inbox/MR 
     ```
     
     ```
     qunex getDICOMFields \
-         --folder=/data/studies/WM/subjects/inbox/MR/original \
-         --tfile=/data/studies/WM/subjects/specs/dicomFields.csv \
+         --folder=/data/studies/WM/sessions/inbox/MR/original \
+         --targetfile=/data/studies/WM/sessions/specs/dicomFields.csv \
          --limit=10
     ```
 
@@ -457,16 +457,16 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
         raise ge.CommandFailed("getDICOMFields", "Folder not found", "The specified folder with DICOM files to analyse was not found:", "%s" % (folder), "Please check your paths!")
 
     try:
-        f = open(tfile, "w")
+        f = open(targetfile, "w")
         f.close()
     except:
-        raise ge.CommandFailed("getDICOMFields", "Could not create target file", "The specifed target file could not be created:", "%s" % (tfile), "Please check your paths and permissions!")
+        raise ge.CommandFailed("getDICOMFields", "Could not create target file", "The specifed target file could not be created:", "%s" % (targetfile), "Please check your paths and permissions!")
 
 
     field_dict = {}
 
     discoverDICOM(folder, dicom_scan, save=False, archive_file="")
-    write_field_dict(tfile, limit)
+    write_field_dict(targetfile, limit)
 
 
 #######################
@@ -600,15 +600,15 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
 
     ```
     qunex changeDICOMFiles \
-         --folder=/data/studies/WM/subjects/inbox/MR \
-         --paramfile=/data/studies/WM/subjects/specs/deid.txt
+         --folder=/data/studies/WM/sessions/inbox/MR \
+         --paramfile=/data/studies/WM/sessions/specs/deid.txt
     ```
     
     ```
     qunex changeDICOMFiles \
-         --folder=/data/studies/WM/subjects/inbox/MR/original \
-         --paramfile=/data/studies/WM/subjects/specs/deidv1.txt \
-         --outputfolder=/data/studies/WM/subjects/MR/deid \
+         --folder=/data/studies/WM/sessions/inbox/MR/original \
+         --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \
+         --outputfolder=/data/studies/WM/sessions/MR/deid \
          --extension="v1"
     ```
 
@@ -650,7 +650,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
         f = open(archivefile, "a")
         f.close()
     except:
-        raise ge.CommandFailed("changeDICOMFiles", "Could not create archive file", "The specifed archive file could not be created:", "%s" % (tfile), "Please check your paths and permissions!")
+        raise ge.CommandFailed("changeDICOMFiles", "Could not create archive file", "The specifed archive file could not be created:", "%s" % (archivefile), "Please check your paths and permissions!")
 
     if outputfolder is not None:
         try:
