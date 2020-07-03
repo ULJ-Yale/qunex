@@ -1650,9 +1650,12 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_STUDY_INPUT_PATH=`opts_GetOpt "${setflag}xnatstudyinputpath" $@`
 
     # -- Backwards comapatibility, sessionsfolder used to be subjectsfolder
-    if [[ -z ${QuNexSessionsFolder} ]]; then
-        QuNexSessionsFolder==`opts_GetOpt "${setflag}subjectsfolder" $@`
-        echo "WARNING: the subjectsfolder parameter is now known as sessionsfolder.";
+    if [[ -z $QuNexSessionsFolder ]]; then
+        QuNexSubjectsFolder==`opts_GetOpt "${setflag}subjectsfolder" $@`
+        if [[ ! -z $QuNexSubjectsFolder ]]; then
+            QuNexSessionsFolder=${QuNexSubjectsFolder}
+            echo "WARNING: the subjectsfolder parameter is now known as sessionsfolder.";
+        fi
     fi
 
     # -- General session and session flags
