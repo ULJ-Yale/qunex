@@ -76,7 +76,7 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
         if os.path.exists(tfolder):
             if overwrite == 'yes':
                 print prefix + "--> hcpls for session %s already exists: cleaning session" % (sessionid)
-                shutil.rmtree(tfolder)                    
+                shutil.rmtree(tfolder)
                 sessions['clean'].append(sessionid)
             elif not os.path.exists(os.path.join(tfolder, 'hcpfs2nii.log')):
                 print prefix + "--> incomplete hcpls for session %s already exists: cleaning session" % (session)
@@ -96,7 +96,7 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
         else:
             print prefix + "--> creating hcpl session %s" % (sessionid)
             sessions['map'].append(sessionid)
-        
+
     if os.path.exists(tfile):
         if sessionid in sessions['skip']:
             return False
@@ -405,7 +405,6 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     if not sourceFiles:
         raise ge.CommandFailed("importHCP", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
-
     # ---> mapping data to sessions' folders
     print "--> mapping files to Qu|Nex hcpls folders"
 
@@ -424,6 +423,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                             fout.write(fdata)
                             fout.close()
                 z.close()
+
                 print "        -> done!"
             except:
                 print "        => Error: Processing of zip package failed. Please check the package!"
@@ -447,6 +447,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                             fout.write(fdata)
                             fout.close()
                 tar.close()
+
                 print "        -> done!"
             except:
                 print "        => Error: Processing of tar package failed. Please check the package!"
@@ -943,7 +944,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSessionFile("mapHCPLS2nii", sfolder, session, subject)
+    sout = gc.createSessionFile("mapHCPLS2nii", sfolder, session, subjectid)
 
     # --- create session_hcp.txt file
     sfile = os.path.join(sfolder, 'session_hcp.txt')
