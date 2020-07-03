@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.60.1 Full support for hcp_suffix in runQC.
 * 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.10 External command calls are now printed in stdout and at the beginning of comlogs.
 * 0.51.9  Consistent jobname in scheduling between qunex and qunexContainer.
