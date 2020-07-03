@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.60.1  Full support for hcp_suffix in runQC.
 * 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.50.5  Splash screen update, uploaded gpu_binaries.
 * 0.50.4  License and README updates.
