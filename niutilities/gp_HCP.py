@@ -151,27 +151,30 @@ def getHCPPaths(sinfo, options):
             d['T2w'] = 'NONE'
 
     # --- Fieldmap related paths
+    d['fieldmap'] = {}
 
-    d['fmapmag']   = ''
-    d['fmapphase'] = ''
-    d['fmapge']    = ''
-    if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_dcmethod'] == 'SiemensFieldMap':
-        fmapmag = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
-        if fmapmag:
-            d['fmapmag'] = fmapmag[0]
+    if options['hcp_avgrdcmethod'] in ['SiemensFieldMap', 'PhilipsFieldMap'] or options['hcp_bold_dcmethod'] in ['SiemensFieldMap', 'PhilipsFieldMap']:
+        fmapmag = glob.glob(os.path.join(d['source'], 'FieldMap*' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
+        for imagepath in fmapmag:
+            fmnum = re.search(r'(?<=FieldMap)[0-9]{1,2}',imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                d['fieldmap'].update({fmnum: {'magnitude': imagepath}})
 
-        fmapphase = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Phase.nii.gz'))
-        if fmapphase:
-            d['fmapphase'] = fmapphase[0]
-        
-        d['fmapge']    = ""
+        fmapphase = glob.glob(os.path.join(d['source'], 'FieldMap*' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Phase.nii.gz'))
+        for imagepath in fmapphase:
+            fmnum = re.search(r'(?<=FieldMap)[0-9]{1,2}',imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                if fmnum in d['fieldmap']:
+                    d['fieldmap'][fmnum].update({'phase': imagepath})
     elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_dcmethod'] == 'GeneralElectricFieldMap':
-        d['fmapmag']   = ""
-        d['fmapphase'] = ""
-
-        fmapge = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_GE.nii.gz'))
-        if fmapge:
-            d['fmapge'] = fmapge[0]
+        fmapge = glob.glob(os.path.join(d['source'], 'FieldMap*' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_GE.nii.gz'))
+        for imagepath in fmapge:
+            fmnum = re.search(r'(?<=FieldMap)[0-9]{1,2}',imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                d['fieldmap'].update({fmnum: {'GE': imagepath}})
 
     # --- default check files
 
@@ -335,6 +338,11 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     FieldMap/<session id>_FieldMap_GE.nii.gz
 
+    __PhilipsFieldMap__
+
+    FieldMap/<session id>_FieldMap_Magnitude.nii.gz
+    FieldMap/<session id>_FieldMap_Phase.nii.gz
+
     RESULTS
     =======
 
@@ -419,6 +427,9 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 GeneralElectricFieldMap
                                 ... average any repeats and use GE field map for
                                     readout correction
+                                PhilipsFieldMap
+                                ... average any repeats and use Philips field
+                                    map for readout correction.
                                 TOPUP
                                 ... average any repeats and use spin echo field
                                     map for readout correction.
@@ -573,6 +584,9 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     2020-01-16 Grega Repovš
              - Updated documentation on SE label specification
+    2020-07-03 Aleksij Kraljič
+             - Included fieldmap distortion correction for Philips scanners.
+             - Solved a bug with fieldmap distortion correction for General Electric scanners
     '''
 
     r = "\n---------------------------------------------------------"
@@ -581,14 +595,14 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     run    = True
     report = "Error"
-
+    
     try:
-
+        # --- Base settings
         doOptionsCheck(options, sinfo, 'hcp_PreFS')
         doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
         hcp = getHCPPaths(sinfo, options)
 
-        # --- checks
+        # --- run checks
 
         if 'hcp' not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
@@ -641,8 +655,13 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         topupconfig = ''
         senum       = None
         tufolder    = None
+        fmmag = ''
+        fmphase = ''
+        fmge = ''
 
-        if options['hcp_avgrdcmethod'] == 'TOPUP':
+        if options['hcp_avgrdcmethod'].lower() == 'topup':
+
+            # -- spin echo settings
 
             sesettings = True
             for p in ['hcp_sephaseneg', 'hcp_sephasepos', 'hcp_seunwarpdir']:
@@ -661,7 +680,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                             tufolder = os.path.join(hcp['source'], 'SpinEchoFieldMap%d%s' % (senum, options['fctail']))
                             r += "\n---> TOPUP Correction, Spin-Echo pair %d specified" % (senum)
                         else:
-                            r += "\n---> ERROR: No Spin-Echo image pair specfied for T1w image! [%d]" % (senum)
+                            r += "\n---> ERROR: No Spin-Echo image pair specified for T1w image! [%d]" % (senum)
                             run = False
                     except:                        
                         r += "\n---> ERROR: Could not process the specified Spin-Echo information [%s]! " % (str(senum))
@@ -692,7 +711,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                         run = False
 
 
-                    # get SE info from sesssion info
+                    # get SE info from session info
                     try:
                         seInfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and 'SE-FM' in v['name'] and 'se' in v and v['se'] == str(senum)][0]
                     except:
@@ -710,7 +729,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                         if not os.path.exists(options['hcp_topupconfig']):
                             topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
                             if not os.path.exists(topupconfig):
-                                r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_topupconfig'])
+                                r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (topupconfig)
                                 run = False
                             else:
                                 r += "\n---> TOPUP configuration file present."
@@ -722,23 +741,39 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     raise
 
         elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap':
-            if os.path.exists(hcp['fmapge']):
-                r += "\n---> Gradient Echo Field Map file present."
-            else:
-                r += "\n---> ERROR: Could not find Gradient Echo Field Map file for session %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapge'])
-                run = False
+            fmnum = T1w.get('fm', None)
+            ## include => if fmnum is None, same as for senum
 
-        elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap']:
-            if os.path.exists(hcp['fmapmag']):
-                r += "\n---> Magnitude Field Map file present."
-            else:
-                r += "\n---> ERROR: Could not find Magnitude Field Map file for session %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapmag'])
-                run = False
-            if os.path.exists(hcp['fmapphase']):
-                r += "\n---> Phase Field Map file present."
-            else:
-                r += "\n---> ERROR: Could not find Phase Field Map file for session %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapphase'])
-                run = False
+            for i, v in hcp['fieldmap'].iteritems(): 
+                if os.path.exists(hcp['fieldmap'][i]['GE']):
+                    r += "\n---> Gradient Echo Field Map %d file present." % (i)
+                else:
+                    r += "\n---> ERROR: Could not find Gradient Echo Field Map %d file for session %s.\n            Expected location: %s" % (i, sinfo['id'], hcp['fmapge'])
+                    run = False
+
+            fmmag = None
+            fmphase = None
+            fmge = hcp['fieldmap'][int(fmnum)]['GE']
+
+        elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap', 'PhilipsFieldMap']:
+            fmnum = T1w.get('fm', None)
+            ## include => if fmnum is None, same as for senum
+
+            for i, v in hcp['fieldmap'].iteritems():
+                if os.path.exists(hcp['fieldmap'][i]['magnitude']):
+                    r += "\n---> Magnitude Field Map %d file present." % (i)
+                else:
+                    r += "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s" % (i, sinfo['id'], hcp['fmapmag'])
+                    run = False
+                if os.path.exists(hcp['fieldmap'][i]['phase']):
+                    r += "\n---> Phase Field Map %d file present." % (i)
+                else:
+                    r += "\n---> ERROR: Could not find Phase Field Map %d file for session %s.\n            Expected location: %s" % (i, sinfo['id'], hcp['fmapphase'])
+                    run = False
+
+            fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+            fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+            fmge = None
 
         else:
             r += "\n---> WARNING: No distortion correction method specified."
@@ -811,9 +846,9 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     ('template2mmmask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz')),
                     ('brainsize', options['hcp_brainsize']),
                     ('fnirtconfig', os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf')),
-                    ('fmapmag', hcp['fmapmag']),
-                    ('fmapphase', hcp['fmapphase']),
-                    ('fmapgeneralelectric', hcp['fmapge']),
+                    ('fmapmag', fmmag),
+                    ('fmapphase',fmphase),
+                    ('fmapgeneralelectric', fmge),
                     ('echodiff', options['hcp_echodiff']),
                     ('SEPhaseNeg', seneg),
                     ('SEPhasePos', sepos),
@@ -2589,7 +2624,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     --hcp_bold_dcmethod      ... BOLD image deformation correction that should
                                  be used: TOPUP, FIELDMAP / SiemensFieldMap,
-                                 GeneralElectricFieldMap or NONE. [TOPUP]
+                                 GeneralElectricFieldMap, PhilipsFieldMap or NONE.
+                                 [TOPUP]
     --hcp_bold_echodiff      ... Delta TE for BOLD fieldmap images or NONE if
                                  not used. [NONE]
     --hcp_bold_sephasepos    ... Label for the positive image of the Spin Echo 
@@ -2918,11 +2954,11 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                         sepresent.append(bold)
                         sepairs[bold] = {'spinPos': spinPos, 'spinNeg': spinNeg}
 
-                # --- Process unwarp direction
-
-                unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
-                unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
-                unwarpdirs = dict(unwarpdirs)
+        #if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
+        # --- Process unwarp direction
+        unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
+        unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
+        unwarpdirs = dict(unwarpdirs)
 
         # --- Get sorted bold numbers
 
@@ -2942,6 +2978,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         refimg      = "NONE"
         futureref   = "NONE"
         topupconfig = ""
+        fmmag       = "NONE"
+        fmphase     = "NONE"
+        fmge        = "NONE"
 
         boldsData = []
 
@@ -3014,9 +3053,21 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             else:
                 r += "\n     ... reference image not used"
 
-            # --- check for spin-echo-fieldmap image
+            # -- set echospacing
 
             echospacing = ""
+            if 'EchoSpacing' in boldinfo:
+                echospacing = boldinfo['EchoSpacing']
+                r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
+            elif options['hcp_bold_echospacing']:
+                echospacing = options['hcp_bold_echospacing']
+                r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
+            else:
+                echospacing = ""
+                r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
+                boldok = False
+
+            # --- check for spin-echo-fieldmap image
 
             if options['hcp_bold_dcmethod'].lower() == 'topup' and sesettings:
                 
@@ -3070,25 +3121,15 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     else:
                         r += "\n---> TOPUP configuration file present."
 
-                # -- set echospacing
-
-                if 'EchoSpacing' in boldinfo:
-                    echospacing = boldinfo['EchoSpacing']
-                    r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
-                elif options['hcp_bold_echospacing']:
-                    echospacing = options['hcp_bold_echospacing']
-                    r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
-                else:
-                    echospacing = ""
-                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
-                    boldok = False
-
             # --- check for Siemens double TE-fieldmap image
 
             elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
+                fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                r, fieldok = checkForFile2(r, hcp['fmapmag'], '\n     ... Siemens fieldmap magnitude image present ', '\n     ... ERROR: Siemens fieldmap magnitude image missing!', status=fieldok)
-                r, fieldok = checkForFile2(r, hcp['fmapphase'], '\n     ... Siemens fieldmap phase image present ', '\n     ... ERROR: Siemens fieldmap phase image missing!', status=fieldok)
+                for i, v in hcp['fieldmap'].iteritems():
+                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
+                    boldok = boldok and fieldok
                 if not is_number(options['hcp_bold_echospacing']):
                     fieldok = False
                     r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (options['hcp_bold_echospacing'])
@@ -3096,13 +3137,34 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     fieldok = False
                     r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (options['hcp_bold_echodiff'])
                 boldok = boldok and fieldok
+                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                fmge = None
 
             # --- check for GE fieldmap image
 
             elif options['hcp_bold_dcmethod'].lower() in ['generalelectricfieldmap']:
+                fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                r, fieldok = checkForFile2(r, hcp['fmapge'], '\n     ... GeneralElectric fieldmap image present ', '\n     ... ERROR: GeneralElectric fieldmap image missing!', status=fieldok)
-                boldok = boldok and fieldok
+                for i, v in hcp['fieldmap'].iteritems():
+                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
+                    boldok = boldok and fieldok
+                fmmag = None
+                fmphase = None
+                fmge = hcp['fieldmap'][int(fmnum)]['GE']
+
+            # --- check for Philips double TE-fieldmap image
+
+            elif options['hcp_bold_dcmethod'].lower() in ['philipsfieldmap']:
+                fmnum = boldinfo.get('fm', None)
+                fieldok = True
+                for i, v in hcp['fieldmap'].iteritems():
+                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
+                    boldok = boldok and fieldok
+                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                fmge = None
 
             # --- NO DC used
 
@@ -3158,6 +3220,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                  'spinNeg':      spinNeg,
                  'spinPos':      spinPos,
                  'topupconfig':  topupconfig,
+                 'fmmag':        fmmag,
+                 'fmphase':      fmphase,
+                 'fmge':         fmge,
                  'fmriref':      fmriref}
             boldsData.append(b)
 
@@ -3292,6 +3357,9 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     spinNeg     = b['spinNeg']
     spinPos     = b['spinPos']
     topupconfig = b['topupconfig']
+    fmmag       = b['fmmag']
+    fmphase     = b['fmphase']
+    fmge        = b['fmge']
     fmriref     = b['fmriref']
 
     # prepare return variables
@@ -3329,7 +3397,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             fmrirefparam = fmriref
 
         comm = os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh') + " "
-
+        
+        print("=======================================================================================================================================")
         elements = [("path",                sinfo['hcp']),
                     ("subject",             sinfo['id'] + options['hcp_suffix']),
                     ("fmriname",            boldtarget),
@@ -3337,9 +3406,9 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     ("fmriscout",           refimg),
                     ("SEPhaseNeg",          spinNeg),
                     ("SEPhasePos",          spinPos),
-                    ("fmapmag",             hcp['fmapmag']),
-                    ("fmapphase",           hcp['fmapphase']),
-                    ("fmapgeneralelectric", hcp['fmapge']),
+                    ("fmapmag",             fmmag),
+                    ("fmapphase",           fmphase),
+                    ("fmapgeneralelectric", fmge),
                     ("echospacing",         echospacing),
                     ("echodiff",            options['hcp_bold_echodiff']),
                     ("unwarpdir",           unwarpdir),

@@ -23,7 +23,7 @@ import collections
 import niutilities.g_exceptions as ge
 import os.path
 import g_core
-
+import re
 
 def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcpsuffix=""):
     '''
@@ -598,14 +598,14 @@ def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="s
     ===
 
     The command is used to prepare subject.txt files so that they hold the
-    information necessary for correct mapping to a fodler structure supporting
+    information necessary for correct mapping to a folder structure supporting
     HCP preprocessing.
 
     For all the sessions specified, the command checks for the presence of
     specified source file (sfile). If the source file is found, each sequence
     name is checked against the source specified in the mapping file (mapping),
-    and the specified label is aded. The results are then saved to the specified
-    target file (tfile). The resulting session infomation files will have
+    and the specified label is added. The results are then saved to the specified
+    target file (tfile). The resulting session information files will have
     "hcpready: true" key-value pair added.
 
     PARAMETERS
@@ -692,7 +692,7 @@ def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="s
     04: bold1:rest       :RSBOLD 3mm 48 2.5s
     05: bold2:sleep      :RSBOLD 3mm 48 2.5s
 
-    Note, that the old sequence names are perserved.
+    Note, that the old sequence names are preserved.
 
 
     EXAMPLE USE
@@ -722,6 +722,8 @@ def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="s
              - Added more detailed report with explicit failure in case of missing source files.
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2020-07-02 Aleksij Kraljič
+             - Expanded field map correction functionality, so multiple SE/FM scan pairs are allowed.
     '''
 
     print "Running getHCPReady\n==================="
@@ -785,19 +787,37 @@ def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="s
 
         lines = [line.strip() for line in open(ssfile)]
 
-        images = False
-        hcpok  = False
-        bold   = 0
-        nlines = []
-        hasref = False
+        images     = False
+        hcpok      = False
+        bold       = 0
+        nlines     = []
+        hasref     = False
+        index      = 0
+        se, fm     = 0, 0
+        imgtrack   = {}
+        setrack    = {}
+        fmtrack    = {}
+        p_repl     = ""
+        sepattern  = re.compile(r'SE-FM-PA|SE-FM-AP|SE-FM-LR|SE-FM-RL')
+        sepatt_a   = re.compile(r'SE-FM-PA|SE-FM-LR')
+        sepatt_b   = re.compile(r'SE-FM-AP|SE-FM-RL')
+        sa_ctn     = 0
+        sb_ctn     = 0
+        fmpattern  = re.compile(r'FM-Magnitude|FM-Phase')
+        fmpatt_mag = re.compile(r'FM-Magnitude')
+        fmpatt_pha = re.compile(r'FM-Phase')
+        fmag_ctn   = 0
+        fpha_ctn   = 0
         for line in lines:
             e = line.split(':')
+            sestr, fmstr = "", ""
             if len(e) > 1:
                 if e[0].strip() == 'hcpready' and e[1].strip() == 'true':
                     hcpok = True
                 if e[0].strip().isdigit():
                     if not images:
                         nlines.append('hcpready: true')
+                        index += 1
                         images = True
 
                     onum = int(e[0].strip())
@@ -819,13 +839,62 @@ def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="s
                         else:
                             bold += 1
                         repl = repl.replace('bold', 'bold%d' % (bold))
+                    elif sepattern.search(repl):
+                        if sepattern.search(p_repl) is None and (sa_ctn == sb_ctn):
+                            se += 1
+                            setrack.update({index: {'num': se}})
+                        if sepatt_a.search(repl):
+                            sa_ctn += 1
+                        elif sepatt_b.search(repl):
+                            sb_ctn += 1
+                        repl = repl.replace(repl, '%s' % (repl))
+                    elif fmpattern.search(repl):
+                        if fmpattern.search(p_repl) is None and (fmag_ctn == fpha_ctn):
+                            fm += 1
+                            fmtrack.update({index: {'num': fm}})
+                        if fmpatt_mag.search(repl):
+                            fmag_ctn += 1
+                        elif fmpatt_pha.search(repl):
+                            fpha_ctn += 1
+                        repl = repl.replace(repl, '%s' % (repl))
+                    elif repl in ['FM-GE']:
+                        fm += 1
+                        fmtrack.update({index: {'num': fm}})
+                        repl = repl.replace(repl, '%s' % (repl))
 
-                    e[1] = " %-16s:%s" % (repl, oimg)
+                    explDef = any([re.search(r'se\(\d{1,2}\)|fm\(\d{1,2}\)',element) for element in e])
+                    if re.search(r'(DWI:)', repl) is None and explDef is False:
+                        if (se > 0) and (re.search(r'(?<!SE-)(FM-)', repl) is None):
+                            sestr = ": se(%d)" % (se)
+                        if (fm > 0) and (re.search(r'(SE-FM)', repl) is None):
+                            fmstr = ": fm(%d)" % (fm)
+                        imgtrack.update({index: {'type': repl, 'se': se, 'fm': fm}})
+
+                    p_repl = repl
+
+                    e[1] = " %-16s:%s%s%s" % (repl, oimg, sestr, fmstr)
+
                     nlines.append(":".join(e))
                 else:
                     nlines.append(line)
             else:
                 nlines.append(line)
+            index += 1
+
+        if fmag_ctn != fpha_ctn:
+            print "WARNING: Field map correction (Siemens/Philips) requires one or more complete pairs of scans: FM-Magnitude/FM-Phase"
+        if sa_ctn != sb_ctn:
+            print "WARNING: Spin-echo field map correction requires one or more complete pairs of scans: SE-FM-PA/SE-FM-AP or SE-FM-LR/SE-FM-RL"
+
+        for item in imgtrack:
+            if imgtrack[item]['fm'] == 0 and fmtrack and re.search(r'(SE-FM)', nlines[item]) is None:
+                fmdist = [abs(ln-item) for ln in fmtrack.keys()]
+                crspfm = min(fmdist)+item
+                nlines[item] = nlines[item] + ": fm(%d)" % (fmtrack[crspfm]['num'])
+            if imgtrack[item]['se'] == 0 and setrack and re.search(r'(?<!SE-)(FM-)', nlines[item]) is None:
+                sedist = [abs(ln-item) for ln in setrack.keys()]
+                crspse = min(sedist)+item
+                nlines[item] = nlines[item] + ": se(%d)" % (setrack[crspse]['num'])    
 
         if hcpok:
             print "     ... %s already HCP ready" % (sfile)
