@@ -152,7 +152,6 @@ def getHCPPaths(sinfo, options):
 
     # --- Fieldmap related paths
     d['fieldmap'] = {}
-
     if options['hcp_avgrdcmethod'] in ['SiemensFieldMap', 'PhilipsFieldMap'] or options['hcp_bold_dcmethod'] in ['SiemensFieldMap', 'PhilipsFieldMap']:
         fmapmag = glob.glob(os.path.join(d['source'], 'FieldMap*' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
         for imagepath in fmapmag:
@@ -660,9 +659,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         fmge = ''
 
         if options['hcp_avgrdcmethod'].lower() == 'topup':
-
             # -- spin echo settings
-
             sesettings = True
             for p in ['hcp_sephaseneg', 'hcp_sephasepos', 'hcp_seunwarpdir']:
                 if not options[p]:
@@ -757,7 +754,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap', 'PhilipsFieldMap']:
             fmnum = T1w.get('fm', None)
-            ## include => if fmnum is None, same as for senum
 
             for i, v in hcp['fieldmap'].iteritems():
                 if os.path.exists(hcp['fieldmap'][i]['magnitude']):
