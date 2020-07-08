@@ -1,50 +1,71 @@
 function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)
 
-%function [] = fc_ComputeABCorr(flist, smask, tmask, verbose)
+%function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)
 %
-%	Computes the correlation of each source mask voxel with each target mask voxel.
+%	Computes the correlation of each source mask voxel with each target mask 
+%   voxel.
 %
-%   INPUT
-%       flist   - File list with information on sessions bold runs and segmentation files,
-%                 or a well strucutured string (see g_ReadFileList).
-%       smask   - .names file for source mask definition.
-%       tmask   - .names file for target mask roi definition.
-%       mask    - Either number of frames to omit or a mask of frames to use [0].
-%       root    - The root of the filename where results are to be saved [''].
-%       options - A string specifying what correlations to save ['g']:
-%                   : g - compute mean correlation across sessions (only makes sense with the same sROI for each session)
-%                   : i - save individual sessions' results
-%       verbose - Whether to report the progress full, script, none. ['none']
+%   INPUTS
+%   ======
+%
+%   --flist      File list with information on sessions bold runs and 
+%                segmentation files, or a well strucutured string (see 
+%                g_ReadFileList).
+%   --smask      .names file for source mask definition.
+%   --tmask      .names file for target mask roi definition.
+%   --mask       Either number of frames to omit or a mask of frames to use [0].
+%   --root       The root of the filename where results are to be saved [''].
+%   --options    A string specifying what correlations to save ['g']:
+%
+%                - 'g' - compute mean correlation across sessions (only makes
+%                  sense with the same sROI for each session)
+%                - 'i' - save individual sessions' results
+%
+%   --verbose    Whether to report the progress full, script, none. ['none']
 %
 %	RESULTS
+%   =======
+%
 %	The resulting files are:
 %
-%   group:
-%   <root>_group_ABCor_Fz   ... Mean Fisher Z value across participants.
-%   <root>_group_ABCor_r    ... Mean Pearson r (converted from Fz) value across participants.
+%   - group:
 %
-%   individual:
-%   <root>_<session id>_ABCor ... Pearson r correlations for the individual.
+%       <root>_group_ABCor_Fz
+%           Mean Fisher Z value across participants.
+%
+%       <root>_group_ABCor_r
+%           Mean Pearson r (converted from Fz) value across participants.
+%
+%   - individual:
+%
+%       <root>_<session id>_ABCor
+%           Pearson r correlations for the individual.
 %
 %   If root is not specified, it is taken to be the root of the flist.
 %
 %   USE
+%   ===
+%
 %   Use the function to compute individual and/or group correlations of each
 %   smask voxel with each tmask voxel. tmask voxels are spread across the volume
 %   and smask voxels are spread across the volumes. For more details see
-%   img_ComputeABCorr nimage method.
+%   `img_ComputeABCorr` - nimage method.
 %
 %   EXAMPLE USE
-%   fc_ComputeABCorr('scz.list', 'PFC.names', 'ACC.names', 5, 'SCZ_PFC-ACC', 'g', 'full');
+%   ===========
 %
-%	---
-% 	Created by Grega Repovš on 2010-08-09.
+%   ::
+%
+%       fc_ComputeABCorr('scz.list', 'PFC.names', 'ACC.names', 5, ...
+%                        'SCZ_PFC-ACC', 'g', 'full');
+%
+
+%	~~~~~~~~~~~~~~~~~~
 %
 % 	Changelog
-%   2017-03-19 Grega Repovs
-%            - Updated documentation, cleaned code.
-%   2017-04-18 Grega Repovs
-%            - Adjusted to use g_ReadFileList
+%   | 2010-08-09 Grega Repovs - Initial version
+%   | 2017-03-19 Grega Repovs - Updated documentation, cleaned code.
+%   | 2017-04-18 Grega Repovs - Adjusted to use g_ReadFileList
 
 
 if nargin < 7 || isempty(verbose), verbose = 'none'; end
