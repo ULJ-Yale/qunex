@@ -1,22 +1,36 @@
 function [cors, sim] = si_RunSimulation_EC(r, models, timepoints, nruns, k, md)
 
-%	function [cors, runs] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
+%``function [cors, runs] = si_RunSimulation_EC(r, models, timepoints, nruns, k, md)``
 %	
-%   Function that generates multi normal timeseries with specified correlations
+%   Function that generates multi normal timeseries with specified correlations.
 %
-%   Inputs
-%       - r             list of correlations, one for each model
-%       - models        array of structures specifying data models to generate
-%       - timepoints    what timepoints to extract for correlation analyses
-%       - nruns         how many simulations to run
-%       - k             division coefficient for corr timeseries
-%       - md            maximal allowed difference between desired and actual correlation
+%   INPUTS
+%   ======
 %
-%   Outputs
-%       - cors      matrix with actual and estimated correlations for each model
-%       - sim       array with actual simulation data
-%	
-% 	Created by Grega Repovš on 2010-10-09.
+%   --r             list of correlations, one for each model
+%   --models        array of structures specifying data models to generate
+%   --timepoints    what timepoints to extract for correlation analyses
+%   --nruns         how many simulations to run [100]
+%   --k             division coefficient for corr timeseries [6]
+%   --md            maximal allowed difference between desired and actual 
+%                   correlation [0.01]
+%
+%   OUTPUTS
+%   =======
+%
+%   cors
+%       matrix with actual and estimated correlations for each model
+%
+%   sim  
+%       array with actual simulation data
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2010-10-09 Grega Repovs
+%              Initial version.
 %	
 
 if nargin < 6

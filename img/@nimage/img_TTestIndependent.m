@@ -1,30 +1,50 @@
 function [p Z M D SE t] = img_TTestIndependent(A, B, vartype, verbose)
 
-%function [p Z M D SE t] = img_TTestZero(A, B, vartype, verbose)
+%``function [p Z M D SE t] = img_TTestZero(A, B, vartype, verbose)``
 %
-%	Computes independent t-test comparing the called image object (A) to B
+%	Computes independent t-test comparing the called image object (A) to B.
 %
-%	A       - the image object the method is called on
-%	B       - the image object to compare to
-%   vartype - are the variances assumed to be equal ('equal') or not ('unequal') ['equal']
-%   verbose - should it talk a lot [no]
+%   INPUTS
+%   ======
 %
-%   Returns
-%       p   - an image with p-values
-%       t   - an image with t-values
-%       Z   - an image with Z-scores converted from p-values
-%       M   - on image with means of both groups
-%       D   - an image with A - B difference in group means
-%       SE  - an image with standard errors of both groups
+%	--A          the image object the method is called on
+%	--B          the image object to compare to
+%   --vartype    are the variances assumed to be equal ('equal') or not 
+%                ('unequal') ['equal']
+%   --verbose    should it talk a lot [false]
 %
-%   ---
-%   Written by Grega Repovš, 2011-10-09
+%   OUTPUTS
+%   =======
+%
+%   p   
+%       an image with p-values
+%
+%   t   
+%       an image with t-values
+%
+%   Z   
+%       an image with Z-scores converted from p-values
+%
+%   M   
+%       on image with means of both groups
+%
+%   D   
+%       an image with A - B difference in group means
+%
+%   SE  
+%       an image with standard errors of both groups
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2011-10-09 Grega Repovs
+%              Initial version.
 %   2018-06-19 Grega Repovs
-%            - Changed ttest call to use named parameters.
+%              Changed ttest call to use named parameters.
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf with norminv to support Octave
+%              Replaced icdf with norminv to support Octave
 %
 
 if nargin < 4

@@ -1,20 +1,37 @@
 function [B, res rvar, Xdof] = si_ComputeGLM(y, X)
 
-%	function [B, res p] = si_ComputeGLM(y, X)
+%``function [B, res rvar, Xdof] = si_ComputeGLM(y, X)``
 %	
-%   Funtion for task structure removal
+%   Funtion for task structure removal.
 %
-%   Inputs
-%       - ts:   timeseries (timepoints x voxels)
-%       - X:    regressor
+%   INPUTS
+%	======
 %
-%   Outputs
-%       - B:    beta coefficients
-%       - res:  residual data
-%       - rvar: residual variance
-%       - Xdof: model degrees of freedom
+%   --ts 	timeseries (timepoints x voxels)
+%   --X		regressor
+%
+%   OUTPUTS
+%	=======
+%
+%   B
+%		beta coefficients
+%
+%   res
+%		residual data
+%
+%   rvar
+%		residual variance
+%
+%   Xdof
+%		model degrees of freedom
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
 %	
-% 	Created by Grega Repovš on 2010-10-09.
+%	2010-10-09 Grega Repovs
+%			   Initial version.
 %	
 
 if nargin < 2

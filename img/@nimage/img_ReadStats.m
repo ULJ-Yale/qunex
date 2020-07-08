@@ -1,34 +1,52 @@
 function [obj] = img_ReadStats(obj, verbose)
 
-%function [obj] = img_ReadStats(obj, verbose)
+%``function [obj] = img_ReadStats(obj, verbose)``
 %
 %	Reads in available files with information on movement, per frame image stats
 %   and scrubbing information.
 %
-%   INPUT
-%       obj      ... nimage object
-%       verbose  ... should it talk a lot
+%   INPUTS
+%   ======
+%
+%   --obj       nimage object
+%   --verbose   should it talk a lot [false]
 %
 %   OUTPUT
-%       obj      ... nimage with added data statistics
+%   ======
+%
+%   obj
+%       nimage with added data statistics
 %
 %   USE
+%   ===
+%
 %   The method is used internaly to get the different statistical data about the
 %   image. It first tries to see if the statistical data is embedded in the
 %   image itself (as might be the case for volume images), otherwise it checks
 %   for presence of external files and reads data from there.
 %
 %   EXAMPLE USE
-%   img = img.img_ReadStats();
+%   ===========
 %
-%   ---
-%   Writen by Grega Repovs 2011-07-31
+%   ::
+%   
+%       img = img.img_ReadStats();
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2013-10-19 Grega Repovs - Added reading embedded data.
-%   2013-10-20 Grega Repovs - Added verbose option.
-%   2014-07-19 Grega Repovs - Switched to g_ReadTable.
-%   2017-03-11 Grega Repovs - Updated documentation and simplified arguments.
+%
+%   2011-07-31 Grega Repovs 
+%              Initial version.
+%   2013-10-19 Grega Repovs 
+%              Added reading embedded data.
+%   2013-10-20 Grega Repovs 
+%              Added verbose option.
+%   2014-07-19 Grega Repovs 
+%              Switched to g_ReadTable.
+%   2017-03-11 Grega Repovs 
+%              Updated documentation and simplified arguments.
 %
 
 if nargin < 2, verbose = false; end

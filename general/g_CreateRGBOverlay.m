@@ -1,13 +1,36 @@
 function [img] = g_CreateRGBOverlay(img, roi, R, G, B, filename, slices);
 
-%function [img] = g_CreateRGBOverlay(img, roi, R, G, B, filename, slices);
+%``function [img] = g_CreateRGBOverlay(img, roi, R, G, B, filename, slices)``
 %
-%   Creates an RGB image of img with overlay in R, G and B for specified ROI values.
-%   Filename is optional. If specified image is saved as a PNG file.
-%   img and roi are expected to be nimage objects. If they are strings, they are
+%   Creates an RGB image of img with overlay in R, G and B for specified ROI
+%   values. Filename is optional. If specified image is saved as a PNG file. img
+%   and roi are expected to be nimage objects. If they are strings, they are
 %   expected to be paths to the files to be loaded.
 %
-%   2012.4.16 Grega Repovš
+%   INPUTS
+%   ======
+%
+%   --img
+%   --roi
+%   --R
+%   --G
+%   --B
+%   --filename
+%   --slices
+%
+%
+%   OUTPUT
+%   ======
+%
+%   img
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2012-04-16 Grega Repovš
+%              Initial version.
 %
 
 savepng = true;

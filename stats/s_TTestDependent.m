@@ -1,24 +1,43 @@
 function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)
 
-%function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)
+%``function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)``
 %
 %	Computes t-test of differences between two dependent groups.
 %
-%	filea   - either a single image or a conc file with data of the group to compare to
-%	fileb   - either a single image or a conc file with data of the group to compare with
-%	target  - the base filename (and path) to be used when saving the results
-%   output  - the type of results to save ['medtpz']
-%             m : mean values for each voxel of both groups (A and B)
-%             e : standard errors for each voxel of both groups (A and B) as well as their difference
-%             d : the A - B difference of means of the two groups
-%             t : t-value for each voxel
-%             p : p-value for each voxel
-%             z : Z-score for each voxel
-%   exclude - values to be excluded from computation
-%   verbose - should report each step?
+%   INPUTS
+%   ======
 %
-%   ---
-%   Written by Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+%	--filea     either a single image or a conc file with data of the group to 
+%               compare to
+%	--fileb     either a single image or a conc file with data of the group to 
+%               compare with
+%	--target    the base filename (and path) to be used when saving the results
+%   --output    the type of results to save ['medtpz']
+% 
+%               m
+%                   mean values for each voxel of both groups (A and B)
+%               e
+%                   standard errors for each voxel of both groups (A and B) as 
+%                   well as their difference
+%               d
+%                   the A - B difference of means of the two groups
+%               t
+%                   t-value for each voxel
+%               p
+%                   p-value for each voxel
+%               z
+%                   Z-score for each voxel
+% 
+%   --exclude   values to be excluded from computation []
+%   --verbose   should report each step [false]
+% 
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2011-10-09 Grega Repovs
+%              Rewritten from previous function with the same name.
 %
 
 if nargin < 6

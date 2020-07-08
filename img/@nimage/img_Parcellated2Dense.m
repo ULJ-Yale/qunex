@@ -1,24 +1,35 @@
 function [img] = img_Parcellated2Dense(img, verbose, defineMissing)
 
-%function [img] = img_Parcellated2Dense(img, verbose)
+%``function [img] = img_Parcellated2Dense(img, verbose)``
 %
 %	Expands a parcelated image to a dense image
 %
-%   INPUT
-%       - img     : a parcelated cifti nimage image object to convert
-%       - verbose : should it report the details
-%       - defineMissing : what value should be used in case of missing
-%                   values (number or 'NaN') [0]
+%   INPUTS
+%   ======
+%
+%   --img               a parcelated cifti nimage image object to convert
+%   --verbose           should it report the details [false]
+%   --defineMissing     what value should be used in case of missing values 
+%                       (number or 'NaN') [0]
 %
 %   OUTPUT
-%       - img     : a resulting dense cifti nimage image object
+%   ======
+%
+%   img
+%       a resulting dense cifti nimage image object
 %
 %   USE
+%   ===
+%
 %   This method is used to expand a parcellated cifti image to a dense cifti
 %   image based on the information stored in cifti metatada.
 %
-%   ---
-%   Written by Grega Repovs, 2019-06-29
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%   2019-06-29 Grega Repovs
+%              Initial version.
 %
 
 % --> process variables

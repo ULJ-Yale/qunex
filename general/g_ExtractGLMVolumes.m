@@ -1,31 +1,33 @@
 function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose, txtf);
 
-%function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose);
+%``function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
 %
 %	For sessions specified in the session list it extracts the GLM estimates of
 %   the effects of interests and saves them in the specified file.
 %
-%   INPUT
-%       flist       - List of files / sessions to process.
-%       outf        - Root file name for the results. If empty, the flist name
-%                     is used. []
-%       efects      - A cell array of strings or a comma separated list of
-%                     effects of interest. If empty all effects but Baseline and
-%                     Trend are extracted. []
-%       frames      - Frame indeces to extract. If empty, all frames are
-%                     extracted. []
-%       saveoption  - Whether to save the extracted estimates in a single file
-%                     organized 'by session', 'by effect', or in separate
-%                     files for each effect ('effect files'). ['by session']
-%       values      - What kind of values to save: 'raw' or 'psc'. ['raw']
-%	    verbose		- Whether to report on the progress or not [false]
-%       txtf        - An optional designator in what text file to also 
-%                     output the data. Only saved if an option is provided
-%                     and the input is ptseries. Valid options are 'long' to
-%                     save the data in long format or empty to skip saving 
-%                     data in a text file. []
+%   INPUTS
+%   ======
+%
+%   --flist       List of files / sessions to process.
+%   --outf        Root file name for the results. If empty, the flist name is 
+%                 used. []
+%   --efects      A cell array of strings or a comma separated list of effects 
+%                 of interest. If empty all effects but Baseline and Trend are 
+%                 extracted. []
+%   --frames      Frame indeces to extract. If empty, all frames are extracted. []
+%   --saveoption  Whether to save the extracted estimates in a single file
+%                 organized 'by session', 'by effect', or in separate files for 
+%                 each effect ('effect files'). ['by session']
+%   --values      What kind of values to save: 'raw' or 'psc'. ['raw']
+%	--verbose	  Whether to report on the progress or not [false]
+%   --txtf        An optional designator in what text file to also output the 
+%                 data. Only saved if an option is provided and the input is 
+%                 ptseries. Valid options are 'long' to save the data in long 
+%                 format or empty to skip saving data in a text file. []
 %
 %   USE
+%   ===
+%
 %   The function is used to extract GLM estimates for the effects of interest
 %   for all the specified sessions and save them in a single file (or one
 %   file per effect of interest). This files can then be used for more focused
@@ -35,6 +37,8 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %   img_ExtractGLMEstimates nimage method.
 %
 %   NOTICE
+%   ======
+%
 %   The underlying method extracts the effects of interest by removing those
 %   frames that relate to irrelevant effects. The order of the effects in the
 %   resulting files will be the same as in the original GLM files when saved
@@ -50,15 +54,25 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %   check the list structure that all the data is there.
 %
 %   EXAMPLE USE
-%   g_ExtractGLMVolumes('wm-glm.list', 'wm-encoding-delay', 'encoding,delay', [], 'by session');
+%   ===========
 %
-%   ---
-% 	Written by Grega Repovš on 2016-08-26.
+%   ::
+%   
+%       g_ExtractGLMVolumes('wm-glm.list', 'wm-encoding-delay', ...
+%       'encoding,delay', [], 'by session');
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2017-03-04 Grgega Repovs - updated documentation
-%   2017-07-01 Grega Repovs - Added psc option.
-%   2018-10-13 Grega Repovs - Added txtf option.
+%   2016-08-26 Grega Repovs
+%              Initial version.
+%   2017-03-04 Grega Repovs
+%              Updated documentation
+%   2017-07-01 Grega Repovs
+%              Added psc option.
+%   2018-10-13 Grega Repovs
+%              Added txtf option.
 %
 %
 

@@ -1,17 +1,29 @@
 function [y] = changeform(x, d)
 
-%	function [a] = changeform(b, d)
+%	``function [a] = changeform(b, d)``
 %	
-%   Function that converts vector to matrix or the other way arround depending on input.
+%   Function that converts vector to matrix or the other way arround depending 
+%   on input.
 %
-%   Inputs
-%       - x     input vector or matrix
-%       - d     optional value for diagonal (default 1)
+%   INPUTS
+%	======
 %
-%   Outputs
-%       - y     output vector or matrix
+%   --x     input vector or matrix
+%   --d     optional value for diagonal (default 1)
+%
+%   OUTPUT
+%	======
+%
+%   y
+%		output vector or matrix
 %	
-% 	Created by Grega Repovš on 2010-10-09.
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%	2010-10-09 Grega Repovs
+%			   Initial version.
 %
 
 if nargin < 2

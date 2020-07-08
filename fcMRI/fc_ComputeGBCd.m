@@ -1,80 +1,121 @@
 function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)
 
-%function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)
+%``function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)`
 %
-%	Computes GBC averages for each specified ROI for n bands defined as distance from ROI.
+%   Computes GBC averages for each specified ROI for n bands defined as distance
+%   from ROI.
 %
-%   INPUT
-%	    flist   	- conc-like style list of session image files or conc files:
-%                        session id:<session_id>
-%                        roi:<path to the individual's ROI file>
-%                        file:<path to bold files - one per line>
-%                     or a well strucutured string (see g_ReadFileList).
-%       command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, aFzp, ...
-%                      <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
-%       roi         - roi names file
-%       rcodes      - codes of regions from roi file to compute GBC for (all if not provided or left empty)
-%       nbands      - number of distance bands to compute GBC for
-%	    mask		- an array mask defining which frames to use (1) and which not (0)
-%	    verbose		- report what is going on
-%       target      - array of ROI codes that define target ROI [default: FreeSurfer cortex codes]
-%	    targetf		- target folder for results
-%       rsmooth     - radius for smoothing (no smoothing if empty)
-%       rdilate     - radius for dilating mask (no dilation if empty)
-%       ignore      - the column in *_scrub.txt file that matches bold file to be used for ignore mask []
-%       time        - whether to time the processing
+%   INPUTS
+%   ======
 %
-%       --- Extract ROI parameters
+%	--flist   	 conc-like style list of session image files or conc files:
 %
-%       method  - method name [mean]
-%          'mean'       - average value of the ROI
-%          'pca'        - first eigenvariate of the ROI
-%          'threshold'  - average of all voxels above threshold
-%          'maxn'       - average of highest n voxels
-%          'weighted'   - weighted average across ROI voxels
-%       weights         - image file with weights to use []
-%       criterium       - threshold or number of voxels to extract []
+%                - session id:<session_id>
+%                - roi:<path to the individual's ROI file>
+%                - file:<path to bold files - one per line>
+%
+%                or a well strucutured string (see g_ReadFileList).
+%   --command    the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, 
+%                aFzp, ...
+%
+%                   ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
+%
+%   --roi        roi names file
+%   --rcodes     codes of regions from roi file to compute GBC for (all if not 
+%                provided or left empty)
+%   --nbands     number of distance bands to compute GBC for
+%	--mask		 an array mask defining which frames to use (1) and which not (0)
+%	--verbose	 report what is going on
+%   --target     array of ROI codes that define target ROI [default: FreeSurfer 
+%                scortex codes]
+%	--targetf	 target folder for results
+%   --rsmooth    radius for smoothing (no smoothing if empty)
+%   --rdilate    radius for dilating mask (no dilation if empty)
+%   --ignore     the column in `*_scrub.txt` file that matches bold file to be 
+%                used for ignore mask []
+%   --time       whether to time the processing
+%
+%   Extract ROI parameters
+%   ----------------------
+%
+%   --method     method name ['mean']:
+%
+%                - 'mean'       - average value of the ROI
+%                - 'pca'        - first eigenvariate of the ROI
+%                - 'threshold'  - average of all voxels above threshold
+%                - 'maxn'       - average of highest n voxels
+%                - 'weighted'   - weighted average across ROI voxels
+%
+%   --weights    image file with weights to use []
+%   --criterium  threshold or number of voxels to extract []
 %
 %   USE
-%   This is a wrapper function for computing GBC for specified ROI across the specified number of
-%   distance bands. The function goes through a list of sessions specified by flist file and runs
-%   img_ComputeGBCd method on bold files listed for each session. ROI to compute GBC for are specified
-%   in roi and rcodes parameters, whereas the mask of what voxels to compute GBC over is specified
-%   by target parameter. The values should match rcodes used in session specific roi file. Usually
-%   this would be a freesurfer segmentation image and if no target values are specified all the gray
-%   matter related values present in aseg files are used.
+%   ===
 %
-%   The results are aggregated and stored in a matlab data file which holds a data structure with the
-%   following fields:
+%   This is a wrapper function for computing GBC for specified ROI across the
+%   specified number of distance bands. The function goes through a list of
+%   sessions specified by flist file and runs `img_ComputeGBCd` method on bold
+%   files listed for each session. ROI to compute GBC for are specified in roi
+%   and rcodes parameters, whereas the mask of what voxels to compute GBC over
+%   is specified by target parameter. The values should match rcodes used in
+%   session specific roi file. Usually this would be a freesurfer segmentation
+%   image and if no target values are specified all the gray matter related
+%   values present in aseg files are used.
 %
-%   — data.gbcd(s).gbc     ... resulting GBC matrix for each session
-%   — data.gbcd(s).roiinfo ... names of ROI for which the GBC was computed for
-%   — data.gbcd(s).rdata   ... information on center mass and distance bands for each of the ROI
-%   — data.roifile         ... the file used to defined ROI
-%   — data.rcodes          ... codes used to identify ROI
-%   - data.sessions        ... cell array of session ids
+%   The results are aggregated and stored in a matlab data file which holds a
+%   data structure with the following fields:
 %
-%   targetf specifies the folder in which the results will be saved. The file will be named using the
-%   root of the flist with '_GBCd.mat' added to it.
+%   - data.gbcd(s).gbc
+%        resulting GBC matrix for each session
 %
-%   For more specific information on what is computed, see help for nimage method img_ComputeGBCd.
+%   - data.gbcd(s).roiinfo
+%        names of ROI for which the GBC was computed for
+%
+%   - data.gbcd(s).rdata
+%       information on center mass and distance bands for each of the ROI
+%
+%   - data.roifile  
+%       the file used to defined ROI
+%
+%   - data.rcodes     
+%       codes used to identify ROI
+%
+%   - data.sessions    
+%       cell array of session ids
+%
+%   targetf specifies the folder in which the results will be saved. The file
+%   will be named using the root of the flist with '_GBCd.mat' added to it.
+%
+%   For more specific information on what is computed, see help for nimage
+%   method img_ComputeGBCd.
 %
 %   EXAMPLE USE
+%   ===========
 %
-%   fc_ComputeGBCd('scz.list', mFz:0.1|pFz:0.1', 'dlpfc.names', [], 10, 0, true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
+%   ::
 %
-%   ---
-%   (c) Created by Grega Repovš on 2009-11-04.
+%       fc_ComputeGBCd('scz.list', mFz:0.1|pFz:0.1', 'dlpfc.names', [], 10, 0, ...
+%       true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
 %
-%   Change log
-% 	2009-11-04 - Created by Grega Repovš
-% 	2010-11-16 - Grega Repovš
-% 	2010-11-22 - Grega Repovs
-%	2010-12-01 - Grega Repovs - added in script for smoothing and dilation
-%	2014-01-22 - Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
-%	2014-02-16 - Grega Repovs - forked from fcComputeGBC3 to do distance based bands
-%	2017-03-19 - Grega Repovs - cleaned, updated documentation
-%	2017-04-18 - Modified by Grega Repovš - adopted use of g_ReadFileList.
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+% 	2009-11-04 Grega Repovs
+%              Initial version.
+% 	2010-11-16 Grega Repovs
+% 	2010-11-22 Grega Repovs
+%	2010-12-01 Grega Repovs
+%              Added in script for smoothing and dilation.
+%	2014-01-22 Grega Repovs
+%              Took care of commands that return mulitiple volumes (e.g. mFzp).
+%	2014-02-16 Grega Repovs
+%              Forked from fcComputeGBC3 to do distance based bands.
+%	2017-03-19 Grega Repovs
+%              Cleaned, updated documentation.
+%	2017-04-18 Grega Repovs
+%              Adopted use of g_ReadFileList.
 %
 
 

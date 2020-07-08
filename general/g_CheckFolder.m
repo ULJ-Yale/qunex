@@ -1,32 +1,42 @@
 function [ok] = g_CheckFolder(filename, description, create, v)
 
-%function [ok] = g_CheckFolder(filename, description, create, v)
+%``function [ok] = g_CheckFolder(filename, description, create, v)``
 %
-%  Checks for existence of a folder, prints notices and creates folder if specified.
+%   Checks for existence of a folder, prints notices and creates folder if
+%   specified.
 %
-%  	INPUT
-%    	filename    ... The path to the folder to check for.
-%    	description ... The description for the folder ['a folder'].
-%		create      ... Whether to create a folder if it does not exist [true].
-%    	v           ... Whether to notify of results [true'].
+%  	INPUTS
+%	======
+%   --filename    	The path to the folder to check for.
+%   --description 	The description for the folder ['a folder'].
+%	--create      	Whether to create a folder if it does not exist [true].
+%   --v           	Whether to notify of results [true].
 %
 %	OUTPUT
-%	  	ok ... Whether the folder was found (true or false)
+%   ======
+%
+%	ok
+%		Whether the folder was found (true or false)
 %
 %   USE
+%	===
+%
 %   Use to check for presence of a folder and to (optionally) create one if it
 %	does not yet exist.
 %
 %   EXAMPLE USE
+%	===========
 %
-%   g_CheckFolder('images/functional/movement', 'movement folder', true, true);
+%   ::
 %
-%   ---
-%   Written by Grega Repovs
+%   	g_CheckFolder('images/functional/movement', 'movement folder', ...
+%		true, true);
+
+%	~~~~~~~~~~~~~~~~~~
 %
-%   Changelog
+%	Changelog
 %   2017-03-12 Grega Repovs
-%            - Updated documentation
+%              Updated documentation
 %
 
 if nargin < 4, v = true; end

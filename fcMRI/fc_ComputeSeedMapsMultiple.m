@@ -1,50 +1,78 @@
 function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
 
-%function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+%``function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)``
 %
 %	Computes seed based correlations maps for individuals as well as group maps.
 %
-%   INPUT
-%	    flist   	- A .list file of session information,
-%                     or a well strucutured string (see g_ReadFileList).
-%	    roinfo	    - An ROI file.
-%	    inmask		- Either an array mask defining which frames to use (1) and
-%                     which not (0) or an event string specifying the events and
-%                     frames to extract [0]
-%	    options		- A string defining which session files to save ['']:
-%	    	r		- save map of correlations
-%           f       - save map of Fisher z values
-%	    	cv		- save map of covariances
-%	    	z		- save map of Z scores
-%	    tagetf		- The folder to save images in ['.'].
-%       method      - Method for extracting timeseries - 'mean' or 'pca' ['mean'].
-%       ignore      - Do we omit frames to be ignored ['no']
-%                     -> no:    do not ignore any additional frames
-%                     -> event: ignore frames as marked in .fidl file
-%                     -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
-%       cv          - Whether covariances should be computed instead of correlations.
+%   INPUTS
+%   ======
+%
+%	--flist   	A .list file of session information, or a well strucutured 
+%               string (see g_ReadFileList).
+%	--roinfo	An ROI file.
+%	--inmask    Either an array mask defining which frames to use (1) and which 
+%               not (0) or an event string specifying the events and frames to 
+%               extract [0]
+%	--options	A string defining which session files to save ['']:
+%
+%	    	    - r   - save map of correlations
+%               - f   - save map of Fisher z values
+%	    	    - cv  - save map of covariances
+%	    	    - z   - save map of Z scores
+%
+%	--targetf	The folder to save images in ['.'].
+%   --method    Method for extracting timeseries - 'mean' or 'pca' ['mean'].
+%   --ignore    Do we omit frames to be ignored ['no']
+%
+%               - no:    do not ignore any additional frames
+%               - event: ignore frames as marked in .fidl file
+%               - other: the column in *_scrub.txt file that matches bold file 
+%               to be used for ignore mask
+%
+%   --cv          Whether covariances should be computed instead of correlations.
 %
 %   RESULTS
-%	It saves group files:
-%		_group_Fz	- average Fz over all the sessions
-%       _group_r    - average Fz converted back to Pearson r
-%       _group_Z    - p values converted to Z scores based on t-test testing if Fz over session differ significantly from 0 (two-tailed)
-%       _all_Fz     - Fz values of all the participants
+%   =======
 %
-%       _group_cov  - average covariance
-%		_all_cov	- covariances of all the participants
+%	It saves group files:
+%
+%   _group_Fz
+%       average Fz over all the sessions
+
+%   _group_r   
+%       average Fz converted back to Pearson r
+
+%   _group_Z   
+%       p values converted to Z scores based on t-test testing if Fz over session differ significantly from 0 (two-tailed)
+
+%   _all_Fz    
+%       Fz values of all the participants
+%
+%   _group_cov 
+%       average covariance
+
+%   _all_cov
+%       covariances of all the participants
 %
 %   USE
+%   ===
+%
 %   The function computes seedmaps for the specified ROI and saves group results
 %   as well as any specified individual results.
 %
 %   EXAMPLE USE
-%   >>> fc_ComputeSeedMapsMultiple('con.list', 'DMN.names', 0, '', 'mean', 'udvarsme', false);
+%   ===========
 %
-%   ---
-% 	Written by Grega Repovš, 2008-02-07.
+%   ::
+%
+%       fc_ComputeSeedMapsMultiple('con.list', 'DMN.names', 0, '', 'mean', ...
+%       'udvarsme', false);
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2008-02-07 Grega Repovš
 %   2008-01-23 Grega Repovš
 %            - Adjusted for a different file list format and an additional ROI mask []
 %   2011-11-10 Grega Repovš

@@ -1,24 +1,41 @@
 function [img] = img_ReadNIfTI(img, filename, dtype, frames, verbose)
 
-%function [img] = img_ReadNIfTI(img, file, dtype, frames, verbose)
+%``function [img] = img_ReadNIfTI(img, file, dtype, frames, verbose)``
 %
-%		Reads in a NIfTI image into an image object
+%	Reads in a NIfTI image into an image object
 %
-%       required:
-%		    img       - mrimage object
-%           filename  - filename (can be a .nii, .nii.gz or .hdr file)
+%   INPUTS
+%   ======
+%		    
+%   --img           mrimage object
+%   --filename      filename (can be a .nii, .nii.gz or .hdr file)
+%   --dtype         datatype to read into ['single']
+%   --frames        number of frames to read [all]
 %
-%		optional:
-%           dtype  - datatype to read into [single]
-%           frames - number of frames to read [all]
+%   OUTPUT
+%   ======
 %
-%       Grega Repovs - 2010-10-13
-%       Grega Repovs - 2011-10-13 - updated to read NIfTI-2
-%       Grega Repovs - 2013-10-20 - added verbose option
-%       Grega Repovs - 2014-05-04 - rewrite to support direct gunzipping
-%       Grega Repovs - 2014-06-29 - rewrite to support mex reading
-%       Grega Repovs - 2017-03-20 - change in reading cifti: not having frame number in dim field
-%       Grega Repovs - 2017-07-02 - extract NamedMaps from .dscalar images and TR from .dtseries
+%   img
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2010-10-13 Grega Repovs
+%              Initial version.
+%   2011-10-13 Grega Repovs
+%              updated to read NIfTI-2
+%   2013-10-20 Grega Repovs
+%              added verbose option
+%   2014-05-04 Grega Repovs
+%              rewrite to support direct gunzipping
+%   2014-06-29 Grega Repovs
+%              rewrite to support mex reading
+%   2017-03-20 Grega Repovs
+%              change in reading cifti: not having frame number in dim field
+%   2017-07-02 Grega Repovs
+%              extract NamedMaps from .dscalar images and TR from .dtseries
 %
 
 if nargin < 5 verbose = false;  end

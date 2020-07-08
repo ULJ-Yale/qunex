@@ -1,36 +1,53 @@
 function [B, Z] = img_ComputeRTypeIII(obj, bdata, verbose)
 
-%function [B, Z] = img_ComputeRTypeIII(obj, bdata, verbose)
+%``function [B, Z] = img_ComputeRTypeIII(obj, bdata, verbose)``
 %
-%   Computes whole brain regression and significances using Type III SS
+%   Computes whole brain regression and significances using Type III Sum of
+%   squares.
 %
-%   INPUT
-%   obj     - nimage image object
-%   bdata   - Data matrix to compute linear regression with and estimate significances.
-%   verbose - Should it talk a lot [no]
+%   INPUTS
+%   ======
 %
-%   OUTPUT
-%   B       - Beta values image for each of the regressors
-%   Z       - Z converted p-values for each of the regressors
+%   --obj       nimage image object
+%   --bdata     Data matrix to compute linear regression with and estimate 
+%               significances.
+%   --verbose   Should it talk a lot [no]
+%
+%   OUTPUTS
+%   =======
+%
+%   B
+%       Beta values image for each of the regressors
+%
+%   Z
+%       Z converted p-values for each of the regressors
 %
 %   USE
-%   The method performs a linear regression of each column of the bdata and returns
-%   Type III SS based significance for each regressor. Specifically, it adds an intercept
-%   and first computes a regression and the resulting sum of squares for the full model.
-%   Then it computes regression of models for which it takes out one of the regressors and
-%   using an F-test compares the resulting sums of squares. In essence it provides an
-%   estimate of statistical significance of improvement of fit of the model due to each of
-%   regressors by controlling for all the other regressors
+%   ===
 %
-%   It returns a beta image (B) with beta values for each of the regressors for the full
-%   model, and Z, a significance map of significances of adding the regressor.
+%   The method performs a linear regression of each column of the bdata and
+%   returns Type III SS based significance for each regressor. Specifically, it
+%   adds an intercept and first computes a regression and the resulting sum of
+%   squares for the full model. Then it computes regression of models for which
+%   it takes out one of the regressors and using an F-test compares the
+%   resulting sums of squares. In essence it provides an estimate of statistical
+%   significance of improvement of fit of the model due to each of regressors by
+%   controlling for all the other regressors
 %
-%   ---
-%   (c) Grega Repovš, 2010-03-18
+%   It returns a beta image (B) with beta values for each of the regressors for
+%   the full model, and Z, a significance map of significances of adding the
+%   regressor.
 %
-%   Change log
-%   2016-11-26 - Grega Repovš - Updated documentation.
-%   2018-06-25 - Grega Repovs - Replaced icdf and cdf with norminv and fcdf to support Octave
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2010-03-18 Grega Repovs
+%   2016-11-26 Grega Repovs
+%              Updated documentation.
+%   2018-06-25 Grega Repovs
+%              Replaced icdf and cdf with norminv and fcdf to support Octave.
 %
 
 if nargin < 3
