@@ -1,37 +1,48 @@
 function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)
 
-%function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)
+%``function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``
 %
 %	Extracts and saves region timeseries defined by provided roiinfo file
 %
 %   INPUTS
-%	    flist   	- A .list file, or a well strucutured string (see g_ReadFileList).
-%	    roiinfo	    - A .names ROI definition file.
-%       inmask      - Per run mask information, number of frames to skip or a vector of frames to keep (1) and reject (0),
-%                     or a string describing which events to extract timeseries for and the frame offset at start and end
-%                     in format: ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
-%	    tagetf		- The name for the file to save timeseries in.
-%       options     - A string defining which outputs to create ['m']:
-%                     -> t - create a tab delimited text file,
-%                     -> m - create a matlab file
-%       method      - Method for extracting timeseries - 'mean', 'median', 'pca', 'all' ['mean'].
-%       ignore      - do we omit frames to be ignored ['no']:
-%                     -> no:     do not ignore any additional frames
-%                     -> event:  ignore frames as marked in .fidl file
-%                     -> other:  the column in *_scrub.txt file that matches bold file to be used for ignore mask
-%                     -> usevec: as specified in the use vector
-%       rcodes      - A list of region codes for which to extract the time-series [].
-%       mcodes      - A list of region codes from session's roi file to use for masking if empty the specification from
-%                     roiinfo will be used.
-%       bmask       - Should a BOLD brain mask be used to further mask the regions used [false].
+%   ======
+%
+%	--flist     A .list file, or a well strucutured string (see g_ReadFileList).
+%	--roiinfo   A .names ROI definition file.
+%   --inmask    Per run mask information, number of frames to skip or a vector 
+%               of frames to keep (1) and reject (0), or a string describing 
+%               which events to extract timeseries for and the frame offset at 
+%               start and end in format: 
+%               ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
+%	--targetf	The name for the file to save timeseries in.
+%   --options   A string defining which outputs to create ['m']:
+%
+%               - t - create a tab delimited text file,
+%               - m - create a matlab file
+
+%   --method    Method for extracting timeseries - 'mean', 'median', 'pca', 
+%               'all' ['mean'].
+%   --ignore    Do we omit frames to be ignored ['no']:
+%               - no:     do not ignore any additional frames
+%               - event:  ignore frames as marked in .fidl file
+%               - other:  the column in *_scrub.txt file that matches bold file 
+%               to be used for ignore mask
+%               - usevec: as specified in the use vector
+%   --rcodes    A list of region codes for which to extract the time-series [].
+%   --mcodes    A list of region codes from session's roi file to use for 
+%               masking if empty the specification from roiinfo will be used.
+%   --bmask     Should a BOLD brain mask be used to further mask the regions 
+%               used [false].
 %
 %   USE
+%   ===
+%
 %   The function is used to extract ROI timeseries. What frames are extracted
 %   can be specified using an event string. If specified, it uses each
 %   session's .fidl file to extract only the specified event related frames.
-%   The string format is:
+%   The string format is::
 %
-%   <title>:<eventlist>:<frame offset1>:<frame offset2>
+%       <title>:<eventlist>:<frame offset1>:<frame offset2>
 %
 %   and multiple extractions can be specified by separating them using the pipe
 %   '|' separator. Specifically, for each extraction, all the events listed in
@@ -41,23 +52,37 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %   note that the extracted frames depend on the length of the event specified
 %   in the .fidl file!
 %
-%   The extracted timeseries can be saved either
-%   in a matlab file with structure:
+%   The extracted timeseries can be saved either in a matlab file with structure:
 %
-%   data.roinames   ... cell array of ROI names
-%   data.roicodes1  ... array of group ROI codes
-%   data.roicodes2  ... array of session specific ROI codes
-%   data.sessions   ... cell array of session codes
-%   data.n_roi_vox  ... cell array of number voxels for each ROI
-%   data.datasets   ... cell array of titles for each of the dataset
-%   data.<title>.timeseries ... cell array of extracted timeseries
+%   data.roinames
+%       cell array of ROI names
+%
+%   data.roicodes1
+%       array of group ROI codes
+%
+%   data.roicodes2
+%       array of session specific ROI codes
+%
+%   data.sessions
+%       cell array of session codes
+%
+%   data.n_roi_vox
+%       cell array of number voxels for each ROI
+%
+%   data.datasets
+%       cell array of titles for each of the dataset
+%
+%   data.<title>.timeseries
+%       cell array of extracted timeseries
 %
 %   or in a tab separated text file in which data for each frame of each session
 %   is in its own line, the first column is the session code, the second the
 %   dataset title, the third the frame number and the following columns are for
 %   each of the specified ROI. The ROI are listed in the header.
 %
-%   *ROI definition*
+%   ROI definition
+%   --------------
+%
 %   The basic definition of ROI to use is taken from roiinfo. Additional masking
 %   is done using session specific ROI files as listed in the .list file. With
 %   large number of regions, masking can time consuming. If the same mask is
@@ -68,36 +93,44 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %
 %   It is also possible to use
 %
-%
 %   EXAMPLE USE
-%   Resting state data:
-%   >>>fc_ExtractROITimeseriesMasked('con.list', 'CCNet.names', 0, 'con-ccnet', 'mt', 'mean', 'udvarsme');
+%   ===========
 %
-%   Event data:
-%   >>>fc_ExtractROITimeseriesMasked('con.list', 'CCNet.names', 'inc:3:4', 'con-ccnet-inc', 'm', 'pca', 'event');
+%   Resting state data::
 %
+%       fc_ExtractROITimeseriesMasked('con.list', 'CCNet.names', 0, ...
+%       'con-ccnet', 'mt', 'mean', 'udvarsme');
 %
-%   ---
-% 	Written by Grega Repovš, 2009-06-25.
+%   Event data::
+%
+%       fc_ExtractROITimeseriesMasked('con.list', 'CCNet.names', 'inc:3:4', ...
+%       'con-ccnet-inc', 'm', 'pca', 'event');
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+% 	2009-06-25 Grega Repovs
 %   2008-01-23 Grega Repovs
-%            - Adjusted for a different file list format and an additional ROI mask
+%              Adjusted for a different file list format and an additional ROI mask.
 %   2011-02-11 Grega Repovs
-%            - Rewritten to use nimage objects and ability for event defined masks
+%              Rewritten to use nimage objects and ability for event defined masks.
 %   2012-07-30 Grega Repovs
-%            - Added option to omit frames specified to be ignored in the fidl file
+%              Added option to omit frames specified to be ignored in the fidl file.
 %   2013-12-11 Grega Repovs
-%            - Added ignore as specified in use vector and rcodes to specify ROI.
+%              Added ignore as specified in use vector and rcodes to specify ROI.
 %   2017-03-19 Grega Repovs
-%            - Updated documentation
+%              Updated documentation.
 %   2017-03-21 Grega Repovs
-%            - Optimized per session masking of ROI.
+%              Optimized per session masking of ROI.
 %   2017-04-18 Grega Repovs
-%            - Adjusted to use updated g_ReadFileList.
+%              Adjusted to use updated g_ReadFileList.
 %   2017-04-25 Grega Repovs
-%            - Updated to allow multiple extractions using the same event string
-%              as fc_ComputeSeedMaps
+%              Updated to allow multiple extractions using the same event string
+%              as fc_ComputeSeedMaps.
 %   2019-04-25 Grega Repovs
-%            - Updated to allow extraction of all voxels within a ROI
+%              Updated to allow extraction of all voxels within a ROI.
 %
 
 if nargin < 10 || isempty(bmask),  bmask   = false;  end
