@@ -358,7 +358,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --sessionsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/sessions folder, where the
                                 imaging  data is supposed to go [.].
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
@@ -887,7 +887,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --sessionsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/sessions folder, where the
                                 imaging  data is supposed to go [.].
     --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
