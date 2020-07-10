@@ -49,6 +49,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'printniftihdr'        : {'com': g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': g_gimg.modniftihdr,             'args': ('filename', 's')},
             'createBatch'          : {'com': g_utilities.createBatch,        'args': ('sessionsfolder', 'sourcefiles', 'targetfile', 'sessions', 'filter', 'overwrite', 'paramfile')},
+            'manageStudy'          : {'com': g_utilities.manageStudy,        'args': ('studyfolder', 'action', 'folders', 'verbose')},
             'createStudy'          : {'com': g_utilities.createStudy,        'args': ('studyfolder', 'folders', )},
             'createList'           : {'com': g_utilities.createList,         'args': ('sessionsfolder', 'sessions', 'filter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
             'createConc'           : {'com': g_utilities.createConc,         'args': ('sessionsfolder', 'sessions', 'filter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
