@@ -1,8 +1,8 @@
 function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
 
-%function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
+%``function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
 %
-%	Segments the voxels in smask based on their connectivity pattern with tmask 
+%   Segments the voxels in smask based on their connectivity pattern with tmask 
 %   voxels. Uses k-means to group voxels in smask.
 %
 %   INPUTS
@@ -73,9 +73,13 @@ function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, 
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   | 2010-08-13 Grega Repovš - Initial version
-%   | 2017-03-19 Grega Repovs - Cleaned up the code and updated documentation
-%   | 2017-04-18 Grega Repovs - Adjusted to use g_ReadFileList
+%
+%   2010-08-13 Grega Repovš
+%              Initial version
+%   2017-03-19 Grega Repovs
+%              Cleaned up the code and updated documentation
+%   2017-04-18 Grega Repovs
+%              Adjusted to use g_ReadFileList
 %
 
 if nargin < 10 || isempty(verbose),  verbose  = 'none';            end

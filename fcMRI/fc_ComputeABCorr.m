@@ -1,6 +1,6 @@
 function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)
 
-%function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)
+%``function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)`
 %
 %	Computes the correlation of each source mask voxel with each target mask 
 %   voxel.
@@ -63,9 +63,13 @@ function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose
 %	~~~~~~~~~~~~~~~~~~
 %
 % 	Changelog
-%   | 2010-08-09 Grega Repovs - Initial version
-%   | 2017-03-19 Grega Repovs - Updated documentation, cleaned code.
-%   | 2017-04-18 Grega Repovs - Adjusted to use g_ReadFileList
+%
+%   2010-08-09 Grega Repovs
+%              Initial version
+%   2017-03-19 Grega Repovs
+%              Updated documentation, cleaned code.
+%   2017-04-18 Grega Repovs
+%              Adjusted to use g_ReadFileList
 
 
 if nargin < 7 || isempty(verbose), verbose = 'none'; end
