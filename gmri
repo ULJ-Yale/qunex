@@ -79,28 +79,28 @@ dicom utilities
 listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
-dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
-dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1] [tool=auto]
-processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [verbose=yes]
+dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
+dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool=auto]
+importDICOM  [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
 import utilities
 ----------------
-BIDSImport   [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
-mapBIDS2nii  [sfolder='.'] [overwrite='no']
-HCPLSImport  [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
-mapHCPLS2nii [sfolder='.'] [overwrite='no']
+importBIDS   [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+mapBIDS2nii  [sourcefolder='.'] [overwrite='no']
+importHCP    [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
+mapHCPLS2nii [sourcefolder='.'] [overwrite='no']
 
 
 WUSTL NIL pipeline utilities
 ----------------------------
-runNIL       [folder=.] [overwrite=no] [sfile=subject.txt]
-runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sfile=subject.txt]
+runNIL       [folder=.] [overwrite=no] [sourcefile=session.txt]
+runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
 
 
 General image file utilities
 ----------------------------
-sliceImage    sfile=<source image> tfile=<target image> [frames=1]
+sliceImage    sourcefile=<source image> targetfile=<target image> [frames=1]
 
 
 NIfTI file conversions
@@ -115,17 +115,16 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-getHCPReady    sessions=<sessions specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
-setupHCP       [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
-setupHCPFolder [subjectsfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=interactive]
+createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_*.txt] [mapping=specs/*_mapping.txt] [filter=None] [overwrite=no]
+setupHCP      [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt]
 
 
 Miscellaneous file utilities
 ----------------------------
-createStudy  studyfolder=<path to study base folder>
-createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
-createList  [subjectsfolder=.] [sessions=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-createConc  [subjectsfolder=.] [sessions=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createStudy  studyfolder=<path to study base folder> [subfolders=$TOOLS/niutilities/templates/study_folders_default.txt]
+createBatch  [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch.txt]
+createList  [sessionsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createConc  [sessionsfolder=.] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
@@ -148,7 +147,7 @@ joinMaps images=<image file list> output=<output file name> [names=<volume names
 PALM utilities
 --------------
 createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
-runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [cores=<number of cores to use in parallel>]  [overwite=no]
+runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of proceeses to run in parallel>]  [overwite=no]
 
 Scheduling utilities
 --------------------
@@ -172,10 +171,9 @@ specified at both levels. No options need to be set for any of the commands
 listed below. The key parameters with their default values are:
 
     sessions=batch.txt   ... the path to the batch.txt file
-    subjectsfolder=.     ... the path to the study subjects folder
+    sessionsfolder=.     ... the path to the study sessions folder
     overwrite=no         ... whether to overwrite existing results
-    cores=1              ... how many cores to utilize for those
-                             commands that can be parallelized
+    parsessions=1        ... how many sessions to run in parallel
     nprocess=0           ... how many sessions to process (0=all)
     log=remove           ... whether to remove logs of commands that have
                              ran and finished successfully
@@ -256,8 +254,13 @@ def runCommand(command, args):
     if folders['basefolder']:
         niu.g_utilities.checkStudy(folders['basefolder'])
 
-    # --- sort commands by type
+    # --- check if command is deprecated
+    command = gcom.checkDeprecatedCommands(command)
 
+    # -- remap deprecated arguments
+    args = gp.mapDeprecated(args, command)
+
+    # --- sort commands by type
     if command in gcom.commands:
         pass
     elif command in gp.allactions:
@@ -265,7 +268,7 @@ def runCommand(command, args):
         return
     elif command in gn.functions:
         if 'scheduler' in args:
-            niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, cores=1, logfolder=folders['logfolder'])
+            niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
         else:
             gn.run(command, args)
         return
@@ -274,9 +277,7 @@ def runCommand(command, args):
         sys.exit(1)
 
     # --- process commands
-
     # -- sort arguments
-
     bargs = {}
     eargs = {}
     for k, v in args.items():
@@ -296,46 +297,42 @@ def runCommand(command, args):
             raise ge.CommandError("gmri", "Invalid arguments", "The extra argument(s) provided is/are not valid! [%s]" % (", ".join(bad)))
 
     # -- process extra arguments
-
     sessions = None
     if 'sessions' in eargs:
-        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sfolder', 'folder']]):
+        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
             raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple sessions!" % (command))
-        if folders['subjectsfolder'] is None:
-            folders['subjectsfolder'] = "."
-        sessions, gopts = gc.getSubjectList(eargs['sessions'], sfilter=eargs.get('filter'), subjid=eargs.get('subjid'), subjectsfolder=folders['subjectsfolder'], verbose=False)
+        if folders['sessionsfolder'] is None:
+            folders['sessionsfolder'] = "."
+        sessions, gopts = gc.getSessionList(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get('sessionids'), sessionsfolder=folders['sessionsfolder'], verbose=False)
 
     logname = eargs.get('logname')
 
     calls = []
 
     # -- runList specifics
-
     if command == "runList":
         if sessions and 'sperlist' in eargs:
 
             if 'scheduler' in eargs:
-
                 # -- define number of sessions to run in each runList
-                cores = int(eargs['sperlist'])
-                args['cores'] = eargs['sperlist']
+                parsessions = int(eargs['sperlist'])
+                args['parsessions'] = eargs['sperlist']
                 if 'ignore' in args:
                     args['ignore'] += 'scheduler'
                 else:
                     args['ignore'] = 'scheduler'
                 del args['sperlist']
 
-                niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+                niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
             
             else:
-
                 # -- define number of sessions to run in each runList
                 sperlist = args['sperlist']
                 del args['sperlist']
 
                 # -- define number of runLists to run in parallel
-                cores = eargs.get('runinpar', 1)
-                args['cores'] = cores
+                parsessions = eargs.get('runinpar', 1)
+                args['parsessions'] = parsessions
                 if 'runinpar' in args:
                     del args['runinpar']
 
@@ -347,7 +344,7 @@ def runCommand(command, args):
                     # -- set up a list of sessions to run in each runList
 
                     slist = [sessions.pop(0)['id'] for e in range(sperlist) if sessions]
-                    largs['subjid'] = "|".join(slist)
+                    largs['sessionids'] = "|".join(slist)
 
                     calls.append({'name': 'runList_%d' % (c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
 
@@ -383,46 +380,40 @@ def runCommand(command, args):
 
     # -- all other commands    
     else:
-
-        cores = int(eargs.get('cores', '1'))
+        parsessions = int(eargs.get('parsessions', '1'))
 
         # -- are we using a scheduler
-
         if 'scheduler' in eargs:
-            niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+            niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
         # -- a basic call
-
         elif sessions is None:
             gcom.commands[command]['com'](**args)
             print "\n===> Successful completion of task"
 
         # -- sessions loop
-
         else:
-
             for session in sessions:
                 targs   = dict(bargs)
                 name    = command + ": " + session['id']
-                sfolder = os.path.join(folders['subjectsfolder'], session['id'])
+                sessionsfolder = os.path.join(folders['sessionsfolder'], session['id'])
                 if folders['logfolder']:
                     logfile = os.path.join(folders['logfolder'], 'comlogs', "%s_%s.log" % (command, session['id']))
-                for targ in ['sfolder', 'folder']:
+                for targ in ['sourcefolder', 'folder']:
                     if targ in gcom.commands[command]['args']:
-                        targs[targ] = sfolder
+                        targs[targ] = sessionsfolder
 
                 calls.append({'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
 
     # -- Have we set up calls to run in parallel?
     if calls:
-
         callInfo = "Running %s" % (command)
         callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
         print callInfo
         
-        print "\n===> Running %s through a list of sessions using %d cores" % (command, cores)
+        print "\n===> Running %s through %d sessions in parallel" % (command, parsessions)
 
-        results = gc.runInParallel(calls, cores=cores, prepend="     ... ")
+        results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
         print "\n===> Final report for command", command

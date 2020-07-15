@@ -24,9 +24,9 @@ import niutilities
 import niutilities.g_exceptions as ge
 import re
 
-def runPALM(image, design=None, args=None, root=None, options=None, cores=None, overwrite='no', cleanup='yes'):
+def runPALM(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):
     '''
-    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [cores=<number of cores to use in parallel>] [overwite=no] [cleanup=yes]
+    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]
 
     USE
     ===
@@ -199,19 +199,19 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
     Additional optional parameters
     ------------------------------
     
-    --options   : a | separate string of additional options to be passed to the
-                  command, e.g. specify 'surface' if only left and right surfaces
-                  from dtseries or dscalar files are to be analysed
-    --root      : optional root name for the result images, design name is used
-                  if the optional parameter is not specified
-    --cores     : number of cores to use in parallel for grayordinate
-                  decomposition, all available cores (3 max for left surface,
-                  right surface and volume files) will be used if not specified
-    --overwrite : whether to remove preexisting image files, if they exists, the
-                  command will exit with a warning if there are preexiting files
-                  and overwrite is set to 'no' (the default)
-    --cleanup   : should the command clean all the temporary generated files or
-                  not before the command exits [yes]
+    --options       : a | separate string of additional options to be passed to the
+                      command, e.g. specify 'surface' if only left and right surfaces
+                      from dtseries or dscalar files are to be analysed
+    --root          : optional root name for the result images, design name is used
+                      if the optional parameter is not specified
+    --parelements   : number of elements to run in parallel for grayordinate
+                      decomposition, all available elements (3 max for left surface,
+                      right surface and volume files) will be used if not specified.
+    --overwrite     : whether to remove preexisting image files, if they exists, the
+                      command will exit with a warning if there are preexiting files
+                      and overwrite is set to 'no' (the default)
+    --cleanup       : should the command clean all the temporary generated files or
+                      not before the command exits [yes]
 
     Example use
     -----------
@@ -482,7 +482,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
 
             print " --> running PALM for CIFTI input"
 
-            completed = niutilities.g_core.runExternalParallel(calls, cores=cores, prepend='     ... ')
+            completed = niutilities.g_core.runExternalParallel(calls, cores=parelements, prepend='     ... ')
 
             errors = []
             for complete in completed:

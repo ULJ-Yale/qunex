@@ -98,3 +98,8 @@ ENV/
 # VSCoder
 .vscode/
 .idea
+
+# Qu|Nex stuff
+1
+2
+*.out

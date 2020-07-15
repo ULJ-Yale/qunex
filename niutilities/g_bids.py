@@ -5,7 +5,7 @@ g_bids.py
 
 Functions for importing and exporting BIDS data to Qu|Nex file structure.
 
-* BIDSImport      ... maps BIDS data to Qu|Nex structure
+* importBIDS      ... maps BIDS data to Qu|Nex structure
 * BIDSExport      ... exports Qu|Nex data to BIDS structured folder
 
 The commands are accessible from the terminal using qunex command.
@@ -26,36 +26,6 @@ import datetime
 import gzip
 import sys
 import niutilities.g_filelock as fl
-
-
-bids = {
-    'modalities': ['anat', 'func', 'dwi', 'fmap'],
-    'optional': ['code', 'derivatives', 'stimuli', 'sourcedata', 'phenotype'],
-    'anat': {
-        'label': ['T1w', 'T2w', 'T1rho', 'T1map', 'T2map', 'T2star', 'FLAIR', 'FLASH', 'PD', 'PDMap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio', 'defacemask'],
-        'info':  ['acq', 'run', 'ce', 'rec', 'echo', 'mod', 'ses'],
-        'sort':  ['mod', 'rec', 'ce', 'echo','run', 'acq', 'label'],
-        'tag':   ['label', 'acq', 'ce', 'rec', 'mod', 'echo', 'run'],
-    },
-    'func': {
-        'label': ['bold', 'sbref'],
-        'info':  ['task', 'acq', 'rec', 'run', 'echo', 'ses'],
-        'sort':  ['rec', 'echo', 'acq', 'run', 'task'],
-        'tag':   ['label', 'task', 'acq', 'echo', 'rec', 'run']
-    },
-    'dwi': {
-        'label': ['dwi'],
-        'info':  ['acq', 'run', 'ses'],
-        'sort':  ['run', 'acq'],
-        'tag':   ['label', 'acq', 'run']
-    },
-    'fmap': {
-        'label': ['phasediff', 'magnitude', 'magnitude1', 'magnitude2', 'phase1', 'phase2', 'epi'],
-        'info':  ['acq', 'run', 'ses', 'dir'],
-        'sort':  ['run', 'dir', 'acq' ],
-        'tag':   ['label', 'dir', 'acq', 'run']
-    }
-}
 
 
 def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False):
@@ -136,13 +106,13 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
         return report(False, "WARNING: %s could not be %sed, source file either does not exist or can not be accessed [%s]! " % (name, action, source))
 
 
-def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
+def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
     try:
-        if subjectsfolder[-1] == '/':
-            subjectsfolder = subjectsfolder[:-1]
+        if sessionsfolder[-1] == '/':
+            sessionsfolder = sessionsfolder[:-1]
     except:
         pass
 
@@ -151,6 +121,18 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
     session  = ""
     optional = ""
     modality = ""
+
+    # --- load BIDS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
+
+    if not os.path.exists(bidsStructure):
+        raise ge.CommandFailed("mapToQUNEXBids", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+
+    bids_file = open(bidsStructure)
+    content = bids_file.read()
+    bids = ast.literal_eval(content)
 
     # -> extract file meta information
 
@@ -172,7 +154,7 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
 
     session = "_".join([e for e in [subject, session] if e])
     if session:
-        folder = os.path.join(subjectsfolder, session, 'bids')
+        folder = os.path.join(sessionsfolder, session, 'bids')
         if select:
             if session not in select:
                 sessionsList['skip'].append(session)
@@ -192,7 +174,7 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
         if session == 'bids':
             io = fl.makedirs(bidsfolder)
             if io and io != 'File exists':
-                raise ge.CommandFailed("BIDSImport", "I/O error: %s" % (io), "Could not create BIDS info folder [%s]!" % (bidsfolder), "Please check paths and permissions!")
+                raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS info folder [%s]!" % (bidsfolder), "Please check paths and permissions!")
 
             io = fl.open_status(os.path.join(bidsfolder, 'bids_info_status'), "Processing started on %s.\n" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")))
 
@@ -210,7 +192,7 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
 
             # --> an error
             elif io != 'File exists':
-                raise ge.CommandFailed("BIDSImport", "I/O error: %s" % (io), "Could not create BIDS info status file [%s]!" % (os.path.join(bidsfolder, 'bids_info_status')), "Please check paths and permissions!")
+                raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS info status file [%s]!" % (os.path.join(bidsfolder, 'bids_info_status')), "Please check paths and permissions!")
 
         # --> session folder exists
         elif os.path.exists(folder):
@@ -247,16 +229,16 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
     io = fl.makedirs(os.path.dirname(tfile))
 
     if io and io != 'File exists':
-        raise ge.CommandFailed("BIDSImport", "I/O error: %s" % (io), "Could not create folder for file [%s]!" % (tfile), "Please check paths and permissions!")
+        raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create folder for file [%s]!" % (tfile), "Please check paths and permissions!")
 
     # --> return file and locking info
     return tfile, session == 'bids'
 
 
 
-def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
+def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
     '''
-    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]
+    importBIDS [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]
     
     USE
     ===
@@ -266,7 +248,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     PARAMETERS
     ==========
 
-    --subjectsfolder    The subjects folder where all the sessions are to be 
+    --sessionsfolder    The sessions folder where all the sessions are to be 
                         mapped to. It should be a folder within the 
                         <study folder>. [.]
 
@@ -274,12 +256,12 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                         following: the BIDS dataset top folder, a folder that 
                         contains the BIDS dataset, a path to the compressed 
                         `.zip` or `.tar.gz` package that can contain a single 
-                        subject or a multi-subject dataset, or a folder that 
+                        session or a multi-session dataset, or a folder that 
                         contains a compressed package. For instance the user 
                         can specify "<path>/<bids_file>.zip" or "<path>" to
                         a folder that contains multiple packages. The default 
                         location where the command will look for a BIDS dataset
-                        is [<subjectsfolder>/inbox/BIDS]
+                        is [<sessionsfolder>/inbox/BIDS]
 
     --sessions          An optional parameter that specifies a comma or pipe
                         separated list of sessions from the inbox folder to be 
@@ -318,9 +300,9 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
                         leave   - leave the specified archive where it is
                         move    - move the specified archive to 
-                                  <subjectsfolder>/archive/BIDS
+                                  <sessionsfolder>/archive/BIDS
                         copy    - copy the specified archive to 
-                                  <subjectsfolder>/archive/BIDS
+                                  <sessionsfolder>/archive/BIDS
                         delete  - delete the archive after processing if no 
                                   errors were identified
 
@@ -333,7 +315,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                         it will be set to the name of the inbox folder or the 
                         name of the compressed package.
 
-    --fileinfo          What file information to include in the subject.txt file.
+    --fileinfo          What file information to include in the session.txt file.
                         Options are:
                         
                         short   - only provide the short description based on the
@@ -345,7 +327,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     PROCESS OF BIDS MAPPING
     =======================
     
-    The BIDSImport command consists of two steps:
+    The importBIDS command consists of two steps:
     
     ==> Step 1 -- Mapping BIDS dataset to Qu|Nex Suite folder structure
     
@@ -368,7 +350,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     The files identified as belonging to a specific session will be mapped to 
     folder: 
     
-        <subjects_folder>/<subject>_<session>/bids
+        <sessions_folder>/<subject>_<session>/bids
 
     The `<subject>_<session>` string will be used as the identifier for the 
     session in all the following steps. If no session is specified in BIDS,
@@ -383,14 +365,14 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     '<bids_study>/participants.tsv' and 'phenotype/*.tsv' files, will be parsed
     and split so that data belonging to a specific participant will be mapped to 
     that participant's sessions 'behavior' folder (e.g. 
-    <Qu|Nex study folder>/subjects/s14_01/behavior/masq01.tsv'). In this way the
+    <Qu|Nex study folder>/sessions/s14_01/behavior/masq01.tsv'). In this way the
     session folder contains all the behavioral data relevant fror that 
     participant.
 
     ==> Step 2 -- Mapping image files to Qu|Nex Suite `nii` folder
     
     For each session separately, images from the `bids` folder are 
-    mapped to the `nii` folder and appropriate `subject.txt` file is created per
+    mapped to the `nii` folder and appropriate `session.txt` file is created per
     standard Qu|Nex specification.
 
     The second step is achieved by running `mapBIDS2nii` on each session folder.
@@ -403,7 +385,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     RESULTS
     =======
 
-    After running the `BIDSImport` command the BIDS dataset will be mapped 
+    After running the `importBIDS` command the BIDS dataset will be mapped 
     to the Qu|Nex folder structure and image files will be prepared for further
     processing along with required metadata.
 
@@ -413,19 +395,19 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     
     * The original BIDS session-level data is stored in:
 
-        <subjectsfolder>/<subject_session>/bids
+        <sessionsfolder>/<session>/bids
 
     * Image files mapped to new names for Qu|Nex are stored in:
 
-        <subjects_folder>/<subject_session>/nii
+        <sessionsfolder>/<session>/nii
 
     * The full description of the mapped files is in:
 
-        <subjects_folder>/<subject_session>/subject.txt
+        <sessionsfolder>/<session>/session.txt
 
     * The output log of BIDS mapping is in: 
 
-        <subjects_folder>/<subject_session>/bids/bids2nii.log
+        <sessionsfolder>/<session>/bids/bids2nii.log
 
     * The study-level BIDS files are in:
 
@@ -440,7 +422,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     ===========
     
     ```
-    qunex BIDSImport subjectsfolder=myStudy overwrite=yes bidsname=swga
+    qunex importBIDS sessionsfolder=myStudy overwrite=yes bidsname=swga
     ```
 
     ----------------
@@ -468,27 +450,27 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
              - Added fileinfo parameter
     '''
 
-    print "Running BIDSImport\n=================="
+    print "Running importBIDS\n=================="
 
     if action not in ['link', 'copy', 'move']:
-        raise ge.CommandError("BIDSImport", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
+        raise ge.CommandError("importBIDS", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
 
     if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("BIDSImport", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+        raise ge.CommandError("importBIDS", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     if archive not in ['leave', 'move', 'copy', 'delete']:
-        raise ge.CommandError("BIDSImport", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+        raise ge.CommandError("importBIDS", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
 
     if fileinfo not in ['short', 'full', None]:
-        raise ge.CommandError("BIDSImport", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
+        raise ge.CommandError("importBIDS", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
-    if subjectsfolder is None:
-        subjectsfolder = os.path.abspath(".")
+    if sessionsfolder is None:
+        sessionsfolder = os.path.abspath(".")
 
-    qxfolders = gc.deduceFolders({'subjectsfolder': subjectsfolder})
+    qxfolders = gc.deduceFolders({'sessionsfolder': sessionsfolder})
 
     if inbox is None:
-        inbox = os.path.join(subjectsfolder, 'inbox', 'BIDS')    
+        inbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')    
     
     sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': [], 'bids': False}
     allOk        = True
@@ -498,21 +480,33 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
     # ---> Check for folders
 
-    BIDSInbox = os.path.join(subjectsfolder, 'inbox', 'BIDS')
+    BIDSInbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')
     if not os.path.exists(BIDSInbox):
         io = fl.makedirs(BIDSInbox)
         if not io:
             print "--> created inbox BIDS folder"
         elif io != 'File exists':
-            raise ge.CommandFailed("BIDSImport", "I/O error: %s" % (io), "Could not create BIDS inbox [%s]!" % (BIDSInbox), "Please check paths and permissions!")
+            raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS inbox [%s]!" % (BIDSInbox), "Please check paths and permissions!")
 
-    BIDSArchive = os.path.join(subjectsfolder, 'archive', 'BIDS')
+    BIDSArchive = os.path.join(sessionsfolder, 'archive', 'BIDS')
     if not os.path.exists(BIDSArchive):
         io = fl.makedirs(BIDSArchive)
         if not io:
             print "--> created BIDS archive folder"
         elif io != 'File exists':
-            raise ge.CommandFailed("BIDSImport", "I/O error: %s" % (io), "Could not create BIDS archive [%s]!" % (BIDSArchive), "Please check paths and permissions!")
+            raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS archive [%s]!" % (BIDSArchive), "Please check paths and permissions!")
+
+    # --- load BIDS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
+
+    if not os.path.exists(bidsStructure):
+        raise ge.CommandFailed("importBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+
+    bids_file = open(bidsStructure)
+    content = bids_file.read()
+    bids = ast.literal_eval(content)
 
     # ---> identification of files
 
@@ -601,18 +595,18 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                         for file in files:
                             sourceFiles.append(os.path.join(path, file))
         else:
-            raise ge.CommandFailed("BIDSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
+            raise ge.CommandFailed("importBIDS", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
-        raise ge.CommandFailed("BIDSImport", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("importBIDS", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
     if not sourceFiles:
-        raise ge.CommandFailed("BIDSImport", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")        
+        raise ge.CommandFailed("importBIDS", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")        
 
 
     # ---> definition of paths
 
     if bidsname is None:
-        if os.path.samefile(inbox, os.path.join(subjectsfolder, 'inbox', 'BIDS')):
+        if os.path.samefile(inbox, os.path.join(sessionsfolder, 'inbox', 'BIDS')):
             bidsname = ""
             BIDSInfo = os.path.join(qxfolders['basefolder'], 'info', 'bids')
         else:
@@ -643,7 +637,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile, lock = mapToQUNEXBids(sf.filename, subjectsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
+                        tfile, lock = mapToQUNEXBids(sf.filename, sessionsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
                         if tfile:
                             if lock:
                                 fl.lock(tfile)
@@ -671,7 +665,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile, lock = mapToQUNEXBids(member.name, subjectsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
+                        tfile, lock = mapToQUNEXBids(member.name, sessionsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
                         if tfile:
                             if lock:
                                 fl.lock(tfile)
@@ -694,7 +688,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 errors += "\n    .. Processing of package %s failed!" % (file)
 
         else:
-            tfile, lock = mapToQUNEXBids(file, subjectsfolder, BIDSInfo, sessionsList, overwrite, "    ")
+            tfile, lock = mapToQUNEXBids(file, sessionsfolder, BIDSInfo, sessionsList, overwrite, "    ")
             if tfile:
                 if tfile.endswith('.nii'):
                     tfile += ".gz"
@@ -838,7 +832,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
                 # -- do image mapping
                 try:
-                    mapBIDS2nii(os.path.join(subjectsfolder, session), overwrite=overwrite, fileinfo=fileinfo)
+                    mapBIDS2nii(os.path.join(sessionsfolder, session), overwrite=overwrite, fileinfo=fileinfo)
                     nmapping = True
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
@@ -847,7 +841,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 # -- do behavioral mapping
 
                 try:
-                    bmapping = mapBIDS2behavior(os.path.join(subjectsfolder, session), behavior, overwrite)
+                    bmapping = mapBIDS2behavior(os.path.join(sessionsfolder, session), behavior, overwrite)
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
                     bmapping = False                
@@ -884,10 +878,10 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
         print line
 
     if not allOk:
-        raise ge.CommandFailed("BIDSImport", "Some actions failed", "Please check report!")
+        raise ge.CommandFailed("importBIDS", "Some actions failed", "Please check report!")
 
     if not report:
-        raise ge.CommandNull("BIDSImport", "No sessions were mapped in this call. Please check report!")
+        raise ge.CommandNull("importBIDS", "No sessions were mapped in this call. Please check report!")
 
 
 def processBIDS(bfolder):
@@ -904,6 +898,18 @@ def processBIDS(bfolder):
     else:
         raise ge.CommandFailed("processBIDS", "No bids folder present!", "There is no bids data in session folder %s" % (bfolder), "Please import BIDS data first!")
     
+    # --- load BIDS structure
+    # template folder
+    niuTemplateFolder = os.environ["NIUTemplateFolder"]
+    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
+
+    if not os.path.exists(bidsStructure):
+        raise ge.CommandFailed("processBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+
+    bids_file = open(bidsStructure)
+    content = bids_file.read()
+    bids = ast.literal_eval(content)
+
     # -> map all the files
     
     for sfile in sourceFiles:
@@ -971,9 +977,9 @@ def processBIDS(bfolder):
         
 
 
-def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
+def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     '''
-    mapBIDS2nii [sfolder='.'] [overwrite='no'] [fileinfo='short']
+    mapBIDS2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short']
 
     USE
     ===
@@ -993,55 +999,55 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
     not copied but rather hard links are created. Only image, bvec and bval 
     files are mapped from the `bids` to `nii` folder. The exact mapping is
     noted in file `bids2nii.log` that is saved to the `bids` folder. The 
-    information on images is also compiled in `subject.txt` file that is 
+    information on images is also compiled in `session.txt` file that is 
     generated in the main session folder. For every image all the information
     present in the bids filename is listed.
 
     PARAMETERS
     ==========
 
-    --sfolder    The base session folder in which bids folder with data and
-                 files for the session is present. [.]
-    
-    --overwrite  Parameter that specifes what should be done in cases where
-                 there are existing data stored in `nii` folder. The options
-                 are:
+    --sourcefolder  The base session folder in which bids folder with data and
+                    files for the session is present. [.]
 
-                 no      - do not overwrite the data, skip session
-                 yes     - remove exising files in `nii` folder and redo the
-                           mapping
+    --overwrite     Parameter that specifes what should be done in cases where
+                    there are existing data stored in `nii` folder. The options
+                    are:
 
-                 The default option is 'no'. 
+                    no      - do not overwrite the data, skip session
+                    yes     - remove exising files in `nii` folder and redo the
+                              mapping
 
-    --fileinfo   What file information to include in the subject.txt file.
-                 Options are:
-                 
-                 short   - only provide the short description based on the
-                           identified BIDS tags
-                 full    - list the full file name excluding the 
-                           participant id, session name and extension
+                    The default option is 'no'. 
+
+    --fileinfo      What file information to include in the session.txt file.
+                    Options are:
+
+                    short   - only provide the short description based on the
+                              identified BIDS tags
+                    full    - list the full file name excluding the 
+                              participant id, session name and extension
 
     RESULTS
     =======
 
     After running the mapped nifti files will be in the `nii` subfolder, 
-    named with sequential image number. `subject.txt` will be in the base 
+    named with sequential image number. `session.txt` will be in the base 
     session folder and `bids2nii.log` will be in the `bids` folder.
     
-    subject.txt file
+    session.txt file
     ----------------
 
-    The subject.txt will be placed in the subject base folder. It will contain
+    The session.txt will be placed in the session base folder. It will contain
     the information about the session id, subject id location of folders and a 
     list of created NIfTI images with their description.
 
-    An example subject.txt file would be:
+    An example session.txt file would be:
 
     id: 06_retest
     subject: 06
-    bids: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/bids
-    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/nii
-    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/hcp
+    bids: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/bids
+    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
     
     01: T1w
     02: bold covertverbgeneration
@@ -1053,7 +1059,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
 
     For each of the listed images there will be a corresponding NIfTI file in
     the nii subfolder (e.g. 04.nii.gz for the line bisection BOLD sequence). 
-    The generated subject.txt files form the basis for the following HCP and 
+    The generated session.txt files form the basis for the following HCP and 
     other processing steps. `id` field will be set to the full session name,
     `subject` will be set to the text preceeding the underscore (`_`) 
     character.
@@ -1069,13 +1075,13 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
     ================================
 
     The command can be run for multiple sessions by specifying `sessions` and
-    optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified sessions in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
+    optionally `sessionsfolder` and `parsessions` parameters. In this case the
+    command will be run for each of the specified sessions in the sessionsfolder
+    (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel by
-    utilizing the specified number of cores (1 by default).
+    (for more information see online documentation). `sourcefolder` will be filled in
+    automatically as each session's folder. Commands will run in parallel where
+    the degree of parallelism is determined by `parsessions` (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `qunex ?schedule` for more information). If set in
@@ -1146,7 +1152,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
         raise ge.CommandError("mapBIDS2nii", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
 
-    sfolder = os.path.abspath(sfolder)
+    sfolder = os.path.abspath(sourcefolder)
     bfolder = os.path.join(sfolder, 'bids')
     nfolder = os.path.join(sfolder, 'nii')
 
@@ -1192,26 +1198,10 @@ def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
     else:
         os.makedirs(nfolder)
 
-    # --- open subject.txt file
-
-    sfile = os.path.join(sfolder, 'subject.txt')
-    if os.path.exists(sfile):
-        if overwrite == 'yes':
-            os.remove(sfile)
-            print "--> removed existing subject.txt file"
-        else:
-            raise ge.CommandFailed("mapBIDS2nii", "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
-
-    sout = open(sfile, 'w')
-    print >> sout, 'id:', session
-    print >> sout, 'subject:', subject
-    print >> sout, 'bids:', bfolder
-    print >> sout, 'raw_data:', nfolder
-    print >> sout, 'hcp:', os.path.join(sfolder, 'hcp')
-    print >> sout
+    # --- create session.txt file
+    sout = gc.createSessionFile("mapBIDS2nii", sfolder, session, subject, overwrite)
 
     # --- open bids2nii log file
-
     if overwrite == 'yes':
         mode = 'w'
     else:

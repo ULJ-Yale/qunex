@@ -1,7 +1,9 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-This file holds code for running HCP preprocessing and image mapping. It
+gp_HCP.py
+
+This file holds code for running HCP preprocessing pipeline. It
 consists of functions:
 
 * hcpPreFS              ... runs HCP PreFS preprocessing
@@ -29,14 +31,15 @@ from the command line using `qunex` command. Help is available through:
 There are additional support functions that are not to be used
 directly.
 
-Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
-Copyright (c) Grega Repovs. All rights reserved.
+
+Copyright (c) Grega Repovs and Jure Demsar.
+All rights reserved.
 """
 
-from gp_core import *
-from g_img import *
-from g_core import checkFiles
+from niutilities.gp_core import *
+from niutilities.g_img import *
+from niutilities.g_core import checkFiles
 import niutilities.g_exceptions as ge
 import os
 import re
@@ -128,7 +131,7 @@ def getHCPPaths(sinfo, options):
     if options['hcp_fs_longitudinal']:
         d['FS_long_template'] = os.path.join(hcpbase, 'T1w', options['hcp_fs_longitudinal'])
         d['FS_long_results']  = os.path.join(hcpbase, 'T1w', "%s.long.%s" % (sinfo['id'] + options['hcp_suffix'], options['hcp_fs_longitudinal']))
-        d['FS_long_subject_template'] = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
+        d['FS_long_subject_template'] = os.path.join(options['sessionsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
         d['hcp_long_nonlin']          = os.path.join(hcpbase, 'MNINonLinear_' + options['hcp_fs_longitudinal'])
     else:
         d['FS_long_template']         = ""
@@ -185,7 +188,7 @@ def getHCPPaths(sinfo, options):
                           ('hcp_bold_surf_check', 'check_fMRISurface.txt'),
                           ('hcp_dwi_check',       'check_Diffusion.txt')]:
         if options[pipe] == 'all':
-            d[pipe] = os.path.join(options['subjectsfolder'], 'specs', default)
+            d[pipe] = os.path.join(options['sessionsfolder'], 'specs', default)
         elif options[pipe] == 'last':
             d[pipe] = False
         else:
@@ -355,19 +358,21 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/sessions folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize [1].
+    --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided 
+                                location and then linked or copied to other 
+                                locations. The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -391,8 +396,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
     
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2]. NONE is only valid
@@ -440,11 +443,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 Map (x, y or NONE) [NONE].
     --hcp_topupconfig       ... Path to a configuration file for TOPUP method
                                 or "NONE" if not used [NONE].
-    --hcp_prefs_check       ... Whether to check the results of PreFreeSurfer 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
     --hcp_prefs_custombrain ... Whether to only run the final registration using
                                 either a custom prepared brain mask (MASK) or 
                                 custom prepared brain images (CUSTOM), or to 
@@ -488,60 +486,18 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     With the information present above, the file `/data/gc/Prisma.conf` would
     be used.
-    
-
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
 
     EXAMPLE USE
     ===========
     
     ```
-    qunex hcp_PreFS sessions=fcMRI/subjects_hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_brainsize=170
+    qunex hcp_PreFS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_brainsize=170
     ```
 
     ```
-    qunex hcp1 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+    qunex hcp1 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ----------------
@@ -575,6 +531,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     2020-01-16 Grega Repovš
              - Updated documentation on SE label specification
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -834,6 +792,12 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
 
         tfile = os.path.join(hcp['hcp_nonlin'], 'T1w_restore_brain.nii.gz')
@@ -853,12 +817,11 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PreFS', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PreFS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP PreFS can be run"
                     report = "HCP Pre FS can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Due to missing files session can not be processed."
             report = "Files missing, PreFS can not be run"
@@ -924,19 +887,21 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/sessions folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize [1].
+    --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided 
+                                location and then linked or copied to other 
+                                locations. The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -954,17 +919,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 or the specified original names ('original') are to
                                 be used ['standard']
     
-    specific parameters
-    -------------------
-
-    In addition the following *specific* parameters will be used to guide the
-    processing in this step:
-
-    --hcp_fs_check    ... Whether to check the results of FreeSurfer  pipeline 
-                          by presence of last file generated  ('last'), the 
-                          default list of all files ('all') or using a specific
-                          check file ('<path to file>'). ['last']
-
 
     HCP Pipelines specific parameters
     ---------------------------------
@@ -974,7 +928,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     
     --hcp_fs_seed             ... Recon-all seed value. If not specified, none
                                   will be used. []
-    --hcp_fs_existing_subject ... Indicates that the command is to be run on
+    --hcp_fs_existing_session ... Indicates that the command is to be run on
                                   top of an already existing analysis/subject.
                                   This excludes the `-i` flag from the 
                                   invocation of recon-all. If set, the
@@ -1000,10 +954,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     Please note, that these settings will only be used when LegacyStyleData 
     processing mode is specified!
-
-
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
+    
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2]. NONE is only valid
@@ -1030,70 +981,29 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     * these options are currently not available
 
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
-
 
     EXAMPLE USE
     ===========
     
 
     ```
-    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+    qunex hcp_FS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_fs_longitudinal=TemplateA
+    qunex hcp_FS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_fs_longitudinal=TemplateA
     ```
 
     ```
-    qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+    qunex hcp2 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ```
-    qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE \\
+    qunex hcp2 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_t2=NONE \\
           hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
     ```
 
@@ -1133,6 +1043,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Added flair option and documentation
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
 
     ----------------
     2019-10-20 Future tasks:
@@ -1219,7 +1131,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 if fstest in reconallfiletxt:
                     break
 
-            if overwrite and options['run'] == "run":
+            if overwrite and options['run'] == "run" and not options['hcp_fs_existing_session']:
                 r += "\n     ... removing previous files"
             else:
                 if fsversion == efsversion:
@@ -1282,8 +1194,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     ('no-conf2hires',    options['hcp_fs_no_conf2hires']),
                     ('processing-mode',  options['hcp_processing_mode'])]
 
-        # -> add t1, t1brain and t2 only if options['hcp_fs_existing_subject'] is FALSE
-        if (not options['hcp_fs_existing_subject']):
+        # -> add t1, t1brain and t2 only if options['hcp_fs_existing_session'] is FALSE
+        if (not options['hcp_fs_existing_session']):
             elements.append(('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')))
             elements.append(('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')))
             elements.append(('t2', t2w))
@@ -1305,9 +1217,15 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
         # --> Add flags
 
-        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_subject', '--existing-subject')]:
+        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_session', '--existing-subject')]:
             if options[optionName]:
                 comm += " %s" % (flag)
+
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -1321,12 +1239,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         if run:
             if options['run'] == "run":
 
-                # --> clean up test file if overwrite and hcp_fs_existing_subject not set to True
-                if (overwrite and os.path.lexists(tfile)and not options['hcp_fs_existing_subject']):
+                # --> clean up test file if overwrite and hcp_fs_existing_session not set to True
+                if (overwrite and os.path.lexists(tfile)and not options['hcp_fs_existing_session']):
                     os.remove(tfile)
 
-                # --> clean up only if hcp_fs_existing_subject is not set to True
-                if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_subject']:
+                # --> clean up only if hcp_fs_existing_session is not set to True
+                if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_session']:
                     # -> longitudinal mode currently not supported
                     # if options['hcp_fs_longitudinal']:
                     #     if os.path.lexists(hcp['FS_long_results']):
@@ -1351,12 +1269,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP FS', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP FS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP FS can be run"
                     report = "HCP FS can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Subject can not be processed."
             report = "FS can not be run"
@@ -1389,16 +1306,16 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     ===
 
     Runs longitudinal FreeSurfer processing in cases when multiple sessions with
-    structural data exist for a single subjects
+    structural data exist for a single subject.
 
     REQUIREMENTS
     ============
 
     The code expects the FreeSurfer Pipeline (hcp_PreFS) to have run 
     successfully on all subject's session. In the batch file, there need to be 
-    clear separation between session id (`id` parameter) and and subject id 
+    clear separation between session id (`id` parameter) and subject id 
     (`subject` parameter). So that the command can identify which sessions 
-    belong to which subject
+    belong to which subject.
 
     RESULTS
     =======
@@ -1406,7 +1323,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     The result is a longitudinal FreeSurfer template that is created in 
     `FSTemplates` folder for each subject in a subfolder with the template name, 
     but is also copied to each session's hcp folder in the T1w folder as
-    sessionid.long.TemplateA. An example is shown below:
+    subjectid.long.TemplateA. An example is shown below:
 
     study
     └─ subjects
@@ -1435,26 +1352,28 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/subjects folder, where the
                           imaging data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise [].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
+     --log            ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided 
+                          location and then linked or copied to other 
+                          locations. The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
                           * 'session' for `<sessionid>/logs/comlogs
                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
-
+                          
     --hcp_folderstructure   ... Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported ['hcpls']
     --hcp_filename          ... Specifies whether the standard ('standard') filenames
@@ -1467,8 +1386,6 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2].
@@ -1498,69 +1415,24 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     --hcp_fs_longitudinal   ... The name of the FS longitudinal template to
                                 be used for the template resulting from this 
                                 command call.
-    --hcp_fslong_check      ... Whether to check the results of FSLongitudinal 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
-    
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
+   
 
     EXAMPLE USE
     ===========
     
     ```
-    qunex longitudinalFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+    qunex longitudinalFS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10
     ```
 
     ```
-    qunex lfs sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+    qunex lfs sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ```
-    qunex lsf sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE \\
+    qunex lfs sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_t2=NONE \\
           hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
           hcp_freesurfer_module=YES
     ```
@@ -1582,6 +1454,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
              - Added full file checking
     2019-06-06 Grega Repovš
              - Enabled multiple log file locations
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -1689,7 +1563,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             --longitudinal="template"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
                 'subject'           : options['hcp_fs_longitudinal'],
-                'subjectDIR'        : os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id']),
+                'subjectDIR'        : os.path.join(options['sessionsfolder'], 'FSTemplates', sinfo['id']),
                 'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
                 'fsloadhpcmodule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
                 'expertfile'        : options['hcp_expert_file'],
@@ -1701,6 +1575,12 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                 't1brain'           : "",
                 't2'                : "",
                 'timepoints'        : ",".join(sessionspaths)}
+
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
 
        # -- Test files
 
@@ -1733,19 +1613,11 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             # -- just checking
             else:
                 r += "\n---> The command was tested for sessions: %s" % (", ".join(sessionsid))
-                r += "\n---> If run, the following command would be executed:\n"
-                rcomm = re.sub(r" +", r" ", comm)
-                rcomm = re.sub(r"--", r"\n  --", rcomm)
-                r += "\n%s\n\n" % rcomm
                 report = "Command can be run"
                 failed = 0
                 
         else:
             r += "\n---> The command could not be run on sessions: %s" % (", ".join(sessionsid))
-            r += "\n---> If run, the following command would be executed:\n"
-            rcomm = re.sub(r" +", r" ", comm)
-            rcomm = re.sub(r"--", r"\n  --", rcomm)
-            r += "\n%s\n\n" % rcomm
             report = "Command can not be run"
             failed = 1
 
@@ -1806,19 +1678,21 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/sessions folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize [1].
+    --parsessions           ... How many sessions to run in parallel [1].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided 
+                                location and then linked or copied to other 
+                                locations. The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -1842,8 +1716,6 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
-                                variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2]. NONE is only valid
@@ -1859,66 +1731,20 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --hcp_inflatescale      ... Inflate extra scale parameter [1].
     * --hcp_fs_longitudinal ... The name of the FS longitudinal template if one
                                 was created and is to be used in this step.
-    --hcp_postfs_check      ... Whether to check the results of PreFreeSurfer 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
 
     * this option is currently not available
-
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
 
     EXAMPLE USE
     ===========
     
     ```
-    qunex hcp_PostFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+    qunex hcp_PostFS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp3 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_t2=NONE
+    qunex hcp3 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_t2=NONE
     ```
 
     ----------------
@@ -1945,6 +1771,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Adjusted parameters, help and processing to use integrated HCPpipelines
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -2023,6 +1851,12 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
 
         # -- Test files
 
@@ -2049,12 +1883,11 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PostFS', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PostFS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP PostFS can be run"
                     report = "HCP PostFS can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Session can not be processed."
             report = "HCP PostFS can not be run"
@@ -2122,19 +1955,21 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/sessions folder, where the
                           imaging data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise [].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
@@ -2190,15 +2025,6 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 DiffPreprocPipeline as a set of --extra-eddy-arg
                                 arguments. ['']
 
-    Additional parameters
-    ---------------------
-
-    --hcp_dwi_check         ... Whether to check the results of the Diffusion 
-                                pipeline by presence of last file generated 
-                                ('last'), the default list of all files ('all') 
-                                or using a specific check file ('<path to file>')
-                                ['last']
-
 
     Gradient Coefficient File Specification:
     ----------------------------------------
@@ -2224,46 +2050,6 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     With the information present above, the file `/data/gc/Prisma.conf` would
     be used.
     
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. It
-    will be replaced with an actual session id at the time of checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    T1w
-    T1w T1w_acpc_dc.nii.gz
-    T1w T2w_acpc_dc.nii.gz
-    T1w T1w_acpc_brain_mask.nii.gz | T1w T1w_acpc_mask.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
     EXAMPLE USE
     ===========
 
@@ -2273,8 +2059,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_Diffusion \
       --sessions="processing/batch.hcp.txt" \\
-      --subjectsfolder="subjects" \\
-      --cores="10" \\
+      --sessionsfolder="sessions" \\
+      --parsessions="10" \\
       --overwrite="no" \\
       --test
     ```
@@ -2285,8 +2071,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcpd \
       --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\
-      --subjectsfolder="<path_to_study_folder>/subjects" \\
-      --cores="4" \\
+      --sessionsfolder="<path_to_study_folder>/sessions" \\
+      --parsessions="4" \\
       --overwrite="yes" \\
       --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
     ```
@@ -2307,6 +2093,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     """
 
     r = "\n------------------------------------------------------------"
@@ -2394,6 +2182,12 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             for eddyoption in eddyoptions:
                 comm += " --extra-eddy-arg=" + eddyoption
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
 
@@ -2413,12 +2207,12 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP Diffusion', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP Diffusion', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
                     failed = 0
-                r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+
         else:
             r += "---> Session can not be processed."
             report = "HCP Diffusion can not be run"
@@ -2471,7 +2265,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     folder:
 
     study
-    └─ subjects
+    └─ sessions
        └─ subject1_session1
           └─ hcp
              └─ subject1_session1
@@ -2493,28 +2287,27 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/sessions folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize. This Parameter 
-                                determines the parallelization on the subject
-                                level [1].
-    --threads               ... How many threads to utilize This Parameter
-                                determines the parallelization on the bolds 
-                                level [1].
+    --parsessions           ... How many sessions to run in parallel [1].
+    --parelements           ... How many elements (e.g bolds) to run in
+                                parralel [1].
     --bolds                 ... Which bold images (as they are specified in the
                                 batch.txt file) to process. It can be a single
                                 type (e.g. 'task'), a pipe separated list (e.g.
                                 'WM|Control|rest') or 'all' to process all [all].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided location
+                                and then linked or copied to other locations. 
+                                The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -2554,21 +2347,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     
     (-) This parameter is currently not supported
 
-    processing validation
-    ---------------------
-
-    --hcp_bold_vol_check     ... Whether to check the results of the fMRIVolume 
-                                 pipeline by presence of last file generated 
-                                 ('last'), the default list of all files ('all') 
-                                 or using a specific check file ('<path to file>')
-                                 ['last']
-
     naming options
     --------------
 
-    --hcp_suffix             ... Specifies a suffix to the session id if
-                                 multiple variants of preprocessing are run,
-                                 empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. [BOLD_]
@@ -2703,60 +2484,18 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     With the information present above, the file `/data/gc/Prisma.conf` would
     be used.
 
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. 
-    Where the actual bold name should be used '{scan} should be placed. These
-    will be replaced with the actual session id and bold names at the time of 
-    checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    {scan}
-    {scan} {scan}_gdc_warp.nii.gz
-    {scan} {scan}_gdc.nii.gz 
-    {scan} {scan}_mc.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
 
     EXAMPLE USE
     ===========
 
     ```
-    qunex hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+    qunex hcp_fMRIVolume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
+    qunex hcp4 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
           hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     ```
 
@@ -2796,6 +2535,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Introduced bold specific SE options and updated documentation
     2020-01-28 Grega Repovš
              - Made SE selection more rubust
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -3166,10 +2907,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # --- Process
         r += "\n"
 
-        threads = min(options['threads'], len(boldsData))
-        r += "\n%s BOLD images on %d threads" % (action("Running", options['run']), threads)
+        parelements = max(1, min(options['parelements'], len(boldsData)))
+        r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
 
-        if (threads == 1): # serial execution
+        if (parelements == 1): # serial execution
             # loop over bolds
             for b in boldsData:
                 # process
@@ -3256,11 +2997,11 @@ def executeSingleHCPfMRIVolume(sinfo, options, overwrite, hcp, b, r, report):
     return r, report
 
 def executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, report):
-    # threads
-    threads = min(options['threads'], len(boldsData))
+    # parelements
+    parelements = max(1, min(options['parelements'], len(boldsData)))
 
     # create a multiprocessing Pool
-    processPoolExecutor = ProcessPoolExecutor(threads)
+    processPoolExecutor = ProcessPoolExecutor(parelements)
 
     # partial function
     f = partial(executeHCPfMRIVolume, sinfo, options, overwrite, hcp)
@@ -3364,6 +3105,12 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
 
         if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
@@ -3428,10 +3175,9 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP fMRIVolume can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP fMRIVolume can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -3439,15 +3185,15 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images or data parameters missing, skipping this BOLD!"
+                r += "\n---> ERROR: images or data parameters missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images or data parameters missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images or data parameters missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
@@ -3456,8 +3202,6 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     except:
         r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
         report['failed'].append(printbold)
-
-    # r += "\n     ... DONE!"
 
     return {'r': r, 'report': report}
 
@@ -3492,8 +3236,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     folder:
 
     study
-    └─ subjects
-       └─ subject1_session1
+    └─ sessions
+       └─ session1_session1
           └─ hcp
              └─ subject1_session1
                ├─ MNINonlinear
@@ -3514,26 +3258,27 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/sessions folder, where the
                           imaging data is supposed to go [.].
-    --cores           ... How many cores to utilize. This Parameter determines
-                          the parallelization on the subject level [1].
-    --threads         ... How many threads to utilize This Parameter determines 
-                          the parallelization on the bolds level [1].
+    --parsessions     ... How many sessions to run in parallel [1].
+    --parelements     ... How many elements (e.g bolds) to run in
+                          parralel [1].
     --bolds           ... Which bold images (as they are specified in the
                           batch.txt file) to process. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
                           'WM|Control|rest') or 'all' to process all [all].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise [].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
@@ -3550,15 +3295,6 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
 
-    processing validation
-    ---------------------
-
-    --hcp_bold_surf_check    ... Whether to check the results of the fMRISurface 
-                                 pipeline by presence of last file generated 
-                                 ('last'), the default list of all files ('all') 
-                                 or using a specific check file ('<path to file>')
-                                 ['last']
-
     use of FS longitudinal template
     -------------------------------
 
@@ -3570,9 +3306,6 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     naming options
     --------------
 
-    --hcp_suffix             ... Specifies a suffix to the session id if
-                                 multiple variants of preprocessing are run,
-                                 empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. []
@@ -3592,59 +3325,19 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --hcp_regname            ... The name of the registration used. [MSMSulc]
 
     
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_fMRISurface.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. 
-    Where the actual bold name should be used '{scan} should be placed. These
-    will be replaced with the actual session id and bold names at the time of 
-    checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    MNINonLinear Results {scan} {scan}.L.native.func.gii
-    MNINonLinear Results {scan} {scan}.R.native.func.gii
-    MNINonLinear Results {scan} {scan}_Atlas.dtseries.nii
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
 
 
     EXAMPLE USE
     ===========
 
     ```
-    qunex hcp_fMRISurface sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+    qunex hcp_fMRISurface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp5 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+    qunex hcp5 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10
     ```
 
     ----------------
@@ -3671,6 +3364,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Adjusted parameters, help and processing to use integrated HCPpipelines
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
     '''
 
     r = "\n------------------------------------------------------------"
@@ -3722,10 +3417,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        threads = min(options['threads'], len(bolds))
-        r += "\n\n%s BOLD images on %d threads" % (action("Processing", options['run']), threads)
+        parelements = max(1, min(options['parelements'], len(bolds)))
+        r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
 
-        if threads == 1: # serial execution
+        if parelements == 1: # serial execution
             for b in bolds:
                 # process
                 result = executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, b)
@@ -3744,7 +3439,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         else: # parallel execution
             # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(threads)
+            processPoolExecutor = ProcessPoolExecutor(parelements)
             # process 
             f = partial(executeHCPfMRISurface, sinfo, options, overwrite, hcp, run)
             results = processPoolExecutor.map(f, bolds)
@@ -3821,6 +3516,11 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -3850,10 +3550,9 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP fMRISurface can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP fMRISurface can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -3861,15 +3560,15 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
@@ -3878,8 +3577,6 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     except:
         r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
         report['failed'].append(printbold)
-
-    # r += "\n     ... DONE!"
 
     return {'r': r, 'report': report}
 
@@ -4133,7 +3830,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
     all bolds together and execute multi-run HCP ICAFix, the concatenated file
-    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    will be named fMRI_CONCAT_ALL. WARNING: if session has many bolds such
     processing requires a lot of computational resources.
 
     REQUIREMENTS
@@ -4170,24 +3867,23 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/sessions folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
-    --threads           ... How many threads to utilize This Parameter
-                            determines the parallelization on the
-                            bolds level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
+    --parelements       ... How many elements (e.g bolds) to run in
+                            parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -4251,13 +3947,13 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_ICAFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects
+        --sessionsfolder=sessions
     ```
 
     ```
     qunex hcp_ICAFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     ```
 
@@ -4295,10 +3991,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            threads = min(options['threads'], len(icafixBolds))
+            parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
-            threads = min(options['threads'], len(icafixGroups))
-        r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
+            parelements = max(1, min(options['parelements'], len(icafixGroups)))
+        r += "\n\n%s %d ICAFix images in parallel" % (action("Processing", options['run']), parelements)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = "0"
@@ -4322,7 +4018,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         # --- Execute
         # single fix
         if singleFix:
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for b in icafixBolds:
                     # process
                     result = executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, b)
@@ -4341,7 +4037,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixBolds)
@@ -4359,7 +4055,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
         # multi fix
         else:
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for g in icafixGroups:
                     # process
                     result = executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, g)
@@ -4378,7 +4074,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPMultiICAFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
@@ -4464,6 +4160,12 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, bandpass))
         fullTest = None
@@ -4490,10 +4192,9 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... single-run HCP ICAFix can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> single-run HCP ICAFix can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -4501,15 +4202,15 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
@@ -4591,6 +4292,12 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
         fullTest = None
@@ -4617,10 +4324,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... multi-run HCP ICAFix can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> multi-run HCP ICAFix can be run"
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -4628,15 +4334,15 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         elif run:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+                r += "\n---> ERROR: No hcp info for session, skipping this group!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -4665,7 +4371,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
     all bolds together and execute multi-run HCP ICAFix, the concatenated file
-    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    will be named fMRI_CONCAT_ALL. WARNING: if session has many bolds such
     processing requires a lot of computational resources.
 
     REQUIREMENTS
@@ -4702,24 +4408,23 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/sessions folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
-    --threads           ... How many threads to utilize This Parameter
-                            determines the parallelization on the
-                            bolds level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
+    --parelements       ... How many elements (e.g bolds) to run in
+                            parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -4771,14 +4476,14 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_PostFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_matlab_mode="interpreted"
     ```
 
     ```
     qunex hcp_PostFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -4820,10 +4525,10 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            threads = min(options['threads'], len(icafixBolds))
+            parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
-            threads = min(options['threads'], len(icafixGroups))
-        r += "\n\n%s PostFix on %d threads" % (action("Processing", options['run']), threads)
+            parelements = max(1, min(options['parelements'], len(icafixGroups)))
+        r += "\n\n%s %d PostFixes in parallel" % (action("Processing", options['run']), parelements)
 
         # --- Execute
         # single fix
@@ -4834,7 +4539,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                 groupBolds = g["name"]
                 icafixBolds.append(groupBolds)
 
-        if threads == 1: # serial execution
+        if parelements == 1: # serial execution
             for b in icafixBolds:
                 # process
                 result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, b)
@@ -4853,7 +4558,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
         else: # parallel execution
             # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(threads)
+            processPoolExecutor = ProcessPoolExecutor(parelements)
             # process 
             f = partial(executeHCPPostFix, sinfo, options, overwrite, hcp, run, singleFix)
             results = processPoolExecutor.map(f, icafixBolds)
@@ -4960,7 +4665,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
                 boldok = False
 
-        # subject
+        # subject/session
         subject = sinfo['id'] + options['hcp_suffix']
 
         comm = '%(script)s \
@@ -4982,6 +4687,12 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 'reusehighpass'     : reusehighpass,
                 'matlabrunmode'     : matlabrunmode}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_%s_hp%s_ICA_Classification_singlescreen.scene" % (subject, boldtarget, highpass))
         fullTest = None
@@ -5001,10 +4712,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP PostFix can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP PostFix can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5012,15 +4722,15 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
         # log beautify
         r += "\n\n"
@@ -5053,7 +4763,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
     If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
     all bolds together and execute multi-run HCP ICAFix, the concatenated file
-    will be named fMRI_CONCAT_ALL. WARNING: if subject has many bolds such
+    will be named fMRI_CONCAT_ALL. WARNING: if session has many bolds such
     processing requires a lot of computational resources.
 
     REQUIREMENTS
@@ -5089,24 +4799,23 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/sessions folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
-    --threads           ... How many threads to utilize This Parameter
-                            determines the parallelization on the
-                            bolds level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
+    --parelements       ... How many elements (e.g bolds) to run in
+                            parralel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -5162,14 +4871,14 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp_ReApplyFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_matlab_mode="interpreted"
     ```
 
     ```
     qunex hcp_ReApplyFix \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -5210,15 +4919,15 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         # --- Multi threading
         if singleFix:
-            threads = min(options['threads'], len(icafixBolds))
+            parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
-            threads = min(options['threads'], len(icafixGroups))
-        r += "\n\n%s ReApplyFix on %d threads" % (action("Processing", options['run']), threads)
+            parelements = max(1, min(options['parelements'], len(icafixGroups)))
+        r += "\n\n%s %d ReApplyFixes in parallel" % (action("Processing", options['run']), parelements)
 
         # --- Execute
         # single fix
         if singleFix:
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for b in icafixBolds:
                     # process
                     result = executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, b)
@@ -5237,7 +4946,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPSingleReApplyFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixBolds)
@@ -5255,7 +4964,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
         # multi fix
         else: 
-            if threads == 1: # serial execution
+            if parelements == 1: # serial execution
                 for g in icafixGroups:
                     # process
                     result = executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, g)
@@ -5274,7 +4983,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
             else: # parallel execution
                 # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(threads)
+                processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process 
                 f = partial(executeHCPMultiReApplyFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
@@ -5387,6 +5096,12 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+            # -- Report command
+            r += "\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
+
             # -- Test files
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], highpass)
@@ -5408,10 +5123,9 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r, overwrite=overwrite)
                     if passed is None:
-                        r += "\n     ... single-run HCP ReApplyFix can be run"
-                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n---> single-run HCP ReApplyFix can be run"
                         report['ready'].append(printbold)
                     else:
                         report['skipped'].append(printbold)
@@ -5419,15 +5133,15 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             elif run:
                 report['not ready'].append(printbold)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                    r += "\n---> ERROR: images missing, skipping this BOLD!"
                 else:
-                    r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                    r += "\n---> ERROR: images missing, this BOLD would be skipped!"
             else:
                 report['not ready'].append(printbold)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                    r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
                 else:
-                    r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                    r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
             # log beautify
             r += "\n\n"
@@ -5551,6 +5265,12 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
+            # -- Report command
+            r += "\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
+
             # -- Test files
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], highpass)
@@ -5572,10 +5292,9 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r)
+                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r, overwrite=overwrite)
                     if passed is None:
-                        r += "\n     ... multi-run HCP ReApplyFix can be run"
-                        r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                        r += "\n---> multi-run HCP ReApplyFix can be run"
                         report['ready'].append(groupname)
                     else:
                         report['skipped'].append(groupname)
@@ -5583,15 +5302,15 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             elif run:
                 report['not ready'].append(groupname)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: images missing, skipping this group!"
+                    r += "\n---> ERROR: images missing, skipping this group!"
                 else:
-                    r += "\n     ... ERROR: images missing, this group would be skipped!"
+                    r += "\n---> ERROR: images missing, this group would be skipped!"
             else:
                 report['not ready'].append(groupname)
                 if options['run'] == "run":
-                    r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+                    r += "\n---> ERROR: No hcp info for session, skipping this group!"
                 else:
-                    r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
+                    r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
             # log beautify
             r += "\n\n"
@@ -5640,6 +5359,12 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 'boldtarget'        : boldtarget,
                 'highpass'          : highpass}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s.ica" % (boldtarget, highpass), "HandNoise.txt")
         fullTest = None
@@ -5659,10 +5384,9 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP HandReclassification can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP HandReclassification can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -5670,15 +5394,15 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
         # log beautify
         r += "\n"
@@ -5704,7 +5428,7 @@ def parseMSMAllBolds(options, bolds, r):
         # if more than one group print a WARNING
         if (len(icafixGroups) > 1):
             # extract the first group
-            r += "\n     ... WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
+            r += "\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
 
     # validate that msmall bolds is a subset of icafixGroups
     if 'hcp_msmall_bolds' in options:
@@ -5712,7 +5436,7 @@ def parseMSMAllBolds(options, bolds, r):
 
         for b in msmallBolds:
             if b not in hcpBolds:
-                r += "\n     ... ERROR: bold %s defined in hcp_msmall_bolds but not found in the used hcp_icafix_bolds!" % b
+                r += "\n---> ERROR: bold %s defined in hcp_msmall_bolds but not found in the used hcp_icafix_bolds!" % b
                 parsOK = False
 
     return (singleRun, icafixGroup, parsOK, r)
@@ -5794,21 +5518,21 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/sessions folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -5875,7 +5599,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     # HCP MSMAll after application of single-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
         --hcp_msmall_bolds="REST_1,REST_2"
         --hcp_matlab_mode="interpreted"
@@ -5885,7 +5609,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     # HCP MSMAll after application of multi-run ICAFix
     qunex hcp_MSMAll \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
         --hcp_msmall_bolds="REST_1,REST_2"
         --hcp_matlab_mode="interpreted"
@@ -6064,7 +5788,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
 
         comm = '%(script)s \
@@ -6097,6 +5821,12 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
         fullTest = None
@@ -6116,10 +5846,9 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP MSMAll can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(printbold)
                 else:
                     report['skipped'].append(printbold)
@@ -6127,15 +5856,15 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         elif run:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+                r += "\n---> ERROR: images missing, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report['not ready'].append(printbold)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
@@ -6225,7 +5954,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
 
         # fix names to use
@@ -6265,6 +5994,12 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
         fullTest = None
@@ -6284,10 +6019,9 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP MSMAll can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -6295,15 +6029,15 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         elif run:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
@@ -6372,21 +6106,21 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     --sessions          ... The batch.txt file with all the sessions information
                             [batch.txt].
-    --subjectsfolder    ... The path to the study/subjects folder, where the
+    --sessionsfolder    ... The path to the study/sessions folder, where the
                             imaging  data is supposed to go [.].
-    --cores             ... How many cores to utilize. This Parameter
-                            determines the parallelization on the
-                            subject level [1].
+    --parsessions       ... How many sessions to run in parallel [1].
     --overwrite         ... Whether to overwrite existing data (yes)
                             or not (no) [no].
+    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+                            variants are run, empty otherwise [].
     --logfolder         ... The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
     --log               ... Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
-                            When a comma separated list is given, the log will
-                            be created at the first provided location and then
-                            linked or copied to other locations. The valid
-                            locations are:
+                            When a comma or pipe ('|') separated list is given, 
+                            the log will be created at the first provided location
+                            and then linked or copied to other locations. 
+                            The valid locations are: 
                             * 'study'   for the default: 
                                         `<study>/processing/logs/comlogs`
                                         location,
@@ -6459,7 +6193,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     # HCP DeDriftAndResample after application of single-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -6468,7 +6202,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     # HCP DeDriftAndResample after application of multi-run ICAFix
     qunex hcp_DeDriftAndResample \
         --sessions=processing/batch.txt \
-        --subjectsfolder=subjects \
+        --sessionsfolder=sessions \
         --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
         --hcp_matlab_mode="interpreted"
     ```
@@ -6690,6 +6424,12 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file (currently check only last bold)
         lastbold = boldtargets.split("@")[-1]
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], concatregname))
@@ -6707,10 +6447,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP DeDriftAndResample can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(regname)
                 else:
                     report['skipped'].append(regname)
@@ -6718,15 +6457,15 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         elif run:
             report['not ready'].append(regname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(regname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
@@ -6803,7 +6542,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             elif options['hcp_matlab_mode'] == "octave":
                 matlabrunmode = 2
             else:
-                r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
+                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
 
         # fix names to use
@@ -6885,6 +6624,12 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
         fullTest = None
@@ -6904,10 +6649,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r)
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
                 if passed is None:
-                    r += "\n     ... HCP DeDriftAndResample can be run"
-                    r += "\n------------------------------------------------------------\nCommand to run:\n %s\n-------------------------------------------------------------\n" % (comm.replace("--", "\n    --"))
+                    r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(groupname)
                 else:
                     report['skipped'].append(groupname)
@@ -6915,15 +6659,15 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         elif run:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: images missing, skipping this group!"
+                r += "\n---> ERROR: images missing, skipping this group!"
             else:
-                r += "\n     ... ERROR: images missing, this group would be skipped!"
+                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report['not ready'].append(groupname)
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+                r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
@@ -6976,6 +6720,12 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                 'bvecs'             : os.path.join(hcp['T1w_folder'], 'Diffusion', 'bvecs'),
                 'bvals'             : os.path.join(hcp['T1w_folder'], 'Diffusion', 'bvals')}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- Test files
         
         tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'dti_FA.nii.gz')
@@ -6993,7 +6743,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP DTI Fit', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP DTI Fit', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP DTI Fit can be run"
                     report = "HCP DTI Fit FS can be run"
@@ -7059,6 +6809,12 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
                 'nf'                : "3",
                 'model'             : "2"}
 
+        # -- Report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+        r += comm.replace("--", "\n    --").replace("             ", "")
+        r += "\n------------------------------------------------------------\n"
+
         # -- test files
 
         tfile = os.path.join(hcp['T1w_folder'], 'Diffusion.bedpostX', 'mean_fsumsamples.nii.gz')
@@ -7074,7 +6830,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP BedpostX', r)
+                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP BedpostX', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP BedpostX can be run"
                     report = "HCP BedpostX can be run"
@@ -7106,7 +6862,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===
 
     mapHCPData maps the results of the HCP preprocessing (in MNINonLinear) to
-    the <subjectsfolder>/<session id>/images folder structure. Specifically, it
+    the <sessionsfolder>/<session id>/images folder structure. Specifically, it
     copies the files and folders:
 
     * T1w.nii.gz                  -> images/structural/T1w.nii.gz
@@ -7125,11 +6881,13 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
+    --parsessions      ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
+    --hcp_suffix       ... Specifies a suffix to the session id if multiple
+                           variants are run, empty otherwise [].
     --hcp_cifti_tail   ... The tail (see above) that specifies, which version of
                            the cifti files to copy over [].
     --bolds            ... Which bold images (as they are specified in the
@@ -7142,8 +6900,11 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                            specified, the results will be copied/linked from
                            `Results.<hcp_bold_variant>` into 
                            `images/functional.<hcp_bold_variant>. []
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
 
-    The parameters can be specified in command call or subject.txt file.
+    The parameters can be specified in command call or session.txt file.
     If possible, the files are not copied but rather hard links are created to
     save space. If hard links can not be created, the files are copied.
 
@@ -7164,7 +6925,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex mapHCPData sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex mapHCPData sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
           overwrite=no hcp_cifti_tail=_Atlas bolds=all
     ```
     
@@ -7178,6 +6939,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     2019-04-25 - Grega Repovš - Changed subjects to sessions
     2019-05-26 - Grega Repovš - Added support for boldnamekey
     2020-01-14 - Grega Repovš - Expanded documentation on use of boldname and hcp_cifti_tail
+    2020-06-23 - Grega Repovš - Fixed use of hcp_suffix and added use of img_suffix
     """
 
     
@@ -7193,7 +6955,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
 
     f = getFileNames(sinfo, options)
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
     #    MNINonLinear/Results/<boldname>/<boldname>_Atlas.dtseries.nii -- cifti
