@@ -1,11 +1,11 @@
-function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
+function [] = fc_Preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
-%function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
+%function [] = fc_Preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 %
 %  A function for running single BOLD file based functional connectivity preprocessing.
 %
 %  INPUTS
-%       subjectf ... The subject's folder with images and data.
+%       sessionf ... The session's folder with images and data.
 %       bold     ... The number of the bold file to process.
 %       omit     ... The number of frames to omit at the start of each bold [].
 %       doIt     ... A string specifying, which steps to perform and in what
@@ -63,11 +63,14 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %                     boldname        : bold
 %                     bold_tail       :
 %                     bold_variant    :
+%                     img_suffix      :
 %                     glm_matrix      : none  ('none' / 'text' / 'image' / 'both')
 %                     glm_residuals   : save
 %                     glm_name        : 
 %
 %  USE
+%  ===
+%  
 %  fc_Preprocess is a complex function initially used to prepare BOLD files
 %  for further functional connectivity analysis. The function enables the
 %  following actions:
@@ -75,6 +78,33 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %  * spatial smoothing (3D or 2D for cifti files)
 %  * temporal filtering (high-pass, low-pass)
 %  * removal of nuisance signal and task structure
+%
+%   BASICS
+%   ======
+%
+%   Basics specify the files to use for processing and what to do. The relevant
+%   parameters are:
+%
+%   - sessionf  ... Specifies the sessions's base folder in which the function
+%                   will look for all the other relevant files.
+%   - bold      ... The number of the bold file to process
+%   - doIt      ... The actions to be performed.
+%   - overwrite ... Whether to overwrite the existing data or not.
+%   - variant   ... A string to prepend to the list of steps done in the
+%                   resulting files saved.
+%   - tail      ... The file (format) extension (e.g. '.nii.gz').
+%   - efile     ... The event (fidl) filename.
+%
+%   Important are also the following optional keys in the options parameter:
+%
+%   - boldname     ... Specifies, how the BOLD files are named in the
+%                      images/functional folder.
+%   - bold_tail    ... Specifies the additional tail that the bold name might
+%                      have (see below).
+%   - bold_variant ... Specifies a possible extension for the images/functional
+%                      and images/segmentation/boldmasks folders
+%   - img_suffix   ... Specifies a possible extension for the images folder name
+%                      enabling processing of multiple parallel workflows
 %
 %  The actions performed are denoted by a single letter, and they
 %  will be executed in the sequence listed. The possible actions are:
@@ -344,7 +374,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %   EXAMPLE USE
 %   ===========
 %
-%   >>> fc_Preprocess('subjects/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
+%   >>> fc_Preprocess('sessions/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %
@@ -404,6 +434,9 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %
 %   2018-09-22 Grega Repovs (v0.9.13)
 %              - Fixed an issue with conversion of doIt from char to string
+%
+%   2020-07-03 Grega Repovs (v0.9.14)
+%              - Added support for img_suffix
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -419,12 +452,12 @@ if nargin < 6,  task = [];                                  end
 if nargin < 5 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 4 || isempty(doIt),   doIt = 'shrcl';           end
 if nargin < 3, omit = [];                                   end
-if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
+if nargin < 2, error('ERROR: At least session folder and BOLD number need to be specified for the funtion to run!'); end
 
 
 fprintf('\nRunning preproces script v0.9.15 [%s]\n--------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
-fprintf('\n       subjectf: %s', subjectf);
+fprintf('\n       sessionf: %s', sessionf);
 fprintf('\n           bold: %s', num2str(bold));
 fprintf('\n           omit: %s', num2str(omit));
 fprintf('\n           doIt: %s', doIt);
@@ -442,7 +475,7 @@ fprintf('\n        options: %s', options);
 fprintf('\n');
 
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=|img_suffix=';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -473,21 +506,21 @@ doIt = strrep(doIt, ' ', '');
 % ======================================================
 %   ----> prepare paths
 
-froot = strcat(subjectf, ['/images/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
+froot = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
 
-file.movdata   = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '_mov.dat']);
-file.oscrub    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.scrub']);
-file.tscrub    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.bold_tail variant '.scrub']);
-file.bstats    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.bstats']);
-file.fidlfile  = strcat(subjectf, ['/images/functional' options.bold_variant '/events/' options.boldname   int2str(bold) efile]);
-file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks' options.bold_variant '/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
+file.movdata   = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '_mov.dat']);
+file.oscrub    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.scrub']);
+file.tscrub    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.bold_tail variant '.scrub']);
+file.bstats    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.bstats']);
+file.fidlfile  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' options.boldname   int2str(bold) efile]);
+file.bmask     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
 
 eroot          = strrep(efile, '.fidl', '');
-file.nuisance  = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.nuisance']);
-file.Xroot     = strcat(subjectf, ['/images/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+file.nuisance  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.nuisance']);
+file.Xroot     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
 
-file.lsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
-file.rsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
+file.lsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
+file.rsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
 
 
 % ======================================================

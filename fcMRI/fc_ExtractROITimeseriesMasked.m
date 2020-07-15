@@ -21,14 +21,14 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %                     -> other:  the column in *_scrub.txt file that matches bold file to be used for ignore mask
 %                     -> usevec: as specified in the use vector
 %       rcodes      - A list of region codes for which to extract the time-series [].
-%       mcodes      - A list of region codes from subject's roi file to use for masking if empty the specification from
+%       mcodes      - A list of region codes from session's roi file to use for masking if empty the specification from
 %                     roiinfo will be used.
 %       bmask       - Should a BOLD brain mask be used to further mask the regions used [false].
 %
 %   USE
 %   The function is used to extract ROI timeseries. What frames are extracted
 %   can be specified using an event string. If specified, it uses each
-%   subject's .fidl file to extract only the specified event related frames.
+%   session's .fidl file to extract only the specified event related frames.
 %   The string format is:
 %
 %   <title>:<eventlist>:<frame offset1>:<frame offset2>
@@ -46,24 +46,24 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %
 %   data.roinames   ... cell array of ROI names
 %   data.roicodes1  ... array of group ROI codes
-%   data.roicodes2  ... array of subject specific ROI codes
-%   data.subjects   ... cell array of subject codes
+%   data.roicodes2  ... array of session specific ROI codes
+%   data.sessions   ... cell array of session codes
 %   data.n_roi_vox  ... cell array of number voxels for each ROI
 %   data.datasets   ... cell array of titles for each of the dataset
 %   data.<title>.timeseries ... cell array of extracted timeseries
 %
-%   or in a tab separated text file in which data for each frame of each subject
-%   is in its own line, the first column is the subject code, the second the
+%   or in a tab separated text file in which data for each frame of each session
+%   is in its own line, the first column is the session code, the second the
 %   dataset title, the third the frame number and the following columns are for
 %   each of the specified ROI. The ROI are listed in the header.
 %
 %   *ROI definition*
 %   The basic definition of ROI to use is taken from roiinfo. Additional masking
-%   is done using subject specific ROI files as listed in the .list file. With
+%   is done using session specific ROI files as listed in the .list file. With
 %   large number of regions, masking can time consuming. If the same mask is
 %   used for all the ROI specified in the roiinfo file (e.g. gray matter) then
-%   it is possible to specify the relevant subject specific mask codes using
-%   the mcodes paramater. In this case the subject specific part of the roiinfo
+%   it is possible to specify the relevant session specific mask codes using
+%   the mcodes paramater. In this case the session specific part of the roiinfo
 %   will be ignored and replaced by mcodes.
 %
 %   It is also possible to use
@@ -90,7 +90,7 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %   2017-03-19 Grega Repovs
 %            - Updated documentation
 %   2017-03-21 Grega Repovs
-%            - Optimized per subject masking of ROI.
+%            - Optimized per session masking of ROI.
 %   2017-04-18 Grega Repovs
 %            - Adjusted to use updated g_ReadFileList.
 %   2017-04-25 Grega Repovs
@@ -151,7 +151,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-[subject, nsub, nfiles, listname] = g_ReadFileList(flist);
+[session, nsub, nfiles, listname] = g_ReadFileList(flist);
 
 fprintf(' ... done.');
 
@@ -169,21 +169,21 @@ nana = length(ana);
 
 
 %   ------------------------------------------------------------------------------------------
-%                                                The main loop ... go through all the subjects
+%                                                The main loop ... go through all the sessions
 
 groi = nimage.img_ReadROI(roiinfo);
 
 for n = 1:nsub
 
-    fprintf('\n ... processing %s', subject(n).id);
+    fprintf('\n ... processing %s', session(n).id);
 
     % ---> reading image files
 
     fprintf('\n     ... reading image file(s)');
 
-    y = nimage(subject(n).files{1});
-    for f = 2:length(subject(n).files)
-        y = [y nimage(subject(n).files{f})];
+    y = nimage(session(n).files{1});
+    for f = 2:length(session(n).files)
+        y = [y nimage(session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -191,19 +191,19 @@ for n = 1:nsub
 
 
 
-    % ---> creating per subject ROI mask
+    % ---> creating per session ROI mask
 
     roi = groi;
 
-    % -- mask with subject's ROI file
+    % -- mask with session's ROI file
 
     imask = ones(roi.voxels, 1);
 
-    if isfield(subject(n), 'roi')
+    if isfield(session(n), 'roi')
         if isempty(mcodes)
-            roi  = nimage.img_ReadROI(roiinfo, subject(n).roi);
+            roi  = nimage.img_ReadROI(roiinfo, session(n).roi);
         else
-            sroi = nimage(subject(n).roi);
+            sroi = nimage(session(n).roi);
             imask = imask & ismember(sroi.data, mcodes);
         end
     end
@@ -211,7 +211,7 @@ for n = 1:nsub
     % -- exclude voxels outside the BOLD brain mask
 
     if bmask
-        imask = imask & img_BOLDBrainMask(subject(n).files);
+        imask = imask & img_BOLDBrainMask(session(n).files);
     end
 
     % -- exclude voxels with 0 variance
@@ -236,7 +236,7 @@ for n = 1:nsub
     % ---> creating task mask
 
     if eventbased
-        finfo = g_CreateTaskRegressors(subject(n).fidl, y.runframes, fstring, fignore);
+        finfo = g_CreateTaskRegressors(session(n).fidl, y.runframes, fstring, fignore);
         finfo = finfo.run;
         matrix = [];
         for r = 1:length(finfo)
@@ -276,7 +276,7 @@ for n = 1:nsub
 
     fprintf('frames]');
 
-    data.subjects{n}     = subject(n).id;
+    data.sessions{n}     = session(n).id;
     data.n_roi_vox(n, :) = roi.roi.nvox;
 
 end
@@ -302,7 +302,7 @@ if ismember('t', options)
     % ---> open file and print header
 
     [fout message] = fopen([targetf '.txt'],'w');
-    fprintf(fout, 'subject\tevent\tframe\tuse');
+    fprintf(fout, 'session\tevent\tframe\tuse');
     for ir = 1:length(data.roinames)
         fprintf(fout, '\t%s', data.roinames{ir});
     end
@@ -318,7 +318,7 @@ if ismember('t', options)
                 usevec = data.(ana(a).name).usevec{is};
                 tslen = size(ts, 2);
                 for it = 1:tslen
-                    fprintf(fout, '\n%s\t%s\t%d\t%d', data.subjects{is}, ana(a).name, it, usevec(it));
+                    fprintf(fout, '\n%s\t%s\t%d\t%d', data.sessions{is}, ana(a).name, it, usevec(it));
                     fprintf(fout, '\t%.5f', ts(:,it));
                 end
             end

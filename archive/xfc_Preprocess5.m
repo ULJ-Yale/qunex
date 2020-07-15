@@ -1,4 +1,4 @@
-function [TS] = fc_Preprocess5(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail)
+function [TS] = fc_Preprocess5(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, wbmask, sessionroi, overwrite, tail)
 
 %	Written by Grega Repovš, 2007-10-29
 %
@@ -42,7 +42,7 @@ if nargin < 14
     if nargin < 13
         overwrite = false;
         if nargin < 12
-            sbjroi = '';
+            sessionroi = '';
             if nargin < 11
                 wbmask = '';
                 if nargin < 10
@@ -80,12 +80,12 @@ file.movdata  = strcat(subjectf, ['/images/functional/movement/bold' int2str(bol
 file.fidlfile = strcat(subjectf, ['/images/functional/events/bold' int2str(bold) efile]);
 
 file.wbmask = wbmask;
-if strcmp(sbjroi, 'aseg')
-    file.sbjroi = file.segmask;
-elseif strcmp(sbjroi, 'wb')
-    file.sbjroi = file.boldmask;
+if strcmp(sessionroi, 'aseg')
+    file.sessionroi = file.segmask;
+elseif strcmp(sessionroi, 'wb')
+    file.sessionroi = file.boldmask;
 else
-    file.sbjroi = sbjroi;
+    file.sessionroi = sessionroi;
 end
 
 glm.rgss = rgss;
@@ -186,7 +186,7 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
 	%   ----> mask if necessary
 	
 	if ~isempty(file.wbmask)
-	    wbmask = nimage.img_ReadROI(file.wbmask, file.sbjroi);
+	    wbmask = nimage.img_ReadROI(file.wbmask, file.sessionroi);
 	    wbmask = wbmask.img_GrowROI(2);
         WB.data = WB.image2D;
         WB.data(wbmask.image2D > 0) = 0;

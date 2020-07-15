@@ -1,6 +1,6 @@
-function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verbose)
+function [] = g_PlotBoldTS(images, elements, masks, filename, skip, sessionid, verbose)
 
-%function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verbose)
+%function [] = g_PlotBoldTS(images, elements, masks, filename, skip, sessionid, verbose)
 %
 %       Creates and saves a plot of BOLD timeseries
 %
@@ -9,7 +9,7 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %       masks       - one or multiple masks to use for extracting BOLD data
 %       filename    - filename to save the plot to
 %       skip        - how many frames to skip at the stat of the bold run
-%       subjid      - subject code
+%       sessionid   - session code
 %       verbose     - whether to be talkative
 %
 %   USE
@@ -137,8 +137,8 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %   This is relevant for legacy data that does not use prescans and the signal is not yet
 %   stable. It is set to 0 by default. The skipped frames are masked.
 %
-%   *subjid*
-%   The subject id information to display in the title of the page.
+%   *sessionid*
+%   The session id information to display in the title of the page.
 %
 %   *filename*
 %   The path and filename for the resulting PDF. 'BoldTSPlot.pdf' by default.
@@ -152,12 +152,12 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %
 %   EXAMPLE USE VIA Qn|Nex FROM TERMINAL
 % 
-%   qunex g_PlotBoldTS --images="<Path_to_Study>/subjects/AP1937/images/functional/bold1.nii.gz" \
+%   qunex g_PlotBoldTS --images="<Path_to_Study>/sessions/AP1937/images/functional/bold1.nii.gz" \
 %   --elements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1" \
-%   --masks="<Path_to_Study>/subjects/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \
+%   --masks="<Path_to_Study>/sessions/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \
 %   --filename='AP1937-BoldTSPlot.pdf' \
 %   --skip="0" \
-%   --subjid="AP1937" \
+%   --sessionid="AP1937" \
 %   --verbose="true"
 % 
 %   ——————————————————————————
@@ -181,7 +181,7 @@ if isOctave
 end
 
 if nargin < 7 || isempty(verbose), verbose = false; end
-if nargin < 6 || isempty(verbose), subjid = []; end
+if nargin < 6 || isempty(verbose), sessionid = []; end
 if nargin < 5 || isempty(skip), skip = 0; end
 if nargin < 4 || isempty(filename), filename = 'BoldTSPlot.pdf'; end
 if nargin < 3, masks = []; end
@@ -464,7 +464,7 @@ txt = strrep(txt, '_', '\_');
 
 sp = subplot('Position', [sz.HPad  1 - sz.VTop 1 - 2 * sz.HPad sz.VTop]);
 set(sp, 'YLim', [0 3]);
-text(0, 0, {['\bf\fontsize{16}BOLD Timeseries Plot \rm|\color{red} ' subjid], ['\rm\fontsize{12}\color{black}' txt]}, 'VerticalAlignment', 'bottom');
+text(0, 0, {['\bf\fontsize{16}BOLD Timeseries Plot \rm|\color{red} ' sessionid], ['\rm\fontsize{12}\color{black}' txt]}, 'VerticalAlignment', 'bottom');
 set(sp, 'Visible', 'off');
 
 if verbose, fprintf('\n ---> saving figure'); end

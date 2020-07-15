@@ -1,6 +1,6 @@
-function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sbjroi, nroi, shrink, verbose);
+function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose);
 
-%function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sbjroi, nroi, shrink, verbose);
+%function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose);
 %
 %	Extracts the specified nuisances and saves it into .nuisance file.
 %
@@ -10,7 +10,7 @@ function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, 
 %   target      - folder to save results into, default: where bold image is, 'none': do not save in external file
 %   ntarget     - where to store used masks and their png image, 'none' for nowhere
 %   wbmask      - a mask used to exclude ROI from the whole-brain nuisance regressor [none]
-%   sbjroi      - a mask used to create subject specific nroi [none]
+%   sessionroi   - a mask used to create session specific nroi [none]
 %   nroi        - ROI.names file to use to define additional nuisance ROI to regress out
 %                 when additionally provided a list of ROI, those will not be masked by
 %                 bold brain mask (e.g. 'nroi.names|eyes,scull')
@@ -24,14 +24,14 @@ function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, 
 %            - Added more detailed reporting of parameters used.
 %
 
-if nargin < 10, verbose = false; end
-if nargin < 9,  shrink  = true;  end
-if nargin < 8,  nroi    = [];    end
-if nargin < 7,  sbjroi  = [];    end
-if nargin < 6,  wbmask  = [];    end
-if nargin < 5,  store   = [];    end
-if nargin < 4,  target  = [];    end
-if nargin < 3,  bmimg   = [];    end
+if nargin < 10, verbose     = false; end
+if nargin < 9,  shrink      = true;  end
+if nargin < 8,  nroi        = [];    end
+if nargin < 7,  sessionroi  = [];    end
+if nargin < 6,  wbmask      = [];    end
+if nargin < 5,  store       = [];    end
+if nargin < 4,  target      = [];    end
+if nargin < 3,  bmimg       = [];    end
 
 if nargin < 2
     error('ERROR: No tissue segmentation image (aseg, aparc+aseg) provided!');
@@ -49,15 +49,15 @@ fs_csf         = [4 5 14 15 24 43 44 72 701];
 if verbose,
     fprintf('\nRunning g_ExtractNuisance\n-------------------------\n');
     fprintf('\nParameters:\n-----------');
-    fprintf('\n        img: %s', img);
-    fprintf('\n      fsimg: %s', fsimg);
-    fprintf('\n      bmimg: %s', bmimg);
-    fprintf('\n     target: %s', target);
-    fprintf('\n    ntarget: %s', ntarget);
-    fprintf('\n     wbmask: %s', wbmask);
-    fprintf('\n     sbjroi: %s', sbjroi);
-    fprintf('\n       nroi: %s', nroi);
-    fprintf('\n     shrink: %s\n', num2str(shrink));
+    fprintf('\n            img: %s', img);
+    fprintf('\n          fsimg: %s', fsimg);
+    fprintf('\n          bmimg: %s', bmimg);
+    fprintf('\n         target: %s', target);
+    fprintf('\n        ntarget: %s', ntarget);
+    fprintf('\n         wbmask: %s', wbmask);
+    fprintf('\n     sessionroi: %s', sessionroi);
+    fprintf('\n           nroi: %s', nroi);
+    fprintf('\n         shrink: %s\n', num2str(shrink));
 end
 
 
@@ -125,11 +125,11 @@ wbmask = getImage(wbmask, fsimg, verbose);
 % --------------------------------------------------------------
 %                                 define additional nuisance ROI
 
-if ~isempty(sbjroi) && ischar(sbjroi)
-    if strcmp(sbjroi, 'aseg')
-        sbjroi = fsimg;
-    elseif strcmp(sbjroi, 'wb')
-        sbjroi = bimg;
+if ~isempty(sessionroi) && ischar(sessionroi)
+    if strcmp(sessionroi, 'aseg')
+        sessionroi = fsimg;
+    elseif strcmp(sessionroi, 'wb')
+        sessionroi = bimg;
     end
 end
 
@@ -138,7 +138,7 @@ if ~isempty(nroi)
     [fnroi nomask] = processeROI(nroi);
 
     if verbose, verbose = '\n---> Reading additional nuisance roi [%s]'; end
-    nroi = getImage(fnroi, sbjroi, verbose);
+    nroi = getImage(fnroi, sessionroi, verbose);
 
     maskcodes = find(~ismember(nroi.roi.roinames, nomask));
     if ~isempty(maskcodes)

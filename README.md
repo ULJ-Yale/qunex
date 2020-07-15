@@ -1,8 +1,4 @@
-# README File for Qu|Nex Suite Matlab NeuroImaging Tools (nitools)
-
-Background
-==========
----
+# README File for Qu|Nex Matlab NeuroImaging Tools (nitools)
 
 Qu|Nex Matlab NeuroImaging Tools, (i.e. `nitools`) are preprocessing and 
 analysis tools developed in matlab that support multiple 
@@ -21,54 +17,39 @@ utilities, and a modified version of HCP (Human Connectome Project)
 preprocessing tools. They are best utilized as a part of Qu|Nex (Multimodal
 Neuroimaging Analysis Platform).
 
-The `nitools` code is is co-developed and co-maintained by the 
-[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
-and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+The `nitools` code is is co-developed and co-maintained by:
 
-Installation
-============
----
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
+* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
 
-### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
-Usage and documentation
-===============================
----
-The Qu|Nex `nitools` are generally used as core functions across 
-various Qu|Nex tools but can be run independently in two ways:
+Quick links
+-----------
 
-1. 
-A number of `nitools` commands provided as part of QuNex/nitools package can be 
-run directly through the `qunex` connector wrapper. 
-For more information on each command run `qunex ?<command_name>`. 
-Arguments can be specified in any order. Arguments that are not provided will 
-be passed as empty strings / vectors to be processed with default values. 
-Take care to embed vectors in square brackets (e.g. "[1 8 6 12]") and cell arrays 
-in curly braces (e.g. "{'DLPFC', 'ACC','FEF'}"). 
-In addition, 'saveOutput' argument can be specified to redirect Matlab
-output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
-2. 
-Directly from inside Matlab by calling each command directly.  
+* [Website](http://qunex.yale.edu/)
+* [Qu|Nex Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
+* [SDK Wiki](https://bitbucket.org/oriadev/qunexsdk/wiki/Home)
+* [Qu|Nex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
+* [Qu|Nex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
+* [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 
-To obtain a list of all supported `qunex nitools` commands run:
 
-`qunex nitoolshelp`
+Change Log
+----------
 
-The function-specific help and usage is imbedded in the help call for each command.
-You can acces this by running `help <command_name>` inside the Matlab terminal. 
+* 0.60.1  Full support for hcp_suffix in runQC.
+* 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
+* 0.50.1  License and README updates.
+* 0.50.0  Renamed gmrimage class to nimage and methods names from mri_ to img_.
+* 0.49.10 Initial submodule versioning.
 
-External dependencies
-=====================
----
 
-### See https://bitbucket.org/oriadev/qunex/src/master/README.md
+References
+----------
 
-Change log
-=====================
----
-
-* 0.50.00 Renamed gmrimage class to nimage and methods names from mri_ to img_.
-* 0.49.10 Initial submodule versioning.
-
-[Mind and Brain Lab]: http://mblab.si
-[Anticevic Lab]: http://anticeviclab.yale.edu
+Yang GJ, Murray JD, Repovs G, Cole MW, Savic A, Glasser MF, Pittenger C,
+Krystal JH, Wang XJ, Pearlson GD, Glahn DC, Anticevic A. Altered global brain
+signal in schizophrenia. Proc Natl Acad Sci U S A. 2014 May 20;111(20):7438-43.
+doi: 10.1073/pnas.1405289111. PubMed PMID: 24799682; PubMed Central PMCID:
+PMC4034208.

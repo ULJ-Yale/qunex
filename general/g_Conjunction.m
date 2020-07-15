@@ -5,7 +5,7 @@ function [p, t, c] = g_Conjunction(img, method, effect, q, data)
 %
 %	v 2.0 © Grega Repovš, Feb 27 2008
 %
-%	Accepts matrix of significance estimates [voxels, subjects] and computes conjunction for 1 <= u <= n.
+%	Accepts matrix of significance estimates [voxels, sessions] and computes conjunction for 1 <= u <= n.
 %	Results at each step are thresholded using FDR q.
 %	Based on Heller et al, NeuroImage 37 (2007) 1178 – 1185
 %
@@ -31,7 +31,7 @@ function [p, t, c] = g_Conjunction(img, method, effect, q, data)
 %	Results (always in the same data format as the input )
 %		p : images of conjoined p values for u = 1 to u = n
 %		t : p thresholded with q(FDR)
-%		c : image with number of subjects that show significant effect
+%		c : image with number of sessions that show significant effect
 %
 %	========= UPDATE LOG =========
 %

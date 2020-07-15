@@ -5,7 +5,7 @@ function  [] = g_ComputeGroupBOLDStats(flist, tfile, stats, inmask, ignore)
 %   function for extraction of image statistics over the whole group.
 %
 %   INPUT
-%       flist   ... A subjects list file.
+%       flist   ... A sessions list file.
 %       tfile   ... The file root to save the results to [''].
 %       stats   ... A cell array or a comma separated string specifying, which statistics to compute.
 %       inmask  ... A mask of frames to exclude or an event string specifying which frames to use.
@@ -15,19 +15,19 @@ function  [] = g_ComputeGroupBOLDStats(flist, tfile, stats, inmask, ignore)
 %               -> '<col>': the column in *_scrub.txt file that matches bold file to be used for ignore mask
 %
 %   USE
-%   The function computes for each subject the specified image statistics across
+%   The function computes for each session the specified image statistics across
 %   the BOLD image, using the nimage img_Stats method. Results are saved for
-%   each computed statistics in a separate file with one volume for each subject
-%   with order of volumes matching the order in which the subjects are listed in
+%   each computed statistics in a separate file with one volume for each session
+%   with order of volumes matching the order in which the sessions are listed in
 %   the flist file. The root of the files in which the results are saved is
 %   specified in tfile. If not specified (i.e. left empty) the root will be the
 %   root of the flist.
 %
 %   The function is flexible in specifying what frames to use and/or exclude.
 %   inmask parameter can specify either a mask of frames to exclude for each
-%   subject, or it can specify an eventstring to be used with a per-subject
+%   session, or it can specify an eventstring to be used with a per-session
 %   fidl file. If an eventstring is specifed, then the list file (flist) needs
-%   to also list a fidl file for each subject. The eventstring will then be
+%   to also list a fidl file for each session. The eventstring will then be
 %   used to create a regressor matrix using g_CreateTaskRegressors function,
 %   and each frame for which there is a non-zero value in any of the regressor
 %   columns will be included in the computation of statistics. As an example,
@@ -126,28 +126,28 @@ end
 
 fprintf('\n ... listing files to process');
 
-subject = g_ReadFileList(flist);
-nsub = length(subject);
+session = g_ReadFileList(flist);
+nsub = length(session);
 
 fprintf(' ... done.');
 
 
 %   ------------------------------------------------------------------------------------------
-%                                                The main loop ... go through all the subjects
+%                                                The main loop ... go through all the sessions
 
 first = true;
 
 for n = 1:nsub
 
-    fprintf('\n ... processing %s', subject(n).id);
+    fprintf('\n ... processing %s', session(n).id);
 
     % ---> reading image files
 
     fprintf('\n     ... reading image file(s)');
 
-    y = nimage(subject(n).files{1});
-    for f = 2:length(subject(n).files)
-        y = [y nimage(subject(n).files{f})];
+    y = nimage(session(n).files{1});
+    for f = 2:length(session(n).files)
+        y = [y nimage(session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -156,9 +156,9 @@ for n = 1:nsub
 
     if eventbased
         mask = [];
-        if isfield(subject(n), 'fidl')
-            if subject(n).fidl
-                rmodel = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, fignore);
+        if isfield(session(n), 'fidl')
+            if session(n).fidl
+                rmodel = g_CreateTaskRegressors(session(n).fidl, y.runframes, inmask, fignore);
                 mask   = rmodel.run;
                 nmask  = [];
                 for r = 1:length(mask)
