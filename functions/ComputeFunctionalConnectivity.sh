@@ -40,7 +40,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are BOLD from previous processing
-# * These may be stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * These may be stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -51,10 +51,10 @@ usage() {
 # -------------------------------------------------------------------------------------------------------------------
 #  fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
 #  INPUT
-#  flist    - A .list file of subject information.
+#  flist    - A .list file with session information.
 #  roinfo   - An ROI file.
 #  inmask   - An array mask defining which frames to use (1) and which not (0) [0]
-#  options  - A string defining which subject files to save ['']:
+#  options  - A string defining which session files to save ['']:
 #  r        - save map of correlations
 #  f        - save map of Fisher z values
 #  cv       - save map of covariances
@@ -69,8 +69,8 @@ usage() {
 # -------------------------------------------------------------------------------------------------------------------   
 #  fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
 #  INPUT 
-#  flist       - conc-like style list of subject image files or conc files:
-#                  subject id:<subject_id>
+#  flist       - conc-like style list of session image files or conc files:
+#                  session id:<session_id>
 #                  roi:<path to the individual's ROI file>
 #                  file:<path to bold files - one per line>
 #               or a well strucutured string (see g_ReadFileList).
@@ -101,20 +101,20 @@ echo ""
 echo "-- GENERAL PARMETERS:"
 echo ""
 echo "      --calculation=<type_of_calculation>      Run <seed>, <gbc> or <dense> calculation for functional connectivity."
-echo "      --runtype=<type_of_run>                  Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
-echo "      --targetf=<path_for_output_file>         Specify the absolute path for output folder. If using --runtype='individual' and left empty the output will default to --inputpath location for each subject"
-echo "      --overwrite=<clean_prior_run>            Delete prior run for a given subject. Default [no]."
+echo "      --runtype=<type_of_run>                  Run calculation on a <list> (requires a list input), on <individual> sessions (requires manual specification) or a <group> of individual sessions (equivalent to a list, but with manual specification)"
+echo "      --targetf=<path_for_output_file>         Specify the absolute path for output folder. If using --runtype='individual' and left empty the output will default to --inputpath location for each session"
+echo "      --overwrite=<clean_prior_run>            Delete prior run for a given session. Default [no]."
 echo ""
 echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP SEED/GBC RUN:"
 echo ""
-echo "      --flist=<subject_list_file>              Specify *.list file of subject information. If specified then --subjectsfolder, --inputfile, --subject and --outname are omitted"
+echo "      --flist=<session_list_file>              Specify *.list file of session information. If specified then --sessionsfolder, --inputfile, --session and --outname are omitted"
 echo ""
-echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT SEED/GBC RUN:"
+echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SESSION SEED/GBC RUN:"
 echo ""
-echo "      --subjectsfolder=<folder_with_subjects>             Path to study subjects folder"
-echo "      --subjects=<list_of_cases>                          List of subjects to run"
+echo "      --sessionsfolder=<folder_with_sessions>             Path to study sessions folder"
+echo "      --sessions=<list_of_cases>                          List of sessions to run"
 echo "      --inputfiles=<files_to_compute_connectivity_on>     Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
-echo "      --inputpath=<path_for_input_file>                   Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
+echo "      --inputpath=<path_for_input_file>                   Specify path of the file you want to use relative to the master study folder and session directory (e.g. /images/functional/)"
 echo "      --outname=<name_of_output_file>                     Specify the suffix name of the output file name"  
 echo ""
 echo "-- REQUIRED GBC PARMETERS:"
@@ -154,7 +154,7 @@ echo ""
 echo "-- OPTIONAL SEED FC PARMETERS: "
 echo ""
 echo "      --method=<method_to_get_timeseries>  Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
-echo "      --options=<calculations_to_save>     A string defining which subject files to save. Default assumes all [''] "
+echo "      --options=<calculations_to_save>     A string defining which session files to save. Default assumes all [''] "
 echo ""
 echo "         > r ... save map of correlations "
 echo "         > f ... save map of Fisher z values "
@@ -170,8 +170,8 @@ echo "      --mask=<which_frames_to_use>             An array mask defining whic
 echo ""
 echo "-- REQUIRED PARMETERS FOR A DENSE FC RUN:"
 echo ""
-echo "      --subjectsfolder=<folder_with_subjects>             Path to study subjects folder"
-echo "      --subjects=<list_of_cases>                          List of subjects to run"
+echo "      --sessionsfolder=<folder_with_sessions>             Path to study sessions folder"
+echo "      --sessions=<list_of_cases>                          List of sessions to run"
 echo "      --inputfiles=<files_to_compute_connectivity_on>     Specify the comma separated file names you want to use (e.g. bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
 echo "      --mem-limit=<limit-GB>                              Restrict memory. Memory limit expressed in gigabytes. Default [4]"
 echo ""
@@ -197,10 +197,10 @@ echo ""
 echo ""
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_sessions>' \ "
 echo "--calculation='seed' \ "
 echo "--runtype='individual' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "--sessions='<comma_separarated_list_of_cases>' \ "
 echo "--inputfiles='<files_to_compute_connectivity_on>' \ "
 echo "--inputpath='/images/functional' \ "
 echo "--extractdata='yes' \ "
@@ -214,9 +214,9 @@ echo "--mask='5' \ "
 echo "--covariance='false' "
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_sessions>' \ "
 echo "--runtype='list' \ "
-echo "--flist='subjects.list' \ "
+echo "--flist='sessions.list' \ "
 echo "--extractdata='yes' \ "
 echo "--outname='<name_of_output_file>' \ "
 echo "--ignore='udvarsme' \ "
@@ -228,10 +228,10 @@ echo "--mask='5' "
 echo "--covariance='false' "
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_sessions>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='individual' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "--sessions='<comma_separarated_list_of_cases>' \ "
 echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
 echo "--inputpath='/images/functional' \ "
 echo "--extractdata='yes' \ "
@@ -249,10 +249,10 @@ echo "--vstep='10000'"
 echo "--covariance='false' "
 echo ""
 echo "qunex computeBOLDfc \ "
-echo "--subjectsfolder='<folder_with_subjects>' \ "
+echo "--sessionsfolder='<folder_with_sessions>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='list' \ "
-echo "--flist='subjects.list' \ "
+echo "--flist='sessions.list' \ "
 echo "--extractdata='yes' \ "
 echo "--outname='<name_of_output_file>' \ "
 echo "--ignore='udvarsme' \ "
@@ -330,8 +330,8 @@ local arguments=("$@")
 
 # -- Initialize global output variables
 
-unset SubjectsFolder   # --subjectsfolder=
-unset CASES            # --subjects=
+unset SessionsFolder   # --sessionsfolder=
+unset CASES            # --sessions=
 unset InputFiles       # --inputfile=
 unset InputPath        # --inputpath=
 unset OutName          #  --outname=
@@ -373,11 +373,11 @@ while [ ${index} -lt ${numArgs} ]; do
             version_show $@
             exit 0
             ;;
-        --subjectsfolder=*)
-            SubjectsFolder=${argument/*=/""}
+        --sessionsfolder=*)
+            SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subjects=*)
+        --sessions=*)
             CASES=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -507,15 +507,15 @@ fi
 # -- Check run type (group or individual)
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     # -- Check options for individual run
-    if [ -z ${SubjectsFolder} ]; then
+    if [ -z ${SessionsFolder} ]; then
         echo ""
-        reho "ERROR: <subjects-folder-path> not specified>. Check usage."; echo ""
+        reho "ERROR: <sessions-folder-path> not specified>. Check usage."; echo ""
         echo ""
         exit 1
     fi
     if [ -z ${CASES} ]; then
         echo ""
-        reho "ERROR: <subject_ids> not specified. Check usage."; echo ""
+        reho "ERROR: <session_ids> not specified. Check usage."; echo ""
         echo ""
         exit 1
     fi
@@ -653,7 +653,7 @@ if [ ${Calculation} == "gbc" ]; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
@@ -671,8 +671,8 @@ if [ ${RunType} == "list" ]; then
     echo "  FileList: ${FileList}"
 fi
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
-    echo "  SubjectsFolder: ${SubjectsFolder}"
-    echo "  Subjects: ${CASES}"
+    echo "  SessionsFolder: ${SessionsFolder}"
+    echo "  Sesssions: ${CASES}"
     echo "  InputFiles: ${InputFiles}"
     echo "  InputPath: ${InputPath}"
     echo "  OutName: ${OutName}"
@@ -715,20 +715,20 @@ if [ ${RunType} == "individual" ]; then
         geho "--- Establishing paths for all input and output folders:"
         echo ""
         if [ ${OutPath} == "" ]; then
-            OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
+            OutPath=${SessionsFolder}/${INPUTCASE}/${InputPath}
         fi
         # -- Parse input from the InputFiles variable
         InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
         if [ ${Calculation} != "dense" ]; then
             # -- Cleanup prior tmp lists
-            rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
+            rm -rf ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
             # -- Generate output directories
-            mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
+            mkdir ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
             mkdir ${OutPath} > /dev/null 2>&1
             # -- Generate the temp list
-            echo "subject id:${INPUTCASE}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-            for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
-            FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
+            echo "session id:${INPUTCASE}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
+            for InputFile in ${InputFiles}; do echo "file:${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+            FinalInput="${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
         fi
     done
 fi
@@ -746,8 +746,8 @@ if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
         # -- Parse input from the InputFiles variable
         InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
         # -- Generate the temp list
-        echo "subject id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
-        for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+        echo "session id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
+        for InputFile in ${InputFiles}; do echo "file:${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
         FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
     done
 fi
@@ -767,7 +767,7 @@ if [ ${Calculation} != "dense" ]; then
         FinalInput=${FileList}
     fi
     # -- Check if FC seed run is specified
-        if [ -z "$ExtractData" ]; then ExtractData=""; fi
+        if [ -z "$ExtractData" ]; then ExtractData="no"; fi
         if [ -z "$Covariance" ]; then Covariance="true"; fi
         if [ -z "$Verbose" ]; then Verbose="true"; fi
         if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
@@ -777,7 +777,7 @@ if [ ${Calculation} != "dense" ]; then
         # -- run FC seed command: 
         # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-        # Example with string input --> ${QUNEXMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        # Example with string input --> ${QUNEXMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|session id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
         if [ -z "$Method" ]; then Method="mean"; fi
         if [ -z "$FCCommand" ]; then FCCommand="all"; fi
         ${QUNEXMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
@@ -787,7 +787,7 @@ if [ ${Calculation} != "dense" ]; then
         # -- run GBC seed command: 
         # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-        # Example with string input --> ${QUNEXMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        # Example with string input --> ${QUNEXMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|session id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
         if [ -z "$TargetROI" ]; then TargetROI=""; fi
         if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
         if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
@@ -808,7 +808,7 @@ fi
 # -- Check if dense run is specified
 if [ ${Calculation} == "dense" ]; then
     for INPUTCASE in ${INPUTCASES}; do
-        geho "--- Running Dense Connectome on BOLD data for ${INPUTCASE}. Note: need ~30GB free RAM at any one time per subject!"
+        geho "--- Running Dense Connectome on BOLD data for ${INPUTCASE}. Note: need ~30GB free RAM at any one time per session!"
         echo ""
         # -- Parse input from the InputFiles variable
         InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
@@ -836,17 +836,17 @@ if [ ${Calculation} == "dense" ]; then
                 #    <limit-GB> - memory limit in gigabytes
                 #
             if [[ ${Covariance} == "false" ]]; then
-                wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
-                ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii \
-                -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+                wb_command -cifti-correlation ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+                ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii \
+                -weights ${SessionsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
                 -fisher-z -mem-limit ${MemLimit}
-                OutDense="${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii"
+                OutDense="${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii"
             else
-                wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
-                ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii \
-                -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+                wb_command -cifti-correlation ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+                ${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii \
+                -weights ${SessionsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
                 -mem-limit ${MemLimit} -covariance
-                OutDense="${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii"
+                OutDense="${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii"
             fi
             if [[ -f ${OutDense} ]]; then
                 echo ""
@@ -865,7 +865,7 @@ if [ ${Calculation} == "dense" ]; then
 fi
 
 # -- Check if data extraction requested
-if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]]; then 
+if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]] && [[ ! `echo ${InputFiles} | grep 'dtseries'` ]]; then 
     geho "--- Saving out the data in a CSV file..."
     # -- Specify pconn file inputs and outputs
     PConnBOLDInputs=`ls ${OutPath}/${OutName}*ptseries.nii`
@@ -887,7 +887,8 @@ if [[ ${RunType} == "group" ]] && [[ ${Calculation} != "dense" ]]; then
     CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
    if [[ ! -z ${CheckRun} ]]; then
         echo ""
-        geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
+        geho "--- Connectivity calculation completed. Look for files beginning with: "
+        geho "    ${OutPath}/${OutName}"
         echo ""
     else
         echo ""
@@ -900,7 +901,8 @@ if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
     CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
    if [[ ! -z ${CheckRun} ]]; then
         echo ""
-        geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
+        geho "--- Connectivity calculation completed. Look for files beginning with: "
+        geho "    ${OutPath}/${OutName}"
         echo ""
     else
         echo ""

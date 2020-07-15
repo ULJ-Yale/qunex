@@ -40,7 +40,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are BOLD data from previous processing
-# * These data are stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -56,10 +56,10 @@ usage() {
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "     --subjectsfolder=<folder_with_subjects>             Path to study folder that contains subjects"
-     echo "     --subjects=<list_of_cases>                           List of subjects to run"
+     echo "     --sessionsfolder=<folder_with_sessions>             Path to study folder that contains sessions"
+     echo "     --sessions=<list_of_cases>                           List of sessions to run"
      echo "     --inputfile=<file_to_compute_parcellation_on>       Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
-     echo "     --inputpath=<path_for_input_file>                   Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
+     echo "     --inputpath=<path_for_input_file>                   Specify path of the file you want to use for parcellation relative to the master study folder and session directory (e.g. /images/functional/)"
      echo "     --inputdatatype=<type_of_dense_data_for_input_file> Specify the type of data for the input file (e.g. dscalar or dtseries)"
      echo "     --parcellationfile=<dlabel_file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
      echo "     --outname=<name_of_output_pconn_file>               Specify the suffix output name of the pconn file"
@@ -67,7 +67,7 @@ usage() {
      echo ""
      echo "-- OPTIONAL PARMETERS:"
      echo ""
-     echo "     --singleinputfile=<parcellate_single_file>          Parcellate only a single file in any location. Individual flags are not needed (--subject, --subjectsfolder, --inputfile)."
+     echo "     --singleinputfile=<parcellate_single_file>          Parcellate only a single file in any location. Individual flags are not needed (--session, --sessionsfolder, --inputfile)."
      echo "     --overwrite=<clean_prior_run>                       Delete prior run"
      echo "     --computepconn=<specify_parcellated_connectivity_calculation>       Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
      echo "     --useweights=<specify_yes_or_no>                    If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
@@ -89,8 +89,8 @@ usage() {
      echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo ""
      echo ""
-     echo "BOLDParcellation.sh --subjectsfolder='<folder_with_subjects>' \ "
-     echo "--subject='<subj_id>' \ "
+     echo "BOLDParcellation.sh --sessionsfolder='<folder_with_sessions>' \ "
+     echo "--session='<session_id>' \ "
      echo "--inputfile='<name_of_input_file' \ "
      echo "--inputpath='<path_for_input_file>' \ "
      echo "--inputdatatype='<type_of_dense_data_for_input_file>' \ "
@@ -133,8 +133,8 @@ fi
 # BOLD data should be pre-processed and in CIFTI format
 # The data should be in the folder relative to the master study folder, specified by the inputfile
 # Mandatory input parameters:
-    # SubjectsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
-    # Subject      # e.g. 100206
+    # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    # Session      # e.g. 100206
     # InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
     # InputPath # e.g. /images/functional/
     # InputDataType # e.g.dtseries
@@ -158,8 +158,8 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global output variables
-unset SubjectsFolder
-unset Subject
+unset SessionsFolder
+unset Session
 unset InputFile
 unset SingleInputFile
 unset InputPath
@@ -193,11 +193,11 @@ while [ ${index} -lt ${numArgs} ]; do
             version_show $@
             exit 0
             ;;
-        --subjectsfolder=*)
-            SubjectsFolder=${argument/*=/""}
+        --sessionsfolder=*)
+            SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subjects=*)
+        --sessions=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -260,15 +260,15 @@ done
 
 # -- Check required parameters
 if [ -z ${SingleInputFile} ]; then
-        if [ -z ${SubjectsFolder} ]; then
+        if [ -z ${SessionsFolder} ]; then
             usage
-            reho "ERROR: <subjects-folder-path> not specified>"
+            reho "ERROR: <sessions-folder-path> not specified>"
             echo ""
             exit 1
         fi
         if [ -z ${CASE} ]; then
             usage
-            reho "ERROR: <subject-id> not specified"
+            reho "ERROR: <session-id> not specified"
             echo ""
             exit 1
         fi
@@ -320,15 +320,15 @@ if [ -z ${WeightsFile} ]; then
 fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   SubjectsFolder: ${SubjectsFolder}"
-echo "   Subject: ${CASE}"
+echo "   SessionsFolder: ${SessionsFolder}"
+echo "   Session: ${CASE}"
 echo "   InputFile: ${InputFile}"
 echo "   SingleInputFile: ${SingleInputFile}"
 echo "   InputPath: ${InputPath}"
@@ -370,9 +370,9 @@ if [ "$InputDataType" == "dtseries" ]; then
     OutFileExt="ptseries.nii"
     if [ -z "$SingleInputFile" ]; then
         # -- Define input
-        BOLDInput="$SubjectsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
+        BOLDInput="$SessionsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
         # -- Define output
-        BOLDOutput="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
+        BOLDOutput="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
     else
         # -- Define input
         BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
@@ -395,9 +395,9 @@ if [ "$InputDataType" == "dscalar" ]; then
     OutFileExt="pscalar.nii"
     if [ -z "$SingleInputFile" ]; then
         # -- Define input
-        BOLDInput="$SubjectsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
+        BOLDInput="$SessionsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
         # -- Define output
-        BOLDOutput="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
+        BOLDOutput="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
     else
         # -- Define input
         BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
@@ -459,20 +459,20 @@ if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
         OutPConnFileExtR="r.pconn.nii"
         OutPConnFileExtRfZ="r_Fz.pconn.nii"
         OutPConnFileExtCov="cov.pconn.nii"
-        PConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
-        PConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
-        PConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
+        PConnBOLDOutputR="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
+        PConnBOLDOutputRfZ="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
+        PConnBOLDOutputCov="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
         OutGBCFileExtR="r_GBC.pscalar.nii"
         OutGBCFileExtRfZ="r_Fz_GBC.pscalar.nii"
         OutGBCFileExtCov="cov_GBC.pscalar.nii"
-        GBCBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtR}"
-        GBCBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtRfZ}"
-        GBCBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtCov}"
+        GBCBOLDOutputR="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtR}"
+        GBCBOLDOutputRfZ="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtRfZ}"
+        GBCBOLDOutputCov="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtCov}"
         # -- Check if weights file is specified
         geho "-- Using weights: $UseWeights"
         echo ""
         if [ "$UseWeights" == "yes" ]; then
-            WeightsFile="${SubjectsFolder}/${CASE}/${WeightsFile}"
+            WeightsFile="${SessionsFolder}/${CASE}/${WeightsFile}"
             geho "Using $WeightsFile to weight the calculations..."
             echo ""
             # -- Compute pconn using correlation
@@ -539,9 +539,9 @@ if [ "$ExtractData" == "yes" ]; then
         CSVOutPConnFileExtR="r.csv"
         CSVOutPConnFileExtCov="cov.csv"
         CSVOutPConnFileExtRfZ="r_Fz.csv"
-        CSVPConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtR}"
-        CSVPConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtCov}"
-        CSVPConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtRfZ}"
+        CSVPConnBOLDOutputR="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtR}"
+        CSVPConnBOLDOutputCov="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtCov}"
+        CSVPConnBOLDOutputRfZ="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtRfZ}"
         rm -f ${CSVPConnBOLDOutputR} 2> /dev/null
         rm -f ${CSVPConnBOLDOutputCov} 2> /dev/null
         rm -f ${CSVPConnBOLDOutputRfZ} 2> /dev/null
@@ -554,7 +554,7 @@ if [ "$ExtractData" == "yes" ]; then
         echo ""
         if [ -z "$SingleInputFile" ]; then
             DscalarFileExtCSV=".csv"
-            CSVDPScalarBoldOut="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${DscalarFileExtCSV}"
+            CSVDPScalarBoldOut="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${DscalarFileExtCSV}"
         else
             CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
         fi
@@ -565,7 +565,7 @@ if [ "$ExtractData" == "yes" ]; then
         geho "--- Saving out the parcellated single file dtseries data in a CSV file..."
         echo ""
         CSVDTseriesFileExtCSV=".csv"
-        CSVDTseriesFileExtCSV="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVDTseriesFileExtCSV}"
+        CSVDTseriesFileExtCSV="$SessionsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVDTseriesFileExtCSV}"
         rm -f "$CSVDTseriesFileExtCSV" 2> /dev/null
         wb_command -nifti-information -print-matrix ${BOLDOutput} >> ${CSVDTseriesFileExtCSV}
     fi
