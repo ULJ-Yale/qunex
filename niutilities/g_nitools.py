@@ -41,7 +41,7 @@ functions = {
     'g_ExtractROIGLMValues':           [('flist', 'string'), ('roif', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('values', 'string'), ('tformat', 'string'), ('verbose', 'bool')],
     'g_ExtractROIValues':              [('roif', 'string'), ('mfs', 'string'), ('sefs', 'string'), ('vnames', 'string'), ('output', 'string'), ('stats', 'string'), ('verbose', 'bool')],
     'g_FindPeaks':                     [('fin', 'string'), ('fout', 'string'), ('mins', 'numeric'), ('maxs', 'numeric'), ('val', 'string'), ('t', 'numeric'), ('presmooth', 'string'), ('projection', 'string'), ('options', 'string'), ('verbose', 'bool')],
-    'g_PlotBoldTS':                    [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('subjid', 'string'), ('verbose', 'bool')],
+    'g_PlotBoldTS':                    [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('sessionid', 'string'), ('verbose', 'bool')],
     'g_PlotBoldTSList':                [('flist', 'string'), ('elements', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('fformat', 'string'), ('verbose', 'bool')],
     'g_QAConcFile':                    [('file', 'string'), ('do', 'string'), ('target', 'string')],
     'g_ConjunctionG':                  [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string')],
@@ -55,8 +55,8 @@ functions = {
     'fc_ExtractROITimeseriesMasked':   [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('targetf', 'string'), ('options', 'string'), ('method', 'string'), ('ignore', 'string'), ('rcodes', 'string'), ('mcodes', 'string'), ('bmask', 'string')],
     'fc_ExtractTrialTimeseriesMasked': [('flist', 'string'), ('roif', 'string'), ('targetf', 'string'), ('tevents', 'string'), ('frames', 'numeric'), ('scrubvar', 'string')],
     'fc_fcMRISegment':                 [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('verbose', 'string')],
-    'fc_Preprocess':                   [('subjectf', 'string'), ('bold', 'numeric'), ('omit', 'numeric'), ('do', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('TR', 'numeric'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string')],
-    'fc_PreprocessConc':               [('subjectf', 'string'), ('bolds', 'numeric'), ('do', 'string'), ('TR', 'numeric'), ('omit', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string'), ('done', 'string')],
+    'fc_Preprocess':                   [('sessionf', 'string'), ('bold', 'numeric'), ('omit', 'numeric'), ('do', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('TR', 'numeric'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string')],
+    'fc_PreprocessConc':               [('sessionf', 'string'), ('bolds', 'numeric'), ('do', 'string'), ('TR', 'numeric'), ('omit', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string'), ('done', 'string')],
     's_ComputeBehavioralCorrelations': [('imgfile', 'string'), ('datafile', 'string'), ('target', 'string')],
     's_p2Z':                           [('img', 'string'), ('out', 'string'), ('tail', 'string')],
     's_TTestDependent':                [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
@@ -153,5 +153,3 @@ def run(command, args):
         print "\n\nERROR: %s failed! Please check output / log!\n" % (command)
     else:
         print "\n\n===> Successful completion of task\n"
-
-

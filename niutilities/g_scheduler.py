@@ -90,7 +90,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     to be separated by pipe characted, whereas key and value need to be
     separated by a colon. An example replacement string:
 
-    "subject:AP23791|folder:/studies/WM/Subjects/AP23791"
+    "session:AP23791|folder:/studies/WM/sessions/AP23791"
 
     REDIRECTING OUTPUT
     ==================
@@ -199,7 +199,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     qunex schedule command="bet {{in}} {{out}}" \\
                    replace="in:t1.nii.gz|out:brain.nii.gz" \\
                    settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
-                   workdir="/studies/WM/Subjects/AP23791/images/structural"
+                   workdir="/studies/WM/sessions/AP23791/images/structural"
     ```
     
     ----------------
@@ -239,7 +239,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         setDict   = dict([e.strip().split("=", 1) for e in setList])
         jobname   = setDict.pop('jobname', "schedule")
         comname   = setDict.pop('comname', "")
-        jobnum    = setDict.pop('jobnum', "1")
+        jobnum    = setDict.pop('jobnum', "")
     except:
         raise ge.CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
 
@@ -304,7 +304,14 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 jobname = v
             elif k == 'nodes':
                 sCommand += "#PBS -l nodes=%s\n" % v
-        sCommand += "#PBS -N %s-%s#%s\n" % (jobname, comname, jobnum)
+        
+        # job name
+        if (comname != ""):
+            jobname = "%s-%s" % (jobname, comname)
+        if (jobnum != ""):
+            jobname = "%s(%s)" % (jobname, jobnum)
+        sCommand += "#PBS -N %s\n" % jobname
+
         if outputs['stdout'] is not None:
             sCommand += "#PBS -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
@@ -323,8 +330,15 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 sCommand += "#BSUB -%s %s\n" % (k, v)
             elif k is 'jobName' and jobname == 'schedule':
                 jobname = v
-        sCommand += "#BSUB -P %s-%s\n" % (jobname, comname)
-        sCommand += "#BSUB -J %s-%s#%d\n" % (jobname, comname, jobnum)
+
+        # jobname
+        if (comname != ""):
+            jobname = "%s-%s" % (jobname, comname)
+        sCommand += "#BSUB -P %s\n" % jobname
+        if (jobnum != ""):
+            jobname = "%s(%s)" % (jobname, jobnum)
+        sCommand += "#BSUB -J %s\n" % jobname
+
         if outputs['stdout'] is not None:
             sCommand += "#BSUB -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
@@ -338,10 +352,14 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 jobname = v
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
-        
+
+        # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
-        sCommand += "#SBATCH --job-name=%s(%s)\n" % (jobname, jobnum)
+        if (jobnum != ""):
+            jobname = "%s(%s)" % (jobname, jobnum)
+        sCommand += "#SBATCH --job-name=%s\n" % jobname
+
         if outputs['stdout'] is not None:
             sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
@@ -393,7 +411,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 # -----------------------------------------------------------------------
 #                                                  general scheduler code
 
-def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None, logname=None):
+def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None):
 
     jobs = []
 
@@ -433,7 +451,7 @@ def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None
     cBase = "\ngmri " + command
 
     for (k, v) in nopt:
-        if k not in ['subjid', 'scheduler']:
+        if k not in ['sessionids', 'scheduler']:
             cBase += ' --%s="%s"' % (k, v)
 
     # ---- if sessions is None
@@ -465,9 +483,9 @@ def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None
             # ---- get session subset
 
             slist = []
-            [slist.append(sessions.pop(0)['id']) for e in range(cores) if sessions]   # might need to change to id
+            [slist.append(sessions.pop(0)['id']) for e in range(parsessions) if sessions]   # might need to change to id
 
-            cStr = cBase + ' --subjid="%s"' % ("|".join(slist))
+            cStr = cBase + ' --sessionids="%s"' % ("|".join(slist))
 
             # ---- set sheduler settings
 

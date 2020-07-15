@@ -116,7 +116,7 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
                         # --- filenames
                         f = getFileNames(sinfo, options)
                         f.update(getBOLDFileNames(sinfo, boldname, options))
-                        d = getSubjectFolders(sinfo, options)
+                        d = getSessionFolders(sinfo, options)
                         # f_conc = os.path.join(d['s_bold_concs'], tconc+".conc")
                         # f_fidl = os.path.join(d['s_bold_events'], tfidl+".fidl")
 
@@ -161,11 +161,11 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the sessions information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
-    --threads          ... How many threads to utilize for bold processing
-                           per session [1].
+    --parsessions      ... How many sessions to run in parallel [1].
+    --parelements      ... How many elements (e.g bolds) to run in
+                           parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -178,28 +178,32 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                            processed [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
-    The parameters can be specified in command call or subject.txt file.
+    The parameters can be specified in command call or session.txt file.
 
     EXAMPLE USE
     ===========
     
     ```
-    qunex createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no hcp_cifti_tail=_Atlas bolds=all threads=8
+    qunex createBOLDBrainMasks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no hcp_cifti_tail=_Atlas bolds=all parelements=8
     ```
 
     ----------------
@@ -234,7 +238,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r += "\n\n........................................................"
 
     doOptionsCheck(options, sinfo, 'createBOLDBrainMasks')    
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     if overwrite:
         ostatus = 'will'
@@ -248,10 +252,10 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executeCreateBOLDBrainMasks(sinfo, options, overwrite, b)
@@ -267,7 +271,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
             report['boldmissing'] += tempReport['boldmissing']
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executeCreateBOLDBrainMasks, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
@@ -445,11 +449,11 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
-    --threads          ... How many threads to utilize for bold processing
-                           per session [1].
+    --parsessions      ... How many sessions to run in parallel [1].
+    --parelements      ... How many elements (e.g bolds) to run in
+                           parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -460,20 +464,24 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -511,7 +519,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     For more detailed description please see wiki entry on Movement scrubbing.
 
-    The listed parameters can be specified in command call or subject.txt file.
+    The listed parameters can be specified in command call or session.txt file.
 
 
     NOTES AND DEPENDENCIES
@@ -532,14 +540,14 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     Using the defaults:
     
     ```
-    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no bolds=all
     ```
 
     Specifying additional parameters for identification of bad frames:
     
     ```
-    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
          overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
     ```
@@ -577,7 +585,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     r += "\n\n........................................................"
 
     doOptionsCheck(options, sinfo, 'computeBOLDStats')  
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     if overwrite:
         ostatus = 'will'
@@ -591,10 +599,10 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executeComputeBOLDStats(sinfo, options, overwrite, b)
@@ -610,7 +618,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
             report['boldmissing'] += tempReport['boldmissing']     
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executeComputeBOLDStats, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
@@ -650,7 +658,7 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
         if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data availability
 
@@ -723,26 +731,26 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                                       analysis.
 
     For the group level it creates three report files that are stored in the
-    <subjectsfolder>/QC/movement folder. These files are:
+    <sessionsfolder>/QC/movement folder. These files are:
 
     * <mov_mreport> (bold_movement_report.txt by default)
       This file lists for each session and bold file mean, sd, range, max, min,
       median, and squared mean divided by max statistics for each of the 6
       movement correction parameters. It also prints mean, median, maximum, and
       standard deviation of frame displacement statistics. The purpose of this
-      file is to enable easy subject and group level analysis of movement in
+      file is to enable easy session and group level analysis of movement in
       the scanner.
 
     * <mov_preport> (bold_movement_report_post.txt by default)
       This file has the same structure and information as the above, whith
       frames marked as bad excluded from the statistics computation. This
-      enables subject and group level assessment of the effects of scrubbing.
+      enables session and group level assessment of the effects of scrubbing.
 
     * <mov_sreport> (bold_movement_scrubbing_report.txt by default)
       This file lists for each BOLD of each session the number and the
       percentage of frames that would be marked as bad and excluded from the
       analyses when a specific exclusion criteria would be used. Again, the
-      file supports subject and group level analysis of movement scrubing.
+      file supports session and group level analysis of movement scrubing.
 
 
     RELEVANT PARAMETERS
@@ -756,9 +764,9 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
+    --parsessions      ... How many sessions to run in parallel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -769,22 +777,26 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed, and the group report will be stored in
-                           `<subjectsfolder>/QC/movement.<hcp_bold_variant>`
+                           `<sessionsfolder>/QC/movement.<hcp_bold_variant>`
                            folder [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -848,7 +860,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                       frames, and what criterium to use for the definition of
                       bad frames (fd/dvars/dvars/dvarsme/idvars/idvarsme/udvars/
                       udvarsme). Set to none to not generate them [udvarsme].
-    --mov_pdf     ... The name of the folder in subjects/QC/movement in which to
+    --mov_pdf     ... The name of the folder in sessions/QC/movement in which to
                       copy the individuals' movement plots [movement_plots].
 
     NOTES AND DEPENDENCIES
@@ -861,10 +873,10 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     Session statistics are appended to the group level report files as they
     are being computed. To avoid messy group level files, it is recommended
-    to run the command with cores set to 1 (example 1), to enforce sequential
+    to run the command with parsessions set to 1 (example 1), to enforce sequential
     processing and adding of information to group level statistics files.
     Another option is to run the processing in two steps. The first step with
-    multiple cores to speed up generation of session level maps (example 2),
+    multiple parsessions to speed up generation of session level maps (example 2),
     and then the second step with a single core, omitting the slow generation
     of session specific plots.
 
@@ -873,18 +885,18 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     ===========
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no bolds=all cores=1
+    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no bolds=all parsessions=1
     ```
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no bolds=all cores=10
+    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no bolds=all parsessions=10
     ```
 
     ```
-    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no bolds=all cores=1 mov_plot=""
+    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no bolds=all parsessions=1 mov_plot=""
     ```
 
     ----------------
@@ -911,11 +923,11 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per session plots, fidl snippets and group reports. Only\n    images specified using --bolds parameter will be processed. Please\n    see documentation for use of other relevant parameters!"
         r += "\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s" % (options)
         if options['hcp_bold_variant']:
-            r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n    Group results will be stored in <subjectsfolder>/QC/movement.%s." % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])    
+            r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n    Group results will be stored in <sessionsfolder>/QC/movement.%s." % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])    
         r += "\n\n........................................................"
 
         doOptionsCheck(options, sinfo, 'createStatsReport')  
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         if overwrite:
             ostatus = 'will'
@@ -929,7 +941,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\nIf already present, existing results %s be overwritten (see --overwrite)." % (ostatus)
 
         procbolds = []
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data
 
@@ -1102,7 +1114,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     the global signal regression, thereby resolving some of the issues taken as
     arguments agains using global signal regression. The file can be either
     a binary mask, or a '.names' file. In the latter case, it is possible to
-    additional mask the ROI to be excluded based on subject specific
+    additional mask the ROI to be excluded based on session specific
     aseg+aparc image (see description of .names file format).
 
     Another option is to include additional independent nuisance regions that
@@ -1111,7 +1123,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     to either a binary image or a '.names' file. In the latter case, it is again
     possible to mask the additional ROI either by the binary whole brain mask or
     the individuals aseg+aparc file. To achieve this, set the additional
-    '--sbjroi' parameter to 'wb' or 'aseg', respectively. If some additional
+    '--sessionroi' parameter to 'wb' or 'aseg', respectively. If some additional
     ROI are to be excluded, even though they fall outside of the brain, then
     these are to be listed as comma separated list of ROI names (that match the
     ROI names in the .names file), separated from the path by a pipe ('|')
@@ -1160,11 +1172,11 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
-    --subjectsfolder   ... The path to the study/subjects folder, where the
+    --sessionsfolder   ... The path to the study/sessions folder, where the
                            imaging  data is supposed to go [.].
-    --cores            ... How many cores to utilize [1].
-    --threads          ... How many threads to utilize for bold processing
-                           per session [1].
+    --parsessions      ... How many sessions to run in parallel [1].
+    --parelements      ... How many elements (e.g bolds) to run in
+                           parralel [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bolds            ... Which bold images (as they are specified in the
@@ -1175,20 +1187,24 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma separated list is given, the log will
-                           be created at the first provided location and then 
-                           linked or copied to other locations. The valid 
-                           locations are: 
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are: 
                            * 'study'   for the default: 
                                        `<study>/processing/logs/comlogs`
                                        location,
                            * 'session' for `<sessionid>/logs/comlogs
+                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                            * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -1204,9 +1220,9 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     --nroi         ... The path to additional nuisance regressors file. It can
                        be either a binary mask or a '.names' file that specifies
                        the ROI to be used. Based on other options, the ROI can
-                       be further masked by subject specific files or not masked
+                       be further masked by session specific files or not masked
                        at all (see USE above).
-    --sbjroi       ... A string specifying which subject specific mask to use
+    --sessionroi    ... A string specifying which session specific mask to use
                        for further masking the additional roi. The two options
                        are 'wb' or 'aseg' for whole brain mask or FreeSurfer
                        aseg+aparc mask, respectively.
@@ -1229,8 +1245,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bolds=all cores=10
+    qunex extractNuisanceSignal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+         overwrite=no bolds=all parsessions=10
     ```
 
     ----------------
@@ -1259,14 +1275,14 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\nExtracting BOLD nuisance signal ..."
     r += "\n\n    The command will extract nuisance signal from each of the specifie BOLD files.\n    The results will be saved as *.nuisance files in the images/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal."
-    r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sbjroi: %(sbjroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
+    r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sessionroi: %(sessionroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
     r += "\n\n    when extracting nuisance signal."
     if options['hcp_bold_variant']:
         r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
     doOptionsCheck(options, sinfo, 'extractNuisanceSignal')  
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     if overwrite:
         ostatus = 'will'
@@ -1280,10 +1296,10 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executeExtractNuisanceSignal(sinfo, options, overwrite, b)
@@ -1299,7 +1315,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
             report['boldmissing'] += tempReport['boldmissing']   
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executeExtractNuisanceSignal, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
@@ -1338,7 +1354,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
         if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data availability
 
@@ -1377,7 +1393,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
             d['s_bold_mov'],            # --- functional/movement subfolder
             d['s_nuisance'],            # --- roi/nuisance subfolder
             options['wbmask'],          # --- mask to exclude ROI from WB
-            options['sbjroi'],          # --- a mask used to specify subject specific WB
+            options['sessionroi'],      # --- a mask used to specify session specific WB
             options['nroi'],            # --- additional nuisance regressors ROI
             options['shrinknsroi'],     # --- shrink nuisance signal ROI
             'true')                     # --- verbosity
@@ -1440,11 +1456,11 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/sessions folder, where the
                           imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --threads         ... How many threads to utilize for bold processing
-                          per session [1].
+    --parsessions     ... How many sessions to run in parallel [1].
+    --parelements     ... How many elements (e.g bolds) to run in
+                          parralel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
@@ -1455,14 +1471,15 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
                           * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -1478,10 +1495,13 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
-                           processed [].
+                           processed [].    
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
                            bold3<bold_prefix>_s_hpss.nii.gz [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
 
     List of bold files specify, which types of bold files are to be processed,
     as they are specified in the batch.txt file. An example of a list of
@@ -1502,7 +1522,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     [<session id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual sessions's folders, they are
-    searched for in the <subjectsfolder>/inbox/events folder. In that case the
+    searched for in the <sessionsfolder>/inbox/events folder. In that case the
     "<session id>_" is not optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -1788,8 +1808,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     ===========
     
     ```
-    qunex preprocessBold sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bolds=rest bold_actions="s,h,r,c,l" \\
+    qunex preprocessBold sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+         overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
          nprocess=0
@@ -1836,10 +1856,10 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     else:
         options['bold_variant'] = '.' + options['hcp_bold_variant'] 
 
-    threads = options['threads']
-    r += "\nProcessing BOLD on %d threads" % (threads)
+    parelements = options['parelements']
+    r += "\nProcessing %d BOLDs in parallel" % (parelements)
 
-    if threads == 1: # serial execution
+    if parelements == 1: # serial execution
         for b in bolds:
             # process
             result = executePreprocessBold(sinfo, options, overwrite, b)
@@ -1856,7 +1876,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
             report['not ready'] += tempReport['not ready']      
     else: # parallel execution
         # create a multiprocessing Pool
-        processPoolExecutor = ProcessPoolExecutor(threads)
+        processPoolExecutor = ProcessPoolExecutor(parelements)
         # process 
         f = partial(executePreprocessBold, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
@@ -1905,7 +1925,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
         f = getFileNames(sinfo, options)
         f.update(getBOLDFileNames(sinfo, boldname, options))
-        d = getSubjectFolders(sinfo, options)
+        d = getSessionFolders(sinfo, options)
 
         # --- check for data availability
 
@@ -1957,7 +1977,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldow = 'false'
 
         scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
+        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
         mcomm = 'fc_Preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
             d['s_base'],                        # --- sessions folder
@@ -2039,27 +2059,28 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder  ... The path to the study/sessions folder, where the
                           imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
+    --parsessions     ... How many sessions to run in parallel [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
-                          folder [bold].
+                          folder [bold].    
     --image_target    ... The target format to work with, one of 4dfp, nifti,
                           dtseries or ptseries [nifti].
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
+                          When a comma or pipe ('|') separated list is given, 
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations. 
+                          The valid locations are: 
                           * 'study'   for the default: 
                                       `<study>/processing/logs/comlogs`
                                       location,
                           * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
 
     specific parameters
@@ -2077,6 +2098,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
+    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used [].
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
                            bold3<bold_prefix>_s_hpss.nii.gz [].
@@ -2091,8 +2115,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     [<session id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual session's folders, they are
-    searched for in the <subjectsfolder>/inbox/events and
-    <subjectsfolder>/inbox/concs folder. In that case the "<session id>_" is not
+    searched for in the <sessionsfolder>/inbox/events and
+    <sessionsfolder>/inbox/concs folder. In that case the "<session id>_" is not
     optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -2117,7 +2141,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     If `conc_use` is set to relative (the default), then the only information 
     taken from the conc files will be the bold numbers. The actual location of 
     the bold files will be constructed from the information on the location of 
-    the subject's sesion folder present in the batch file, and the 
+    the session's sesion folder present in the batch file, and the 
     `hcp_bold_variant` setting, whereas the specific bold file name and file 
     format (e.g. .nii.gz vs. .dtseries.nii) to use will depend on `boldname`, 
     `image_target`, and `hcp_cifti_tail` settings. This allows flexible use
@@ -2414,8 +2438,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Activation analysis
     
     ```
-    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-M1 \\
+    qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+         overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
          bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
          glm_matrix=both glm_residuals=none nprocess=0 \\
@@ -2425,8 +2449,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Functional connectivity preprocessing
     
     ```
-    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-FC \\
+    qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+         overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
          bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
          glm_matrix=none glm_residuals=save nprocess=0 \\
@@ -2486,7 +2510,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
             try:
                 r += "\n\nConc bundle: %s" % (tconc)
 
-                d = getSubjectFolders(sinfo, options)
+                d = getSessionFolders(sinfo, options)
                 f = {}
                 f_conc = os.path.join(d['s_bold_concs'], concroot + tconc + ".conc")
                 f_fidl = os.path.join(d['s_bold_events'], tfidl + ".fidl")
@@ -2555,8 +2579,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     # if absolute path flag use session folder from conc file
                     if (options['conc_use'] == 'absolute'):
                         # extract session folder from conc file
-                        options['subjectsfolder'] = (c[0].split(sinfo['id']))[0]
-                        d['s_base'] = options['subjectsfolder'] + sinfo['id']
+                        options['sessionsfolder'] = (c[0].split(sinfo['id']))[0]
+                        d['s_base'] = options['sessionsfolder'] + sinfo['id']
                         options['bold_tail'] = (c[0].split(boldname))[1].replace(getExtension(options['image_target']), "")
 
                     r += "\n\nLooking up: " + boldname + " ..."
@@ -2635,7 +2659,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
+                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- session folder
