@@ -1,55 +1,82 @@
 function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents, frames, scrubvar)
 
-%function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents, frames, scrubvar)
+%``function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents, frames, scrubvar)``
 %
 %   Extracts trial timeseries for each of the specified ROI.
 %
 %   INPUT
-%	  flist    ... File list with information on .conc, .fidl, and individual
-%                  roi (segmentation) files, or a well strucutured string (see
-%                  g_ReadFileList).
-%	  roif 	   ... Region "names" file that specifies the ROI to extract trial
-%                  timeseries for.
-%     targetf  ... The target matlab file with results.
-%	  tevents  ... The indeces of the events for which to extract timeseries,
-%                  can be a cell array of combinations of event indeces.
-%	  frames   ... Limits of frames to include in the extracted timeseries.
-%     scrubvar ... Critera to use for scrubbing data - scrub based on:
-%                   - [] do not scrub
-%                   - 'mov'      ... overall movement displacement
-%                   - 'dvars'    ... frame-to-frame variability
-%                   - 'dvarsme'  ... median normalized dvars
-%                   - 'idvars'   ... mov AND dvars
-%                   - 'idvarsme' ... mov AND dvarsme
-%                   - 'udvars'   ... mov OR dvars
-%                   - 'udvarsme' ... mov OR dvarsme
+%   =====
 %
-%   OUTPUT
-%     data(n)    ... A structure with extracted trial timeseries for each session:
-%       .session ... Subject id
-%       .set(n)  ... Extracted datasets for the session.
-%           .fevents.event  ... a list of events processed
-%           .fevents.frame  ... start frames of the events processed
-%           .fevents.events ... list of event names included
-%           .nevents        ... number of events processed
-%           .frames         ... a list of frames processed
-%           .timeseries     ... a 3D matrix with the dimensions:
-%                               - number of events (trials)
-%                               - number of frames extracted for each trial
-%                               - number of regions to extract data from
-%           .scrub          ... a matrix of scrub markers (nevents x n event frames)
-%           .baseline       ... a matrix of baseline data for each ROI for each run (nrun x nroi)
-%           .eventbaseline  ... a matrix of baseline for each event (trial) for each ROI (nevents x nroi)
-%           .run            ... a record of which run each event (trial) comes from
+%	--flist       File list with information on .conc, .fidl, and individual
+%                 roi (segmentation) files, or a well strucutured string (see
+%                 g_ReadFileList).
+%	--roif 	      Region "names" file that specifies the ROI to extract trial
+%                 timeseries for.
+%   --targetf     The target matlab file with results.
+%	--tevents     The indeces of the events for which to extract timeseries,
+%                 can be a cell array of combinations of event indeces.
+%	--frames      Limits of frames to include in the extracted timeseries.
+%   --scrubvar    Critera to use for scrubbing data - scrub based on:
+%
+%                   - [] do not scrub
+%                   - 'mov'      - overall movement displacement
+%                   - 'dvars'    - frame-to-frame variability
+%                   - 'dvarsme'  - median normalized dvars
+%                   - 'idvars'   - mov AND dvars
+%                   - 'idvarsme' - mov AND dvarsme
+%                   - 'udvars'   - mov OR dvars
+%                   - 'udvarsme' - mov OR dvarsme
+%
+%   OUTPUTS
+%   =======
+%
+%   data(n)
+%       A structure with extracted trial timeseries for each session:
+%       
+%       .session
+%           Subject id
+%
+%       .set(n)
+%           Extracted datasets for the session.
+%           
+%           .fevents.event  
+%               a list of events processed
+%           .fevents.frame  
+%               start frames of the events processed
+%           .fevents.events 
+%               list of event names included
+%           .nevents        
+%               number of events processed
+%           .frames         
+%               a list of frames processed
+%           .timeseries     
+%               a 3D matrix with the dimensions:
+%                   - number of events (trials)
+%                   - number of frames extracted for each trial
+%                   - number of regions to extract data from
+%           .scrub
+%               a matrix of scrub markers (nevents x n event frames)
+%           .baseline
+%               a matrix of baseline data for each ROI for each run (nrun x nroi)
+%           .eventbaseline
+%               a matrix of baseline for each event (trial) for each ROI (nevents x nroi)
+%           .run            
+%               a record of which run each event (trial) comes from
 %
 %   USE
+%   ===
+%
 %   The function is used to extract per trial data from each session for the
 %   specified events. The data is returned in a data structure described above,
 %   as well as saved to a matlab data file.
 %
 %   EXAMPLE USE
+%   ===========
 %
-%   >>> fc_ExtractTrialTimeseriesMasked('scz+con.list', 'ccroi.names', 'ccroits', {[0], [1 2], [3 4]}, [2 4], 'udvarsme');
+%   ::
+%
+%       fc_ExtractTrialTimeseriesMasked('scz+con.list', 'ccroi.names', ...
+%       'ccroits', {[0], [1 2], [3 4]}, [2 4], 'udvarsme');
 %
 %   The above call would extract three sets of timeseries for a) event coded as
 %   0, b) events coded as 1 or 2 and c) events coded as 3 and 4 in the fidl
@@ -57,19 +84,24 @@ function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents,
 %   the regions specified in the ccroi.names frames 2, 3, and 4. It would save
 %   the results in a file 'ccroits.mat'. At extraction it would ignore all
 %   frames that were marked bad using the 'udvarsme' criterion.
+
+
+%   ~~~~~~~~~~~~~~~~~~
 %
-%   ---
-%   Written by Grega Repovš, 2008-01-22
+%   Changelog
+%
+%   2008-01-22 Grega Repovs
+%              Initial version.
 %   2011-11-07 Grega Repovs
-%            - adjusted and partly rewriten to use nimage object
+%              Adjusted and partly rewriten to use nimage object.
 %   2012-04-20 Grega Repovs
-%            - added the option of scrubbing the data
+%              Added the option of scrubbing the data.
 %   2013-07-24 Grega Repovs
-%            - adjusted to use the new ROIMask method
+%              Adjusted to use the new ROIMask method.
 %   2017-03-11 Grega Repovs
-%            - Cleaned code and updated documentation
+%              Cleaned code and updated documentation.
 %   2017-04-18 Grega Repovs
-%            - Adjusted to use updated g_ReadFileList.
+%              Adjusted to use updated g_ReadFileList.
 
 if nargin < 6, scrubvar = []; end
 if nargin < 5, error('ERROR: Five arguments need to be specified for the function to run!'); end
