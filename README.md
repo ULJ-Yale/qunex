@@ -5,9 +5,11 @@ modules that support a flexible and extensible framework for data organization, 
 quality assurance, and various analytics across neuroimaging modalities. The Qu|Nex suite is 
 designed to be flexible and can be developed by adding functions developed around its component tools.
 
-The Qu|Nex code is is co-developed and co-maintained by the 
-[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
-and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+The Qu|Nex code is is co-developed and co-maintained by the:
+
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
+* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
 
 
 Quick links
@@ -24,21 +26,47 @@ Quick links
 Versioning
 ----------
 
+<<<<<<< HEAD
 Qu|Nex suite version: 0.51.2
+||||||| merged common ancestors
+Qu|Nex suite version: 0.51.0
+=======
+Qu|Nex suite version: 0.61.0
+>>>>>>> release/0.61.0
 
 Submodules:
 
+<<<<<<< HEAD
 * connector: 0.50.1
 * library: 0.50.2
 * nitools: 0.50.0
 * niutilities: 0.51.2
+||||||| merged common ancestors
+* connector: 0.50.1
+* library: 0.50.2
+* nitools: 0.50.0
+* niutilities: 0.51.0
+=======
+* connector: 0.61.0
+* library: 0.61.0
+* nitools: 0.60.1
+* niutilities: 0.61.0
+>>>>>>> release/0.61.0
 
 
 Release notes
 -------------
 
+<<<<<<< HEAD
 * 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
+||||||| merged common ancestors
+=======
+* 0.61.0 Implementation of bug fixes across connector and pipeline restructure back-compatibility
+* 0.60.0 Renamed all subject related parameters to session. Pipeline architecture restructure.
+* 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
+* 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
+>>>>>>> release/0.61.0
 * 0.51.0 MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
 * 0.50.4 Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
 * 0.50.2 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
@@ -57,8 +85,30 @@ PMC4034208.
 Detailed change log
 -------------------
 
+<<<<<<< HEAD
 * 0.51.2  [niutilities] Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1  [niutilities] Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
+||||||| merged common ancestors
+=======
+* 0.61.0  [connector, library, niutilities] Implementation of bug fixes across connector and pipeline restructure back-compatibility
+* 0.60.1  [connector, library, niutilities] Full support for hcp_suffix in runQC.
+* 0.60.0  [connector, library, nitools, niutilities] Renamed all subject related parameters to session. Pipeline architecture restructure.
+* 0.51.15 [library] Updated ColeAnticevicNetPartition with files from most recent release (v1.1.4) of the parcellation.
+* 0.51.14 [library] Updated ColeAnticevicNetPartition with files from most recent release of the parcellation.
+* 0.51.13 [connector, library] Splash screen update, added gpu_binaries and montage templates.
+* 0.51.12 [niutilities] External command calls are now printed in stdout and at the beginning of comlogs.
+* 0.51.11 [niutilities] Consistent jobname in scheduling between qunex and qunexContainer.
+* 0.51.10 [connector, library, nitools, niutilities] License and README updates.
+* 0.51.9  [niutilities] Fixed reporting when hcp_fs_existing_subject is true.
+* 0.51.8  [niutilities] Changed hcpsuffix to hcp_suffix throughout.
+* 0.51.7  [niutilities] Updated in-line documentation.
+* 0.51.6  [library] Replaced REMOVED.git-id files.
+* 0.51.5  [library] Fixed QC template files.
+* 0.51.4  [connector] Fixed incorrect calling of hcpd.
+* 0.51.3  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
+* 0.51.2  [niutilities] Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
+* 0.51.1  [niutilities] Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
+>>>>>>> release/0.61.0
 * 0.51.0  [niutilities] Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.7  [library] qunex_envstatus now reports OS info.
 * 0.50.6  [niutilities] Consistent parameter injection notation.
