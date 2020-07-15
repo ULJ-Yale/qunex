@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.1 Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.1 Full support for hcp_suffix in runQC.
 * 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.10 External command calls are now printed in stdout and at the beginning of comlogs.

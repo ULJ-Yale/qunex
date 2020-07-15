@@ -491,6 +491,9 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
     with lock:
         print "\n-----------------------------------------\nFinished at %s" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+    if not result:
+        print "\n===> Successful completion of task"
+
     if logfile:
         sys.stdout.close()
         sys.stdout = sysstdout

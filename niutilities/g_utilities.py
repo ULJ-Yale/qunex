@@ -124,6 +124,9 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
             if os.path.exists(tfolder):
                 if verbose:
                     print " ... folder exists:", tfolder
+            else:  
+                if verbose:
+                    print " ... folder does not exist:", tfolder
 
     if create:
         if verbose:
