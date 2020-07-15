@@ -5,7 +5,7 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %   Computes seed based correlations maps for individuals as well as group maps.
 %
 %   INPUT
-%       flist    - A .list file listing the subjects and their files for which to compute seedmaps,
+%       flist    - A .list file listing the sessions and their files for which to compute seedmaps,
 %                  or a well strucutured string (see g_ReadFileList).
 %       roiinfo  - A names file for the ROI seeds.
 %       inmask   - An array mask defining which frames to use (1) and which not (0) or the number of frames to skip at start []
@@ -39,7 +39,7 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %
 %   USE
 %   The function computes seed maps for the specified ROI. If an event string is
-%   provided, it uses each subject's .fidl file to extract only the specified
+%   provided, it uses each session's .fidl file to extract only the specified
 %   event related frames. The string format is:
 %
 %   <title>:<eventlist>:<frame offset1>:<frame offset2>
@@ -142,7 +142,7 @@ nana = length(ana);
 
 fprintf('\n ... listing files to process');
 
-[subject, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
+[session, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 lname = strrep(listname, '.list', '');
 lname = strrep(lname, '.conc', '');
@@ -153,19 +153,19 @@ fprintf(' ... done.');
 
 
 %   ------------------------------------------------------------------------------------------
-%                                                The main loop ... go through all the subjects
+%                                                The main loop ... go through all the sessions
 
 
 for n = 1:nsub
 
-    fprintf('\n ... processing %s', subject(n).id);
+    fprintf('\n ... processing %s', session(n).id);
 
     % ---> reading ROI file
 
     fprintf('\n     ... creating ROI mask');
 
-    if isfield(subject(n), 'roi')
-        sroifile = subject(n).roi;
+    if isfield(session(n), 'roi')
+        sroifile = session(n).roi;
     else
         sroifile = [];
     end
@@ -178,9 +178,9 @@ for n = 1:nsub
 
     fprintf('\n     ... reading image file(s)');
 
-    y = nimage(subject(n).files{1});
-    for f = 2:length(subject(n).files)
-        y = [y nimage(subject(n).files{f})];
+    y = nimage(session(n).files{1});
+    for f = 2:length(session(n).files)
+        y = [y nimage(session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -202,7 +202,7 @@ for n = 1:nsub
     if isempty(fstring)
         finfo = [];
     else
-        finfo = g_CreateTaskRegressors(subject(n).fidl, y.runframes, fstring, fignore);
+        finfo = g_CreateTaskRegressors(session(n).fidl, y.runframes, fstring, fignore);
         finfo = finfo.run;
         matrix = [];
         for r = 1:length(finfo)
@@ -290,8 +290,8 @@ end
 fprintf('\n\n... computing group results');
 
 for s = 1:nsub
-    extra(s).key = ['subject ' int2str(s)];
-    extra(s).value = subject(s).id;
+    extra(s).key = ['session ' int2str(s)];
+    extra(s).value = session(s).id;
 end
 
 for a = 1:nana

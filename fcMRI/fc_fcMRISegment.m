@@ -6,7 +6,7 @@ function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 %   Uses WTA to select the region the voxel is most correlated with.
 %
 %   INPUT
-%       flist   - A .list file information on subjects bold runs and segmentation files.
+%       flist   - A .list file information on sessions bold runs and segmentation files.
 %       smask   - .names file for source mask definition
 %       tmask   - .names file for target mask roi definition
 %       mask    - Either number of frames to omit or a mask of frames to use [0].
@@ -15,8 +15,8 @@ function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 %       verbose - Whether to report the progress 'full', 'script', 'none' ['none'].
 %
 %	RESULTS
-%   <root>_corr_roi - correlations of each subject with the target roi
-%   <root>_segs     - segmentations for each subject
+%   <root>_corr_roi - correlations of each session with the target roi
+%   <root>_segs     - segmentations for each session
 %   <root>_scorr    - final segmentation and probabilities of segmentation for each target ROI across the group
 %   <root>_gseg     - final segmentation based on group mean correlations
 %
@@ -79,19 +79,19 @@ files = fopen(flist);
 c = 0;
 while feof(files) == 0
     s = fgetl(files);
-    if ~isempty(strfind(s, 'subject id:'))
+    if ~isempty(strfind(s, 'session id:'))
         c = c + 1;
         [t, s] = strtok(s, ':');
-        subject(c).id = s(2:end);
+        session(c).id = s(2:end);
         nf = 0;
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');
-        subject(c).roi = s(2:end);
-        checkFile(subject(c).roi);
+        session(c).roi = s(2:end);
+        checkFile(session(c).roi);
     elseif ~isempty(strfind(s, 'file:'))
         nf = nf + 1;
         [t, s] = strtok(s, ':');
-        subject(c).files{nf} = s(2:end);
+        session(c).files{nf} = s(2:end);
         checkFile(s(2:end));
     end
 end
@@ -101,22 +101,22 @@ if script, fprintf(' ... done.'), end
 
 
 %   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
+%   -------------------------------------------- The main loop ... go through all the sessions
 
 %   --- Get variables ready first
 
-tROI = nimage.img_ReadROI(tmask, subject(1).roi);
+tROI = nimage.img_ReadROI(tmask, session(1).roi);
 
 nroi = length(tROI.roi.roinames);
-nsubjects = length(subject);
+nsessions = length(session);
 
-template = tROI.zeroframes(nsubjects);
+template = tROI.zeroframes(nsessions);
 template.data = template.image2D();
 
 for n = 1:nroi
     corrs(n) = template;
 end
-segs = template.zeroframes(nsubjects);
+segs = template.zeroframes(nsessions);
 gseg = template.zeroframes(nroi+1);
 gcorr = template.zeroframes(nroi+1);
 gZ = template.zeroframes(nroi+1);
@@ -124,25 +124,25 @@ gZ = template.zeroframes(nroi+1);
 clear('template');
 clear('tROI');
 
-for s = 1:nsubjects
+for s = 1:nsessions
 
     %   --- reading in image files
     if script, tic, end
-	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
+	if script, fprintf('\n------\nProcessing %s', session(s).id), end
 	if script, fprintf('\n... reading file(s) '), end
 
-    roif = nimage(subject(s).roi);
+    roif = nimage(session(s).roi);
 	tROI = nimage.img_ReadROI(tmask, roif);
 	sROI = nimage.img_ReadROI(smask, roif);
 
-	nfiles = length(subject(s).files);
+	nfiles = length(session(s).files);
 
-	img = nimage(subject(s).files{1});
+	img = nimage(session(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = nimage(subject(s).files{n});
+    	    new = nimage(session(s).files{n});
     	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    if script, fprintf(', %d', n), end
@@ -173,7 +173,7 @@ for r = 1:nroi
     Z = norminv((1-(p/2)), 0, 1);
     gZ.data(:,r+1) = Z .* sign(mean(f, 2));
 
-    gseg.data(:,r+1) = sum(ismember(segs.data,r),2)./nsubjects;
+    gseg.data(:,r+1) = sum(ismember(segs.data,r),2)./nsessions;
 end
 
 [G gcorr.data(:,1)] = max(gcorr.data(:,2:nroi+1),[],2);

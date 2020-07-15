@@ -5,13 +5,13 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 %	Computes seed based correlations maps for individuals as well as group maps.
 %
 %   INPUT
-%	    flist   	- A .list file of subject information,
+%	    flist   	- A .list file of session information,
 %                     or a well strucutured string (see g_ReadFileList).
 %	    roinfo	    - An ROI file.
 %	    inmask		- Either an array mask defining which frames to use (1) and
 %                     which not (0) or an event string specifying the events and
 %                     frames to extract [0]
-%	    options		- A string defining which subject files to save ['']:
+%	    options		- A string defining which session files to save ['']:
 %	    	r		- save map of correlations
 %           f       - save map of Fisher z values
 %	    	cv		- save map of covariances
@@ -26,9 +26,9 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 %
 %   RESULTS
 %	It saves group files:
-%		_group_Fz	- average Fz over all the subjects
+%		_group_Fz	- average Fz over all the sessions
 %       _group_r    - average Fz converted back to Pearson r
-%       _group_Z    - p values converted to Z scores based on t-test testing if Fz over subject differ significantly from 0 (two-tailed)
+%       _group_Z    - p values converted to Z scores based on t-test testing if Fz over session differ significantly from 0 (two-tailed)
 %       _all_Fz     - Fz values of all the participants
 %
 %       _group_cov  - average covariance
@@ -102,7 +102,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-[subject, nsub, nfiles, listname] = g_ReadFileList(flist);
+[session, nsub, nfiles, listname] = g_ReadFileList(flist);
 
 lname = strrep(listname, '.list', '');
 lname = strrep(lname, '.conc', '');
@@ -113,19 +113,19 @@ fprintf(' ... done.');
 
 
 %   ------------------------------------------------------------------------------------------
-%                                                The main loop ... go through all the subjects
+%                                                The main loop ... go through all the sessions
 
 
 for n = 1:nsub
 
-    fprintf('\n ... processing %s', subject(n).id);
+    fprintf('\n ... processing %s', session(n).id);
 
     % ---> reading ROI file
 
 	fprintf('\n     ... creating ROI mask');
 
-	if isfield(subject(n), 'roi')
-	    sroifile = subject(n).roi;
+	if isfield(session(n), 'roi')
+	    sroifile = session(n).roi;
 	else
 	    sroifile = '';
     end
@@ -137,9 +137,9 @@ for n = 1:nsub
 
 	fprintf('\n     ... reading image file(s)');
 
-	y = nimage(subject(n).files{1});
-	for f = 2:length(subject(n).files)
-	    y = [y nimage(subject(n).files{f})];
+	y = nimage(session(n).files{1});
+	for f = 2:length(session(n).files)
+	    y = [y nimage(session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -148,9 +148,9 @@ for n = 1:nsub
 
 	if eventbased
 	    mask = [];
-	    if isfield(subject(n), 'fidl')
-            if subject(n).fidl
-                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, fignore);
+	    if isfield(session(n), 'fidl')
+            if session(n).fidl
+                mask = g_CreateTaskRegressors(session(n).fidl, y.runframes, inmask, fignore);
                 mask = mask.run;
     	        nmask = [];
                 for r = 1:length(mask)
@@ -233,19 +233,19 @@ for n = 1:nsub
         % ----> if needed, save individual images
 
         if ~isempty(strfind(options, 'cv')) && cv
-            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_cov']);   fprintf(' cov');
+            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_cov']);   fprintf(' cov');
         end
         if ~isempty(strfind(options, 'r')) && ~cv
-            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_r']);   fprintf(' r');
+            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_r']);   fprintf(' r');
     	end
     	if ~isempty(strfind(options, 'f')) && ~cv
-            group(r).Fz.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Fz']);   fprintf(' Fz');
+            group(r).Fz.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_Fz']);   fprintf(' Fz');
     	end
     	if ~isempty(strfind(options, 'p')) && ~cv
-            p.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_p']);   fprintf(' p');
+            p.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_p']);   fprintf(' p');
     	end
     	if ~isempty(strfind(options, 'z')) && ~cv
-    	    z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Z']);   fprintf(' Z');
+    	    z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_Z']);   fprintf(' Z');
     	end
 
 	end
@@ -260,8 +260,8 @@ fprintf('\n\n... computing group results');
 for r = 1:nroi
 
     for s = 1:nsub
-        extra(s).key = ['subject ' int2str(n)];
-        extra(s).value = subject(n).id;
+        extra(s).key = ['session ' int2str(n)];
+        extra(s).value = session(n).id;
     end
 
 	fprintf('\n    ... for region %s', group(r).roi);

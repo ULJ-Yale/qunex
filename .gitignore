@@ -94,3 +94,8 @@ ENV/
 
 # VIM swap files
 *.swp
+
+# Qu|Nex stuff
+1
+2
+*.out

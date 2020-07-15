@@ -6,8 +6,8 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %
 % INPUT
 %
-%    flist       - conc-like style list of subject image files or conc files:
-%                     subject id:<subject_id>
+%    flist       - conc-like style list of session image files or conc files:
+%                     session id:<session_id>
 %                     roi:<path to the individual's ROI file>
 %                     file:<path to bold files - one per line>
 %                  or a well strucutured string (see g_ReadFileList).
@@ -31,23 +31,23 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %
 % USE
 %
-% This function is a wrapper for nimage.img_ComputeGBC method. It enables computing GBC for a list of subjects.
-% flist specifies the subject identities, bold files to compute GBC on and roi to use for specifying the volume mask,
+% This function is a wrapper for nimage.img_ComputeGBC method. It enables computing GBC for a list of sessions.
+% flist specifies the session identities, bold files to compute GBC on and roi to use for specifying the volume mask,
 % voxels over which to compute GBC. mask specifies what frames of an image to work on. target specifies the ROI codes
-% that define ROI from the subject specific ROI files over which to compute GBC for. Usually the subject specific
-% roi file would be that subject's FreeSurfer aseg or aseg+aparc segmentation. And if no target is specified all
+% that define ROI from the session specific ROI files over which to compute GBC for. Usually the session specific
+% roi file would be that session's FreeSurfer aseg or aseg+aparc segmentation. And if no target is specified all
 % gray matter voxels are used for computing GBC.
 %
 % What specifically gets computed is defined in the command string. For specifics see help for the nimage.img_ComputeGBC
 % method.
 %
-% In addition, if rsmoot and rdilate are specified, each subjects bold image will be 3D smoothed with the specifed FWHM
-% in voxels. As subjects gray matter masks differ and do not overlap precisely, rdilate will dilate the borders with the
+% In addition, if rsmoot and rdilate are specified, each sessions bold image will be 3D smoothed with the specifed FWHM
+% in voxels. As sessions gray matter masks differ and do not overlap precisely, rdilate will dilate the borders with the
 % provided number of voxels. Here it is important to note tha values from the expanded mask will not be used, rather the
 % values from the valid mask will be smeared into the dilated area.
 %
 % The results will be saved in the targetf folder. The results of each command will be saved in a separate file holding
-% the computed GBC values for all the subjects. The files will be named with the root of the flist with _gbc_ and code
+% the computed GBC values for all the sessions. The files will be named with the root of the flist with _gbc_ and code
 % for the specific gbc computed added.
 %
 % For more information see documentation for nimage.img_ComputeGBC method.
@@ -94,54 +94,54 @@ end
 
 fprintf('\n ... listing files to process');
 
-[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
+[session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 
 
 %   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
+%   -------------------------------------------- The main loop ... go through all the sessions
 
 %   --- Get variables ready first
 
-template  = nimage(subject(1).files{1}, 'single', 1);
+template  = nimage(session(1).files{1}, 'single', 1);
 nvoxels   = template.voxels;
 desc      = parseCommand(command);
 nvolumes  = length(desc);
 
 
-template = template.zeroframes(nsubjects);
+template = template.zeroframes(nsessions);
 for n = 1:nvolumes
     gbc(n) = template;
 end
 clear('template');
 
-for s = 1:nsubjects
+for s = 1:nsessions
 
-    %   --- do we use a subject specific mask
+    %   --- do we use a session specific mask
 
     usemask = false;
-    if isfield(subject(s), 'roi') && (~isempty(subject(s).roi))
+    if isfield(session(s), 'roi') && (~isempty(session(s).roi))
         usemask = true;
     end
 
     %   --- reading in image files
     tic;
-	fprintf('\n ... processing %s', subject(s).id);
+	fprintf('\n ... processing %s', session(s).id);
 	fprintf('\n     ... reading image file(s) ');
 
 	y = [];
 
-	nfiles = length(subject(s).files);
+	nfiles = length(session(s).files);
 
-	img = nimage(subject(s).files{1});
+	img = nimage(session(s).files{1});
 
 	if ~isempty(mask),   img = img.sliceframes(mask); end
     if ~isempty(ignore), img = scrub(img, ignore); end
 
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = nimage(subject(s).files{n});
+    	    new = nimage(session(s).files{n});
             fprintf(', %d', n);
     	    if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = scrub(new, ignore); end
@@ -150,7 +150,7 @@ for s = 1:nsubjects
     end
 
     if usemask
-        imask = nimage(subject(s).roi);
+        imask = nimage(session(s).roi);
         imask = imask.ismember(target);
 
         if rsmooth

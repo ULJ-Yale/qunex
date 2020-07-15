@@ -25,9 +25,9 @@ function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents,
 %                   - 'udvarsme' ... mov OR dvarsme
 %
 %   OUTPUT
-%     data(n)    ... A structure with extracted trial timeseries for each subject:
-%       .subject ... Subject id
-%       .set(n)  ... Extracted datasets for the subject.
+%     data(n)    ... A structure with extracted trial timeseries for each session:
+%       .session ... Subject id
+%       .set(n)  ... Extracted datasets for the session.
 %           .fevents.event  ... a list of events processed
 %           .fevents.frame  ... start frames of the events processed
 %           .fevents.events ... list of event names included
@@ -43,7 +43,7 @@ function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents,
 %           .run            ... a record of which run each event (trial) comes from
 %
 %   USE
-%   The function is used to extract per trial data from each subject for the
+%   The function is used to extract per trial data from each session for the
 %   specified events. The data is returned in a data structure described above,
 %   as well as saved to a matlab data file.
 %
@@ -94,7 +94,7 @@ frames = int16(frames);
 
 fprintf('\n ... listing files to process');
 
-[subject, nsub, nfiles, listname] = g_ReadFileList(flist);
+[session, nsub, nfiles, listname] = g_ReadFileList(flist);
 
 fprintf(' ... done.');
 
@@ -102,24 +102,24 @@ fprintf(' ... done.');
 %                                                         set up datastructure to save results
 
 for n = 1:nsub
-    data(n).subject = subject(n).id;
+    data(n).session = session(n).id;
 end
 
 
 %   ------------------------------------------------------------------------------------------
-%                                                The main loop ... go through all the subjects
+%                                                The main loop ... go through all the sessions
 
 
 for s = 1:nsub
 
-    fprintf('\n ... processing %s', subject(s).id);
+    fprintf('\n ... processing %s', session(s).id);
 
     % ---> reading ROI file
 
 	fprintf('\n     ... creating ROI mask');
 
-	if isfield(subject(s), 'roi')
-	    sroifile = subject(s).roi;
+	if isfield(session(s), 'roi')
+	    sroifile = session(s).roi;
 	else
 	    sroifile = [];
     end
@@ -135,9 +135,9 @@ for s = 1:nsub
 
 	fprintf('\n     ... reading image file(s)');
 
-	y = nimage(subject(s).files{1});
-  	for f = 2:length(subject(s).files)
-	    y = [y nimage(subject(s).files{f})];
+	y = nimage(session(s).files{1});
+  	for f = 2:length(session(s).files)
+	    y = [y nimage(session(s).files{f})];
     end
 
     if scrubit
@@ -174,7 +174,7 @@ for s = 1:nsub
 
     fprintf('\n     ... reading event data');
 
-    fevents = g_ReadEventFile(subject(s).fidl);
+    fevents = g_ReadEventFile(session(s).fidl);
     temp = fevents.frame(:,1) + 1;
     bframes = int16([temp; 999999]);
     for n = 1:nniz
@@ -244,7 +244,7 @@ for s = 1:nsub
 	end
 	fprintf(' done');
 
-    data(s).subject = subject(s).id;
+    data(s).session = session(s).id;
     data(s).set = niz;
 end
 

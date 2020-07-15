@@ -15,7 +15,7 @@ function [B, rss, p] = img_GLMFit2(obj, X)
 %
 %   USE
 %   The method computes a linear regression between dataseries of each voxel and all the columns
-%   of the X regressor matrix. The image can be a series of activation values for a set of subjects,
+%   of the X regressor matrix. The image can be a series of activation values for a set of sessions,
 %   and columns of X behavioral, demographic or other variables. X can have whatever number of columns,
 %   but the number of rows need to match the number of frames in the image.
 %
