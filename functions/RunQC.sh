@@ -104,7 +104,7 @@ usage() {
     echo ""
     echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma or pipe. E.g. --bolddata='1,2,3,4,5' "
     echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
-    echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_sessions_folder>/<session_id>/session_hcp.txt and identify all BOLDs to process"
+    echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_sessions_folder>/<session_id>/${SessAcqInfoFile} and identify all BOLDs to process"
     echo ""
     echo ""
     echo "-- BOLD FC PARMETERS (Requires --boldfc='<pconn or pscalar>',--boldfcinput=<image_input>, --bolddata or --boldruns or --bolds"
@@ -391,19 +391,19 @@ fi
 # -- Check general required parameters
 if [ -z ${CASES} ]; then
     usage
-    reho "ERROR: <session_ids> not specified."; echo ""
+    reho "---> ERROR: <session_ids> not specified."; echo ""
     exit 1
 fi
 if [[ ${CASES} == *.txt ]]; then
     SessionBatchFile="$CASES"
     echo ""
-    echo "Using $SessionBatchFile for input."
+    echo "---> Using $SessionBatchFile for input."
     echo ""
     CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
 fi
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <sessions_folder> not specified."; echo ""
+    reho "---> ERROR: <sessions_folder> not specified."; echo ""
     exit 1
 fi
 if [ -z ${Overwrite} ]; then
@@ -412,11 +412,11 @@ if [ -z ${Overwrite} ]; then
 fi
 if [ -z ${OutPath} ]; then
     OutPath="${SessionsFolder}/QC/${Modality}"
-    echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; echo ""
+    echo "---> Output folder path value not explicitly specified. Using default: ${OutPath}"; echo ""
 fi
 if [ -z ${Modality} ]; then 
     usage
-    reho "ERROR:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; echo ""
+    reho "---> ERROR:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; echo ""
     exit 1
 fi
 if [ -z "$RunQCCustom" ]; then 
@@ -439,13 +439,13 @@ if [ -z "$UserSceneFile" ]; then
     fi
     if [ -z "$scenetemplatefolder" ]; then
         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
-        reho "---> Template folder path value not explicitly specified."; echo ""
-        reho "---> Using Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
+        echo "---> Template folder path value not explicitly specified."; echo ""
+        echo "---> Using Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
     fi
     if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
         echo ""
-        geho "---> Scene files found in: "; echo ""
-        geho "`ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
+        echo "---> Scene files found in: "; echo ""
+        echo "`ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
     else 
         reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
@@ -480,15 +480,15 @@ if [ -z ${TimeStamp} ]; then
 fi
 if [ -z ${Suffix} ]; then
     Suffix="$CASE_$TimeStamp"
-    echo "Suffix not manually set. Setting default: ${Suffix}"; echo ""
+    echo "---> Suffix not manually set. Setting default: ${Suffix}"; echo ""
 fi
 if [ -z ${SceneZip} ]; then
     SceneZip="yes"
-    echo "Generation of scene zip file not explicitly provided. Using defaults: ${SceneZip}"; echo ""
+    echo "---> Generation of scene zip file not explicitly provided. Using defaults: ${SceneZip}"; echo ""
 fi
 
 if [ -z "$HCPSuffix" ]; then 
-    echo "hcp_suffix flag not explicitly provided. Using defaults: ${HCPSuffix}"; echo ""
+    echo "---> hcp_suffix flag not explicitly provided. Using defaults: ${HCPSuffix}"; echo ""
 fi
 
 # -- DWI modality-specific settings:
@@ -505,8 +505,8 @@ if [ "$Modality" = "BOLD" ]; then
     # - Check if BOLDS parameter is empty:
     if [ -z "$BOLDS" ]; then 
         echo ""
-        echo "Note: BOLD input list not specified. Relying session_hcp.txt individual information files."
-        BOLDS="session_hcp.txt"
+        echo "Note: BOLD input list not specified. Relying ${SessAcqInfoFile} individual information files."
+        BOLDS="${SessAcqInfoFile}"
         echo ""
     fi
     
@@ -528,12 +528,12 @@ if [ "$Modality" = "BOLD" ]; then
     
     if [ ! -z "$BOLDfc" ]; then
         if [ -z "$BOLDfcInput" ]; then 
-            reho "--> ERROR: Flag --boldfcinput is missing. Check your inputs and re-run."; echo ""; exit 1
+            reho "---> ERROR: Flag --boldfcinput is missing. Check your inputs and re-run."; echo ""; exit 1
         fi
     fi
     if [[ ! -z ${SessionBatchFile} ]]; then
         if [[ ! -f ${SessionBatchFile} ]]; then
-            reho " --> ERROR: Requested BOLD modality with a batch file. Batch file not found."
+            reho "---> ERROR: Requested BOLD modality with a batch file. Batch file not found."
             exit 1
         else
             BOLDSBATCH="${BOLDS}"
@@ -633,6 +633,7 @@ echo ""
 
 
 finalReport(){
+
     if [ "${CompletionCheck}" == "fail" ]; then
         reho "------------------------- ERROR --------------------------------"
         echo ""
@@ -654,29 +655,33 @@ finalReport(){
 
 completionCheck() {
  
+        echo ""
+        geho " --- Running QC completion checks..."
+        echo ""
+ 
     if [[ ${Modality} != "BOLD" ]]; then
-        if [[ -z ${FinalLog} ]]; then reho "--- ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
+        if [[ -z ${FinalLog} ]]; then reho "---> ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
         LogError=`cat ${FinalLog} | grep "ERROR"`
         if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ] && [[ ${LogError} == "" ]]; then
             echo ""
-            geho "--- Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
+            geho "---> Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
             echo ""
             echo ""
-            geho "--- PNG file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png "
+            geho "---> PNG file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png "
             echo ""
         else
             echo ""
-            reho "--- ERROR: Scene generation for ${OutPath}/${WorkingSceneFile} failed. Check work."; echo ""
+            reho "---> ERROR: Scene generation and PNG output failed. Check work."; echo ""
             CompletionCheck="fail"
         fi
         if [ "$SceneZip" == "yes" ]; then
             if [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ]; then
                 echo ""
-                geho "--- Scene zip file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip"
+                geho "---> Scene zip file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip"
                 echo ""
             else
                 echo ""
-                reho "--- ERROR: Scene zip generation failed. Check work."
+                reho "---> ERROR: Scene zip generation failed. Check work."
                 echo ""
             fi
         fi
@@ -685,22 +690,22 @@ completionCheck() {
             ZipSceneFile=${WorkingDTISceneFile}.${TimeStamp}.zip
             if [ -f ${OutPath}/${WorkingDTISceneFile} ]; then
                 echo ""
-                geho "--- Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
+                geho "---> Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
                 echo ""
             else
                 echo ""
-                reho "--- ERROR: Scene generation failed for ${OutPath}/${WorkingDTISceneFile}. Check inputs."; echo ""
+                reho "---> ERROR: Scene generation failed for ${OutPath}/${WorkingDTISceneFile}. Check inputs."; echo ""
                 CompletionCheck="fail"
                 return 1
             fi
             if [ "$SceneZip" == "yes" ]; then
                 if [ -f ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip]; then
                     echo ""
-                    geho "--- Scene zip file found and generated: ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip"
+                    geho "---> Scene zip file found and generated: ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip"
                     echo ""
                 else
                     echo ""
-                    reho "--- ERROR: Scene zip generation failed for ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip. Check work."; echo ""
+                    reho "---> ERROR: Scene zip generation failed for ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip. Check work."; echo ""
                     CompletionCheck="fail"
                     return 1
                 fi
@@ -711,22 +716,22 @@ completionCheck() {
             ZipSceneFile=${WorkingBedpostXSceneFile}.${TimeStamp}.zip
             if [ -f ${OutPath}/${WorkingBedpostXSceneFile} ]; then
                 echo ""
-                geho "--- Scene file found and generated: ${OutPath}/${WorkingBedpostXSceneFile}"
+                geho "---> Scene file found and generated: ${OutPath}/${WorkingBedpostXSceneFile}"
                 echo ""
             else
                 echo ""
-                reho "--- ERROR: Scene generation failed for ${OutPath}/${WorkingBedpostXSceneFile}. Check inputs."; echo ""
+                reho "---> ERROR: Scene generation failed for ${OutPath}/${WorkingBedpostXSceneFile}. Check inputs."; echo ""
                 CompletionCheck="fail"
                 return 1
             fi
             if [ "$SceneZip" == "yes" ]; then
                 if [ -f ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip]; then
                     echo ""
-                    geho "--- Scene zip file found and generated: ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip"
+                    geho "---> Scene zip file found and generated: ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip"
                     echo ""
                 else
                     echo ""
-                    reho "--- ERROR: Scene zip generation failed for ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip. Check work."; echo ""
+                    reho "---> ERROR: Scene zip generation failed for ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip. Check work."; echo ""
                     CompletionCheck="fail"
                     return 1
                 fi
@@ -739,30 +744,30 @@ completionCheck() {
         # -- BOLD FC completion check
         if [[ ! -z ${BOLDfc} ]]; then
             CompletionCheck=""
-            if [[ -z ${FinalLog} ]]; then reho "--- ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
+            if [[ -z ${FinalLog} ]]; then reho "---> ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
             LogError=`cat ${FinalLog} | grep 'ERROR'`
             if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ] && [[ ${LogError} == "" ]]; then
                 echo ""
-                geho "--- Scene file and PNG file found and generated: ${OutPath}/${WorkingSceneFile}"
+                geho "---> Scene file and PNG file found and generated: ${OutPath}/${WorkingSceneFile}"
                 echo ""
                 CompletionCheck=""
                 return 0
                 if [ "$SceneZip" == "yes" ]; then
                     if [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ]; then
                         echo ""
-                        geho "--- Scene zip file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip"
+                        geho "---> Scene zip file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip"
                         echo ""
                         CompletionCheck=""
                         return 0
                     else
                         echo ""
-                        reho "--- ERROR: Scene zip generation not completed."; echo ""
+                        reho "---> ERROR: Scene zip generation not completed."; echo ""
                         CompletionCheck="fail"
                     fi
                 fi
             else
                 echo ""
-                reho "--- ERROR: Scene and PNG QC generation not completed."; echo ""
+                reho "---> ERROR: Scene and PNG QC generation not completed."; echo ""
                 CompletionCheck="fail"
             fi
         fi
@@ -777,12 +782,12 @@ completionCheck() {
                 # -- Echo completion & Check SNROnly flag
                 if [ -f ${TSNRReportBOLD} ]; then
                     echo ""
-                    geho "---  SNR calculation requested. SNR completed." 
+                    geho "---> SNR calculation requested. SNR completed." 
                     geho "     Session specific report can be found here: ${TSNRReportBOLD}"
                     echo ""
                     CompletionCheck=""
                 else
-                    reho "--- ERROR: SNR report not found for ${CASE} and BOLD ${BOLD}."
+                    reho "---> ERROR: SNR report not found for ${CASE} and BOLD ${BOLD}."
                     echo ""
                     CompletionCheck="fail"
                 fi
@@ -792,43 +797,43 @@ completionCheck() {
                CompletionCheck=""
                if [ -f ${TSNRReportBOLD} ]; then
                     echo ""
-                    geho "---  SNR calculation requested. SNR completed." 
+                    geho "---> SNR calculation requested. SNR completed." 
                     geho "     Session specific report can be found here: ${TSNRReportBOLD}"
                     echo ""
                     CompletionCheck=""
                 else
-                    reho "--- ERROR: SNR report not found for ${CASE} and BOLD ${BOLD}."
+                    reho "---> ERROR: SNR report not found for ${CASE} and BOLD ${BOLD}."
                     echo ""
                     CompletionCheck="fail"
                 fi
                 
-                if [[ -z ${FinalLog} ]]; then reho "--- ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
+                if [[ -z ${FinalLog} ]]; then reho "---> ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
                 LogError=`cat ${FinalLog} | grep 'ERROR'`
                 
                 if [[ -f ${OutPath}/${WorkingSceneFile} ]] && [[ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.GStimeseries.QC.wb.png ]] && [[ ${LogError} == "" ]]; then
                     echo ""
-                    geho "--- Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
+                    geho "---> Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
                     echo ""
                     return 0
                     if [ "$SceneZip" == "yes" ]; then
                         if [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ]; then
                             echo ""
-                            geho "--- Scene zip file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip"
+                            geho "---> Scene zip file found and generated: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip"
                             echo ""
                             return 0
                         else
                             echo ""
-                            reho "--- ERROR: Scene zip generation failed. Check work."; echo ""
+                            reho "---> ERROR: Scene zip generation failed. Check work."; echo ""
                             CompletionCheck="fail"
                         fi
                     fi
                 else
                     echo ""
-                    reho "--- ERROR: Scene and PNG QC generation not completed."; echo ""
+                    reho "---> ERROR: Scene and PNG QC generation not completed."; echo ""
                     echo ""
-                    reho "    ---> Check scene output: ${OutPath}/${WorkingSceneFile}"
-                    reho "    ---> Check scene png: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png"
-                    reho "    ---> Check run-specific log: ${FinalLog}"; echo ""
+                    reho "    --> Check scene output: ${OutPath}/${WorkingSceneFile}"
+                    reho "    --> Check scene png: ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png"
+                    reho "    --> Check run-specific log: ${FinalLog}"; echo ""
                     CompletionCheck="fail"
                 fi
             fi
@@ -891,7 +896,7 @@ runsnr_BOLD() {
     fi
     if [[ ${Overwrite} == "no" ]]; then 
         echo ""
-        geho "--- Overwrite is set to 'no'. Running checks for completed QC."
+        geho "---> Overwrite is set to 'no'. Running checks for completed QC."
         completionCheck
         echo ""
         if [[ ${CompletionCheck} != "fail" ]]; then
@@ -921,8 +926,8 @@ runsnr_BOLD() {
         xmax=`fslval ${HCPFolder}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
     fi
     # -- Get mix/max stats
-    ymax=`wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`
-    ymin=`wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
+    ymax=`wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`
+    ymin=`wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
     printf "${TSNRLog}\n" >> ${TSNRReport}
     printf "${TSNRLog}\n" >> ${TSNRReportBOLD}
 }
@@ -932,19 +937,19 @@ runscene_BOLDfc() {
     if [ -z "$BOLDfcPath" ]; then 
         BOLDfcPath="${SessionsFolder}/${CASE}/images/functional"
         echo ""
-        echo "--- Note: Flag --boldfcpath not provided. Setting now: ${BOLDfcPath}"
+        echo "---> Note: Flag --boldfcpath not provided. Setting now: ${BOLDfcPath}"
         echo ""
     fi
     if [[ ${Overwrite} == "no" ]]; then
         echo ""
-        geho "--- Overwrite is set to 'no'. Running checks for completed QC."
+        geho "---> Overwrite is set to 'no'. Running checks for completed QC."
         completionCheck
         if [[ ${CompletionCheck} != "fail" ]]; then
             return 0
         fi
     fi
-    echo " ==> Setting up commands to run BOLD FC scene generation"; echo ""
-    echo " --- Working on ${OutPath}/${WorkingSceneFile}"; echo ""
+    echo "---> Setting up commands to run BOLD FC scene generation"; echo ""
+    echo "---> Working on ${OutPath}/${WorkingSceneFile}"; echo ""
     # -- Setup naming conventions before generating scene
     ComRunBoldfc1="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}" 
     ComRunBoldfc2="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
@@ -962,10 +967,10 @@ runscene_BOLDfc() {
     ComRunBoldfc7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
     # -- Generate Scene Zip File if set to YES
     if [ "$SceneZip" == "yes" ]; then
-        geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
+        geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
         geho "    ${HCPFolder}"
         echo ""
-        geho "--- The zip file will be saved to: "
+        geho "---> The zip file will be saved to: "
         geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
         echo ""
         RemoveScenePath="${HCPFolder}"
@@ -991,7 +996,7 @@ runscene_BOLDfc() {
 runscene_BOLD() {
     if [[ ${Overwrite} == "no" ]]; then 
         echo ""
-        geho "--- Overwrite is set to 'no'. Running checks for completed QC."
+        geho "---> Overwrite is set to 'no'. Running checks for completed QC."
         completionCheck
         echo ""
         if [[ ${CompletionCheck} != "fail" ]]; then
@@ -1019,10 +1024,10 @@ runscene_BOLD() {
     ComRunBold9="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
     # -- Generate Scene Zip File if set to YES
     if [ "$SceneZip" == "yes" ]; then
-        geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
+        geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
         geho "    ${HCPFolder}"
         echo ""
-        geho "--- The zip file will be saved to: "
+        geho "---> The zip file will be saved to: "
         geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
         echo ""
         RemoveScenePath="${HCPFolder}"
@@ -1054,11 +1059,22 @@ main() {
     get_options "$@"
     for CASE in ${CASES}; do
         # -- Set basics
+       
+        # -- Set session_hcp.txt file 
+        if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
+            SessAcqInfoFile="session_hcp.txt"
+        else
+            # -- Set subject_hcp.txt file if session_hcp.txt is missing for backwards compatibility
+           if [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
+               SessAcqInfoFile="subject_hcp.txt"
+           fi
+        fi
+        
         CASEName="${CASE}${HCPSuffix}"
-        HCPFolder="${StudyFolder}/sessions/${CASE}/hcp/${CASEName}"
+        HCPFolder="${SessionsFolder}/${CASE}/hcp/${CASEName}"
         if [ ! -z "$HCPSuffix" ]; then 
            geho " ===> HCP suffix specified ${HCPSuffix}"; echo ""
-           geho "      Setting hcp folder to: ${StudyFolder}/sessions/${CASE}/hcp/${CASEName}"; echo ""             
+           geho "      Setting hcp folder to: ${SessionsFolder}/${CASE}/hcp/${CASEName}"; echo ""
         fi 
         # -- Check if raw NIFTI QC is requested and run it first
         if [ "$Modality" == "rawNII" ] ; then 
@@ -1085,14 +1101,14 @@ main() {
                 geho "      ${CustomTemplateSceneFiles}"; echo ""
             fi
             
-            # -- Check if session_hcp.txt is present:
-            if [[ ${BOLDS} == "session_hcp.txt" ]]; then
+            # -- Check if ${SessAcqInfoFile} is present:
+            if [[ ${BOLDS} == "${SessAcqInfoFile}" ]]; then
                 echo ""
-                echo "--- Using session_hcp.txt individual information files. Verifying that session_hcp.txt exists."; echo ""
-                if [[ -f "${SessionsFolder}/${CASE}/session_hcp.txt" ]]; then
-                    echo "${SessionsFolder}/${CASE}/session_hcp.txt found. Proceeding..."
+                echo "---> Using ${SessAcqInfoFile} individual information files. Verifying that ${SessAcqInfoFile} exists."; echo ""
+                if [[ -f "${SessionsFolder}/${CASE}/${SessAcqInfoFile}" ]]; then
+                    echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} found. Proceeding..."
                 else
-                    reho "${SessionsFolder}/${CASE}/session_hcp.txt NOT found. Check BOLD inputs."
+                    reho "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check BOLD inputs."
                     echo ""
                     exit 1
                 fi
@@ -1182,19 +1198,19 @@ main() {
                     fi
                 fi
                 # -- Check if session_hcp is used
-                if [ "$BOLDS" == "session_hcp.txt" ]; then
-                    geho "--- session_hcp.txt parameter file specified. Verifying presence of session_hcp.txt before running QC on all BOLDs..."; echo ""
-                    if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
-                        # -- Stalling on some systems --> BOLDCount=`more ${SessionsFolder}/${CASE}/session_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
-                        BOLDCount=`grep "bold" ${SessionsFolder}/${CASE}/session_hcp.txt  | grep -v "ref" | wc -l`
+                if [ "$BOLDS" == "${SessAcqInfoFile}" ]; then
+                    geho "---> ${SessAcqInfoFile} parameter file specified. Verifying presence of ${SessAcqInfoFile} before running QC on all BOLDs..."; echo ""
+                    if [ -f ${SessionsFolder}/${CASE}/${SessAcqInfoFile} ]; then
+                        # -- Stalling on some systems --> BOLDCount=`more ${SessionsFolder}/${CASE}/${SessAcqInfoFile} | grep "bold" | grep -v "ref" | wc -l`
+                        BOLDCount=`grep "bold" ${SessionsFolder}/${CASE}/${SessAcqInfoFile}  | grep -v "ref" | wc -l`
                         rm ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
                         COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
                         # -- Stalling on some systems --> BOLDS=`more ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt`
                         BOLDS=`cat ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt`
                         rm ${SessionsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
-                        geho "--- Information file ${SessionsFolder}/${CASE}/session_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
+                        geho "---> Information file ${SessionsFolder}/${CASE}/${SessAcqInfoFile} found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
                     else
-                        reho "--- ERROR: ${SessionsFolder}/${CASE}/session_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
+                        reho "---> ERROR: ${SessionsFolder}/${CASE}/${SessAcqInfoFile} not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
                         exit 1
                     fi
                 else
@@ -1273,15 +1289,15 @@ main() {
                         # -- Check if BOLD exists and skip if not it does not
                         if [[ ! -f ${HCPFolder}/${BOLDRoot}.dtseries.nii ]]; then
                             echo ""
-                            reho "--- ERROR: BOLD data specified for BOLD ${BOLD} not found: "
+                            reho "---> ERROR: BOLD data specified for BOLD ${BOLD} not found: "
                             reho "          --> ${HCPFolder}/${BOLDRoot}.dtseries.nii "
                             echo ""
-                            reho "--- Check presence of your inputs for ${CASE} and BOLD ${BOLD} and re-run! Proceeding to next BOLD run."
+                            reho "---> Check presence of your inputs for ${CASE} and BOLD ${BOLD} and re-run! Proceeding to next BOLD run."
                             echo ""
                             CompletionCheck="fail"
                         else
                             # -- Generate QC statistics for a given BOLD
-                            geho "--- Specified BOLD data found. Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
+                            geho "---> Specified BOLD data found. Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
                             echo ""
                             # Check if SNR only requested
                             if [ "$SNROnly" == "yes" ]; then 
@@ -1390,7 +1406,7 @@ main() {
                         # -- Check if Preprocessed T1w files are present
                         if [ ! -f ${GeneralPathCheck} ]; then
                             echo ""
-                            reho "--- ERROR: Data requested not found: "
+                            reho "---> ERROR: Data requested not found: "
                             reho "           --> ${GeneralPathCheck} "
                             echo ""
                             reho "Check presence of your inputs and re-run!"
@@ -1399,7 +1415,7 @@ main() {
                             return 1
                         else
                             echo ""
-                            geho "--- Data inputs found: ${GeneralPathCheck}"
+                            geho "---> Data inputs found: ${GeneralPathCheck}"
                             echo ""
                             # -- Setup naming conventions for general inputs before generating scene
                             Com4a="sed -i -e 's|DUMMYIMAGEPATH|$SessionsFolder/$CASE/$GeneralSceneDataPath|g' ${OutPath}/${WorkingSceneFile}"
@@ -1417,7 +1433,7 @@ main() {
                         # -- Check if Preprocessed T1w files are present
                         if [ -z ${HCPFolder}/MNINonLinear/T1w_restore.nii.gz ]; then
                             echo ""
-                            reho "--- ERROR: Preprocessed T1w data not found: "
+                            reho "---> ERROR: Preprocessed T1w data not found: "
                             reho "           --> ${HCPFolder}/MNINonLinear/T1w_restore.nii.gz "
                             echo ""
                             reho "Check presence of your T1w inputs and re-run!"
@@ -1426,7 +1442,7 @@ main() {
                             return 1
                         else
                             echo ""
-                            geho "--- T1w inputs found: ${HCPFolder}/MNINonLinear/T1w_restore.nii.gz"
+                            geho "---> T1w inputs found: ${HCPFolder}/MNINonLinear/T1w_restore.nii.gz"
                             echo ""
                         fi
                     fi
@@ -1437,22 +1453,22 @@ main() {
                     
                     # -- Perform checks if modality is T2w
                     if [ "$Modality" == "T2w" ]; then
-                        # -- Check if T2w is found in the session_hcp.txt mapping file
-                        T2wCheck=`cat ${SessionsFolder}/${CASE}/session_hcp.txt | grep "T2w"`
+                        # -- Check if T2w is found in the ${SessAcqInfoFile} mapping file
+                        T2wCheck=`cat ${SessionsFolder}/${CASE}/${SessAcqInfoFile} | grep "T2w"`
                         if [[ -z $T2wCheck ]]; then
                             echo ""
-                            reho "--- ERROR: T2w QC requested but T2w mapping in ${SessionsFolder}/${CASE}/session_hcp.txt not detected. Check your data and re-run if needed."
+                            reho "---> ERROR: T2w QC requested but T2w mapping in ${SessionsFolder}/${CASE}/${SessAcqInfoFile} not detected. Check your data and re-run if needed."
                             CompletionCheck="fail"
                             echo ""
                             return 1
                         else
                             echo ""
-                            geho "--- T2w mapping found: ${SessionsFolder}/${CASE}/session_hcp.txt. Checking for T2w data next..."
+                            geho "---> T2w mapping found: ${SessionsFolder}/${CASE}/${SessAcqInfoFile}. Checking for T2w data next..."
                             echo ""
-                            # -- If session_hcp.txt mapping file present check if Preprocessed T2w files are present
+                            # -- If ${SessAcqInfoFile} mapping file present check if Preprocessed T2w files are present
                             if [ -z ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz ]; then
                                 echo ""
-                                reho "--- ERROR: Preprocessed T2w data not found: "
+                                reho "---> ERROR: Preprocessed T2w data not found: "
                                 reho "           --> ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz "
                                 echo ""
                                 reho "Check presence of your T2w inputs and re-run!"
@@ -1461,7 +1477,7 @@ main() {
                                 return 1
                             else
                                 echo ""
-                                geho "--- T2w inputs found: ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz"
+                                geho "---> T2w inputs found: ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz"
                                 echo ""
                             fi
                         fi
@@ -1476,7 +1492,7 @@ main() {
                         # -- Check if Preprocessed Myelin files are present
                         if [ -z ${HCPFolder}/MNINonLinear/${CASEName}.L.SmoothedMyelinMap.164k_fs_LR.func.gii ] || [ -z ${HCPFolder}/MNINonLinear/${CASEName}.R.SmoothedMyelinMap.164k_fs_LR.func.gii ]; then
                             echo ""
-                            reho "--- ERROR: Preprocessed Smoothed Myelin data not found: "
+                            reho "---> ERROR: Preprocessed Smoothed Myelin data not found: "
                             reho "           --> ${HCPFolder}/MNINonLinear/${CASEName}.*.SmoothedMyelinMap.164k_fs_LR.func.gii  "
                             echo ""
                             reho "---- Check presence of your Myelin inputs and re-run!"
@@ -1485,8 +1501,8 @@ main() {
                             return 1
                         else
                             echo ""
-                            geho "--- Myelin L hemisphere input found: ${HCPFolder}/MNINonLinear/${CASEName}.L.SmoothedMyelinMap.164k_fs_LR.func.gii "
-                            geho "--- Myelin R hemisphere input found: ${HCPFolder}/MNINonLinear/${CASEName}.R.SmoothedMyelinMap.164k_fs_LR.func.gii "
+                            geho "---> Myelin L hemisphere input found: ${HCPFolder}/MNINonLinear/${CASEName}.L.SmoothedMyelinMap.164k_fs_LR.func.gii "
+                            geho "---> Myelin R hemisphere input found: ${HCPFolder}/MNINonLinear/${CASEName}.R.SmoothedMyelinMap.164k_fs_LR.func.gii "
                             echo ""
                         fi
                     fi
@@ -1509,15 +1525,15 @@ main() {
                         # -- Check if Preprocessed DWI files are present
                         if [ -z ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz ]; then
                             echo ""
-                            reho "--- ERROR: Preprocessed DWI data not found: "
+                            reho "---> ERROR: Preprocessed DWI data not found: "
                             reho "           --> ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz "
                             echo ""
-                            reho "--- Check presence of your DWI inputs and re-run!"
+                            reho "---> Check presence of your DWI inputs and re-run!"
                             echo ""
                             exit 1
                         else
                             echo ""
-                            geho "--- DWI inputs found: ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz "
+                            geho "---> DWI inputs found: ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz "
                             echo ""
                             # -- Split the data and setup 1st and 2nd volumes for visualization
                             Com4a="fslsplit ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split -t"
@@ -1539,7 +1555,7 @@ main() {
                                     WorkingDTISceneFile="${CASEName}.${Modality}.dtifit.QC.wb.scene"
                                 fi
                                 echo ""
-                                geho "--- QC for FSL dtifit requested. Checking if dtifit was completed..."
+                                geho "---> QC for FSL dtifit requested. Checking if dtifit was completed..."
                                 echo ""
                                 # -- Check if dtifit is done
                                 minimumfilesize=100000
@@ -1563,7 +1579,7 @@ main() {
                                     # -- Combine DWI commands
                                     Com4="$Com4; $Com4g"
                                 else
-                                    reho "--- ERROR: FSL dtifit not found for $CASEName. Skipping dtifit QC request for upcoming QC calls. Check dtifit results: "
+                                    reho "---> ERROR: FSL dtifit not found for $CASEName. Skipping dtifit QC request for upcoming QC calls. Check dtifit results: "
                                     reho "           --> ${HCPFolder}/T1w/${DWIPath}/ "
                                 fi
                             fi
@@ -1575,7 +1591,7 @@ main() {
                                     WorkingBedpostXSceneFile="${CASEName}.${Modality}.bedpostx.QC.wb.scene"
                                 fi
                                 echo ""
-                                geho "--- QC for FSL BedpostX requested. Checking if BedpostX was completed..."
+                                geho "---> QC for FSL BedpostX requested. Checking if BedpostX was completed..."
                                 echo ""
                                 # -- Check if the file even exists
                                 if [ -f ${HCPFolder}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz ]; then
@@ -1604,7 +1620,7 @@ main() {
                                     fi
                                 else 
                                     echo ""
-                                    reho "--- ERROR: FSLBedpostX outputs missing or incomplete for $CASEName. Skipping BedpostX QC request for upcoming QC calls. Check BedpostX results: "
+                                    reho "---> ERROR: FSLBedpostX outputs missing or incomplete for $CASEName. Skipping BedpostX QC request for upcoming QC calls. Check BedpostX results: "
                                     reho "           --> ${HCPFolder}/T1w/Diffusion.bedpostX/ "
                                     echo ""
                                     BedpostXQC="no"
@@ -1613,7 +1629,7 @@ main() {
                             # -- If eddy qc is selected then create hard link to eddy qc pdf and print the qc_mot_abs for each subjec to a report
                             if [ "$EddyQCStats" == "yes" ]; then
                                 echo ""
-                                geho "--- QC Stats for FSL EDDY requested. Checking if EDDY QC was completed..."
+                                geho "---> QC Stats for FSL EDDY requested. Checking if EDDY QC was completed..."
                                 echo ""
                                 # -- Then check if eddy qc is completed
                                 if [ -f ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
@@ -1632,11 +1648,11 @@ main() {
                                     ln ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASEName}.${Modality}.eddy.QC.pdf
                                     printf "${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt
                                     
-                                    geho "--- Completed EDDY QC stats for ${CASEName}"
+                                    geho "---> Completed EDDY QC stats for ${CASEName}"
                                     geho "    Final report can be found here: ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt"; echo ""
                                 else
                                     echo ""
-                                    reho "--- ERROR: EDDY QC outputs missing or incomplete for $CASEName. Skipping EDDY QC request. Check EDDY results."
+                                    reho "---> ERROR: EDDY QC outputs missing or incomplete for $CASEName. Skipping EDDY QC request. Check EDDY results."
                                     echo ""
                                 fi
                             fi
@@ -1655,7 +1671,8 @@ main() {
                     # -- Output image of the scene
                     Com6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539"
                     echo ""
-                    echo "$Com6"
+                    geho "---> Running PNG extraction using the following command..."
+                    echo "      $Com6"
                     echo ""
                     
                     # -- Check if dtifit is requested
@@ -1687,14 +1704,14 @@ main() {
                     # -- Generate Scene Zip File if set to YES
                     if [ "$SceneZip" == "yes" ]; then
                         echo ""
-                        geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
+                        geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
                         geho "    ${HCPFolder}"
                         echo ""
-                        geho "--- The zip file will be saved to: "
+                        geho "---> The zip file will be saved to: "
                         geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
                         echo ""
                         if [[ ${Modality} == "general" ]]; then
-                             geho "--- ${Modality} scene type requested. Outputs will be set relative to: "
+                             geho "---> ${Modality} scene type requested. Outputs will be set relative to: "
                              geho "    ${SessionsFolder}/${CASE}"
                              echo ""
                              RemoveScenePath="${SessionsFolder}/${CASE}"
@@ -1703,14 +1720,15 @@ main() {
                              Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SessionsFolder}/${CASE}/${WorkingSceneFile}" 
                              Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SessionsFolder}/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip"
                              echo ""
-                             echo "$Com10d"
+                             geho "---> Running PNG extraction using the following command..."
+                             echo "      $Com10d"
                              echo ""
                              Com10e="echo ${SessionsFolder}/${CASE}/${WorkingSceneFile}"
                              Com10f="mkdir -p ${SessionsFolder}/${CASE}/qc &> /dev/null"
                              Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SessionsFolder}/${CASE}/qc/"
                              Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
                         else
-                             geho "--- ${Modality} scene type requested. Outputs will be set relative to: "
+                             geho "---> ${Modality} scene type requested. Outputs will be set relative to: "
                              geho "    ${HCPFolder}"
                              echo ""
                              RemoveScenePath="${HCPFolder}"
@@ -1728,10 +1746,10 @@ main() {
                     # -- Generate Zip files for dtifit scenes if requested
                     if [ "$DtiFitQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
                         echo ""
-                        geho "--- Scene zip set to: $SceneZip. DtiFitQC set to: $DtiFitQC. Relevant scene files will be zipped using the following base folder:" 
+                        geho "---> Scene zip set to: $SceneZip. DtiFitQC set to: $DtiFitQC. Relevant scene files will be zipped using the following base folder:" 
                         geho "    ${HCPFolder}"
                         echo ""
-                        geho "--- The zip file will be saved to: "
+                        geho "---> The zip file will be saved to: "
                         geho "    ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip"
                         echo ""
                         RemoveScenePath="${HCPFolder}"
@@ -1747,10 +1765,10 @@ main() {
                     # -- Generate Zip files for bedpostx scenes if requested
                     if [ "$BedpostXQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
                         echo ""
-                        geho "--- Scene zip set to: $SceneZip. BedpostXQC set to: $BedpostXQC. Relevant scene files will be zipped using the following base folder:" 
+                        geho "---> Scene zip set to: $SceneZip. BedpostXQC set to: $BedpostXQC. Relevant scene files will be zipped using the following base folder:" 
                         geho "    ${HCPFolder}"
                         echo ""
-                        geho "--- The zip file will be saved to: "
+                        geho "---> The zip file will be saved to: "
                         geho "    ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip"
                         echo ""
                         RemoveScenePath="${HCPFolder}"
@@ -1822,10 +1840,10 @@ main() {
                         CustomRunQUEUE="$RunQCCustom1; $RunQCCustom2; $RunQCCustom3; $RunQCCustom4; $RunQCCustom5; $ComRunBoldPngNameGSMap; $RunQCCustom6; $RunQCCustom7; $RunQCCustom8; $RunQCCustom9"
                         if [ "$SceneZip" == "yes" ]; then
                             echo ""
-                            geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
+                            geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
                             geho "    ${HCPFolder}"
                             echo ""
-                            geho "--- The zip file will be saved to: "
+                            geho "---> The zip file will be saved to: "
                             geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
                             echo ""
                             RemoveScenePath="${HCPFolder}"
@@ -1870,10 +1888,10 @@ main() {
                     RunQCUser9="rm -f ${OutPath}/data_split*"
                     UserRunQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser8; $RunQCUser9"
                     if [ "$SceneZip" == "yes" ]; then
-                        geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
+                        geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
                         geho "    ${HCPFolder}"
                         echo ""
-                        geho "--- The zip file will be saved to: "
+                        geho "---> The zip file will be saved to: "
                         geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
                         echo ""
                         RemoveScenePath="${HCPFolder}"

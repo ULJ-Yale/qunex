@@ -767,7 +767,7 @@ if [ ${Calculation} != "dense" ]; then
         FinalInput=${FileList}
     fi
     # -- Check if FC seed run is specified
-        if [ -z "$ExtractData" ]; then ExtractData=""; fi
+        if [ -z "$ExtractData" ]; then ExtractData="no"; fi
         if [ -z "$Covariance" ]; then Covariance="true"; fi
         if [ -z "$Verbose" ]; then Verbose="true"; fi
         if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
@@ -865,7 +865,7 @@ if [ ${Calculation} == "dense" ]; then
 fi
 
 # -- Check if data extraction requested
-if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]]; then 
+if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]] && [[ ! `echo ${InputFiles} | grep 'dtseries'` ]]; then 
     geho "--- Saving out the data in a CSV file..."
     # -- Specify pconn file inputs and outputs
     PConnBOLDInputs=`ls ${OutPath}/${OutName}*ptseries.nii`
@@ -887,7 +887,8 @@ if [[ ${RunType} == "group" ]] && [[ ${Calculation} != "dense" ]]; then
     CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
    if [[ ! -z ${CheckRun} ]]; then
         echo ""
-        geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
+        geho "--- Connectivity calculation completed. Look for files beginning with: "
+        geho "    ${OutPath}/${OutName}"
         echo ""
     else
         echo ""
@@ -900,7 +901,8 @@ if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
     CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
    if [[ ! -z ${CheckRun} ]]; then
         echo ""
-        geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
+        geho "--- Connectivity calculation completed. Look for files beginning with: "
+        geho "    ${OutPath}/${OutName}"
         echo ""
     else
         echo ""
