@@ -26,47 +26,23 @@ Quick links
 Versioning
 ----------
 
-<<<<<<< HEAD
-Qu|Nex suite version: 0.51.2
-||||||| merged common ancestors
-Qu|Nex suite version: 0.51.0
-=======
 Qu|Nex suite version: 0.61.0
->>>>>>> release/0.61.0
 
 Submodules:
 
-<<<<<<< HEAD
-* connector: 0.50.1
-* library: 0.50.2
-* nitools: 0.50.0
-* niutilities: 0.51.2
-||||||| merged common ancestors
-* connector: 0.50.1
-* library: 0.50.2
-* nitools: 0.50.0
-* niutilities: 0.51.0
-=======
 * connector: 0.61.0
 * library: 0.61.0
 * nitools: 0.60.1
 * niutilities: 0.61.0
->>>>>>> release/0.61.0
 
 
 Release notes
 -------------
 
-<<<<<<< HEAD
-* 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
-* 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
-||||||| merged common ancestors
-=======
 * 0.61.0 Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.0 Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
->>>>>>> release/0.61.0
 * 0.51.0 MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
 * 0.50.4 Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
 * 0.50.2 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
@@ -85,11 +61,6 @@ PMC4034208.
 Detailed change log
 -------------------
 
-<<<<<<< HEAD
-* 0.51.2  [niutilities] Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
-* 0.51.1  [niutilities] Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
-||||||| merged common ancestors
-=======
 * 0.61.0  [connector, library, niutilities] Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.1  [connector, library, niutilities] Full support for hcp_suffix in runQC.
 * 0.60.0  [connector, library, nitools, niutilities] Renamed all subject related parameters to session. Pipeline architecture restructure.
@@ -108,7 +79,6 @@ Detailed change log
 * 0.51.3  [connector, library, niutilities] Renamed cores and threads parameters, changed dcm2niix ERROR to WARNING.
 * 0.51.2  [niutilities] Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1  [niutilities] Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
->>>>>>> release/0.61.0
 * 0.51.0  [niutilities] Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.7  [library] qunex_envstatus now reports OS info.
 * 0.50.6  [niutilities] Consistent parameter injection notation.
