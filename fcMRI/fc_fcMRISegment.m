@@ -1,26 +1,41 @@
 function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 
-%function [] = fc_fcMRISegment(flist, smask, tmask, verbose)
+%``function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)``
 %
 %	Segments the voxels in smask based on their connectivity with tmask ROI.
 %   Uses WTA to select the region the voxel is most correlated with.
 %
-%   INPUT
-%       flist   - A .list file information on sessions bold runs and segmentation files.
-%       smask   - .names file for source mask definition
-%       tmask   - .names file for target mask roi definition
-%       mask    - Either number of frames to omit or a mask of frames to use [0].
-%       root    - The root of the filename where results are to be saved [''].
-%       options - Whether to use 'raw', 'absolute' or 'partial' correlations ['raw'].
-%       verbose - Whether to report the progress 'full', 'script', 'none' ['none'].
+%   INPUTS
+%   ======
+%
+%   --flist     A .list file information on sessions bold runs and segmentation 
+%               files.
+%   --smask     .names file for source mask definition
+%   --tmask     .names file for target mask roi definition
+%   --mask      Either number of frames to omit or a mask of frames to use [0].
+%   --root      The root of the filename where results are to be saved [''].
+%   --options   Whether to use 'raw', 'absolute' or 'partial' correlations ['raw'].
+%   --verbose   Whether to report the progress 'full', 'script', 'none' ['none'].
 %
 %	RESULTS
-%   <root>_corr_roi - correlations of each session with the target roi
-%   <root>_segs     - segmentations for each session
-%   <root>_scorr    - final segmentation and probabilities of segmentation for each target ROI across the group
-%   <root>_gseg     - final segmentation based on group mean correlations
+%   =======
+%
+%   <root>_corr_roi 
+%       correlations of each session with the target roi
+%
+%   <root>_segs     
+%       segmentations for each session
+%
+%   <root>_scorr    
+%       final segmentation and probabilities of segmentation for each target ROI 
+%       across the group
+%
+%   <root>_gseg     
+%       final segmentation based on group mean correlations
 %
 %   USE
+%   ===
+%
 %   Use the function to segment voxels specified in smask roi file based on the
 %   correlation with ROI specifed in the tmask file. Each voxel is assigned the
 %   code of the target ROI it most correlates with. For more information see
@@ -29,16 +44,24 @@ function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 %   If no root is specified, the root of the flist is used.
 %
 %   EXAMPLE USE
-%   >>> fc_fcMRISegment('con.list', 'thalamus.names', 'yeo7.names', 0, 'Th-yeo-seg', 'partial', 'script');
+%   ===========
 %
-%   ---
-% 	Written by Grega Repovš, 2010-08-07.
+%   ::
+%
+%       fc_fcMRISegment('con.list', 'thalamus.names', 'yeo7.names', 0, ...
+%       'Th-yeo-seg', 'partial', 'script');
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2010-08-07 Grega Repovs
+%              Initial version.
 %   2017-03-19 Grega Repovs
-%            - Cleaned code, updated documentation
+%              Cleaned code, updated documentation.
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf with norminv to support Octave
+%              Replaced icdf with norminv to support Octave.
 %
 
 
