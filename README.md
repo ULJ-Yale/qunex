@@ -26,7 +26,7 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.60.1
+Qu|Nex suite version: 0.61.0
 
 Submodules:
 
