@@ -61,6 +61,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.0  [connector, library, niutilities] Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.1  [connector, library, niutilities] Full support for hcp_suffix in runQC.
 * 0.60.0  [connector, library, nitools, niutilities] Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.15 [library] Updated ColeAnticevicNetPartition with files from most recent release (v1.1.4) of the parcellation.
