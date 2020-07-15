@@ -1,21 +1,30 @@
 function [Fz] = fc_Fisher(r)
 
-%function [Fz] = fc_Fisher(r)
+%``function [Fz] = fc_Fisher(r)``
 %
-%  Converts Pearson correlations to Fisher z values. As a pre-pass, to avoid
-%  infinite Fisher z values, it multiplies all correlations with 0.9999999.
+%	Converts Pearson correlations to Fisher z values. As a pre-pass, to avoid
+%	infinite Fisher z values, it multiplies all correlations with 0.9999999.
 %
-%  INPUT
-%       f  - Peason's correlation coefficients.
+%	INPUT
+%	=====
 %
-%  OUTPUT
-%       Fz - Fisher Z values
+%	--f 		Pearson's correlation coefficients.
 %
-%  ---
-%  Written by Grega Repovs, 2007-06-23.
+%	OUTPUT
+%	======
+%	
+%	Fz
+%		Fisher Z values
 %
-%  Changelog
-%  2017-03-19 Grega Repovs - updated documentation
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+% 
+%   2007-06-23 Grega Repovs
+%			   Initial version.	
+%	2017-03-19 Grega Repovs
+%			   Updated documentation.
 
 
 r = double(r);
