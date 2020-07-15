@@ -20,28 +20,28 @@ cuda_queue=$FSLGECUDAQ
 
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <Number_of_Samples> <Scheduler>"
+    echo "usage: $0 <StudyFolder> <Session> <Number_of_Samples> <Scheduler>"
     echo ""
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 Nsamples=$3				# "$3" #Number of Samples to compute
 Scheduler=$4			# "$4" #Scheduler to use for the fsl_sub command
 
 if [ "$3" == "" ];then Nsamples=10000; fi
 OutFileName="Conn1.dconn.nii"
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
-RegFolder="$StudyFolder"/"$Subject"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Subject"/MNINonLinear/ROIs
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
+RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
+ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir -p ${ResultsFolder}
 fi
 
 #Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.bedpostX
+BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 rm -rf $ResultsFolder/stop
@@ -128,14 +128,14 @@ echo ""
 
 # - Specify scheduler options
 if [ $Scheduler == "SLURM" ]; then
-	SchedulerOptions="job-name=${Subject}_ptx_run,time=8:00:00,ntasks=1,cpus-per-task=1,mem=40000,partition=$cuda_queue,gres=gpu:1"
+	SchedulerOptions="job-name=${Session}_ptx_run,time=8:00:00,ntasks=1,cpus-per-task=1,mem=40000,partition=$cuda_queue,gres=gpu:1"
 	echo $SchedulerOptions >> $ResultsFolder/commands_Mat1_sc.sh
 fi
 if [ $Scheduler == "PBS" ]; then
-	SchedulerOptions="N=${Subject}_ptx_run,walltime=8:00:00,q=$cuda_queue,nodes=1:ppn=1:cpus=10,mem=40000"
+	SchedulerOptions="N=${Session}_ptx_run,walltime=8:00:00,q=$cuda_queue,nodes=1:ppn=1:cpus=10,mem=40000"
 fi
 if [ $Scheduler == "LSF" ]; then
-	SchedulerOptions="J=${Subject}_ptx_run,walltime=8:00:00,queue=$cuda_queue,cores=10,mem=40000"
+	SchedulerOptions="J=${Session}_ptx_run,walltime=8:00:00,queue=$cuda_queue,cores=10,mem=40000"
 fi
 	
 ptx_id=`gmri schedule command="${ResultsFolder}/commands_Mat1.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:${ResultsFolder}/Mat1_logs/Mat1.output.log|stderr:${ResultsFolder}/Mat1_logs/Mat1.error.log" workdir="${ResultsFolder}"`
@@ -161,9 +161,9 @@ if [ $Scheduler == "LSF" ]; then
 fi
 
 # -- Deprecated fsl_sub call
-# $FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat1_logs -N Mat1_conn ${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Subject} ${TemplateFolder} ${OutFileName}
+# $FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat1_logs -N Mat1_conn ${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}
 
-PostProcMatrixCommand="${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Subject} ${TemplateFolder} ${OutFileName}"
+PostProcMatrixCommand="${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}"
 
 rm -f $ResultsFolder/postcommands_Mat1.sh &> /dev/null
 echo "${PostProcMatrixCommand}" >> $ResultsFolder/postcommands_Mat1.sh

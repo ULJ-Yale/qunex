@@ -2,7 +2,7 @@
 
 Usage() {
     echo ""
-    echo "autoPtx <StudyFolder> <SubjectId> <BpXFolder> [<std2diff> <diff2std>]"
+    echo "autoPtx <StudyFolder> <SessionId> <BpXFolder> [<std2diff> <diff2std>]"
     echo ""
     exit 1
 }
@@ -13,21 +13,21 @@ Usage() {
 GPU_flag=1 #Set to 1 to run using GPUs
 
 StudyFolder=$1
-SubjectId=$2
+SessionId=$2
 BpxFolder=$3
 
-InputDir=$StudyFolder/$SubjectId/T1w/$BpxFolder
-OutDir=${StudyFolder}/${SubjectId}/MNINonLinear/Results/autoPtx
+InputDir=$StudyFolder/$SessionId/T1w/$BpxFolder
+OutDir=${StudyFolder}/${SessionId}/MNINonLinear/Results/autoPtx
 mkdir -p ${OutDir}
 
 if [ "$4" == "" ]; then
-    MNI_to_FA_warp=${StudyFolder}/${SubjectId}/MNINonLinear/xfms/standard2acpc_dc.nii.gz
+    MNI_to_FA_warp=${StudyFolder}/${SessionId}/MNINonLinear/xfms/standard2acpc_dc.nii.gz
 else
     MNI_to_FA_warp=$4
 fi
 
 if [ "$5" == "" ]; then
-    FA_to_MNI_warp=${StudyFolder}/${SubjectId}/MNINonLinear/xfms/acpc_dc2standard.nii.gz
+    FA_to_MNI_warp=${StudyFolder}/${SessionId}/MNINonLinear/xfms/acpc_dc2standard.nii.gz
 else
     FA_to_MNI_warp=$5
 fi

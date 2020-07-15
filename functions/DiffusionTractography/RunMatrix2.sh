@@ -6,7 +6,7 @@ set -e
 
 if [ "$4" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <DistanceThreshold> <DownsampleMat2Target>"
+    echo "usage: $0 <StudyFolder> <Session> <DistanceThreshold> <DownsampleMat2Target>"
     echo "<DistanceThreshold> in mm (e.g. 4), defines the max distance allowed from the pial surface and the cubcortex"
     echo "                    for a voxel to be considered in Mat2 Target mask. Use -1 to avoid any stripping"
     echo "if flag <DownsampleMat2Target> is set to 1, the mask is downsampled to 3mm isotropic"
@@ -15,7 +15,7 @@ if [ "$4" == "" ];then
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 DistanceThreshold=$3
 DownsampleMat2Target=$4
 
@@ -31,19 +31,19 @@ if [ $DownsampleMat2Target -eq 0 ]; then
     echo "Warning!! Not downsampling the target mask requires large amounts of memory and may crash the current scripts!"
 fi
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
-BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.bedpostX
-RegFolder="$StudyFolder"/"$Subject"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Subject"/MNINonLinear/ROIs
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
+BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
+RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
+ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir ${ResultsFolder}
 fi
 
 #Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.bedpostX
+BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 #Or RubiX samples
-#BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.rubiX
+#BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.rubiX
 #DtiMask=$BedpostxFolder/HRbrain_mask
 
 
@@ -145,4 +145,4 @@ ${scriptsdir}/CreateMat2GPUSub.sh $ResultsFolder #Create submission script to th
 gpu_id=`qsub $ResultsFolder/Mat2GPUSub.sh -W depend=afterok:${ptx_merged_id} -o $ResultsFolder/Mat2_logs/Mat2GPU.o -e $ResultsFolder/Mat2_logs/Mat2GPU.e`
 
 #(~60 minutes, ~32 GB)
-fsl_sub -T 240 -R 40000 -j ${gpu_id} -l $ResultsFolder/Mat2_logs -N Mat2_conn $scriptsdir/PostProcMatrix2.sh $StudyFolder $Subject $TemplateFolder $Nrepeats
+fsl_sub -T 240 -R 40000 -j ${gpu_id} -l $ResultsFolder/Mat2_logs -N Mat2_conn $scriptsdir/PostProcMatrix2.sh $StudyFolder $Session $TemplateFolder $Nrepeats

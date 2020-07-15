@@ -17,28 +17,28 @@ cuda_queue=$FSLGECUDAQ
 
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Subject> <Number_of_Samples> <Scheduler>"
+    echo "usage: $0 <StudyFolder> <Session> <Number_of_Samples> <Scheduler>"
     echo ""
     exit 1
 fi
 
 StudyFolder=$1          # "$1" #Path to Generic Study folder
-Subject=$2              # "$2" #SubjectID
+Session=$2              # "$2" #SessionID
 Nsamples=$3				# "$3" #Number of Samples to compute
 Scheduler=$4			# "$4" #Scheduler to use for the fsl_sub command
 
 if [ "$3" == "" ];then Nsamples=3000; fi
 OutFileName="Conn3.dconn.nii"
 
-ResultsFolder="$StudyFolder"/"$Subject"/MNINonLinear/Results/Tractography
-RegFolder="$StudyFolder"/"$Subject"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Subject"/MNINonLinear/ROIs
+ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
+RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
+ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir -p ${ResultsFolder}
 fi
 
 #Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Subject"/T1w/Diffusion.bedpostX
+BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 rm -rf $ResultsFolder/stop
@@ -122,15 +122,15 @@ echo "Queueing Probtrackx"
 
 # - Specify scheduler options
 if [ $Scheduler == "SLURM" ]; then
-	SchedulerOptions="job-name=${Subject}_ptx_run,time=12:00:00,ntasks=1,cpus-per-task=10,mem=40000,partition=$LSFPartitionName,gres=gpu:1"
+	SchedulerOptions="job-name=${Session}_ptx_run,time=12:00:00,ntasks=1,cpus-per-task=10,mem=40000,partition=$LSFPartitionName,gres=gpu:1"
 fi
 
 if [ $Scheduler == "PBS" ]; then
-	SchedulerOptions="N=${Subject}_ptx_run,walltime=12:00:00,q=$cuda_queue,nodes=1:ppn=1:cpus=10,mem=40000"
+	SchedulerOptions="N=${Session}_ptx_run,walltime=12:00:00,q=$cuda_queue,nodes=1:ppn=1:cpus=10,mem=40000"
 fi
 
 if [ $Scheduler == "LSF" ]; then
-	SchedulerOptions="J=${Subject}_ptx_run,walltime=12:00:00,queue=$cuda_queue,cores=10,mem=40000"
+	SchedulerOptions="J=${Session}_ptx_run,walltime=12:00:00,queue=$cuda_queue,cores=10,mem=40000"
 fi
 
 ptx_id=`gmri schedule command="${ResultsFolder}/commands_Mat3.txt" settings="${Scheduler},${SchedulerOptions}" output="stdout:${ResultsFolder}/Mat1_logs|stderr:${ResultsFolder}/Mat1_logs_error" workdir="${ResultsFolder}" | grep "Submitted batch" | sed 's/.* //g'`
@@ -146,22 +146,22 @@ ptx_id=`gmri schedule command="${ResultsFolder}/commands_Mat3.txt" settings="${S
 # - Create CIFTI file=Mat3+Mat3_transp (1.5 hours, 36 GB)
 
 	## -- DEPRECATED SCHEDULER CALLS:
-	#$FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat3_logs -N Mat3_conn ${scriptsdir}/PostProcMatrix3.sh ${StudyFolder} ${Subject} ${TemplateFolder} ${OutFileName}
+	#$FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat3_logs -N Mat3_conn ${scriptsdir}/PostProcMatrix3.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}
 
 # - Specify scheduler options
 if [ $Scheduler == "SLURM" ]; then
-	SchedulerOptions="depend=done:${Subject}_ptx_run,time=12:00:00,ntasks=1,cpus-per-task=5,mem=40000,partition=$LSFPartitionName"
+	SchedulerOptions="depend=done:${Session}_ptx_run,time=12:00:00,ntasks=1,cpus-per-task=5,mem=40000,partition=$LSFPartitionName"
 fi
 
 if [ $Scheduler == "PBS" ]; then
-	SchedulerOptions="depend=${Subject}_ptx_run,walltime=12:00:00,nodes=1:ppn=1:cpus=5,mem=40000"
+	SchedulerOptions="depend=${Session}_ptx_run,walltime=12:00:00,nodes=1:ppn=1:cpus=5,mem=40000"
 fi
 
 if [ $Scheduler == "LSF" ]; then
-	SchedulerOptions="w=done(${Subject}_ptx_run),walltime=12:00:00,cores=5,mem=40000"
+	SchedulerOptions="w=done(${Session}_ptx_run),walltime=12:00:00,cores=5,mem=40000"
 fi
 
-CreateCIFTIFileCommand="${scriptsdir}/PostProcMatrix3.sh ${StudyFolder} ${Subject} ${TemplateFolder} ${OutFileName}"
+CreateCIFTIFileCommand="${scriptsdir}/PostProcMatrix3.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}"
 gmri schedule command="${CreateCIFTIFileCommand}" settings="${Scheduler},${SchedulerOptions}" output="stdout:${ResultsFolder}/Mat1_logs|stderr:${ResultsFolder}/Mat1_logs_error" workdir="${ResultsFolder}"`
 
 

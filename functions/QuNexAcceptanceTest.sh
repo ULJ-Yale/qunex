@@ -40,7 +40,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are data stored in the following format
-# * These data are stored in: "$SubjectsFolder/$CASE/
+# * These data are stored in: "$SessionsFolder/$CASE/
 #
 #~ND~END~
 
@@ -66,7 +66,7 @@ usage() {
     echo "                                                      Supported: ${SupportedAcceptanceTestSteps}"
     echo ""
     echo "   --studyfolder=<path_to_qunex_study>            Path to study data folder"
-    echo "   --subjectsfolder=<folder_with_subjects_data>  Path to study data folder where the subjects folders reside"
+    echo "   --sessionsfolder=<folder_with_sessions_data>  Path to study data folder where the subjects folders reside"
     echo "   --subjects=<list_of_cases>                    List of subjects to run that are study-specific and correspond to XNAT database subject IDs"
     echo "   --sessionlabels=<imaging_session_labels>      Label for session within project. Note: may be general across multiple subjects (e.g. rest) or for longitudinal runs."
     echo "   --runtype=<local_or_xnat_check>               Default is [], which executes a local file system run, but requires --studyfolder to set"
@@ -122,7 +122,7 @@ usage() {
     echo ""
     echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma or pipe. E.g. --bolddata='1,2,3,4,5' "
     echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
-    echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
+    echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_sessions_folder>/<session_id>/session_hcp.txt and identify all BOLDs to process"
     echo ""    
     echo "--boldimages=<bold_run_numbers>                                  Specify a list of required BOLD images separated by comma or pipe. Where the number of the bold image would be, indicate by '{N}', e.g:"
     echo "                                                                   --boldimages='bold{N}_Atlas.dtseries.nii|seed_bold{N}_Atlas_s_hpss_res-VWMWB_lpss_LR-Thal.dtseriesnii' "
@@ -194,7 +194,7 @@ fi
 # -- Initialize global output variables
 unset CASES
 unset StudyFolder
-unset SubjectsFolder
+unset SessionsFolder
 unset SESSIONS
 unset SESSION_LABELS
 unset BOLDS # --bolddata
@@ -339,7 +339,7 @@ if [[ ${RUN_TYPE} != "xnat" ]]; then
    if [[ -z ${CASES} ]]; then usage; reho "Error: Requesting local run but --subject flag is missing."; echo ""; exit 1; fi
    if [[ -z ${SESSION_LABELS} ]]; then usage; SESSION_LABELS=""; reho "Note: --sessionlabels are not defined. Assuming no label info."; echo ""; fi
     RunAcceptanceTestDir="${StudyFolder}/processing/logs/acceptTests"
-    if [ -z ${SubjectsFolder} ]; then SubjectsFolder="${StudyFolder}/subjects"; fi
+    if [ -z ${SessionsFolder} ]; then SessionsFolder="${StudyFolder}/sessions"; fi
     echo ""
     reho "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestOut"
     echo ""
@@ -448,7 +448,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     ## -- Setup XNAT log variables
     if [[ -z ${StudyFolder} ]]; then
         XNATInfoPath="${HOME}/acceptTests/xnatlogs"
-        reho "Note: --subjectsfolder flag omitted. Setting logs to $XNATInfoPath"
+        reho "Note: --sessionsfolder flag omitted. Setting logs to $XNATInfoPath"
         echo ""
     else
         XNATInfoPath="${StudyFolder}/processing/logs/acceptTests/xnatlogs"
@@ -467,7 +467,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     
     ## -- Setup acceptance test location
     RunAcceptanceTestDir="$(dirname ${XNATInfoPath})"
-    if [[ -z ${SubjectsFolder} ]]; then SubjectsFolder="${StudyFolder}/subjects"; fi
+    if [[ -z ${SessionsFolder} ]]; then SessionsFolder="${StudyFolder}/sessions"; fi
     
     echo ""
     reho "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestDir"
@@ -476,7 +476,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     
     ## -- Obtain temp info on subjects and experiments in the project
     XNATTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -m 30 -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -m 30 -X GET "${XNAT_HOST_NAME}/data/sessions?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv
     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -m 30 -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv
 
     if [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv ] && [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv ]; then
@@ -633,16 +633,16 @@ echo ""
             UnitTestDataCheck() {
                 SubjectSessionTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
                 if [[ ${RUN_TYPE} == "xnat" ]]; then
-                       if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData} ); then 
+                       if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData} ); then 
                            Status="PASS"
-                           geho "     ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}"
-                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
-                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
+                           geho "     ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}"
+                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
+                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
                        else 
                            Status="FAIL"
-                           reho "     ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}"
-                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
-                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
+                           reho "     ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}"
+                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
+                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
                        fi
                        if [ -f ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt ]; then 
                            echo ""
@@ -652,12 +652,12 @@ echo ""
                            reho "     ERROR: Individual file for XNAT archiving missing: ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt "
                        fi
                 else
-                       if [ -f ${StudyFolder}/subjects/${CASE}/${UnitTestData} ]; then
-                           geho "     ${UnitTest} PASS: ${StudyFolder}/subjects/${CASE}/${UnitTestData}"
-                           echo "  ${UnitTest} PASS: ${StudyFolder}/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
+                       if [ -f ${StudyFolder}/sessions/${CASE}/${UnitTestData} ]; then
+                           geho "     ${UnitTest} PASS: ${StudyFolder}/sessions/${CASE}/${UnitTestData}"
+                           echo "  ${UnitTest} PASS: ${StudyFolder}/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
                        else 
-                           reho "     ${UnitTest} FAIL: ${StudyFolder}/subjects/${CASE}/${UnitTestData}"
-                           echo "  ${UnitTest} FAIL: ${StudyFolder}/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
+                           reho "     ${UnitTest} FAIL: ${StudyFolder}/sessions/${CASE}/${UnitTestData}"
+                           echo "  ${UnitTest} FAIL: ${StudyFolder}/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
                        fi
                 fi
                 
@@ -796,11 +796,11 @@ echo ""
                             XNATUploadFile="${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt"
                             echo ""
                             geho "---> Uploading ${XNATUploadFile} to ${XNAT_HOST_NAME} "
-                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
+                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
                             echo ""
-                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} &> /dev/null
+                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} &> /dev/null
                             echo ""
-                            if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/QUNEX_ACCEPT/files/${XNATUploadFile} ); then 
+                            if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/QUNEX_ACCEPT/files/${XNATUploadFile} ); then 
                                 geho " -- ${XNATUploadFile} uploaded to ${XNAT_HOST_NAME}"
                             else 
                                 reho " -- ${XNATUploadFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."

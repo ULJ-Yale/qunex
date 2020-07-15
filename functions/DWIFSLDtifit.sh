@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files: $SubjectsFolder/subjects/$CASE/hcp/$CASE/T1w/Diffusion
+# * The necessary input files: $SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion
 #
 #~ND~END~
 
@@ -59,9 +59,9 @@ echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
 echo "--function=<function_name>                           Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>              Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>           List of subjects to run"
-echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
+echo "--sessionsfolder=<folder_with_sessions>              Path to study folder that contains sessions"
+echo "--sessions=<comma_separated_list_of_cases>           List of sessions to run"
+echo "--overwrite=<clean_prior_run>                        Delete prior run for a given session"
 echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                     e.g. for SLURM the string would look like this: "
 echo "                                                     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
@@ -83,8 +83,8 @@ echo ""
 echo ""     
 echo ""     
 echo ""
-echo "qunex --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "qunex --sessionsfolder='<path_to_study_sessions_folder>' \ "
+echo "--sessions='<comma_separarated_list_of_cases>' \ "
 echo "--function='FSLDtifit' \ "
 echo "--scheduler='<name_of_scheduler_and_options>' \ "
 echo "--overwrite='yes'"
@@ -133,21 +133,21 @@ get_options() {
 local scriptName=$(basename ${0})
 local arguments=($@)
 # -- Initialize global output variables
-unset SubjectsFolder
-unset Subject
+unset SessionsFolder
+unset Session
 runcmd=""
 
 # -- Parse arguments
-CASE=`opts_GetOpt "--subject" $@`
-SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
+CASE=`opts_GetOpt "--session" $@`
+SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
 
 # -- Check required parameters
-if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects Folder"; exit 1; fi
-if [ -z "$CASE" ]; then reho "Error: Subject missing"; exit 1; fi
+if [ -z "$SessionsFolder" ]; then reho "Error: Sessions Folder"; exit 1; fi
+if [ -z "$CASE" ]; then reho "Error: Session missing"; exit 1; fi
 
 # -- Set StudyFolder
-cd $SubjectsFolder/../ &> /dev/null
+cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
@@ -155,8 +155,8 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Study Folder: ${StudyFolder}"
-echo "   Subjects Folder: ${SubjectsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Sessions Folder: ${SessionsFolder}"
+echo "   Session: ${CASE}"
 echo "   Study Log Folder: ${LogFolder}"
 echo "   Overwrite prior run: ${Overwrite}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
@@ -179,13 +179,13 @@ if [ "$Overwrite" == "yes" ]; then
     echo ""
     reho "Removing existing dtifit run for $CASE..."
     echo ""
-    rm -rf ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_* > /dev/null 2>&1
+    rm -rf ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_* > /dev/null 2>&1
 fi
 
 checkCompletion() {
 # -- Check file presence
-if [ -a ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz ]; then
-    actualfilesize=$(wc -c <${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz)
+if [ -a ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz ]; then
+    actualfilesize=$(wc -c <${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz)
 else
     actualfilesize="0"
 fi
@@ -213,19 +213,19 @@ if [[ ${Overwrite} == "no" ]]; then
 fi
 
 # -- Command to run
-dtifit --data=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals
+dtifit --data=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals
 
 # -- Perform completion checks
 reho "--- Checking outputs..."
 echo ""
 checkCompletion
 if [[ ${RunCompleted} == "yes" ]]; then
-    geho "DTI FIT completed: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
+    geho "DTI FIT completed: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
     echo ""
 else
    echo ""
    reho " -- DTI FIT run not found or incomplete for $CASE. Something went wrong." 
-   reho "    Check output: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
+   reho "    Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
    echo ""
    exit 1
 fi

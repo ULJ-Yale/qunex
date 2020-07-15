@@ -1,14 +1,17 @@
 # README File for Qu|Nex Connector Component
 
 The `connector` repository as part of the Qu|Nex package serves as the overall wrapper 
-for the Qu|Nex suite. It handles flexible directory inputs and subject lists. 
+for the Qu|Nex suite. It handles flexible directory inputs and session lists. 
 The `connector` code supports various functionality across the Qu|Nex suite, 
 including data organization, QC, preprocessing, various analyses etc. 
 The wrapper code is flexible and can be updated by adding functions developed around 
 other Qu|Nex suite tools (e.g. `niutilities` or `nitools` Qu|Nex submodules).
 
-The Qu|Nex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
-and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+The Qu|Nex `connector` code is is co-developed and co-maintained by the:
+
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
+* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
 
 
 Quick links
@@ -25,8 +28,15 @@ Quick links
 Change Log
 ----------
 
-* 0.50.1 Harmonized the use of hcp_suffix.
-* 0.50.0 Renamed gmrimage class to nimage and methods names from mri_ to img_.
+* 0.61.0  Implementation of bug fixes across connector and pipeline restructure back-compatibility
+* 0.60.1  Full support for hcp_suffix in runQC.
+* 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
+* 0.50.5  Splash screen update, uploaded gpu_binaries.
+* 0.50.4  License and README updates.
+* 0.50.3  Fixed incorrect calling of hcpd.
+* 0.50.2  Renamed cores and threads parameters.
+* 0.50.1  Harmonized the use of hcp_suffix.
+* 0.50.0  Renamed gmrimage class to nimage and methods names from mri_ to img_.
 * 0.49.10 Initial submodule versioning.
 
 

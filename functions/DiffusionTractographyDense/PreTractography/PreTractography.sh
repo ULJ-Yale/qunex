@@ -58,20 +58,20 @@ echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX ---> BedpostX out
 echo ""
 echo "-- REQUIRED PARMETERS VIA MNAP:"
 echo ""
-echo "--subjectsfolder=<folder_with_subjects>                 Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>              List of subjects to run"
+echo "--sessionsfolder=<folder_with_sessions>                 Path to study folder that contains sessions"
+echo "--sessions=<comma_separated_list_of_cases>              List of sessions to run"
 echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                        e.g. for SLURM the string would look like this: "
 echo "                                                        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
 echo "-- EXAMPLE:"
 echo ""
-echo "mnap pretractographyDense --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "mnap pretractographyDense --sessionsfolder='<path_to_study_sessions_folder>' \ "
+echo "--sessions='<comma_separarated_list_of_cases>' \ "
 echo "--scheduler='<name_of_scheduler_and_options>' \ "
 echo ""
-echo "Direct usage: $0 <StudyFolder> <Subject> <MSMflag>"
-echo "       T1w and MNINonLinear folders are expected within <StudyFolder>/<Subject>"
+echo "Direct usage: $0 <StudyFolder> <Session> <MSMflag>"
+echo "       T1w and MNINonLinear folders are expected within <StudyFolder>/<Session>"
 echo "       MSMflag=0 uses the default surfaces, MSMflag=1 uses the MSM surfaces defined in MakeTrajectorySpace_MNI.sh" 
 echo ""
 exit 0
@@ -88,7 +88,7 @@ fi
 scriptsdir="${HCPPIPEDIR_dMRITracFull}"/PreTractography
 
 StudyFolder=$1
-Subject=$2
+Session=$2
 MSMflag=$3
 
 WholeBrainTrajectoryLabels=${scriptsdir}/config/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
@@ -96,7 +96,7 @@ LeftCerebralTrajectoryLabels=${scriptsdir}/config/LeftCerebralFreeSurferTrajecto
 RightCerebralTrajectoryLabels=${scriptsdir}/config/RightCerebralFreeSurferTrajectoryLabelTableLut.txt
 FreeSurferLabels=${scriptsdir}/config/FreeSurferAllLut.txt
 
-T1wDiffusionFolder="${StudyFolder}/${Subject}/T1w/Diffusion"
+T1wDiffusionFolder="${StudyFolder}/${Session}/T1w/Diffusion"
 DiffusionResolution=`${FSLDIR}/bin/fslval ${T1wDiffusionFolder}/data pixdim1`
 DiffusionResolution=`printf "%0.2f" ${DiffusionResolution}`
 LowResMesh=32
@@ -104,7 +104,7 @@ StandardResolution="2"
 
 # -- Needed for making the fibre connectivity file in Diffusion space
 ${scriptsdir}/MakeTrajectorySpace.sh \
-    --path="$StudyFolder" --subject="$Subject" \
+    --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
     --leftcerebrallabels="$LeftCerebralTrajectoryLabels" \
     --rightcerebrallabels="$RightCerebralTrajectoryLabels" \
@@ -113,13 +113,13 @@ ${scriptsdir}/MakeTrajectorySpace.sh \
 
 ${scriptsdir}/MakeWorkbenchUODFs.sh \
 --path="${StudyFolder}" \
---subject="${Subject}" \
+--session="${Session}" \
 --lowresmesh="${LowResMesh}" \
 --diffresol="${DiffusionResolution}"
 
 # -- Create lots of files in MNI space used in tractography
 ${scriptsdir}/MakeTrajectorySpace_MNI.sh \
-    --path="$StudyFolder" --subject="$Subject" \
+    --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
     --leftcerebrallabels="$LeftCerebralTrajectoryLabels" \
     --rightcerebrallabels="$RightCerebralTrajectoryLabels" \
