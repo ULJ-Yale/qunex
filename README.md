@@ -30,15 +30,16 @@ Qu|Nex suite version: 0.60.1
 
 Submodules:
 
-* connector: 0.60.1
-* library: 0.60.1
-* nitools: 0.60.0
-* niutilities: 0.60.1
+* connector: 0.61.0
+* library: 0.61.0
+* nitools: 0.60.1
+* niutilities: 0.61.0
 
 
 Release notes
 -------------
 
+* 0.61.0 Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.0 Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
