@@ -457,9 +457,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     command will be run for each of the specified sessions in the sessionsfolder
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each sessions's folder. Commands will run in parallel by
-    utilizing the specified number of parelements (1 by default).
+    (for more information see online documentation). `sessionsfolder` will be
+    filled in automatically as each sessions's folder. Commands will run in
+    parallel by utilizing the specified number of parelements (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `qunex ?schedule` for more information). If set in
