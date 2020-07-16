@@ -457,9 +457,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     command will be run for each of the specified sessions in the sessionsfolder
     (current directory by default). Optional `filter` and `sessionids` parameters
     can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each sessions's folder. Commands will run in parallel by
-    utilizing the specified number of parelements (1 by default).
+    (for more information see online documentation). `sessionsfolder` will be
+    filled in automatically as each sessions's folder. Commands will run in
+    parallel by utilizing the specified number of parelements (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `qunex ?schedule` for more information). If set in
@@ -892,6 +892,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                                         name (Siemens scanners). The value should
                                         specify how many of the last image type 
                                         labels to add. [0]
+                    - addJSONInfo   ... What sequence information to extract
+                                        from JSON sidecar files and add to 
+                                        session.txt file. Specify a comma 
+                                        separated list of fields or 'all'.
+                                        See list in session.txt file description
+                                        below. []
 
     RESULTS
     =======
@@ -910,8 +916,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     Subject id will be extracted from the session id assuming the session id
     formula: `<subject id>_<session id>`. If there is no underscore in the 
     session id, the subject id is assumed to equal session id.
-    `
-
+    
     An example session.txt file would be:
 
     id: OP169_baseline
@@ -940,6 +945,16 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     file could be generated (Survey images for instance don't convert). The
     generated session.txt files form the basis for the following HCP and other
     processing steps.
+
+    The following information can be extracted from sidecar JSON files and added
+    to the sequence information in session.txt file:
+    
+    :<fieldname>:       <JSON key>
+    :TR:                RepetitionTime
+    :PEDirection:       PhaseEncodingDirection
+    :EchoSpacing:       EffectiveEchoSpacing
+    :DwellTime:         DwellTime
+    :ReadoutDirection:  ReadoutDirection
 
     DICOM-Report.txt file
     ---------------------
@@ -1041,6 +1056,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
              - Changed subjects to sessions
     2019-06-22 Grega Repovš
              - Added multiple sessions example
+    2020-06-15 Grega Repovš
+             - Added addJSONInfo option and improved handling of JSON files
     '''
 
     print "Running dicom2niix\n=================="
@@ -1056,12 +1073,16 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     # check options
 
     optionstr = options
-    options = {'addImageType': '0'}
+    options = {'addImageType': '0', 'addJSONInfo': []}
 
     if optionstr:
         try:
             for k, v in [e.split(':') for e in optionstr.split('|')]:
-                options[k.strip()] = v.strip()
+                k, v = k.strip(), v.strip()
+                if k in options and type(options[k]) is list:
+                    options[k] = [e.strip() for e in v.split(',')]
+                else:
+                    options[k] = v
         except:
             raise ge.CommandError('dicom2niix', "Misspecified options string", "The options string is not valid! [%s]" % (optionstr), "Please check command instructions!")
 
@@ -1312,11 +1333,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             if debug:
                 print "     --> found %s nifti file(s): %s" % (nimg, "\n                            ".join(imgs))
 
-            # --> initialize JSON information
-            
-            jsoninfo = ""
-            jinf = {}
-
             for img in imgs:
                 if not os.path.exists(img):
                     continue                
@@ -1350,6 +1366,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     if os.path.exists(dwisrc):
                         os.rename(dwisrc, os.path.join(imgf, "%s%s" % (tbasename, dwiextra)))
 
+                # --> initialize JSON information
+            
+                jsoninfo = ""
+                jinf = {}
+
                 # --> check for .json files and extract info if present                
 
                 for jsonextra in ['.json', '.JSON']:
@@ -1369,15 +1390,15 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                             os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
                             jsonsrc = tfname.replace('.nii.gz', '.json')
 
-                            if 'RepetitionTime' in jinf:
+                            if 'RepetitionTime' in jinf and ('TR' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
                                 jsoninfo += ": TR(%s)" % (str(jinf['RepetitionTime']))
-                            if 'PhaseEncodingDirection' in jinf:
+                            if 'PhaseEncodingDirection' in jinf and ('PEDirection' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
                                 jsoninfo += ": PEDirection(%-2s)" % (jinf['PhaseEncodingDirection'])    
-                            if 'EffectiveEchoSpacing' in jinf:
+                            if 'EffectiveEchoSpacing' in jinf and ('EchoSpacing' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
                                 jsoninfo += ": EchoSpacing(%s)" % (str(jinf['EffectiveEchoSpacing']))
-                            if 'DwellTime' in jinf:
+                            if 'DwellTime' in jinf and ('DwellTime' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
                                 jsoninfo += ": DwellTime(%s)" % (str(jinf['DwellTime']))
-                            if 'ReadoutDirection' in jinf:
+                            if 'ReadoutDirection' in jinf and ('ReadoutDirection' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
                                 jsoninfo += ": ReadoutDirection(%-2s)" % (jinf['ReadoutDirection'])
                         except:
                             print >> r, "     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc)
@@ -2035,10 +2056,16 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     --options         A pipe separated string that lists additional options as a 
                       "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
                       processing dicom or PAR/REC files. Currently it supports:
-                      - addImageType  ... Adds image type information to the 
+                      - addImageType ... Adds image type information to the 
                                          sequence name (Siemens scanners). The 
                                          value should specify how many of the 
                                          last image type labels to add. [0]
+                      - addJSONInfo  ... What sequence information to extract
+                                         from JSON sidecar files and add to 
+                                         session.txt file. Specify a comma 
+                                         separated list of fields or 'all'.
+                                         See list in session.txt file description
+                                         of dicom2niix inline help. []
 
     --unzip           Whether to unzip individual DICOM files that are gzipped.
                       Valid options are 'yes', 'no', and 'ask'. ['yes']

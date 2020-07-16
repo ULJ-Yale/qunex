@@ -2921,7 +2921,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                 print "     -> %s " % (os.path.basename(session))
 
     if report['missing source']:
-        raise ge.CommandFailed("createSessionInfo", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sfile), "Please check the data and parameters!")
+        raise ge.CommandFailed("createSessionInfo", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sourcefile), "Please check the data and parameters!")
 
     return
 
