@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.1
+Qu|Nex suite version: 0.61.2
 
 Submodules:
 
 * connector: 0.61.0
 * library: 0.61.0
 * nitools: 0.60.1
-* niutilities: 0.61.2
+* niutilities: 0.61.3
 
 
 Release notes
 -------------
 
+* 0.61.2 Fixed a bug in niutilities when importing BIDS data.
 * 0.61.1 Hotfix of a breaking bug in createSessionInfo. Inclusion of sequence information from JSON files when running importDICOM and dicom2niix is now optional.
 * 0.61.0 Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.0 Renamed all subject related parameters to session. Pipeline architecture restructure.
@@ -62,6 +63,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.2  [niutilities] Fixed a bug in niutilities when importing BIDS data.
 * 0.61.1  [niutilities] Hotfix of a breaking bug in createSessionInfo. Inclusion of sequence information from JSON files when running importDICOM and dicom2niix is now optional.
 * 0.61.0  [connector, library, niutilities] Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.1  [connector, library, niutilities] Full support for hcp_suffix in runQC.
