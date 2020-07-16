@@ -26,6 +26,7 @@ import datetime
 import gzip
 import sys
 import niutilities.g_filelock as fl
+import ast
 
 
 def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False):

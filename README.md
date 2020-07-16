@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.3  Added import of ast library to g_bids.py.
 * 0.61.2  Inclusion of sequence information from JSON files when running importDICOM and dicom2niix is now optional.
 * 0.61.1  Replaced the old variable name sfile with sourcefile in createSessionInfo.
 * 0.61.0  Implementation of bug fixes across connector and pipeline restructure back-compatibility.
