@@ -117,11 +117,12 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
     except:
         pass
 
-    folder   = bidsfolder
-    subject  = ""
-    session  = ""
-    optional = ""
-    modality = ""
+    folder     = bidsfolder
+    subject    = ""
+    session    = ""
+    optional   = ""
+    modality   = ""
+    isoptional = False
 
     # --- load BIDS structure
     # template folder
@@ -144,6 +145,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
             session = part.split('-')[1]
         elif part in bids['optional']:
             optional = part
+            isoptional = True
         elif part in bids['modalities']:
             modality = part
         else:
@@ -224,7 +226,12 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
             sessionsList['map'].append(session)
     
     # --> compile target filename
-    tfile = os.path.join(folder, optional, modality, os.path.basename(file))
+    if isoptional:
+        oparts = file.split(os.sep)
+        fparts = [folder] + oparts[oparts.index(optional):]
+        tfile  = os.path.join(*fparts)
+    else:
+        tfile = os.path.join(folder, optional, modality, os.path.basename(file))
 
     # --> check folder
     io = fl.makedirs(os.path.dirname(tfile))
@@ -580,8 +587,17 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
             else:
                 metadataPath = inbox
             
+            mcandidates = []
             for m in metadata:
-                sourceFiles += glob.glob(os.path.join(metadataPath, m))
+                mcandidates += glob.glob(os.path.join(metadataPath, m))
+
+            for mcandidate in mcandidates:
+                if os.path.isfile(mcandidate):
+                    sourceFiles.append(mcandidate)
+                elif os.path.isdir(mcandidate):
+                    for path, dirs, files in os.walk(mcandidate):
+                        for file in files:
+                            sourceFiles.append(os.path.join(path, file))
 
             # --- compile candidates
 
@@ -629,7 +645,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     # ---> mapping data to sessions' folders
 
     print "--> mapping files to Qu|Nex bids folders"
-
+    
     for file in sourceFiles:
         if file.endswith('.zip'):
             print "    --> processing zip package [%s]" % (file)
