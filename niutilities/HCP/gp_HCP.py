@@ -2617,7 +2617,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             # -- spin echo settings
 
             sesettings = True
-            for p in ['hcp_bold_sephaseneg', 'hcp_bold_sephasepos', 'hcp_bold_unwarpdir']:
+            for p in ['hcp_bold_sephaseneg', 'hcp_bold_sephasepos', 'hcp_bold_unwarpdir', 'hcp_bold_topupconfig']:
                 if not options[p]:
                     r += '\n---> ERROR: TOPUP requested but %s parameter is not set! Please review parameter file!' % (p)
                     boldok = False
@@ -2661,11 +2661,28 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                         sepresent.append(bold)
                         sepairs[bold] = {'spinPos': spinPos, 'spinNeg': spinNeg}
 
-                # --- Process unwarp direction
+            # --> check for topupconfig
 
-                unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
-                unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
-                unwarpdirs = dict(unwarpdirs)
+            if options['hcp_bold_topupconfig']:
+                topupconfig = options['hcp_bold_topupconfig']
+                if not os.path.exists(options['hcp_bold_topupconfig']):
+                    topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_bold_topupconfig'])
+                    if not os.path.exists(topupconfig):
+                        r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_bold_topupconfig'])
+                        run = False
+                    else:
+                        r += "\n     ... TOPUP configuration file present"
+                else:
+                    r += "\n     ... TOPUP configuration file present"
+
+        # --- Process unwarp direction
+
+        if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
+            unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
+            unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
+            unwarpdirs = dict(unwarpdirs)
+        else:
+            unwarpdirs = {'default': ""}
 
         # --- Get sorted bold numbers
 
@@ -2680,11 +2697,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         spinP       = 0
         spinN       = 0
-        spinNeg     = "NONE"  # AP or LR
-        spinPos     = "NONE"  # PA or RL
+        spinNeg     = ""  # AP or LR
+        spinPos     = ""  # PA or RL
         refimg      = "NONE"
         futureref   = "NONE"
         topupconfig = ""
+        orient      = ""
 
         boldsData = []
 
@@ -2705,61 +2723,55 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             r += "\n\n---> %s BOLD %s" % (action("Preprocessing settings (unwarpdir, refimage, moveref, seimage) for", options['run']), printbold)
             boldok = True
 
-            # --- set unwarpdir
-
-            if "o" in boldinfo:
-                orient    = "_" + boldinfo['o']
-                unwarpdir = unwarpdirs.get(boldinfo['o'])
-                if unwarpdir is None:
-                    r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['o'])
-                    boldok = False
-            elif 'phenc' in boldinfo:
-                orient    = "_" + boldinfo['phenc']
-                unwarpdir = unwarpdirs.get(boldinfo['phenc'])
-                if unwarpdir is None:
-                    r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['phenc'])
-                    boldok = False
-            else:
-                orient = ""
-                unwarpdir = unwarpdirs.get('default')
-                if unwarpdir is None:
-                    r += '\n     ... ERROR: No default unwarpdir is set! Please check hcp_bold_unwarpdir parameter!'
-                    boldok = False
-
-            if orient:
-                r += "\n     ... phase encoding direction: %s" % (orient[1:])
-            else:
-                r += "\n     ... phase encoding direction not specified"
-                
-            r += "\n     ... unwarp direction: %s" % (unwarpdir)
-
-            # --- set reference
-            #
-            # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
-            # - have to keep track of whether an old topup in the same direction exists
-            #
-            
-            # --- check for bold image
-
-            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                boldroot = boldinfo['filename']
-            else:
-                boldroot = boldsource + orient
-
-            boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
-            r, boldok = checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
-
-            # --- check for ref image
-
-            if options['hcp_bold_sbref'].lower() == 'use':
-                refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
-                r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
-            else:
-                r += "\n     ... reference image not used"
-
-            # --- check for spin-echo-fieldmap image
+            # ===> Check for and prepare distortion correction parameters
 
             echospacing = ""
+            unwarpdir = ""
+
+            if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
+
+                # --- set unwarpdir
+
+                if "o" in boldinfo:
+                    orient    = "_" + boldinfo['o']
+                    unwarpdir = unwarpdirs.get(boldinfo['o'])
+                    if unwarpdir is None:
+                        r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['o'])
+                        boldok = False
+                elif 'phenc' in boldinfo:
+                    orient    = "_" + boldinfo['phenc']
+                    unwarpdir = unwarpdirs.get(boldinfo['phenc'])
+                    if unwarpdir is None:
+                        r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['phenc'])
+                        boldok = False
+                else:
+                    orient = ""
+                    unwarpdir = unwarpdirs.get('default')
+                    if unwarpdir is None:
+                        r += '\n     ... ERROR: No default unwarpdir is set! Please check hcp_bold_unwarpdir parameter!'
+                        boldok = False
+
+                if orient:
+                    r += "\n     ... phase encoding direction: %s" % (orient[1:])
+                else:
+                    r += "\n     ... phase encoding direction not specified"
+                    
+                r += "\n     ... unwarp direction: %s" % (unwarpdir)
+
+                # -- set echospacing
+
+                if 'EchoSpacing' in boldinfo:
+                    echospacing = boldinfo['EchoSpacing']
+                    r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
+                elif options['hcp_bold_echospacing']:
+                    echospacing = options['hcp_bold_echospacing']
+                    r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
+                else:
+                    echospacing = ""
+                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
+                    boldok = False
+
+            # --- check for spin-echo-fieldmap image
 
             if options['hcp_bold_dcmethod'].lower() == 'topup' and sesettings:
                 
@@ -2799,33 +2811,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     spinP = spinN
                     futureref = "NONE"
 
-                # --> check for topupconfig
-
-                if options['hcp_bold_topupconfig']:
-                    topupconfig = options['hcp_bold_topupconfig']
-                    if not os.path.exists(options['hcp_bold_topupconfig']):
-                        topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_bold_topupconfig'])
-                        if not os.path.exists(topupconfig):
-                            r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_bold_topupconfig'])
-                            run = False
-                        else:
-                            r += "\n---> TOPUP configuration file present."
-                    else:
-                        r += "\n---> TOPUP configuration file present."
-
-                # -- set echospacing
-
-                if 'EchoSpacing' in boldinfo:
-                    echospacing = boldinfo['EchoSpacing']
-                    r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
-                elif options['hcp_bold_echospacing']:
-                    echospacing = options['hcp_bold_echospacing']
-                    r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
-                else:
-                    echospacing = ""
-                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
-                    boldok = False
-
             # --- check for Siemens double TE-fieldmap image
 
             elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
@@ -2860,6 +2845,30 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             else:
                 r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_dcmethod'])
                 boldok = False
+
+            # --- set reference
+            #
+            # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
+            # - have to keep track of whether an old topup in the same direction exists
+            #
+
+            # --- check for bold image
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                boldroot = boldinfo['filename']
+            else:
+                boldroot = boldsource + orient
+
+            boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
+            r, boldok = checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
+
+            # --- check for ref image
+
+            if options['hcp_bold_sbref'].lower() == 'use':
+                refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
+                r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
+            else:
+                r += "\n     ... reference image not used"
 
             # ---> Check the mask used
             if options['hcp_bold_mask']:

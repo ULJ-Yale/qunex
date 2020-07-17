@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.5  Fixed checking of dc correction parameters in fMRIVolume.
 * 0.61.4  Added support for multiple nested folders within BIDS study level directories.
 * 0.61.3  Added import of ast library to g_bids.py.
 * 0.61.2  Inclusion of sequence information from JSON files when running importDICOM and dicom2niix is now optional.
