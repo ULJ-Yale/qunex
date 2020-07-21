@@ -2500,7 +2500,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     folder:
 
     study
-    └─ subjects
+    └─ sessions
        └─ subject1_session1
           └─ hcp
              └─ subject1_session1
@@ -2522,28 +2522,27 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     --sessions              ... The batch.txt file with all the sessions information
                                 [batch.txt].
-    --subjectsfolder        ... The path to the study/subjects folder, where the
+    --sessionsfolder        ... The path to the study/sessions folder, where the
                                 imaging  data is supposed to go [.].
-    --cores                 ... How many cores to utilize. This Parameter 
-                                determines the parallelization on the subject
-                                level [1].
-    --threads               ... How many threads to utilize This Parameter
-                                determines the parallelization on the bolds 
-                                level [1].
+    --parsessions           ... How many sessions to run in parallel [1].
+    --parelements           ... How many elements (e.g bolds) to run in
+                                parralel [1].
     --bolds                 ... Which bold images (as they are specified in the
                                 batch.txt file) to process. It can be a single
                                 type (e.g. 'task'), a pipe separated list (e.g.
                                 'WM|Control|rest') or 'all' to process all [all].
     --overwrite             ... Whether to overwrite existing data (yes) or not (no)
                                 [no].
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
     --logfolder             ... The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default []
     --log                   ... Whether to keep ('keep') or remove ('remove') the
                                 temporary logs once jobs are completed ['keep'].
-                                When a comma separated list is given, the log will
-                                be created at the first provided location and then 
-                                linked or copied to other locations. The valid 
-                                locations are: 
+                                When a comma or pipe ('|') separated list is given, 
+                                the log will be created at the first provided location
+                                and then linked or copied to other locations. 
+                                The valid locations are: 
                                 * 'study'   for the default: 
                                             `<study>/processing/logs/comlogs`
                                             location,
@@ -2583,21 +2582,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     
     (-) This parameter is currently not supported
 
-    processing validation
-    ---------------------
-
-    --hcp_bold_vol_check     ... Whether to check the results of the fMRIVolume 
-                                 pipeline by presence of last file generated 
-                                 ('last'), the default list of all files ('all') 
-                                 or using a specific check file ('<path to file>')
-                                 ['last']
-
     naming options
     --------------
 
-    --hcp_suffix             ... Specifies a suffix to the session id if
-                                 multiple variants of preprocessing are run,
-                                 empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. [BOLD_]
@@ -2733,60 +2720,18 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     With the information present above, the file `/data/gc/Prisma.conf` would
     be used.
 
-    Full file checking
-    ------------------
-
-    If `--hcp_prefs_check` parameter is set to `all` or a specific file, after
-    the completion of processing, the command will check whether processing was
-    completed successfully by checking against a given file list. If 'all' is 
-    specified, `check_PreFreeSurfer.txt` file will be used, which has to be 
-    present in the `<subjectsfolder>/subjects/specs` directory. If another 
-    strings is given, the command will first check for a presence of a file with 
-    such name in the spec folder (see before), and then check if it is a 
-    valid path to a file. If a file is found, each line in a file should 
-    represent a file or folder that has to be present in the 
-    `<session id>/hcp/<session id>` directory. Folders should be separated by
-    lines. Where a session id should be used, `{sessionid}` should be placed. 
-    Where the actual bold name should be used '{scan} should be placed. These
-    will be replaced with the actual session id and bold names at the time of 
-    checking. 
-
-    A line that starts with a '#' is considered a comment and will be ignored. 
-    If two alternatives are possible and either one of them satisfies the check,
-    they should be placed on the same line, separated by a '|' character.
-
-    Example content:
-    
-    ```
-    {scan}
-    {scan} {scan}_gdc_warp.nii.gz
-    {scan} {scan}_gdc.nii.gz 
-    {scan} {scan}_mc.nii.gz
-    ```
-
-    If full file checking is used:
-
-    1/ the success of the run will be judged by the presence of all the files 
-       as they are specified in the check file.
-    2/ logs will be named:
-       done        - the final file is present as well as all the required files
-       incomplete  - the final file is present but not all the required files
-       error       - the final file is missing
-    3/ missing files will be printed to the stdout and a full report will be 
-       appended to the log file.
-
 
     EXAMPLE USE
     ===========
 
     ```
-    qunex hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10
+    qunex hcp_fMRIVolume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10
     ```
 
     ```
-    qunex hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-          overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
+    qunex hcp4 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+          overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
           hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     ```
 
@@ -2826,9 +2771,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Introduced bold specific SE options and updated documentation
     2020-01-28 Grega Repovš
              - Made SE selection more rubust
+    2020-04-23 Grega Repovš
+             - Removed full file checking from documentation
+    2020-07-21 Aleksij Kraljič
+             - Implemented Philips B0-map field map distortion correction
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Volume registration [%s] ... " % (action("Running", options['run']), options['hcp_processing_mode'])
 
@@ -2891,9 +2840,23 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             #     r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
             run = False
         
-        # --- lookup gdcoeffs file if needed
+        # -> lookup gdcoeffs file if needed
 
         gdcfile, r, run = checkGDCoeffFile(options['hcp_bold_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
+
+        # -> default parameter values
+
+        spinP       = 0
+        spinN       = 0
+        spinNeg     = ""  # AP or LR
+        spinPos     = ""  # PA or RL
+        refimg      = "NONE"
+        futureref   = "NONE"
+        topupconfig = ""
+        orient      = ""
+        fmmag       = "NONE"
+        fmphase     = "NONE"
+        fmge        = "NONE"
 
         # -> Check for SE images
 
@@ -2906,7 +2869,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             # -- spin echo settings
 
             sesettings = True
-            for p in ['hcp_bold_sephaseneg', 'hcp_bold_sephasepos', 'hcp_bold_unwarpdir']:
+            for p in ['hcp_bold_sephaseneg', 'hcp_bold_sephasepos', 'hcp_bold_unwarpdir', 'hcp_bold_topupconfig']:
                 if not options[p]:
                     r += '\n---> ERROR: TOPUP requested but %s parameter is not set! Please review parameter file!' % (p)
                     boldok = False
@@ -2950,11 +2913,28 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                         sepresent.append(bold)
                         sepairs[bold] = {'spinPos': spinPos, 'spinNeg': spinNeg}
 
-        #if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
+            # --> check for topupconfig
+
+            if options['hcp_bold_topupconfig']:
+                topupconfig = options['hcp_bold_topupconfig']
+                if not os.path.exists(options['hcp_bold_topupconfig']):
+                    topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_bold_topupconfig'])
+                    if not os.path.exists(topupconfig):
+                        r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_bold_topupconfig'])
+                        run = False
+                    else:
+                        r += "\n     ... TOPUP configuration file present"
+                else:
+                    r += "\n     ... TOPUP configuration file present"
+
         # --- Process unwarp direction
-        unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
-        unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
-        unwarpdirs = dict(unwarpdirs)
+
+        if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
+            unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
+            unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
+            unwarpdirs = dict(unwarpdirs)
+        else:
+            unwarpdirs = {'default': ""}
 
         # --- Get sorted bold numbers
 
@@ -2966,17 +2946,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Preprocess
-
-        spinP       = 0
-        spinN       = 0
-        spinNeg     = "NONE"  # AP or LR
-        spinPos     = "NONE"  # PA or RL
-        refimg      = "NONE"
-        futureref   = "NONE"
-        topupconfig = ""
-        fmmag       = "NONE"
-        fmphase     = "NONE"
-        fmge        = "NONE"
 
         boldsData = []
 
@@ -2997,71 +2966,53 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             r += "\n\n---> %s BOLD %s" % (action("Preprocessing settings (unwarpdir, refimage, moveref, seimage) for", options['run']), printbold)
             boldok = True
 
-            # --- set unwarpdir
-
-            if "o" in boldinfo:
-                orient    = "_" + boldinfo['o']
-                unwarpdir = unwarpdirs.get(boldinfo['o'])
-                if unwarpdir is None:
-                    r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['o'])
-                    boldok = False
-            elif 'phenc' in boldinfo:
-                orient    = "_" + boldinfo['phenc']
-                unwarpdir = unwarpdirs.get(boldinfo['phenc'])
-                if unwarpdir is None:
-                    r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['phenc'])
-                    boldok = False
-            else:
-                orient = ""
-                unwarpdir = unwarpdirs.get('default')
-                if unwarpdir is None:
-                    r += '\n     ... ERROR: No default unwarpdir is set! Please check hcp_bold_unwarpdir parameter!'
-                    boldok = False
-
-            if orient:
-                r += "\n     ... phase encoding direction: %s" % (orient[1:])
-            else:
-                r += "\n     ... phase encoding direction not specified"
-                
-            r += "\n     ... unwarp direction: %s" % (unwarpdir)
-
-            # --- set reference
-            #
-            # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
-            # - have to keep track of whether an old topup in the same direction exists
-            #
-            
-            # --- check for bold image
-
-            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                boldroot = boldinfo['filename']
-            else:
-                boldroot = boldsource + orient
-
-            boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
-            r, boldok = checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
-
-            # --- check for ref image
-
-            if options['hcp_bold_sbref'].lower() == 'use':
-                refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
-                r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
-            else:
-                r += "\n     ... reference image not used"
-
-            # -- set echospacing
+            # ===> Check for and prepare distortion correction parameters
 
             echospacing = ""
-            if 'EchoSpacing' in boldinfo:
-                echospacing = boldinfo['EchoSpacing']
-                r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
-            elif options['hcp_bold_echospacing']:
-                echospacing = options['hcp_bold_echospacing']
-                r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
-            else:
-                echospacing = ""
-                r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
-                boldok = False
+            unwarpdir = ""
+
+            if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
+
+                # --- set unwarpdir
+
+                if "o" in boldinfo:
+                    orient    = "_" + boldinfo['o']
+                    unwarpdir = unwarpdirs.get(boldinfo['o'])
+                    if unwarpdir is None:
+                        r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['o'])
+                        boldok = False
+                elif 'phenc' in boldinfo:
+                    orient    = "_" + boldinfo['phenc']
+                    unwarpdir = unwarpdirs.get(boldinfo['phenc'])
+                    if unwarpdir is None:
+                        r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['phenc'])
+                        boldok = False
+                else:
+                    orient = ""
+                    unwarpdir = unwarpdirs.get('default')
+                    if unwarpdir is None:
+                        r += '\n     ... ERROR: No default unwarpdir is set! Please check hcp_bold_unwarpdir parameter!'
+                        boldok = False
+
+                if orient:
+                    r += "\n     ... phase encoding direction: %s" % (orient[1:])
+                else:
+                    r += "\n     ... phase encoding direction not specified"
+                    
+                r += "\n     ... unwarp direction: %s" % (unwarpdir)
+
+                # -- set echospacing
+
+                if 'EchoSpacing' in boldinfo:
+                    echospacing = boldinfo['EchoSpacing']
+                    r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
+                elif options['hcp_bold_echospacing']:
+                    echospacing = options['hcp_bold_echospacing']
+                    r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
+                else:
+                    echospacing = ""
+                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
+                    boldok = False
 
             # --- check for spin-echo-fieldmap image
 
@@ -3102,20 +3053,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 if spinN != spinP:
                     spinP = spinN
                     futureref = "NONE"
-
-                # --> check for topupconfig
-
-                if options['hcp_bold_topupconfig']:
-                    topupconfig = options['hcp_bold_topupconfig']
-                    if not os.path.exists(options['hcp_bold_topupconfig']):
-                        topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_bold_topupconfig'])
-                        if not os.path.exists(topupconfig):
-                            r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_bold_topupconfig'])
-                            run = False
-                        else:
-                            r += "\n---> TOPUP configuration file present."
-                    else:
-                        r += "\n---> TOPUP configuration file present."
 
             # --- check for Siemens double TE-fieldmap image
 
@@ -3176,6 +3113,30 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_dcmethod'])
                 boldok = False
 
+            # --- set reference
+            #
+            # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
+            # - have to keep track of whether an old topup in the same direction exists
+            #
+
+            # --- check for bold image
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                boldroot = boldinfo['filename']
+            else:
+                boldroot = boldsource + orient
+
+            boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
+            r, boldok = checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
+
+            # --- check for ref image
+
+            if options['hcp_bold_sbref'].lower() == 'use':
+                refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
+                r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
+            else:
+                r += "\n     ... reference image not used"
+
             # ---> Check the mask used
             if options['hcp_bold_mask']:
                 if options['hcp_bold_mask'] != 'T1_fMRI_FOV' and options['hcp_processing_mode'] == 'HCPStyleData':
@@ -3225,10 +3186,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # --- Process
         r += "\n"
 
-        threads = min(options['threads'], len(boldsData))
-        r += "\n%s BOLD images on %d threads" % (action("Running", options['run']), threads)
+        parelements = max(1, min(options['parelements'], len(boldsData)))
+        r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
 
-        if (threads == 1): # serial execution
+        if (parelements == 1): # serial execution
             # loop over bolds
             for b in boldsData:
                 # process
@@ -3291,7 +3252,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
 
-    r += "\n\nHCP fMRIVolume %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP fMRIVolume %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # rint r
     return (r, report)
