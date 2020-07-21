@@ -2602,9 +2602,20 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             #     r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
             run = False
         
-        # --- lookup gdcoeffs file if needed
+        # -> lookup gdcoeffs file if needed
 
         gdcfile, r, run = checkGDCoeffFile(options['hcp_bold_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
+
+        # -> default parameter values
+
+        spinP       = 0
+        spinN       = 0
+        spinNeg     = ""  # AP or LR
+        spinPos     = ""  # PA or RL
+        refimg      = "NONE"
+        futureref   = "NONE"
+        topupconfig = ""
+        orient      = ""
 
         # -> Check for SE images
 
@@ -2694,15 +2705,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Preprocess
-
-        spinP       = 0
-        spinN       = 0
-        spinNeg     = ""  # AP or LR
-        spinPos     = ""  # PA or RL
-        refimg      = "NONE"
-        futureref   = "NONE"
-        topupconfig = ""
-        orient      = ""
 
         boldsData = []
 
