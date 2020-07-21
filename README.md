@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.6  Removed a bug where the topupconfig parameter was not properly set when running hcp4.
 * 0.61.5  Fixed checking of dc correction parameters in fMRIVolume.
 * 0.61.4  Added support for multiple nested folders within BIDS study level directories.
 * 0.61.3  Added import of ast library to g_bids.py.
