@@ -199,7 +199,7 @@ def doOptionsCheck(options, sinfo, command):
         if log in ['keep', 'study']:
             comlogs.append(studyComlogs)
         elif log == 'session':
-            comlogs.append(os.path.join(options['subjectsfolder'], sinfo['id'], 'logs', 'comlogs'))
+            comlogs.append(os.path.join(options['sessionsfolder'], sinfo['id'], 'logs', 'comlogs'))
         elif log == 'hcp':
             if 'hcp' in sinfo:
                 comlogs.append(os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'], 'logs', 'comlogs'))
@@ -226,7 +226,7 @@ def getFileNames(sinfo, options):
     getFileNames - documentation not yet available.
     """
 
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
     rgss = rgss.translate(None, ' ,;|')
@@ -343,7 +343,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     """
     getBOLDFileNames - documentation not yet available.
     """
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
     f = {}
 
     if 'bold_tail' not in options:
@@ -398,7 +398,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     if 'e' in options['bold_nuisance']:
         f['bold_event_o']       = os.path.join(d['s_source'], boldname + options['event_file'])
-        f['bold_event_a']       = os.path.join(options['subjectsfolder'], 'inbox', sinfo['id'] + "_" + boldname + options['event_file'])
+        f['bold_event_a']       = os.path.join(options['sessionsfolder'], 'inbox', sinfo['id'] + "_" + boldname + options['event_file'])
         f['bold_event']         = os.path.join(d['s_bold_events'], boldname + options['event_file'])
 
     # --- bold preprocessed files
@@ -432,7 +432,7 @@ def findFile(sinfo, options, fname):
     """
     findFile - documentation not yet available.
     """
-    d = getSubjectFolders(sinfo, options)
+    d = getSessionFolders(sinfo, options)
 
     tfile = os.path.join(d['inbox'], "%s_%s" % (sinfo['id'], fname))
     if os.path.exists(tfile):
@@ -459,9 +459,9 @@ def findFile(sinfo, options, fname):
     return False
 
 
-def getSubjectFolders(sinfo, options):
+def getSessionFolders(sinfo, options):
     """
-    getSubjectFolders - documentation not yet available.
+    getSessionFolders - documentation not yet available.
     """
     d = {}
 
@@ -476,10 +476,10 @@ def getSubjectFolders(sinfo, options):
         bvar = '.' + options['hcp_bold_variant']
 
     if "hcp" in sinfo:
-        d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'])
+        d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
 
-    d['s_base']             = os.path.join(options['subjectsfolder'], sinfo['id'])
-    d['s_images']           = os.path.join(d['s_base'], 'images')
+    d['s_base']             = os.path.join(options['sessionsfolder'], sinfo['id'])
+    d['s_images']           = os.path.join(d['s_base'], 'images' + options['img_suffix'])
     d['s_struc']            = os.path.join(d['s_images'], 'structural')
     d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
     d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks' + bvar)
@@ -496,9 +496,9 @@ def getSubjectFolders(sinfo, options):
     d['s_fs_mri']           = os.path.join(d['s_fs'], 'mri')
     d['s_fs_orig']          = os.path.join(d['s_fs'], 'mri/orig')
     d['s_fs_surf']          = os.path.join(d['s_fs'], 'surf')
-    d['inbox']              = os.path.join(options['subjectsfolder'], 'inbox')
+    d['inbox']              = os.path.join(options['sessionsfolder'], 'inbox')
 
-    d['qc']                 = os.path.join(options['subjectsfolder'], 'QC')
+    d['qc']                 = os.path.join(options['sessionsfolder'], 'QC')
     d['qc_mov']             = os.path.join(d['qc'], 'movement' + bvar)
 
     if not os.path.exists(d['s_source']) and options['source_folder']:
@@ -579,7 +579,7 @@ def missingReport(missing, message, prefix):
     return r 
    
 
-def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True):
+def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False):
     '''
     The function checks the presence of a test file.
     If specified it runs also full test.
@@ -594,7 +594,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
             fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
 
-    if os.path.exists(tfile):
+    if os.path.exists(tfile) and not overwrite:
         if verbose:
             r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
         report = "%s finished" % (command)
@@ -688,7 +688,6 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         r += '\n---> logfile: %s' % (tfile)
 
         # -- do we have multiple logfolders?
-
         for logfolder in logfolders:
             nfile = os.path.join(logfolder, tname)
             if not os.path.exists(logfolder):
@@ -702,6 +701,16 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         return tfile, r
 
     endlog = None
+
+    # -- Report command
+    printComm = "------------------------------------------------------------\n"
+    printComm += "Running external command via Qu|Nex:\n\n"
+    comm = run.replace("--", "\n    --").replace("             ", "")
+    comm += "\n"
+    printComm += comm
+    if checkfile is not None or checkfile != "":
+        printComm += "\nTest file: %s\n" % checkfile
+    printComm += "------------------------------------------------------------\n"
 
     if overwrite or not os.path.exists(checkfile):
         r += '\n\n%s' % (description)
@@ -731,36 +740,45 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
 
         # --- open log file
-
-        nf = open(tmplogfile, 'w')
-        print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
-
+        nf = open(tmplogfile, 'a')
         if not os.path.exists(tmplogfile):
             r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
             raise ExternalFailed(r)
 
         # --- run command
         try:
+            # add command call to start of the log
+            print >> nf, printComm
+
+            # close and switch to append mode
+            nf.close()
+            nf = open(tmplogfile, 'a')
+
             if shell:
                 ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
             else:
                 ret = subprocess.call(run.split(), stdout=nf, stderr=nf)
+
         except:
-            r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
+            r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
+            r += comm
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
+
 
         # --- check results
 
         if ret:
-            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (description, ret, run)
+            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (description, ret)
+            r += comm
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
         status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf, verbose=verbose)
 
         if status is None:
-            r += "\n\nTry running the command directly for more detailed error information:\n--> %s\n" % (run)
+            r += "\n\nTry running the command directly for more detailed error information:\n"
+            r += comm
 
         # --- End
 

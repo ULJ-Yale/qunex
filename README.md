@@ -21,9 +21,11 @@ set of native Matlab functions, methods and utilities, and a modified version
 of HCP (Human Connectome Project) preprocessing tools. They are best utilized as 
 a part of Qu|Nex (Multimodal Neuroimaging Analysis Platform).
 
-The Qu|Nex code is is co-developed and co-maintained by the 
-[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
-and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+The `niutilities` code is is co-developed and co-maintained by:
+
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
+* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
 
 
 Quick links
@@ -40,16 +42,36 @@ Quick links
 Change log
 ----------
 
+* 0.61.6  Removed a bug where the topupconfig parameter was not properly set when running hcp4.
+* 0.61.5  Fixed checking of dc correction parameters in fMRIVolume.
+* 0.61.4  Added support for multiple nested folders within BIDS study level directories.
+* 0.61.3  Added import of ast library to g_bids.py.
+* 0.61.2  Inclusion of sequence information from JSON files when running importDICOM and dicom2niix is now optional.
+* 0.61.1  Replaced the old variable name sfile with sourcefile in createSessionInfo.
+* 0.61.0  Implementation of bug fixes across connector and pipeline restructure back-compatibility.
+* 0.60.1  Full support for hcp_suffix in runQC.
+* 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
+* 0.51.10 External command calls are now printed in stdout and at the beginning of comlogs.
+* 0.51.9  Consistent jobname in scheduling between qunex and qunexContainer.
+* 0.51.8  License and README updates.
+* 0.51.7  Fixed reporting when hcp_fs_existing_session is true.
+* 0.51.6  Changed hcpsuffix to hcp_suffix throughout.
+* 0.51.5  Updated in-line documentation.
+* 0.51.4  Renamed cores and threads parameters.
+* 0.51.3  Changed dcm2niix ERROR to WARNING, removed full file checking documentation.
+* 0.51.2  Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
+* 0.51.1  Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
+* 0.51.0  Integration of MSMAll and DeDriftAndResample HCP pipelines.
 * 0.50.11 Updated extraction of PAR file id.
 * 0.50.10 Consistent parameter injection notation.
 * 0.50.9  Harmonized use of hcp_suffix.
 * 0.50.8  hcp_PreFS glob debug.
-* 0.50.7  Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
+* 0.50.7  Debug of hcpFS/hcp2 command when --hcp_fs_existing_session is set to TRUE.
 * 0.50.6  Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.5  HCP glob debug, ICAFix exceptions now look nicer.
 * 0.50.4  ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter.
 * 0.50.3  ICAFix regname debug.
-* 0.50.2  Added filesort option for HCPLSImport.
+* 0.50.2  Added filesort option for importHCP.
 * 0.50.1  Optimized bold comparison.
 * 0.50.0  HCP ICAFix implementation.
 * 0.49.10 Initial submodule versioning.
