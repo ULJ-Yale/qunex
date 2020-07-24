@@ -26,11 +26,11 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.5
+Qu|Nex suite version: 0.61.
 
 Submodules:
 
-* connector: 0.61.0
+* connector: 0.61.1
 * library: 0.61.0
 * nitools: 0.60.1
 * niutilities: 0.61.6
@@ -39,6 +39,7 @@ Submodules:
 Release notes
 -------------
 
+* 0.61.6 runQC now works properly when overwrite is set to no.
 * 0.61.5 Removed a bug that prevented proper setup of hcp_fMRIVolume parameters.
 * 0.61.4 Fixed several bugs when when importing BIDS data.
 * 0.61.1 Hotfix of a breaking bug in createSessionInfo. Inclusion of sequence information from JSON files when running importDICOM and dicom2niix is now optional.
@@ -64,6 +65,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.6  [connector] Removed a bug where the topupconfig parameter was not properly set when running hcp4.
 * 0.61.5  [niutilities] Removed a bug where the topupconfig parameter was not properly set when running hcp4.
 * 0.61.4  [niutilities] Fixed checking of dc correction parameters in fMRIVolume.
 * 0.61.3  [niutilities] Added support for multiple nested folders within BIDS study level directories.
