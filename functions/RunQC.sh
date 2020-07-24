@@ -650,14 +650,164 @@ finalReport(){
 }
 
 # -------------------------------------------
-# -- Completion checks function
+# -- Completion checks functions
 # -------------------------------------------
 
+# check if a previous run was successful
+previousCompletionCheck() {
+
+    # set the default value for this check
+    PreviousCompletionCheck="pass"
+
+    # if Modality is not BOLD
+    if [[ ${Modality} != "BOLD" ]]; then
+
+        # check for working scene file
+        if [ ! -f ${OutPath}/${WorkingSceneFile} ]; then
+            PreviousCompletionCheck="fail"
+            return 1
+        fi
+
+        # check for timestamped working scene file
+        for f in ${OutPath}/${WorkingSceneFile}.*.png; do
+            if [ ! -e $f ]; then
+                PreviousCompletionCheck="fail"
+                return 1
+            fi
+        done
+
+        # check for working DTI scene file
+        if [ "$DtiFitQC" == "yes" ]; then
+
+            if [ ! -f ${OutPath}/${WorkingDTISceneFile} ]; then
+                PreviousCompletionCheck="fail"
+                return 1
+            fi
+
+            # check for timestamped working DTI scene file
+            if [ "$SceneZip" == "yes" ]; then
+                for f in ${OutPath}/${WorkingDTISceneFile}.*.zip; do
+                    if [ ! -e $f ]; then
+                        PreviousCompletionCheck="fail"
+                        return 1
+                    fi
+                done
+            fi
+        fi
+        
+        # check for working BedpostX scene file
+        if [ "$BedpostXQC" == "yes" ]; then
+            if [ ! -f ${OutPath}/${WorkingBedpostXSceneFile} ]; then
+                PreviousCompletionCheck="fail"
+                return 1
+            fi
+
+            # check for working timestamped BedpostX scene file
+            if [ "$SceneZip" == "yes" ]; then
+                for f in ${OutPath}/${WorkingBedpostXSceneFile}.*.zip; do
+                    if [ ! -e $f ]; then
+                        PreviousCompletionCheck="fail"
+                        return 1
+                    fi
+                done
+            fi
+        fi
+    fi
+ 
+    # if Modality is BOLD
+    if [ ${Modality} == "BOLD" ]; then
+        # iterate over BOLDS
+        for BOLD in ${BOLDS}; do
+
+            # Check if prefix is specified
+            if [ ! -z "$BOLDPrefix" ]; then
+                if [ `echo ${BOLDPrefix} | grep '_'` ]; then BOLD="${BOLDPrefix}${BOLD}"; else BOLD="${BOLDPrefix}_${BOLD}"; fi
+            else
+                # Check if BOLD folder with the given number contains additional prefix info and return an exit code if yes
+                NoBOLDDirPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/*${BOLD}`
+                NoBOLDPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/*${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
+                if [ ! -z ${NoBOLDDirPreffix} ]; then
+                    BOLD=${NoBOLDPreffix}
+                fi
+            fi
+
+            # BOLD FC completion check
+            if [ ! -z ${BOLDfc} ]; then
+
+                # set working scene file
+                WorkingSceneFile="${CASEName}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
+
+                # check for working scene file
+                if [ ! -f ${OutPath}/${WorkingSceneFile} ]; then
+                    PreviousCompletionCheck="fail"
+                    return 1
+                fi
+
+                # check for timestamped working scene file
+                for f in ${OutPath}/${WorkingSceneFile}.*.png; do
+                    if [ ! -e $f ]; then
+                        PreviousCompletionCheck="fail"
+                        return 1
+                    fi
+                done
+            fi
+            
+            # BOLD raw dtseries cmpletion check
+            if [ -z ${BOLDfc} ]; then
+
+                # check for timestamped TSNR report
+                for f in ${OutPath}/${CASEName}_${BOLD}_TSNR_Report_*.txt; do
+                    if [ ! -e $f ]; then
+                        PreviousCompletionCheck="fail"
+                        return 1
+                    fi
+                done
+
+                # BOLD raw scene completion check w/o TSNR
+                if [ ${SNROnly} != "yes" ]; then
+
+                    # set working scene file
+                    WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
+
+                    # scene zip?
+                    if [ "$SceneZip" == "yes" ]; then
+
+                        # check for timestamped working scene zip file
+                        for f in ${OutPath}/${WorkingSceneFile}.*.zip; do
+                            if [ ! -e $f ]; then
+                                PreviousCompletionCheck="fail"
+                                return 1
+                            fi
+                        done
+
+                    else
+                        # check for working scene file
+                        if [ ! -f ${OutPath}/${WorkingSceneFile} ]; then
+                            PreviousCompletionCheck="fail"
+                            return 1
+                        fi
+
+                        # check for timestamped working scene file
+                        for f in ${OutPath}/${WorkingSceneFile}.*.GStimeseries.QC.wb.png; do
+                            if [ ! -e $f ]; then
+                                PreviousCompletionCheck="fail"
+                                return 1
+                            fi
+                        done
+
+                    fi
+                fi
+            fi
+        done
+    fi
+}
+
+# check if this run was successful
 completionCheck() {
  
-        echo ""
-        geho " --- Running QC completion checks..."
-        echo ""
+    echo ""
+    geho " --- Running QC completion checks..."
+    echo ""
  
     if [[ ${Modality} != "BOLD" ]]; then
         if [[ -z ${FinalLog} ]]; then reho "---> ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
@@ -687,7 +837,6 @@ completionCheck() {
         fi
     
         if [ "$DtiFitQC" == "yes" ]; then
-            ZipSceneFile=${WorkingDTISceneFile}.${TimeStamp}.zip
             if [ -f ${OutPath}/${WorkingDTISceneFile} ]; then
                 echo ""
                 geho "---> Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
@@ -713,7 +862,6 @@ completionCheck() {
         fi
         
         if [ "$BedpostXQC" == "yes" ]; then
-            ZipSceneFile=${WorkingBedpostXSceneFile}.${TimeStamp}.zip
             if [ -f ${OutPath}/${WorkingBedpostXSceneFile} ]; then
                 echo ""
                 geho "---> Scene file found and generated: ${OutPath}/${WorkingBedpostXSceneFile}"
@@ -746,6 +894,7 @@ completionCheck() {
             CompletionCheck=""
             if [[ -z ${FinalLog} ]]; then reho "---> ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
             LogError=`cat ${FinalLog} | grep 'ERROR'`
+
             if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ] && [[ ${LogError} == "" ]]; then
                 echo ""
                 geho "---> Scene file and PNG file found and generated: ${OutPath}/${WorkingSceneFile}"
@@ -772,41 +921,27 @@ completionCheck() {
             fi
         fi
         
-        # -- BOLD raw dtseries QC check
+        # BOLD raw dtseries QC check
         if [[ -z ${BOLDfc} ]]; then
-            # -- TSNR completion check
-            TSNRReport="${OutPath}/TSNR_Report_All_${TimeStamp}.txt"
-            TSNRReportBOLD="${OutPath}/${CASE}_${BOLD}_TSNR_Report_${TimeStamp}.txt"
-            if [[ ${SNROnly} == "yes" ]]; then
+            # Check TSNRReportBOLD regardless of SNROnly flag
+            CompletionCheck=""
+
+            # Echo completion & Check SNROnly flag
+            if [ -f ${TSNRReportBOLD} ]; then
+                echo ""
+                geho "---> SNR calculation requested. SNR completed." 
+                geho "     Session specific report can be found here: ${TSNRReportBOLD}"
+                echo ""
                 CompletionCheck=""
-                # -- Echo completion & Check SNROnly flag
-                if [ -f ${TSNRReportBOLD} ]; then
-                    echo ""
-                    geho "---> SNR calculation requested. SNR completed." 
-                    geho "     Session specific report can be found here: ${TSNRReportBOLD}"
-                    echo ""
-                    CompletionCheck=""
-                else
-                    reho "---> ERROR: SNR report not found for ${CASE} and BOLD ${BOLD}."
-                    echo ""
-                    CompletionCheck="fail"
-                fi
+            else
+                reho "---> ERROR: SNR report not found for ${CASE} and BOLD ${BOLD}."
+                echo ""
+                CompletionCheck="fail"
             fi
+
             # -- BOLD raw scene completion check w/o TSNR
             if [[ ${SNROnly} != "yes" ]]; then
-               CompletionCheck=""
-               if [ -f ${TSNRReportBOLD} ]; then
-                    echo ""
-                    geho "---> SNR calculation requested. SNR completed." 
-                    geho "     Session specific report can be found here: ${TSNRReportBOLD}"
-                    echo ""
-                    CompletionCheck=""
-                else
-                    reho "---> ERROR: SNR report not found for ${CASE} and BOLD ${BOLD}."
-                    echo ""
-                    CompletionCheck="fail"
-                fi
-                
+
                 if [[ -z ${FinalLog} ]]; then reho "---> ERROR: Final log file not defined. Report this error to developers."; echo ""; exit 1; fi
                 LogError=`cat ${FinalLog} | grep 'ERROR'`
                 
@@ -888,21 +1023,13 @@ runsnr_BOLD() {
     TSNRReportBOLD="${OutPath}/${CASEName}_${BOLD}_TSNR_Report_${TimeStamp}.txt"
     
     # -- Check completion
-    if [[ ${Overwrite} == "yes" ]]; then
+    if [ ${Overwrite} == "yes" ]; then
         rm -f ${HCPFolder}/${BOLDRoot}_GS.txt &> /dev/null
         rm -f ${HCPFolder}/${BOLDRoot}_GS.dtseries.nii &> /dev/null
         rm -f ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii &> /dev/null
         rm -f ${OutPath}/${CASEname}_${BOLD}_TSNR_Report_*
     fi
-    if [[ ${Overwrite} == "no" ]]; then 
-        echo ""
-        geho "---> Overwrite is set to 'no'. Running checks for completed QC."
-        completionCheck
-        echo ""
-        if [[ ${CompletionCheck} != "fail" ]]; then
-            return 0
-        fi
-    fi
+
     # -- Reduce dtseries
     wb_command -cifti-reduce ${HCPFolder}/${BOLDRoot}.dtseries.nii TSNR ${HCPFolder}/${BOLDRoot}_TSNR.dscalar.nii -exclude-outliers 4 4
     # -- Compute SNR
@@ -940,14 +1067,7 @@ runscene_BOLDfc() {
         echo "---> Note: Flag --boldfcpath not provided. Setting now: ${BOLDfcPath}"
         echo ""
     fi
-    if [[ ${Overwrite} == "no" ]]; then
-        echo ""
-        geho "---> Overwrite is set to 'no'. Running checks for completed QC."
-        completionCheck
-        if [[ ${CompletionCheck} != "fail" ]]; then
-            return 0
-        fi
-    fi
+
     echo "---> Setting up commands to run BOLD FC scene generation"; echo ""
     echo "---> Working on ${OutPath}/${WorkingSceneFile}"; echo ""
     # -- Setup naming conventions before generating scene
@@ -994,15 +1114,6 @@ runscene_BOLDfc() {
 
 # -- Function to run BOLD raw scene QC
 runscene_BOLD() {
-    if [[ ${Overwrite} == "no" ]]; then 
-        echo ""
-        geho "---> Overwrite is set to 'no'. Running checks for completed QC."
-        completionCheck
-        echo ""
-        if [[ ${CompletionCheck} != "fail" ]]; then
-            return 0
-        fi
-    fi
     # -- Setup naming conventions before generating scene
     ComRunBold1="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}" 
     ComRunBold2="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
@@ -1126,6 +1237,16 @@ main() {
                     done
                 else
                     rm -f ${OutPath}/${CASEName}.${Modality}.* &> /dev/null
+                fi
+            else
+                geho "---> Overwrite is set to 'no'. Running checks for previously ran QC."
+                previousCompletionCheck
+                if [[ ${PreviousCompletionCheck} != "fail" ]]; then
+                    echo ""
+                    geho "---> Found files from a previous run, skipping this one"
+                    echo ""
+                    geho "------------------------- Successful completion of work --------------------------------"
+                    return 0
                 fi
             fi
             
@@ -1254,7 +1375,10 @@ main() {
                         ${RunQCLogFolder}/${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${TimeStamp}.log
                         FinalLog="${RunQCLogFolder}/QC_${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${TimeStamp}.log"
                         rm ${OutPath}/${TemplateSceneFile} &> /dev/null
-                        completionCheck
+                        # only run completion check if file are missing for the previous run
+                        if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
+                            completionCheck
+                        fi
                     else
 
                     # -- Work on raw BOLD QC + TSNR
@@ -1301,34 +1425,37 @@ main() {
                             echo ""
                             # Check if SNR only requested
                             if [ "$SNROnly" == "yes" ]; then 
-                                    runsnr_BOLD
+                                runsnr_BOLD
                             else
-                               # -- Check if running defaults w/o UserSceneFile
-                               if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ] && [ "$RunQCCustom" != "yes" ]; then
-                                   # Inputs
-                                   Modality="BOLD"
-                                   TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
-                                   scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
-                                   WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
-                                   # -- Rsync over template files for a given BOLD
-                                   runsnr_BOLD
-                                   Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
-                                   Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null "
-                                   Com3="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${WorkingSceneFile}"
-                                   Com4="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${WorkingSceneFile}"
-                                   Com5="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${WorkingSceneFile}"
-                                   ComQueue="$Com1; $Com2; $Com3; $Com4; $Com5"
-                                   runscene_BOLD
-                                   # -- Clean up prior conflicting scripts, generate script and set permissions
-                                   rm -f ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
-                                   echo "$ComRunBoldQUEUE" >> ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-                                   chmod 770 ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-                                   # -- Run script
-                                   ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log
-                                   rm ${OutPath}/${TemplateSceneFile} &> /dev/null
-                                   FinalLog="${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log"
-                                   completionCheck
-                               fi
+                                # -- Check if running defaults w/o UserSceneFile
+                                if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ] && [ "$RunQCCustom" != "yes" ]; then
+                                    # Inputs
+                                    Modality="BOLD"
+                                    TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
+                                    scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+                                    WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
+                                    # -- Rsync over template files for a given BOLD
+                                    runsnr_BOLD
+                                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
+                                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null "
+                                    Com3="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${WorkingSceneFile}"
+                                    Com4="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${WorkingSceneFile}"
+                                    Com5="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${WorkingSceneFile}"
+                                    ComQueue="$Com1; $Com2; $Com3; $Com4; $Com5"
+                                    runscene_BOLD
+                                    # -- Clean up prior conflicting scripts, generate script and set permissions
+                                    rm -f ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
+                                    echo "$ComRunBoldQUEUE" >> ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
+                                    chmod 770 ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
+                                    # -- Run script
+                                    ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log
+                                    rm ${OutPath}/${TemplateSceneFile} &> /dev/null
+                                    FinalLog="${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log"
+                                    # only run completion check if file are missing for the previous run
+                                    if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
+                                        completionCheck
+                                    fi
+                                fi
                             fi
                             # -- Check if custom QC was specified
                             if [ "$RunQCCustom" == "yes" ]; then
@@ -1350,7 +1477,10 @@ main() {
                                     ${RunQCLogFolder}/${CASEName}_CustomRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.log
                                     FinalLog="${RunQCLogFolder}/QC_${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.log"
                                 done
-                                completionCheck
+                                # only run completion check if file are missing for the previous run
+                                if [ -z ${PreviousCompletionCheck} ] && [ ${PreviousCompletionCheck} == "fail" ]; then
+                                    completionCheck
+                                fi
                             fi
                             # # -- Check if user specific scene path was provided
                             # if [ ! -z "$UserSceneFile" ]; then
@@ -1367,7 +1497,10 @@ main() {
                             #     chmod 770 "$RunQCLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
                             #     # -- Run script
                             #     "$RunQCLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$RunQCLogFolder"/QC_"$CASE"_UserRunQUEUE_"$Modality"_"$TimeStamp".log
-                            # completionCheck
+                            #     # only run completion check if file are missing for the previous run
+                            #     if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
+                            #         completionCheck
+                            #     fi
                             # fi
                         fi
                     fi
@@ -1807,7 +1940,10 @@ main() {
                     "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log
                     echo ""
                     FinalLog="${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log"
-                    completionCheck
+                    # only run completion check if file are missing for the previous run
+                    if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
+                        completionCheck
+                    fi
                 fi
                 
                 # -- Check if custom QC was specified
@@ -1863,7 +1999,10 @@ main() {
                         # -- Run Job
                         "$RunQCLogFolder"/${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.log
                         FinalLog="${RunQCLogFolder}/QC_${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.log"
-                        completionCheck
+                        # only run completion check if file are missing for the previous run
+                        if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
+                            completionCheck
+                        fi
                     done
                 fi
                 # -- Check if user specific scene path was provided
@@ -1911,8 +2050,11 @@ main() {
                     # -- Run Job
                     "$RunQCLogFolder"/${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.log
                     FinalLog="${RunQCLogFolder}/QC_${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.log"
-                    completionCheck
-                fi           
+                    # only run completion check if file are missing for the previous run
+                    if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
+                        completionCheck
+                    fi
+                fi
             fi
         fi
     done
