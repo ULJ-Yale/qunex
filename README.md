@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.61.1  runQC now works properly when overwrite is set to no.
 * 0.61.0  Implementation of bug fixes across connector and pipeline restructure back-compatibility
 * 0.60.1  Full support for hcp_suffix in runQC.
 * 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
