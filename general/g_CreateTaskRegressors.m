@@ -1,79 +1,124 @@
 function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, check)
 
-%function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, check)
+%``function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, check)``
 %
 %   Create task regressors for each bold run.
 %
-%   INPUT
-%   - fidlf - session's fidl event file
-%   - concf - session's conc file or an array of run lengths
-%   - model - array structure that specifies what needs to be modelled and how or a string description
-%     - decription - description of the model
-%     - regressor  - a structure array that specifies each regressor with fields:
-%         - name - given name
-%         - code - event codes (used in fidl file)
-%         - hrf_type
-%           -> 'boynton' (assumed response)
-%           -> 'SPM' (assumed response)
-%           -> 'gamma' (assumed response)
-%           -> 'u' (unassumed response)
-%           -> 'block' (block response)
-%         - length
-%           - number of frames to model (for unasumed response)
-%           - length of event in s (for assumed response - if empty, duration is taken from event file)
-%           - start and end offset in frames (for block response)
-%         - weight
-%           - column
-%           - normalize (within vs. across)
-%           - method    (z, 01, -11, none)
-%   - ignore - what to do with frames to ignore ['no']
-%       -> 'no' (don't do anything)
-%       -> 'ignore' (ignore those frames)
-%       -> 'specify' (create a separate regressor)
-%       -> 'both' (ignore and specify)
-%   - check  - how to handle event mismatch between fidlf and model ['warning']
-%       -> 'ignore' (don't do anything)
-%       -> 'warning' (throw a warning)
-%       -> 'error' (throw an error)
+%   INPUTS
+%   ======
+%
+%   --fidlf     session's fidl event file
+%   --concf     session's conc file or an array of run lengths
+%   --model     array structure that specifies what needs to be modelled and how 
+%               or a string description:
+%
+%               decription
+%                   description of the model
+%               regressor
+%                   a structure array that specifies each regressor with fields:
+%
+%                   - name - given name
+%                   - code - event codes (used in fidl file)
+%                   - hrf_type:
+%                       - 'boynton' (assumed response)
+%                       - 'SPM' (assumed response)
+%                       - 'gamma' (assumed response)
+%                       - 'u' (unassumed response)
+%                       - 'block' (block response)
+%
+%               length
+%                  - number of frames to model (for unasumed response)
+%                  - length of event in s (for assumed response - if empty, duration is taken from event file)
+%                  - start and end offset in frames (for block response)
+%
+%               weight
+%
+%               - column
+%               - normalize (within vs. across)
+%               - method    (z, 01, -11, none)
+%   --ignore    what to do with frames to ignore ['no']
+%               - 'no' (don't do anything)
+%               - 'ignore' (ignore those frames)
+%               - 'specify' (create a separate regressor)
+%               - 'both' (ignore and specify)
+%
+%   --check     how to handle event mismatch between fidlf and model ['warning']
+%               - 'ignore' (don't do anything)
+%               - 'warning' (throw a warning)
+%               - 'error' (throw an error)
 %
 %   OUTPUT
-%   - model - struct with the specified model
-%     - run - struct array with per run data
-%       - regressors - cell array of regressor names taken from event file
-%       - matrix - matrix of regressor values for the run
-%     - columns - description of columns
-%       - event - event name
-%       - frame - frame of that event (for unassumed models)
-%     - regressor
-%     - description
-%     - ignore
-%     - fidl
+%   ======
+%
+%   model
+%       struct with the specified model
+%
+%       - run ... struct array with per run data
+%
+%           - regressors - cell array of regressor names taken from event file
+%           - matrix - matrix of regressor values for the run
+%
+%       - columns ... description of columns
+%
+%           - event - event name
+%           - frame - frame of that event (for unassumed models)
+%
+%       - regressor
+%       - description
+%       - ignore
+%       - fidl
 %
 %   USE
+%   ===
+%
 %   The function takes a session's fidl and conc file and based on the
 %   information provided in the model variable generates a matrix of regressors
 %   for each bold file separately. It returns the information in a data
 %   structure.
 %
 %   EXAMPLE USE
-%   model = g_CreateTaskRegressors('OP354-flanker.fidl', 'OP354-flanker.conc', 'taskblock:boynton|congruent:7|incongruent:7', 'ignore');
+%   ===========
+%
+%   ::
+%
+%       model = g_CreateTaskRegressors('OP354-flanker.fidl', ...
+%       'OP354-flanker.conc', 'taskblock:boynton|congruent:7|incongruent:7', ...
+%       'ignore');
 %
 %   NOTES
-%   - Assumed response regressors get normalized to 1 only within each run, not across runs.
+%   =====
 %
-%   ---
-%   Written by Grega Repovs 2008-07-11
+%   Assumed response regressors get normalized to 1 only within each run, not
+%   across runs.
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2008-07-16 Grega Repovš - Updated
-%   2011-01-24 Grega Repovš - Updated
-%   2011-02-11 Grega Repovš - Updated
-%   2011-07-31 Grega Repovš - Updated to use two decimal points precision and area under the curve
-%   2015-10-23 Grega Repovš - Updated (Error reporting for missing event info.)
-%   2016-02-04 Grega Repovš - Updated (Added behavioral regressors and changed output structure)
-%   2017-02-11 Grega Repovš - Updated to use the general g_HRF function.
-%   2017-03-12 Grega Repovš - Updated documentation
-%   2017-10-18 Aleksij Kraljic - add an option for handling event name mismatch between fidlf and model
+%
+%   2008-07-11 Grega Repovš
+%              Initial version.
+%   2008-07-16 Grega Repovš
+%              Updated
+%   2011-01-24 Grega Repovš
+%              Updated
+%   2011-02-11 Grega Repovš
+%              Updated
+%   2011-07-31 Grega Repovš
+%              Updated to use two decimal points precision and area under the 
+%              curve
+%   2015-10-23 Grega Repovš
+%              Updated (Error reporting for missing event info.)
+%   2016-02-04 Grega Repovš
+%              Updated (Added behavioral regressors and changed output structure)
+%   2017-02-11 Grega Repovš
+%              Updated to use the general g_HRF function.
+%   2017-03-12 Grega Repovš
+%              Updated documentation
+%   2017-10-18 Aleksij Kraljic
+%              Added an option for handling event name mismatch between fidlf 
+%              and model
+%
 
 
 % ---> set variables
