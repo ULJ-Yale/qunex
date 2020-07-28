@@ -1,26 +1,34 @@
 function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 
-%function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
+%``function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose)``
 %
 %   Computes BOLD run per frame statistics and scrubbing information.
 %
 %   INPUTS
-%       img      ... An nimage object or a path to a BOLD file to process.
-%       mask     ... An nimage object or a path to a mask file to use.
-%       target   ... A folder to save results into ['']:
-%                    '': where bold image is,
-%                    'none': do not save results in an external file
-%       store    ... Whether to store the data in the image file ['']
-%                    - 'same': in the same file,
-%                    - '<ext>': in a new file with extension <ext>,
-%                    - '': do not save information in an image file
-%       scrub    ... A string describing whether and how to compute scrubbing
-%                    information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or
-%                    'none' for no scrubbing (see img_ComputeScrub nimage
-%                    method for more information.
-%       verbose  ... To report the progress or not [false].
+%   ======
+%
+%   --img      An nimage object or a path to a BOLD file to process.
+%   --mask     An nimage object or a path to a mask file to use.
+%   --target   A folder to save results into ['']:
+%
+%              - '': where bold image is,
+%              - 'none': do not save results in an external file
+%
+%   --store    Whether to store the data in the image file ['']:
+%
+%              - 'same': in the same file,
+%              - '<ext>': in a new file with extension <ext>,
+%              - '': do not save information in an image file
+%
+%   --scrub    A string describing whether and how to compute scrubbing
+%              information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or
+%              'none' for no scrubbing (see img_ComputeScrub nimage
+%              method for more information.
+%   --verbose  To report the progress or not [false].
 %
 %   USE
+%   ===
+%
 %   The function is used to compute and save per frame statistics to be used for
 %   bad frames scrubbing. It also initiates computation of scrubbing information
 %   if a scrubbing string is present.
@@ -49,25 +57,32 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %   for information, which frame to use.
 %
 %   NOTICE
+%   ======
 %   Saving data by embedding in a volume file is currently disabled.
 %
 %   EXAMPLE USE
-%   g_ComputeBOLDStats('bold1.nii.gz', [], 'movement', '', '', true);
+%   ===========
+%   
+%   ::
 %
-%   ---
-%   Written by Grega Repovš on 2011-07-09.
+%       g_ComputeBOLDStats('bold1.nii.gz', [], 'movement', '', '', true);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%   2011-07-09 Grega Repovs
+%              Initial version
 %   2013-10-20 Grega Repovs
-%            - Added embedding and scrubbing
+%              Added embedding and scrubbing
 %   2013-12-18 Grega Repovs
-%            - Split in two to enable single bold file processing
+%              Split in two to enable single bold file processing
 %   2017-03-12 Grega Repovs
-%            - Updated documentation
+%              Updated documentation
 %   2018-06-20 Grega Repovš
-%            - Added more detailed reporting of parameters used.
+%              Added more detailed reporting of parameters used.
 %   2018-08-24 Grega Repovš
-%            - Saving parameters to *.scrub file
+%              Saving parameters to *.scrub file
 %
 
 if nargin < 6, verbose = false; end
