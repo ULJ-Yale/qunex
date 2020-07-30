@@ -907,11 +907,12 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                 return False
             else:
                 return True
-        elif not os.path.exists(fileName):
-            if check == 'warn':
+        elif check == 'warn':
+            if not os.path.exists(fileName):
                 print "WARNING: File does not exist, but will be included in the list anyway [%s]!" % (fileName)
-                return True
-            else:
+            return True
+        else:
+            if not os.path.exists(fileName):
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
 
     # --- check sessions
