@@ -905,7 +905,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
             if not os.path.exists(fileName):
                 print "WARNING: File does not exist [%s]!" % (fileName)
                 return False
-            else
+            else:
                 return True
         elif not os.path.exists(fileName):
             if check == 'warn':
