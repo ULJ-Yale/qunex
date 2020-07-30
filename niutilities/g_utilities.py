@@ -731,6 +731,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                          - no   ... do not check whether files are present or not
                          - warn ... check for presence and warn if the file to be 
                                     listed is not found, but do not abort
+                         - present ... check for presence, warn if the file to be
+                                    listed is not found, but do not include 
+                                    missing files in the list
 
     USE DESCRIPTION
     ===============
@@ -831,6 +834,8 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     - yes  ... check for presence and abort if the file to be listed is not found
     - no   ... do not check whether files are present or not
     - warn ... check for presence and warn if the file to be listed is not found
+    - present ... check for presence, warn if the file to be listed is not found,
+                  but do not include the file in the list
 
     Examples
     --------
@@ -887,16 +892,22 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
              - Fixed a None checkup bug
     2020-01-14 Grega Repovš
              - Expanded documentation with explicit parameter specification
+    2020-07-30 Andraz Matkovic
+               Added option to exclude missing files from the list.
     """
 
     print "Running createList\n=================="
 
     def checkFile(fileName):
         if check == 'no':
-            pass
+            return True
         elif not os.path.exists(fileName):
-            if check == 'warn':
+            if check == 'warn' or check == 'present':
                 print "WARNING: File does not exist [%s]!" % (fileName)
+                if check == 'warn':
+                    return True
+                else:
+                    return False
             else:
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
 
@@ -976,8 +987,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         if boldnums:
             for boldnum in boldnums:
                 tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
-                checkFile(tfile)
-                lines.append("    file:" + tfile)
+                includeFile = checkFile(tfile)
+                if includeFile:
+                    lines.append("    file:" + tfile)
 
         if boldtags:
             try:
@@ -991,28 +1003,33 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                 pass
             for boldnum in bolds:
                 tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
-                checkFile(tfile)
-                lines.append("    file:" + tfile)
+                includeFile = checkFile(tfile)
+                if includeFile:
+                    lines.append("    file:" + tfile)
 
         if roi:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', roi)
-            checkFile(tfile)
-            lines.append("    roi:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    roi:" + tfile)
 
         if glm:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', glm)
-            checkFile(tfile)
-            lines.append("    glm:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    glm:" + tfile)
 
         if conc:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'concs', conc)
-            checkFile(tfile)
-            lines.append("    conc:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    conc:" + tfile)
 
         if fidl:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'events', fidl)
-            checkFile(tfile)
-            lines.append("    fidl:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    fidl:" + tfile)
 
     # --- write to target file
 
