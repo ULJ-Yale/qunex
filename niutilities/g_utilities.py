@@ -901,9 +901,12 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     def checkFile(fileName):
         if check == 'no':
             return True
-        elif os.path.exists(fileName) and check == 'present':
-            print "WARNING: File does not exist [%s]!" % (fileName)
-            return False
+        elif check == 'present':
+            if not os.path.exists(fileName):
+                print "WARNING: File does not exist [%s]!" % (fileName)
+                return False
+            else
+                return True
         elif not os.path.exists(fileName):
             if check == 'warn':
                 print "WARNING: File does not exist, but will be included in the list anyway [%s]!" % (fileName)
