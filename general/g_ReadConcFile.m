@@ -19,7 +19,9 @@ function [files] = g_ReadConcFile(file)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   Grega Repovš
+%	Initial version.
 
 [fin message] = fopen(file);
 if fin == -1
