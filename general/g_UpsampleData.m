@@ -1,35 +1,52 @@
 function [ud] = g_UpsampleData(oldData, oldSphere, newSphere, newData)
-%function [ud] = g_UpsampleData(data, oldSphere, newSphere)
+%``function [ud] = g_UpsampleData(data, oldSphere, newSphere, newData)``
 %
-%       Upsample surface data and the corresponding surface file.
+%   Upsample surface data and the corresponding surface file.
 %
-%   INPUT
-%       oldData          - input can be in two forms:
-%                               a) a metric file containing the data (.shape.gii)
-%                               b) data vector
-%       oldSurface       - sphere surface file corresponding to oldData
-%       newSphere        - sphere surface to fit (upsample) oldData to
-%       newData          - a metric file containing the upsampled data (.shape.gii) []
+%   INPUTS
+%   ======
+%
+%   --oldData        input can be in two forms:
+%
+%                    - a metric file containing the data (.shape.gii)
+%                    - data vector
+%
+%   --oldSurface     sphere surface file corresponding to oldData
+%   --newSphere      sphere surface to fit (upsample) oldData to
+%   --newData        a metric file containing the upsampled data (.shape.gii) []
 %
 %   OUTPUT
-%       ud               - upsampled data vector
+%   ======
+%   
+%   ud 
+%       upsampled data vector
 %
 %   USE
-%   The function is used to upsample the data to fit the passed input 
-%   sphere surface. The newData can then be analyzed on surfaces derived
-%   from the passed newSphere surface data.
+%   ===
+%
+%   The function is used to upsample the data to fit the passed input sphere
+%   surface. The newData can then be analyzed on surfaces derived from the
+%   passed newSphere surface data.
 %
 %   EXAMPLE USE
-%   To upsample a surface data distribution from 10000 to 38492 vertices use:
+%   ===========
 %
-%   rd = g_UpsampleData('oldData.surf.gii',...
+%   To upsample a surface data distribution from 10000 to 38492 vertices use::
+%
+%       rd = g_UpsampleData('oldData.surf.gii',...
 %                'L.sphere.10k_fs_LR.surf.gii',...
 %                'L.sphere.32k_fs_LR.surf.gii',...
 %                'newData.shape.gii);
 %
-%   ---
-%   Written by Aleksij Kraljic, June 26, 2017
+
+%   ~~~~~~~~~~~~~~~~~~
 %
+%   Changelog
+%
+%   2017-07-26 Aleksij Kraljic
+%              Initial version.
+%
+
 deleteOutData = false;
 if nargin < 4 || isempty(newData),           newData = 'temp_new_data.shape.gii'; deleteOutData = true; end
 
