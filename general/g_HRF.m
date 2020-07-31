@@ -1,15 +1,20 @@
 function [ts] = g_HRF(dt, hrf, len, p)
 
-%function [ts] = g_HRF(dt, hrf, len, p)
+%``function [ts] = g_HRF(dt, hrf, len, p)``
 %
-%   INPUT
-%   - dt   ... Timing resolution in seconds. [.01]
-%   - hrf  ... HRF function to use, one of 'boynton', 'spm', 'gamma'. ['boynton']
-%   - len  ... Duration of the HRF in seconds [32]
-%   - p    ... Additional parameters. If not provided, set to HRF defaults
+%   INPUTS
+%   ======
+%
+%   --dt    Timing resolution in seconds. [.01]
+%   --hrf   HRF function to use, one of 'boynton', 'spm', 'gamma'. ['boynton']
+%   --len   Duration of the HRF in seconds [32]
+%   --p     Additional parameters. If not provided, set to HRF defaults
 %
 %   OUTPUT
-%   - ts   ... 32s of HRF at the provided resolution
+%   ======
+%
+%   ts
+%       HRF timeseries at the provided resolution
 %
 %   USE
 %   ===
@@ -20,50 +25,53 @@ function [ts] = g_HRF(dt, hrf, len, p)
 %   will ensure the right scaling. All the HRF functions are allways scaled
 %   so that the peak equals 1. The descriptions of specific HRF follow.
 %
-%
 %   boynton
 %   -------
-%   Boynton HRF is defined by the formula from Dale and Buckner, 1997:
 %
-%   h(t>delta)  = ((t-delta)/tau)^alpha * exp(-(t-delta)/tau)
-%   h(t<=delta) = 0;
+%   Boynton HRF is defined by the formula from Dale and Buckner, 1997::
+%
+%       h(t>delta)  = ((t-delta)/tau)^alpha * exp(-(t-delta)/tau)
+%       h(t<=delta) = 0;
 %
 %   The parameters to provide are:
-%   * delta ... time in seconds [2.25]
-%   * tau   ... time in seconds [1.25]
-%   * alpha ... the exponent [2]
+%
+%   - delta ... time in seconds [2.25]
+%   - tau   ... time in seconds [1.25]
+%   - alpha ... the exponent [2]
 %
 %   gamma
 %   -----
+%
 %   Gamma HRF is defined as gamma distribution with parameters:
 %
-%   * rlag   ... response lag (peak) [6.3]
-%   * rdisp  ... reponse dispersion  [0.9]
-%   * olag   ... time lag of the response onset [0]
+%   - rlag   ... response lag (peak) [6.3]
+%   - rdisp  ... reponse dispersion  [0.9]
+%   - olag   ... time lag of the response onset [0]
 %
-%   and is computed as:
+%   and is computed as::
 %
-%   ts = pdf('Gamma', x, rlag, rdisp;
+%       ts = pdf('Gamma', x, rlag, rdisp);
 %
 %   Do note that changing the dispersion value will also change the location
 %   of the peak of the generated HRF.
 %
 %   spm
 %   ---
-%   SPM HRF is computed as a combination of two gamma distributions,
-%   the firts describing the peak of the reponse, the other the undershoot. The
-%   parameters are:
 %
-%   * rlag   ... response lag [6]
-%   * rdisp  ... response dispersion [1]
-%   * ulag   ... undershoot lag [16]
-%   * udisp  ... undershoot dispersion [1]
-%   * rurat  ... response / undershoot ratio [6]
-%   * olag   ... time lag of the response onset [0]
+%   SPM HRF is computed as a combination of two gamma distributions, the firts
+%   describing the peak of the reponse, the other the undershoot. The parameters
+%   are:
 %
-%   HRF is computed as:
+%   - rlag   ... response lag [6]
+%   - rdisp  ... response dispersion [1]
+%   - ulag   ... undershoot lag [16]
+%   - udisp  ... undershoot dispersion [1]
+%   - rurat  ... response / undershoot ratio [6]
+%   - olag   ... time lag of the response onset [0]
 %
-%   ts = pdf('Gamma', x, rlag, rdisp) - pdf('Gamma', x, ulag, udisp) / rurat;
+%   HRF is computed as::
+%
+%       ts = pdf('Gamma', x, rlag, rdisp) - pdf('Gamma', x, ulag, udisp) / rurat;
 %
 %   Do note that values are interdependant. Changing ulag or rdisp will both
 %   change the time of the peak as well as the rest of the HRF shape.
@@ -71,11 +79,18 @@ function [ts] = g_HRF(dt, hrf, len, p)
 %   EXAMPLE USE
 %   ===========
 %
-%   hrf = g_HRF(0.1, 'boynton');
-%   hrf = g_HRF(0.1, 'spm', [6 0.9 12 0.9 3 0]);
+%   ::
+%   
+%       hrf = g_HRF(0.1, 'boynton');
+%       hrf = g_HRF(0.1, 'spm', [6 0.9 12 0.9 3 0]);
 %
-%   ----
-%   Written by Grega Repovš, 2017-02-11
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%   
+%   2017-02-11 Grega Repovš
+%              Initial version.
+%
 
 
 if nargin < 4,                 p   = [];        end
