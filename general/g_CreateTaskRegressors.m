@@ -28,21 +28,24 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, check)
 %
 %               length
 %                  - number of frames to model (for unasumed response)
-%                  - length of event in s (for assumed response - if empty, duration is taken from event file)
+%                  - length of event in s (for assumed response - if empty, 
+%                    duration is taken from event file)
 %                  - start and end offset in frames (for block response)
 %
 %               weight
+%                   - column
+%                   - normalize (within vs. across)
+%                   - method    (z, 01, -11, none)
 %
-%               - column
-%               - normalize (within vs. across)
-%               - method    (z, 01, -11, none)
 %   --ignore    what to do with frames to ignore ['no']
+%
 %               - 'no' (don't do anything)
 %               - 'ignore' (ignore those frames)
 %               - 'specify' (create a separate regressor)
 %               - 'both' (ignore and specify)
 %
 %   --check     how to handle event mismatch between fidlf and model ['warning']
+%
 %               - 'ignore' (don't do anything)
 %               - 'warning' (throw a warning)
 %               - 'error' (throw an error)
