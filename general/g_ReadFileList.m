@@ -1,45 +1,67 @@
 function [session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose)
 
-%function [session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose)
+%``function [session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose)``
 %
-%	Reads a list of files and returns a structure with file information.
+%   Reads a list of files and returns a structure with file information.
 %
 %   INPUTS
-%       flist         : A path to the list file or a well structured string.
-%       verbose       : Whether to report on progress [false]
+%   ======
+%
+%   --flist       A path to the list file or a well structured string.
+%   --verbose     Whether to report on progress. [false]
 %
 %   OUTPUTS
-%       - sessions    : a structure array with information
-%           - id      : session id
-%           - roi     : path to a session ROI file
-%           - glm     : path to a session glm file
-%           - fidl    : path to a session fidl file
-%           - files   : cell array of file paths
-%           - folder  : sessions root folder
-%       - nsessions   : number of sessions in the list
-%       - nfiles      : number of all files in the list
+%
+%   sessions
+%       A structure array with information:
+%
+%       - id      ... session id
+%       - roi     ... path to a session ROI file
+%       - glm     ... path to a session glm file
+%       - fidl    ... path to a session fidl file
+%       - files   ... cell array of file paths
+%       - folder  ... sessions root folder
+%
+%   nsessions
+%       number of sessions in the list
+%   nfiles
+%       number of all files in the list
 %
 %   USE
+%   ===
+%
 %   The function reads the file list and returns a structure array with the
 %   information on each session. It is also possible to pass the list in the
 %   input string itself. In this case, it has to start with 'listname:<name>'
 %   all the regular lines of the list file can then be passed with pipe ('|')
-%   instead of newline. Example:
+%   instead of newline. Example::
 %
-%   'listname:wmlist|session id:OP483|file:bold1.nii.gz|roi:aseg.nii.gz'
+%       'listname:wmlist|session id:OP483|file:bold1.nii.gz|roi:aseg.nii.gz'
 %
 %   EXAMPLE USE
-%   [sessions, nsessions] = g_ReadFileList('scz.list', true);
+%   ===========
 %
-%   ---
-% 	Written by Grega Repovš on 2010-11-23.
+%   ::
+%
+%       [sessions, nsessions] = g_ReadFileList('scz.list', true);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2012-05-20 Grega Repovš - Changed to omit missing files
-%   2013-07-26 Grega Repovš - Added folder to the list of things to list
-%   2015-12-09 Grega Repovš - Added reading of fidl and glm files
-%   2017-03-19 Grega Repovš - Updated documentation
-%   2017-04-18 Grega Repovš - Added option of string parsing
+%
+%   2010-11-23 Grega Repovš
+%              Initial version.
+%   2012-05-20 Grega Repovš
+%              Changed to omit missing files
+%   2013-07-26 Grega Repovš
+%              Added folder to the list of things to list
+%   2015-12-09 Grega Repovš
+%              Added reading of fidl and glm files
+%   2017-03-19 Grega Repovš
+%              Updated documentation
+%   2017-04-18 Grega Repovš
+%              Added option of string parsing
 
 
 if nargin < 2
