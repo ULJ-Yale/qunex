@@ -6684,18 +6684,13 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                     r += "\n---> ERROR: invalid input, check the hcp_resample_extractnames parameter!"
                 # else check if concatname is in groups
                 else:
-                    # extract concat name ok?
-                    if concatname not in groupList:
-                        groupok = False
-                        r += "\n---> ERROR: extract concat name [%s], not found in concat names!" % concatname
-
                     # extract fix names ok?
                     fixnames = en_split[1].split(",")
                     for fn in fixnames:
                         # extract fixname name ok?
                         if fn not in boldList:
                             groupok = False
-                            r += "\n---> ERROR: extract name [%s], not found in fix names!" % fn
+                            r += "\n---> ERROR: extract fix name [%s], not found in provided fix names!" % fn
 
                     if len(en_split) > 0:
                         boldnames = en_split[1].replace(",", "@")
