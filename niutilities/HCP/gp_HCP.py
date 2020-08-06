@@ -6250,7 +6250,8 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse msmall_bolds
-        singleRun, msmallGroup, parsOK, r = parseMSMAllBolds(options, bolds, r)
+        singleRun, icafixBolds, dedriftGroups, parsOK, r = parseICAFixBolds(options, bolds, r, True)
+
         if not parsOK:
             raise ge.CommandFailed("hcp_DeDriftAndResample", "... invalid input parameters!")
 
@@ -6258,11 +6259,11 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
         # single-run
         if singleRun:
             # process
-            result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+            result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, dedriftGroups[0])
         # multi-run
         else: 
             # process
-            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, dedriftGroups)
 
         # merge r
         r += result['r']
@@ -6489,11 +6490,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     return {'r': r, 'report': report}
 
 
-def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group):
-    # get group data
-    groupname = group["name"]
-    bolds = group["bolds"]
-
+def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, groups):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -6503,45 +6500,74 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
 
         # --- check for bold images and prepare targets parameter
+        groupList = []
+        grouptargets = ""
+        boldList = []
         boldtargets = ""
 
         # highpass
         highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # check if files for all bolds exist
-        for b in bolds:
-            # set ok to true for now
-            boldok = True
+        for g in groups:
+            # get group data
+            groupname = g["name"]
+            bolds = g["bolds"]
 
-            # extract data
-            _, _, _, boldinfo = b
+            # for storing bolds
+            groupbolds = ""
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
-                printbold  = boldinfo['filename']
-                boldtarget = boldinfo['filename']
-            else:
-                printbold  = str(bold)
-                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+            # flag if everything is ok
+            groupok = True
 
-            # input file check
-            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            for b in bolds:
+                # set ok to true for now
+                boldok = True
 
-            if not boldok:
+                # extract data
+                _, _, _, boldinfo = b
+
+                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                    printbold  = boldinfo['filename']
+                    boldtarget = boldinfo['filename']
+                else:
+                    printbold  = str(bold)
+                    boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+                # input file check
+                boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
+                r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+                if not boldok:
+                    groupok = False
+                    break
+                else:
+                    # add @ separator
+                    if groupbolds is not "":
+                        groupbolds = groupbolds + "@"
+
+                    # add latest image
+                    boldList.append(boldtarget)
+                    groupbolds = groupbolds + boldtarget
+
+            if boldok:
+                # check if group file exists
+                groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+                groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
+                r, groupok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=groupok)
+
+            if not groupok:
                 break
             else:
-                # add @ separator
-                if boldtargets is not "":
-                    boldtargets = boldtargets + "@"
+                # add @ or % separator
+                if grouptargets is not "":
+                    grouptargets = grouptargets + "@"
+                    boldtargets = boldtargets + "%"
 
-                # add latest image
-                boldtargets = boldtargets + boldtarget
-
-        if boldok:
-            # check if group file exists
-            groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
-            groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
-            r, boldok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
+                # add latest group
+                groupList.append(groupname)
+                grouptargets = grouptargets + groupname
+                boldtargets = boldtargets + groupbolds
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = 0
@@ -6626,7 +6652,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'maps'                : maps,
                 'myelinmaps'          : myelinmaps,
                 'mrfixnames'          : boldtargets,
-                'mrfixconcatnames'    : groupname,
+                'mrfixconcatnames'    : grouptargets,
                 'dontfixnames'        : dontfixnames,
                 'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
                 'highpass'            : highpass,
@@ -6634,6 +6660,78 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
+
+        # -- Additional parameters
+        # -- hcp_resample_extractnames
+        if 'hcp_resample_extractnames' in options:
+            # variables for storing
+            extractnames = ""
+            extractconcatnames = ""
+
+            # split to groups
+            ens = options['hcp_resample_extractnames'].split("|")
+            # iterate
+            for en in ens:
+                en_split = en.split(":")
+                concatname = en_split[0]
+                
+                # if none all is good
+                if (concatname.upper() == "NONE"):
+                    concatname = concatname.upper()
+                # wrong input
+                elif len(en_split) == 0:
+                    groupok = False
+                    r += "\n---> ERROR: invalid input, check the hcp_resample_extractnames parameter!"
+                # else check if concatname is in groups
+                else:
+                    # extract concat name ok?
+                    if concatname not in groupList:
+                        groupok = False
+                        r += "\n---> ERROR: extract concat name [%s], not found in concat names!" % concatname
+
+                    # extract fix names ok?
+                    fixnames = en_split[1].split(",")
+                    for fn in fixnames:
+                        # extract fixname name ok?
+                        if fn not in boldList:
+                            groupok = False
+                            r += "\n---> ERROR: extract name [%s], not found in fix names!" % fn
+
+                    if len(en_split) > 0:
+                        boldnames = en_split[1].replace(",", "@")
+
+                # add @ or % separator
+                if extractnames is not "":
+                    extractconcatnames = extractconcatnames + "@"
+                    # skip if NONE
+                    if (concatname != "NONE" and boldnames is not None):
+                        extractnames = extractnames + "%"
+
+                # add latest group
+                extractconcatnames = extractconcatnames + concatname
+                # skip if NONE
+                if (concatname != "NONE" and boldnames is not None):
+                    extractnames = extractnames + boldnames
+
+            # append to command
+            comm = comm + ' \            --multirun-fix-extract-names="%s"' % extractnames
+            comm = comm + ' \            --multirun-fix-extract-concat-names="%s"' % extractconcatnames
+
+        # -- hcp_resample_extractextraregnames
+        if 'hcp_resample_extractextraregnames' in options:
+            comm = comm + ' \            --multirun-fix-extract-extra-regnames="%s"' % options['hcp_resample_extractextraregnames']
+
+        # -- hcp_resample_extractvolume
+        if 'hcp_resample_extractvolume' in options:
+            extractvolume = options['hcp_resample_extractvolume'].upper()
+
+            # check value 
+            if extractvolume != "TRUE" or extractvolume != "FALSE":
+                groupok = False
+                r += "\n---> ERROR: invalid extractvolume parameter [%s], expecting TRUE or FALSE!" % extractvolume
+
+            # append to command
+            comm = comm + ' \            --multirun-fix-extract-volume="%s"' % extractvolume
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
@@ -6646,7 +6744,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         fullTest = None
 
         # -- Run
-        if run and boldok:
+        if run and groupok:
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
