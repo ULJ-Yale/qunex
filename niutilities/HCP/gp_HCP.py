@@ -6145,57 +6145,82 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    hcp_icafix_bolds            ... List of bolds on which ICAFix was applied,
-                                    with the same format as for ICAFix. Typically,
-                                    this should be identical to the list used
-                                    in the ICAFix run [same default as for
-                                    hcp_ICAFix and hcp_MSMAll].
-    hcp_resample_concatregname  ... Output name of the dedrifted registration
-                                    [MSMAll].
-    hcp_resample_regname        ... Registration sphere name
-                                    [<hcp_msmall_outregname>_2_d40_WRN].
-    hcp_icafix_highpass         ... Value for the highpass filter, [0] for
-                                    multi-run HCP ICAFix and [2000] for
-                                    single-run HCP ICAFix. Should be identical
-                                    to the value used for ICAFIX.
-    hcp_hiresmesh               ... High resolution mesh node count [164].
-    hcp_lowresmeshes            ... Low resolution meshes node count [32]. To
-                                    provide more values separate them with commas.
-    hcp_resample_reg_files      ... Comma separated paths to the spheres output
-                                    from the MSMRemoveGroupDrift pipeline
-                                    [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
-                                    <HCPPIPEDIR>/global/templates/MSMAll/<file2>].
-                                    Where <file1> is equal to:
-                                    DeDriftingGroup.L.sphere.DeDriftMSMAll.
-                                    164k_fs_LR.surf.gii and <file2> is equal to
-                                    DeDriftingGroup.R.sphere.DeDriftMSMAll.
-                                    164k_fs_LR.surf.gii
-    hcp_resample_maps           ... Comma separated paths to maps that will have
-                                    the MSMAll registration applied that are not 
-                                    myelin maps
-                                    [sulc,curvature,corrThickness,thickness].
-    hcp_resample_myelinmaps     ... Comma separated paths to myelin maps
-                                    [MyelinMap,SmoothedMyelinMap].
-    hcp_bold_smoothFWHM         ... Smoothing FWHM that matches what was
-                                    used in the fMRISurface pipeline [2].
-    hcp_matlab_mode             ... Specifies the Matlab version, can be
-                                    interpreted, compiled or octave
-                                    [compiled].
-    hcp_icafix_domotionreg      ... Whether to regress motion parameters as
-                                    part of the cleaning. The default value
-                                    after a single-run HCP ICAFix is [TRUE],
-                                    while the default after a multi-run HCP
-                                    ICAFix is [FALSE].
-    hcp_resample_dontfixnames   ... A list of comma separated bolds that will
-                                    not have HCP ICAFix reapplied to them.
-                                    Only applicable if single-run ICAFix was used.
-                                    Generally not recommended [NONE].
-    hcp_resample_myelintarget   ... A myelin target file is required to run
-                                    this pipeline when using a different mesh
-                                    resolution than the original
-                                    MSMAll registration [NONE].
-    hcp_resample_inregname      ... A string to enable multiple fMRI
-                                    resolutions (e.g._1.6mm) [NONE].
+    hcp_icafix_bolds                    ... List of bolds on which ICAFix was
+                                            applied, with the same format as for
+                                            ICAFix. Typically, this should be
+                                            identical to the list used in the
+                                            ICAFix run [same default as for
+                                            hcp_ICAFix and hcp_MSMAll].
+    hcp_resample_concatregname          ... Output name of the dedrifted
+                                            registration [MSMAll].
+    hcp_resample_regname                ... Registration sphere name
+                                            [<hcp_msmall_outregname>_2_d40_WRN].
+    hcp_icafix_highpass                 ... Value for the highpass filter, [0]
+                                            for multi-run HCP ICAFix and [2000]
+                                            for single-run HCP ICAFix. Should be
+                                            identical to the value used for
+                                            ICAFIX.
+    hcp_hiresmesh                       ... High resolution mesh node count
+                                            [164].
+    hcp_lowresmeshes                    ... Low resolution meshes node count
+                                            [32]. To provide more values
+                                            separate them with commas.
+    hcp_resample_reg_files              ... Comma separated paths to the spheres
+                                            output from the MSMRemoveGroupDrift
+                                            pipeline
+                                            [<HCPPIPEDIR>/global/templates/
+                                            MSMAll/<file1>,<HCPPIPEDIR>/global/
+                                            templates/MSMAll/<file2>].
+                                            Where <file1> is equal to:
+                                            DeDriftingGroup.L.sphere.
+                                            DeDriftMSMAll.164k_fs_LR.surf.gii
+                                            and <file2> is equal to
+                                            DeDriftingGroup.R.sphere.
+                                            DeDriftMSMAll.164k_fs_LR.surf.gii
+    hcp_resample_maps                   ... Comma separated paths to maps that
+                                            will have the MSMAll registration
+                                            applied that are not myelin maps
+                                            [sulc,curvature,corrThickness,
+                                            thickness].
+    hcp_resample_myelinmaps             ... Comma separated paths to myelin maps
+                                            [MyelinMap,SmoothedMyelinMap].
+    hcp_bold_smoothFWHM                 ... Smoothing FWHM that matches what was
+                                            used in the fMRISurface pipeline
+                                            [2].
+    hcp_matlab_mode                     ... Specifies the Matlab version, can be
+                                            interpreted, compiled or octave
+                                            [compiled].
+    hcp_icafix_domotionreg              ... Whether to regress motion parameters
+                                            as part of the cleaning. The default
+                                            value after a single-run HCP ICAFix
+                                            is [TRUE], while the default after
+                                            a multi-run HCP ICAFix is [FALSE].
+    hcp_resample_dontfixnames           ... A list of comma separated bolds that
+                                            will not have HCP ICAFix reapplied
+                                            to them. Only applicable if
+                                            single-run ICAFix was used.
+                                            Generally not recommended [NONE].
+    hcp_resample_myelintarget           ... A myelin target file is required to
+                                            run this pipeline when using a
+                                            different mesh resolution than the
+                                            original MSMAll registration [NONE].
+    hcp_resample_inregname              ... A string to enable multiple fMRI
+                                            resolutions (e.g._1.6mm) [NONE].
+    hcp_resample_extractnames           ... List of bolds and concat names
+                                            provided in the same format as the
+                                            hcp_icafix_bolds parameter. Defines
+                                            which bolds to extract. Exists to
+                                            enable extraction of a subset of the
+                                            runs in a multi-run HCP ICAFix group
+                                            into a new concatenated series.
+    hcp_resample_extractextraregnames   ... extract multi-run HCP ICAFix runs
+                                            for additional surface
+                                            registrations, often MSMSulc.
+    hcp_resample_extractvolume          ... whether to also extract the
+                                            specified multi-run HCP ICAFix from
+                                            the volume data, requires
+                                            hcp_resample_extractnames to work
+                                            [FALSE].
 
     EXAMPLE USE
     ===========
