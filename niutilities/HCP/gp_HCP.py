@@ -6508,6 +6508,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         # highpass
         highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
+        # runok
+        runok = True
+
         # check if files for all bolds exist
         for g in groups:
             # get group data
@@ -6517,13 +6520,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             # for storing bolds
             groupbolds = ""
 
-            # flag if everything is ok
-            groupok = True
-
             for b in bolds:
-                # set ok to true for now
-                boldok = True
-
                 # extract data
                 _, _, _, boldinfo = b
 
@@ -6536,38 +6533,36 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
                 # input file check
                 boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
-                r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+                r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg)
 
                 if not boldok:
-                    groupok = False
-                    break
-                else:
-                    # add @ separator
-                    if groupbolds is not "":
-                        groupbolds = groupbolds + "@"
+                    runok = False
 
-                    # add latest image
-                    boldList.append(boldtarget)
-                    groupbolds = groupbolds + boldtarget
+                # add @ separator
+                if groupbolds is not "":
+                    groupbolds = groupbolds + "@"
 
-            if boldok:
-                # check if group file exists
-                groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
-                groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
-                r, groupok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=groupok)
+                # add latest image
+                boldList.append(boldtarget)
+                groupbolds = groupbolds + boldtarget
+
+            # check if group file exists
+            groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+            groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
+            r, groupok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg)
 
             if not groupok:
-                break
-            else:
-                # add @ or % separator
-                if grouptargets is not "":
-                    grouptargets = grouptargets + "@"
-                    boldtargets = boldtargets + "%"
+                runok = False
 
-                # add latest group
-                groupList.append(groupname)
-                grouptargets = grouptargets + groupname
-                boldtargets = boldtargets + groupbolds
+            # add @ or % separator
+            if grouptargets is not "":
+                grouptargets = grouptargets + "@"
+                boldtargets = boldtargets + "%"
+
+            # add latest group
+            groupList.append(groupname)
+            grouptargets = grouptargets + groupname
+            boldtargets = boldtargets + groupbolds
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = 0
@@ -6581,11 +6576,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             else:
                 r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 raise
-
-        # fix names to use
-        fixnames = boldtargets
-        if 'hcp_msmall_mr_bolds_touse' in options:
-            fixnames = options['hcp_msmall_mr_bolds_touse'].replace(",", "@")
 
         # dedrift reg files
         regfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
@@ -6680,7 +6670,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                     concatname = concatname.upper()
                 # wrong input
                 elif len(en_split) == 0:
-                    groupok = False
+                    runok = False
                     r += "\n---> ERROR: invalid input, check the hcp_resample_extractnames parameter!"
                 # else check if concatname is in groups
                 else:
@@ -6689,7 +6679,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                     for fn in fixnames:
                         # extract fixname name ok?
                         if fn not in boldList:
-                            groupok = False
+                            runok = False
                             r += "\n---> ERROR: extract fix name [%s], not found in provided fix names!" % fn
 
                     if len(en_split) > 0:
@@ -6721,8 +6711,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             extractvolume = options['hcp_resample_extractvolume'].upper()
 
             # check value 
-            if extractvolume != "TRUE" or extractvolume != "FALSE":
-                groupok = False
+            if extractvolume != "TRUE" and extractvolume != "FALSE":
+                runok = False
                 r += "\n---> ERROR: invalid extractvolume parameter [%s], expecting TRUE or FALSE!" % extractvolume
 
             # append to command
@@ -6739,7 +6729,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         fullTest = None
 
         # -- Run
-        if run and groupok:
+        if run and runok:
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
