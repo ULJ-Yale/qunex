@@ -1984,7 +1984,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     -------------------------
 
     --hcp_dwi_echospacing    ... Echo Spacing or Dwelltime of DWI images.
-                                 [0.00035]
+                                 [image specific]
 
     distortion correction details
     -----------------------------
@@ -2015,6 +2015,13 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 0 - As 1, but also include uncombined single 
                                     volumes
                                 [1]
+    --hcp_dwi_selectbestb0  ... If set selects the best b0 for each phase
+                                encoding direction to pass on to topup rather
+                                than the default behaviour of using equally
+                                spaced b0's throughout the scan. The best b0
+                                is identified as the least distorted (i.e., most
+                                similar to the average b0 after registration).
+                                [FALSE]
     --hcp_dwi_extraeddyarg  ... A string specifying additional arguments to pass
                                 to the DiffPreprocPipeline_Eddy.sh script and 
                                 subsequently to the run_eddy.sh script and 
@@ -2024,6 +2031,11 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 split by whitespace to be passed to the HCP 
                                 DiffPreprocPipeline as a set of --extra-eddy-arg
                                 arguments. ['']
+
+    additional parameters
+    ---------------------
+
+    --hcp_dwi_name          ... name to give DWI output directories. [Diffusion]
 
 
     Gradient Coefficient File Specification:
@@ -2177,10 +2189,17 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                 'combinedataflag'   : options['hcp_dwi_combinedata'],
                 'printcom'          : options['hcp_printcom']}
 
+        # -- Optional parameters
         if options['hcp_dwi_extraeddyarg']:
             eddyoptions = options['hcp_dwi_extraeddyarg'].split()
             for eddyoption in eddyoptions:
-                comm += " --extra-eddy-arg=" + eddyoption
+                comm += " \            --extra-eddy-arg=" + eddyoption
+
+        if options['hcp_dwi_name']:
+            comm += " \            --dwiname=" + options['hcp_dwi_name']
+
+        if options['hcp_dwi_selectbestb0']:
+            comm += " \            --select-best-b0=" + options['hcp_dwi_selectbestb0']
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
