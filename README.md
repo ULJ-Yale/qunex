@@ -39,7 +39,7 @@ Submodules:
 Release notes
 -------------
 
-* 0.61.7 Added additiona parameters to DeDriftAndResample.
+* 0.61.7 Added additional parameters to DeDriftAndResample and updated HCP diffusion.
 * 0.61.6 runQC now works properly when overwrite is set to no.
 * 0.61.5 Removed a bug that prevented proper setup of hcp_fMRIVolume parameters.
 * 0.61.4 Fixed several bugs when when importing BIDS data.
@@ -66,7 +66,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
-* 0.61.7  [niutilities] Added additiona parameters to DeDriftAndResample.
+* 0.61.7  [niutilities] Added additional parameters to DeDriftAndResample and updated HCP diffusion.
 * 0.61.6  [connector] runQC now works properly when overwrite is set to no.
 * 0.61.5  [niutilities] Removed a bug where the topupconfig parameter was not properly set when running hcp4.
 * 0.61.4  [niutilities] Fixed checking of dc correction parameters in fMRIVolume.
