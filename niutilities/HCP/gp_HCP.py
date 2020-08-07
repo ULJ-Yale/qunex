@@ -5684,16 +5684,15 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
         report['not ready']  += tempReport['not ready']
         report['skipped']    += tempReport['skipped'] 
 
-
         # if all ok execute DeDrifAndResample if enabled
         if 'hcp_msmall_resample' not in options or options['hcp_msmall_resample'] == "TRUE":
             if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                 # single-run
                 if singleRun:
-                    result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+                    result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, [msmallGroup])
                 # multi-run
                 else:
-                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, [msmallGroup])
 
                 r += result['r']
                 report = result['report']
@@ -6693,6 +6692,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 # if none all is good
                 if (concatname.upper() == "NONE"):
                     concatname = concatname.upper()
+                    boldnames = "NONE"
                 # wrong input
                 elif len(en_split) == 0:
                     runok = False
@@ -6713,15 +6713,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 # add @ or % separator
                 if extractnames is not "":
                     extractconcatnames = extractconcatnames + "@"
-                    # skip if NONE
-                    if (concatname != "NONE" and boldnames is not None):
-                        extractnames = extractnames + "%"
+                    extractnames = extractnames + "%"
 
                 # add latest group
                 extractconcatnames = extractconcatnames + concatname
-                # skip if NONE
-                if (concatname != "NONE" and boldnames is not None):
-                    extractnames = extractnames + boldnames
+                extractnames = extractnames + boldnames
 
             # append to command
             comm = comm + ' \            --multirun-fix-extract-names="%s"' % extractnames
