@@ -404,7 +404,7 @@ tomap = {'bppt':                    'bolds',
          'subjid':                  {
                                         'sessionid': ['dicom2niix', 'batchTag2NameKey'],
                                         'sessionids': ['exportHCP', 'mapIO'],
-                                        'default': 'sourcefile'
+                                        'default': 'sessionid'
                                     },
          'sbjroi':                  'sessionroi',
          'subjectf':                'sessionf'
