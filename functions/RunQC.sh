@@ -1228,16 +1228,18 @@ main() {
             # -- Check of overwrite flag was set
             if [ ${Overwrite} == "yes" ]; then
                 echo ""
-                echo " --- Note: Overwrite requested. Removing existing ${Modality} QC scene: ${OutPath}/${WorkingSceneFile} "
-                echo ""
                 if [ ${Modality} == "BOLD" ]; then
+                    echo " --- Note: Overwrite requested. "
                     for BOLD in $BOLDS
                     do
+                        echo " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASEName}.${Modality}.${BOLD}.* "
                         rm -f ${OutPath}/${CASEName}.${Modality}.${BOLD}.* &> /dev/null
                     done
                 else
+                    echo " --- Note: Overwrite requested. Removing existing ${Modality} QC scene: ${OutPath}/${WorkingSceneFile} "
                     rm -f ${OutPath}/${CASEName}.${Modality}.* &> /dev/null
                 fi
+                echo ""
             else
                 geho "---> Overwrite is set to 'no'. Running checks for previously ran QC."
                 previousCompletionCheck
