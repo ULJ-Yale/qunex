@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.8  All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  Added additional parameters to DeDriftAndResample.
 * 0.61.6  Removed a bug where the topupconfig parameter was not properly set when running hcp4.
 * 0.61.5  Fixed checking of dc correction parameters in fMRIVolume.

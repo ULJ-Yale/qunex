@@ -2192,13 +2192,13 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         if options['hcp_dwi_extraeddyarg']:
             eddyoptions = options['hcp_dwi_extraeddyarg'].split()
             for eddyoption in eddyoptions:
-                comm += " \            --extra-eddy-arg=" + eddyoption
+                comm += "             --extra-eddy-arg=" + eddyoption
 
         if options['hcp_dwi_name']:
-            comm += " \            --dwiname=" + options['hcp_dwi_name']
+            comm += "             --dwiname=" + options['hcp_dwi_name']
 
         if options['hcp_dwi_selectbestb0']:
-            comm += " \            --select-best-b0=" + options['hcp_dwi_selectbestb0']
+            comm += "             --select-best-b0=" + options['hcp_dwi_selectbestb0']
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
@@ -6738,12 +6738,12 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 extractnames = extractnames + boldnames
 
             # append to command
-            comm = comm + ' \            --multirun-fix-extract-names="%s"' % extractnames
-            comm = comm + ' \            --multirun-fix-extract-concat-names="%s"' % extractconcatnames
+            comm += '             --multirun-fix-extract-names="%s"' % extractnames
+            comm += '             --multirun-fix-extract-concat-names="%s"' % extractconcatnames
 
         # -- hcp_resample_extractextraregnames
         if 'hcp_resample_extractextraregnames' in options:
-            comm = comm + ' \            --multirun-fix-extract-extra-regnames="%s"' % options['hcp_resample_extractextraregnames']
+            comm += '             --multirun-fix-extract-extra-regnames="%s"' % options['hcp_resample_extractextraregnames']
 
         # -- hcp_resample_extractvolume
         if 'hcp_resample_extractvolume' in options:
@@ -6755,7 +6755,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 r += "\n---> ERROR: invalid extractvolume parameter [%s], expecting TRUE or FALSE!" % extractvolume
 
             # append to command
-            comm = comm + ' \            --multirun-fix-extract-volume="%s"' % extractvolume
+            comm += '             --multirun-fix-extract-volume="%s"' % extractvolume
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
