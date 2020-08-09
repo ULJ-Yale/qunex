@@ -117,7 +117,7 @@ def getHCPPaths(sinfo, options):
     
     # T1w file
     try:
-        T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]      
+        T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
         filename = T1w.get('filename', None)
         if filename and options['hcp_filename'] == "original":
             d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*' + filename + '*.nii.gz')))
@@ -555,7 +555,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # --- check for T1w and T2w images
-
         for tfile in hcp['T1w'].split("@"):
             if os.path.exists(tfile):
                 r += "\n---> T1w image file present."
