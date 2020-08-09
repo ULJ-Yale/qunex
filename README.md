@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.7
+Qu|Nex suite version: 0.61.8
 
 Submodules:
 
 * connector: 0.61.2
 * library: 0.61.0
 * nitools: 0.60.1
-* niutilities: 0.61.7
+* niutilities: 0.61.8
 
 
 Release notes
 -------------
 
+* 0.61.8 All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7 Added additional parameters to DeDriftAndResample.
 * 0.61.6 runQC now works properly when overwrite is set to no.
 * 0.61.5 Removed a bug that prevented proper setup of hcp_fMRIVolume parameters.
@@ -66,6 +67,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.8  [niutilities] All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  [niutilities] Added additional parameters to DeDriftAndResample and updated HCP diffusion.
 * 0.61.6  [connector] runQC now works properly when overwrite is set to no.
 * 0.61.5  [niutilities] Removed a bug where the topupconfig parameter was not properly set when running hcp4.
