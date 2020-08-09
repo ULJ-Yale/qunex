@@ -30,7 +30,7 @@ Qu|Nex suite version: 0.61.7
 
 Submodules:
 
-* connector: 0.61.1
+* connector: 0.61.2
 * library: 0.61.0
 * nitools: 0.60.1
 * niutilities: 0.61.7
