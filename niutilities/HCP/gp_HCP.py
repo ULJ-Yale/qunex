@@ -1368,8 +1368,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                           - 'study' (for the default: 
                             `<study>/processing/logs/comlogs` location)
                           - 'session' (for `<sessionid>/logs/comlogs`)
-                          - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-                          - '<path>'  (for an arbitrary directory)
+                          - 'hcp' (for `<hcp_folder>/logs/comlogs`)
+                          - '<path>' (for an arbitrary directory)
                           
     --hcp_folderstructure   ... Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported. 
@@ -2348,7 +2348,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     processing in this step:
 
     Specific parameters
-    ---------------------------------
+    -------------------
 
     --hcp_bold_biascorrection   ... Whether to perform bias correction for BOLD 
                                     images. NONE or Legacy. [NONE]
@@ -4901,7 +4901,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     --hcp_icafix_highpass             ... Value for the highpass filter,
                                           [0] for multi-run HCP ICAFix and 
                                           [2000] for single-run HCP ICAFix.
-    --hcp_matlab_mode                 ... Specifies the Matlab version, can be
+    --hcp_matlab_mode                 ... Specifies the MATLAB version, can be
                                           interpreted, compiled or octave.
                                           [compiled]
     --hcp_icafix_domotionreg          ... Whether to regress motion parameters 
@@ -4965,12 +4965,14 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     """
 
     """
-    ----------------
-    Written by Jure Demšar
+    ~~~~~~~~~~~~~~~~~~
 
-    Changelog
+    Change log
+
     2019-10-15 Jure Demsar
-             - Core functionality.
+               Initial version
+    2019-10-15 Jure Demsar
+               Core functionality.
     """
 
     r = "\n------------------------------------------------------------"

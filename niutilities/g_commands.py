@@ -85,11 +85,11 @@ deprecated_commands = {"HCPLSImport": "importHCP",
                        "getHCPReady": "createSesssionInfo"}
 
 def checkDeprecatedCommands(command):
-    '''
+    """
     checkDeprecatedCommands(options, deprecatedCommands)
     Checks for deprecated commands, remaps deprecated ones
-    and notifes the user.
-    '''
+    and notifies the user.
+    """
 
     # store the command
     newCommand = command

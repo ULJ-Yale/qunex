@@ -5,7 +5,7 @@ gi_HCP.py
 
 Functions for importing HCP style data into Qu|Nex:
 
-- importHCP     ... maps HCP style data to Qu|Nex structure
+- importHCP  ... maps HCP style data to Qu|Nex structure
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -155,30 +155,30 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     --action            How to map the files to Qu|Nex structure. ['link']
                         The following actions are supported:
                         
-                        - link ... files will be mapped by creating hard links
-                                   if possible, otherwise they will be copied
-                        - copy ... files will be copied                   
-                        - move ... files will be moved
+                        - link (files will be mapped by creating hard links if 
+                          possible, otherwise they will be copied)
+                        - copy (files will be copied)                  
+                        - move (files will be moved)
 
     --overwrite         The parameter specifies what should be done with 
                         data that already exists in the locations to which HCPLS
                         data would be mapped to. ['no'] Options are:
 
-                        - no  ... do not overwrite the data and skip processing 
-                                  of the session
-                        - yes ... remove exising files in `nii` folder and redo 
-                                  the mapping 
+                        - no (do not overwrite the data and skip processing of 
+                          the session)
+                        - yes (remove exising files in `nii` folder and redo the
+                          mapping) 
 
     --archive           What to do with the files after they were mapped. 
                         ['move'] Options are:
 
-                        - leave  ... leave the specified archive where it is
-                        - move   ... move the specified archive to 
-                                     `<sessionsfolder>/archive/HCPLS`
-                        - copy   ... copy the specified archive to 
-                                     `<sessionsfolder>/archive/HCPLS`
-                        - delete ... delete the archive after processing if no 
-                                     errors were identified
+                        - leave (leave the specified archive where it is)
+                        - move (move the specified archive to 
+                          `<sessionsfolder>/archive/HCPLS`)
+                        - copy (copy the specified archive to 
+                          `<sessionsfolder>/archive/HCPLS`)
+                        - delete (delete the archive after processing if no 
+                          errors were identified)
 
                         Please note that there can be an
                         interaction with the `action` parameter. If files are
@@ -194,10 +194,10 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                         and session information based on the file paths and 
                         names. The pattern has to return the groups named:
 
-                        - subject_id    ... the id of the subject
-                        - session_name  ... the name of the session 
-                        - data          ... the rest of the path with the 
-                                            sequence related files
+                        - subject_id (the id of the subject)
+                        - session_name (the name of the session) 
+                        - data (the rest of the path with the sequence related 
+                          files)
 
                         The default is:
                         ``'(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'``
@@ -208,11 +208,11 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                         string of sort keys separated by '_'. [`name_type_se`] 
                         The available sort keys are:
        
-                        - name  ... sort by the name of the file
-                        - type  ... sort by the type of the file 
-                                    (T1w, T2w, rfMRI, tfMRI, Diffusion)
-                        - se    ... sort by the number of the related pair of 
-                                    the SE fieldmap images.
+                        - name (sort by the name of the file)
+                        - type (sort by the type of the file (T1w, T2w, rfMRI, 
+                          tfMRI, Diffusion))
+                        - se (sort by the number of the related pair of the SE 
+                          fieldmap images)
        
                         The files will be sorted in the order of the listed 
                         keys.
@@ -254,20 +254,21 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     
     1. Mapping HCPLS dataset to Qu|Nex Suite folder structure
     
-        The `inbox` parameter specifies the location of the HCPLS dataset. This path 
-        is inspected for a HCPLS compliant dataset. The path can point to a folder 
-        with extracted HCPLS dataset, a `.zip` or `.tar.gz` archive or a folder 
-        containing one or more `.zip` or `.tar.gz` archives. In the initial step, 
-        each file found will be assigned either to a specific session. 
+        The `inbox` parameter specifies the location of the HCPLS dataset. This
+        path is inspected for a HCPLS compliant dataset. The path can point to a
+        folder with extracted HCPLS dataset, a `.zip` or `.tar.gz` archive or a 
+        folder containing one or more `.zip` or `.tar.gz` archives. In the
+        initial step, each file found will be assigned either to a specific 
+        session. 
 
         <hcpls_dataset_name> can be provided as a `hcplsname` parameter to the
-        command call. If `hcplsname` is not provided, the name will be set to the 
-        name of the parent folder or the name of the compressed archive.
+        command call. If `hcplsname` is not provided, the name will be set to
+        the name of the parent folder or the name of the compressed archive.
 
         The files identified as belonging to a specific session will be mapped to 
-        folder: 
+        folder::
         
-        ``<sessions_folder>/<subject>_<session>/hcpls``
+            <sessions_folder>/<subject>_<session>/hcpls
 
         The `<subject>_<session>` string will be used as the identifier for the 
         session in all the following steps. If the folder for the `session` 
@@ -295,7 +296,6 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     ::
 
         qunex importHCP sessionsfolder=myStudy/sessions inbox=HCPLS overwrite=yes hcplsname=hcpls
-    
     """
 
     """
@@ -683,8 +683,96 @@ def processHCPLS(sessionfolder, filesort):
 
 
 def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
-    '''
-    mapHCPLS2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]
+    """
+    ``mapHCPLS2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``
+
+    Maps data organized according to HCPLS specification to `nii` folder
+    structure as expected by Qu|Nex functions.
+
+    INPUTS
+    ======
+
+    --sourcefolder  The base session folder in which bids folder with data and
+                    files for the session are present. [.]
+    
+    --overwrite     Parameter that specifes what should be done in cases where
+                    there are existing data stored in `nii` folder. ['no'] The 
+                    options are:
+
+                    - no (do not overwrite the data, skip session)
+                    - yes (remove exising files in `nii` folder and redo the
+                      mapping)
+
+    --report        The path to the file that will hold the information about the
+                    images that are relevant for HCP Pipelines. If not provided
+                    it will default to 
+
+    --filesort      An optional parameter that specifies how the files should
+                    be sorted before mapping to `nii` folder and inclusion in 
+                    `session_hcp.txt`. The sorting is specified by a string of
+                    sort keys separated by '_'. The available sort keys are:
+   
+                    - name (sort by the name of the file)
+                    - type (sort by the type of the file (T1w, T2w, rfMRI, 
+                      tfMRI, Diffusion)
+                    - se (sort by the number of the related pair of the SE 
+                      fieldmap images)
+   
+                    The files will be sorted in the order of the listed keys.
+                    The default is: "name_type_se".
+   
+                    NOTE: 
+                    
+                    - SE field map pair will allways come before the first image
+                      in the sorted list that references it. 
+                    - Diffusion images will always be listed jointly in a fixed 
+                      order.
+
+    OUTPUTS
+    =======
+
+    After running the mapped nifti files will be in the `nii` subfolder, 
+    named with sequential image number. `session.txt` will be in the base 
+    session folder and `hcpls2nii.log` will be in the `hcpls` folder.
+    
+    session.txt file
+    ----------------
+
+    The session.txt will be placed in the session base folder. It will contain
+    the information about the session id, subject id location of folders and a 
+    list of created NIfTI images with their description.
+
+    An example session.txt file would be::
+
+        id: 06_retest
+        subject: 06
+        hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
+        raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+        hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
+        
+        01: T1w
+        02: bold1:rest1
+        03: bold2:rest1
+        04: bold3:rest2
+        05: bold4:rest2
+        06: bold5:CARIT
+        07: bold6:FACENAME
+        08: bold7:VISMOTOR
+        09: dwi
+
+    For each of the listed images there will be a corresponding NIfTI file in
+    the nii subfolder (e.g. 04.nii.gz for resting state 2 PA). 
+    The generated session.txt files form the basis for the following HCP and 
+    other processing steps. `id` field will be set to the full session name,
+    `subject` will be set to the text preceeding the first underscore (`_`) 
+    character.
+
+    hcpls2nii.log file
+    ------------------
+
+    The `hcpls2nii.log` provides the information about the date and time the
+    files were mapped and the exact information about which specific file 
+    from the `hcpls` folder was mapped to which file in the `nii` folder.
 
     USE
     ===
@@ -708,95 +796,8 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     generated in the main session folder. For every image all the information
     present in the hcpls filename is listed.
 
-    PARAMETERS
-    ==========
-
-    --sourcefolder  The base session folder in which bids folder with data and
-                    files for the session are present. [.]
-    
-    --overwrite     Parameter that specifes what should be done in cases where
-                    there are existing data stored in `nii` folder. The options
-                    are:
-
-                    no      - do not overwrite the data, skip session
-                    yes     - remove exising files in `nii` folder and redo the
-                              mapping
-
-                    The default option is 'no'. 
-
-    --report        The path to the file that will hold the information about the
-                    images that are relevant for HCP Pipelines. If not provided
-                    it will default to 
-
-    --filesort      An optional parameter that specifies how the files should
-                    be sorted before mapping to `nii` folder and inclusion in 
-                    `session_hcp.txt`. The sorting is specified by a string of
-                    sort keys separated by '_'. The available sort keys are:
-   
-                    * name  ... sort by the name of the file
-                    * type  ... sort by the type of the file (T1w, T2w, rfMRI, 
-                                tfMRI, Diffusion)
-                    * se    ... sort by the number of the related pair of the
-                                SE fieldmap images.
-   
-                    The files will be sorted in the order of the listed keys.
-                    The default is: "name_type_se".
-   
-                    NOTE: 
-                    1) SE field map pair will allways come before the first image
-                       in the sorted list that references it. 
-                    2) Diffusion images will always be listed jointly in a fixed 
-                       order.
-
-    RESULTS
-    =======
-
-    After running the mapped nifti files will be in the `nii` subfolder, 
-    named with sequential image number. `session.txt` will be in the base 
-    session folder and `hcpls2nii.log` will be in the `hcpls` folder.
-    
-    session.txt file
-    ----------------
-
-    The session.txt will be placed in the session base folder. It will contain
-    the information about the session id, subject id location of folders and a 
-    list of created NIfTI images with their description.
-
-    An example session.txt file would be:
-
-    id: 06_retest
-    subject: 06
-    hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
-    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
-    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
-    
-    01: T1w
-    02: bold1:rest1
-    03: bold2:rest1
-    04: bold3:rest2
-    05: bold4:rest2
-    06: bold5:CARIT
-    07: bold6:FACENAME
-    08: bold7:VISMOTOR
-    09: dwi
-
-    For each of the listed images there will be a corresponding NIfTI file in
-    the nii subfolder (e.g. 04.nii.gz for resting state 2 PA). 
-    The generated session.txt files form the basis for the following HCP and 
-    other processing steps. `id` field will be set to the full session name,
-    `subject` will be set to the text preceeding the first underscore (`_`) 
-    character.
-
-    hcpls2nii.log file
-    -----------------
-
-    The `hcpls2nii.log` provides the information about the date and time the
-    files were mapped and the exact information about which specific file 
-    from the `hcpls` folder was mapped to which file in the `nii` folder.
-
-
-    MULTIPLE SESSIONS AND SCHEDULING
-    ================================
+    Multiple sessions and scheduling
+    --------------------------------
 
     The command can be run for multiple sessions by specifying `sessions` and
     optionally `sessionsfolder` and `parsessions` parameters. In this case the
@@ -822,55 +823,56 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     file processing, the best performance might be achieved by running on a 
     single node and a single core.
 
-    CAVEATS AND MISSING FUNCTIONALITY
-    =================================
+    Caveats and missing functionality
+    ---------------------------------
 
     .bvec and .bval files
-    ---------------------
+    ~~~~~~~~~~~~~~~~~~~~~
 
     `.bvec` and `.bval` files are expected to be present along with dMRI files
     in each session folder. If they are present in another folder, they are 
     currently not mapped to the `.nii` folder.
 
     Image format
-    ------------
+    ~~~~~~~~~~~~
 
     The function assumes that all the images are saved as `.nii.gz` files!
-
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex mapHCPLS2nii folder=. overwrite=yes
-    ```
+    ::
 
-    ```
-    qunex mapHCPLS2nii \\
-      --sessionsfolder="/data/my_study/sessions" \\
-      --sessions="AP*" \\
-      --overwrite=yes
-    ```
+        qunex mapHCPLS2nii folder=. overwrite=yes
 
-    ----------------
-    Written by Grega Repovš
+    ::
 
-    Changelog
+        qunex mapHCPLS2nii \\
+          --sessionsfolder="/data/my_study/sessions" \\
+          --sessions="AP*" \\
+          --overwrite=yes
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2019-01-19 Grega Repovš
-             - Initial version based on mapBIDS2nii
+               Initial version based on mapBIDS2nii
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-05-22 Grega Repovš
-             - Added boldname to output
+               Added boldname to output
     2019-06-01 Grega Repovš
-             - Returns statistics
+               Returns statistics
     2019-06-22 Grega Repovš
-             - Added multiple sessions example
+               Added multiple sessions example
     2019-09-21 Jure Demšar
-             - Filename (previously boldname) is now used in all sequences
+               Filename (previously boldname) is now used in all sequences
     2020-03-24 Grega Repovš
-             - Addded file sorting parameter
-    '''
+               Addded file sorting parameter
+    """
 
     if not filesort:
         filesort = "name_type_se"

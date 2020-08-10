@@ -65,11 +65,11 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     --mapaction       How to map the data. ['link'] The following actions are 
                       supported:
 
-                      - 'copy'  ... the data is copied from source to target
-                      - 'link'  ... if possible, hard links are created for the 
-                                    files, if not, the data is copied
-                      - 'move'  ... the data is moved from source to target 
-                                    location
+                      - 'copy' (the data is copied from source to target)
+                      - 'link' (if possible, hard links are created for the 
+                        files, if not, the data is copied)
+                      - 'move' (the data is moved from source to target 
+                        location)
 
     --mapto           The external target of the mapping when starting with the 
                       Qu|Nex. This flag is optional and only has to be specified 
@@ -78,10 +78,10 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     --overwrite       Whether existing files at the target location should be
                       overwritten.['no'] Possible options are:
 
-                      - yes  ... any existing files should be replaced
-                      - no   ... no existing files should be replaced and the
-                                 mapping should be aborted if any are found
-                      - skip ... skip files that already exist, process others
+                      - yes (any existing files should be replaced)
+                      - no (no existing files should be replaced and the
+                        mapping should be aborted if any are found)
+                      - skip (skip files that already exist, process others)
 
     --mapexclude      A comma separated list of regular expression patterns that
                       specify, which files should be excluded from mapping. The

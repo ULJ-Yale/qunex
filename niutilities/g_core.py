@@ -22,21 +22,30 @@ import niutilities.g_exceptions as ge
 
 
 def readSessionData(filename, verbose=False):
-    '''
-    readSessionData(filename, verbose=False)
+    """
+    ``readSessionData(filename, verbose=False)``
 
-    An internal function for reading batch.txt files. It reads the file and
+    Reads a `batch.txt` file.
+    
+    USE
+    ===
+
+    An internal function for reading `batch.txt` files. It reads the file and
     returns a list of sessions with the information on images and the additional
     parameters specified in the header.
 
-    ---
-    Written by Grega Repovš.
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
 
     Change log
 
     2019-05-22 Grega Repovš
-             - Now only reads '_' parameters as global variables in the initial section
-    '''
+               Initial version
+    2019-05-22 Grega Repovš
+               Now only reads '_' parameters as global variables in the initial section
+    """
 
     if not os.path.exists(filename):
         print "\n\n=====================================================\nERROR: Batch file does not exist [%s]" % (filename)
@@ -165,14 +174,18 @@ def readSessionData(filename, verbose=False):
 
 
 def readList(filename, verbose=False):
-    '''
-    readList(filename, verbose=False)
+    """
+    ``readList(filename, verbose=False)``
 
     An internal function for reading list files. It reads the file and
     returns a list of sessions each with the provided list of files.
+    """
 
-    ---
-    Written by Grega Repovš.'''
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Written by Grega Repovš.
+    """
 
     slist   = []
     session = None
@@ -201,31 +214,44 @@ def readList(filename, verbose=False):
 
 
 def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
-    '''
-    getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)
+    """
+    ``getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
 
-    An internal function for getting a list of sessions as an array of dictionaries in
-    the form: [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}].
+    Gets a list of sessions as an array of dictionaries.
+
+    USE
+    ===
+
+    An internal function for getting a list of sessions as an array of 
+    dictionaries in the form::
+
+        [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}]
 
     The provided listString can be:
 
-    * a comma, space or pipe separated list of session id codes,
-    * a path to a batch file (identified by .txt extension),
-    * a path to a *.list file (identified by .list extension).
+    - a comma, space or pipe separated list of session id codes,
+    - a path to a batch file (identified by .txt extension),
+    - a path to a `*.list` file (identified by .list extension).
 
-    In the first cases, the dictionary will include only session ids, in the second all the
-    other information present in the batch file, in the third lists of specified files, e.g.:
-    [{'id': <session id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
+    In the first cases, the dictionary will include only session ids, in the 
+    second all the other information present in the batch file, in the third 
+    lists of specified files, e.g.::
 
-    If filter is provided (not None), only sessions that match the filter will be returned.
-    If sessionids is provided (not None), only sessions with matching id will be returned.
-    If sessionsfolder is provided (not None), sessions from a listString will be treated as
-    glob patterns and all folders that match the pattern in the sessionsfolder will be returned
-    as session ids.
+        [{'id': <session id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
 
-    ---
+    If filter is provided (not None), only sessions that match the filter will 
+    be returned. If sessionids is provided (not None), only sessions with 
+    matching id will be returned. If sessionsfolder is provided (not None), 
+    sessions from a listString will be treated as glob patterns and all folders 
+    that match the pattern in the sessionsfolder will be returned as session 
+    ids.
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
     Written by Grega Repovš.
-    '''
+    """
 
     gpref = {}
 
@@ -272,15 +298,20 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
 
 
 def deduceFolders(args):
-    '''
-    deduceFolders(args)
+    """
+    ``deduceFolders(args)``
 
     Tries to deduce the location of study specific folders based on the provided
     arguments. For internal use only.
+    """
 
-    ---
-    Written by Grega Repovš, 2018-03-31
-    '''
+    """
+    ~~~~~~~~~~~~~~~~~~
+    Change log
+
+    2018-03-31 Grega Repovš
+               Initial version
+    """
 
     reference  = args.get('reference')
     logfolder  = args.get('logfolder')
@@ -316,25 +347,40 @@ def deduceFolders(args):
 
 
 def runExternalParallel(calls, cores=None, prepend=''):
-    '''
-    runExternalParallel(calls, cores=None, prepend='')
+    """
+    ``runExternalParallel(calls, cores=None, prepend='')``
 
-    Runs external commands specified in 'calls' in parallel utilizing all the available or the number of cores specified in 'cores'.
-    Parameters:
+    Runs external commands specified in 'calls' in parallel utilizing all the 
+    available or the number of cores specified in 'cores'.
+    
+    INPUTS
+    ======
 
-    calls   : A list of dictionaries that specifies the commands to run. It should consists of:
-              - name : The name of the command to run.
-              - args : The actual command provided as a list of arguments.
-              - sout : The name of the log file to which to direct the standard output from the command ran.
-    cores   : The number of cores to utilize. If specified as None or 'all', all available cores will be utilised.
-    prepend : The string to prepend to each line of progress report.
+    --calls    ... A list of dictionaries that specifies the commands to run. It
+                   should consists of:
 
-    Example call:
-    runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, cores=1, prepend=' ... ')
+                   - name (the name of the command to run)
+                   - args (the actual command provided as a list of arguments)
+                   - sout (the name of the log file to which to direct the 
+                     standard output from the command ran)
 
-    ---
+    --cores    ... The number of cores to utilize. If specified as None or 
+                   'all', all available cores will be utilized.
+    --prepend  ... The string to prepend to each line of progress report.
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, cores=1, prepend=' ... ')
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+    
     Written by Grega Repovš.
-    '''
+    """
 
     if cores is None or cores in ['all', 'All', 'ALL']:
         cores = multiprocessing.cpu_count()
@@ -405,20 +451,23 @@ results = []
 lock    = multiprocessing.Lock()
 
 def record(response):
-    '''
-    record(response)
+    """
+    ``record(response)``
 
     Appends response from a completed function.
 
     For internal use only.
+    """
 
-    ---
-    Written by Grega Repovš, 2018-03-31
+    """
+    ~~~~~~~~~~~~~~~~~~
+    Change log
 
-    Change log:
-    2019-01-17 - Grega Repovš
-                 Fixed the correct response
-    '''
+    2018-03-31 Grega Repovš
+               Initial version
+    2019-01-17 Grega Repovš
+               Fixed the correct response
+    """
 
     global results
 
@@ -439,16 +488,22 @@ def record(response):
 
 
 def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
-    '''
-    runWithLog(function, args=None, logfile=None, name=None)
+    """
+    ``runWithLog(function, args=None, logfile=None, name=None)``
+
     Runs a function with the arguments by redirecting standard output and
     standard error to the specified log file.
 
     For internal use only.
+    """
 
-    ---
-    Written by Grega Repovš, 2018-03-31
-    '''
+    """
+    ~~~~~~~~~~~~~~~~~~
+    Change log
+
+    2018-03-31 Grega Repovš
+               Initial version
+    """
 
     if name is None:
         name = function.__name__
@@ -512,26 +567,43 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
 
 
 def runInParallel(calls, cores=None, prepend=""):
-    '''
-    runInParallel(calls, cores=None, prepend="")
+    """
+    ``runInParallel(calls, cores=None, prepend="")``
 
-    Runs functions specified in 'calls' in parallel utilizing all the available or the number of cores specified in 'cores'.
-    Parameters:
+    Runs functions specified in 'calls' in parallel utilizing all the available 
+    or the number of cores specified in 'cores'.
+    
+    INPUTS
+    ======
 
-    calls   : A list of dictionaries that specifies the commands to run. It should consists of:
-              - name     : The name of the command to run.
-              - function : The function to be run.
-              - args     : The arguments to be passed to the function.
-              - logfile  : The path to the log file to which to direct the standard output from the command ran.
-    cores   : The number of cores to utilize. If specified as None or 'all', all available cores will be utilised.
-    prepend : The string to prepend to each line of progress report.
+    --calls    ... A list of dictionaries that specifies the commands to run. 
+                   It should consists of:
 
-    Example call:
-    runInParallel({'name': 'Sort dicom files', 'function': niu.g_dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
+                   - name (the name of the command to run)
+                   - function (the function to be run)
+                   - args (the arguments to be passed to the function)
+                   - logfile (the path to the log file to which to direct the 
+                   standard output from the command ran)
 
-    ---
-    Written by Grega Repovš, 2018-03-31
-    '''
+    --cores    ... The number of cores to utilize. If specified as None or 
+                   'all', all available cores will be utilized.
+    --prepend  ... The string to prepend to each line of progress report.
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        runInParallel({'name': 'Sort dicom files', 'function': niu.g_dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+    Change log
+
+    2018-03-31 Grega Repovš
+               Initial version
+    """
 
     global results
 
@@ -557,7 +629,9 @@ def runInParallel(calls, cores=None, prepend=""):
 
 
 def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
-    '''
+    """
+    ``checkFiles(testFolder, specFile, fields=None, report=None, append=False)``
+
     Check the testFolder for presence of files as specified in specFile, which 
     lists files one per line with space delimited paths. Additionally an array
     of key-value pairs can be provided. If present every instance of {<key>} 
@@ -565,7 +639,7 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     written to that file. Where there might be two alternative options of results
     e.g. difference because of AP/PA direction, then the alternative is to 
     be provided in the same line separated by a pipe '|'
-    '''
+    """
  
     # --- open the report if needed:
 
@@ -641,16 +715,20 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
 
 
 def printAndLog(*args, **kwargs):
-    '''
-    Prints all that is given as nonpositional argument to the standard output.
-    For keyword arguments:
+    """
+    ``printAndLog(*args, **kwargs)``
 
-    * file     ... prints to the file
-    * write    ... creates a file and writes to it
-    * append   ... opens a file and appends to it
-    * silent   ... whether to not print to stdout
-    * end      ... how to end ['\n']
-    '''
+    Prints all that is given as nonpositional argument to the standard output.
+    
+    INPUTS
+    ======
+
+    - file     ... prints to the file
+    - write    ... creates a file and writes to it
+    - append   ... opens a file and appends to it
+    - silent   ... whether to not print to stdout
+    - end      ... how to end ['\n']
+    """
 
     silent = kwargs.get('silent', False)
     file   = kwargs.get('file', None)
@@ -678,19 +756,37 @@ def printAndLog(*args, **kwargs):
 
 def getLogFile(folders=None, tags=None):
     """
-    Creates a log file in the comlogs folder and returns the name and the file handle.
-    It tries to find the correct location for the log based on the provided folders.
+    ``getLogFile(folders=None, tags=None)``
+
+    Creates a log file in the comlogs folder.
     
-    Arguments:
+    INPUTS
+    ======
+
     - folders  ... a dictionary with the known paths
     - tags     ... an array of strings to use to create the filename
 
-    Returns
+    OUTPUTS
+    =======
+
     - filename     ... the path to the log file
     - file handle  ... the file handle of the open file
+    
+    USE
+    ===
 
-    ---
-    Written by Grega Repovš, 2019-05-29
+    Creates a log file in the comlogs folder and returns the name and the file 
+    handle. It tries to find the correct location for the log based on the 
+    provided folders.
+
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+    Change log
+
+    2019-05-29 Grega Repovš
+               Initial version
     """
 
     folders = deduceFolders(folders)
@@ -713,11 +809,18 @@ def getLogFile(folders=None, tags=None):
 
 def closeLogFile(logfile=None, logname=None, status="done"):
     """
-    Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at the start of the logname to the
-    provided status.
+    ``closeLogFile(logfile=None, logname=None, status="done")``
 
-    ---
-    Written by Grega Repovš, 2019-05-29
+    Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at
+    the start of the logname to the provided status.
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+    Change log
+
+    2019-05-29 Grega Repovš
+               Initial version
     """
 
     if logfile:
@@ -833,11 +936,19 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
 
 def createSessionFile(command, sfolder, session, subject, overwrite):
     """
+    ``createSessionFile(command, sfolder, session, subject, overwrite)``
+    
     Creates the generic, non pipeline specific, session file.
-
-    ---
-    Written by Jure Demšar, 2020-06-09
     """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+    Change log
+
+    2020-06-09 Jure Demšar
+               Initial version
+    """
+
     # open fifle
     sfile = os.path.join(sfolder, 'session.txt')
     if os.path.exists(sfile):

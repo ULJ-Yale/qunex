@@ -6,7 +6,7 @@ gs_HCP.py
 Functions for preparing information and mapping images to a HCP preprocessing
 compliant folder structure:
 
-- setupHCP      ... maps the data to a hcp folder
+- setupHCP  ... maps the data to a hcp folder
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -43,11 +43,14 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
                         [session_hcp.txt]
     --check             Whether to check if session is marked ready for setting 
                         up hcp folder [yes].
-    --existing          What to do if the hcp folder already exists? Options 
-                        are:
-                        abort -> abort setting up hcp folder
-                        add   -> leave existing files and add new ones (default)
-                        clear -> remove any exisiting files and redo hcp mapping
+    --existing          What to do if the hcp folder already exists. ['add']
+                        Options are:
+                        
+                        - abort (abort setting up hcp folder)
+                        - add (leave existing files and add new ones)
+                        - clear (remove any existing files and redo hcp 
+                          mapping)
+
     --filename          How to name the bold files in the hcp structure. The 
                         default is to name them by their bold number 
                         ('standard') (e.g. BOLD_1), the alternative is to use 
@@ -60,8 +63,18 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
                         to HCP session is then:
                         `<targetfolder>/<session id><hcp_suffix>`. []
 
-    IMAGE DEFINITION
-    ================
+    USE
+    ===
+
+    The command maps images from the sessions's nii folder into a folder
+    structure that conforms to the naming conventions used in the HCP
+    minimal preprocessing workflow. For the mapping to be correct, the
+    command expects the source session.txt file (sourcefile) to hold the relevant
+    information on images. To save space, the images are not copied into the new
+    folder structure but rather hard-links are created if possible.
+
+    Image definition
+    ----------------
 
     For the mapping to work, each MR to be mapped has to be marked with the
     appropriate image type in the source.txt file. The following file types
@@ -128,7 +141,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
 
 
     HCP folder structure version
-    ----------------------------
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     `version` parameter determines the HCP folder structure to use:
 
@@ -140,8 +153,8 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
                 the '_fncb' and '_strc' extensions, respectively.
 
 
-    MULTIPLE SESSIONS AND SCHEDULING
-    ================================
+    Multiple sessions and scheduling
+    --------------------------------
 
     The command can be run for multiple sessions by specifying `sessions` and
     optionally `sessionsfolder` and `parsessions` parameters. In this case the
@@ -164,24 +177,12 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
     should be stored. Otherwise the processor will make best guess, where the
     logs should go.
 
-    USE
-    ===
-
-    The command maps images from the sessions's nii folder into a folder
-    structure that conforms to the naming conventions used in the HCP
-    minimal preprocessing workflow. For the mapping to be correct, the
-    command expects the source session.txt file (sourcefile) to hold the relevant
-    information on images. To save space, the images are not copied into the new
-    folder structure but rather hard-links are created if possible.
-
-
     EXAMPLE USE
     ===========
     
     ::
 
         qunex setupHCP sourcefolder=OP316 sourcefile=session.txt
-        
     """
 
     """

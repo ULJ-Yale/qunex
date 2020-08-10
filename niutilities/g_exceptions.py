@@ -3,7 +3,7 @@
 """
 g_exceptions.py
 
-Definition of exceptions used in gmri
+Definition of exceptions used in gmri.
 """
 
 
