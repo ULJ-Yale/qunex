@@ -2189,15 +2189,15 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                 'printcom'          : options['hcp_printcom']}
 
         # -- Optional parameters
-        if options['hcp_dwi_extraeddyarg']:
+        if 'hcp_dwi_extraeddyarg' in options:
             eddyoptions = options['hcp_dwi_extraeddyarg'].split()
             for eddyoption in eddyoptions:
                 comm += "             --extra-eddy-arg=" + eddyoption
 
-        if options['hcp_dwi_name']:
+        if 'hcp_dwi_name' in options:
             comm += "             --dwiname=" + options['hcp_dwi_name']
 
-        if options['hcp_dwi_selectbestb0']:
+        if 'hcp_dwi_selectbestb0' in options:
             comm += "             --select-best-b0=" + options['hcp_dwi_selectbestb0']
 
         # -- Report command
