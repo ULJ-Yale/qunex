@@ -39,6 +39,7 @@ Submodules:
 Release notes
 -------------
 
+* 0.61.9 HCP Diffusion pipeline upgrades.
 * 0.61.8 All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7 Added additional parameters to DeDriftAndResample.
 * 0.61.6 runQC now works properly when overwrite is set to no.
@@ -67,6 +68,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.9  [niutilities] HCP Diffusion pipeline upgrades.
 * 0.61.8  [niutilities] All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  [niutilities] Added additional parameters to DeDriftAndResample and updated HCP diffusion.
 * 0.61.6  [connector] runQC now works properly when overwrite is set to no.
