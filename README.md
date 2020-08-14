@@ -31,7 +31,7 @@ Qu|Nex suite version: 0.61.9
 Submodules:
 
 * connector: 0.61.3
-* library: 0.61.1
+* library: 0.61.2
 * nitools: 0.60.1
 * niutilities: 0.61.11
 
@@ -39,7 +39,7 @@ Submodules:
 Release notes
 -------------
 
-* 0.61.9 HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in niutilities.
+* 0.61.9 HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in niutilities, added CUDA.
 * 0.61.8 All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7 Added additional parameters to DeDriftAndResample.
 * 0.61.6 runQC now works properly when overwrite is set to no.
