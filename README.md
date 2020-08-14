@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.61.3  Added bedpostx and probtrackx GPU binaries.
 * 0.61.2  Added some additional printouts to runQC for user friendliness.
 * 0.61.1  runQC now works properly when overwrite is set to no.
 * 0.61.0  Implementation of bug fixes across connector and pipeline restructure back-compatibility
