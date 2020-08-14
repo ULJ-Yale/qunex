@@ -7129,7 +7129,12 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         if os.path.exists(f['fs_aparc_bold']):
             os.remove(f['fs_aparc_bold'])
         if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')) and os.path.exists(f['fs_aparc_t1']):
-            _, endlog, _, failedcom = runExternalForFile(f['fs_aparc_bold'], 'flirt -interp nearestneighbour -ref %s -in %s -out %s -applyisoxfm 2' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite=overwrite, logfolder=options['comlogs'], logtags=options['logtag'], shell=True)
+            # prepare logtags
+            if options['logtag'] != "":
+                options['logtag'] += "_"
+            logtags = options['logtag'] + "%s-flirt_%s" % (options['command_ran'], sinfo['id'])
+
+            _, endlog, _, failedcom = runExternalForFile(f['fs_aparc_bold'], 'flirt -interp nearestneighbour -ref %s -in %s -out %s -applyisoxfm 2' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite=overwrite, logfolder=options['comlogs'], logtags=logtags, shell=True)
             if failedcom:
                 report['lores aseg+aparc'] = 'failed'
                 failed += 1
