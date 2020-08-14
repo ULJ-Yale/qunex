@@ -20,7 +20,7 @@ import re
 
 
 
-def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
+def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None):
     '''
     schedule [command=<command string>] [script=<path to script>] \\
              settings=<settings string> \\
@@ -79,6 +79,10 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     --output        A string specifying whether to return or redirect the
                     standard output and error. See "REDIRECTING OUTPUT" for
                     details
+    --bash          Used if any additional commands have to be run in the
+                    compute node before the execution of the Qu|Nex command
+                    itself. Use a semicolon separated list to chain multiple
+                    commands. ['']
 
     If the optional parameters are not specified, they will not be used.
 
@@ -218,6 +222,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                - Changed subjects to sessions
     2019-20-01 Jure Demšar
                - Upgraded job naming and PBS scheduler
+    2020-14-08 Jure Demšar
+               - Added the bash parameter.
     '''
 
     # --- check inputs
@@ -368,6 +374,10 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     # --- run scheduler
 
+    # add bash commands before the qunex command if specified
+    if bash:
+        sCommand += "\n" + bash + "\n"
+
     print "Submitting:\n------------------------------\n", sCommand + command
 
     if outputs['return'] is None:
@@ -384,6 +394,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         sout = subprocess.PIPE
 
     run = subprocess.Popen(com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True)
+
     run.stdin.write(sCommand + command)
     run.stdin.close()
 
@@ -411,7 +422,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 # -----------------------------------------------------------------------
 #                                                  general scheduler code
 
-def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None):
+def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None, bash=None):
 
     jobs = []
 
@@ -419,7 +430,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
     nopt = []
     for (k, v) in args.iteritems():
-        if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess']:
+        if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'bash']:
             nopt.append((k, v))
 
     # ---- open log
@@ -431,14 +442,18 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
     gc.printAndLog("===> Running scheduler for command %s" % (command), file=flog)
 
-    # ---- set up scheduler options
+    # ---- setup scheduler options
 
     settings    = args['scheduler']
     workdir     = args.get('scheduler_workdir', None)
     environment = args.get('scheduler_environment', None)
     sleeptime   = args.get('scheduler_sleep', 0)
+    
+    # ---- setup bash (commands to run inside compute node before the Qu|Nex command)
 
-    # --- set logfolder
+    bash  = args.get('bash', None)
+
+    # ---- set logfolder
 
     if logfolder is None:
         logfolder = os.path.abspath(".")
@@ -463,7 +478,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         scheduler = settings.split(',')[0].strip()
         exectime  = datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
         logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
-        result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+        result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash)
         jobs.append((jobid, command))
 
     # ---- if session list is present
@@ -499,7 +514,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
             gc.printAndLog("\n---> submitting %s" % (jobname), file=flog)
             gc.printAndLog(cStr, file=flog)
 
-            result, jobid = schedule(command=cStr, settings=sString, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+            result, jobid = schedule(command=cStr, settings=sString, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash)
             jobs.append((jobid, jobname))
 
             gc.printAndLog("...\n", result, file=flog)
