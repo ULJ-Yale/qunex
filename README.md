@@ -46,8 +46,15 @@ Change Log
 References
 ----------
 
-Yang GJ, Murray JD, Repovs G, Cole MW, Savic A, Glasser MF, Pittenger C,
+* Yang GJ, Murray JD, Repovs G, Cole MW, Savic A, Glasser MF, Pittenger C,
 Krystal JH, Wang XJ, Pearlson GD, Glahn DC, Anticevic A. Altered global brain
 signal in schizophrenia. Proc Natl Acad Sci U S A. 2014 May 20;111(20):7438-43.
 doi: 10.1073/pnas.1405289111. PubMed PMID: 24799682; PubMed Central PMCID:
 PMC4034208.
+
+* bedpostx and probtrackx CUDA binaries included in this repository were
+developed by: Hernandez-Fernandez M, Reguly I, Jbabdi S, Giles M, Smith S,
+Sotiropoulos SN. Using GPUs to accelerate computational diffusion MRI: From 
+icrostructure estimation to tractography and connectomes. NeuroImage
+2019;188:598-615. doi: 10.1016/j.neuroimage.2018.12.015.
+
