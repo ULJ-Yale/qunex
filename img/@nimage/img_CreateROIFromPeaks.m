@@ -1,32 +1,53 @@
 function [img] = img_CreateROIFrompeaksIn(img, peaksIn)
-%function [img] = img_CreateROIFrompeaksIn(img, peaksIn)
+%``function [img] = img_CreateROIFrompeaksIn(img, peaksIn)``
 %
 %   Creates ROI from given peaks data.
 %
-%   INPUT
-%       peaksIn  - ROI data formated as:
-%                  a) N x 5 matrix:
-%                          [x1, y1, z1, radius1, value1;
-%                           x2, y2, z2, radius2, value2;
-%                                       ...
-%                           xN, yN, zN, radiusN, valueN]
-%                  b) string with N x 5 data, where rows are separated by
-%                     a semicolon:
-%                          'x1, y1, z1, radius1, value1;
-%                           x2, y2, z2, radius2, value2;
-%                           xN, yN, zN, radiusN, valueN'
-%                  c) name of the file containing the data formated as
-%                     described in part b).
+%   INPUTS
+%   ======
+%   
+%   --img
+%   --peaksIn   ROI data formated as:
 %
-%                  Where: x, y, z are coordinated of each peak,
-%                         radius is the radius of the peak in mm,
-%                         value is the value of the peak (ID, z value,...).
+%               - N x 5 matrix::
 %
-%   USE EXAMPLE
-%       img = img.img_CreateROIFrompeaksIn(peaksIn)
+%                   [x1, y1, z1, radius1, value1;
+%                    x2, y2, z2, radius2, value2;
+%                                ...
+%                    xN, yN, zN, radiusN, valueN]
 %
-%   ---
-%   Written by Aleksij Kraljic, 08-08-2017
+%               - string with N x 5 data, where rows are separated by
+%                 a semicolon::
+%
+%                   'x1, y1, z1, radius1, value1;
+%                    x2, y2, z2, radius2, value2;
+%                    xN, yN, zN, radiusN, valueN'
+%
+%               - name of the file containing the data formated as described in 
+%                 part b).
+%
+%               Where: x, y, z are coordinated of each peak, radius is the 
+%               radius of the peak in mm, value is the value of the peak (ID, 
+%               z value, ...).
+%
+%   OUTPUT
+%   ======
+%   
+%   img
+%
+%   EXAMPLE USE
+%   ===========
+%
+%   ::
+%   
+%       img = img.img_CreateROIFrompeaksIn(peaksIn);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%   2017-08-08 Aleksij Kraljic
+%              Initial version.
 
 % --- check weather the input is: a) matrix (nx5) b) string c) file
 if ~isnumeric(peaksIn)
