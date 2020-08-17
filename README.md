@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.8
+Qu|Nex suite version: 0.61.9
 
 Submodules:
 
-* connector: 0.61.2
-* library: 0.61.0
+* connector: 0.61.3
+* library: 0.61.2
 * nitools: 0.60.1
-* niutilities: 0.61.8
+* niutilities: 0.61.11
 
 
 Release notes
 -------------
 
+* 0.61.9 HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in niutilities, added CUDA.
 * 0.61.8 All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7 Added additional parameters to DeDriftAndResample.
 * 0.61.6 runQC now works properly when overwrite is set to no.
@@ -67,6 +68,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.9  [niutilities, connector] HCP Diffusion pipeline upgrades, support for running bash commands before the Qu|Nex command when scheduling, added CUDA 9.1 bedpostx and probtrackx binaries, removed race conditions in createBOLDBrainMasks and mapHCPData.
 * 0.61.8  [niutilities] All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  [niutilities] Added additional parameters to DeDriftAndResample and updated HCP diffusion.
 * 0.61.6  [connector] runQC now works properly when overwrite is set to no.
