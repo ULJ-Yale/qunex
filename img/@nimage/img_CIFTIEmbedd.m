@@ -44,6 +44,7 @@ function [img] = img_CIFTIEmbedd(img, structures, data)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2014-08-01 Grega Repovs
 %              Initial version
 %   2016-11-25 Grega Repovs

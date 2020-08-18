@@ -144,6 +144,7 @@ function [obj, commands] = img_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2009-11-08 Grega Repovs
 %              Original version
 %   2010-10-13 Grega Repovs

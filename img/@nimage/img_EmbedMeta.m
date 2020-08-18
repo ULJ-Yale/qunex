@@ -48,6 +48,7 @@ function [img] = img_EmbedMeta(img, data, code, name, verbose)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %	2016-08-20 Grega Repovs
 %			   Initial version.
 %   2016-12-13 Grega Repovs

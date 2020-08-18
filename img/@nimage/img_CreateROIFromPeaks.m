@@ -46,6 +46,7 @@ function [img] = img_CreateROIFrompeaksIn(img, peaksIn)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2017-08-08 Aleksij Kraljic
 %              Initial version.
 

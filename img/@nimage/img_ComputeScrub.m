@@ -96,6 +96,7 @@ function [img, param] = img_ComputeScrub(img, comm)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2013-10-20 Grega Repovs
 %              Initial version.
 %   2016-11-29 Grega Repovs

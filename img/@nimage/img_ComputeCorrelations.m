@@ -54,6 +54,7 @@ function [correlations, zscores, pvalues] = img_ComputeCorrelations(obj, bdata, 
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2010-03-18 Grega Repovs
 %              Initial version.
 %   2014-09-03 Grega Repovs

@@ -44,6 +44,7 @@ function [obj] = img_ComputeABCor(obj, smask, tmask, verbose)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %	2010-08-08 Grega Repovs
 %			   Initial version.
 %   2016-11-25 Grega Repovs

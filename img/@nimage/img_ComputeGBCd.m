@@ -86,6 +86,7 @@ function [results, roiinfo, rdata] = img_ComputeGBCd(obj, command, roi, rcodes, 
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2009-11-08 Grega Repovs
 %              Original version
 %   2010-10-13 Grega Repovs

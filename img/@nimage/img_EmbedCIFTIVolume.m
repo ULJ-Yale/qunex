@@ -25,6 +25,7 @@ function [img] = img_EmbedCIFTIVolume(img, vol_img)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %	2017-06-23 Aleksij Kraljic
 %			   Initial version.
 

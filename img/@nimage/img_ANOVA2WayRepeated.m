@@ -45,6 +45,7 @@ function [p F Z M SE] = img_ANOVA2WayRepeated(obj, a, b, verbose)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2011-10-07 Grega Repovs
 %              Initial version
 %   2018-06-25 Grega Repovs

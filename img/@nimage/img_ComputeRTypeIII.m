@@ -42,6 +42,7 @@ function [B, Z] = img_ComputeRTypeIII(obj, bdata, verbose)
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2010-03-18 Grega Repovs
 %   2016-11-26 Grega Repovs
 %              Updated documentation.
