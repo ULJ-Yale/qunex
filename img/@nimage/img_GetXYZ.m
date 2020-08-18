@@ -1,48 +1,64 @@
 function [xyz] = img_GetXYZ(img, ijk)
 
-%function [xyz] = img_GetXYZ(img, ijk)
+%``function [xyz] = img_GetXYZ(img, ijk)``
 %
-%	Returns the XYZ world coordinates for given image indeces or ROI
+%	Returns the XYZ world coordinates for given image indeces or ROI.
 %
-%   INPUT
-%       ijk  - A matrix of voxel indeces or a weight matrix, weight image.
+%   INPUTS
+%   ======
+%
+%   --img
+%   --ijk     A matrix of voxel indeces or a weight matrix, weight image.
 %
 %   OUTPUT
-%       xyz  - Depending on the ijk input:
-%              ... A matrix of voxel indeces
-%                  -> a matrix of x, y, z coordinates for each specified index
-%              ... An ROI image
-%                  -> A structure including matrices reporting centroids for
-%                     each ROI in XYZ (world) and IJK (indeces) cordinates.
-%              ... A weight image
-%                  -> A structure including matrices reporting centroids for
-%                     each ROI as defined in the img image in XYZ (world) and
-%                     IJK (indices) coordinates, and matrices reporting weighted
-%                     centroids for each ROI in XYZ and IJK.
+%   ======
+%   
+%   xyz
+%       Depending on the ijk input:
+%       
+%           A matrix of voxel indeces
+%               a matrix of x, y, z coordinates for each specified index    
+%           An ROI image
+%               A structure including matrices reporting centroids for each ROI 
+%               in XYZ (world) and IJK (indeces) cordinates.
+%           A weight image
+%                A structure including matrices reporting centroids for each ROI 
+%                as defined in the img image in XYZ (world) and IJK (indices) 
+%                coordinates, and matrices reporting weighted centroids for each 
+%                ROI in XYZ and IJK.
 %
 %   NOTES
-%   - The coordinates are computed based on the 1-based indeces x = 1 .. N, not 0-based indeces!
-%   - The coordinates are computed based on the nifti header affine transform matrix (srow_x/y/z)
+%   =====
 %
-%   USE EXAMPLE
-%   To get centroids of all the ROI:
+%   - The coordinates are computed based on the 1-based indeces x = 1 .. N, not
+%     0-based indeces!
+%   - The coordinates are computed based on the nifti header affine transform
+%     matrix (srow_x/y/z)
 %
-%   >>> centroids = roi.img_GetXYZ();
+%   EXAMPLE USE
+%   ===========
 %
-%   To get world coordinates for specific indeces:
+%   To get centroids of all the ROI::
 %
-%   >>> xyz = img.img_GetXYZ([34, 60, 24; 25, 52, 18]);
+%       centroids = roi.img_GetXYZ();
 %
-%   To get weighted ROI centroids:
+%   To get world coordinates for specific indeces::
 %
-%   >>> wcentroids = roi.img_GetXYZ(zimg);
+%       xyz = img.img_GetXYZ([34, 60, 24; 25, 52, 18]);
 %
-%   %   ---
-%   Written by Grega Repovs, 2016-01-16
+%   To get weighted ROI centroids::
+%
+%       wcentroids = roi.img_GetXYZ(zimg);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2016-01-16 Grega Repovs
+%              Initial version.
 %   2017-03-04 Grega Repovs
-%            - Updated documentation
+%              Updated documentation.
 %
 
 if nargin < 2, ijk = []; end
