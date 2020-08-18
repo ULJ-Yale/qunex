@@ -1,25 +1,40 @@
 function [vol_img] = img_ExtractCIFTIVolume(img, data_format)
 
-%function [vol_img] = img_CIFTI2volume(img, data_format)
+%``function [vol_img] = img_CIFTI2volume(img, data_format)``
 %
-%   Transforms a CIFTI nimage into a NIfTI volume nimage in order to
-%   allow the usage of the existing methods for volume model analysis.
+%   Transforms a CIFTI nimage into a NIfTI volume nimage in order to allow the
+%   usage of the existing methods for volume model analysis.
 %
-%   INPUT
-%       data_format  - '2D' for NIfTY data format in 2D (default)
-%                      '4D' for NIfTY data foramt in 4D
+%   INPUTS
+%	======
+%	
+%	--img	
+%	--data_format  - '2D' for NIfTY data format in 2D (default)
+%                  - '4D' for NIfTY data foramt in 4D
 %
 %   OUTPUT
-%       vol_img  - nimage in a NIfTI format.
+%	======
 %
-%   USE EXAMPLE
+%   vol_img
+%		nimage in a NIfTI format.
+%
+%   EXAMPLE USE
+%	===========
+%
+%	::
+%
 %       vol_img = img.img_ExtractCIFTIVolume();
 %
-%   ---
-%   Written by Aleksij Kraljic, 23-06-2017
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%	2017-06-23 Aleksij Kraljic
+%			   Initial version.
 
 % set Image2D as the default data format (if data_format is not passed)
-if nargin<2
+if nargin < 2
     data_format = '2D';
 end
 
