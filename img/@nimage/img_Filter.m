@@ -1,23 +1,36 @@
 function [img] = img_Filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
 
-%function [img] = img_Filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
+%``function [img] = img_Filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)``
 %
-%   input
-%       img      - image to be filtered
-%       hp_sigma - sigma for high-pass filter
-%       lp_sigma - sigma for low-pass filter
-%       omit     - how many frames to omit at the start of the run
-%       verbose  - should we talk much
-%       ignore   - what to do with frames marked as "do not use"
-%                   - keep   : do nothing
-%                   - linear : do linear interpolation
-%                   - spline : do spline interpolation
+%   INPUTS
+%   ======
 %
-% Grega Repovš - 2013-10-20
-%              - added the ignore / interpolate option
+%   --img        image to be filtered
+%   --hp_sigma   sigma for high-pass filter
+%   --lp_sigma   sigma for low-pass filter
+%   --omit       how many frames to omit at the start of the run
+%   --verbose    should we talk much
+%   --ignore     what to do with frames marked as "do not use"
 %
-% Grega Repovs - 2015-10-22
-%              - optimized to ignore 0-variance voxels
+%                - keep   ... do nothing
+%                - linear ... do linear interpolation
+%                - spline ... do spline interpolation
+%
+%   OUTPUT
+%   ======
+%   
+%   img
+%       filtered image
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2013-10-20 Grega Repovs
+%              Added the ignore / interpolate option.
+%   2015-10-22 Grega Repovs
+%              Optimized to ignore 0-variance voxels.
 
 
 
