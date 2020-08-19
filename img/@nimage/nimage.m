@@ -23,21 +23,26 @@ classdef nimage
 %
 %  img_ComputeCorrelations - computes correlations with the provided data matrix
 %
-%  ---
-%  Written by Grega Repovs, 2009-10-04
 %
-%  2011-07-31 Grega Repovs
-%           - Added importing of existing movement, fstat and scrubbing data
-%  2016-01-16 Grega Repovs
-%           - Added GetXY and specifying save format with file extension.
-%  2017-03-21 Grega Repovs
-%           - horzcat now supports concatenation of empty objects.
-%           - img_ReadConcFile returns more information
-%  2017-07-02 Grega Repovs
-%           - horzcat, zeroframes and sliceframe suport img.cifti.maps
-%  2018-03-17 Grega Repovs
-%           - nimage now supports creation of dtseries and dscalar standard CIFTI images
-%             from numeric data
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2009-10-04 Grega Repovs
+%              Initial version.
+%   2011-07-31 Grega Repovs
+%              Added importing of existing movement, fstat and scrubbing data
+%   2016-01-16 Grega Repovs
+%              Added GetXY and specifying save format with file extension.
+%   2017-03-21 Grega Repovs
+%              horzcat now supports concatenation of empty objects.
+%              img_ReadConcFile returns more information
+%   2017-07-02 Grega Repovs
+%              horzcat, zeroframes and sliceframe suport img.cifti.maps
+%   2018-03-17 Grega Repovs
+%              nimage now supports creation of dtseries and dscalar standard 
+%              CIFTI images from numeric data
 %
 
     properties
