@@ -1,18 +1,39 @@
 function [res] = img_SaveNIfTI(img, filename, datatype, verbose)
 
-%   function [res] = img_SaveNIfTI(obj, filename, datatype, verbose)
+%``function [res] = img_SaveNIfTI(obj, filename, datatype, verbose)``
 %
 %   Saves a NIfTI image based on the existing header information.
 %
-%   Required:
-%     obj      - nimage object
-%     filename - the filename to use
+%   INPUTS
+%   ======
 %
-%   Grega Repovs - 2010-10-13
-%   Grega Repovs - 2011-10-13 - Updated to write NIfTI-2
-%   Grega Repovs - 2013-10-19 - Added call for embedding data
-%   Grega Repovs - 2014-06-29 - Update to use MEX function
-%   Grega Repovs - 2017-07-02 - Uses xml templates to embed metadata for standard .dscalar and dtseries
+%   --obj         nimage object
+%   --filename    the filename to use
+%   --datatype    []
+%   --verbose     should it talk a lot [false]
+%
+%
+%   OUTPUT
+%   ======
+%   
+%   res
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2010-10-13 Grega Repovs
+%              Initial version.
+%   2011-10-13 Grega Repovs
+%              Updated to write NIfTI-2
+%   2013-10-19 Grega Repovs
+%              Added call for embedding data
+%   2014-06-29 Grega Repovs
+%              Update to use MEX function
+%   2017-07-02 Grega Repovs
+%              Uses xml templates to embed metadata for standard .dscalar and 
+%              dtseries.
 %
 
 if nargin < 4, verbose = false; end
