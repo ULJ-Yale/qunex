@@ -38,6 +38,7 @@ Quick links
 Change Log
 ----------
 
+* 0.60.2  Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
 * 0.60.1  Full support for hcp_suffix in runQC.
 * 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.50.1  License and README updates.

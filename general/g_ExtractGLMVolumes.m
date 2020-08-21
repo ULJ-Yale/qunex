@@ -15,8 +15,8 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %       frames      - Frame indeces to extract. If empty, all frames are
 %                     extracted. []
 %       saveoption  - Whether to save the extracted estimates in a single file
-%                     organized 'by session', 'by effect', or in separate
-%                     files for each effect ('effect files'). ['by session']
+%                     organized 'by_session', 'by_effect', or in separate
+%                     files for each effect ('effect_files'). ['by_session']
 %       values      - What kind of values to save: 'raw' or 'psc'. ['raw']
 %	    verbose		- Whether to report on the progress or not [false]
 %       txtf        - An optional designator in what text file to also 
@@ -56,16 +56,16 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 % 	Written by Grega Repovš on 2016-08-26.
 %
 %   Changelog
-%   2017-03-04 Grgega Repovs - updated documentation
+%   2017-03-04 Grega Repovs - updated documentation
 %   2017-07-01 Grega Repovs - Added psc option.
 %   2018-10-13 Grega Repovs - Added txtf option.
-%
+%   2020-08-21 Grega Repovs - Replaced spaces with underscores in saveoption parameter values
 %
 
 if nargin < 8 || isempty(txtf),       txtf       = ''; end
 if nargin < 7, verbose   = false; end
 if nargin < 6 || isempty(values),     values     = 'raw'; end
-if nargin < 5 || isempty(saveoption), saveoption = 'by session'; end
+if nargin < 5 || isempty(saveoption), saveoption = 'by_session'; end
 if nargin < 4, frames    = [];    end
 if nargin < 3, effects   = [];    end
 if nargin < 2, outf      = [];    end
@@ -81,6 +81,15 @@ if isempty(outf)
 end
 
 % --------------------------------------------------------------
+%                                               check saveoption
+
+saveoption = strrep(saveoption, '_', ' ');
+if ~ismember(saveoption, {'by effect', 'by session', 'effect files'})
+    error('ERROR: Invalid saveoption value [%s]! Valid options are: by_effect, by_session, effect_files.', strrep(saveoption, ' ', '_'));
+end
+
+
+% --------------------------------------------------------------
 %                                                  read filelist
 
 sessions = g_ReadFileList(flist);
@@ -90,7 +99,9 @@ nsub = length(sessions);
 %                                      parse estimates parameter
 
 if ischar(effects)
-    effects = strtrim(regexp(effects, ',', 'split'));
+    if ~isempty(effects)
+        effects = strtrim(regexp(effects, ',', 'split'));
+    end
 end
 
 
@@ -142,8 +153,8 @@ end
 
 % --- do we need to reorder?
 
-if strcmp(saveoption, 'by estimate')
-    if verbose, fprintf('\n---> sorting data by estimate'); end
+if strcmp(saveoption, 'by effect')
+    if verbose, fprintf('\n---> sorting data by effects'); end
     index = [];
     for e = effects(:)'
         index = [index find(ismember(effect, e))];
