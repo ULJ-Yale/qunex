@@ -1,29 +1,38 @@
 function [panel] = img_SliceMatrix(img, sdim, slices)
 
-%function [panel] = img_SliceMatrix(img, sdim, slices)
+%``function [panel] = img_SliceMatrix(img, sdim, slices)``
 %
 %	Takes the first volume and generates a panel / matrix of slices in selected
 %	dimension.
 %
-%	INPUT
-%		img    ... A nimage object.
-%		sdim   ... The dimension across which to make the slices. What slices
-%				   are generated (axial, saggital or coronal) depends on the
-%				   geometry of the image. [3]
-%		slices ... Which slices to include. If empty, all the slices will be
-%				   included. []
+%	INPUTS
+%	======
+%
+%	--img    	A nimage object.
+%	--sdim   	The dimension across which to make the slices. What slices are 
+%				generated (axial, saggital or coronal) depends on the geometry 
+%				of the image. [3]
+%	--slices 	Which slices to include. If empty, all the slices will be
+%				included. []
 %
 %	OUTPUT
-%		panel  ... A 2D matrix consisting of optimal collage of slices.
+%	======
+%
+%	panel
+%		A 2D matrix consisting of optimal collage of slices.
 %
 %	EXAMPLE USE
-%	panel = img.img_SliceMatrix(2);
+%	===========
 %
+%	::
+%	
+%		panel = img.img_SliceMatrix(2);
 %
-%   ----
-%	Written by Grega Repovs
+
+%   ~~~~~~~~~~~~~~~~~~
 %
-%	Changelog
+%   Changelog
+%
 %	2010-04-18 Grega Repovs - Entry into repository (as RGBReshape)
 %	2017-03-03 Grega Repovs - Moved to nimage method, renamed, adjusted
 %                             and updated documentation
