@@ -1,28 +1,47 @@
 classdef nimage
 %
-%  nimage class
+%   nimage class offers an object to store MR image data. It provides basic
+%   methods for loading and saving image, methods for returning different
+%   representations of the image, methods for extracting data and manipulating
+%   image, and methods for performing basic math with the images.
 %
-%  nimage class offers an object to store MR image data.
-%  It provides basic methods for loading and saving image,
-%  methods for returning different representations of the image,
-%  methods for extracting data and manipulating image, and
-%  methods for performing basic math with the images.
+%   METHODS
+%   =======
 %
-%  Methods:
+%   nimage             
+%       constructor / loader
 %
-%  nimage           - constructor / loader
-%  img_readimage      - reads an image file
-%  img_saveimage      - saves an image file
-%  img_saveimageframe - saves only the specified frame(s) of an image file
-%  image2D            - returns 2D (voxels by frames) representation of image data
-%  image4D            - returns 4D (x by y by z by frames representation of image data)
-%  maskimg            - trims data from all nonzero voxels of the mask
-%  unmaskimg          - restores the full volume from masked image with zeros for missing voxels
-%  standardize        - transforms values to z scores within each voxel's timeseries
-%  correlize          - standardizes and divides by sqrt(N-1) to prepare for efficient correlation computation
+%   img_readimage      
+%       reads an image file
 %
-%  img_ComputeCorrelations - computes correlations with the provided data matrix
+%   img_saveimage      
+%       saves an image file
 %
+%   img_saveimageframe 
+%       saves only the specified frame(s) of an image file
+%
+%   image2D            
+%       returns 2D (voxels by frames) representation of image data
+%
+%   image4D            
+%       returns 4D (x by y by z by frames representation of image data)
+%
+%   maskimg            
+%       trims data from all nonzero voxels of the mask
+%
+%   unmaskimg          
+%       restores the full volume from masked image with zeros for missing voxels
+%
+%   standardize        
+%       transforms values to z scores within each voxel's timeseries
+%
+%   correlize          
+%       standardizes and divides by sqrt(N-1) to prepare for efficient 
+%       correlation computation
+%   
+%   img_ComputeCorrelations
+%       computes correlations with the provided data matrix
+%   
 %
 
 %   ~~~~~~~~~~~~~~~~~~
