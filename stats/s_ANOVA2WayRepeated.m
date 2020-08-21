@@ -1,25 +1,37 @@
 function [] = s_ANOVA2WayRepeated(dfile, a, b, output, verbose)
 
-%function [] = s_ANOVA2WayRepeated(dfile, a, b, output, verbose)
+%``function [] = s_ANOVA2WayRepeated(dfile, a, b, output, verbose)``
 %	
-%	Computes ANOVA with two repeated measures factors with a and b levels and saves specified results.
+%   Computes ANOVA with two repeated measures factors with a and b levels and
+%   saves specified results.
+%
+%   INPUTS
+%   ======
 %	
-%	dfile   - the data file to work on - either a single image or a conc file
+%	dfile     the data file to work on - either a single image or a conc file
 %             The images have to be organized as a series of volumes with 
 %             session, factor A, factor B in the order of faster to slowest 
 %             varying variable. The data has to be fully balanced with no
 %             missing values.
-%   a       - number of levels for factor A
-%   b       - number of levels for factor B
-%   output  - the type of results to save ['mefpz']
-%             m : mean values for each cell
-%             e : standard errors for each cell
-%             f : F-values for all three effects
-%             p : p-values for all three effects
-%             z : Z-scores for all three effects
-%   verbose - should report each step?
+%   a         number of levels for factor A
+%   b         number of levels for factor B
+%   output    the type of results to save ['mefpz']
 %
-%   Grega Repovš, 2011-10-09
+%             - m ... mean values for each cell
+%             - e ... standard errors for each cell
+%             - f ... F-values for all three effects
+%             - p ... p-values for all three effects
+%             - z ... Z-scores for all three effects
+%
+%   verbose   should report each step [false]
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2011-10-09 Grega Repovs
+%              Initial version.
 %	
 
 if nargin < 5
