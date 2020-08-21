@@ -1,17 +1,28 @@
 function [ts] = si_TrimPad(ts,l)
 
-%	function [ts] = si_TrimPad(ts,l)
+%``function [ts] = si_TrimPad(ts,l)``
 %	
-%   Function that trimms or pads timeseries to specified length
+%   Function that trimms or pads timeseries to specified length.
 %
-%   Inputs
-%       - ts:   timeseries (timepoints x voxels)
-%       - l:    desired length
+%   INPUTS
+%	======
 %
-%   Outputs
-%       - ts    trimmed / padded timeseries
+%   --ts	timeseries (timepoints x voxels)
+%   --l  	desired length
+%
+%   OUTPUT
+%	======
+%
+%   ts
+%		trimmed / padded timeseries
 %	
-% 	Created by Grega Repovš on 2010-10-09.
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%	
+%	2010-10-09 Grega Repovs
+%			   Initial version.
 %	
 
 if nargin < 2
