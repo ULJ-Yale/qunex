@@ -1,52 +1,70 @@
 function [out, doIt] = img_Stats(img, doIt, exclude)
 
-%function [out, doIt] = img_Stats(img, doIt, exclude)
+%``function [out, doIt] = img_Stats(img, doIt, exclude)``
 %
-%	Computes the specified statistics across frames excluding values specified in exclude
+%   Computes the specified statistics across frames excluding values specified
+%   in exclude.
 %
-%   INPUT
-%       img ... A nimage object
-%       do  ... A comma separated string or a cell array of the statistics to
+%   INPUTS
+%   ======
+%       
+%   --img       A nimage object
+%   --do        A comma separated string or a cell array of the statistics to
 %               compute ['m']:
-%           'n'     ... number of values
-%           'm'     ... mean
-%           'me'    ... median
-%           'max'   ... max
-%           'min'   ... min
-%           'sum'   ... sum
-%           'sd'    ... standard deviation
-%           'var'   ... variability
-%           'rmsd'  ... root mean squared difference across time
-%           'nrmsd' ... mean normalized root mean squared difference across time
-%           't'     ... t value of t-test against zero
-%           'tp'    ... p values of t-test against zero
-%           'tz'    ... z values of t-test against zero
-%       exclude - values to be omitted from computing the statistics
+%   
+%               _ 'n'     ... number of values
+%               _ 'm'     ... mean
+%               _ 'me'    ... median
+%               _ 'max'   ... max
+%               _ 'min'   ... min
+%               _ 'sum'   ... sum
+%               _ 'sd'    ... standard deviation
+%               _ 'var'   ... variability
+%               _ 'rmsd'  ... root mean squared difference across time
+%               _ 'nrmsd' ... mean normalized root mean squared difference across time
+%               _ 't'     ... t value of t-test against zero
+%               _ 'tp'    ... p values of t-test against zero
+%               _ 'tz'    ... z values of t-test against zero
+%
+%   --exclude   values to be omitted from computing the statistics
 %
 %   OUTPUT
-%       out ... a nimage object with one frame for each statistic computed
-%       do  ... the command executed
+%   ======
+%
+%   out
+%       a nimage object with one frame for each statistic computed
+%   do
+%       the command executed
 %
 %   USE
+%   ===
+%
 %   The method is used to compute the specified statistics across all frames for
 %   each voxel of the image. All the voxels with values specified in exclude are
 %   set to NaN, and all the statistics are computed excluding NaN values.
 %
 %   EXAMPLE USE
-%   >>> msdimg = img.img_Stats({'m', 'sd'});
+%   ===========
 %
-%   ---
-%   Written by Grega Repovs, 2011-03-18
+%   ::
+%
+%       msdimg = img.img_Stats({'m', 'sd'});
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2011-03-18 Grega Repovs
+%              Initial version.
 %   2017-03-11 Grega Repovs
-%            - Updated documentation.
-%            - Now accepts string with a comma separated commands.
-%            - Made loop more robust.
+%              Updated documentation.
+%              Now accepts string with a comma separated commands.
+%              Made loop more robust.
 %   2018-04-21 Grega Repovs
-%            - Added computation of RMSD and intensity normalized RMDS.
+%              Added computation of RMSD and intensity normalized RMDS.
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf and cdf with norminv and tcdf to support Octave
+%              Replaced icdf and cdf with norminv and tcdf to support Octave
 
 
 if nargin < 3, exclude = [];            end
