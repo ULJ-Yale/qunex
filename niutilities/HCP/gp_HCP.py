@@ -4307,11 +4307,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)d \
+                %(bandpass)s \
                 "%(concatfilename)s" \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)d \
+                %(fixthreshold)s \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
