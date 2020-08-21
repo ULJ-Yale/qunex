@@ -3629,12 +3629,13 @@ def parseICAFixBolds(options, bolds, r, msmall=False):
 
     for b in bolds:
         # extract data
-        _, _, _, boldinfo = b
+        printbold, _, _, boldinfo = b
 
         if 'filename' in boldinfo and options['hcp_filename'] == 'original':
             boldtarget = boldinfo['filename']
             boldtag = boldinfo['task']
         else:
+            printbold = str(printbold)
             boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
             boldtag = boldinfo['task']
 
@@ -4146,13 +4147,13 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
 def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
-    _, _, _, boldinfo = bold
+    printbold, _, _, boldinfo = bold
 
     if 'filename' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['filename']
         boldtarget = boldinfo['filename']
     else:
-        printbold  = str(bold)
+        printbold = str(printbold)
         boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
     # prepare return variables
@@ -4176,10 +4177,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)d \
+                %(bandpass)s \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)d \
+                %(fixthreshold)s \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
                 'inputfile'             : inputfile,
@@ -4275,13 +4276,13 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             boldok = True
 
             # extract data
-            _, _, _, boldinfo = b
+            printbold, _, _, boldinfo = b
 
             if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
-                printbold  = str(bold)
+                printbold  = str(printbold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
@@ -4640,13 +4641,13 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # highpass
         highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
-        _, _, _, boldinfo = bold
+        printbold, _, _, boldinfo = bold
 
         if 'filename' in boldinfo and options['hcp_filename'] == 'original':
             printbold  = boldinfo['filename']
             boldtarget = boldinfo['filename']
         else:
-            printbold  = str(bold)
+            printbold  = str(printbold)
             boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
@@ -5055,13 +5056,13 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
 def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
-    _, _, _, boldinfo = bold
+    printbold, _, _, boldinfo = bold
 
     if 'filename' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['filename']
         boldtarget = boldinfo['filename']
     else:
-        printbold  = str(bold)
+        printbold  = str(printbold)
         boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
     # prepare return variables
@@ -5214,13 +5215,13 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             boldok = True
 
             # extract data
-            _, _, _, boldinfo = b
+            printbold, _, _, boldinfo = b
 
             if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
-                printbold  = str(bold)
+                printbold  = str(printbold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
@@ -5776,13 +5777,13 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             boldok = True
 
             # extract data
-            _, _, _, boldinfo = b
+            printbold, _, _, boldinfo = b
 
             if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
-                printbold  = str(bold)
+                printbold  = str(printbold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             # input file check
@@ -5938,13 +5939,13 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             boldok = True
 
             # extract data
-            _, _, _, boldinfo = b
+            printbold, _, _, boldinfo = b
 
             if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
-                printbold  = str(bold)
+                printbold  = str(printbold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             # input file check
@@ -6369,13 +6370,13 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             boldok = True
 
             # extract data
-            _, _, _, boldinfo = b
+            printbold, _, _, boldinfo = b
 
             if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
-                printbold  = str(bold)
+                printbold  = str(printbold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             # input file check
@@ -6564,13 +6565,13 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
             for b in bolds:
                 # extract data
-                _, _, _, boldinfo = b
+                printbold, _, _, boldinfo = b
 
                 if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                     printbold  = boldinfo['filename']
                     boldtarget = boldinfo['filename']
                 else:
-                    printbold  = str(bold)
+                    printbold  = str(printbold)
                     boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
                 # input file check
