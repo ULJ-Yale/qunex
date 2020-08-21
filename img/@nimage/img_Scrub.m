@@ -1,23 +1,37 @@
 function [img] = img_Scrub(img, com)
 
-%function [img] = img_Scrub(img, com)
+%``function [img] = img_Scrub(img, com)``
 %
 %   Scrubs image according to the command
 %
-%       input:
-%           img   - mrimage object
-%           com   - the description of how to scrub
-%                      format:
-%                      a) string only --> use the relevant column from .scrub file
-%                      b) string:string --> use the relevant columnd from .scrub and then either
-%                                           NA - set the bad frames to value NaN
-%                                           RM - delete the bad frames from the image
-%                      c) string:string:number --> use the number to threshold based on .bstats and .mov files
+%   INPUTS
+%   ======
 %
-%       output:
-%           img  - scrubbed image
+%   --img     nimage object.
+%   --com     The description of how to scrub. Format:
 %
-%       Grega Repovs - 2012-10-29
+%             string only
+%               use the relevant column from .scrub file
+%             string:string
+%               use the relevant columnd from .scrub and then either:
+%                   - NA - set the bad frames to value NaN
+%                   - RM - delete the bad frames from the image
+%             string:string:number
+%               use the number to threshold based on .bstats and .mov files
+%
+%   OUTPUT
+%   ======
+%   
+%   img
+%       scrubbed image
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2012-10-29 Grega Repovs
+%              Initial version.
 %
 %   ToDo:
 %       Needs shifting added to com and mask!
