@@ -208,6 +208,10 @@ def doHCPOptionsCheck(options, sinfo, command):
         options['fmtail'] = ""
 
 
+def checkInlineParameterUse(modality, parameter, options):
+    return any([e in options['use_sequence_info'] for e in ['all', parameter, '%s:all' % (modality), '%s:%s' % (modality, parameter)]])
+
+
 def action(action, run):
     """
     action - documentation not yet available.
@@ -219,7 +223,6 @@ def action(action, run):
             return "test " + action
     else:
         return action
-
 
 
 def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
@@ -460,7 +463,29 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 templates to use in the prefs step. Note: it should
                                 match the resolution of the acquired structural 
                                 images.
+    --use_sequence_info     ... A pipe, comma or space separated list of inline 
+                                sequence information to use in preprocessing of
+                                specific image modalities.
+                                
+                                Example specifications:
+                                * `all`: use all present inline information for
+                                  all modalities,
+                                * 'DwellTime': use DwellTime information for all
+                                  modalities,
+                                * `T1w:all': use all present inline information 
+                                  for T1w modality,
+                                * `SE:EchoSpacing': use EchoSpacing information
+                                  for Spin-Echo fieldmap images.
+                                * 'none': do not use inline information
 
+                                Modalities: T1w, T2w, SE, BOLD, dMRi
+                                Inline information: TR, PEDirection, EchoSpacing
+                                  DwellTime, ReadoutDirection
+
+                                If information is not specified it will not be 
+                                used. More general specification (e.g. `all`) 
+                                implies all more specific cases (e.g. `T1w:all`).
+                                ['all']
    
     Gradient Coefficient File Specification:
     ----------------------------------------
@@ -532,6 +557,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation on SE label specification
     2020-04-23 Grega Repovš
              - Removed full file checking from documentation
+    2020-08-22 Grega Repovš
+             - Added the use of use_sequence_info parameter
     '''
 
     r = "\n------------------------------------------------------------"
@@ -558,13 +585,13 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             if os.path.exists(tfile):
                 r += "\n---> T1w image file present."
                 T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
-                if 'DwellTime' in T1w:
+                if 'DwellTime' in T1w and checkInlineParameterUse('T1w', 'DwellTime', options):
                     options['hcp_t1samplespacing'] = T1w['DwellTime']
                     r += "\n---> T1w image specific EchoSpacing: %s s" % (options['hcp_t1samplespacing'])
-                elif 'EchoSpacing' in T1w:
+                elif 'EchoSpacing' in T1w  and checkInlineParameterUse('T1w', 'EchoSpacing', options):
                     options['hcp_t1samplespacing'] = T1w['EchoSpacing']
                     r += "\n---> T1w image specific EchoSpacing: %s s" % (options['hcp_t1samplespacing'])
-                if 'UnwarpDir' in T1w:
+                if 'UnwarpDir' in T1w and checkInlineParameterUse('T1w', 'UnwarpDir', options):
                     options['hcp_unwarpdir'] = T1w['UnwarpDir']
                     r += "\n---> T1w image specific unwarp direction: %s" % (options['hcp_unwarpdir'])
             else:
@@ -582,10 +609,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(tfile):
                     r += "\n---> T2w image file present."
                     T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
-                    if 'DwellTime' in T2w:
+                    if 'DwellTime' in T2w and checkInlineParameterUse('T2w', 'DwellTime', options):
                         options['hcp_t2samplespacing'] = T2w['DwellTime']
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (options['hcp_t2samplespacing'])
-                    elif 'EchoSpacing' in T2w:
+                    elif 'EchoSpacing' in T2w and checkInlineParameterUse('T2w', 'EchoSpacing', options):
                         options['hcp_t2samplespacing'] = T2w['EchoSpacing']
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (options['hcp_t2samplespacing'])
                 else:
@@ -656,11 +683,14 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     except:
                         seInfo = None
 
-                    if seInfo and 'EchoSpacing' in seInfo:
+                    if seInfo and 'EchoSpacing' in seInfo and checkInlineParameterUse('SE', 'EchoSpacing', options):
                         options['hcp_seechospacing'] = seInfo['EchoSpacing']
                         r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (options['hcp_seechospacing'])
                     if seInfo and 'phenc' in seInfo:
                         options['hcp_seunwarpdir'] = SEDirMap[seInfo['phenc']]
+                        r += "\n---> Spin-Echo unwarp direction: %s" % (options['hcp_seunwarpdir'])
+                    elif seInfo and 'PEDirection' in seInfo and checkInlineParameterUse('SE', 'PEDirection', options):
+                        options['hcp_seunwarpdir'] = seInfo['PEDirection']
                         r += "\n---> Spin-Echo unwarp direction: %s" % (options['hcp_seunwarpdir'])
 
                     if options['hcp_topupconfig'] != 'NONE' and options['hcp_topupconfig']:
@@ -1981,18 +2011,41 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     image acquisition details
     -------------------------
 
-    --hcp_dwi_echospacing    ... Echo Spacing or Dwelltime of DWI images.
-                                 [image specific]
+    --hcp_dwi_echospacing   ... Echo Spacing or Dwelltime of DWI images.
+                                [image specific]
+    --use_sequence_info     ... A pipe, comma or space separated list of inline 
+                                sequence information to use in preprocessing of
+                                specific image modalities.
+                                
+                                Example specifications:
+                                * `all`: use all present inline information for
+                                  all modalities,
+                                * 'DwellTime': use DwellTime information for all
+                                  modalities,
+                                * `T1w:all': use all present inline information 
+                                  for T1w modality,
+                                * `SE:EchoSpacing': use EchoSpacing information
+                                  for Spin-Echo fieldmap images.
+                                * 'none': do not use inline information
+
+                                Modalities: T1w, T2w, SE, BOLD, dMRi
+                                Inline information: TR, PEDirection, EchoSpacing
+                                  DwellTime, ReadoutDirection
+
+                                If information is not specified it will not be 
+                                used. More general specification (e.g. `all`) 
+                                implies all more specific cases (e.g. `T1w:all`).
+                                ['all']
 
     distortion correction details
     -----------------------------
 
-    --hcp_dwi_PEdir          ... The direction of unwarping. Use 1 for LR/RL
-                                 Use 2 for AP/PA. Default is [2]
-    --hcp_dwi_gdcoeffs       ... A path to a file containing gradient distortion
-                                 coefficients, alternatively a string describing
-                                 multiple options (see below), or "NONE", if not 
-                                 used [NONE].
+    --hcp_dwi_PEdir         ... The direction of unwarping. Use 1 for LR/RL
+                                Use 2 for AP/PA. Default is [2]
+    --hcp_dwi_gdcoeffs      ... A path to a file containing gradient distortion
+                                coefficients, alternatively a string describing
+                                multiple options (see below), or "NONE", if not 
+                                used [NONE].
 
     Eddy post processing parameters
     -------------------------------
@@ -2105,6 +2158,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     2020-04-23 Grega Repovš
              - Removed full file checking from documentation
+    2020-08-22 Grega Repovš
+             - Added the use of use_sequence_info parameter
     """
 
     r = "\n------------------------------------------------------------"
@@ -2152,9 +2207,12 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
         dwiinfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'DWI'][0]
 
-        if 'EchoSpacing' in dwiinfo:
+        if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
             echospacing = dwiinfo['EchoSpacing']
-            r += "\n---> Using image specific EchoSpacing: %s ms" % (echospacing)                
+            r += "\n---> Using image specific EchoSpacing: %s ms" % (echospacing)
+        elif 'DwellTime' in dwiinfo and checkInlineParameterUse('dMRI', 'DwellTime', options):
+            echospacing = dwiinfo['DwellTime']
+            r += "\n---> Using image specific DwellTime as EchoSpacing: %s ms" % (echospacing)                
         else:
             echospacing = options['hcp_dwi_echospacing']
             r += "\n---> Using study general EchoSpacing: %s ms" % (echospacing)
@@ -2367,41 +2425,64 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     naming options
     --------------
 
-    --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
-                                 preprocessing are run. The prefix is prepended
-                                 to the bold name. [BOLD_]
-    --hcp_filename           ... Specifies whether BOLD names are to be created
-                                 using sequential numbers ('standard') using the 
-                                 formula `<hcp_bold_prefix>_[N]` (e.g. BOLD_3) 
-                                 or actual bold names ('original', e.g. 
-                                 rfMRI_REST1_AP). ['standard']
+    --hcp_bold_prefix       ... To be specified if multiple variants of BOLD
+                                preprocessing are run. The prefix is prepended
+                                to the bold name. [BOLD_]
+    --hcp_filename          ... Specifies whether BOLD names are to be created
+                                using sequential numbers ('standard') using the 
+                                formula `<hcp_bold_prefix>_[N]` (e.g. BOLD_3) 
+                                or actual bold names ('original', e.g. 
+                                rfMRI_REST1_AP). ['standard']
 
     image acquisition details
     -------------------------
 
-    --hcp_bold_echospacing      ... Echo Spacing or Dwelltime of BOLD images.
-                                    [0.00035]
-    --hcp_bold_sbref            ... Whether BOLD Reference images should be used
-                                    - NONE or USE. [NONE]
+    --hcp_bold_echospacing  ... Echo Spacing or Dwelltime of BOLD images.
+                                [0.00035]
+    --hcp_bold_sbref        ... Whether BOLD Reference images should be used
+                                - NONE or USE. [NONE]
+    --use_sequence_info     ... A pipe, comma or space separated list of inline 
+                                sequence information to use in preprocessing of
+                                specific image modalities.
+                                
+                                Example specifications:
+                                * `all`: use all present inline information for
+                                  all modalities,
+                                * 'DwellTime': use DwellTime information for all
+                                  modalities,
+                                * `T1w:all': use all present inline information 
+                                  for T1w modality,
+                                * `SE:EchoSpacing': use EchoSpacing information
+                                  for Spin-Echo fieldmap images.
+                                * 'none': do not use inline information
+
+                                Modalities: T1w, T2w, SE, BOLD, dMRi
+                                Inline information: TR, PEDirection, EchoSpacing
+                                  DwellTime, ReadoutDirection
+
+                                If information is not specified it will not be 
+                                used. More general specification (e.g. `all`) 
+                                implies all more specific cases (e.g. `T1w:all`).
+                                ['all']
 
     distortion correction details
     -----------------------------
 
-    --hcp_bold_dcmethod      ... BOLD image deformation correction that should
-                                 be used: TOPUP, FIELDMAP / SiemensFieldMap,
-                                 GeneralElectricFieldMap or NONE. [TOPUP]
-    --hcp_bold_echodiff      ... Delta TE for BOLD fieldmap images or NONE if
-                                 not used. [NONE]
-    --hcp_bold_sephasepos    ... Label for the positive image of the Spin Echo 
-                                 Field Map pair [""]
-    --hcp_bold_sephaseneg    ... Label for the negative image of the Spin Echo 
-                                 Field Map pair [""]
-    --hcp_bold_unwarpdir     ... The direction of unwarping. Can be specified
-                                 separately for LR/RL : 'LR=x|RL=-x|x' or
-                                 separately for PA/AP : 'PA=y|AP=y-|y-'. [y]
-    --hcp_bold_res           ... Target image resolution. 2mm recommended. [2].
-    --hcp_bold_gdcoeffs      ... Gradient distorsion correction coefficients
-                                 or NONE. [NONE]
+    --hcp_bold_dcmethod     ... BOLD image deformation correction that should
+                                be used: TOPUP, FIELDMAP / SiemensFieldMap,
+                                GeneralElectricFieldMap or NONE. [TOPUP]
+    --hcp_bold_echodiff     ... Delta TE for BOLD fieldmap images or NONE if
+                                not used. [NONE]
+    --hcp_bold_sephasepos   ... Label for the positive image of the Spin Echo 
+                                Field Map pair [""]
+    --hcp_bold_sephaseneg   ... Label for the negative image of the Spin Echo 
+                                Field Map pair [""]
+    --hcp_bold_unwarpdir    ... The direction of unwarping. Can be specified
+                                separately for LR/RL : 'LR=x|RL=-x|x' or
+                                separately for PA/AP : 'PA=y|AP=y-|y-'. [y]
+    --hcp_bold_res          ... Target image resolution. 2mm recommended. [2].
+    --hcp_bold_gdcoeffs     ... Gradient distorsion correction coefficients
+                                or NONE. [NONE]
 
     slice timing correction (*)
     ---------------------------
@@ -2554,6 +2635,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Made SE selection more rubust
     2020-04-23 Grega Repovš
              - Removed full file checking from documentation
+    2020-08-22 Grega Repovš
+             - Added the use of use_sequence_info parameter
     '''
 
     r = "\n------------------------------------------------------------"
@@ -2763,6 +2846,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     if unwarpdir is None:
                         r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['phenc'])
                         boldok = False
+                elif 'PEDirection' in boldinfo and checkInlineParameterUse('BOLD', 'PEDirection', options):
+                    if boldinfo['PEDirection'] in PEDirMap:
+                        orient    = "_" + PEDirMap[boldinfo['PEDirection']]
+                        unwarpdir = boldinfo['PEDirection']
+                    else:
+                        r += '\n     ... ERROR: Invalid PEDirection specified [%s]! Please check sequence specific PEDirection value!' % (boldinfo['PEDirection'])
+                        boldok = False
                 else:
                     orient = ""
                     unwarpdir = unwarpdirs.get('default')
@@ -2779,7 +2869,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
                 # -- set echospacing
 
-                if 'EchoSpacing' in boldinfo:
+                if 'EchoSpacing' in boldinfo and checkInlineParameterUse('BOLD', 'EchoSpacing', options):
                     echospacing = boldinfo['EchoSpacing']
                     r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
                 elif options['hcp_bold_echospacing']:

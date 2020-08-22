@@ -213,6 +213,7 @@ arglist = [['# ---- Basic settings'],
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
+           ['use_sequence_info',  'all',                                         g_core.pcslist,    "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
            ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
