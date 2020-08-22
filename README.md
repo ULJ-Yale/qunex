@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.11
+Qu|Nex suite version: 0.61.12
 
 Submodules:
 
 * connector: 0.61.3
-* library: 0.61.2
+* library: 0.61.4
 * nitools: 0.60.2
-* niutilities: 0.61.11
+* niutilities: 0.61.12
 
 
 Release notes
 -------------
 
+* 0.61.12 Added CUDA support for Diffusion pipelines.
 * 0.61.11 Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
 * 0.61.10 Removed a bug in single-run HCP ICAFix
 * 0.61.9  HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in niutilities, added CUDA.
@@ -70,6 +71,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.12 [library] When running through Singularity CUDA is not loaded from inside the container.
 * 0.61.11 [nitools] Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
 * 0.61.10 [niutilities] Removed a bug in single-run HCP ICAFix
 * 0.61.9  [niutilities, connector] HCP Diffusion pipeline upgrades, support for running bash commands before the Qu|Nex command when scheduling, added CUDA 9.1 bedpostx and probtrackx binaries, removed race conditions in createBOLDBrainMasks and mapHCPData.
