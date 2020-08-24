@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.12 Removed a bug with standard filename in ICAFix.
 * 0.61.11 Removed race conditions in createBOLDBrainMasks and mapHCPData.
 * 0.61.10 Added support for running bash commands before the qunex command inside the compute node when scheduling.
 * 0.61.9  HCP Diffusion pipeline upgrades.
