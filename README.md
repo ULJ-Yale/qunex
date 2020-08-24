@@ -26,33 +26,37 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.9
+Qu|Nex suite version: 0.61.13
 
 Submodules:
 
 * connector: 0.61.3
-* library: 0.61.2
-* nitools: 0.60.1
-* niutilities: 0.61.11
+* library: 0.61.5
+* nitools: 0.60.2
+* niutilities: 0.61.12
 
 
 Release notes
 -------------
 
-* 0.61.9 HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in niutilities, added CUDA.
-* 0.61.8 All DeDriftAndResample parameters are now properly passed to HCP pipelines.
-* 0.61.7 Added additional parameters to DeDriftAndResample.
-* 0.61.6 runQC now works properly when overwrite is set to no.
-* 0.61.5 Removed a bug that prevented proper setup of hcp_fMRIVolume parameters.
-* 0.61.4 Fixed several bugs when when importing BIDS data.
-* 0.61.1 Hotfix of a breaking bug in createSessionInfo. Inclusion of sequence information from JSON files when running importDICOM and dicom2niix is now optional.
-* 0.61.0 Implementation of bug fixes across connector and pipeline restructure back-compatibility
-* 0.60.0 Renamed all subject related parameters to session. Pipeline architecture restructure.
-* 0.51.2 Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
-* 0.51.1 Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
-* 0.51.0 MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
-* 0.50.4 Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
-* 0.50.2 Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
+* 0.61.13 Added --nv flag to qunexContainer for Singularity CUDA support.
+* 0.61.12 Added CUDA support for Diffusion pipelines.
+* 0.61.11 Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
+* 0.61.10 Removed a bug in single-run HCP ICAFix
+* 0.61.9  HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in niutilities, added CUDA.
+* 0.61.8  All DeDriftAndResample parameters are now properly passed to HCP pipelines.
+* 0.61.7  Added additional parameters to DeDriftAndResample.
+* 0.61.6  runQC now works properly when overwrite is set to no.
+* 0.61.5  Removed a bug that prevented proper setup of hcp_fMRIVolume parameters.
+* 0.61.4  Fixed several bugs when when importing BIDS data.
+* 0.61.1  Hotfix of a breaking bug in createSessionInfo. Inclusion of sequence information from JSON files when running importDICOM and dicom 2niix is now optional.
+* 0.61.0  Implementation of bug fixes across connector and pipeline restructure back-compatibility
+* 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
+* 0.51.2  Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
+* 0.51.1  Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
+* 0.51.0  MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
+* 0.50.4  Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
+* 0.50.2  Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
 
 
 References
@@ -68,6 +72,10 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.13 [library] Added --nv flag to Singularity runs in qunexContainer for CUDA support.
+* 0.61.12 [library] When running through Singularity CUDA is not loaded from inside the container.
+* 0.61.11 [nitools] Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
+* 0.61.10 [niutilities] Removed a bug in single-run HCP ICAFix
 * 0.61.9  [niutilities, connector] HCP Diffusion pipeline upgrades, support for running bash commands before the Qu|Nex command when scheduling, added CUDA 9.1 bedpostx and probtrackx binaries, removed race conditions in createBOLDBrainMasks and mapHCPData.
 * 0.61.8  [niutilities] All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  [niutilities] Added additional parameters to DeDriftAndResample and updated HCP diffusion.
