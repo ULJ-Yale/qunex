@@ -2214,25 +2214,33 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             # -- Optional parameters
             if 'hcp_dwi_extraeddyarg' in options:
                 eddyoptions = options['hcp_dwi_extraeddyarg'].split()
+
                 for eddyoption in eddyoptions:
-                    comm += "             --extra-eddy-arg=" + eddyoption
+                    # flag have only one minuse for prefix
+                    if '=' in eddyoption:
+                        prefix="--"
+                    else:
+                        prefix="-"
+
+                    comm += "                --extra-eddy-arg=" + prefix + eddyoption
 
             if 'hcp_dwi_name' in options:
-                comm += "             --dwiname=" + options['hcp_dwi_name']
+                comm += "                --dwiname=" + options['hcp_dwi_name']
 
             if 'hcp_dwi_selectbestb0' in options:
-                comm += "             --select-best-b0=" + options['hcp_dwi_selectbestb0']
+                comm += "                --select-best-b0=" + options['hcp_dwi_selectbestb0']
 
             if 'hcp_dwi_cudaversion' in options:
-                comm += "             --cuda-version=" + options['hcp_dwi_cudaversion']
+                comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
             if 'hcp_dwi_nogpu' in options:
-                comm += "             --no-gpu"
+                comm += "                --no-gpu"
+
 
             # -- Report command
             r += "\n\n------------------------------------------------------------\n"
             r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += comm.replace("                --", "\n    --")
             r += "\n------------------------------------------------------------\n"
 
             # -- Test files
