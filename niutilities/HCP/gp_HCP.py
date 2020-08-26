@@ -1988,8 +1988,9 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     distortion correction details
     -----------------------------
 
-    --hcp_dwi_PEdir          ... The direction of unwarping. Use 1 for LR/RL
-                                 Use 2 for AP/PA. Default is [2]
+    --hcp_dwi_phasepos       ... The direction of unwarping for positive phase.
+                                 Can be AP, PA, LR, or RL. Negative phase is 
+                                 set automatically based on this setting. [PA]
     --hcp_dwi_gdcoeffs       ... A path to a file containing gradient distortion
                                  coefficients, alternatively a string describing
                                  multiple options (see below), or "NONE", if not 
@@ -2035,6 +2036,17 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     ---------------------
 
     --hcp_dwi_name          ... name to give DWI output directories. [Diffusion]
+
+    --hcp_dwi_cudaversion   ... If using the GPU-enabled version of eddy, then
+                                this option can be used to specify which
+                                eddy_cuda binary version to use. If X.Y is
+                                specified, then FSLDIR/bin/eddy_cudaX.Y will be
+                                used. Note that CUDA 9.1 is installed in the
+                                container. []
+
+    --hcp_dwi_nogpu         ... If specified, use the non-GPU-enabled version
+                                of eddy. Defaults to using the GPU-enabled
+                                version of eddy. []
 
 
     Gradient Coefficient File Specification:
@@ -2121,29 +2133,41 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- set up data
-
-        if options['hcp_dwi_PEdir'] == "1":
-            direction = [('pos', 'RL'), ('neg', 'LR')]
-        else:
+        if 'hcp_dwi_phasepos' not in options or options['hcp_dwi_phasepos'] == "PA":
+            direction = [('pos', 'PA'), ('neg', 'AP')]
+            PEdir = 2
+        elif options['hcp_dwi_phasepos'] == "AP":
             direction = [('pos', 'AP'), ('neg', 'PA')]
+            PEdir = 2
+        elif options['hcp_dwi_phasepos'] == "LR":
+            direction = [('pos', 'LR'), ('neg', 'RL')]
+            PEdir = 1
+        elif options['hcp_dwi_phasepos'] == "RL":
+            direction = [('pos', 'RL'), ('neg', 'LR')]
+            PEdir = 1
+        else:
+            r += "\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]" % options['hcp_dwi_phasepos']
+            run = False
 
-        dwiData = dict()
-        for ddir, dext in direction:
-            dwiData[ddir] = "@".join(glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext))))
+        if run:
+            dwiData = dict()
+            for ddir, dext in direction:
+                dwiData[ddir] = "@".join(glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext))))
 
-        for ddir in ['pos', 'neg']:
-            dfiles = dwiData[ddir].split("@")
-            if dfiles:
-                r += "\n---> The following %s direction files were found:" % (ddir)
-                for dfile in dfiles:
-                    r += "\n     %s" % (os.path.basename(dfile))
-            else:
-                r += "\n---> ERROR: No %s direction files were found!"
-                run = False
+            for ddir in ['pos', 'neg']:
+                dfiles = dwiData[ddir].split("@")
+
+                if dfiles and dfiles != ['']:
+                    r += "\n---> The following %s direction files were found:" % (ddir)
+                    for dfile in dfiles:
+                        r += "\n     %s" % (os.path.basename(dfile))
+                else:
+                    r += "\n---> ERROR: No %s direction files were found!" % ddir
+                    run = False
 
         # --- lookup gdcoeffs file if needed
 
@@ -2160,59 +2184,64 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             echospacing = options['hcp_dwi_echospacing']
             r += "\n---> Using study general EchoSpacing: %s ms" % (echospacing)
 
-
         # --- build the command
+        if run:
+            comm = '%(script)s \
+                --path="%(path)s" \
+                --subject="%(subject)s" \
+                --PEdir=%(PEdir)s \
+                --posData="%(posData)s" \
+                --negData="%(negData)s" \
+                --echospacing="%(echospacing)s" \
+                --gdcoeffs="%(gdcoeffs)s" \
+                --dof="%(dof)s" \
+                --b0maxbval="%(b0maxbval)s" \
+                --combine-data-flag="%(combinedataflag)s" \
+                --printcom="%(printcom)s"' % {
+                    'script'            : os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
+                    'posData'           : dwiData['pos'],
+                    'negData'           : dwiData['neg'],
+                    'path'              : sinfo['hcp'],
+                    'subject'           : sinfo['id'] + options['hcp_suffix'],
+                    'echospacing'       : echospacing,
+                    'PEdir'             : PEdir,
+                    'gdcoeffs'          : gdcfile,
+                    'dof'               : options['hcp_dwi_dof'],
+                    'b0maxbval'         : options['hcp_dwi_b0maxbval'],
+                    'combinedataflag'   : options['hcp_dwi_combinedata'],
+                    'printcom'          : options['hcp_printcom']}
 
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --PEdir=%(PEdir)s \
-            --posData="%(posData)s" \
-            --negData="%(negData)s" \
-            --echospacing="%(echospacing)s" \
-            --gdcoeffs="%(gdcoeffs)s" \
-            --dof="%(dof)s" \
-            --b0maxbval="%(b0maxbval)s" \
-            --combine-data-flag="%(combinedataflag)s" \
-            --printcom="%(printcom)s"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
-                'posData'           : dwiData['pos'],
-                'negData'           : dwiData['neg'],
-                'path'              : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'echospacing'       : echospacing,
-                'PEdir'             : options['hcp_dwi_PEdir'],
-                'gdcoeffs'          : gdcfile,
-                'dof'               : options['hcp_dwi_dof'],
-                'b0maxbval'         : options['hcp_dwi_b0maxbval'],
-                'combinedataflag'   : options['hcp_dwi_combinedata'],
-                'printcom'          : options['hcp_printcom']}
+            # -- Optional parameters
+            if 'hcp_dwi_extraeddyarg' in options:
+                eddyoptions = options['hcp_dwi_extraeddyarg'].split()
+                for eddyoption in eddyoptions:
+                    comm += "             --extra-eddy-arg=" + eddyoption
 
-        # -- Optional parameters
-        if 'hcp_dwi_extraeddyarg' in options:
-            eddyoptions = options['hcp_dwi_extraeddyarg'].split()
-            for eddyoption in eddyoptions:
-                comm += "             --extra-eddy-arg=" + eddyoption
+            if 'hcp_dwi_name' in options:
+                comm += "             --dwiname=" + options['hcp_dwi_name']
 
-        if 'hcp_dwi_name' in options:
-            comm += "             --dwiname=" + options['hcp_dwi_name']
+            if 'hcp_dwi_selectbestb0' in options:
+                comm += "             --select-best-b0=" + options['hcp_dwi_selectbestb0']
 
-        if 'hcp_dwi_selectbestb0' in options:
-            comm += "             --select-best-b0=" + options['hcp_dwi_selectbestb0']
+            if 'hcp_dwi_cudaversion' in options:
+                comm += "             --cuda-version=" + options['hcp_dwi_cudaversion']
 
-        # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+            if 'hcp_dwi_nogpu' in options:
+                comm += "             --no-gpu"
 
-        # -- Test files
-        tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
+            # -- Report command
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
-        if hcp['hcp_dwi_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_dwi_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
-        else:
-            fullTest = None
+            # -- Test files
+            tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
+
+            if hcp['hcp_dwi_check']:
+                fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_dwi_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            else:
+                fullTest = None
 
         # -- Run
 
@@ -2232,7 +2261,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                     failed = 0
 
         else:
-            r += "---> Session can not be processed."
+            r += "\n---> Session can not be processed."
             report = "HCP Diffusion can not be run"
             failed = 1
 
