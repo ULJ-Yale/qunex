@@ -2214,15 +2214,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             # -- Optional parameters
             if 'hcp_dwi_extraeddyarg' in options:
                 eddyoptions = options['hcp_dwi_extraeddyarg'].split()
-
                 for eddyoption in eddyoptions:
-                    # flag have only one minuse for prefix
-                    if '=' in eddyoption:
-                        prefix="--"
-                    else:
-                        prefix="-"
-
-                    comm += "                --extra-eddy-arg=" + prefix + eddyoption
+                    comm += "                --extra-eddy-arg=" + eddyoption
 
             if 'hcp_dwi_name' in options:
                 comm += "                --dwiname=" + options['hcp_dwi_name']
