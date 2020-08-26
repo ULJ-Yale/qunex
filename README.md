@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.14
+Qu|Nex suite version: 0.61.15
 
 Submodules:
 
 * connector: 0.61.3
 * library: 0.61.5
 * nitools: 0.60.2
-* niutilities: 0.61.13
+* niutilities: 0.61.14
 
 
 Release notes
 -------------
 
+* 0.61.15 Beautified and debugged extra-eddy-arg printout in HCP Diffusion pipeline.
 * 0.61.14 Added new parameters introduced by the latest HCP pipelines to HCP Diffusion command.
 * 0.61.13 Added --nv flag to qunexContainer for Singularity CUDA support.
 * 0.61.12 Added CUDA support for Diffusion pipelines.
@@ -73,6 +74,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.15 [niutilities] Optimized extra-eddy-arg parsing in HCP Diffusion pipelines and beutified the printout.
 * 0.61.14 [niutilities] Added new parameters (hcp_dwi_phasepos, hcp_dwi_cudaversion, hcp_dwi_nogpu) to HCP Diffusion pipeline.
 * 0.61.13 [library] Added --nv flag to Singularity runs in qunexContainer for CUDA support.
 * 0.61.12 [library] When running through Singularity CUDA is not loaded from inside the container.
