@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.16 HCP Diffusion now uses pipe (|) as the extra eddy args separator.
 * 0.61.15 On some systems HCP Pipelines had trouble injecting numbers into outgoing command calls.
 * 0.61.14 Beautified and debugged extra-eddy-arg printout in HCP Diffusion pipeline.
 * 0.61.13 Added new parameters (hcp_dwi_phasepos, hcp_dwi_cudaversion, hcp_dwi_nogpu) to HCP Diffusion pipeline.
