@@ -2023,14 +2023,17 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 similar to the average b0 after registration).
                                 [FALSE]
     --hcp_dwi_extraeddyarg  ... A string specifying additional arguments to pass
-                                to the DiffPreprocPipeline_Eddy.sh script and 
-                                subsequently to the run_eddy.sh script and 
-                                finally to the command that actually invokes the 
-                                eddy binary. The string is to be writen as a 
-                                contiguous set of tokens to be added. It will be
-                                split by whitespace to be passed to the HCP 
-                                DiffPreprocPipeline as a set of --extra-eddy-arg
-                                arguments. ['']
+                                to the DiffPreprocPipeline_Eddy.sh script and
+                                subsequently to the run_eddy.sh script and
+                                finally to the command that actually invokes the
+                                eddy binary. The string is to be written as a
+                                contiguous set of arguments to be added. Each
+                                argument needs to be provided together with
+                                dashes if it needs them. To provide multiple
+                                arguments divide them with the pipe (|)
+                                character,
+                                e.g. --hcp_dwi_extraeddyarg="--niter=8|--nvoxhp=2000".
+                                ['']
 
     additional parameters
     ---------------------
