@@ -2213,7 +2213,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- Optional parameters
             if 'hcp_dwi_extraeddyarg' in options:
-                eddyoptions = options['hcp_dwi_extraeddyarg'].split()
+                eddyoptions = options['hcp_dwi_extraeddyarg'].split("|")
                 for eddyoption in eddyoptions:
                     comm += "                --extra-eddy-arg=" + eddyoption
 
@@ -4207,10 +4207,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)s \
+                %(bandpass)d \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)s \
+                %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
                 'inputfile'             : inputfile,
@@ -4337,11 +4337,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)s \
+                %(bandpass)d \
                 "%(concatfilename)s" \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)s \
+                %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
@@ -4736,7 +4736,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             --template-scene-dual-screen="%(dualscene)s" \
             --template-scene-single-screen="%(singlescene)s" \
             --reuse-high-pass="%(reusehighpass)s" \
-            --matlab-run-mode="%(matlabrunmode)d"' % {
+            --matlab-run-mode="%(matlabrunmode)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'PostFix.sh'),
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : subject,
@@ -5141,8 +5141,8 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                 --fmri-name="%(boldtarget)s" \
                 --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
-                --low-res-mesh="%(lowresmesh)d" \
-                --matlab-run-mode="%(matlabrunmode)d" \
+                --low-res-mesh="%(lowresmesh)s" \
+                --matlab-run-mode="%(matlabrunmode)s" \
                 --motion-regression="%(motionregression)s" \
                 --delete-intermediates="%(deleteintermediates)s"' % {
                     'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixPipeline.sh'),
@@ -5310,7 +5310,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)s" \
-                --matlab-run-mode="%(matlabrunmode)d" \
+                --matlab-run-mode="%(matlabrunmode)s" \
                 --motion-regression="%(motionregression)s" \
                 --delete-intermediates="%(deleteintermediates)s"' % {
                     'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
@@ -5865,7 +5865,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
-            --matlab-run-mode="%(matlabrunmode)d"' % {
+            --matlab-run-mode="%(matlabrunmode)s"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -6036,7 +6036,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
-            --matlab-run-mode="%(matlabrunmode)d"' % {
+            --matlab-run-mode="%(matlabrunmode)s"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -6486,7 +6486,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
-            --matlab-run-mode="%(matlabrunmode)d" \
+            --matlab-run-mode="%(matlabrunmode)s" \
             --motion-regression="%(motionregression)s" \
             --myelin-target-file="%(myelintargetfile)s" \
             --input-reg-name="%(inputregname)s"' % {
@@ -6700,7 +6700,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
-            --matlab-run-mode="%(matlabrunmode)d" \
+            --matlab-run-mode="%(matlabrunmode)s" \
             --motion-regression="%(motionregression)s" \
             --myelin-target-file="%(myelintargetfile)s" \
             --input-reg-name="%(inputregname)s"' % {
