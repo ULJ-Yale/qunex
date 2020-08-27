@@ -2213,7 +2213,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- Optional parameters
             if 'hcp_dwi_extraeddyarg' in options:
-                eddyoptions = options['hcp_dwi_extraeddyarg'].split()
+                eddyoptions = options['hcp_dwi_extraeddyarg'].split("|")
                 for eddyoption in eddyoptions:
                     comm += "                --extra-eddy-arg=" + eddyoption
 
@@ -4207,10 +4207,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)s \
+                %(bandpass)d \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)s \
+                %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
                 'inputfile'             : inputfile,
@@ -4337,11 +4337,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)s \
+                %(bandpass)d \
                 "%(concatfilename)s" \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)s \
+                %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
@@ -4732,7 +4732,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
             --fmri-name="%(boldtarget)s" \
-            --high-pass="%(highpass)s" \
+            --high-pass="%(highpass)d" \
             --template-scene-dual-screen="%(dualscene)s" \
             --template-scene-single-screen="%(singlescene)s" \
             --reuse-high-pass="%(reusehighpass)s" \
@@ -5139,7 +5139,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                 --path="%(path)s" \
                 --subject="%(subject)s" \
                 --fmri-name="%(boldtarget)s" \
-                --high-pass="%(highpass)s" \
+                --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)s" \
                 --matlab-run-mode="%(matlabrunmode)s" \
@@ -5307,7 +5307,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 --subject="%(subject)s" \
                 --fmri-names="%(boldtargets)s" \
                 --concat-fmri-name="%(groupname)s" \
-                --high-pass="%(highpass)s" \
+                --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)s" \
                 --matlab-run-mode="%(matlabrunmode)s" \
@@ -5412,7 +5412,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
             --fmri-name="%(boldtarget)s" \
-            --high-pass="%(highpass)s"' % {
+            --high-pass="%(highpass)d"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ApplyHandReClassifications.sh'),
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
@@ -5858,7 +5858,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             --multirun-fix-concat-name="" \
             --multirun-fix-names-to-use="" \
             --output-fmri-name="%(outfmriname)s" \
-            --high-pass="%(highpass)s" \
+            --high-pass="%(highpass)d" \
             --fmri-proc-string="%(fmriprocstring)s" \
             --msm-all-templates="%(msmalltemplates)s" \
             --output-registration-name="%(outregname)s" \
@@ -6029,7 +6029,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             --multirun-fix-concat-name="%(concatname)s" \
             --multirun-fix-names-to-use="%(fixnamestouse)s" \
             --output-fmri-name="%(outfmriname)s" \
-            --high-pass="%(highpass)s" \
+            --high-pass="%(highpass)d" \
             --fmri-proc-string="%(fmriprocstring)s" \
             --msm-all-templates="%(msmalltemplates)s" \
             --output-registration-name="%(outregname)s" \
@@ -6699,7 +6699,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             --fix-names="NONE" \
             --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)s" \
-            --high-pass="%(highpass)s" \
+            --high-pass="%(highpass)d" \
             --matlab-run-mode="%(matlabrunmode)s" \
             --motion-regression="%(motionregression)s" \
             --myelin-target-file="%(myelintargetfile)s" \
