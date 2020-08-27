@@ -2891,6 +2891,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
                     r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
+                if not is_number(options['hcp_bold_echospacing']):
+                    fieldok = False
+                    r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (options['hcp_bold_echospacing'])
+                if not is_number(options['hcp_bold_echodiff']):
+                    fieldok = False
+                    r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (options['hcp_bold_echodiff'])
+                boldok = boldok and fieldok
                 fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
                 fmphase = hcp['fieldmap'][int(fmnum)]['phase']
                 fmge = None
