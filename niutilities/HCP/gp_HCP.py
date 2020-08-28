@@ -4217,10 +4217,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
                 'inputfile'             : inputfile,
-                'bandpass'              : bandpass,
+                'bandpass'              : int(bandpass),
                 'domot'                 : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
-                'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
+                'fixthreshold'          : int(10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold']),
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Report command
@@ -4348,11 +4348,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
-                'bandpass'              : bandpass,
+                'bandpass'              : int(bandpass),
                 'concatfilename'        : concatfilename,
                 'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
-                'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
+                'fixthreshold'          : int(10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold']),
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Report command
