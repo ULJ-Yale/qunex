@@ -4739,16 +4739,16 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             --template-scene-dual-screen="%(dualscene)s" \
             --template-scene-single-screen="%(singlescene)s" \
             --reuse-high-pass="%(reusehighpass)s" \
-            --matlab-run-mode="%(matlabrunmode)s"' % {
+            --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'PostFix.sh'),
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : subject,
                 'boldtarget'        : boldtarget,
-                'highpass'          : highpass,
+                'highpass'          : int(highpass),
                 'dualscene'         : dualscene,
                 'singlescene'       : singlescene,
                 'reusehighpass'     : reusehighpass,
-                'matlabrunmode'     : matlabrunmode}
+                'matlabrunmode'     : int(matlabrunmode)}
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
@@ -5145,17 +5145,17 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                 --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)s" \
-                --matlab-run-mode="%(matlabrunmode)s" \
+                --matlab-run-mode="%(matlabrunmode)d" \
                 --motion-regression="%(motionregression)s" \
                 --delete-intermediates="%(deleteintermediates)s"' % {
                     'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixPipeline.sh'),
                     'path'                : sinfo['hcp'],
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
                     'boldtarget'          : boldtarget,
-                    'highpass'            : highpass,
+                    'highpass'            : int(highpass),
                     'regname'             : regname,
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                    'matlabrunmode'       : matlabrunmode,
+                    'matlabrunmode'       : int(matlabrunmode),
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
@@ -5313,7 +5313,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)s" \
-                --matlab-run-mode="%(matlabrunmode)s" \
+                --matlab-run-mode="%(matlabrunmode)d" \
                 --motion-regression="%(motionregression)s" \
                 --delete-intermediates="%(deleteintermediates)s"' % {
                     'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
@@ -5321,10 +5321,10 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
                     'boldtargets'         : boldtargets,
                     'groupname'           : groupname,
-                    'highpass'            : highpass,
+                    'highpass'            : int(highpass),
                     'regname'             : regname,
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                    'matlabrunmode'       : matlabrunmode,
+                    'matlabrunmode'       : int(matlabrunmode),
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
@@ -5420,7 +5420,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'boldtarget'        : boldtarget,
-                'highpass'          : highpass}
+                'highpass'          : int(highpass)}
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
@@ -5868,20 +5868,20 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
-            --matlab-run-mode="%(matlabrunmode)s"' % {
+            --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
                 'msmallBolds'         : msmallBolds,
                 'outfmriname'         : outfmriname,
-                'highpass'            : highpass,
+                'highpass'            : int(highpass),
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
                 'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_hiresmesh' not in options else options['hcp_hiresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
-                'matlabrunmode'       : matlabrunmode}
+                'matlabrunmode'       : int(matlabrunmode)}
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
@@ -6039,7 +6039,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
-            --matlab-run-mode="%(matlabrunmode)s"' % {
+            --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -6047,14 +6047,14 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'concatname'          : groupname,
                 'fixnamestouse'       : fixnamestouse,
                 'outfmriname'         : outfmriname,
-                'highpass'            : highpass,
+                'highpass'            : int(highpass),
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
                 'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_hiresmesh' not in options else options['hcp_hiresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
-                'matlabrunmode'       : matlabrunmode}
+                'matlabrunmode'       : int(matlabrunmode)}
 
         # -- Report command
         r += "\n\n------------------------------------------------------------\n"
@@ -6489,7 +6489,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
-            --matlab-run-mode="%(matlabrunmode)s" \
+            --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
             --myelin-target-file="%(myelintargetfile)s" \
             --input-reg-name="%(inputregname)s"' % {
@@ -6506,8 +6506,8 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'fixnames'            : boldtargets,
                 'dontfixnames'        : dontfixnames,
                 'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
-                'highpass'            : highpass,
-                'matlabrunmode'       : matlabrunmode,
+                'highpass'            : int(highpass),
+                'matlabrunmode'       : int(matlabrunmode),
                 'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
@@ -6703,7 +6703,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
-            --matlab-run-mode="%(matlabrunmode)s" \
+            --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
             --myelin-target-file="%(myelintargetfile)s" \
             --input-reg-name="%(inputregname)s"' % {
@@ -6721,8 +6721,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'mrfixconcatnames'    : grouptargets,
                 'dontfixnames'        : dontfixnames,
                 'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
-                'highpass'            : highpass,
-                'matlabrunmode'       : matlabrunmode,
+                'highpass'            : int(highpass),
+                'matlabrunmode'       : int(matlabrunmode),
                 'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
