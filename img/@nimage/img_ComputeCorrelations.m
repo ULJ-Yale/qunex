@@ -1,4 +1,4 @@
-function [correlations, zscores, pvaues] = img_ComputeCorrelations(obj, bdata, verbose, cv)
+function [correlations, zscores, pvalues] = img_ComputeCorrelations(obj, bdata, verbose, cv)
 
 %function [correlations, zscores, pvalues] = img_ComputeCorrelations(obj, bdata, verbose, cv)
 %
