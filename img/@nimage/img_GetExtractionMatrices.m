@@ -280,5 +280,6 @@ for n = 1:nexlists
     end
 
     exsets(n).exmat = exmat(okrows, :);
-    exsets(n).eind  = exmat(okrows);
+    exsets(n).eind  = eind(okrows);
     exsets(n).estat = estat;
+end
