@@ -32,6 +32,7 @@ import traceback
 from datetime import datetime
 import time
 import niutilities.g_exceptions as ge
+import niutilities.g_filelock as fl
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -310,6 +311,10 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
 
+        # template file
+        templatefile = f['bold_template']
+    
+
         # --- copy over bold data
 
         # --- bold
@@ -360,14 +365,28 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
         else:
             # --- link a template
-            if not os.path.exists(f['bold_template']):
+            # lock
+            fl.lock(templatefile)
+
+            # create link
+            if not os.path.exists(templatefile):
                 # r += '\n ... link %s to %s' % (f['bold1_brain'], f['bold_template'])
                 os.link(f['bold1_brain'], f['bold_template'])
 
+            # unlock
+            fl.unlock(templatefile)
+
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
+
+        # unlock tempalte file if it crashed there
+        fl.unlock(templatefile)
+
         report['boldfail'] += 1
     except:
+        # unlock tempalte file if it crashed there
+        fl.unlock(templatefile)
+
         report['boldfail'] += 1
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         time.sleep(1)

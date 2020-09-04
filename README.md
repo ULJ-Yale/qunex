@@ -42,6 +42,17 @@ Quick links
 Change log
 ----------
 
+* 0.61.17 Robust parsing of integer parameters in HCP processing commands.
+* 0.61.16 HCP Diffusion now uses pipe (|) as the extra eddy args separator.
+* 0.61.15 On some systems HCP Pipelines had trouble injecting numbers into outgoing command calls.
+* 0.61.14 Beautified and debugged extra-eddy-arg printout in HCP Diffusion pipeline.
+* 0.61.13 Added new parameters (hcp_dwi_phasepos, hcp_dwi_cudaversion, hcp_dwi_nogpu) to HCP Diffusion pipeline.
+* 0.61.12 Removed a bug with standard filename in ICAFix.
+* 0.61.11 Removed race conditions in createBOLDBrainMasks and mapHCPData.
+* 0.61.10 Added support for running bash commands before the qunex command inside the compute node when scheduling.
+* 0.61.9  HCP Diffusion pipeline upgrades.
+* 0.61.8  All DeDriftAndResample parameters are now properly passed to HCP pipelines.
+* 0.61.7  Added additional parameters to DeDriftAndResample.
 * 0.61.6  Removed a bug where the topupconfig parameter was not properly set when running hcp4.
 * 0.61.5  Fixed checking of dc correction parameters in fMRIVolume.
 * 0.61.4  Added support for multiple nested folders within BIDS study level directories.
