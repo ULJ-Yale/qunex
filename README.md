@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.15
+Qu|Nex suite version: 0.61.17
 
 Submodules:
 
 * connector: 0.61.3
 * library: 0.61.5
 * nitools: 0.60.2
-* niutilities: 0.61.14
+* niutilities: 0.61.18
 
 
 Release notes
 -------------
 
+* 0.61.17 hcp_dwi_selectbestb0 in HCP Diffusion pipelines is now a flag.
 * 0.61.16 HCP Diffusion now uses pipe (|) as the extra eddy args separator.
 * 0.61.15 Beautified and debugged extra-eddy-arg printout in HCP Diffusion pipeline.
 * 0.61.14 Added new parameters introduced by the latest HCP pipelines to HCP Diffusion command.
@@ -75,6 +76,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.61.17 [niutilities] Added a missing import to ge_HCP, hcp_dwi_selectbestb0 is now a flag.
 * 0.61.16 [niutilities] HCP Diffusion now uses pipe (|) as the extra eddy args separator.
 * 0.61.15 [niutilities] Optimized extra-eddy-arg parsing in HCP Diffusion pipelines and beutified the printout.
 * 0.61.14 [niutilities] Added new parameters (hcp_dwi_phasepos, hcp_dwi_cudaversion, hcp_dwi_nogpu) to HCP Diffusion pipeline.
