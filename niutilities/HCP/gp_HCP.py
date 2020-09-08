@@ -2224,7 +2224,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                 comm += "                --dwiname=" + options['hcp_dwi_name']
 
             if 'hcp_dwi_selectbestb0' in options:
-                comm += "                --select-best-b0=" + options['hcp_dwi_selectbestb0']
+                comm += "                --select-best-b0"
 
             if 'hcp_dwi_cudaversion' in options:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
