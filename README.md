@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.61.4  When running single Qu|Nex commands warnings would erroneously state that we are running throgh RunTurnkey.
 * 0.61.3  Added bedpostx and probtrackx CUDA 9.1 binaries.
 * 0.61.2  Added some additional printouts to runQC for user friendliness.
 * 0.61.1  runQC now works properly when overwrite is set to no.
