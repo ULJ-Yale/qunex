@@ -2022,7 +2022,7 @@ fi
 
 if [[ ${SessionsFolderName} != "subjects" ]]; then
   if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-      mageho "WARNING: You are attempting to execute RunTurnkey using a conflicting Qu|Nex file hierarchy:"
+      mageho "WARNING: You are attempting to execute a Qu|Nex command using a conflicting Qu|Nex file hierarchy:"
       echo ""
       echo "     Found: --> ${StudyFolder}/subjects"
       echo "     Found: --> ${StudyFolder}/${SessionsFolderName}"
@@ -2045,7 +2045,7 @@ if [[ ${SessionsFolderName} != "subjects" ]]; then
       SessionsFolderBase=`base $SessionsFolder`
       if [[ ${SessionsFolderBase} == "subjects" ]]; then 
           SessionsFolderName="${SessionsFolderBase}"
-          mageho "WARNING: You are attempting to execute RunTurnkey using an outdated Qu|Nex file hierarchy:"
+          mageho "WARNING: You are attempting to execute Qu|Nex command using an outdated Qu|Nex file hierarchy:"
           echo ""
           echo "     Found: --> ${StudyFolder}/${SessionsFolderName}"
           echo ""
@@ -2056,7 +2056,7 @@ if [[ ${SessionsFolderName} != "subjects" ]]; then
           echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
           echo ""
       else
-          mageho "WARNING: You are attempting to execute RunTurnkey using a conflicting Qu|Nex file hierarchy:"
+          mageho "WARNING: You are attempting to execute Qu|Nex command using a conflicting Qu|Nex file hierarchy:"
           echo ""
           echo "     Found: --> ${StudyFolder}/subjects"
           echo "     Found: --> ${StudyFolder}/${SessionsFolderBase}"
@@ -2076,7 +2076,7 @@ if [[ ${SessionsFolderName} != "subjects" ]]; then
 fi
 
 if [[ ${SessionsFolderName} == "subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-    mageho "WARNING: You are attempting to execute RunTurnkey using an outdated Qu|Nex file hierarchy:"
+    mageho "WARNING: You are attempting to execute Qu|Nex command using an outdated Qu|Nex file hierarchy:"
     echo ""
     echo "       Found: --> ${StudyFolder}/${SessionsFolderName}"
     echo ""
