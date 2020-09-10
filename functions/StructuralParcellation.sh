@@ -89,7 +89,7 @@ usage() {
  echo ""
  echo "For SLURM scheduler the string would look like this via the qunex call:: "
  echo ""                   
- echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+ echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
  echo ""
  echo " qunex structuralParcellation --sessionsfolder='<folder_with_sessions>' \ "
  echo " --session='<case_id>' \ "
