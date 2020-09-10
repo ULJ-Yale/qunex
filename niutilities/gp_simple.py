@@ -4,16 +4,18 @@
 This file holds code for support functions for image preprocessing and analysis.
 It consists of functions:
 
-* createBoldList   ... creates a list with paths to each session's BOLD files
-* createConcList   ... creates a list with paths to each session's conc files
-* listSessionInfo  ... lists session data stored in batch.txt file
+--createBoldList   Creates a list with paths to each session's BOLD files.
+--createConcList   Creates a list with paths to each session's conc files.
+--listSessionInfo  Lists session data stored in batch.txt file.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
-`qunex ?<command>` for command specific help
-`qunex -o` for a list of relevant arguments and options
+- `qunex ?<command>` for command specific help
+- `qunex -o` for a list of relevant arguments and options
+"""
 
+"""
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
@@ -106,7 +108,19 @@ def listSessionInfo(sinfo, options, overwrite=False, thread=0):
 
 def runShellScript(sinfo, options, overwrite=False, thread=0):
     """
-    runShellScript [... processing options]
+    ``runShellScript [... processing options]``
+
+    Runs the specified script on every selected session from batch.txt file.
+
+    INPUTS
+    ======
+
+    --script              The path to the script to be executed.
+    --sessions            The batch.txt file with all the session information
+                          [batch.txt].
+    --parsessions         How many sessions to run in parallel. [1]
+
+    The parameters can be specified in command call or in a batch.txt file.
 
     USE
     ===
@@ -119,65 +133,55 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     the processing parameters and places them into the script. If the
     information is not provided, the {{<key>}} will remain as is.
 
-    EXAMPLE
-    =======
+    Example
+    -------
 
-    If batch.txt contains among others:
+    If batch.txt contains among others::
 
-    ---
-    id: OP578
-    subject: OP578
-    dicom: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/dicom
-    raw_data: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii
-    hcp: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp
-    group: control
+        ---
+        id: OP578
+        subject: OP578
+        dicom: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/dicom
+        raw_data: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii
+        hcp: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp
+        group: control
 
-    If script.sh contains among others:
+    If script.sh contains among others::
 
-    ls -l {{hcp}}/{{id}}/MNINonLinear
-    if [ "{{group}}" = "control" ]; then
-        mkdir /gpfs/project/fas/n3/Studies/tmp/{{id}}
-        cp {{raw_data}}/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/{{id}}
-    fi
-    echo "{{nothing}}"
+        ls -l {{hcp}}/{{id}}/MNINonLinear
+        if [ "{{group}}" = "control" ]; then
+            mkdir /gpfs/project/fas/n3/Studies/tmp/{{id}}
+            cp {{raw_data}}/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/{{id}}
+        fi
+        echo "{{nothing}}"
 
-    Before running the function will change that part of the script to:
+    Before running the function will change that part of the script to::
 
-    ls -l /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp/OP578/MNINonLinear
-    if [ "control" = "control" ]; then
-        mkdir /gpfs/project/fas/n3/Studies/tmp/OP578
-        cp /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/OP578
-    fi
-    echo "{{nothing}}"
-
-
-    RELEVANT PARAMETERS
-    ===================
-
-    The relevant processing parameters are:
-
-    --script          ... Tha path to the script to be executed.
-    --sessions        ... The batch.txt file with all the session information
-                          [batch.txt].
-    --parsessions     ... How many sessions to run in parallel [1].
-
-    The parameters can be specified in command call or batch.txt file.
+        ls -l /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp/OP578/MNINonLinear
+        if [ "control" = "control" ]; then
+            mkdir /gpfs/project/fas/n3/Studies/tmp/OP578
+            cp /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/OP578
+        fi
+        echo "{{nothing}}"
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex runShellScript sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
-          overwrite=no script=fcMRI/processdata.sh
-    ````
-    
-    ----------------
-    Written by Grega Repovš 2017-06-24
+    ::
+
+        qunex runShellScript sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
+              overwrite=no script=fcMRI/processdata.sh
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
 
     Change log
-    2019-04-25 Grega Repovš
-             - Changed subjects to sessions
 
+    2017-06-24 Grega Repovš
+               Initial version
+    2019-04-25 Grega Repovš
+               Changed subjects to sessions
     """
 
     r = "\n---------------------------------------------------------"

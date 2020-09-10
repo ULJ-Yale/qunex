@@ -119,17 +119,27 @@ def get_dicom_name(opened_dicom, extension="dcm"):
 
 def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file=""):
     """
+    ``discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file="")``
+
+    Runs deid_function on each dicom it finds.
+
+    INPUTS
+    ======
+
+    --folder         The folder path to search for dicoms.
+    --deid_function  The function to run on each dicom file.
+    --output_folder  The folder to write the dicoms to, or inplace if None.
+    --rename_files   If output_folder is provided, whether to rename the files.
+                     This renames the files inside zip and tar files, not the
+                     zip or tar files themselves.
+    --extension      If rename_files is true, the additional characters to put
+                     after the extension (like abc.dcm{extension}).
+
+    USE
+    ===
+
     Given a folder name, looks for DICOMs in nested subfolders, zip files, gzip files
     and tar files and runs the function deid_function on each dicom it finds
-
-    :param folder: the folder path to search for dicoms
-    :param deid_function: the function to run on each dicom file
-    :param output_folder: the folder to write the dicoms to, or inplace if None
-    :param rename_files: if output_folder is provided, whether to rename the files. This renames
-        the files inside zip and tar files, not the zip or tar files themselves.
-    :param extension: if rename_files is true, the additional characters to put after the extension
-        (like abc.dcm{extension})
-    :return: None
     """
     if output_folder is None and rename_files:
         raise ge.CommandFailed("discoverDICOM", "Output folder not specified", "Files can only be renamed if they are being saved in a different location.", "Please provide output_folder as an argument!")
@@ -290,16 +300,18 @@ field_dict = {}
 
 
 def field_dict_modifier(node_id, node_path, node):
-    """Add the node_id node_element pair to field_dict with the provided DataElement
+    """
+    ``field_dict_modifier(node_id, node_path, node)``
 
-    :param node_id: the id (like 0x0194db21/0x238983d92) of the DataElement
-    :type node_id: str
-    :param node_path: the path (like fieldname/innerfield) of the DataElement
-    :type node_path: str
-    :param node: the DataElement whose value is being recorded
-    :type node: pydicom.DataElement
-    :return: None
-    :rtype: None
+    Adds the node_id node_element pair to field_dict with the provided 
+    DataElement.
+
+    INPUTS
+    ======
+
+    --node_id    The id (like 0x0194db21/0x238983d92) of the DataElement.
+    --node_path  The path (like fieldname/innerfield) of the DataElement.
+    --node       The DataElement whose value is being recorded.
     """
     value_list = field_dict.get((node_id, node_path), set())
     if isinstance(node.value, bytearray):
@@ -313,19 +325,19 @@ def field_dict_modifier(node_id, node_path, node):
 
 
 def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=False):
-    """Recursively step through the levels of the dicom dataset, calling node_func on each DataElement found with its
-    id and path
+    """
+    ``recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=False)``
 
-    :param dataset: The current level of the dicom
-    :type dataset: pydicom.Dataset
-    :param node_func: The function to call on each node, which takes the node_id, node_path and dataElement as arguments
-    :type node_func: Callable[[str, str, pydicom.DataElement], None]
-    :param parent_id: the id (like 0x0194db21/0x238983d92) of the parent or None if this is the whole dicom
-    :type parent_id: str
-    :param parent_path: the path (like fieldname/innerfield) of the parent or None if this is the whole dicom
-    :type parent_path: str
-    :return: None
-    :rtype: None
+    Recursively steps through the levels of the dicom dataset, calling node_func
+    on each DataElement found with its id and path.
+
+    --dataset      The current level of the dicom.
+    --node_func    The function to call on each node, which takes the node_id, 
+                   node_path and dataElement as arguments.
+    --parent_id    The id (like 0x0194db21/0x238983d92) of the parent or None if
+                   this is the whole dicom.
+    --parent_path  The path (like fieldname/innerfield) of the parent or None if
+                   this is the whole dicom.
     """
     # order the dicom tags
 
@@ -387,18 +399,13 @@ def write_field_dict(output_file, limit):
 
 
 def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
-    '''
-    getDICOMFields [folder=.] [targetfile=dicomFields.csv] [limit=20]
+    """
+    ``getDICOMFields [folder=.] [targetfile=dicomFields.csv] [limit=20]``
 
-    USE
-    ===
+    Returns an overview of DICOM fields across all the DICOM files.
 
-    The command is used to get an overview of DICOM fields across all the DICOM
-    files in the study with example values, with the goal of identifying
-    those fields that might carry personally identifiable information.
-
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
     --folder        The base folder to search for DICOM files. 
                     The command will try to locate all valid DICOM files
@@ -408,7 +415,7 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
     --limit         The maximum number of example values to provide for each of the
                     DICOM fields. [20]
 
-    RESULTS
+    OUTPUTS
     =======
 
     After running, the command will inspect all the valid DICOM files (including
@@ -419,39 +426,51 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
     (csv) file.
 
     This file can be used to identify the fields that might carry personally
-    identifiable information and therefore need to be processed appropriately. 
+    identifiable information and therefore need to be processed appropriately.
+
+    USE
+    ===
+
+    The command is used to get an overview of DICOM fields across all the DICOM
+    files in the study with example values, with the goal of identifying
+    those fields that might carry personally identifiable information.
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex getDICOMFields
-    ```
-    
-    ```
-    qunex getDICOMFields \
-         --folder=/data/studies/WM/sessions/inbox/MR 
-    ```
-    
-    ```
-    qunex getDICOMFields \
-         --folder=/data/studies/WM/sessions/inbox/MR/original \
-         --targetfile=/data/studies/WM/sessions/specs/dicomFields.csv \
-         --limit=10
-    ```
+    ::
 
-    ----------------
-    Written by Antonija Kolobarić
+        qunex getDICOMFields
+    
+    
+    ::
 
-    Changelog
+        qunex getDICOMFields \
+             --folder=/data/studies/WM/sessions/inbox/MR
+    
+    ::
+
+        qunex getDICOMFields \
+             --folder=/data/studies/WM/sessions/inbox/MR/original \
+             --targetfile=/data/studies/WM/sessions/specs/dicomFields.csv \
+             --limit=10
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
+    2018-10-24 Antonija Kolobarić
+               Initial version adopted from importBIDS
     2018-10-24 Grega Repovš
-             - Updated documentation
-             – Changed parameter names to match the convention and use elsewhere
-             - Added input parameter checks
+               Updated documentation
+               Changed parameter names to match the convention and use elsewhere
+               Added input parameter checks
     2018-11-11 Grega Repovš
-             - The command does not change/save the files anymore
-             - More robust checking of parameters             
-    '''
+               The command does not change/save the files anymore
+               More robust checking of parameters             
+    """
 
     if not os.path.exists(folder):
         raise ge.CommandFailed("getDICOMFields", "Folder not found", "The specified folder with DICOM files to analyse was not found:", "%s" % (folder), "Please check your paths!")
@@ -479,22 +498,14 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
 def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
-    '''
-    changeDICOMFiles [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]
+    """
+    ``changeDICOMFiles [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``
 
-    USE
-    ===
+    Changes all the dicom files in the specified folder according to the
+    directions provided in the `paramfile`.
 
-    The command is used to change all the dicom files in the specified folder
-    according to directions provided in the `paramfile`. The values to be 
-    archived are saved (appended) to `archivefile` as a comma separated values 
-    formatted file. The dicom files can be either changed in place or saved to 
-    the specified `outputfolder` and optionally renamed by adding the specified
-    `extension`. 
-
-
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
     --folder            The base folder from which the search for DICOM files 
                         should start. The command will try to locate all valid 
@@ -506,7 +517,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
                         to be stored. [archive.csv]
     --outputfolder      The optional path to the folder to which the modified 
                         dicom files are to be saved. If not specified, the dicom 
-                        files are changed in place (overwriten). []
+                        files are changed in place (overwritten). []
     --extension         An optional extension to be added to each modified dicom 
                         file name. The extension can be applied only when files 
                         are copied to the `outputfolder`. []
@@ -517,7 +528,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
 
 
     PARAMETER FILE
-    ==============
+    --------------
 
     Parameter file is a text file that specifies the operations that are to be 
     performed on the fields in the dicom files. The default name for the 
@@ -532,40 +543,42 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     is a comma separated list of commands and their optional parameters. 
     The possible actions are:
 
-    archive  ... Archive the original value in the archive file.
-    hash     ... Replace the original value with the hashed value. An optional
-                 salt can be specified.
-    replace  ... Replace the original value with the specified value.
-    delete   ... Delete the field from the dicom file.
+    - archive (archive the original value in the archive file)
+    - hash (replace the original value with the hashed value. An optional salt 
+      can be specified)
+    - replace (replace the original value with the specified value)
+    - delete (delete the field from the dicom file)
     
     If multiple actions are specified, they are carried out in the above order
     (archive, hash, replace, delete). When hashing, to prevent the possibility
     of reconstructing the original value by hashing candidate values, a salt 
     is used. By default a random salt is generated each time changeDICOMFiles 
     is run, however, a specific salt can be provided as the optional parameter
-    to the `hash` command. A random salt can also be explictly specified by 
-    setting the optinal parameter to 'random'.
+    to the `hash` command. A random salt can also be explicitly specified by 
+    setting the optimal parameter to 'random'.
 
-    Lines in the parmeter file that start with '#' or do not specify a mapping 
+    Lines in the parameter file that start with '#' or do not specify a mapping 
     (i.e. lack '>') are ignored.
 
-    Example spec file:
-    ------------------
+    Example spec file
+    ~~~~~~~~~~~~~~~~~
 
-    0x80005  > delete
-    0x100010 > delete
-    0x80012  > delete, archive
-    0x82112  > hash, archive
-    0x180022 > hash:qrklejwrlke, archive
-    0x180032 > replace:20070101
+    ::
+
+        0x80005  > delete
+        0x100010 > delete
+        0x80012  > delete, archive
+        0x82112  > hash, archive
+        0x180022 > hash:qrklejwrlke, archive
+        0x180032 > replace:20070101
 
 
     DATE REPLACEMENT
-    ================
+    ----------------
 
     The date the dicom was recorded is taken from the StudyDate or SeriesDate
     field. The date found is then replaced either by a randomly generated date 
-    or the date specified by the `replacementdate` parameter. Any occurence of 
+    or the date specified by the `replacementdate` parameter. Any occurrence of 
     the date in any of the other fields in dicom is also replaced by the same
     randomly generated or specified date. Please note that any other dates 
     (e.g. participant's birth date) are not automatically replaced. These need
@@ -573,64 +586,75 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
 
 
     DEIDENTIFICATION EFFECTIVENESS
-    ==============================
+    ------------------------------
 
-    Please note the folowing:
+    Please note the following:
 
-    1/ Only the fields explicitly set to be removed, replaced or hashed will
-       be changed. It is the resposibility of the user to make sure that no
+    1. Only the fields explicitly set to be removed, replaced or hashed will
+       be changed. It is the responsibility of the user to make sure that no
        dicom fields with identifiable information are left unchanged.
-    2/ Only valid dicom fields can be accessed and changed using this tool. Any 
+    2. Only valid dicom fields can be accessed and changed using this tool. Any 
        vendor specific metadata that is not stored in regular dicom fields will
        not be changed. Please make sure that no such information is present in 
        your dicom files.
-    3/ Only metadata stored in dicom fields can be processed using this tool.
+    3. Only metadata stored in dicom fields can be processed using this tool.
        If any information is "burnt in" into the image data itself, it can not
        be identified and changed using this tool. Please make sure that no
        such information is present in your dicom files.
 
+    USE
+    ===
+
+    The command is used to change all the dicom files in the specified folder
+    according to directions provided in the `paramfile`. The values to be 
+    archived are saved (appended) to `archivefile` as a comma separated values 
+    formatted file. The dicom files can be either changed in place or saved to 
+    the specified `outputfolder` and optionally renamed by adding the specified
+    `extension`. 
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex changeDICOMFiles \
-         --folder=. 
-    ```
+    ::
 
-    ```
-    qunex changeDICOMFiles \
-         --folder=/data/studies/WM/sessions/inbox/MR \
-         --paramfile=/data/studies/WM/sessions/specs/deid.txt
-    ```
+        qunex changeDICOMFiles \
+            --folder=. 
+
+    ::
+
+        qunex changeDICOMFiles \
+            --folder=/data/studies/WM/sessions/inbox/MR \
+            --paramfile=/data/studies/WM/sessions/specs/deid.txt
     
-    ```
-    qunex changeDICOMFiles \
-         --folder=/data/studies/WM/sessions/inbox/MR/original \
-         --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \
-         --outputfolder=/data/studies/WM/sessions/MR/deid \
-         --extension="v1"
-    ```
+    ::
 
-    ----------------
-    Written by Antonija Kolobarić & Grega Repovš
+        qunex changeDICOMFiles \
+             --folder=/data/studies/WM/sessions/inbox/MR/original \
+             --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \
+             --outputfolder=/data/studies/WM/sessions/MR/deid \
+             --extension="v1"
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
+    2018-10-24 Antonija Kolobarić and Grega Repovš
+               Initial version
     2018-11-10 Grega Repovš
-             - Updated documentation
-             – Changed parameter names to match the convention and use elsewhere
-             - Added input parameter checks
-    
+               Updated documentation
+               Changed parameter names to match the convention and use elsewhere
+               Added input parameter checks
     2018-11-11 Grega Repovš
-             - Stores the correct renamed and processed files in the zip package
-             - urlsafe hash encoding
-             - More robust field checking
-
+               Stores the correct renamed and processed files in the zip package
+               urlsafe hash encoding
+               More robust field checking
     2018-11-13 Grega Repovš
-             - Fixed in place processing of tar and zip archives
-             - Fixed saving of gzipped dicom files
-             - Expanded documentation
-    '''
+               Fixed in place processing of tar and zip archives
+               Fixed saving of gzipped dicom files
+               Expanded documentation
+    """
 
     if extension:
         renamefiles = True
@@ -670,12 +694,20 @@ def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacem
 
 
 def from_tag(tag_value):
-    """Get the tag string from its value
+    """
+    ``from_tag(tag_value)``
 
-    :param tag_value: the integer tag value
-    :type tag_value: int
-    :return: the tag hex string (like 0xd73829b1)
-    :rtype: str
+    Gets the tag string from its value.
+
+    INPUT
+    =====
+    
+    --tag_value  The integer tag value.
+    
+    OUTPUT
+    ======
+
+    Returns the tag hex string (like 0xd73829b1).
     """
     hex_tag = hex(tag_value)
     if hex_tag[-1] != "L":
@@ -685,12 +717,20 @@ def from_tag(tag_value):
 
 
 def get_tag(tag_string):
-    """Get the individual tag from the string representation
+    """
+    ``get_tag(tag_string)``
 
-    :param tag_string: the tag hex string (like 0xd73829b1)
-    :type tag_string: str
-    :return: the integer tag value
-    :rtype: int
+    Gets the individual tag from the string representation.
+
+    INPUT
+    =====
+
+    --tag_string  The tag hex string (like 0xd73829b1).
+
+    OUTPUT
+    ======
+
+    Returns the integer tag value.
     """
     removed = tag_string.lstrip("0x")
     if len(removed) < 8:
@@ -700,12 +740,20 @@ def get_tag(tag_string):
 
 
 def get_group(full_id):
-    """Get the group from the full id of a DataElement
+    """
+    ``get_group(full_id)``
 
-    :param full_id: the id (like 0x0194db21/0x238983d92) of the element
-    :type full_id: str
-    :return: the group id as a number
-    :rtype: int
+    Gets the group from the full id of a DataElement.
+    
+    INPUT
+    =====
+
+    --full_id  The id (like 0x0194db21/0x238983d92) of the element.
+
+    OUTPUT
+    ======
+
+    Returns the group id as a number.
     """
     try:
         return struct.pack(">I", get_tag(full_id.split("/")[0]))
@@ -741,30 +789,53 @@ def deid(opened_dicom, param_file="", archive_file="", filename=""):
 
 
 def read_spec_file(spec_file):
-    """Reads the spec file, which specifies what actions to take with specific tags.
+    """
+    ``read_spec_file(spec_file)``
+    
+    Reads the spec file that specifies what actions to take with specific tags.
 
-    Example spec file:
+    INPUT
+    =====
 
-    0x80005 > archive, delete
-    fieldname3 > hash: sdh2083uddoqew
-    fieldname5 > archive, hash:random
-    fieldname7 > hash: sdh2083uddoqew
+    --spec_file  the path to the spec file
+    
+    OUTPUT
+    ======
 
-    0x80005  > delete
-    0x100010 > delete
-    0x80012  > delete, archive
-    0x82112  > hash, archive
-    0x180022 > hash:qrklejwrlke, archive
-    0x180032 > replace:20070101
+    --action_dict  Action_dict is a mapping of keys to a set of actions.
+    --replace_map  Replace_map is a mapping of keys to the value to replace 
+                   their value with.
+    --hasher_map   Hasher map is a map of keys to the salt to use for the hash 
+                   function.
 
-    Operations are applied in this order: archive, hash, replace, delete
+    USE
+    ===
 
-    Lines that start with '#' or do not specify a mapping (i.e. lack '>') are ignored.
+    Reads the spec file that specifies what actions to take with specific tags.
 
-    :param spec_file: the path to the spec file
-    :return: (action_dict, replace_map, hasher_map), action_dict is a mapping of keys to a set of actions,
-    replace_map is a mapping of keys to the value to replace their value with, hasher map is a map of keys
-    to the salt to use for the hash function
+    Example spec file::
+
+        0x80005 > archive, delete
+        fieldname3 > hash: sdh2083uddoqew
+        fieldname5 > archive, hash:random
+        fieldname7 > hash: sdh2083uddoqew
+
+        0x80005  > delete
+        0x100010 > delete
+        0x80012  > delete, archive
+        0x82112  > hash, archive
+        0x180022 > hash:qrklejwrlke, archive
+        0x180032 > replace:20070101
+
+    Operations are applied in this order:
+
+    1. archive
+    2. hash
+    3. replace
+    4. delete
+
+    Lines that start with '#' or do not specify a mapping (i.e. lack '>') are
+    ignored.
     """
 
     actionOrder = ['archive', 'hash', 'replace', 'delete']
@@ -844,19 +915,18 @@ def action_resolver(key, action, action_dict, replace_map, hasher_map):
 
 def replace(target_dicom, tag, field_id, filename, replace_map):
     """
+    ``replace(target_dicom, tag, field_id, filename, replace_map)``
 
-    :param target_dicom: The dicom dataset one level above the element to apply this action to
-    :type target_dicom: pydicom.Dataset
-    :param tag: the tag to the data element is located at in target_dicom
-    :type tag: int
-    :param field_id: the full id (like /0x0194db21/0x238983d92) of the element to archive
-    :type field_id: str
-    :param filename: the filename for this dicom
-    :type filename: str
-    :param replace_map: the map of field ids to the values to replace them with
-    :type replace_map: dict[str, str]
-    :return: None
-    :rtype: None
+    INPUTS
+    ======
+
+    --target_dicom   The dicom dataset one level above the element to apply this
+                     action to.
+    --tag            The tag to the data element is located at in target_dicom.
+    --field_id       The full id (like /0x0194db21/0x238983d92) of the element
+                     to archive.
+    --filename       The filename for this dicom.
+    --replace_map    The map of field ids to the values to replace them with.
     """
     replace_result_string = replace_map[field_id]
 
@@ -870,34 +940,42 @@ def replace(target_dicom, tag, field_id, filename, replace_map):
 
 
 def hash_one_value(value, salt):
-    """Apply the hash function to one value
+    """
+    ``hash_one_value(value, salt)``
 
-    :param value: the value to hash
-    :type value: str
-    :param salt: the salt to use for the hash
-    :type salt: str
-    :return: the hashed value converted to remove special characters
-    :rtype: str
+    Apply the hash function to one value.
+    
+    INPUTS
+    ======
+
+    --value  The value to hash.
+    --salt   The salt to use for the hash.
+
+    OUTPUT
+    ======
+
+    Returns the hashed value converted to remove special characters.
     """
     hashed = hashlib.pbkdf2_hmac('sha256', bytearray(value), bytearray(salt), 100000)
     return base64.urlsafe_b64encode(hashed)[:-1]
 
 
 def hash(target_dicom, tag, field_id, filename, hasher_map):
-    """Hash the value in the field in this dicom
+    """
+    ``hash(target_dicom, tag, field_id, filename, hasher_map)``
 
-    :param target_dicom: The dicom dataset one level above the element to apply this action to
-    :type target_dicom: pydicom.Dataset
-    :param tag: the tag to the data element is located at in target_dicom
-    :type tag: int
-    :param field_id: the full id (like /0x0194db21/0x238983d92) of the element to archive
-    :type field_id: str
-    :param filename: the filename for this dicom
-    :type filename: str
-    :param hasher_map: the map from field ids to the salt to use for their hash
-    :type hasher_map: dict[str, str]
-    :return: None
-    :rtype: None
+    Hash the value in the field in this dicom.
+
+    INPUTS
+    ======
+
+    --target_dicom  The dicom dataset one level above the element to apply this
+                    action to.
+    --tag           The tag to the data element is located at in target_dicom
+    --field_id      The full id (like /0x0194db21/0x238983d92) of the element to
+                    archive.
+    --filename      The filename for this dicom.
+    --hasher_map    The map from field ids to the salt to use for their hash.
     """
     salt = hasher_map[field_id]
 
@@ -911,38 +989,41 @@ def hash(target_dicom, tag, field_id, filename, hasher_map):
 
 
 def delete(target_dicom, tag, field_id, filename):
-    """Delete the field from the dicom
+    """
+    ``delete(target_dicom, tag, field_id, filename)``
 
-    :param target_dicom: The dicom dataset one level above the element to apply this action to
-    :type target_dicom: pydicom.Dataset
-    :param tag: the tag to the data element is located at in target_dicom
-    :type tag: int
-    :param field_id: the full id (like /0x0194db21/0x238983d92) of the element
-    :type field_id: str
-    :param filename: the filename for this dicom
-    :type filename: str
-    :return: None
-    :rtype: None
+    Delete the field from the dicom.
+
+    INPUTS
+    ======
+
+    --target_dicom  The dicom dataset one level above the element to apply this 
+                    action to.
+    --tag           The tag to the data element is located at in target_dicom.
+    --field_id      The full id (like /0x0194db21/0x238983d92) of the element.
+    --filename      The filename for this dicom.
     """
     if isinstance(target_dicom, pydicom.Dataset):
         target_dicom.pop(tag, None)
 
 
 def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
-    """Archive the field from the dicom
+    """
+    ``archive(target_dicom, tag, field_id, filename, archive_csv_writer)``
 
-    :param target_dicom: The dicom dataset one level above the element to apply this action to
-    :type target_dicom: pydicom.Dataset
-    :param tag: the tag to the data element is located at in target_dicom
-    :type tag: int
-    :param field_id: the full id (like /0x0194db21/0x238983d92) of the element
-    :type field_id: str
-    :param filename: the filename for this dicom
-    :type filename: str
-    :param archive_csv_writer: the csv.Writer object to write the archive to
-    :type archive_csv_writer: csv.Writer
-    :return: None
-    :rtype: None
+    Archive the field from the dicom.
+
+    INPUTS
+    ======
+
+    --target_dicom        The dicom dataset one level above the element to apply
+                          this action to.
+    --tag                 The tag to the data element is located at in
+                          target_dicom.
+    --field_id            The full id (like /0x0194db21/0x238983d92) of the
+                          element.
+    --filename            The filename for this dicom.
+    --archive_csv_writer  The csv.Writer object to write the archive to.
     """
     if isinstance(target_dicom, pydicom.Dataset):
         value = str(target_dicom.get(tag))
@@ -950,16 +1031,19 @@ def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
 
 
 def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
-    """Apply the apply_func to the data element/s at the field id specified in the dicom provided
+    """
+    ``apply_action_from_field_id(opened_dicom, field_id, apply_func, filename)``
 
-    :param opened_dicom: the opened dicom file
-    :type opened_dicom: pydicom.Dataset
-    :param field_id: the id (like /0x0194db21/0x238983d92) to apply the function to
-    :type field_id: str
-    :param apply_func: the function to apply
-    :type apply_func: Callable[[pydicom.Dataset, int, str, str], None]
-    :return: None
-    :rtype: None
+    Apply the apply_func to the data element/s at the field id specified in the 
+    dicom provided.
+
+    INPUTS
+    ======
+    
+    --opened_dicom  The opened dicom file.
+    --field_id      The id (like /0x0194db21/0x238983d92) to apply the function 
+                    to.
+    --apply_func    The function to apply.
     """
     field_path = field_id.split('/')
     field_path_int = [get_tag(x) for x in field_path]
@@ -989,12 +1073,13 @@ def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
 
 def strip_dates(dicom_file, replacement_date=None):
     """
-    :param dicom_file: the opened dicom file to strip dates from
-    :type dicom_file: pydicom.FileDataset
-    :param replacement_date: the date string to replace stripped dates with
-    :type replacement_date: str
-    :return: None
-    :rtype: None
+    ``strip_dates(dicom_file, replacement_date=None)``
+
+    INPUTS
+    ======
+
+    --dicom_file        The opened dicom file to strip dates from.
+    --replacement_date  The date string to replace stripped dates with.
     """
 
     if "StudyDate" in dicom_file:
@@ -1029,18 +1114,16 @@ def strip_dates(dicom_file, replacement_date=None):
 
 def date_removal_func(node_id, node_path, node, target_date, replace_date):
     """
-    :param node_id: the id (like /0x0194db21/0x238983d92) of the data element
-    :type node_id: str
-    :param node_path: the path (like /field1name/innername) of the data element
-    :type node_path: str
-    :param node: the data element in the dicom
-    :type node: pydicom.DataElement
-    :param target_date: the date string to replace
-    :type target_date: str
-    :param replace_date: the date string to replace the above string with
-    :type replace_date: str
-    :return: None
-    :rtype: None
+    ``date_removal_func(node_id, node_path, node, target_date, replace_date)``
+
+    INPUTS
+    ======
+
+    --node_id       The id (like /0x0194db21/0x238983d92) of the data element.
+    --node_path     The path (like /field1name/innername) of the data element.
+    --node          The data element in the dicom.
+    --target_date   The date string to replace.
+    --replace_date  The date string to replace the above string with.
     """
     if isinstance(node.value, str):
         node.value = node.value.replace(target_date, replace_date)

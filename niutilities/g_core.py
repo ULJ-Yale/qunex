@@ -3,7 +3,7 @@
 """
 This file holds code for core support functions used by other code for
 preprocessing and analysis. The functions are for internal use
-and can not be called externaly.
+and can not be called externally.
 """
 
 import re
@@ -356,7 +356,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
     INPUTS
     ======
 
-    --calls    ... A list of dictionaries that specifies the commands to run. It
+    --calls        A list of dictionaries that specifies the commands to run. It
                    should consists of:
 
                    - name (the name of the command to run)
@@ -364,9 +364,9 @@ def runExternalParallel(calls, cores=None, prepend=''):
                    - sout (the name of the log file to which to direct the 
                      standard output from the command ran)
 
-    --cores    ... The number of cores to utilize. If specified as None or 
+    --cores        The number of cores to utilize. If specified as None or 
                    'all', all available cores will be utilized.
-    --prepend  ... The string to prepend to each line of progress report.
+    --prepend      The string to prepend to each line of progress report.
 
     EXAMPLE USE
     ===========
@@ -576,18 +576,18 @@ def runInParallel(calls, cores=None, prepend=""):
     INPUTS
     ======
 
-    --calls    ... A list of dictionaries that specifies the commands to run. 
+    --calls        A list of dictionaries that specifies the commands to run. 
                    It should consists of:
 
                    - name (the name of the command to run)
                    - function (the function to be run)
                    - args (the arguments to be passed to the function)
                    - logfile (the path to the log file to which to direct the 
-                   standard output from the command ran)
+                     standard output from the command ran)
 
-    --cores    ... The number of cores to utilize. If specified as None or 
+    --cores        The number of cores to utilize. If specified as None or 
                    'all', all available cores will be utilized.
-    --prepend  ... The string to prepend to each line of progress report.
+    --prepend      The string to prepend to each line of progress report.
 
     EXAMPLE USE
     ===========
@@ -723,11 +723,11 @@ def printAndLog(*args, **kwargs):
     INPUTS
     ======
 
-    - file     ... prints to the file
-    - write    ... creates a file and writes to it
-    - append   ... opens a file and appends to it
-    - silent   ... whether to not print to stdout
-    - end      ... how to end ['\n']
+    --file         Prints to the file.
+    --write        Creates a file and writes to it.
+    --append       Opens a file and appends to it.
+    --silent       Whether to not print to stdout.
+    --end          How to end ['\n'].
     """
 
     silent = kwargs.get('silent', False)
@@ -763,14 +763,14 @@ def getLogFile(folders=None, tags=None):
     INPUTS
     ======
 
-    - folders  ... a dictionary with the known paths
-    - tags     ... an array of strings to use to create the filename
+    --folders      A dictionary with the known paths.
+    --tags         An array of strings to use to create the filename.
 
     OUTPUTS
     =======
 
-    - filename     ... the path to the log file
-    - file handle  ... the file handle of the open file
+    --filename         The path to the log file.
+    --file handle      The file handle of the open file.
     
     USE
     ===

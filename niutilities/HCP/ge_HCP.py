@@ -5,7 +5,7 @@ ge_HCP.py
 
 Functions for exporting HCP style data out of the Qu|Nex suite:
 
-- exportHCP     ... maps HCP style data to Qu|Nex structure
+--exportHCP         maps HCP style data to Qu|Nex structure
 
 The commands are accessible from the terminal using the gmri utility.
 """

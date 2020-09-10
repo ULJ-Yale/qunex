@@ -4,10 +4,20 @@
 g_img.py
 
 Some basic functions to be used for work with nifti and 4dfp images.
+"""
 
-Created by Grega Repovs on 2011-03-05.
-2011-07-30 - added function for reporting basic information
-Copyright (c) Grega Repovs. All rights reserved.
+"""
+~~~~~~~~~~~~~~~~~~
+
+Change log
+
+2011-03-05 Grega Repovš
+           Initial version
+2011-07-30 Grega Repovš
+           Added function for reporting basic information
+
+Copyright (c) Grega Repovs and Jure Demsar.
+All rights reserved.
 """
 
 import struct
@@ -125,11 +135,11 @@ def readBasicInfo(filename):
 
 
 def printniftihdr(filename=None):
-    '''
-    printniftihdr <image_filename>
+    """
+    ``printniftihdr <image_filename>``
 
     Prints the header contents of the NIfTI file.
-    '''
+    """
 
     hdr = niftihdr(filename)
     print hdr
@@ -725,31 +735,38 @@ class niftihdr:
 
 
 def sliceImage(sourcefile, targetfile, frames=1):
-    '''
-    sliceImage sourcefile=<source image> targetfile=<target image> [frames=1]
+    """
+    ``sliceImage sourcefile=<source image> targetfile=<target image> [frames=1]``
 
     Takes the source volume image file, removes all but the first N frames, and
     saves the resulting image to target volume image file.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
-    --sourcefile:   Source volume file (.4dfp, .nii, or .nii.gz)
-    --targetfile:   Target volume file of the same format
-    --frames:       Optional number of initial frames to retain [1]
+    --sourcefile  Source volume file (.4dfp, .nii, or .nii.gz).
+    --targetfile  Target volume file of the same format.
+    --frames      Optional number of initial frames to retain. [1]
 
     EXAMPLE USE
     ===========
 
-    qunex sliceImage sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
-    
-    ---
-    Written by Grega Repovš
+    ::
 
-    Changelog
-    2016-12-25 - Grega Repovš - Adopted from a selfstanding command in the
-                                dofcMRIp package, added documentation.
-    '''
+        qunex sliceImage sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
+    2016-12-25 Grega Repovš
+               Initial version
+    2016-12-25 Grega Repovš
+               Adopted from a selfstanding command in the dofcMRIp package,
+               added documentation.
+    """
     frames = int(frames)
     if 'nii' in getImgFormat(sourcefile):
         sliceNIfTI(sourcefile, targetfile, frames)

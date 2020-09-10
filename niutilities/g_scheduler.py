@@ -4,8 +4,16 @@
 This file holds the functions for running jobs through job schedulers on a
 computer cluster. It supports PBS, LSF, and SLURM. The functions are accessible
 and used both as terminal commands as well as internal use functions.
+"""
 
-Created by Grega Repovs on 2017-06-17.
+"""
+~~~~~~~~~~~~~~~~~~
+
+Change log
+
+2017-06-17 Grega Repovs
+           Initial version
+
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
@@ -21,22 +29,20 @@ import re
 
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
-    '''
-    schedule [command=<command string>] [script=<path to script>] \\
-             settings=<settings string> \\
-             [replace=<"key:value|key:value" string>] \\
-             [workdir=<path to working directory>] \\
-             [environment=<path to environment setup script>] \\
-             [output=<string specifying how to process output>]
+    """
+    ::
 
-    USE
-    ===
+        schedule [command=<command string>] [script=<path to script>] \\
+                 settings=<settings string> \\
+                 [replace=<"key:value|key:value" string>] \\
+                 [workdir=<path to working directory>] \\
+                 [environment=<path to environment setup script>] \\
+                 [output=<string specifying how to process output>]
 
-    Schedules the provided command the referenced script to be run by the
-    specified scheduler (PBS, LSF, SLURM are currently supported).
+    Schedules the provided command.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
     Required parameters
     -------------------
@@ -47,7 +53,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 complex multiline script.
     --script    The path to a script to be executed.
 
-    and the settings need to be specified by:
+    The settings need to be specified by:
 
     --settings  A string specifying the scheduler to be used and the additional
                 settings for it.
@@ -58,14 +64,14 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     scheduler. Additional parameters common to all the schedulers can be
     specified:
 
-    * jobname  - the name of the job to run
-    * comname  - the name of the command the job runs
-    * jobnum   - the number of the job being run
+    - jobname (the name of the job to run)
+    - comname (the name of the command the job runs)
+    - jobnum  (the number of the job being run)
 
-    Example settings strings:
+    Example settings strings::
 
-    "SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
-    "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=anticevic"
+        "SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+        "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=anticevic"
 
     Optional parameters
     -------------------
@@ -83,17 +89,17 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     If the optional parameters are not specified, they will not be used.
 
     VALUE EMBEDDING
-    ===============
+    ---------------
 
     If replace parameter is set, all instances of {{key}} in the command or
     script will be replaced with the provided value. The key/value pairs need
     to be separated by pipe characted, whereas key and value need to be
-    separated by a colon. An example replacement string:
+    separated by a colon. An example replacement string::
 
-    "session:AP23791|folder:/studies/WM/sessions/AP23791"
+        "session:AP23791|folder:/studies/WM/sessions/AP23791"
 
     REDIRECTING OUTPUT
-    ==================
+    ------------------
 
     If no output is specified, the job's standard output and error (stdout,
     stderr) are left as is and processed by the scheduler, and the result of
@@ -101,30 +107,39 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     four different directives provided by "<key>:<value>" strings separated by
     pipe:
 
-    * stdout - specifies a path to a log file that should store standard output
-               of the submitted job
-    * stderr - specified a path to a log file that should store error output
-               of the submitted job
-    * both   - specifies a path to a log file that should store joint standard
-               and error outputs of the submitted job
-    * return - specifies whether standard output ('stdout'), error outpout
-               ('stderr'), both ('both') or none ('none') should be returned as
-               a string from the job submission call.
+    - stdout  (specifies a path to a log file that should store standard output
+      of the submitted job.)
+    - stderr  (specified a path to a log file that should store error output
+      of the submitted job.)
+    - both    (specifies a path to a log file that should store joint standard
+      and error outputs of the submitted job.)
+    - return  (specifies whether standard output ('stdout'), error outpout
+      ('stderr'), both ('both') or none ('none') should be returned as
+      a string from the job submission call.)
 
     Specify "return" value only when schedule is used as a function called from
     another python script or function to process the result.
 
-    Examples:
+    Examples
+    ~~~~~~~~
 
-    * "stdout:processing.log"
-    * "stdout:processing.output.log|stderr:processing.error.log"
-    * "both:processing.log|return:true"
+    ::
+
+        "stdout:processing.log"
+
+    ::
+
+        "stdout:processing.output.log|stderr:processing.error.log"
+
+    ::
+    
+        "both:processing.log|return:true"
 
     Do not specify error and standard outputs both using --output parameter and
     scheduler specific options within settings string.
 
     SCHEDULER SPECIFICS
-    ===================
+    -------------------
 
     Each of the supported scheduler systems has a somewhat different way of
     specifying job parameters. Please see documentation for each of the
@@ -132,93 +147,109 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     information for each of the schedulers on how to specify --settings.
 
     PBS settings
-    ------------
+    ~~~~~~~~~~~~
 
     PBS uses various flags to specify parameters. Be careful that the settings
     string includes only comma separated 'key=value' pairs. Scheduler will then
     do its best to use the right flags. Specifically:
 
     Keys: mem, walltime, software, file, procs, pmem, feature, host,
-    naccesspolicy, epilogue, prologue will be submitted using:
-    "#PBS -l <key>=<value>"
+    naccesspolicy, epilogue, prologue will be submitted using::
 
-    Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using:
-    "#PBS -<key> <value>"
+        "#PBS -l <key>=<value>"
 
-    Key: depend will be submitted using:
-    "#PBS -W depend=<value>"
+    Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using::
 
-    Key: umask will be submitted using:
-    "#PBS -W umask=<value>"
+        "#PBS -<key> <value>"
 
-    Key: nodes is a special case. It will be submitted as:
-    "#PBS -l <value>"
+    Key: depend will be submitted using::
+
+        "#PBS -W depend=<value>"
+
+    Key: umask will be submitted using::
+
+        "#PBS -W umask=<value>"
+
+    Key: nodes is a special case. It will be submitted as::
+
+        "#PBS -l <value>"
 
     LSF settings
-    ------------
+    ~~~~~~~~~~~~
 
     For LSF the following key/value parameters are parsed as:
 
-    * queue    -> "#BSUB -q <queue>"
-    * mem      -> "#BSUB -R 'span[hosts=1] rusage[mem=<mem>]"
-    * walltime -> "#BSUB -W <walltime>"
-    * cores    -> "#BSUB -n <cores>"
+    - queue     (``"#BSUB -q <queue>"``)
+    - mem       (``"#BSUB -R 'span[hosts=1] rusage[mem=<mem>]"``)
+    - walltime  (``"#BSUB -W <walltime>"``)
+    - cores     (``"#BSUB -n <cores>"``)
 
-    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo, jobName
-    will be submitted using:
-    "#BSUB -<key> <value>"
+    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo, 
+    jobName will be submitted using::
+
+        "#BSUB -<key> <value>"
 
     SLURM settings
-    --------------
+    ~~~~~~~~~~~~~~
 
-    For SLURM any provided key/value pair will be passed in the form:
-    "#SBATCH --<key>=<value>"
+    For SLURM any provided key/value pair will be passed in the form::
+
+        "#SBATCH --<key>=<value>"
 
     Some of the possible parameters to set are:
 
-    * partition        ... The partition (queue) to use
-    * nodes            ... Total number of nodes to run on
-    * ntasks           ... Number of tasks
-    * cpus-per-task    ... Number of cores per task
-    * time             ... Maximum wall time DD-HH:MM:SS
-    * constraint       ... Specific node architecture
-    * mem-per-cpu      ... Memory requested per CPU in MB
-    * mail-user        ... Email address to send notifications to
-    * mail-type        ... On what events to send emails
+    - partition        (The partition (queue) to use.)
+    - nodes            (Total number of nodes to run on.)
+    - ntasks           (Number of tasks.)
+    - cpus-per-task    (Number of cores per task.)
+    - time             (Maximum wall time DD-HH:MM:SS.)
+    - constraint       (Specific node architecture.)
+    - mem-per-cpu      (Memory requested per CPU in MB.)
+    - mail-user        (Email address to send notifications to.)
+    - mail-type        (On what events to send emails.)
 
+    USE
+    ===
+
+    Schedules the provided command the referenced script to be run by the
+    specified scheduler (PBS, LSF, SLURM are currently supported).
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
-                   settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
-    ```
+    ::
 
-    ```
-    qunex schedule command="bet {{in}} {{out}}" \\
-                   replace="in:t1.nii.gz|out:brain.nii.gz" \\
-                   settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
-                   workdir="/studies/WM/sessions/AP23791/images/structural"
-    ```
+        qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+
+    ::
+
+        qunex schedule command="bet {{in}} {{out}}" \\
+                       replace="in:t1.nii.gz|out:brain.nii.gz" \\
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
+                       workdir="/studies/WM/sessions/AP23791/images/structural"
+    """
     
-    ----------------
-    Written by Grega Repovš, 2017-06-17
+    """
+    ~~~~~~~~~~~~~~~~~~
 
-    Changelog
-    2017-09-30 - Grega Repovs
-                 Added additional options to scheduling LSF jobs.
-    2017-09-30 - Grega Repovs
-                 Added options to redirect job output to log files.
-    2018-10-03 - Grega Repovs
-                 Added checking for validity of log file directories.
-    2018-10-04 - Grega Repovs
-                 Excluded log validity checking for 'return'.
+    Change log
+
+    2017-06-17 Grega Repovs
+               Initial version
+    2017-09-30 Grega Repovs
+               Added additional options to scheduling LSF jobs
+    2017-09-30 Grega Repovs
+               Added options to redirect job output to log files
+    2018-10-03 Grega Repovs
+               Added checking for validity of log file directories
+    2018-10-04 Grega Repovs
+               Excluded log validity checking for 'return'
     2019-04-25 Grega Repovš
-               - Changed subjects to sessions
+               Changed subjects to sessions
     2019-20-01 Jure Demšar
-               - Upgraded job naming and PBS scheduler
-    '''
+               Upgraded job naming and PBS scheduler
+    """
 
     # --- check inputs
 

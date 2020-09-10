@@ -6,20 +6,20 @@ gp_HCP.py
 This file holds code for running HCP preprocessing pipeline. It
 consists of functions:
 
-- hcpPreFS              ... runs HCP PreFS preprocessing
-- hcpFS                 ... runs HCP FS preprocessing
-- hcpPostFS             ... runs HCP PostFS preprocessing
-- hcpDiffusion          ... runs HCP Diffusion weighted image preprocessing
-- hcpfMRIVolume         ... runs HCP BOLD Volume preprocessing
-- hcpfMRISurface        ... runs HCP BOLD Surface preprocessing
-- hcpICAFix             ... runs HCP ICAFix
-- hcpPostFix            ... runs HCP PostFix
-- hcpReApplyFix         ... runs HCP ReApplyFix
-- hcpMSMAll             ... runs HCP MSMAll
-- hcpDeDriftAndResample ... runs HCP DeDriftAndResample
-- hcpDTIFit             ... runs DTI Fit
-- hcpBedpostx           ... runs Bedpost X
-- mapHCPData            ... maps results of HCP preprocessing into `images` folder
+--hcpPreFS               runs HCP PreFS preprocessing
+--hcpFS                  runs HCP FS preprocessing
+--hcpPostFS              runs HCP PostFS preprocessing
+--hcpDiffusion           runs HCP Diffusion weighted image preprocessing
+--hcpfMRIVolume          runs HCP BOLD Volume preprocessing
+--hcpfMRISurface         runs HCP BOLD Surface preprocessing
+--hcpICAFix              runs HCP ICAFix
+--hcpPostFix             runs HCP PostFix
+--hcpReApplyFix          runs HCP ReApplyFix
+--hcpMSMAll              runs HCP MSMAll
+--hcpDeDriftAndResample  runs HCP DeDriftAndResample
+--hcpDTIFit              runs DTI Fit
+--hcpBedpostx            runs Bedpost X
+--mapHCPData             maps results of HCP preprocessing into `images` folder
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -340,18 +340,18 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions              ... The batch.txt file with all the sessions 
+    --sessions                  The batch.txt file with all the sessions 
                                 information. [batch.txt]
-    --sessionsfolder        ... The path to the study/sessions folder, where the
+    --sessionsfolder            The path to the study/sessions folder, where the
                                 imaging  data is supposed to go. [.]
-    --parsessions           ... How many sessions to run in parallel. [1]
-    --overwrite             ... Whether to overwrite existing data (yes) or not 
+    --parsessions               How many sessions to run in parallel. [1]
+    --overwrite                 Whether to overwrite existing data (yes) or not 
                                 (no). [no]
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+    --hcp_suffix                Specifies a suffix to the session id if multiple
                                 variants are run, empty otherwise. []
-    --logfolder             ... The path to the folder where runlogs and comlogs
+    --logfolder                 The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default. []
-    --log                   ... Whether to keep ('keep') or remove ('remove') 
+    --log                       Whether to keep ('keep') or remove ('remove') 
                                 the temporary logs once jobs are completed 
                                 ['keep']. When a comma or pipe ('|') separated 
                                 list is given, the log will be created at the 
@@ -365,16 +365,16 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                                 - '<path>' (for an arbitrary directory)
 
-    --hcp_processing_mode   ... Controls whether the HCP acquisition and 
+    --hcp_processing_mode       Controls whether the HCP acquisition and 
                                 processing guidelines should be treated as 
                                 requirements (HCPStyleData) or if additional 
                                 processing functionality is allowed 
                                 (LegacyStyleData). In this case running 
                                 processing w/o a T2w image.
-    --hcp_folderstructure   ... Specifies the version of the folder structure to
+    --hcp_folderstructure       Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported.
                                 ['hcpls']
-    --hcp_filename          ... Specifies whether the standard ('standard') 
+    --hcp_filename              Specifies whether the standard ('standard') 
                                 filenames or the specified original names 
                                 ('original') are to be used. ['standard']
 
@@ -384,25 +384,25 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
     
-    --hcp_t2                  ... NONE if no T2w image is available and the
+    --hcp_t2                      NONE if no T2w image is available and the
                                   preprocessing should be run without them,
                                   anything else otherwise. NONE is only 
                                   valid if 'LegacyStyleData' processing mode was
                                   specified. [t2]
-    --hcp_brainsize           ... Specifies the size of the brain in mm. 170 is 
+    --hcp_brainsize               Specifies the size of the brain in mm. 170 is 
                                   FSL default and seems to be a good choice, HCP
                                   uses 150, which can lead to problems with 
                                   larger heads. [150]
-    --hcp_t1samplespacing     ... T1 image sample spacing, NONE if not used.
+    --hcp_t1samplespacing         T1 image sample spacing, NONE if not used.
                                   [NONE]
-    --hcp_t2samplespacing     ... T2 image sample spacing, NONE if not used.
+    --hcp_t2samplespacing         T2 image sample spacing, NONE if not used.
                                   [NONE]
-    --hcp_gdcoeffs            ... Path to a file containing gradient distortion
+    --hcp_gdcoeffs                Path to a file containing gradient distortion
                                   coefficients, alternatively a string 
                                   describing multiple options (see below), or 
                                   "NONE", if not used. [NONE]
-    --hcp_bfsigma             ... Bias Field Smoothing Sigma (optional). []
-    --hcp_avgrdcmethod        ... Averaging and readout distortion correction
+    --hcp_bfsigma                 Bias Field Smoothing Sigma (optional). []
+    --hcp_avgrdcmethod            Averaging and readout distortion correction
                                   method. [NONE]
                                   Can take the following values:
 
@@ -417,22 +417,22 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                   - TOPUP (average any repeats and use spin echo
                                     field map for readout correction)
                                 
-    --hcp_unwarpdir           ... Readout direction of the T1w and T2w images
+    --hcp_unwarpdir               Readout direction of the T1w and T2w images
                                   (x, y, z or NONE); used with either a regular 
                                   field map or a spin echo field map. [NONE]
-    --hcp_echodiff            ... Difference in TE times if a fieldmap image is
+    --hcp_echodiff                Difference in TE times if a fieldmap image is
                                   used, set to NONE if not used. [NONE]
-    --hcp_seechospacing       ... Echo Spacing or Dwelltime of Spin Echo Field 
+    --hcp_seechospacing           Echo Spacing or Dwelltime of Spin Echo Field 
                                   Map or "NONE" if not used. [NONE]
-    --hcp_sephasepos          ... Label for the positive image of the Spin Echo 
+    --hcp_sephasepos              Label for the positive image of the Spin Echo 
                                   Field Map pair. [""]
-    --hcp_sephaseneg          ... Label for the negative image of the Spin Echo 
+    --hcp_sephaseneg              Label for the negative image of the Spin Echo 
                                   Field Map pair. [""]
-    --hcp_seunwarpdir         ... Phase encoding direction of the Spin Echo 
+    --hcp_seunwarpdir             Phase encoding direction of the Spin Echo 
                                   Field Map (x, y or NONE). [NONE]
-    --hcp_topupconfig         ... Path to a configuration file for TOPUP method
+    --hcp_topupconfig             Path to a configuration file for TOPUP method
                                   or "NONE" if not used. [NONE]
-    --hcp_prefs_custombrain   ... Whether to only run the final registration 
+    --hcp_prefs_custombrain       Whether to only run the final registration 
                                   using either a custom prepared brain mask 
                                   (MASK) or custom prepared brain images 
                                   (CUSTOM), or to run the full set of processing
@@ -449,7 +449,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                   - `T2w_acpc_dc_restore_brain.nii.gz`
                                   - `T2w_acpc_dc_restore.nii.gz`
 
-    --hcp_prefs_template_res  ... The resolution (in mm) of the structural 
+    --hcp_prefs_template_res      The resolution (in mm) of the structural 
                                   images templates to use in the preFS step. 
                                   Note: it should match the resolution of the 
                                   acquired structural images.
@@ -883,18 +883,18 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions              ... The batch.txt file with all the sessions 
+    --sessions                  The batch.txt file with all the sessions 
                                 information. [batch.txt]
-    --sessionsfolder        ... The path to the study/sessions folder, where the
+    --sessionsfolder            The path to the study/sessions folder, where the
                                 imaging  data is supposed to go. [.]
-    --parsessions           ... How many sessions to run in parallel. [1]
-    --overwrite             ... Whether to overwrite existing data (yes) or not 
+    --parsessions               How many sessions to run in parallel. [1]
+    --overwrite                 Whether to overwrite existing data (yes) or not 
                                 (no). [no]
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+    --hcp_suffix                Specifies a suffix to the session id if multiple
                                 variants are run, empty otherwise. []
-    --logfolder             ... The path to the folder where runlogs and comlogs
+    --logfolder                 The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default. []
-    --log                   ... Whether to keep ('keep') or remove ('remove') 
+    --log                       Whether to keep ('keep') or remove ('remove') 
                                 the temporary logs once jobs are completed 
                                 ['keep']. When a comma or pipe ('|') separated 
                                 list is given, the log will be created at the 
@@ -908,16 +908,16 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                                 - '<path>' (for an arbitrary directory)
 
-    --hcp_processing_mode   ... Controls whether the HCP acquisition and 
+    --hcp_processing_mode       Controls whether the HCP acquisition and 
                                 processing guidelines should be treated as 
                                 requirements (HCPStyleData) or if additional 
                                 processing functionality is allowed 
                                 (LegacyStyleData). In this case running 
                                 processing w/o a T2w image.
-    --hcp_folderstructure   ... Specifies the version of the folder structure to
+    --hcp_folderstructure       Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported.
                                 ['hcpls']
-    --hcp_filename          ... Specifies whether the standard ('standard') 
+    --hcp_filename              Specifies whether the standard ('standard') 
                                 filenames or the specified original names 
                                 ('original') are to be used. ['standard']
     
@@ -928,9 +928,9 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     These are optional parameters. Please note that they will only be used
     when HCP Pipelines are used. They are not implemented in hcpmodified!
     
-    --hcp_fs_seed              ... Recon-all seed value. If not specified, none
+    --hcp_fs_seed                  Recon-all seed value. If not specified, none
                                    will be used. []
-    --hcp_fs_existing_session  ... Indicates that the command is to be run on
+    --hcp_fs_existing_session      Indicates that the command is to be run on
                                    top of an already existing analysis/subject.
                                    This excludes the `-i` flag from the 
                                    invocation of recon-all. If set, the
@@ -938,14 +938,14 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                    to run using the --hcp_fs_extra_reconall
                                    parameter. Accepted values are TRUE and 
                                    FALSE. [FALSE]
-    --hcp_fs_extra_reconall    ... A string with extra parameters to pass to 
+    --hcp_fs_extra_reconall        A string with extra parameters to pass to 
                                    FreeSurfer recon-all. The extra parameters 
                                    are to be listed in a pipe ('|') separated 
                                    string. Parameters and their values need to 
                                    be listed separately. E.g. to pass 
                                    `-norm3diters 3` to reconall, the string has 
                                    to be: "-norm3diters|3". []
-    --hcp_fs_flair             ... If set to TRUE indicates that recon-all is to 
+    --hcp_fs_flair                 If set to TRUE indicates that recon-all is to 
                                    be run with the -FLAIR/-FLAIRpial options
                                    (rather than the -T2/-T2pial options).
                                    The FLAIR input image itself should be 
@@ -957,28 +957,28 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     Please note, that these settings will only be used when LegacyStyleData 
     processing mode is specified!
     
-    --hcp_t2                ... NONE if no T2w image is available and the
+    --hcp_t2                    NONE if no T2w image is available and the
                                 preprocessing should be run without them,
                                 anything else otherwise [t2]. NONE is only valid
                                 if 'LegacyStyleData' processing mode was 
                                 specified.
-    --hcp_expert_file       ... Path to the read-in expert options file for
+    --hcp_expert_file           Path to the read-in expert options file for
                                 FreeSurfer if one is prepared and should be used
                                 empty otherwise. []
-    --hcp_control_points    ... Specify YES to use manual control points or
+    --hcp_control_points        Specify YES to use manual control points or
                                 empty otherwise. [] (currently not available)
-    --hcp_wm_edits          ... Specify YES to use manually edited WM mask or
+    --hcp_wm_edits              Specify YES to use manually edited WM mask or
                                 empty otherwise. [] (currently not available)
-    --hcp_fs_brainmask      ... Specify 'original' to keep the masked original 
+    --hcp_fs_brainmask          Specify 'original' to keep the masked original 
                                 brain image; 'manual' to use the manually edited
                                 brainmask file; default 'fs' uses the brainmask 
                                 generated by mri_watershed. [fs] (currently not 
                                 available)
-    --hcp_autotopofix_off   ... Specify YES to turn off the automatic topologic 
+    --hcp_autotopofix_off       Specify YES to turn off the automatic topologic 
                                 fix step in FS and compute WM surface 
                                 deterministically from manual WM mask, or empty 
                                 otherwise. [] (currently not available)                            
-    --hcp_freesurfer_home   ... Path for FreeSurfer home folder can be manually
+    --hcp_freesurfer_home       Path for FreeSurfer home folder can be manually
                                 specified to override default environment 
                                 variable to ensure backwards compatiblity and 
                                 hcp2 customization.
@@ -1347,18 +1347,18 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions        ... The batch.txt file with all the sessions information.
+    --sessions            The batch.txt file with all the sessions information.
                           [batch.txt]
-    --sessionsfolder  ... The path to the study/subjects folder, where the
+    --sessionsfolder      The path to the study/subjects folder, where the
                           imaging data is supposed to go. [.]
-    --parsessions     ... How many sessions to run in parallel. [1]
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no).
+    --parsessions         How many sessions to run in parallel. [1]
+    --overwrite           Whether to overwrite existing data (yes) or not (no).
                           [no]
-    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+    --hcp_suffix          Specifies a suffix to the session id if multiple
                           variants are run, empty otherwise. []
-    --logfolder       ... The path to the folder where runlogs and comlogs
+    --logfolder           The path to the folder where runlogs and comlogs
                           are to be stored, if other than default. []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
+    --log                 Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed. ['keep']
                           When a comma or pipe ('|') separated list is given, 
                           the log will be created at the first provided 
@@ -1371,10 +1371,10 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                           - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                           - '<path>' (for an arbitrary directory)
                           
-    --hcp_folderstructure   ... Specifies the version of the folder structure to
+    --hcp_folderstructure       Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported. 
                                 ['hcpls']
-    --hcp_filename          ... Specifies whether the standard ('standard') 
+    --hcp_filename              Specifies whether the standard ('standard') 
                                 filenames or the specified original names 
                                 ('original') are to be used. ['standard']
 
@@ -1384,33 +1384,33 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_t2                 ... NONE if no T2w image is available and the
+    --hcp_t2                     NONE if no T2w image is available and the
                                  preprocessing should be run without them,
                                  anything else otherwise. [t2]
-    --hcp_expert_file        ... Path to the read-in expert options file for
+    --hcp_expert_file            Path to the read-in expert options file for
                                  FreeSurfer if one is prepared and should be
                                  used empty otherwise. []
-    --hcp_control_points     ... Specify YES to use manual control points or
+    --hcp_control_points         Specify YES to use manual control points or
                                  empty otherwise. []
-    --hcp_wm_edits           ... Specify YES to use manually edited WM mask or
+    --hcp_wm_edits               Specify YES to use manually edited WM mask or
                                  empty otherwise. []
-    --hcp_fs_brainmask       ... Specify 'original' to keep the masked original 
+    --hcp_fs_brainmask           Specify 'original' to keep the masked original 
                                  brain image; 'manual' to use the manually 
                                  edited brainmask file; default 'fs' uses the 
                                  brainmask generated by mri_watershed. [fs]
-    --hcp_autotopofix_off    ... Specify YES to turn off the automatic 
+    --hcp_autotopofix_off        Specify YES to turn off the automatic 
                                  topological fix step in FS and compute WM 
                                  surface deterministically from manual WM mask, 
                                  or empty otherwise. []                           
-    --hcp_freesurfer_home    ... Path for FreeSurfer home folder can be manually
+    --hcp_freesurfer_home        Path for FreeSurfer home folder can be manually
                                  specified to override default environment 
                                  variable to ensure backwards compatibility and 
                                  hcp2 customization.
-    --hcp_freesurfer_module  ... Whether to load FreeSurfer as a module on the 
+    --hcp_freesurfer_module      Whether to load FreeSurfer as a module on the 
                                  cluster. You can specify using YES or empty 
                                  otherwise. [] To ensure backwards compatibility 
                                  and hcp2 customization.
-    --hcp_fs_longitudinal    ... The name of the FS longitudinal template to
+    --hcp_fs_longitudinal        The name of the FS longitudinal template to
                                  be used for the template resulting from this 
                                  command call.
 
@@ -1687,18 +1687,18 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions              ... The batch.txt file with all the sessions 
+    --sessions                  The batch.txt file with all the sessions 
                                 information. [batch.txt]
-    --sessionsfolder        ... The path to the study/sessions folder, where the
+    --sessionsfolder            The path to the study/sessions folder, where the
                                 imaging  data is supposed to go. [.]
-    --parsessions           ... How many sessions to run in parallel. [1]
-    --overwrite             ... Whether to overwrite existing data (yes) or not 
+    --parsessions               How many sessions to run in parallel. [1]
+    --overwrite                 Whether to overwrite existing data (yes) or not 
                                 (no). [no]
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+    --hcp_suffix                Specifies a suffix to the session id if multiple
                                 variants are run, empty otherwise. []
-    --logfolder             ... The path to the folder where runlogs and comlogs
+    --logfolder                 The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default. []
-    --log                   ... Whether to keep ('keep') or remove ('remove') 
+    --log                       Whether to keep ('keep') or remove ('remove') 
                                 the temporary logs once jobs are completed 
                                 ['keep']. When a comma or pipe ('|') separated 
                                 list is given, the log will be created at the 
@@ -1712,16 +1712,16 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                                 - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                                 - '<path>' (for an arbitrary directory)
 
-    --hcp_processing_mode   ... Controls whether the HCP acquisition and 
+    --hcp_processing_mode       Controls whether the HCP acquisition and 
                                 processing guidelines should be treated as 
                                 requirements (HCPStyleData) or if additional 
                                 processing functionality is allowed 
                                 (LegacyStyleData). In this case running 
                                 processing w/o a T2w image.
-    --hcp_folderstructure   ... Specifies the version of the folder structure to
+    --hcp_folderstructure       Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported.
                                 ['hcpls']
-    --hcp_filename          ... Specifies whether the standard ('standard') 
+    --hcp_filename              Specifies whether the standard ('standard') 
                                 filenames or the specified original names 
                                 ('original') are to be used. ['standard']
 
@@ -1731,22 +1731,22 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_t2                 ... NONE if no T2w image is available and the
+    --hcp_t2                     NONE if no T2w image is available and the
                                  preprocessing should be run without them,
                                  anything else otherwise [t2]. NONE is only 
                                  valid if 'LegacyStyleData' processing mode was 
                                  specified.
-    --hcp_grayordinatesres   ... The resolution of the volume part of the
+    --hcp_grayordinatesres       The resolution of the volume part of the
                                  grayordinate representation in mm. [2]
-    --hcp_hiresmesh          ... The number of vertices for the high resolution
+    --hcp_hiresmesh              The number of vertices for the high resolution
                                  mesh of each hemisphere (in thousands). [164]
-    --hcp_lowresmesh         ... The number of vertices for the low resolution
+    --hcp_lowresmesh             The number of vertices for the low resolution
                                  mesh of each hemisphere (in thousands). [32]
-    --hcp_regname            ... The registration used, FS or MSMSulc. [MSMSulc]
-    --hcp_mcsigma            ... Correction sigma used for metric smoothing.
+    --hcp_regname                The registration used, FS or MSMSulc. [MSMSulc]
+    --hcp_mcsigma                Correction sigma used for metric smoothing.
                                  [sqrt(200)]
-    --hcp_inflatescale       ... Inflate extra scale parameter. [1]
-    --hcp_fs_longitudinal    ... The name of the FS longitudinal template if one
+    --hcp_inflatescale           Inflate extra scale parameter. [1]
+    --hcp_fs_longitudinal        The name of the FS longitudinal template if one
                                  was created and is to be used in this step. 
                                  (currently not available)
 
@@ -1969,18 +1969,18 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions        ... The batch.txt file with all the sessions information.
+    --sessions            The batch.txt file with all the sessions information.
                           [batch.txt]
-    --sessionsfolder  ... The path to the study/sessions folder, where the
+    --sessionsfolder      The path to the study/sessions folder, where the
                           imaging data is supposed to go. [.]
-    --parsessions     ... How many sessions to run in parallel. [1]
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no).
+    --parsessions         How many sessions to run in parallel. [1]
+    --overwrite           Whether to overwrite existing data (yes) or not (no).
                           [no]
-    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+    --hcp_suffix          Specifies a suffix to the session id if multiple
                           variants are run, empty otherwise. []
-    --logfolder       ... The path to the folder where runlogs and comlogs
+    --logfolder           The path to the folder where runlogs and comlogs
                           are to be stored, if other than default. []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
+    --log                 Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed. ['keep']
                           When a comma or pipe ('|') separated list is given, 
                           the log will be created at the first provided location
@@ -1999,15 +1999,15 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     Image acquisition details
     -------------------------
 
-    --hcp_dwi_echospacing    ... Echo Spacing or Dwelltime of DWI images.
+    --hcp_dwi_echospacing        Echo Spacing or Dwelltime of DWI images.
                                  [0.00035]
 
     Distortion correction details
     -----------------------------
 
-    --hcp_dwi_PEdir          ... The direction of unwarping. Use 1 for LR/RL
+    --hcp_dwi_PEdir              The direction of unwarping. Use 1 for LR/RL
                                  Use 2 for AP/PA. [2]
-    --hcp_dwi_gdcoeffs       ... A path to a file containing gradient distortion
+    --hcp_dwi_gdcoeffs           A path to a file containing gradient distortion
                                  coefficients, alternatively a string describing
                                  multiple options (see below), or "NONE", if not 
                                  used. [NONE]
@@ -2015,11 +2015,11 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     Eddy post processing parameters
     -------------------------------
 
-    --hcp_dwi_dof           ... Degrees of Freedom for post eddy registration to 
+    --hcp_dwi_dof               Degrees of Freedom for post eddy registration to 
                                 structural images. [6]
-    --hcp_dwi_b0maxbval     ... Volumes with a bvalue smaller than this value 
+    --hcp_dwi_b0maxbval         Volumes with a bvalue smaller than this value 
                                 will be considered as b0s. [50]
-    --hcp_dwi_combinedata   ... Specified value is passed as the CombineDataFlag 
+    --hcp_dwi_combinedata       Specified value is passed as the CombineDataFlag 
                                 value for the eddy_postproc.sh script. If JAC 
                                 resampling has been used in eddy, this value 
                                 determines what to do with the output file. [1]
@@ -2032,7 +2032,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 - 0 (as 1, but also include uncombined single 
                                   volumes)
                                 
-    --hcp_dwi_extraeddyarg  ... A string specifying additional arguments to pass
+    --hcp_dwi_extraeddyarg      A string specifying additional arguments to pass
                                 to the DiffPreprocPipeline_Eddy.sh script and 
                                 subsequently to the run_eddy.sh script and 
                                 finally to the command that actually invokes the 
@@ -2296,25 +2296,25 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions              ... The batch.txt file with all the sessions 
+    --sessions                  The batch.txt file with all the sessions 
                                 information. [batch.txt]
-    --sessionsfolder        ... The path to the study/sessions folder, where the
+    --sessionsfolder            The path to the study/sessions folder, where the
                                 imaging  data is supposed to go. [.]
-    --parsessions           ... How many sessions to run in parallel. [1]
-    --parelements           ... How many elements (e.g bolds) to run in
+    --parsessions               How many sessions to run in parallel. [1]
+    --parelements               How many elements (e.g bolds) to run in
                                 parallel. [1]
-    --bolds                 ... Which bold images (as they are specified in the
+    --bolds                     Which bold images (as they are specified in the
                                 batch.txt file) to process. It can be a single
                                 type (e.g. 'task'), a pipe separated list (e.g.
                                 'WM|Control|rest') or 'all' to process all.
                                 [all]
-    --overwrite             ... Whether to overwrite existing data (yes) or not 
+    --overwrite                 Whether to overwrite existing data (yes) or not 
                                 (no). [no]
-    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+    --hcp_suffix                Specifies a suffix to the session id if multiple
                                 variants are run, empty otherwise. []
-    --logfolder             ... The path to the folder where runlogs and comlogs
+    --logfolder                 The path to the folder where runlogs and comlogs
                                 are to be stored, if other than default. []
-    --log                   ... Whether to keep ('keep') or remove ('remove') 
+    --log                       Whether to keep ('keep') or remove ('remove') 
                                 the temporary logs once jobs are completed 
                                 ['keep']. When a comma or pipe ('|') separated 
                                 list is given, the log will be created at the 
@@ -2328,7 +2328,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                 - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                                 - '<path>' (for an arbitrary directory)
 
-    --hcp_processing_mode   ... Controls whether the HCP acquisition and 
+    --hcp_processing_mode       Controls whether the HCP acquisition and 
                                 processing guidelines should be treated as 
                                 requirements (HCPStyleData) or if additional 
                                 processing functionality is allowed 
@@ -2336,10 +2336,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                 processing with slice timing correction,
                                 external BOLD reference, or without a distortion 
                                 correction method.
-    --hcp_folderstructure   ... Specifies the version of the folder structure to
+    --hcp_folderstructure       Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported. 
                                 ['hcpls']
-    --hcp_filename          ... Specifies whether the standard ('standard') 
+    --hcp_filename              Specifies whether the standard ('standard') 
                                 filenames or the specified original names 
                                 ('original') are to be used. ['standard']
 
@@ -2350,25 +2350,25 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     Specific parameters
     -------------------
 
-    --hcp_bold_biascorrection   ... Whether to perform bias correction for BOLD 
+    --hcp_bold_biascorrection       Whether to perform bias correction for BOLD 
                                     images. NONE or Legacy. [NONE]
-    --hcp_bold_usejacobian      ... Whether to apply the jacobian of the 
+    --hcp_bold_usejacobian          Whether to apply the jacobian of the 
                                     distortion correction to fMRI data.
 
     Use of FS longitudinal template
     -------------------------------
 
-    --hcp_fs_longitudinal  ... The name of the FS longitudinal template if one
+    --hcp_fs_longitudinal      The name of the FS longitudinal template if one
                                was created and is to be used in this step. 
                                (This parameter is currently not supported)
 
     Naming options
     --------------
 
-    --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
+    --hcp_bold_prefix            To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. [BOLD]
-    --hcp_filename           ... Specifies whether BOLD names are to be created
+    --hcp_filename               Specifies whether BOLD names are to be created
                                  using sequential numbers ('standard') using the 
                                  formula `<hcp_bold_prefix>_[N]` (e.g. BOLD_3) 
                                  or actual bold names ('original', e.g. 
@@ -2377,40 +2377,40 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     Image acquisition details
     -------------------------
 
-    --hcp_bold_echospacing      ... Echo Spacing or Dwelltime of BOLD images.
+    --hcp_bold_echospacing          Echo Spacing or Dwelltime of BOLD images.
                                     [0.00035]
-    --hcp_bold_sbref            ... Whether BOLD Reference images should be used
+    --hcp_bold_sbref                Whether BOLD Reference images should be used
                                     - NONE or USE. [NONE]
 
     Distortion correction details
     -----------------------------
 
-    --hcp_bold_dcmethod      ... BOLD image deformation correction that should
+    --hcp_bold_dcmethod          BOLD image deformation correction that should
                                  be used: TOPUP, FIELDMAP / SiemensFieldMap,
                                  GeneralElectricFieldMap or NONE. [TOPUP]
-    --hcp_bold_echodiff      ... Delta TE for BOLD fieldmap images or NONE if
+    --hcp_bold_echodiff          Delta TE for BOLD fieldmap images or NONE if
                                  not used. [NONE]
-    --hcp_bold_sephasepos    ... Label for the positive image of the Spin Echo 
+    --hcp_bold_sephasepos        Label for the positive image of the Spin Echo 
                                  Field Map pair []
-    --hcp_bold_sephaseneg    ... Label for the negative image of the Spin Echo 
+    --hcp_bold_sephaseneg        Label for the negative image of the Spin Echo 
                                  Field Map pair []
-    --hcp_bold_unwarpdir     ... The direction of unwarping. Can be specified
+    --hcp_bold_unwarpdir         The direction of unwarping. Can be specified
                                  separately for LR/RL : `'LR=x|RL=-x|x'` or
                                  separately for PA/AP : `'PA=y|AP=y-|y-'`. [y]
-    --hcp_bold_res           ... Target image resolution. 2mm recommended. [2].
-    --hcp_bold_gdcoeffs      ... Gradient distortion correction coefficients
+    --hcp_bold_res               Target image resolution. 2mm recommended. [2].
+    --hcp_bold_gdcoeffs          Gradient distortion correction coefficients
                                  or NONE. [NONE]
 
     Slice timing correction
     -----------------------
 
-    --hcp_bold_doslicetime       ... Whether to do slice timing correction TRUE 
+    --hcp_bold_doslicetime           Whether to do slice timing correction TRUE 
                                      or FALSE. []
-    --hcp_bold_slicetimerparams  ... A comma or pipe separated string of 
+    --hcp_bold_slicetimerparams      A comma or pipe separated string of 
                                      parameters for FSL slicetimer.
-    --hcp_bold_stcorrdir         ... (*) The direction of slice acquisition 
+    --hcp_bold_stcorrdir             (*) The direction of slice acquisition 
                                      ('up' or 'down'. [up]
-    --hcp_bold_stcorrint         ... (*) Whether slices were acquired in an 
+    --hcp_bold_stcorrint             (*) Whether slices were acquired in an 
                                      interleaved fashion (odd) or not (empty).
                                      [odd]
 
@@ -2420,22 +2420,22 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     Motion correction and atlas registration
     ----------------------------------------
 
-    --hcp_bold_preregistertool  ... What tool to use to preregister BOLDs before
+    --hcp_bold_preregistertool      What tool to use to preregister BOLDs before
                                     FSL BBR is run, epi_reg (default) or flirt.
                                     [epi_reg]
-    --hcp_bold_movreg           ... Whether to use FLIRT (default and best for
+    --hcp_bold_movreg               Whether to use FLIRT (default and best for
                                     multiband images) or MCFLIRT for motion
                                     correction. [FLIRT]
-    --hcp_bold_movref           ... (*) What reference to use for movement 
+    --hcp_bold_movref               (*) What reference to use for movement 
                                     correction (independent, first). 
                                     [independent]
-    --hcp_bold_seimg            ... (*) What image to use for spin-echo 
+    --hcp_bold_seimg                (*) What image to use for spin-echo 
                                     distortion correction (independent, first). 
                                     [independent]
-    --hcp_bold_refreg           ... (*) Whether to use only linear (default) or 
+    --hcp_bold_refreg               (*) Whether to use only linear (default) or 
                                     also nonlinear registration of motion 
                                     corrected bold to reference. [linear]
-    --hcp_bold_mask             ... (*) Specifies what mask to use for the final 
+    --hcp_bold_mask                 (*) Specifies what mask to use for the final 
                                     bold:
 
                                     - T1_fMRI_FOV: combined T1w brain mask and 
@@ -3292,24 +3292,24 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions        ... The batch.txt file with all the sessions information.
+    --sessions            The batch.txt file with all the sessions information.
                           [batch.txt]
-    --sessionsfolder  ... The path to the study/sessions folder, where the
+    --sessionsfolder      The path to the study/sessions folder, where the
                           imaging data is supposed to go. [.]
-    --parsessions     ... How many sessions to run in parallel. [1]
-    --parelements     ... How many elements (e.g bolds) to run in
+    --parsessions         How many sessions to run in parallel. [1]
+    --parelements         How many elements (e.g bolds) to run in
                           parallel. [1]
-    --bolds           ... Which bold images (as they are specified in the
+    --bolds               Which bold images (as they are specified in the
                           batch.txt file) to process. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
                           'WM|Control|rest') or 'all' to process all [all].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no).
+    --overwrite           Whether to overwrite existing data (yes) or not (no).
                           [no]
-    --hcp_suffix      ... Specifies a suffix to the session id if multiple
+    --hcp_suffix          Specifies a suffix to the session id if multiple
                           variants are run, empty otherwise. []
-    --logfolder       ... The path to the folder where runlogs and comlogs
+    --logfolder           The path to the folder where runlogs and comlogs
                           are to be stored, if other than default. []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
+    --log                 Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed. ['keep']
                           When a comma or pipe ('|') separated list is given, 
                           the log will be created at the first provided location
@@ -3322,10 +3322,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                           - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                           - '<path>' (for an arbitrary directory)
 
-    --hcp_folderstructure   ... Specifies the version of the folder structure to
+    --hcp_folderstructure       Specifies the version of the folder structure to
                                 use, 'initial' and 'hcpls' are supported. 
                                 ['hcpls']
-    --hcp_filename          ... Specifies whether the standard ('standard') 
+    --hcp_filename              Specifies whether the standard ('standard') 
                                 filenames or the specified original names 
                                 ('original') are to be used. ['standard']
 
@@ -3335,7 +3335,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     Use of FS longitudinal template
     -------------------------------
 
-    --hcp_fs_longitudinal  ... (*) The name of the FS longitudinal template if 
+    --hcp_fs_longitudinal      (*) The name of the FS longitudinal template if 
                                one was created and is to be used in this step.
     
     (*) This parameter is currently not in use
@@ -3343,23 +3343,23 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     Naming options
     --------------
 
-    --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
+    --hcp_bold_prefix            To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. []
 
     Grayordinate image mapping details
     ----------------------------------
 
-    --hcp_lowresmesh         ... The number of vertices to be used in the
+    --hcp_lowresmesh             The number of vertices to be used in the
                                  low-resolution grayordinate mesh 
                                  (in thousands). [32]
-    --hcp_bold_res           ... The resolution of the BOLD volume data in mm.
+    --hcp_bold_res               The resolution of the BOLD volume data in mm.
                                  [2]
-    --hcp_grayordinatesres   ... The size of voxels for the subcortical and
+    --hcp_grayordinatesres       The size of voxels for the subcortical and
                                  cerebellar data in grayordinate space in mm.
                                  [2]
-    --hcp_bold_smoothFWHM    ... The size of the smoothing kernel (in mm). [2]
-    --hcp_regname            ... The name of the registration used. [MSMSulc]
+    --hcp_bold_smoothFWHM        The size of the smoothing kernel (in mm). [2]
+    --hcp_regname                The name of the registration used. [MSMSulc]
 
     OUTPUTS
     =======
@@ -3903,20 +3903,20 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     General parameters
     ------------------
 
-    --sessions          ... The batch.txt file with all the sessions 
+    --sessions              The batch.txt file with all the sessions 
                             information. [batch.txt]
-    --sessionsfolder    ... The path to the study/sessions folder, where the
+    --sessionsfolder        The path to the study/sessions folder, where the
                             imaging  data is supposed to go. [.]
-    --parsessions       ... How many sessions to run in parallel. [1]
-    --parelements       ... How many elements (e.g bolds) to run in
+    --parsessions           How many sessions to run in parallel. [1]
+    --parelements           How many elements (e.g bolds) to run in
                             parralel. [1]
-    --overwrite         ... Whether to overwrite existing data (yes)
+    --overwrite             Whether to overwrite existing data (yes)
                             or not (no). [no]
-    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+    --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
-    --logfolder         ... The path to the folder where runlogs and comlogs
+    --logfolder             The path to the folder where runlogs and comlogs
                             are to be stored, if other than default []
-    --log               ... Whether to keep ('keep') or remove ('remove') the
+    --log                   Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
                             When a comma or pipe ('|') separated list is given, 
                             the log will be created at the first provided
@@ -3935,7 +3935,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_icafix_bolds                ... Specify a list of bolds for ICAFix.
+    --hcp_icafix_bolds                    Specify a list of bolds for ICAFix.
                                           You can specify a comma separated list
                                           of bolds, e.g. 
                                           "<boldname1>,<boldname2>", in this
@@ -3953,18 +3953,18 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                           bolds together and execute multi-run
                                           HCP ICAFix, the concatenated file will
                                           be named fMRI_CONCAT_ALL. []
-    --hcp_icafix_highpass             ... Value for the highpass filter,
+    --hcp_icafix_highpass                 Value for the highpass filter,
                                           [0] for multi-run HCP ICAFix and
                                           [2000] for single-run HCP ICAFix.
-    --hcp_matlab_mode                 ... Specifies the Matlab version, can be
+    --hcp_matlab_mode                     Specifies the Matlab version, can be
                                           interpreted, compiled or octave.
                                           [compiled]
-    --hcp_icafix_domotionreg          ... Whether to regress motion parameters 
+    --hcp_icafix_domotionreg              Whether to regress motion parameters 
                                           as part of the cleaning. The default 
                                           value for single-run HCP ICAFix is 
                                           [TRUE], while the default for 
                                           multi-run HCP ICAFix is [FALSE].
-    --hcp_icafix_traindata            ... Which file to use for training data.
+    --hcp_icafix_traindata                Which file to use for training data.
                                           You can provide a full path to a file 
                                           or just a filename if the file is in 
                                           the ${FSL_FIXDIR}/training_files 
@@ -3972,13 +3972,13 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                                           and
                                           [HCP_Style_Single_Multirun_Dedrift.RData]
                                           for multi-run HCP ICAFix.
-    --hcp_icafix_threshold            ... ICAFix threshold that controls the
+    --hcp_icafix_threshold                ICAFix threshold that controls the
                                           sensitivity/specificity tradeoff. [10]
-    --hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
+    --hcp_icafix_deleteintermediates      If TRUE, deletes both the concatenated
                                           high-pass filtered and non-filtered 
                                           timeseries files that are 
                                           prerequisites to FIX cleaning. [FALSE]
-    --hcp_icafix_postfix              ... Whether to automatically run HCP 
+    --hcp_icafix_postfix                  Whether to automatically run HCP 
                                           PostFix if HCP ICAFix finishes
                                           successfully. [TRUE]
 
@@ -4454,20 +4454,20 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     General parameters
     ------------------
 
-    --sessions          ... The batch.txt file with all the sessions 
+    --sessions              The batch.txt file with all the sessions 
                             information. [batch.txt]
-    --sessionsfolder    ... The path to the study/sessions folder, where the
+    --sessionsfolder        The path to the study/sessions folder, where the
                             imaging  data is supposed to go. [.]
-    --parsessions       ... How many sessions to run in parallel. [1]
-    --parelements       ... How many elements (e.g bolds) to run in
+    --parsessions           How many sessions to run in parallel. [1]
+    --parelements           How many elements (e.g bolds) to run in
                             parallel. [1]
-    --overwrite         ... Whether to overwrite existing data (yes)
+    --overwrite             Whether to overwrite existing data (yes)
                             or not (no). [no]
-    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+    --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
-    --logfolder         ... The path to the folder where runlogs and comlogs
+    --logfolder             The path to the folder where runlogs and comlogs
                             are to be stored, if other than default [].
-    --log               ... Whether to keep ('keep') or remove ('remove') the
+    --log                   Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed. ['keep']
                             When a comma or pipe ('|') separated list is given, 
                             the log will be created at the first provided 
@@ -4486,7 +4486,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_icafix_bolds           ... Specify a list of bolds for ICAFix.
+    --hcp_icafix_bolds               Specify a list of bolds for ICAFix.
                                      You can specify a comma separated list
                                      of bolds, e.g. "<boldname1>,<boldname2>",
                                      in this case single-run HCP ICAFix will be
@@ -4503,19 +4503,19 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                                      execute multi-run HCP ICAFix, the
                                      concatenated file will be named
                                      fMRI_CONCAT_ALL. []
-    --hcp_icafix_highpass        ... Value for the highpass filter,
+    --hcp_icafix_highpass            Value for the highpass filter,
                                      [0] for multi-run HCP ICAFix and [2000]
                                      for single-run HCP ICAFix.
-    --hcp_matlab_mode            ... Specifies the Matlab version, can be
+    --hcp_matlab_mode                Specifies the Matlab version, can be
                                      interpreted, compiled or octave.
                                      [compiled]
-    --hcp_postfix_dualscene      ... Path to an alternative template scene, if
+    --hcp_postfix_dualscene          Path to an alternative template scene, if
                                      empty HCP default dual scene will be used
                                      [].
-    --hcp_postfix_singlescene    ... Path to an alternative template scene, if
+    --hcp_postfix_singlescene        Path to an alternative template scene, if
                                      empty HCP default single scene will be used
                                      [].
-    --hcp_postfix_reusehighpass  ... Whether to reuse highpass. [YES]
+    --hcp_postfix_reusehighpass      Whether to reuse highpass. [YES]
 
     OUTPUTS
     =======
@@ -4848,20 +4848,20 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     General parameters
     ------------------
 
-    --sessions          ... The batch.txt file with all the sessions 
+    --sessions              The batch.txt file with all the sessions 
                             information. [batch.txt]
-    --sessionsfolder    ... The path to the study/sessions folder, where the
+    --sessionsfolder        The path to the study/sessions folder, where the
                             imaging  data is supposed to go. [.]
-    --parsessions       ... How many sessions to run in parallel. [1]
-    --parelements       ... How many elements (e.g bolds) to run in
+    --parsessions           How many sessions to run in parallel. [1]
+    --parelements           How many elements (e.g bolds) to run in
                             parallel. [1]
-    --overwrite         ... Whether to overwrite existing data (yes)
+    --overwrite             Whether to overwrite existing data (yes)
                             or not (no). [no]
-    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+    --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
-    --logfolder         ... The path to the folder where runlogs and comlogs
+    --logfolder             The path to the folder where runlogs and comlogs
                             are to be stored, if other than default [].
-    --log               ... Whether to keep ('keep') or remove ('remove') the
+    --log                   Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed ['keep'].
                             When a comma or pipe ('|') separated list is given, 
                             the log will be created at the first provided 
@@ -4880,7 +4880,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_icafix_bolds                ... Specify a list of bolds for ICAFix.
+    --hcp_icafix_bolds                    Specify a list of bolds for ICAFix.
                                           You can specify a comma separated list
                                           of bolds, e.g. 
                                           "<boldname1>,<boldname2>", in this 
@@ -4898,24 +4898,24 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
                                           bolds together and execute multi-run 
                                           HCP ICAFix, the concatenated file will
                                           be named fMRI_CONCAT_ALL. []
-    --hcp_icafix_highpass             ... Value for the highpass filter,
+    --hcp_icafix_highpass                 Value for the highpass filter,
                                           [0] for multi-run HCP ICAFix and 
                                           [2000] for single-run HCP ICAFix.
-    --hcp_matlab_mode                 ... Specifies the MATLAB version, can be
+    --hcp_matlab_mode                     Specifies the MATLAB version, can be
                                           interpreted, compiled or octave.
                                           [compiled]
-    --hcp_icafix_domotionreg          ... Whether to regress motion parameters 
+    --hcp_icafix_domotionreg              Whether to regress motion parameters 
                                           as part of the cleaning. The default 
                                           value for single-run HCP ICAFix is 
                                           [TRUE], while the default for 
                                           multi-run HCP ICAFix is [FALSE].
-    --hcp_icafix_deleteintermediates  ... If TRUE, deletes both the concatenated
+    --hcp_icafix_deleteintermediates      If TRUE, deletes both the concatenated
                                           high-pass filtered and non-filtered 
                                           timeseries files that are 
                                           prerequisites to FIX cleaning. [FALSE]
-    --hcp_icafix_regname              ... Specifies surface registration name.
+    --hcp_icafix_regname                  Specifies surface registration name.
                                           If NONE MSMSulc will be used. [NONE]
-    --hcp_lowresmesh                  ... Specifies the low res mesh number.
+    --hcp_lowresmesh                      Specifies the low res mesh number.
                                           [32]
 
     OUTPUTS
@@ -5552,18 +5552,18 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     General parameters
     ------------------
 
-    --sessions          ... The batch.txt file with all the sessions
+    --sessions              The batch.txt file with all the sessions
                             information. [batch.txt]
-    --sessionsfolder    ... The path to the study/sessions folder, where the
+    --sessionsfolder        The path to the study/sessions folder, where the
                             imaging  data is supposed to go. [.]
-    --parsessions       ... How many sessions to run in parallel. [1]
-    --overwrite         ... Whether to overwrite existing data (yes)
+    --parsessions           How many sessions to run in parallel. [1]
+    --overwrite             Whether to overwrite existing data (yes)
                             or not (no). [no]
-    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+    --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
-    --logfolder         ... The path to the folder where runlogs and comlogs
+    --logfolder             The path to the folder where runlogs and comlogs
                             are to be stored, if other than default [].
-    --log               ... Whether to keep ('keep') or remove ('remove') the
+    --log                   Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed. ['keep']
                             When a comma or pipe ('|') separated list is given, 
                             the log will be created at the first provided 
@@ -5582,7 +5582,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_icafix_bolds          ... List of bolds on which ICAFix was applied,
+    --hcp_icafix_bolds              List of bolds on which ICAFix was applied,
                                     with the same format as for ICAFix. 
                                     Typically, this should be identical to the 
                                     list used in the ICAFix run. If multi-run 
@@ -5596,7 +5596,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     together in a single concatenation called
                                     fMRI_CONCAT_ALL (i.e., same default
                                     behavior as in ICAFix). []
-    --hcp_msmall_bolds          ... A comma separated list that defines the 
+    --hcp_msmall_bolds              A comma separated list that defines the 
                                     bolds that will be used in the computation 
                                     of the MSMAll registration. Typically, this 
                                     should be limited to resting-state scans. 
@@ -5607,28 +5607,28 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                                     probably NOT what you want to do if 
                                     hcp_icafix_bolds includes non-resting-state 
                                     scans].
-    --hcp_icafix_highpass       ... Value for the highpass filter, [0] for
+    --hcp_icafix_highpass           Value for the highpass filter, [0] for
                                     multi-run HCP ICAFix and [2000] for
                                     single-run HCP ICAFix. Should be identical
                                     to the value used for ICAFIX.
-    --hcp_msmall_outfmriname    ... The name which will be given to the
+    --hcp_msmall_outfmriname        The name which will be given to the
                                     concatenation of scans specified by the
                                     hcp_msmall_bold parameter. [rfMRI_REST]
-    --hcp_msmall_templates      ... Path to directory containing MSMAll template
+    --hcp_msmall_templates          Path to directory containing MSMAll template
                                     files.
                                     [<HCPPIPEDIR>/global/templates/MSMAll]
-    --hcp_msmall_outregname     ... Output registration name.
+    --hcp_msmall_outregname         Output registration name.
                                     [MSMAll_InitialReg]
-    --hcp_hiresmesh             ... High resolution mesh node count. [164]
-    --hcp_lowresmesh            ... Low resolution mesh node count. [32]
-    --hcp_regname               ... Input registration name. [MSMSulc]
-    --hcp_matlab_mode           ... Specifies the MATLAB version, can be
+    --hcp_hiresmesh                 High resolution mesh node count. [164]
+    --hcp_lowresmesh                Low resolution mesh node count. [32]
+    --hcp_regname                   Input registration name. [MSMSulc]
+    --hcp_matlab_mode               Specifies the MATLAB version, can be
                                     interpreted, compiled or octave.
                                     [compiled]
-    --hcp_msmall_procstring     ... Identification for FIX cleaned dtseries to 
+    --hcp_msmall_procstring         Identification for FIX cleaned dtseries to 
                                     use.
                                     [<hcp_cifti_tail>_hp<hcp_highpass>_clean]
-    --hcp_msmall_resample       ... Whether to automatically run
+    --hcp_msmall_resample           Whether to automatically run
                                     HCP DeDriftAndResample if HCP MSMAll
                                     finishes successfully. [TRUE]
 
@@ -6168,18 +6168,18 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     General parameters
     ------------------
 
-    --sessions          ... The batch.txt file with all the sessions 
+    --sessions              The batch.txt file with all the sessions 
                             information. [batch.txt]
-    --sessionsfolder    ... The path to the study/sessions folder, where the
+    --sessionsfolder        The path to the study/sessions folder, where the
                             imaging  data is supposed to go. [.]
-    --parsessions       ... How many sessions to run in parallel. [1]
-    --overwrite         ... Whether to overwrite existing data (yes)
+    --parsessions           How many sessions to run in parallel. [1]
+    --overwrite             Whether to overwrite existing data (yes)
                             or not (no). [no]
-    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+    --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
-    --logfolder         ... The path to the folder where runlogs and comlogs
+    --logfolder             The path to the folder where runlogs and comlogs
                             are to be stored, if other than default [].
-    --log               ... Whether to keep ('keep') or remove ('remove') the
+    --log                   Whether to keep ('keep') or remove ('remove') the
                             temporary logs once jobs are completed. ['keep']
                             When a comma or pipe ('|') separated list is given, 
                             the log will be created at the first provided 
@@ -6198,24 +6198,24 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_icafix_bolds            ... List of bolds on which ICAFix was applied,
+    --hcp_icafix_bolds                List of bolds on which ICAFix was applied,
                                       with the same format as for ICAFix. 
                                       Typically, this should be identical to the
                                       list used in the ICAFix run [same default 
                                       as for hcp_ICAFix and hcp_MSMAll].
-    --hcp_resample_concatregname  ... Output name of the dedrifted registration.
+    --hcp_resample_concatregname      Output name of the dedrifted registration.
                                       [MSMAll]
-    --hcp_resample_regname        ... Registration sphere name.
+    --hcp_resample_regname            Registration sphere name.
                                       [<hcp_msmall_outregname>_2_d40_WRN]
-    --hcp_icafix_highpass         ... Value for the highpass filter, [0] for
+    --hcp_icafix_highpass             Value for the highpass filter, [0] for
                                       multi-run HCP ICAFix and [2000] for
                                       single-run HCP ICAFix. Should be identical
                                       to the value used for ICAFIX.
-    --hcp_hiresmesh               ... High resolution mesh node count. [164]
-    --hcp_lowresmeshes            ... Low resolution meshes node count. To
+    --hcp_hiresmesh                   High resolution mesh node count. [164]
+    --hcp_lowresmeshes                Low resolution meshes node count. To
                                       provide more values separate them with 
                                       commas. [32]
-    --hcp_resample_reg_files      ... Comma separated paths to the spheres 
+    --hcp_resample_reg_files          Comma separated paths to the spheres 
                                       output from the MSMRemoveGroupDrift 
                                       pipeline
                                       [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
@@ -6225,31 +6225,31 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                       164k_fs_LR.surf.gii and <file2> is equal 
                                       to DeDriftingGroup.R.sphere.DeDriftMSMAll.
                                       164k_fs_LR.surf.gii
-    --hcp_resample_maps           ... Comma separated paths to maps that will 
+    --hcp_resample_maps               Comma separated paths to maps that will 
                                       have the MSMAll registration applied that 
                                       are not myelin maps
                                       [sulc,curvature,corrThickness,thickness].
-    --hcp_resample_myelinmaps     ... Comma separated paths to myelin maps
+    --hcp_resample_myelinmaps         Comma separated paths to myelin maps
                                       [MyelinMap,SmoothedMyelinMap].
-    --hcp_bold_smoothFWHM         ... Smoothing FWHM that matches what was
+    --hcp_bold_smoothFWHM             Smoothing FWHM that matches what was
                                       used in the fMRISurface pipeline. [2]
-    --hcp_matlab_mode             ... Specifies the Matlab version, can be
+    --hcp_matlab_mode                 Specifies the Matlab version, can be
                                       interpreted, compiled or octave.
                                       [compiled]
-    --hcp_icafix_domotionreg      ... Whether to regress motion parameters as
+    --hcp_icafix_domotionreg          Whether to regress motion parameters as
                                       part of the cleaning. The default value
                                       after a single-run HCP ICAFix is [TRUE],
                                       while the default after a multi-run HCP
                                       ICAFix is [FALSE].
-    --hcp_resample_dontfixnames   ... A list of comma separated bolds that will
+    --hcp_resample_dontfixnames       A list of comma separated bolds that will
                                       not have HCP ICAFix reapplied to them.
                                       Only applicable if single-run ICAFix was 
                                       used. Generally not recommended. [NONE]
-    --hcp_resample_myelintarget   ... A myelin target file is required to run
+    --hcp_resample_myelintarget       A myelin target file is required to run
                                       this pipeline when using a different mesh
                                       resolution than the original
                                       MSMAll registration. [NONE]
-    --hcp_resample_inregname      ... A string to enable multiple fMRI
+    --hcp_resample_inregname          A string to enable multiple fMRI
                                       resolutions (e.g._1.6mm). [NONE]
 
     OUTPUTS
@@ -6963,28 +6963,28 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     The relevant processing parameters are:
 
-    --sessions          ... The batch.txt file with all the session information.
+    --sessions              The batch.txt file with all the session information.
                             [batch.txt]
-    --sessionsfolder    ... The path to the study/sessions folder, where the
+    --sessionsfolder        The path to the study/sessions folder, where the
                             imaging data is supposed to go. [.]
-    --parsessions       ... How many sessions to run in parallel. [1]
-    --overwrite         ... Whether to overwrite existing data (yes) or not
+    --parsessions           How many sessions to run in parallel. [1]
+    --overwrite             Whether to overwrite existing data (yes) or not
                             (no). [no]
-    --hcp_suffix        ... Specifies a suffix to the session id if multiple
+    --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
-    --hcp_cifti_tail    ... The tail (see above) that specifies, which version
+    --hcp_cifti_tail        The tail (see above) that specifies, which version
                             of the cifti files to copy over. []
-    --bolds             ... Which bold images (as they are specified in the
+    --bolds                 Which bold images (as they are specified in the
                             batch.txt file) to copy over. It can be a single
                             type (e.g. 'task'), a pipe separated list (e.g.
                             'WM|Control|rest') or 'all' to copy all. [all]
-    --boldname          ... The prefix for the fMRI files in the images folder.
+    --boldname              The prefix for the fMRI files in the images folder.
                             [bold]
-    --hcp_bold_variant  ... Optional variant of HCP BOLD preprocessing. If
+    --hcp_bold_variant      Optional variant of HCP BOLD preprocessing. If
                             specified, the results will be copied/linked from
                             `Results.<hcp_bold_variant>` into 
                             `images/functional.<hcp_bold_variant>`. []
-    --img_suffix        ... Specifies a suffix for 'images' folder to enable
+    --img_suffix            Specifies a suffix for 'images' folder to enable
                             support for multiple parallel workflows. Empty 
                             if not used. []
 

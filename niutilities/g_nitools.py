@@ -5,13 +5,11 @@ This file holds the functions and settings for providing a wrapper to run
 Qu|Nex/nitools code.
 
 None of the code is run directly from the terminal interface.
+"""
 
+"""
 Created by Grega Repovs on 2017-09-16.
 Copyright (c) Grega Repovs. All rights reserved.
-
----
-Changelog
-
 """
 
 import os

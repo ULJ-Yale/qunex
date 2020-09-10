@@ -5,8 +5,8 @@ g_bids.py
 
 Functions for importing and exporting BIDS data to Qu|Nex file structure.
 
-- importBIDS      ... maps BIDS data to Qu|Nex structure
-- BIDSExport      ... exports Qu|Nex data to BIDS structured folder
+--importBIDS          maps BIDS data to Qu|Nex structure
+--BIDSExport          exports Qu|Nex data to BIDS structured folder
 
 The commands are accessible from the terminal using qunex command.
 """
@@ -255,11 +255,11 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     INPUTS
     ======
 
-    --sessionsfolder  ... The sessions folder where all the sessions are to be 
+    --sessionsfolder      The sessions folder where all the sessions are to be 
                           mapped to. It should be a folder within the 
                           <study folder>. [.]
 
-    --inbox           ... The location of the BIDS dataset. It can be any of the
+    --inbox               The location of the BIDS dataset. It can be any of the
                           following: the BIDS dataset top folder, a folder that 
                           contains the BIDS dataset, a path to the compressed 
                           `.zip` or `.tar.gz` package that can contain a single 
@@ -270,7 +270,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                           location where the command will look for a BIDS 
                           dataset is [<sessionsfolder>/inbox/BIDS].
 
-    --sessions        ... An optional parameter that specifies a comma or pipe
+    --sessions            An optional parameter that specifies a comma or pipe
                           separated list of sessions from the inbox folder to be 
                           processed. Glob patterns can be used. If provided, 
                           only packets or folders within the inbox that match 
@@ -283,7 +283,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                           format or as explicit 
                           `sub-<subject id>[/ses-<session name>]` names.
 
-    --action          ... How to map the files to Qu|Nex structure. ['link']
+    --action              How to map the files to Qu|Nex structure. ['link']
                           These are the options:
                         
                           - link (the files will be mapped by creating hard 
@@ -291,7 +291,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                           - copy (the files will be copied)       
                           - move (the files will be moved)
 
-    --overwrite       ... The parameter specifies what should be done with 
+    --overwrite           The parameter specifies what should be done with 
                           data that already exists in the locations to which 
                           bids data would be mapped to. ['no'] Options are:
 
@@ -300,7 +300,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                           - yes (remove existing files in `nii` folder and redo 
                             the mapping)
 
-    --archive         ... What to do with the files after they were mapped. 
+    --archive             What to do with the files after they were mapped. 
                           ['move'] Options are:
 
                           - leave (leave the specified archive where it is)
@@ -316,11 +316,11 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                          they will be missing if `archive` is set to 'move' or 
                          'copy'.
 
-    --bidsname       ... The optional name of the BIDS dataset. If not provided
+    --bidsname           The optional name of the BIDS dataset. If not provided
                          it will be set to the name of the inbox folder or the 
                          name of the compressed package.
 
-    --fileinfo       ... What file information to include in the session.txt 
+    --fileinfo           What file information to include in the session.txt 
                          file. Options are:
                         
                          - short (only provide the short description based on 
@@ -1006,10 +1006,10 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     INPUTS
     ======
 
-    --sourcefolder  ... The base session folder in which bids folder with data 
+    --sourcefolder      The base session folder in which bids folder with data 
                         and files for the session is present. [.]
 
-    --overwrite     ... Parameter that specifies what should be done in cases 
+    --overwrite         Parameter that specifies what should be done in cases 
                         where there are existing data stored in `nii` folder. 
                         ['no'] The options are:
 
@@ -1018,7 +1018,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
                           the mapping)
 
 
-    --fileinfo      ... What file information to include in the session.txt 
+    --fileinfo          What file information to include in the session.txt 
                         file. Options are:
 
                         - short (only provide the short description based on the

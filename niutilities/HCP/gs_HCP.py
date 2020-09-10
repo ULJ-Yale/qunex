@@ -6,7 +6,7 @@ gs_HCP.py
 Functions for preparing information and mapping images to a HCP preprocessing
 compliant folder structure:
 
-- setupHCP  ... maps the data to a hcp folder
+--setupHCP      maps the data to a hcp folder
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -80,25 +80,25 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
     appropriate image type in the source.txt file. The following file types
     are recognized and will be mapped correctly:
 
-    - T1w             ... T1 weighted high resolution structural image
-    - T2w             ... T2 weighted high resolution structural image
-    - FM-GE           ... Gradient echo field map image used for distortion
+    --T1w                 T1 weighted high resolution structural image
+    --T2w                 T2 weighted high resolution structural image
+    --FM-GE               Gradient echo field map image used for distortion
                           correction
-    - FM-Magnitude    ... Field mapping magnitude image used for distortion
+    --FM-Magnitude        Field mapping magnitude image used for distortion
                           correction
-    - FM-Phase        ... Field mapping phase image used for distortion
+    --FM-Phase            Field mapping phase image used for distortion
                           correction
-    - boldref[N]      ... Reference image for the following BOLD image
-    - bold[N]         ... BOLD image
-    - SE-FM-AP        ... Spin-echo fieldmap image recorded using the A-to-P
+    --boldref[N]          Reference image for the following BOLD image
+    --bold[N]             BOLD image
+    --SE-FM-AP            Spin-echo fieldmap image recorded using the A-to-P
                           phase encoding direction
-    - SE-FM-PA        ... Spin-echo fieldmap image recorded using the P-to-A
+    --SE-FM-PA            Spin-echo fieldmap image recorded using the P-to-A
                           phase encoding direction
-    - SE-FM-LR        ... Spin-echo fieldmap image recorded using the L-to-R
+    --SE-FM-LR            Spin-echo fieldmap image recorded using the L-to-R
                           phase encoding direction
-    - SE-FM-RL        ... Spin-echo fieldmap image recorded using the R-to-L
+    --SE-FM-RL            Spin-echo fieldmap image recorded using the R-to-L
                           phase encoding direction
-    - DWI             ... Diffusion weighted image
+    --DWI                 Diffusion weighted image
 
     
     In addition to these parameters, it is also possible to optionally specify, 
@@ -145,10 +145,10 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
 
     `version` parameter determines the HCP folder structure to use:
 
-    - 'v1'  ... Unprocessed data is parallel to processed data, functional data
+    --'v1'      Unprocessed data is parallel to processed data, functional data
                 folders have '_fncb' suffix and field map data folders have
                 '_strc' tail.
-    - 'v2'  ... Unprocessed data is a subfolder in the HCP session folder, 
+    --'v2'      Unprocessed data is a subfolder in the HCP session folder, 
                 functional data folders and field map data folders do not have 
                 the '_fncb' and '_strc' extensions, respectively.
 

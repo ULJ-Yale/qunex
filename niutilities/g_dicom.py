@@ -5,14 +5,14 @@ g_dicom.py
 
 Functions for processing dicom images and converting them to NIfTI format:
 
-- readPARInfo     ... reads image info from Philips PAR/REC files
-- readDICOMInfo   ... reads image info from DICOM files
-- dicom2niiz      ... converts DICOM to NIfTI images
-- sortDicom       ... sorts the DICOM files into subfolders according to images
-- listDicom       ... list the information on DICOM files
-- splitDicom      ... split files from different sessions
-- importDICOM     ... processes incoming data
-- getDICOMInfo    ... prints HCP relevant information from a DICOM file
+--readPARInfo         reads image info from Philips PAR/REC files
+--readDICOMInfo       reads image info from DICOM files
+--dicom2niiz          converts DICOM to NIfTI images
+--sortDicom           sorts the DICOM files into subfolders according to images
+--listDicom           list the information on DICOM files
+--splitDicom          split files from different sessions
+--importDICOM         processes incoming data
+--getDICOMInfo        prints HCP relevant information from a DICOM file
 
 The commands are accessible from the terminal using gmri utility.
 """
@@ -87,7 +87,7 @@ def readPARInfo(filename):
     INPUT
     =====
 
-    --filename  ... The name of the `.PAR` file.
+    --filename      The name of the `.PAR` file.
 
     OUTPUT
     ======
@@ -153,7 +153,7 @@ def readDICOMInfo(filename):
     INPUT
     =====
 
-    --filename  ... The name of the `DICOM` file.
+    --filename      The name of the `DICOM` file.
 
     OUTPUT
     ======
@@ -388,19 +388,19 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     INPUTS
     ======
 
-    --folder       ... The base session folder with the dicom subfolder that 
+    --folder           The base session folder with the dicom subfolder that 
                        holds session numbered folders with dicom files. [.]
-    --clean        ... Whether to remove preexisting NIfTI files (yes), leave
+    --clean            Whether to remove preexisting NIfTI files (yes), leave
                        them and abort (no) or ask interactively (ask). [ask]
-    --unzip        ... If the dicom files are gziped whether to unzip them 
+    --unzip            If the dicom files are gziped whether to unzip them 
                        (yes), leave them be and abort (no) or ask interactively
                        (ask). [ask]
-    --gzip         ... After the dicom files were processed whether to gzip them 
+    --gzip             After the dicom files were processed whether to gzip them 
                        (yes), leave them ungzipped (no) or ask interactively
                        (ask). [ask]
-    --verbose      ... Whether to be report on the progress (True) or not
+    --verbose          Whether to be report on the progress (True) or not
                        (False). [True]
-    --parelements  ... How many parallel processes to run dcm2nii conversion 
+    --parelements      How many parallel processes to run dcm2nii conversion 
                        with. The number is one by default, if specified as 
                        'all', all available resources are utilized.
 
@@ -870,31 +870,31 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     INPUTS
     ======
 
-    --folder       ... The base session folder with the dicom subfolder that
+    --folder           The base session folder with the dicom subfolder that
                        holds session numbered folders with dicom files. [.]
 
-    --clean        ... Whether to remove preexisting NIfTI files (yes), leave
+    --clean            Whether to remove preexisting NIfTI files (yes), leave
                        them and abort (no) or ask interactively (ask). [ask]
 
-    --unzip        ... If the dicom files are gziped whether to unzip them
+    --unzip            If the dicom files are gziped whether to unzip them
                        (yes), leave them be and abort (no) or ask interactively 
                        (ask). [ask]
 
-    --gzip         ... After the dicom files were processed whether to gzip them
+    --gzip             After the dicom files were processed whether to gzip them
                        (yes), leave them ungzipped (no) or ask interactively
                        (ask). [ask]
 
-    --sessionid    ... The id code to use for this session. If not provided, the
+    --sessionid        The id code to use for this session. If not provided, the
                        session id is extracted from dicom files.
 
-    --verbose      ... Whether to be report on the progress (True) or not
+    --verbose          Whether to be report on the progress (True) or not
                        (False). [True]
 
-    --parelements  ... How many parallel processes to run dcm2nii conversion
+    --parelements      How many parallel processes to run dcm2nii conversion
                        with. The number is one by defaults, if specified as
                        'all', all available resources are utilized.
 
-    --tool         ... What tool to use for the conversion [auto]. It can be
+    --tool             What tool to use for the conversion [auto]. It can be
                        one of:
 
                        - auto (determine best tool based on heuristics)
@@ -902,7 +902,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                        - dcm2nii
                        - dicm2nii
 
-    --options       ... A pipe separated string that lists additional options as
+    --options           A pipe separated string that lists additional options as
                         a "<key1>:<value1>|<key2>:<value2>" pairs to be used
                         when processing dicom or PAR/REC files. Currently it
                         supports:
@@ -1523,7 +1523,7 @@ def sortDicom(folder=".", **kwargs):
     INPUTS
     ======
 
-    --folder  ... The base session folder that contains the inbox subfolder with
+    --folder      The base session folder that contains the inbox subfolder with
                   the unsorted DICOM files.
 
     USE
@@ -1733,7 +1733,7 @@ def listDicom(folder=None):
     INPUTS
     ======
 
-    --folder  ... The folder to be inspected for the presence of the DICOM 
+    --folder      The folder to be inspected for the presence of the DICOM 
                   files. [inbox]
 
     USE
@@ -1806,7 +1806,7 @@ def splitDicom(folder=None):
     INPUTS
     ======
 
-    --folder  ... The folder that contains the DICOM files to be sorted out.
+    --folder      The folder that contains the DICOM files to be sorted out.
 
     USE
     ===
@@ -1884,12 +1884,12 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     INPUTS
     ======
 
-    --sessionsfolder  ... The base study sessions folder (e.g. WM44/sessions) 
+    --sessionsfolder      The base study sessions folder (e.g. WM44/sessions) 
                           where the inbox and individual session folders are. 
                           If not specified, the current working folder will be 
                           taken as the location of the sessionsfolder. [.]
     
-    --sessions        ... A comma delimited string that lists the sessions to 
+    --sessions            A comma delimited string that lists the sessions to 
                           process. If master inbox folder is used, the parameter 
                           is optional and it can include regex patterns. In this 
                           case only those sessions identified by the pattern
@@ -1898,7 +1898,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                           set to none, the list specifies the session folders to
                           process, and it can include glob patterns. [""]
     
-    --masterinbox     ... The master inbox folder with packages to process. By 
+    --masterinbox         The master inbox folder with packages to process. By 
                           default masterinbox is in base study folder: 
                           <sessionsfolder>/inbox/MR. If the packages are
                           elsewhere the location can be specified here. If set 
@@ -1906,7 +1906,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                           individual sessions folders.
                           [<sessionsfolder>/inbox/MR]
     
-    --check           ... The type of check to perform when packages or session  
+    --check               The type of check to perform when packages or session  
                           folders are identified. [yes] The possible values are:
 
                           - yes (ask for interactive confirmation to proceed)
@@ -1914,15 +1914,15 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                           - any (continue if any packages are ready to process
                             report error otherwise)
 
-    --pattern         ... The regex pattern to use to find the packages and 
+    --pattern             The regex pattern to use to find the packages and 
                           to extract the session id.
                           ["(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"]
 
-    --nameformat      ... The regex pattern to use to extract subject id and 
+    --nameformat          The regex pattern to use to extract subject id and 
                           (optionally) the session name from the session or
                           packet name. ["(?P<subject_id>.*)"]
 
-    --tool            ... What tool to use for the conversion [auto]. It can be 
+    --tool                What tool to use for the conversion [auto]. It can be 
                           one of:
 
                           - auto (determine best tool based on heuristics)
@@ -1930,12 +1930,12 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                           - dcm2nii
                           - dicm2nii
 
-    --parelements     ... The number of parallel processes to use when running 
+    --parelements         The number of parallel processes to use when running 
                           converting DICOM images to NIfTI files. If specified
                           as 'all', all avaliable resources will be utilized.
                           [1]
 
-    --logfile         ... A string specifying the location of the log file and
+    --logfile             A string specifying the location of the log file and
                           the columns in which packetname, subject id and
                           session name information are stored. The string should
                           specify: ``"path:<path to the log file>|
@@ -1944,7 +1944,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                           information>[|sessionid:<the column with sesion id 
                           information>]"``. [""]
 
-    --archive         ... What to do with a processed package ['move']. Options 
+    --archive             What to do with a processed package ['move']. Options 
                           are:
 
                           - move (move the package to the default archive 
@@ -1960,7 +1960,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                           `archive` parameter is only valid for compressed 
                           packages.
     
-    --options         ... A pipe separated string that lists additional options 
+    --options             A pipe separated string that lists additional options 
                           as a 
                           "<key1>:<value1>|<key2>:<value2>" pairs to be used 
                           when processing dicom or PAR/REC files. Currently it 
@@ -1976,18 +1976,18 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                             See list in session.txt file description of 
                             dicom2niix inline help. [])
 
-    --unzip           ... Whether to unzip individual DICOM files that are
+    --unzip               Whether to unzip individual DICOM files that are
                           gzipped. Valid options are 'yes', 'no', and 'ask'.
                           ['yes']
 
-    --gzip            ... Whether to gzip individual DICOM files after they were
+    --gzip                Whether to gzip individual DICOM files after they were
                           processed. Valid options are 'yes', 'no', 'ask'.
                           ['yes']
 
-    --overwrite       ... Whether to remove existing data in the dicom and nii 
+    --overwrite           Whether to remove existing data in the dicom and nii 
                           folders. ['no']
 
-    --verbose         ... Whether to provide detailed report also of packets
+    --verbose             Whether to provide detailed report also of packets
                           that could not be identified and/or are not matched 
                           with log file. ['yes']
 
@@ -2789,8 +2789,8 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
     INPUTS
     ======
 
-    --dicomfile  ... The path to the DICOM file to be inspected.
-    --scanner    ... The scanner on which the data was acquired, currently only
+    --dicomfile      The path to the DICOM file to be inspected.
+    --scanner        The scanner on which the data was acquired, currently only
                      "siemens" and "philips" are supported. [siemens]
 
     USE

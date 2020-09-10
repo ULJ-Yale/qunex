@@ -4,9 +4,9 @@
 This file holds code for NIfTI file manipulation utilities. The functions
 implemented here are:
 
-- fz2zf    ... reordering of time and z dimension
-- reslice  ... reslicing of images
-- reorder  ... reordering of slices in images
+--fz2zf        reordering of time and z dimension
+--reslice      reslicing of images
+--reorder      reordering of slices in images
 
 These functions are primarily intended for internal use by other gmri commands.
 """
@@ -31,8 +31,8 @@ def fz2zf(inf, outf=None):
     INPUTS
     ======
 
-    --inf   ... input image filename to be shuffled
-    --outf  ... output image filename. If not provided, it replaces the original
+    --inf       input image filename to be shuffled
+    --outf      output image filename. If not provided, it replaces the original
                 file.
     """
 
@@ -86,9 +86,9 @@ def reslice(inf, slices, outf=None):
     INPUTS
     ======
 
-    --inf     ... input image filename to be reordered.
-    --slices  ... number of slices per volume.
-    --outf    ... output image filename. If not provided, it replaces the 
+    --inf         input image filename to be reordered.
+    --slices      number of slices per volume.
+    --outf        output image filename. If not provided, it replaces the 
                   original file.
 
     USE
@@ -186,8 +186,8 @@ def reorder(inf, outf=None):
     INPUTS
     ======
 
-    --inf   ... input image filename to be reordered
-    --outf  ... output image filename. If not provided, it replaces the original
+    --inf       input image filename to be reordered
+    --outf      output image filename. If not provided, it replaces the original
                 file.
     '''
 
@@ -240,8 +240,8 @@ def nifti24dfp(inf, outf=None):
     INPUTS
     ======
 
-    --inf   ... input image filename to be converted.
-    --outf  ... output image filename. If not provided, it replaces the original
+    --inf       input image filename to be converted.
+    --outf      output image filename. If not provided, it replaces the original
                 file.
     """
 

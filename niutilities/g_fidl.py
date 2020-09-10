@@ -90,23 +90,26 @@ def readConc(concf, TR):
 
 
 def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
-    '''
-    joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]
+    """
+    ``joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]``
 
-    Combines all the fild files matching root based on the information in conc file.
+    Combines all the fidl files matching root based on the information in conc
+    file.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
-    --concfile:  the conc file to use as reference
-    --fidlroot:  the root to use to find fild files
-    --outfolder: the folder in which to save the results
+    --concfile   The conc file to use as reference.
+    --fidlroot   The root to use to find fidl files.
+    --outfolder  The folder in which to save the results.
     
     EXAMPLE USE
     ===========
     
-    qunex joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
-    '''
+    ::
+
+        qunex joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
+    """
 
     # ---> find all fidl files, sort them, read them, get TR info
 
@@ -184,31 +187,39 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
 
 def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
-    '''
-    joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]
+    """
+    ``joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]``
 
-    Uses joinFidl to join all the fidl files that match the name of each conc file in the concfolder.
+    Uses joinFidl to join all the fidl files that match the name of each conc
+    file in the concfolder.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
-    --concfolder:  the folder with conc files
-    --fidlfolder:  the folder with fidl files - defaults to concfolder if not provided
-    --outfolder:   the folder in which the joint files should be saved, defauts to fidlfolder if not provided
+    --concfolder  The folder with conc files.
+    --fidlfolder  The folder with fidl files - defaults to concfolder if not
+                  provided.
+    --outfolder   The folder in which the joint files should be saved, defaults
+                  to fidlfolder if not provided.
 
     EXAMPLE USE
     ===========
-    
-    qunex joinFidlFolder concfolder=concs fidlfolder=fidls
 
-    ----------------
-    Written by Grega Repovš 
-    
+    ::
+
+        qunex joinFidlFolder concfolder=concs fidlfolder=fidls
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
     Change log
 
     2019-05-12 Grega Repovš
-             - Reports an error if no conc file is found to process
-    '''
+               Initial version
+    2019-05-12 Grega Repovš
+               Reports an error if no conc file is found to process
+    """
 
     if fidlfolder is None:
         fidlfolder = concfolder
@@ -239,22 +250,24 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
 
 def splitFidl(concfile, fidlfile, outfolder=None):
     """
-    splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
+    ``splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
 
-    Splits a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.
+    Splits a multi-bold fidl file into run specific bold files based on the
+    sequence of bold files in conc file and their lengths.
     
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
-    --concfile:  the path to the conc file
-    --fidlfile:  the path to the fidl file
-    --outfolder: the path to the folder to put split fidls in
+    --concfile   The path to the conc file.
+    --fidlfile   The path to the fidl file.
+    --outfolder  The path to the folder to put split fidls in.
 
-    USE EXAMPLE
+    EXAMPLE USE
     ===========
 
-    qunex splitFidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl outfolder=/data/mystudy/analysis/splitfidls
+    ::
 
+        qunex splitFidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl outfolder=/data/mystudy/analysis/splitfidls
     """
 
     # ---> read the fidl and conc info
@@ -307,33 +320,41 @@ def splitFidl(concfile, fidlfile, outfolder=None):
 
 
 def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
-    '''
-    checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false] [verbose=true]
+    """
+    ``checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false] [verbose=true]``
 
     Prints figures showing fidl events and their duration.
     
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
-    --fidlfile:   The path to the fidl file to plot. All the fidl files in the folder if none specified.
-    --fidlfolder: The folder from which to plot the fidl files.
-    --plotfile:   The name of the file to save the plot to. Only makes sense if fidlfile is specified.
-    --allcodes:   Whether to plot line for all fidl codes even if no event has a particular code.
-    --verbose:    Whether to report progress
+    --fidlfile    The path to the fidl file to plot. All the fidl files in the
+                  folder if none specified.
+    --fidlfolder  The folder from which to plot the fidl files.
+    --plotfile    The name of the file to save the plot to. Only makes sense if
+                  fidlfile is specified.
+    --allcodes    Whether to plot line for all fidl codes even if no event has a
+                  particular code.
+    --verbose     Whether to report progress
 
     EXAMPLE USE
     ===========
     
-    qunex checkFidl fidlfolder=jfidls
+    ::
 
-    ----------------
-    Written by Grega Repovš 
-    
+        qunex checkFidl fidlfolder=jfidls
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
     Change log
 
     2019-05-12 Grega Repovš
-             - Reports an error if no fidl file is found to process
-    '''
+               Initial version
+    2019-05-12 Grega Repovš
+               Reports an error if no fidl file is found to process
+    """
 
     if fidlfile:
         if not os.path.exists(fidlfile):

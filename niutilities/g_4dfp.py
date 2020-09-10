@@ -4,10 +4,10 @@
 This file holds code for running 4dfp NIL preprocessing commands and volume to
 surface mapping. It implements the following commands:
 
-- runNIL        ... Runs NIL preprocessing of a session.
-- runNILFolder  ... Runs NIL preprocessing of sessins in a folder.
-- map2PALS      ... Maps volume image to PALS Atlas caret image.
-- map2HCP       ... Maps volume image to CIFTI dense scalar image.
+--runNIL            runs NIL preprocessing of a session
+--runNILFolder      runs NIL preprocessing of sessins in a folder
+--map2PALS          maps volume image to PALS Atlas caret image
+--map2HCP           maps volume image to CIFTI dense scalar image
 
 Use gmri to run the commands from the terminal.
 """
@@ -58,12 +58,12 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     INPUTS
     ======
 
-    --folder      ... the base study sessions folder (e.g. WM44/sessions) where
+    --folder          the base study sessions folder (e.g. WM44/sessions) where
                        OP folders and the inbox folder with the new packages 
                        from the scanner reside.
-    --pattern     ... which sessionsfolders to match (default OP*).
-    --overwrite   ... whether to overwrite existing (params and BOLD) files.
-    --sourcefile  ... the name of the session file.
+    --pattern         which sessionsfolders to match (default OP*).
+    --overwrite       whether to overwrite existing (params and BOLD) files.
+    --sourcefile      the name of the session file.
 
     EXAMPLE USE
     ===========
@@ -133,11 +133,11 @@ def runNIL(folder=".", overwrite=None, sourcefile=None):
     INPUTS
     ======
 
-    --folder      ... session's folder with nii and dicom folders and 
+    --folder          session's folder with nii and dicom folders and 
                       session.txt file.
-    --overwrite   ... whether to overwrite existing parameters file or existing 
+    --overwrite       whether to overwrite existing parameters file or existing 
                       BOLD data.
-    --sourcefile  ... the name of the session file.
+    --sourcefile      the name of the session file.
 
     USE
     ===
@@ -289,15 +289,15 @@ def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
     INPUTS
     ======
 
-    --volume   ... a volume file or a space separated list of volume files - put
+    --volume       a volume file or a space separated list of volume files - put
                    in quotes
-    --metric   ... the name of the metric file that stores the mapping
-    --atlas    ... volume atlas from which to map (711-2C by default or 711-2B, 
+    --metric       the name of the metric file that stores the mapping
+    --atlas        volume atlas from which to map (711-2C by default or 711-2B, 
                    AFNI, FLIRT, FNIRT, SPM2, SPM5, SPM95, SPM96, SPM99, 
                    MRITOTAL)
-    --method   ... interpolated, maximum, enclosing, strongest, Gaussian 
+    --method       interpolated, maximum, enclosing, strongest, Gaussian 
                    (for other options see caret_command)
-    --mapping  ... a single mapping option or a space separated list in quotes.
+    --mapping      a single mapping option or a space separated list in quotes.
                    [afm] The options are:
                 
                    - afm (average fiducial mapping)
@@ -337,9 +337,9 @@ def map2HCP(volume, method='trilinear'):
     INPUTS
     ======
 
-    --volume  ... a volume file or a space separated list of volume files - put 
+    --volume      a volume file or a space separated list of volume files - put 
                   in quotes
-    --method  ... one of: trilinear, enclosing, cubic, ribbon constrained
+    --method      one of: trilinear, enclosing, cubic, ribbon constrained
     
     USE
     ===

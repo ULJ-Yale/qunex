@@ -5,7 +5,7 @@ gi_HCP.py
 
 Functions for importing HCP style data into Qu|Nex:
 
-- importHCP  ... maps HCP style data to Qu|Nex structure
+--importHCP      maps HCP style data to Qu|Nex structure
 
 The commands are accessible from the terminal using the gmri utility.
 """

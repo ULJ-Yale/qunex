@@ -2,7 +2,9 @@
 # encoding: utf-8
 """
 Miscellaneous utilities for file processing.
+"""
 
+"""
 Created by Grega Repovs on 2017-09-17.
 Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 """
