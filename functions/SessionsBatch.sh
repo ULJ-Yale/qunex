@@ -56,10 +56,10 @@ usage() {
  echo "INPUTS"
  echo "======"
  echo ""
- echo " --sessionsfolder    Path to study folder that contains sessions"
- echo " --sessions          Comma separated list of sessions to run"
- echo " --outname           Output name of the batch file to generate. "
- echo " --outpath           Path for the batch file"
+ echo "--sessionsfolder    Path to study folder that contains sessions"
+ echo "--sessions          Comma separated list of sessions to run"
+ echo "--outname           Output name of the batch file to generate. "
+ echo "--outpath           Path for the batch file"
  echo ""
  exit 0
  
