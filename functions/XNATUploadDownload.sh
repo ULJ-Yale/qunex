@@ -51,6 +51,8 @@
 
 usage() {
  echo ""
+ echo "XNATUploadDownload"
+ echo ""
  echo "This function implements syncing to a specified XNAT server via the CURL REST "
  echo "API."
  echo ""

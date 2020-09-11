@@ -48,6 +48,8 @@
 
 usage() {
  echo ""
+ echo "PreTractography"
+ echo ""
  echo "This function runs the Pretractography Dense trajectory space generation."
  echo ""
  echo "Note that this is a very quick function to run [< 5min] so no overwrite options "

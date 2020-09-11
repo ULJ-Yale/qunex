@@ -52,6 +52,8 @@ SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5 BOLDImages"
 
 usage() {
  echo ""
+ echo "QuNexAcceptanceTest"
+ echo ""
  echo "This function implements Qu|Nex acceptance testing per pipeline unit."
  echo ""
  echo "INPUTS"

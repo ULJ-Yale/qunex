@@ -1053,7 +1053,7 @@ connectorExec
 }
 show_usage_ROIExtract() {
 echo ""
-echo "DESCRIPTION for ${UsageInput}"
+echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh
 }
 

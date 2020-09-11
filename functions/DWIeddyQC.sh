@@ -55,6 +55,8 @@
 
 usage() {
  echo ""
+ echo "DWIeddyQC"
+ echo ""
  echo "This function is based on FSL's eddy to perform quality control on "
  echo "diffusion MRI (dMRI) datasets. It explicitly assumes the that eddy has been "
  echo " run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
@@ -120,7 +122,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " DWIEddyQC.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \ "
+ echo " DWIeddyQC.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \ "
  echo " --session='<session_id>' \ "
  echo " --eddybase='<eddy_base_name>' \ "
  echo " --report='individual'"
