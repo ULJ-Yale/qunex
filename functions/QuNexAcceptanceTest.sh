@@ -158,10 +158,12 @@ usage() {
  echo "EXAMPLE USE"
  echo "==========="
  echo ""
- echo "QuNexAcceptanceTest.sh --studyfolder='<absolute_path_to_study_folder>' \ "
- echo "--subjects='<subject_IDs_on_local_server>' \ "
- echo "--xnatprojectid='<name_of_xnat_project_id>' \ "
- echo "--xnathost='<XNAT_site_URL>' "
+ echo "::"
+ echo ""
+ echo " QuNexAcceptanceTest.sh --studyfolder='<absolute_path_to_study_folder>' \ "
+ echo " --subjects='<subject_IDs_on_local_server>' \ "
+ echo " --xnatprojectid='<name_of_xnat_project_id>' \ "
+ echo " --xnathost='<XNAT_site_URL>' "
  echo ""
 }
 
