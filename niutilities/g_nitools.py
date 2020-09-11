@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_nitools.py``
+
 This file holds the functions and settings for providing a wrapper to run
 Qu|Nex/nitools code.
 

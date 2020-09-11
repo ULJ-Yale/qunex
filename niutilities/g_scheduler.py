@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_scheduler.py``
+
 This file holds the functions for running jobs through job schedulers on a
 computer cluster. It supports PBS, LSF, and SLURM. The functions are accessible
 and used both as terminal commands as well as internal use functions.

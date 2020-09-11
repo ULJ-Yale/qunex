@@ -1,25 +1,25 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-gp_HCP.py
+``gp_HCP.py``
 
 This file holds code for running HCP preprocessing pipeline. It
 consists of functions:
 
---hcpPreFS               runs HCP PreFS preprocessing
---hcpFS                  runs HCP FS preprocessing
---hcpPostFS              runs HCP PostFS preprocessing
---hcpDiffusion           runs HCP Diffusion weighted image preprocessing
---hcpfMRIVolume          runs HCP BOLD Volume preprocessing
---hcpfMRISurface         runs HCP BOLD Surface preprocessing
---hcpICAFix              runs HCP ICAFix
---hcpPostFix             runs HCP PostFix
---hcpReApplyFix          runs HCP ReApplyFix
---hcpMSMAll              runs HCP MSMAll
---hcpDeDriftAndResample  runs HCP DeDriftAndResample
---hcpDTIFit              runs DTI Fit
---hcpBedpostx            runs Bedpost X
---mapHCPData             maps results of HCP preprocessing into `images` folder
+--hcpPreFS               Runs HCP PreFS preprocessing.
+--hcpFS                  Runs HCP FS preprocessing.
+--hcpPostFS              Runs HCP PostFS preprocessing.
+--hcpDiffusion           Runs HCP Diffusion weighted image preprocessing.
+--hcpfMRIVolume          Runs HCP BOLD Volume preprocessing.
+--hcpfMRISurface         Runs HCP BOLD Surface preprocessing.
+--hcpICAFix              Runs HCP ICAFix.
+--hcpPostFix             Runs HCP PostFix.
+--hcpReApplyFix          Runs HCP ReApplyFix.
+--hcpMSMAll              Runs HCP MSMAll.
+--hcpDeDriftAndResample  Runs HCP DeDriftAndResample.
+--hcpDTIFit              Runs DTI Fit.
+--hcpBedpostx            Runs Bedpost X.
+--mapHCPData             Maps results of HCP preprocessing into `images` folder.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:

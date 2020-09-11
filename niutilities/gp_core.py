@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``gp_core.py``
+
 This file holds code for core support functions used by other code for
 preprocessing and analysis. The functions are for internal use
 and can not be called externally.
@@ -593,15 +595,20 @@ def missingReport(missing, message, prefix):
    
 
 def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False):
-    '''
+    """
+    ``checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False)``
+
     The function checks the presence of a test file.
     If specified it runs also full test.
-    it returns:
+    
+    OUTPUTS
+    =======
 
-    * None - test file is missing
-    * incomplete - test file is present, but full test was incomplete
-    * done - test file is present, and if full test was specified, all files were present as well
-    '''
+    --None        test file is missing
+    --incomplete  test file is present, but full test was incomplete
+    --done        test file is present, and if full test was specified, all
+                  files were present as well
+    """
     
     if fullTest and 'specfolder' in fullTest:
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):

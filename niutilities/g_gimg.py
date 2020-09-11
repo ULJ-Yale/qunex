@@ -1,9 +1,14 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-This file holds code for an image reading and manipulation object. The code is
-for internal use and not called directly. It also implements the modniftihdr command.
+``g_gimg.py``
 
+This file holds code for an image reading and manipulation object. The code is
+for internal use and not called directly. It also implements the modniftihdr
+command.
+"""
+
+"""
 Created by Grega Repovs on 2013-04-13.
 Copyright (c) Grega Repovs. All rights reserved.
 """

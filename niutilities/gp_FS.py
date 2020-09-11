@@ -1,13 +1,15 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``gp_FS.py``
+
 This file holds code for running legacy FreeSurfer preprocessing on NIL
 preprocessed images. The specific functions are:
 
-- runBasicStructuralSegmentation
-- checkForFreeSurferData
-- runFreeSurferFullSegmentation
-- runFreeSurferSubcorticalSegmentation
+--runBasicStructuralSegmentation
+--checkForFreeSurferData
+--runFreeSurferFullSegmentation
+--runFreeSurferSubcorticalSegmentation
 
 All the functions are part of the processing suite. They should be called
 from the command line using `gmri` command. Help is available through:

@@ -1,18 +1,18 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_dicom.py
+``g_dicom.py``
 
 Functions for processing dicom images and converting them to NIfTI format:
 
---readPARInfo         reads image info from Philips PAR/REC files
---readDICOMInfo       reads image info from DICOM files
---dicom2niiz          converts DICOM to NIfTI images
---sortDicom           sorts the DICOM files into subfolders according to images
---listDicom           list the information on DICOM files
---splitDicom          split files from different sessions
---importDICOM         processes incoming data
---getDICOMInfo        prints HCP relevant information from a DICOM file
+--readPARInfo         Reads image info from Philips PAR/REC files.
+--readDICOMInfo       Reads image info from DICOM files.
+--dicom2niiz          Converts DICOM to NIfTI images.
+--sortDicom           Sorts the DICOM files into subfolders according to images.
+--listDicom           List the information on DICOM files.
+--splitDicom          Split files from different sessions.
+--importDICOM         Processes incoming data.
+--getDICOMInfo        Prints HCP relevant information from a DICOM file.
 
 The commands are accessible from the terminal using gmri utility.
 """

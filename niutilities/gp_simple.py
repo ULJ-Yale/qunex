@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``gp_simple.py``
+
 This file holds code for support functions for image preprocessing and analysis.
 It consists of functions:
 

@@ -1,6 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_fidl.py``
+"""
+
+"""
 Created by Grega Repovs on 2013-10-07.
 Adapted from previous joinFidl.py script
 Copyright (c) Grega Repovs. All rights reserved.

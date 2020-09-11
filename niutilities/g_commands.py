@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_commands.py
+``g_commands.py``
 
 Definition of commands used in gmri along with their parameters.
 """

@@ -1,12 +1,14 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_NIfTI.py``
+
 This file holds code for NIfTI file manipulation utilities. The functions
 implemented here are:
 
---fz2zf        reordering of time and z dimension
---reslice      reslicing of images
---reorder      reordering of slices in images
+--fz2zf        Reordering of time and z dimension.
+--reslice      Reslicing of images.
+--reorder      Reordering of slices in images.
 
 These functions are primarily intended for internal use by other gmri commands.
 """

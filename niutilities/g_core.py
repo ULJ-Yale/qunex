@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_core.py``
+
 This file holds code for core support functions used by other code for
 preprocessing and analysis. The functions are for internal use
 and can not be called externally.

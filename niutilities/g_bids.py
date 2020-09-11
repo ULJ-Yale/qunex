@@ -1,12 +1,12 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_bids.py
+``g_bids.py``
 
 Functions for importing and exporting BIDS data to Qu|Nex file structure.
 
---importBIDS          maps BIDS data to Qu|Nex structure
---BIDSExport          exports Qu|Nex data to BIDS structured folder
+--importBIDS          Maps BIDS data to Qu|Nex structure.
+--BIDSExport          Exports Qu|Nex data to BIDS structured folder.
 
 The commands are accessible from the terminal using qunex command.
 """

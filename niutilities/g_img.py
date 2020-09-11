@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_img.py
+``g_img.py``
 
 Some basic functions to be used for work with nifti and 4dfp images.
 """

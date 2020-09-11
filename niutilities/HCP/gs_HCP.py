@@ -1,12 +1,12 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-gs_HCP.py
+``gs_HCP.py``
 
 Functions for preparing information and mapping images to a HCP preprocessing
 compliant folder structure:
 
---setupHCP      maps the data to a hcp folder
+--setupHCP      Maps the data to an hcp folder.
 
 The commands are accessible from the terminal using the gmri utility.
 """
