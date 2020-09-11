@@ -265,6 +265,7 @@ show_usage_nitoolsHelp() {
         geho "--------------------------------------------------------"
         echo ""
         MatlabFunctions=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/"`
+        MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/nitools/ -name "*.m" | grep -v "archive/"`
         MatlabFunctionsfcMRI=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
         MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/general/"`
         MatlabFunctionsNIMG=`ls $TOOLS/$QUNEXREPO/nitools/img/\@nimage/*.m`
@@ -341,12 +342,12 @@ show_allcommands_connector() {
 
 connectorExec() {
 
+
 Platform="Platform Information: `uname -a`"
 
 
 # -- Set the time stamp for given job
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-
 if [[ ${CommandToRun} == "runTurnkey" ]]; then
    unset GmriCommandToRun
    if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
@@ -356,31 +357,37 @@ if [[ ${CommandToRun} == "runTurnkey" ]]; then
    fi
 fi
 
+# -- Check if Matlab command
+unset QuNexMatlabCall
+MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/nitools/ -name "*.m" | grep -v "archive/"`
+if [[ ! -z `echo $MatlabFunctionsCheck | grep "$CommandToRun"` ]]; then
+    QuNexMatlabCall="$CommandToRun"
+    echo ""
+    echo " ==> Note: $QuNexMatlabCall is part of the Qu|Nex nitools."
+    echo ""
+fi 
+
 # -- Check if study folder is created
-if [[ ! -f ${StudyFolder}/.qunexstudy ]]; then 
+if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${QuNexMatlabCall} ]]; then 
     echo ""
-    echo "Qu|Nex study folder specification in ${StudyFolder} not found. Generating now..."
-    echo ""
-    gmri createStudy "${StudyFolder}"
+    mageho "WARNING: Qu|Nex study folder specification .qunexstudy in ${StudyFolder} not found."
+    mageho "         Check that ${StudyFolder} is a valid Qu|Nex folder."
+    mageho "         Consider re-generating Qu|Nex hierarchy..."; echo ""
+    # gmri createStudy ${StudyFolder}
 fi
 
-# -- Check if part of the Qu|Nex file hierarchy is missing
-QuNexFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/hcpls info/tasks info/stimuli info/bids sessions/inbox/MR sessions/inbox/EEG sessions/inbox/BIDS sessions/inbox/behavior sessions/inbox/concs sessions/inbox/events sessions/archive/MR sessions/archive/EEG sessions/archive/BIDS sessions/archive/behavior sessions/specs sessions/QC"
-for QuNexFolder in ${QuNexFolders}; do
-    if [[ ! -d ${StudyFolder}/${QuNexFolder} ]]; then
-          echo "Qu|Nex folder ${StudyFolder}/${QuNexFolder} not found. Generating now..."; echo ""
-          mkdir -p ${StudyFolder}/${QuNexFolder} &> /dev/null
-    fi
-done
-
-# -- Add check in case the sessions folder is distinct from the default name
-QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
-for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
-    if [[ ! -d ${QuNexSessionsFolder} ]]; then
-          echo "Qu|Nex folder ${QuNexSessionsFolder} not found. Generating now..."; echo ""
-          mkdir -p ${QuNexSessionsFolder} &> /dev/null
-    fi
-done
+if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
+    # -- Add check in case the sessions folder is distinct from the default name
+    # -- Eventually use the template file to replace hard-coded values
+    QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/niutilities/templates/study_folders_default.txt | tr -d '\r'`
+    QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
+    for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
+        if [[ ! -d ${QuNexSessionsFolder} ]]; then
+              echo "Qu|Nex folder ${QuNexSessionsFolder} not found. Generating now..."; echo ""
+              mkdir -p ${QuNexSessionsFolder} &> /dev/null
+        fi
+    done
+fi
 
 # -- If logfolder flag set then set it and set master log
 if [[ -z ${LogFolder} ]]; then
@@ -2326,7 +2333,7 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
         # - Check if BOLDS parameter is empty:
         if [ -z "$BOLDS" ]; then
             echo ""
-            echo "WARRNING: BOLD input list not specified. Relying on session_hcp.txt individual information files."
+            echo "WARNING: BOLD input list not specified. Relying on session_hcp.txt individual information files."
             BOLDS="session_hcp.txt"
             echo ""
         fi
