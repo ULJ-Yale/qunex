@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.19 Improved HCPYA dataset support by ensuring the import of SE-FM and FM images.
 * 0.61.18 Added a missing import to ge_HCP, hcp_dwi_selectbestb0 is now a flag.
 * 0.61.17 Robust parsing of integer parameters in HCP processing commands.
 * 0.61.16 HCP Diffusion now uses pipe (|) as the extra eddy args separator.
