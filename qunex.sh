@@ -771,7 +771,7 @@ QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLega
 connectorExec
 }
 show_usage_hcpdLegacy() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
 }
 
@@ -809,7 +809,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh \
 connectorExec
 }
 show_usage_eddyQC() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh
 }
 
@@ -832,7 +832,7 @@ connectorExec
 }
 show_usage_DWIDenseParcellation() {
 echo ""
-echo "-- DESCRIPTION for ${UsageInput}"
+echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh
 }
 
@@ -854,7 +854,7 @@ QuNexCallToRun="DWIDenseSeedTractography.sh \
 connectorExec
 }
 show_usage_DWIDenseSeedTractography() {
-echo "-- DESCRIPTION for ${UsageInput}"
+echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseSeedTractography.sh
 }
 
@@ -953,7 +953,7 @@ if [[ ${Calculation} == "dense" ]]; then
 fi
 }
 show_usage_computeBOLDfc() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh
 }
 
@@ -984,7 +984,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellati
 connectorExec
 }
 show_usage_structuralParcellation() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh
 }
 
@@ -1019,7 +1019,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh 
 connectorExec
 }
 show_usage_BOLDParcellation() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh
 }
 
@@ -1071,7 +1071,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
 connectorExec
 }
 show_usage_FSLDtifit() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh
 }
 
@@ -1095,7 +1095,7 @@ connectorExec
 }
 
 show_usage_FSLBedpostxGPU() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 }
 
@@ -1125,7 +1125,7 @@ connectorExec
 
 show_usage_autoPtx() {
 echo ""
-echo "-- DESCRIPTION for ${UsageInput} "
+echo "qunex ${UsageInput} "
 echo ""
 echo "This command runs the autoptx script in ${AutoPtxFolder}."
 echo ""
@@ -1147,7 +1147,7 @@ QuNexCallToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${
 connectorExec
 }
 show_usage_pretractographyDense() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
 }
 
@@ -1171,7 +1171,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.s
 connectorExec
 }
 show_usage_ProbtrackxGPUDense() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh
 }
 
@@ -1290,15 +1290,15 @@ UsageInput="runQC"
 echo ""
 reho "==> NOTE: QCPreproc is deprecated. New function name --> ${UsageInput}"
 echo ""
-echo "-- DESCRIPTION for ${UsageInput}"
+echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh
 }
 show_usage_runQC() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh
 }
 show_usage_runQC() {
-echo ""; echo "-- DESCRIPTION for ${UsageInput}"
+echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh
 }
 
