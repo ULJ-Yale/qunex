@@ -1353,7 +1353,7 @@ QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 showVersion() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
-    geho "    Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Version: v${QuNexVer}"
+    geho "Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Version: v${QuNexVer}"
     echo ""
 }
 
