@@ -90,7 +90,7 @@ usage() {
  echo "                       Session-specific output: "
  echo "                       <sessions_folder>/<case>/nii/slicesdir "
  echo ""
- echo "                       Uses FSL's `slicesdir` script to generate PNGs and an "
+ echo "                       Uses FSL's 'slicesdir' script to generate PNGs and an "
  echo "                       HTML file in the above directory. "
  echo ""
  echo "                       Note: If using 'general' modality, then visualization is "
