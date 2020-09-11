@@ -90,9 +90,6 @@ usage() {
  echo "INPUTS"
  echo "======"
  echo ""
- echo "--function          Explicitly specify name of function in flag or use function "
- echo "                    name as first argument (e.g. qunex <function_name> followed "
- echo "                    by flags)"
  echo "--sessionsfolder    Path to study folder that contains sessions"
  echo "--sessions          Comma separated list of sessions to run"
  echo "--overwrite         Delete a prior run for a given session (yes / no) [Note: "
@@ -184,12 +181,12 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo "qunex ProbtrackxGPUDense --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo "--sessions='<comma_separarated_list_of_cases>' \ "
- echo "--scheduler='<name_of_scheduler_and_options>' \ "
- echo "--omatrix1='yes' \ "
- echo "--nsamplesmatrix1='10000' \ "
- echo "--overwrite='no'"
+ echo " qunex ProbtrackxGPUDense --sessionsfolder='<path_to_study_sessions_folder>' \ "
+ echo " --sessions='<comma_separarated_list_of_cases>' \ "
+ echo " --scheduler='<name_of_scheduler_and_options>' \ "
+ echo " --omatrix1='yes' \ "
+ echo " --nsamplesmatrix1='10000' \ "
+ echo " --overwrite='no'"
  exit 0
 }
 
