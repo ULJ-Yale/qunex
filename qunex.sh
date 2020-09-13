@@ -350,10 +350,11 @@ Platform="Platform Information: `uname -a`"
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 if [[ ${CommandToRun} == "runTurnkey" ]]; then
    unset GmriCommandToRun
-   if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
+   if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
        if [[ ! -d ${WORKDIR} ]]; then 
           mkdir -p ${WORKDIR} &> /dev/null
        fi
+       gmri createStudy ${StudyFolder}
    fi
 fi
 
