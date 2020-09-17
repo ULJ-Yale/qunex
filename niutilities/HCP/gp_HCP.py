@@ -2248,14 +2248,16 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             # -- Optional parameters
             if 'hcp_dwi_extraeddyarg' in options:
                 eddyoptions = options['hcp_dwi_extraeddyarg'].split("|")
-                for eddyoption in eddyoptions:
-                    comm += "                --extra-eddy-arg=" + eddyoption
+
+                if eddyoptions != ['']:
+                    for eddyoption in eddyoptions:
+                        comm += "                --extra-eddy-arg=" + eddyoption
 
             if 'hcp_dwi_name' in options:
                 comm += "                --dwiname=" + options['hcp_dwi_name']
 
             if 'hcp_dwi_selectbestb0' in options:
-                comm += "                --select-best-b0=" + options['hcp_dwi_selectbestb0']
+                comm += "                --select-best-b0"
 
             if 'hcp_dwi_cudaversion' in options:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
@@ -5875,7 +5877,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+        fmriprocstring = "%s_hp%s_clean" % (options['hcp_cifti_tail'], str(highpass))
         if 'hcp_msmall_procstring' in options:
             fmriprocstring = options['hcp_msmall_procstring']
 
@@ -6004,12 +6006,12 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
-        r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
+        r = "\n\n\n --- Failed during processing of bolds %s\n" % (msmallBolds)
         r += str(errormessage)
-        report['failed'].append(printbold)
+        report['failed'].append(msmallBolds)
     except:
-        r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
-        report['failed'].append(printbold)
+        r += "\n --- Failed during processing of bolds %s with error:\n %s\n" % (msmallBolds, traceback.format_exc())
+        report['failed'].append(msmallBolds)
 
     return {'r': r, 'report': report}
 
@@ -6037,7 +6039,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+        fmriprocstring = "%s_hp%s_clean" % (options['hcp_cifti_tail'], str(highpass))
         if 'hcp_msmall_procstring' in options:
             fmriprocstring = options['hcp_msmall_procstring']
 
@@ -6459,6 +6461,12 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
+        # regname
+        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
+        regname = "%s_2_d40_WRN" % outregname
+        if 'hcp_resample_regname' in options:
+            regname = options['hcp_resample_regname']
+
         # get group data
         bolds = group["bolds"]
 
@@ -6538,12 +6546,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         lowresmeshes = 32
         if 'hcp_lowresmeshes' in options:
             lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
-
-        # regname
-        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
-        regname = "%s_2_d40_WRN" % outregname
-        if 'hcp_resample_regname' in options:
-            regname = options['hcp_resample_regname']
 
         # concatregname
         concatregname = "MSMAll" if 'hcp_resample_concatregname' not in options else options['hcp_resample_concatregname']
