@@ -5802,7 +5802,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+        fmriprocstring = "%s_hp%s_clean" % (options['hcp_cifti_tail'], str(highpass))
         if 'hcp_msmall_procstring' in options:
             fmriprocstring = options['hcp_msmall_procstring']
 
@@ -5964,7 +5964,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+        fmriprocstring = "%s_hp%s_clean" % (options['hcp_cifti_tail'], str(highpass))
         if 'hcp_msmall_procstring' in options:
             fmriprocstring = options['hcp_msmall_procstring']
 
@@ -6386,6 +6386,12 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
+        # regname
+        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
+        regname = "%s_2_d40_WRN" % outregname
+        if 'hcp_resample_regname' in options:
+            regname = options['hcp_resample_regname']
+
         # get group data
         bolds = group["bolds"]
 
@@ -6465,12 +6471,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         lowresmeshes = 32
         if 'hcp_lowresmeshes' in options:
             lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
-
-        # regname
-        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
-        regname = "%s_2_d40_WRN" % outregname
-        if 'hcp_resample_regname' in options:
-            regname = options['hcp_resample_regname']
 
         # concatregname
         concatregname = "MSMAll" if 'hcp_resample_concatregname' not in options else options['hcp_resample_concatregname']
