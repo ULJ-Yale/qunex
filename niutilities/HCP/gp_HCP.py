@@ -2871,10 +2871,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
                 elif options['hcp_bold_seimg'] == 'first':
                     if firstSE is None:
-                        spinN = sepresent[0]
+                        spinN = int(sepresent[0])
                         r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
                     else:
-                        spinN = firstSE
+                        spinN = int(firstSE)
                         r += "\n     ... using the spin echo fieldmap set for the first bold run, %d" % (spinN)
                     spinNeg = sepairs[spinN]['spinNeg']
                     spinPos = sepairs[spinN]['spinPos']
