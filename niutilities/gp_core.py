@@ -410,7 +410,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     f['bold_nuisance']          = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + '.nuisance')
     f['bold_scrub']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + '.scrub')
 
-    f['bold_vol']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + '.nii.gz')
+    f['bold_vol']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['bold_tail'] + '.nii.gz')
     f['bold_dts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_cifti_tail'] + '.dtseries.nii')
     f['bold_pts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_cifti_tail'] + '.ptseries.nii')
 
