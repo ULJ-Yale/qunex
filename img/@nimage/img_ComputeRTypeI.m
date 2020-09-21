@@ -1,35 +1,55 @@
 function [B, Z] = img_ComputeRTypeI(obj, bdata, verbose)
 
-%function [B, Z] = img_ComputeRTypeI(obj, bdata, verbose)
+%``function [B, Z] = img_ComputeRTypeI(obj, bdata, verbose)``
 %
-%	Computes whole brain regression and significances using Type I SS
+%   Computes whole brain regression and significances using Type I Sum of
+%   squares.
 %
-%   INPUT
-%	obj     - nimage image object
-%   bdata   - Data matrix to compute linear regression with and estimate significances.
-%   verbose - Should it talk a lot [no]
+%   INPUTS
+%   =====
 %
-%   OUTPUT
-%   B       - Beta values image for each of the regressors
-%   Z       - Z converted p-values for each of the regressors
+%	--obj     
+%       nimage image object
+%   --bdata   
+%       Data matrix to compute linear regression with and estimate significances.
+%   --verbose 
+%       Should it talk a lot [no]
+%
+%   OUTPUTS
+%   =======
+%
+%   B       
+%       Beta values image for each of the regressors
+%
+%   Z       
+%       Z converted p-values for each of the regressors
 %
 %   USE
-%   The method performs a linear regression of each column of the bdata and returns
-%   Type I SS based significance for each regressor. Specifically, it first computes
-%   intercept and then adds each regressor, comparing each residual SS with the previous
-%   one using an F-test. In essence it provides an estimate of statistical significance of
-%   improvement of fit by adding each of the regressors in order.
+%   ===
 %
-%   It returns a beta image (B) with beta values for each of the regressors when they were
-%   first added to the regression, and Z, a significance map for addition of each of the
-%   regressors in order.
+%   The method performs a linear regression of each column of the bdata and
+%   returns Type I Sum of squares based significance for each regressor.
+%   Specifically, it first computes intercept and then adds each regressor,
+%   comparing each residual SS with the previous one using an F-test. In essence
+%   it provides an estimate of statistical significance of improvement of fit by
+%   adding each of the regressors in order.
 %
-%   ---
-%   (c) Grega Repovš, 2010-03-18
+%   It returns a beta image (B) with beta values for each of the regressors when
+%   they were first added to the regression, and Z, a significance map for
+%   addition of each of the regressors in order.
 %
-%   Change log
-%   2016-11-26 - Grega Repovš - Updated documentation.
-%   2018-06-25 - Grega Repovs - Replaced icdf and cdf with norminv and fcdf to support Octave
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2010-03-18 Grega Repovs
+%              Initial version.
+%   2016-11-26 Grega Repovš
+%              Updated documentation.
+%   2018-06-25 Grega Repovs
+%              Replaced icdf and cdf with norminv and fcdf to support Octave.
 %
 
 if nargin < 3

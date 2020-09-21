@@ -1,27 +1,44 @@
 function [p Z M SE t] = img_TTestZero(obj, verbose)
 
-%function [p Z M SE t] = img_TTestZero(obj, verbose)
+%``function [p Z M SE t] = img_TTestZero(obj, verbose)``
 %
 %	Computes t-test against zero across all the volumes in the image.
 %
-%	obj     - the images to work on
-%   verbose - should it talk a lot [no]
+%   INPUTS
+%   ======
 %
-%   Returns
-%       p   - an image with p-values
-%       t   - an image with t-values
-%       Z   - an image with Z-scores converted from p-values
-%       M   - an image with means across all volumes
-%       SE  - an image with standard errors of means across all volumes
+%	--obj       the images to work on
+%   --verbose   should it talk a lot [false]
 %
-%   ---
-%   Written by Grega Repovš, 2011-10-09
+%   OUTPUTS
+%   =======
+%
+%   p
+%       an image with p-values
+%
+%   t
+%       an image with t-values
+%
+%   Z
+%       an image with Z-scores converted from p-values
+%
+%   M
+%       an image with means across all volumes
+%
+%   SE
+%       an image with standard errors of means across all volumes
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2011-10-09 Grega Repovs
+%              Initial version.
 %   2018-06-19 Grega Repovs
-%            - Changed ttest call to use named parameters.
+%              Changed ttest call to use named parameters.
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf with norminv to support Octave
+%              Replaced icdf with norminv to support Octave.
 %
 
 if nargin < 2

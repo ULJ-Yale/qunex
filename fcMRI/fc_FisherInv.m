@@ -1,20 +1,29 @@
 function [r] = fc_FisherInv(fz)
 
-%function [r] = fc_FisherInv(fz)
+%``function [r] = fc_FisherInv(fz)`
 %
-%  Converts Fisher z values to pearson correlations.
+%	Converts Fisher z values to pearson correlations.
 %
-%  INPUT
-%       fz - Fisher z values
+%	INPUT
+%	=====
 %
-%  OUTPUT
-%       r  - Pearson correlations
+%	--fz 	Fisher z values
 %
-%  ---
-%  Written by Grega Repovs, 2007-06-23.
+%	OUTPUT
+%	======
 %
-%  Changelog
-%  2017-03-19 Grega Repovs - updated documentation
+%	r 	
+%		Pearson correlations
+%
+
+%	~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+% 
+%   2007-06-23 Grega Repovs
+%			   Initial version.	
+%	2017-03-19 Grega Repovs
+%			   Updated documentation.
 
 t = exp(fz*2);
 r = (t-1)./(t+1);

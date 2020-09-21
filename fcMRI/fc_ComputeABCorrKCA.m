@@ -1,39 +1,56 @@
 function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
 
-%function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
+%``function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
 %
-%	Segments the voxels in smask based on their connectivity pattern with tmask voxels.
-%   Uses k-means to group voxels in smask.
+%   Segments the voxels in smask based on their connectivity pattern with tmask 
+%   voxels. Uses k-means to group voxels in smask.
 %
 %   INPUTS
-%       flist    - A file list with information on sessions bold runs and segmentation files,
-%                  or a well strucutured string (see g_ReadFileList).
-%       smask    - .names file for source mask definition.
-%       tmask    - .names file for target mask roi definition.
-%       nc       - List of the number(s) of clusters to compute k-means on.
-%       mask     - Either number of frames to omit or a mask of frames to use [0].
-%       root     - The root of the filename where results are to be saved [flist].
-%       options  - A string with ['g']:
-%                   : g - save results based on group average correlations
-%                   : i - save individual sessions' results
-%       dmeasure - Distance measure to used ['correlation'].
-%       nrep     - Number of replications to run [10].
-%       verbose - whether to report the progress full, script, none [none]
+%   ======
+%
+%   --flist       A file list with information on sessions bold runs and 
+%                 segmentation files, or a well strucutured string (see 
+%                 g_ReadFileList).
+%   --smask       .names file for source mask definition.
+%   --tmask       .names file for target mask roi definition.
+%   --nc          List of the number(s) of clusters to compute k-means on.
+%   --mask        Either number of frames to omit or a mask of frames to use [0].
+%   --root        The root of the filename where results are to be saved [flist].
+%   --options     A string with ['g']:
+%
+%                 - g - save results based on group average correlations
+%                 - i - save individual sessions' results
+%
+%   --dmeasure    Distance measure to used ['correlation'].
+%   --nrep        Number of replications to run [10].
+%   --verbose     whether to report the progress full, script, none [none]
 %
 %	RESULTS
+%   =======
+%
 %   The resulting files are:
 %
-%   group:
-%   <root>_group_k[N]       ... Group based cluster assignments for k=N.
-%   <root>_group_k[N]_cent  ... Group based centroids for k=N.
+%   - group:
 %
-%   individual:
-%   <root>_<session id>_group_k[N]      ... Individual's cluster assignments for k=N.
-%   <root>_<session id>_group_k[N]_cent ... Individual's centroids for k=N.
+%       <root>_group_k[N]
+%           Group based cluster assignments for k=N.
 %
-%   If root is not specified, it is taken to be the root of the flist.%
+%       <root>_group_k[N]_cent
+%           Group based centroids for k=N.
+%
+%   - individual:
+%
+%       <root>_<session id>_group_k[N]
+%           Individual's cluster assignments for k=N.
+%
+%       <root>_<session id>_group_k[N]_cent
+%           Individual's centroids for k=N.
+%
+%   If root is not specified, it is taken to be the root of the flist.
 %
 %   USE
+%   ===
+%
 %   Use the function to cluster source voxels (specified by smask) based on their
 %   correlation pattern with target voxels (specified by tmask). The clustering
 %   is computed using k-means for the number of clusters specified in the nc
@@ -45,17 +62,24 @@ function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, 
 %   taking the best of nrep replications.
 %
 %   EXAMPLE USE
-%   fc_ComputeABCorrKCA('study.list', 'thalamus.names', 'PFC.names', [3:9], 0, 'Th-PFC', 'g', 'correlations', 15);
+%   ===========
 %
-%   ---
-% 	Written by Grega Repovš on 2010-08-13.
+%   ::
+%
+%       fc_ComputeABCorrKCA('study.list', 'thalamus.names', 'PFC.names', [3:9], ...
+%                       0, 'Th-PFC', 'g', 'correlations', 15);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2010-08-13 Grega Repovš
+%              Initial version
 %   2017-03-19 Grega Repovs
-%            - Cleaned up the code
-%            - Updated documentation
+%              Cleaned up the code and updated documentation
 %   2017-04-18 Grega Repovs
-%            - Adjusted to use g_ReadFileList
+%              Adjusted to use g_ReadFileList
 %
 
 if nargin < 10 || isempty(verbose),  verbose  = 'none';            end

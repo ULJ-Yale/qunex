@@ -1,17 +1,33 @@
 function [img] = img_EmbedCIFTIVolume(img, vol_img)
 
-%function [img] = img_EmbedCIFTIVolume(img, vol_img)
+%``function [img] = img_EmbedCIFTIVolume(img, vol_img)``
 %
 %   Overwrites the CIFTI-2 nimage with a modified/analyzed NIfTY model.
 %
-%   INPUT
-%       vol_img  - nimage in a NIfTI format.
+%   INPUTS
+%	======
+%	
+%	--img 	
+%   --vol_img	nimage in a NIfTI format.
 %
-%   USE EXAMPLE
+%	OUTPUT
+%	======
+%	
+%	img
+%
+%   EXAMPLE USE
+%	===========
+%	
+%	::
 %       img = img.img_EmbedCIFTIVolume(vol_img);
 %
-%   ---
-%   Written by Aleksij Kraljic, 23-06-2017
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%	2017-06-23 Aleksij Kraljic
+%			   Initial version.
 
 % import CIFTI-2 components from the .mat file
 load('CIFTI_BrainModel.mat');

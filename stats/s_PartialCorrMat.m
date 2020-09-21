@@ -2,10 +2,21 @@ function [p] = s_PartialCorrMat(X, Z, verbose)
 
 %function [p] = s_PartialCorrMat(X, Z)
 %	
-%	Computes partial correlation for each column in X with each column in Z,
-%	partialing out other columns in Z.
+%   Computes partial correlation for each column in X with each column in Z,
+%   partialing out other columns in Z.
 %
-%   Returns matrix n x m where n is number of column in X and m number of vars in Z.
+%   INPUTS
+%   ======
+%
+%   --X
+%   --Z
+%   --verbose   should it talk a lot [false]
+%   
+%   OUTPUT
+%   ======
+%
+%   p
+%       matrix n x m where n is number of column in X and m number of vars in Z
 %	
 
 if nargin < 3

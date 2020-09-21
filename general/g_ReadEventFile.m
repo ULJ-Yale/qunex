@@ -1,20 +1,40 @@
 function [out] = g_ReadEventFile(file, tunit)
 
+%``function [out] = g_ReadEventFile(file, tunit)``
 %
-%	Reads fidl event file and returns a structure that includes:
+%	Reads fidl event file and returns a structure.
 %
-%	frame   - frame number of the event start
-%	elength - event length in frames
-%	event_s - start of the event in s
-%	event_l - length of the event in s
-%	event   - event code
-%	events  - list of event names
-%	TR      - tr in s
+%	INPUTS
+%	======
 %
-%   (c) Grega Repovš
-%   2011-07-30 - Added coding of frames to ignore
-%   2016-02-03 - Added checking for event length in ms
-%   2018-07-27 - Updated checking for event length in ms
+%	--file 		fidl event file
+%	--tunit
+%
+% 	OUTPUT
+%	======
+%	
+%	out
+%		A structure that includes:
+%
+%		- frame   ... frame number of the event start
+%		- elength ... event length in frames
+%		- event_s ... start of the event in s
+%		- event_l ... length of the event in s
+%		- event   ... event code
+%		- events  ... list of event names
+%		- TR      ... TR in s
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2011-07-30 Grega Repovš
+%			   Added coding of frames to ignore
+%   2016-02-03 Grega Repovš
+%			   Added checking for event length in ms
+%   2018-07-27 Grega Repovš
+%			   Updated checking for event length in ms
 %
 
 if nargin < 2 || isempty(tunit), tunit = 's'; end

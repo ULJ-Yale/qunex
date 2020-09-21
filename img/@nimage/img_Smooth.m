@@ -1,69 +1,107 @@
 function img = img_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
 
-%function img = img_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries)
+%``function img = img_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)``
 %
 %   Does geodesic gaussian kernel smoothing of the gmri image.
 %
-%   INPUT
-%       img         ... a nimage object with data in volume representation.
-%       fwhm        ... full Width at Half Maximum in mm formatted as:
-%                       a) [fwhm for volume structure] for NIfTI [2]
-%                       b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
-%                          *(if only 1 element is passed, it takes that value for both, volume and surface structures)
-%       verbose     ... whether to report the progress. [false]
-%       ftype       ... type of smoothing filter:
-%                       a) 'gaussian' or 'box' for NIfTI files ['gaussian']
-%                       b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
-%       ksize       ... size of the smoothing kernel in voxels for NIfTI files, [] (empty) for CIFTI files [6]
-%       projection  ... type of surface component projection ('midthickness', 'inflated',...)
-%                          or a string containing the path to the surface files (.surf.gii)
-%                          for both, left and right cortex separated by a pipe:
-%                       a) for a default projection: 'type: midthickness' ['type:midthickness']
-%                       b) for a specific projection:
-%                          'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
-%       mask        ... specify the cifti mask to select areas on which to
-%       perform smoothing, if you don't want to use the mask -> mask = 'no', otherwise the default mask is the same as the input file
-%       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
-%       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
-%       timeSeries  ... boolean to indicate whether a thresholded timeseries image should use each frame as a mask for the
-%                           corresponding frame. By default [false], the first frame is taken a mask for all the frames
-%       frames      ... list of frames to perform smoothing on [1]
-%       ****************************************************************************************************
-%       Smoothing time series images with thresholded data should be performed for each frame separatelly,
-%       otherwise the smoothing will use the first frame as a smoothing mask for all the frames.
-%       (this issue will be solved in the future)
-%       ****************************************************************************************************
+%   INPUTS
+%   ======
+%
+%   --img         a nimage object with data in volume representation.
+%   --fwhm        Full Width at Half Maximum in mm formatted as:
+%
+%                 a) [fwhm for volume structure] for NIfTI [2]
+%                 b) [fwhm for volume structure, fwhm for surface structures] 
+%                    for CIFTI [2]
+%
+%                 If only 1 element is passed, it takes that value for both, 
+%                 volume and surface structures.
+%
+%   --verbose     whether to report the progress. [false]
+%   --ftype       type of smoothing filter:
+%
+%                 a) 'gaussian' or 'box' for NIfTI files ['gaussian']
+%                 b) '' (empty argument) for CIFTI files, since geodesic 
+%                    gaussian smoothing is the only option
+%
+%   --ksize       size of the smoothing kernel in voxels for NIfTI files, 
+%                 [] (empty) for CIFTI files [6]
+%   --projection  type of surface component projection ('midthickness', 
+%                 'inflated', ...) or a string containing the path to the 
+%                 surface files (.surf.gii) for both, left and right cortex 
+%                 separated by a pipe:
+%
+%                 a) for a default projection: 'type: midthickness' 
+%                    ['type:midthickness']
+%                 b) for a specific projection:
+%                    'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
+%
+%   --mask        specify the cifti mask to select areas on which to perform 
+%                 smoothing, if you don't want to use the mask set to 'no', 
+%                 otherwise the default mask is the same as the input file
+%   --wb_path     path to wb_command ['/Applications/workbench/bin_macosx64']
+%   --hcpatlas    path to HCPATLAS folder containing projection surf.gii files
+%   --timeSeries  boolean to indicate whether a thresholded timeseries image 
+%                 should use each frame as a mask for the corresponding frame. 
+%                 By default [false], the first frame is taken a mask for all 
+%                 the frames.
+%   --frames      list of frames to perform smoothing on [1]
+%
 %
 %   OUTPUT
-%       img         ... image with data smoothed.
+%   ======
+%
+%   img
+%       image with data smoothed
+%
+%   NOTE
+%   ====
+%
+%   Smoothing time series images with thresholded data should be performed for
+%   each frame separatelly, otherwise the smoothing will use the first frame as
+%   a smoothing mask for all the frames. (this issue will be solved in the
+%   future)
 %
 %   USE
+%   ===
+%
 %   The method enables smoothing of MR data (NIfTI or CIFTI). The smoothing is
 %   specified in voxels for volume structures and mm^2 for surface structures
 %   smoothing. The default smoothing kernel for volume structures is 'gaussian'
-%   with kernel size 7. For surface structure it is required to specify the
-%   type of the projection ('midthickness', 'inflated',...). If PATH
-%   environment variable is not saved in the system, it is required to pass
-%   the path to the wb_command with the wb_path input argument. The path to
-%   the directory containing surface (surf.gii) files should be stored in
-%   the HCPATLAS environment variable, otherwise, the path to surface files
-%   should be passed with the hcpatlas input argument. In case the file
-%   contains multiple frames, all of the frames undergo smoothing.
+%   with kernel size 7. For surface structure it is required to specify the type
+%   of the projection ('midthickness', 'inflated',...). If PATH environment
+%   variable is not saved in the system, it is required to pass the path to the
+%   wb_command with the wb_path input argument. The path to the directory
+%   containing surface (surf.gii) files should be stored in the HCPATLAS
+%   environment variable, otherwise, the path to surface files should be passed
+%   with the hcpatlas input argument. In case the file contains multiple frames,
+%   all of the frames undergo smoothing.
 %
 %   EXAMPLE (CIFTI image)
-%   img_smooth = img.img_Smooth([7 9], false, [], [], 'midthickness');
+%   =====================
+%
+%   ::
+%
+%       img_smooth = img.img_Smooth([7 9], false, [], [], 'midthickness');
 %
 %   EXAMPLE (NIfTI image)
-%   img_smooth = img.img_Smooth(3, true, 'gaussian', 8);
+%   =====================
 %
-%   ---
-%   Written by Aleksij Kraljic, July 11, 2017
+%   ::
+%
+%       img_smooth = img.img_Smooth(3, true, 'gaussian', 8);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2017-07-11 Aleksij Kraljic
+%              Initial version
 %	2017-07-17 Aleksij Kraljic
-%        - Added option for passing specific surf.gii projection files
+%              Added option for passing specific surf.gii projection files
 %   2017-12-20 Aleksij Kraljic
-%        - Added option for smoothing thresholded multiple-frame images
+%              Added option for smoothing thresholded multiple-frame images
 
 % input checking
 if nargin < 11 || isempty(frames),     frames = 1; warn = 1;             end

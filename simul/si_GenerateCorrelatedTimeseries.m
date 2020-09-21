@@ -1,20 +1,35 @@
 function [ts, er, dr] = si_GenerateCorrelatedTimeseries(r, len, md)
 
-%	function [ts, er, dr] = si_GenerateCorrelatedTimeseries(r, len, md)
+%``function [ts, er, dr] = si_GenerateCorrelatedTimeseries(r, len, md)``
 %	
-%   Function that generates multi normal timeseries with specified correlations
+%   Function that generates multi normal timeseries with specified correlations.
 %
-%   Inputs
-%       - r     correlation matrix
-%       - l     desired timeseries length
-%       - md    maximal allowed difference between desired and actual correlation
+%   INPUTS
+%   ======
 %
-%   Outputs
-%       - ts    generated timeseries
-%       - r     actual correlations
-%       - dr    maximal difference between desired and actual correlation
-%	
-% 	Created by Grega Repovš on 2010-10-09.
+%   --r     correlation matrix
+%   --l     desired timeseries length
+%   --md    maximal allowed difference between desired and actual correlation
+%
+%   OUTPUT
+%   ======
+%
+%   ts
+%       generated timeseries
+%
+%   r
+%       actual correlations
+%
+%   dr
+%       maximal difference between desired and actual correlation
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+% 	2010-10-09 Grega Repovs
+%              Initial version.
 %	
 
 if nargin < 3

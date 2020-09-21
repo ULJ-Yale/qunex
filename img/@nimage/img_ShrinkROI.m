@@ -1,21 +1,31 @@
 function [out] = img_ShrinkROI(img, method, crit)
 
-%function [out] = img_ShrinkROI(img, method, crit)
+%``function [out] = img_ShrinkROI(img, method, crit)``
 %
 %	Peels a layer off all regions to reduce their size.
 %
-%   INPUT
-%       in     ... A nimage object with ROI volume data.
-%       method ... What is considered as neighbour ['surface']
-%               surface - sharing a surface (default) (N=7)
-%               edge    - sharing at least an edge    (N=19)
-%               corner  - sharing at least a corner   (N=27)
-%       crit - how many of the neighbouring voxels need to be present to survive - default is all
+%   INPUTS
+%   ======
+%
+%   --in        A nimage object with ROI volume data.
+%   --method    What is considered as neighbour ['surface']
+%
+%               - surface ... sharing a surface (default) (N=7)
+%               - edge    ... sharing at least an edge    (N=19)
+%               - corner  ... sharing at least a corner   (N=27)
+%
+%   --crit      how many of the neighbouring voxels need to be present to 
+%               survive - default is all
 %
 %   OUTPUT
-%       out    ... A nimage object with shrunk regions
+%   ======
+%
+%   out
+%       A nimage object with shrunk regions
 %
 %   USE
+%   ===
+%
 %   The method inspects all the voxels in the image for presence of neighbours.
 %   If a voxel has all the specified neighbors (or a crit number of them), then
 %   it is left as it is. If it does not have the required number of neighbours,
@@ -25,19 +35,24 @@ function [out] = img_ShrinkROI(img, method, crit)
 %   corner.
 %
 %   EXAMPLE USE
+%   ===========
+%
 %   To cunt as neighbors voxels that share at least an edge and take out those
-%   that have less than 17 neighbors use:
+%   that have less than 17 neighbors use::
 %
-%   >>> shrunkimg = img.img_ShrinkROI('edge', 17);
+%       shrunkimg = img.img_ShrinkROI('edge', 17);
 %
-%   ---
-%   Written by Grega Repovs, 2010-05-10
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2010-05-10 Grega Repovs
+%              Initial version.
 %   2013-07-24 Grega Repovs
-%          ... adjusted for multivolume ROI files
+%              Adjusted for multivolume ROI files
 %   2017-03-11 Grega Repovs
-%          ... updated documentation
+%              Updated documentation
 %
 
 if nargin < 2,  method = 'surface';  end

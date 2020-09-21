@@ -1,25 +1,43 @@
 function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose);
 
-%function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose);
+%``function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)``
 %
 %	Extracts the specified nuisances and saves it into .nuisance file.
 %
-%   img         - nimage or a path to a bold file to process
-%   fsimg       - nimage, a path to a freesurfer segmentation or '1b' for extraction based on first frame
-%	bmimg      	- nimage, a path to brain mask for this specific bold or [] for image thresholding
-%   target      - folder to save results into, default: where bold image is, 'none': do not save in external file
-%   ntarget     - where to store used masks and their png image, 'none' for nowhere
-%   wbmask      - a mask used to exclude ROI from the whole-brain nuisance regressor [none]
-%   sessionroi   - a mask used to create session specific nroi [none]
-%   nroi        - ROI.names file to use to define additional nuisance ROI to regress out
-%                 when additionally provided a list of ROI, those will not be masked by
-%                 bold brain mask (e.g. 'nroi.names|eyes,scull')
-%	verbose		- to report on progress or not [not]
+%   INPUTS
+%   ======
 %
-%   ---
-% 	Created by Grega Repovš on 2014-07-17.
+%   --img         nimage or a path to a bold file to process
+%   --fsimg       nimage, a path to a freesurfer segmentation or '1b' for 
+%                 extraction based on first frame
+%	--bmimg       nimage, a path to brain mask for this specific bold or [] for 
+%                 image thresholding []
+%   --target      folder to save results into, default: where bold image is, 
+%                 'none': do not save in external file 
+%   --ntarget     where to store used masks and their png image, 'none' for 
+%                 nowhere
+%   --wbmask      a mask used to exclude ROI from the whole-brain nuisance 
+%                 regressor [none]
+%   --sessionroi  a mask used to create session specific nroi [none]
+%   --nroi        ROI.names file to use to define additional nuisance ROI to 
+%                 regress out when additionally provided a list of ROI, those 
+%                 will not be masked by bold brain mask (e.g. 
+%                 'nroi.names|eyes,scull')
+%	--verbose     to report on progress or not [not]
+%
+%   OUTPUTS
+%   =======
+%
+%   nuisance
+%
+%   hdr
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 % 	ChangeLog
+%   2014-07-14 Grega Repovš
+%              Initial version.
 %   2018-06-20 Grega Repovš
 %            - Added more detailed reporting of parameters used.
 %

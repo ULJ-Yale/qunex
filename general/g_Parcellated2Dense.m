@@ -1,31 +1,41 @@
 function [img] = g_Parcellated2Dense(inimg, outimg, verbose, missingvalues)
 
-%function [img] = g_Parcellated2Dense(inimg, outimg, verbose, missingvalues)
+%``function [img] = g_Parcellated2Dense(inimg, outimg, verbose, missingvalues)``
 %
 %	Expands the parcelated file to a dense file
 %
-%   INPUT
-%       - inimg          : a path to the image to expand
-%       - outimg         : a path where the expanded image is to be saved
-%       - verbose        : should it report the details
-%       - missingvalues  : what value should be used in case of missing
-%                          values (numeric or NaN) provided as a string ['0']
+%   INPUTS
+%	======
+%
+%   --inimg				a path to the image to expand
+%   --outimg         	a path where the expanded image is to be saved
+%   --verbose        	should it report the details
+%   --missingvalues  	what value should be used in case of missing values 
+%						(numeric or NaN) provided as a string ['0']
 %
 %   OUTPUT
-%       - img : a dense cifti nimage image object
+%	======
+%
+%   img
+%		a dense cifti nimage image object
 %
 %   USE
+%	===
+%
 %   This method is used to expand a parcellated cifti data file to a cifti 
 %   dense data file based on the information stored in cifti metatada.
 %
-%   ---
-%   Written by Grega Repovs, 2019-06-29
+
+%   ~~~~~~~~~~~~~~~~~~
 %
-%   Change log
+%   Changelog
+%
+%	2019-06-29 Grega Repovs
+%			   Initial version.
 %   2019-08-27 Andraz Matkovic
-%            - Added ability to specify missing values value
+%              Added ability to specify missing values value.
 %   2019-08-29 Grega Repovs
-%            - Changed the missingvalues parameter name
+%              Changed the missingvalues parameter name.
 %
 
 % --> process variables

@@ -1,20 +1,34 @@
 function [img] = img_Read4DFP(img, file, dtype, frames, verbose)
 
-%function [img] = img_Read4DFP(img, file, dtype, verbose)
+%``function [img] = img_Read4DFP(img, file, dtype, frames, verbose)``
 %
-%		Reads in a 4dfp image into an image object
+%   Reads in a 4dfp image into an image object
 %
-%       required:
-%		    img   - mrimage object
-%           file  - filename (can be a .conc., .ifh or .img file)
+%   INPUTS
+%   ======
 %
-%		optional:
-%           dtype - number format to use ['single']
-%           frames - number of frames to read [all]
+%   --img         mrimage object
+%   --file        filename (can be a .conc., .ifh or .img file)
+%   --dtype       number format to use ['single']
+%   --frames      number of frames to read [all]
+%   --verbose     should it report the details [false]
 %
-%       Grega Repovs - 2009-11-19
-%       2011-07-31 - Changed the handling of conc files to nimage main method.
-%       2013-10-20 - Added verbose option
+%   OUTPUT
+%   ======
+%
+%   img
+%  
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2009-11-19 Grega Repovs
+%              Initial version.
+%   2011-07-31 Grega Repovs
+%              Changed the handling of conc files to nimage main method.
+%   2013-10-20 Grega Repovs
+%              Added verbose option
 %
 
 if nargin < 5

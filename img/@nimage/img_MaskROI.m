@@ -1,46 +1,60 @@
 function [roi] = img_MaskROI(img, roi2)
 
-%function [img] = img_MaskROI(img, roi2)
+%``function [img] = img_MaskROI(img, roi2)``
 %
 %	Mask the ROI file based on the second ROI.
 %
-%   INPUT
-%       img    - The original nimage ROI image object.
-%       roi2   - The additional ROI image passed either as a gmriimage or
-%                a path to the image.
+%   INPUTS
+%   ======
+%
+%   --img       The original nimage ROI image object.
+%   --roi2      The additional ROI image passed either as a gmriimage or a path 
+%               to the image.
 %
 %   OUTPUT
-%       roi    - A new image with the original ROI masked with the ROI in the
-%                second ROI file.
+%   ======
+%   
+%   roi 
+%       A new image with the original ROI masked with the ROI in the second ROI 
+%       file.
 %
 %   USE
+%   ===
+%
 %   The most frequent use case is to generate a subject specific ROI file in
-%   which the group defined ROI provided in the original image are masked by
-%   the second image that provides subjects specific information on brain
+%   which the group defined ROI provided in the original image are masked by the
+%   second image that provides subjects specific information on brain
 %   segmentation (e.g. aseg+aparc image).
 %
 %   For method to work, the ROI had to be read using the img_ReadROI method,
 %   called on a .names file, so that it has the information on both group level
 %   and subject specific ROI codes. The method loops through all the original
-%   ROI and if subject specific codes are specified for that group level ROI,
-%   it masks the ROI using the specified codes for the subject specific ROI.
+%   ROI and if subject specific codes are specified for that group level ROI, it
+%   masks the ROI using the specified codes for the subject specific ROI.
 %
 %   EXAMPLE USE
-%   >>> roi = nimage.img_ReadROI('CCN.names');
-%   >>> sroi = roi.img_MaskROI('OP338.aseg+aparc.nii.gz');
+%   ===========
+%
+%   ::
+%
+%       roi = nimage.img_ReadROI('CCN.names');
+%       sroi = roi.img_MaskROI('OP338.aseg+aparc.nii.gz');
 %
 %   Note that the above can be simplified by the use of img_ReadROI itself,
 %   which internaly calls img_MaskROI if the name of the second ROI image file
-%   is provided.
+%   is provided::
 %
-%   >>> sroi = nimage.img_ReadROI('CCN.names', 'OP338.aseg+aparc.nii.gz');
+%       sroi = nimage.img_ReadROI('CCN.names', 'OP338.aseg+aparc.nii.gz');
 %
-%   ---
-%   Written by Grega Repovs, 2015-12-09
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2015-12-09 Grega Repovs
+%              Initial version
 %   2017-03-04 Grega Repovs
-%            - Updated documentation
+%              Updated documentation
 %
 
 if nargin < 2
