@@ -5892,7 +5892,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
         fullTest = None
 
         # -- Run
@@ -6065,7 +6065,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
         fullTest = None
 
         # -- Run
