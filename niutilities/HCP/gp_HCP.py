@@ -7286,9 +7286,10 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                         print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
                         c = 0
                         for mline in mdata:
-                            c += 1
-                            mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
-                            print >> mfile, mline.replace(' -', '-')
+                            if len(mline) >= 6:
+                                c += 1
+                                mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
+                                print >> mfile, mline.replace(' -', '-')
                         mfile.close()
                         r += "\n     ... movement data prepared"
                     else:

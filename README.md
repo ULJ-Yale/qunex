@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.61.21 Added correction of invalid movement regressor files upon mapHCPData.
 * 0.61.20 Fixed a bug in MSMAll error reporting.
 * 0.61.19 Improved HCPYA dataset support by ensuring the import of SE-FM and FM images.
 * 0.61.18 Added a missing import to ge_HCP, hcp_dwi_selectbestb0 is now a flag.
