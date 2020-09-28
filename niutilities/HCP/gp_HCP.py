@@ -60,7 +60,7 @@ from functools import partial
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
-PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
+PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'LR': 'x-', 'x-': 'LR', 'RL': 'x', 'x': 'RL'}
 SEDirMap  = {'AP': 'y', 'PA': 'y', 'LR': 'x', 'RL': 'x'}
 
 
