@@ -792,10 +792,11 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -1221,10 +1222,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 comm += " %s" % (flag)
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -1576,10 +1578,11 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                 'timepoints'        : ",".join(sessionspaths)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
        # -- Test files
 
@@ -1851,10 +1854,11 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
 
         # -- Test files
@@ -2236,10 +2240,11 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
 
             # -- Report command
-            r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-            r += comm.replace("                --", "\n    --")
-            r += "\n------------------------------------------------------------\n"
+            if run:
+                r += "\n\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
 
             # -- Test files
             tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
@@ -3170,10 +3175,11 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -3189,7 +3195,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         # -- Run
 
-        if run and boldok:            
+        if run and boldok:
             if options['run'] == "run":
                 if overwrite or not os.path.exists(tfile):
 
@@ -3581,10 +3587,11 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -4226,10 +4233,11 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, bandpass))
@@ -4358,10 +4366,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if groupok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
@@ -4753,10 +4762,11 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 'matlabrunmode'     : int(matlabrunmode)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_%s_hp%s_ICA_Classification_singlescreen.scene" % (subject, boldtarget, highpass))
@@ -5162,10 +5172,11 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
             # -- Report command
-            r += "\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
-            r += "\n------------------------------------------------------------\n"
+            if boldok:
+                r += "\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += comm.replace("--", "\n    --").replace("             ", "")
+                r += "\n------------------------------------------------------------\n"
 
             # -- Test files
             # postfix
@@ -5331,10 +5342,11 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
             # -- Report command
-            r += "\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
-            r += "\n------------------------------------------------------------\n"
+            if groupok:
+                r += "\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += comm.replace("--", "\n    --").replace("             ", "")
+                r += "\n------------------------------------------------------------\n"
 
             # -- Test files
             # postfix
@@ -5425,10 +5437,11 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 'highpass'          : int(highpass)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s.ica" % (boldtarget, highpass), "HandNoise.txt")
@@ -5886,10 +5899,11 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'matlabrunmode'       : int(matlabrunmode)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldsok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
@@ -6059,10 +6073,11 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'matlabrunmode'       : int(matlabrunmode)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
@@ -6515,10 +6530,11 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldsok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file (currently check only last bold)
         lastbold = boldtargets.split("@")[-1]
@@ -6794,10 +6810,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             comm += '             --multirun-fix-extract-volume="%s"' % extractvolume
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if runok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
@@ -6890,10 +6907,11 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                 'bvals'             : os.path.join(hcp['T1w_folder'], 'Diffusion', 'bvals')}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
         
@@ -6979,10 +6997,11 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
                 'model'             : "2"}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- test files
 
