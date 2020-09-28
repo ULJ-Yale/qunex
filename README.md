@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.62.0  DOcumentation rework.
 * 0.61.6  Added CUDA 9.1 bedpostx support.
 * 0.61.5  Fixed a bug where Qu|nex would create unnecessary folders.
 * 0.61.4  When running single Qu|Nex commands warnings would erroneously state that we are running throgh RunTurnkey.
