@@ -51,29 +51,25 @@
 # ------------------------------------------------------------------------------
 
 usage() {
-echo ""
-echo "-----------------------------------------------------------------------------------------------------------"
-echo "------ General usage for syncing and backing up folders and data onto local or remote servers -------------"
-echo "-----------------------------------------------------------------------------------------------------------"
-echo ""
-echo "  This function runs rsync across the entire folder structure based on user specifications"
-echo ""
-echo "  * Mandatory Inputs:"
-echo ""
-echo "   --syncfolders=<path_to_folders>         Set path for folders that contains studies for syncing"
-echo "   --syncserver=<sync_server>              Set sync server <UserName@some.server.address> or 'local' to sync locally"
-echo "   --syncdestination=<destination_path>    Set sync destination path"
-echo "   --synclogfolder=<path_to_log_folder>        Set log folder"
-echo ""
-echo "  * Optional Inputs:"
-echo ""
-echo "   --sessions=<lists_specific_sessions>      Set input sessions for Sync. "
-echo "                                             If set, then '--syncfolders' path has to contain sessions' folders."
-echo ""
-echo " Written by Alan Anticevic"
-echo ""
-echo ""
-exit 0
+ echo ""
+ echo "This function runs rsync across the entire folder structure based on user "
+ echo "specifications. It is used for syncing and backing up folders and data onto "
+ echo "local or remote servers." 
+ echo ""
+ echo "INPUTS"
+ echo "======"
+ echo ""
+ echo "--syncfolders        Set path for folders that contains studies for syncing"
+ echo "--syncserver         Set sync server <UserName@some.server.address> or 'local' "
+ echo "					    to sync locally"
+ echo "--syncdestination    Set sync destination path"
+ echo "--synclogfolder      Set log folder"
+ echo "--sessions           Comma separated list of sessions for sync. (optional) "
+ echo "                     If set, then '--syncfolders' path has to contain sessions' "
+ echo "				        folders."
+ echo ""
+ echo ""
+ exit 0
 }
 
 # ------------------------------------------------------------------------------

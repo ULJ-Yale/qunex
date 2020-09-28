@@ -47,23 +47,22 @@
 # ------------------------------------------------------------------------------
 
 usage() {
-     echo ""
-     echo "-- DESCRIPTION for SessionsBatch"
-     echo ""
-     echo "This function generates a batch file for processing for a given session."
-     echo "It is designed to be invoked directly via Qu|Nex call:"
-     echo ""
-     echo "   > qunex createLists"
-     echo ""
-     echo "This script accepts the following mandatory paramaters:"
-     echo ""
-     echo "   --sessionsfolder=<folder_with_sessions>        Path to study folder that contains sessions"
-     echo "   --sessions=<comma_separated_list_of_cases>  Session to run"
-     echo "   --outname=<output_name_of_the_batch>        Output name of the batch file to generate. "
-     echo "   --outpath=<absolute_path_to_list_folder>    Path for the batch file"
-     echo ""
-     exit 0
-}
+ echo ""
+ echo "This function generates a batch file for processing for a given session."
+ echo "It is designed to be invoked directly via Qu|Nex call::"
+ echo ""
+ echo " qunex createLists"
+ echo ""
+ echo "INPUTS"
+ echo "======"
+ echo ""
+ echo "--sessionsfolder    Path to study folder that contains sessions"
+ echo "--sessions          Comma separated list of sessions to run"
+ echo "--outname           Output name of the batch file to generate. "
+ echo "--outpath           Path for the batch file"
+ echo ""
+ exit 0
+ 
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
