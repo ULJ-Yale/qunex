@@ -408,14 +408,16 @@ tomap = {'bppt':                    'bolds',
          'tfile':                   'targetfile',
          'sfile':                   {
                                         'sourcefiles': ['createBatch', 'pullSequenceNames', 'gatherBehavior'],
-                                        'sourcefile': ['createSessionInfo', 'setupHCP', 'sliceImage', 'runNIL', 'runNILFolder']
+                                        'sourcefile': ['createSessionInfo', 'setupHCP', 'sliceImage', 'runNIL', 'runNILFolder'],
+                                        'default': 'sourcefile'
                                     },
          'sfilter':                 'filter',
          'hcp_fs_existing_subject': 'hcp_fs_existing_session',
          'subjectsfolder':          'sessionsfolder',
          'subjid':                  {
                                         'sessionid': ['dicom2niix', 'batchTag2NameKey'],
-                                        'sessionids': ['exportHCP', 'mapIO']
+                                        'sessionids': ['exportHCP', 'mapIO'],
+                                        'default': 'sessionid'
                                     },
          'sbjroi':                  'sessionroi',
          'subjectf':                'sessionf'
@@ -589,6 +591,9 @@ def mapDeprecated(options, command):
                 for k2, v2 in mapto.iteritems():
                     if command in v2:
                         mapto = k2
+                        break
+                    elif k2 == 'default':
+                        mapto = v2
                         break
 
             # remap

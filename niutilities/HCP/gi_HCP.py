@@ -578,6 +578,7 @@ def processHCPLS(sessionfolder, filesort):
         folderInfo   = {}
         folderFiles  = []
         senum        = 0
+        fmnum        = 0
         missingFiles = []
 
         # --- get folder information
@@ -612,6 +613,16 @@ def processHCPLS(sessionfolder, filesort):
                 senum = int(senum)
             else:
                 senum = 1
+
+        # --- Proces fieldmap files
+
+        fmfile = [e for e in files if 'FieldMap_Magnitude' in e]
+        if fmfile:
+            fmnum = [e for e in fmfile[0].split('_') if 'Magnitude' in e][0].replace('Magnitude', "").replace('.nii.gz', "")
+            if fmnum:
+                fmnum = int(fmnum)
+            else:
+                fmnum = 1
 
         for file in files:
             fileName = os.path.basename(file)
@@ -662,7 +673,7 @@ def processHCPLS(sessionfolder, filesort):
 
         # --- finish up folder
 
-        checkedFolders.append({'senum': senum, 'name': folderName, 'label': folderLabel, 'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles})
+        checkedFolders.append({'senum': senum, 'fmnum': fmnum, 'name': folderName, 'label': folderLabel, 'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles})
 
     # sort folders
 
@@ -1025,6 +1036,10 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                         out = ": se(%d)" % (folder['senum'])
                         print >> sout, out,
                         print >> sout_hcp, out,
+                    if folder['fmnum']:
+                        out = ": fm(%d)" % (folder['fmnum'])
+                        print >> sout, out,
+                        print >> sout_hcp, out,
                     echospacing = 0
                     if fileInfo['json'].get('DwellTime', None):
                         echospacing = fileInfo['json'].get('DwellTime')
@@ -1060,13 +1075,18 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     else:
                         phenc = fileInfo['parts'][2]
 
+                    fmstr = ""
+                    if folder['fmnum']:
+                        fmstr += ": fm(%d)" % (folder['fmnum'])
+                    if folder['senum']:
+                        fmstr += ": se(%d)" % (folder['senum'])
 
                     if 'SBRef' in fileInfo['parts']:
-                        out = "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc)
+                        out = "%02d: %-20s: %-30s%s : phenc(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), fmstr, phenc)
                         print >> sout, out,
                         print >> sout_hcp, out,
                     else:
-                        out = "%02d: %-20s: %-30s: se(%d) : phenc(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc)
+                        out = "%02d: %-20s: %-30s%s : phenc(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), fmstr, phenc)
                         print >> sout, out,
                         print >> sout_hcp, out,
 
@@ -1091,9 +1111,21 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     if phenc:
                         phenc = PEDirMap.get(phenc, 'NA')
                     else:
-                        phenc = fileInfo['parts'][2]
+                        phenc = [e for e in ['LR', 'RL', 'AP', 'PA'] if e in fileInfo['parts']] + ['NA']
+                        phenc = phenc[0]                        
+                    
+                    if phenc == 'NA':                          
+                        print "==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (imgn, fileInfo['name'])
+                        phencstr = ""
+                    else:
+                        phencstr = ": phenc(%s) " % (phenc)
 
-                    out = "%02d: %-20s: %-30s: se(%d) : phenc(%s) : EchoSpacing(%.10f) : filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                    if fileInfo['json'].get('EffectiveEchoSpacing', None):
+                        echospstr = ": EchoSpacing(%.10f) " % (fileInfo['json'].get('EffectiveEchoSpacing'))
+                    else:
+                        echospstr = ""
+
+                    out = "%02d: %-20s: %-30s: se(%d) %s%s: filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phencstr, echospstr, "_".join(fileInfo['parts']))
                     print >> sout, out
                     print >> sout_hcp, out
 
@@ -1102,6 +1134,14 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     print >> rout, "%-25s : %.8f" % ("_hcp_seechospacing", fileInfo['json'].get('EffectiveEchoSpacing', -9.))
                     print >> rout, "%-25s : '%s=%s'" % ("_hcp_seunwarpdir", phenc, unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
 
+                # -- Siemens fieldmap
+                elif fileInfo['parts'][0] == 'FieldMap':
+                    out = "%02d: %-20s: %-30s: fm(%d) : filename(%s)" % (imgn, "FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['fmnum'], "_".join(fileInfo['parts']))
+                    print >> sout, out
+                    print >> sout_hcp, out
+
+                    print >> rout, "\n" + "_".join(fileInfo['parts'])
+                    print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
 
                 # -- dMRI
                 elif fileInfo['parts'][0] in ['dMRI', 'DWI']:
@@ -1109,10 +1149,17 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     if phenc:
                         phenc = PEDirMap.get(phenc, 'NA')
                     else:
-                        phenc = fileInfo['parts'][2]
+                        phenc = [e for e in ['LR', 'RL', 'AP', 'PA'] if e in fileInfo['parts']] + ['NA']
+                        phenc = phenc[0]
+                    
+                    if phenc == 'NA':                          
+                        print "==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (imgn, fileInfo['name'])
+                        phencstr = ""
+                    else:
+                        phencstr = ": phenc(%s)" % (phenc)
 
                     if 'SBRef' in fileInfo['parts']:
-                        out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc)
+                        out = "%02d: %-20s: %-30s%s" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phencstr)
                         print >> sout, out,
                         print >> sout_hcp, out,
                         if fileInfo['json'].get('EffectiveEchoSpacing', None):
