@@ -873,7 +873,7 @@ getBoldList() {
         geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}' in batch file ${ProcessingBatchFile} ... "; 
         if [[ -f ${ProcessingBatchFile} ]]; then
             # For debugging
-            # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionids="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+            # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g'"
             LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
             LBOLDRUNS="${LBOLDRUNS}"
         else
@@ -997,7 +997,7 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
     echo "   Qu|Nex Mapping file input: ${SCAN_MAPPING_FILENAME}"
 fi
 
-echo "   Qu|Nex Project-specific final Batch file path: ${ProcessingBatchFile}"
+echo "   Qu|Nex Project-specific final Batch file path: ${QuNexProcessingDir}"
 echo "   Qu|Nex Study folder: ${StudyFolder}"
 echo "   Qu|Nex Log folder: ${QuNexMasterLogFolder}"
 echo "   Qu|Nex Session-specific working folder: ${QuNexRawInboxDir}"
@@ -1618,6 +1618,9 @@ fi
                 FILECHECK="fail"
             fi
         fi
+        
+        # -- Clean up inbox_temp
+        rm -r -p ${QuNexWorkDir}/inbox_temp &> /dev/null
 
         # -- Check if mapping and batch files exist and if content OK
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
