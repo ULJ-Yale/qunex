@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.62.1  SLURM scheduling now supports flags (parameters without values).
 * 0.62.0  Documentation rework.
 * 0.61.23 hcp_bold_unwarpdir support for HCPYA.
 * 0.61.22 Outgoing command call is not printed if there is an error earlier in execution.

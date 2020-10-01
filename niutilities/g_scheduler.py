@@ -356,6 +356,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for key, value in setDict.items():
             if key in ('J', 'job-name') and jobname == 'schedule':
                 jobname = v
+            elif value == "QX_FLAG":
+                sCommand += "#SBATCH --%s\n" % (key.replace('--', ''))
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
@@ -484,9 +486,20 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     # ---- if session list is present
 
     else:
-        settings  = settings.split(',')
-        scheduler = settings.pop(0).strip()
-        settings  = dict([[f.strip() for f in e.split('=')] for e in settings])
+        settingsList  = settings.split(',')
+        scheduler = settingsList.pop(0).strip()
+        settings = {}
+
+        # split settings
+        for s in settingsList:
+            # parameters with values
+            if "=" in s:
+                sSplit = s.split("=", 1)
+                settings[sSplit[0].strip()] = sSplit[1].strip()
+            # flags
+            else:
+                settings[s.strip()] = "QX_FLAG"
+
         settings['jobname'] = settings.get('jobname', command)
 
         c = 0
