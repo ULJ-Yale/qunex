@@ -60,7 +60,7 @@ from functools import partial
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
-PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
+PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'LR': 'x-', 'x-': 'LR', 'RL': 'x', 'x': 'RL'}
 SEDirMap  = {'AP': 'y', 'PA': 'y', 'LR': 'x', 'RL': 'x'}
 
 
@@ -792,10 +792,11 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -1221,10 +1222,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 comm += " %s" % (flag)
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -1576,10 +1578,11 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                 'timepoints'        : ",".join(sessionspaths)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
        # -- Test files
 
@@ -1851,10 +1854,11 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
 
         # -- Test files
@@ -1988,8 +1992,9 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     distortion correction details
     -----------------------------
 
-    --hcp_dwi_PEdir          ... The direction of unwarping. Use 1 for LR/RL
-                                 Use 2 for AP/PA. Default is [2]
+    --hcp_dwi_phasepos       ... The direction of unwarping for positive phase.
+                                 Can be AP, PA, LR, or RL. Negative phase is 
+                                 set automatically based on this setting. [PA]
     --hcp_dwi_gdcoeffs       ... A path to a file containing gradient distortion
                                  coefficients, alternatively a string describing
                                  multiple options (see below), or "NONE", if not 
@@ -2022,19 +2027,33 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 similar to the average b0 after registration).
                                 [FALSE]
     --hcp_dwi_extraeddyarg  ... A string specifying additional arguments to pass
-                                to the DiffPreprocPipeline_Eddy.sh script and 
-                                subsequently to the run_eddy.sh script and 
-                                finally to the command that actually invokes the 
-                                eddy binary. The string is to be writen as a 
-                                contiguous set of tokens to be added. It will be
-                                split by whitespace to be passed to the HCP 
-                                DiffPreprocPipeline as a set of --extra-eddy-arg
-                                arguments. ['']
+                                to the DiffPreprocPipeline_Eddy.sh script and
+                                subsequently to the run_eddy.sh script and
+                                finally to the command that actually invokes the
+                                eddy binary. The string is to be written as a
+                                contiguous set of arguments to be added. Each
+                                argument needs to be provided together with
+                                dashes if it needs them. To provide multiple
+                                arguments divide them with the pipe (|)
+                                character,
+                                e.g. --hcp_dwi_extraeddyarg="--niter=8|--nvoxhp=2000".
+                                ['']
 
     additional parameters
     ---------------------
 
     --hcp_dwi_name          ... name to give DWI output directories. [Diffusion]
+
+    --hcp_dwi_cudaversion   ... If using the GPU-enabled version of eddy, then
+                                this option can be used to specify which
+                                eddy_cuda binary version to use. If X.Y is
+                                specified, then FSLDIR/bin/eddy_cudaX.Y will be
+                                used. Note that CUDA 9.1 is installed in the
+                                container. []
+
+    --hcp_dwi_nogpu         ... If specified, use the non-GPU-enabled version
+                                of eddy. Defaults to using the GPU-enabled
+                                version of eddy. []
 
 
     Gradient Coefficient File Specification:
@@ -2121,29 +2140,41 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- set up data
-
-        if options['hcp_dwi_PEdir'] == "1":
-            direction = [('pos', 'RL'), ('neg', 'LR')]
-        else:
+        if 'hcp_dwi_phasepos' not in options or options['hcp_dwi_phasepos'] == "PA":
+            direction = [('pos', 'PA'), ('neg', 'AP')]
+            PEdir = 2
+        elif options['hcp_dwi_phasepos'] == "AP":
             direction = [('pos', 'AP'), ('neg', 'PA')]
+            PEdir = 2
+        elif options['hcp_dwi_phasepos'] == "LR":
+            direction = [('pos', 'LR'), ('neg', 'RL')]
+            PEdir = 1
+        elif options['hcp_dwi_phasepos'] == "RL":
+            direction = [('pos', 'RL'), ('neg', 'LR')]
+            PEdir = 1
+        else:
+            r += "\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]" % options['hcp_dwi_phasepos']
+            run = False
 
-        dwiData = dict()
-        for ddir, dext in direction:
-            dwiData[ddir] = "@".join(glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext))))
+        if run:
+            dwiData = dict()
+            for ddir, dext in direction:
+                dwiData[ddir] = "@".join(glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext))))
 
-        for ddir in ['pos', 'neg']:
-            dfiles = dwiData[ddir].split("@")
-            if dfiles:
-                r += "\n---> The following %s direction files were found:" % (ddir)
-                for dfile in dfiles:
-                    r += "\n     %s" % (os.path.basename(dfile))
-            else:
-                r += "\n---> ERROR: No %s direction files were found!"
-                run = False
+            for ddir in ['pos', 'neg']:
+                dfiles = dwiData[ddir].split("@")
+
+                if dfiles and dfiles != ['']:
+                    r += "\n---> The following %s direction files were found:" % (ddir)
+                    for dfile in dfiles:
+                        r += "\n     %s" % (os.path.basename(dfile))
+                else:
+                    r += "\n---> ERROR: No %s direction files were found!" % ddir
+                    run = False
 
         # --- lookup gdcoeffs file if needed
 
@@ -2160,59 +2191,68 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             echospacing = options['hcp_dwi_echospacing']
             r += "\n---> Using study general EchoSpacing: %s ms" % (echospacing)
 
-
         # --- build the command
+        if run:
+            comm = '%(script)s \
+                --path="%(path)s" \
+                --subject="%(subject)s" \
+                --PEdir=%(PEdir)s \
+                --posData="%(posData)s" \
+                --negData="%(negData)s" \
+                --echospacing="%(echospacing)s" \
+                --gdcoeffs="%(gdcoeffs)s" \
+                --dof="%(dof)s" \
+                --b0maxbval="%(b0maxbval)s" \
+                --combine-data-flag="%(combinedataflag)s" \
+                --printcom="%(printcom)s"' % {
+                    'script'            : os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
+                    'posData'           : dwiData['pos'],
+                    'negData'           : dwiData['neg'],
+                    'path'              : sinfo['hcp'],
+                    'subject'           : sinfo['id'] + options['hcp_suffix'],
+                    'echospacing'       : echospacing,
+                    'PEdir'             : PEdir,
+                    'gdcoeffs'          : gdcfile,
+                    'dof'               : options['hcp_dwi_dof'],
+                    'b0maxbval'         : options['hcp_dwi_b0maxbval'],
+                    'combinedataflag'   : options['hcp_dwi_combinedata'],
+                    'printcom'          : options['hcp_printcom']}
 
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --PEdir=%(PEdir)s \
-            --posData="%(posData)s" \
-            --negData="%(negData)s" \
-            --echospacing="%(echospacing)s" \
-            --gdcoeffs="%(gdcoeffs)s" \
-            --dof="%(dof)s" \
-            --b0maxbval="%(b0maxbval)s" \
-            --combine-data-flag="%(combinedataflag)s" \
-            --printcom="%(printcom)s"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
-                'posData'           : dwiData['pos'],
-                'negData'           : dwiData['neg'],
-                'path'              : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'echospacing'       : echospacing,
-                'PEdir'             : options['hcp_dwi_PEdir'],
-                'gdcoeffs'          : gdcfile,
-                'dof'               : options['hcp_dwi_dof'],
-                'b0maxbval'         : options['hcp_dwi_b0maxbval'],
-                'combinedataflag'   : options['hcp_dwi_combinedata'],
-                'printcom'          : options['hcp_printcom']}
+            # -- Optional parameters
+            if 'hcp_dwi_extraeddyarg' in options:
+                eddyoptions = options['hcp_dwi_extraeddyarg'].split("|")
 
-        # -- Optional parameters
-        if 'hcp_dwi_extraeddyarg' in options:
-            eddyoptions = options['hcp_dwi_extraeddyarg'].split()
-            for eddyoption in eddyoptions:
-                comm += "             --extra-eddy-arg=" + eddyoption
+                if eddyoptions != ['']:
+                    for eddyoption in eddyoptions:
+                        comm += "                --extra-eddy-arg=" + eddyoption
 
-        if 'hcp_dwi_name' in options:
-            comm += "             --dwiname=" + options['hcp_dwi_name']
+            if 'hcp_dwi_name' in options:
+                comm += "                --dwiname=" + options['hcp_dwi_name']
 
-        if 'hcp_dwi_selectbestb0' in options:
-            comm += "             --select-best-b0=" + options['hcp_dwi_selectbestb0']
+            if 'hcp_dwi_selectbestb0' in options:
+                comm += "                --select-best-b0"
 
-        # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+            if 'hcp_dwi_cudaversion' in options:
+                comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-        # -- Test files
-        tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
+            if 'hcp_dwi_nogpu' in options:
+                comm += "                --no-gpu"
 
-        if hcp['hcp_dwi_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_dwi_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
-        else:
-            fullTest = None
+
+            # -- Report command
+            if run:
+                r += "\n\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+            # -- Test files
+            tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
+
+            if hcp['hcp_dwi_check']:
+                fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_dwi_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+            else:
+                fullTest = None
 
         # -- Run
 
@@ -2232,7 +2272,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                     failed = 0
 
         else:
-            r += "---> Session can not be processed."
+            r += "\n---> Session can not be processed."
             report = "HCP Diffusion can not be run"
             failed = 1
 
@@ -3135,10 +3175,11 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -3154,7 +3195,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         # -- Run
 
-        if run and boldok:            
+        if run and boldok:
             if options['run'] == "run":
                 if overwrite or not os.path.exists(tfile):
 
@@ -3546,10 +3587,11 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
 
@@ -4177,24 +4219,25 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)s \
+                %(bandpass)d \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)s \
+                %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
                 'inputfile'             : inputfile,
-                'bandpass'              : bandpass,
+                'bandpass'              : int(bandpass),
                 'domot'                 : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
-                'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
+                'fixthreshold'          : int(10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold']),
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, bandpass))
@@ -4307,26 +4350,27 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         comm = '%(script)s \
                 "%(inputfile)s" \
-                %(bandpass)s \
+                %(bandpass)d \
                 "%(concatfilename)s" \
                 "%(domot)s" \
                 "%(trainingdata)s" \
-                %(fixthreshold)s \
+                %(fixthreshold)d \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
-                'bandpass'              : bandpass,
+                'bandpass'              : int(bandpass),
                 'concatfilename'        : concatfilename,
                 'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
-                'fixthreshold'          : 10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
+                'fixthreshold'          : int(10 if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold']),
                 'deleteintermediates'   : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if groupok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
@@ -4711,17 +4755,18 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : subject,
                 'boldtarget'        : boldtarget,
-                'highpass'          : highpass,
+                'highpass'          : int(highpass),
                 'dualscene'         : dualscene,
                 'singlescene'       : singlescene,
                 'reusehighpass'     : reusehighpass,
-                'matlabrunmode'     : matlabrunmode}
+                'matlabrunmode'     : int(matlabrunmode)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_%s_hp%s_ICA_Classification_singlescreen.scene" % (subject, boldtarget, highpass))
@@ -5111,7 +5156,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                 --fmri-name="%(boldtarget)s" \
                 --high-pass="%(highpass)d" \
                 --reg-name="%(regname)s" \
-                --low-res-mesh="%(lowresmesh)d" \
+                --low-res-mesh="%(lowresmesh)s" \
                 --matlab-run-mode="%(matlabrunmode)d" \
                 --motion-regression="%(motionregression)s" \
                 --delete-intermediates="%(deleteintermediates)s"' % {
@@ -5119,18 +5164,19 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
                     'path'                : sinfo['hcp'],
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
                     'boldtarget'          : boldtarget,
-                    'highpass'            : highpass,
+                    'highpass'            : int(highpass),
                     'regname'             : regname,
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                    'matlabrunmode'       : matlabrunmode,
+                    'matlabrunmode'       : int(matlabrunmode),
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
             # -- Report command
-            r += "\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
-            r += "\n------------------------------------------------------------\n"
+            if boldok:
+                r += "\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += comm.replace("--", "\n    --").replace("             ", "")
+                r += "\n------------------------------------------------------------\n"
 
             # -- Test files
             # postfix
@@ -5288,18 +5334,19 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
                     'boldtargets'         : boldtargets,
                     'groupname'           : groupname,
-                    'highpass'            : highpass,
+                    'highpass'            : int(highpass),
                     'regname'             : regname,
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
-                    'matlabrunmode'       : matlabrunmode,
+                    'matlabrunmode'       : int(matlabrunmode),
                     'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
             # -- Report command
-            r += "\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
-            r += "\n------------------------------------------------------------\n"
+            if groupok:
+                r += "\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += comm.replace("--", "\n    --").replace("             ", "")
+                r += "\n------------------------------------------------------------\n"
 
             # -- Test files
             # postfix
@@ -5387,13 +5434,14 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'boldtarget'        : boldtarget,
-                'highpass'          : highpass}
+                'highpass'          : int(highpass)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s.ica" % (boldtarget, highpass), "HandNoise.txt")
@@ -5708,10 +5756,10 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
             if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                 # single-run
                 if singleRun:
-                    result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, [msmallGroup])
+                    result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
                 # multi-run
                 else:
-                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, [msmallGroup])
+                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
 
                 r += result['r']
                 report = result['report']
@@ -5767,7 +5815,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         highpass = 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+        fmriprocstring = "%s_hp%s_clean" % (options['hcp_cifti_tail'], str(highpass))
         if 'hcp_msmall_procstring' in options:
             fmriprocstring = options['hcp_msmall_procstring']
 
@@ -5841,23 +5889,24 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
                 'msmallBolds'         : msmallBolds,
                 'outfmriname'         : outfmriname,
-                'highpass'            : highpass,
+                'highpass'            : int(highpass),
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
                 'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_hiresmesh' not in options else options['hcp_hiresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
-                'matlabrunmode'       : matlabrunmode}
+                'matlabrunmode'       : int(matlabrunmode)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldsok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
         fullTest = None
 
         # -- Run
@@ -5896,12 +5945,12 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
-        r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
+        r = "\n\n\n --- Failed during processing of bolds %s\n" % (msmallBolds)
         r += str(errormessage)
-        report['failed'].append(printbold)
+        report['failed'].append(msmallBolds)
     except:
-        r += "\n --- Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
-        report['failed'].append(printbold)
+        r += "\n --- Failed during processing of bolds %s with error:\n %s\n" % (msmallBolds, traceback.format_exc())
+        report['failed'].append(msmallBolds)
 
     return {'r': r, 'report': report}
 
@@ -5929,7 +5978,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         highpass = 0 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass']
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%d_clean" % (options['hcp_cifti_tail'], highpass)
+        fmriprocstring = "%s_hp%s_clean" % (options['hcp_cifti_tail'], str(highpass))
         if 'hcp_msmall_procstring' in options:
             fmriprocstring = options['hcp_msmall_procstring']
 
@@ -6014,23 +6063,24 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 'concatname'          : groupname,
                 'fixnamestouse'       : fixnamestouse,
                 'outfmriname'         : outfmriname,
-                'highpass'            : highpass,
+                'highpass'            : int(highpass),
                 'fmriprocstring'      : fmriprocstring,
                 'msmalltemplates'     : msmalltemplates,
                 'outregname'          : "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname'],
                 'highresmesh'         : 164 if 'hcp_hiresmesh' not in options else options['hcp_hiresmesh'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'inregname'           : "MSMSulc" if 'hcp_regname' not in options else options['hcp_regname'],
-                'matlabrunmode'       : matlabrunmode}
+                'matlabrunmode'       : int(matlabrunmode)}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_hp%s_clean_vn.dtseries.nii" % (outfmriname, options['hcp_cifti_tail'], highpass))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
         fullTest = None
 
         # -- Run
@@ -6351,6 +6401,12 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
+        # regname
+        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
+        regname = "%s_2_d40_WRN" % outregname
+        if 'hcp_resample_regname' in options:
+            regname = options['hcp_resample_regname']
+
         # get group data
         bolds = group["bolds"]
 
@@ -6431,12 +6487,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         if 'hcp_lowresmeshes' in options:
             lowresmeshes = options['hcp_lowresmeshes'].replace(",", "@")
 
-        # regname
-        outregname = "MSMAll_InitialReg" if 'hcp_msmall_outregname' not in options else options['hcp_msmall_outregname']
-        regname = "%s_2_d40_WRN" % outregname
-        if 'hcp_resample_regname' in options:
-            regname = options['hcp_resample_regname']
-
         # concatregname
         concatregname = "MSMAll" if 'hcp_resample_concatregname' not in options else options['hcp_resample_concatregname']
 
@@ -6473,17 +6523,18 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 'fixnames'            : boldtargets,
                 'dontfixnames'        : dontfixnames,
                 'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
-                'highpass'            : highpass,
-                'matlabrunmode'       : matlabrunmode,
+                'highpass'            : int(highpass),
+                'matlabrunmode'       : int(matlabrunmode),
                 'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if boldsok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file (currently check only last bold)
         lastbold = boldtargets.split("@")[-1]
@@ -6688,8 +6739,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 'mrfixconcatnames'    : grouptargets,
                 'dontfixnames'        : dontfixnames,
                 'smoothingfwhm'       : 2 if 'hcp_bold_smoothFWHM' not in options else options['hcp_bold_smoothFWHM'],
-                'highpass'            : highpass,
-                'matlabrunmode'       : matlabrunmode,
+                'highpass'            : int(highpass),
+                'matlabrunmode'       : int(matlabrunmode),
                 'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'myelintargetfile'    : "NONE" if 'hcp_resample_myelintarget' not in options else options['hcp_resample_myelintarget'],
                 'inputregname'        : "NONE" if 'hcp_resample_inregname' not in options else options['hcp_resample_inregname']}
@@ -6759,10 +6810,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             comm += '             --multirun-fix-extract-volume="%s"' % extractvolume
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if runok:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test file
         tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
@@ -6855,10 +6907,11 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                 'bvals'             : os.path.join(hcp['T1w_folder'], 'Diffusion', 'bvals')}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- Test files
         
@@ -6944,10 +6997,11 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
                 'model'             : "2"}
 
         # -- Report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running HCP Pipelines command via Qu|Nex:\n\n"
-        r += comm.replace("--", "\n    --").replace("             ", "")
-        r += "\n------------------------------------------------------------\n"
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += comm.replace("--", "\n    --").replace("             ", "")
+            r += "\n------------------------------------------------------------\n"
 
         # -- test files
 
@@ -7255,9 +7309,10 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                         print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
                         c = 0
                         for mline in mdata:
-                            c += 1
-                            mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
-                            print >> mfile, mline.replace(' -', '-')
+                            if len(mline) >= 6:
+                                c += 1
+                                mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
+                                print >> mfile, mline.replace(' -', '-')
                         mfile.close()
                         r += "\n     ... movement data prepared"
                     else:
