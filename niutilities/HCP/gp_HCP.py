@@ -7058,7 +7058,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                                   -> images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
                                      (2mm iso downsampled version)
     * fsaverage_LR32k/*           -> images/segmentation/hcp/fsaverage_LR32k
-    * BOLD_[N].nii.gz             -> images/functional/[boldname][N].nii.gz
+    * BOLD_[N][tail].nii.gz       -> images/functional/[boldname][N][bold_tail].nii.gz
     * BOLD_[N][tail].dtseries.nii -> images/functional/[boldname][N][hcp_cifti_tail].dtseries.nii
     * Movement_Regressors.txt     -> images/functional/movement/[boldname][N]_mov.dat
 
@@ -7076,6 +7076,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                            [no].
     --hcp_suffix       ... Specifies a suffix to the session id if multiple
                            variants are run, empty otherwise [].
+    --bold_tail        ... The tail (see above) that specifies, which version of 
+                           the nifti files to copy over [].
     --hcp_cifti_tail   ... The tail (see above) that specifies, which version of
                            the cifti files to copy over [].
     --bolds            ... Which bold images (as they are specified in the
@@ -7096,16 +7098,18 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     If possible, the files are not copied but rather hard links are created to
     save space. If hard links can not be created, the files are copied.
 
-    Specific attention needs to be paid to the `hcp_cifti_tail` parameter. Using
-    the regular HCP minimal preprocessing pipelines, CIFTI files have a tail 
-    `_Atlas` e.g. `BOLD_6_Atlas.dtseries.nii`. This tail might be changed if 
-    another method was used for surface registration or if CIFTI images were 
-    additionally processed after the HCP minimal processing pipeline. `boldname` 
-    and `hcp_cifti_tail` define the final name of the fMRI images linked into the 
-    `images/functional` folder. Specifically, with `boldname=bold` and 
-    `hcp_cifti_tail=_Atlas`, volume files will be named using formula: 
-    `<boldname>[N].nii.gz` (e.g. `bold1.nii.gz`), and cifti files will be named 
-    using formula: `<boldname>[N]<hcp_cifti_tail>.dtseries.nii` (e.g. 
+    Specific attention needs to be paid to the `hcp_cifti_tail` and
+    `bold_tail` parameters. Using the regular HCP minimal preprocessing
+    pipelines, CIFTI files have a tail `_Atlas` e.g.
+    `BOLD_6_Atlas.dtseries.nii`. This tail might be changed if another method
+    was used for surface registration or if CIFTI images were additionally
+    processed after the HCP minimal processing pipeline. `boldname`
+    `bold_tail` and `hcp_cifti_tail` define the final name of the fMRI
+    images linked into the `images/functional` folder. Specifically, with
+    `boldname=bold`, `bold_tail`='' and `hcp_cifti_tail=_Atlas`, volume
+    files will be named using formula: `<boldname>[N]<bold_tail>.nii.gz`
+    (e.g. `bold1.nii.gz`), and cifti files will be named using formula:
+    `<boldname>[N]<hcp_cifti_tail>.dtseries.nii` (e.g.
     `bold1_Atlas.dtseries.nii`).
 
 
@@ -7288,7 +7292,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... volume image ready"
                 else:
                     # r += "\n     ... linking volume image \n         %s to\n         -> %s" % (os.path.join(boldpath, bname + '.nii.gz'), f['bold'])
-                    status, r = linkOrCopy(os.path.join(boldpath, bname + '.nii.gz'), f['bold'], r, status, "volume image", "\n     ... ")
+                    status, r = linkOrCopy(os.path.join(boldpath, bname + options['bold_tail'] + '.nii.gz'), f['bold_vol'], r, status, "volume image", "\n     ... ")
 
                 if os.path.exists(f['bold_dts']) and not overwrite:
                     r += "\n     ... grayordinate image ready"
