@@ -424,7 +424,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 # -----------------------------------------------------------------------
 #                                                  general scheduler code
 
-def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None, bash=None):
+def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None):
 
     jobs = []
 
@@ -452,7 +452,6 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     sleeptime   = args.get('scheduler_sleep', 0)
     
     # ---- setup bash (commands to run inside compute node before the Qu|Nex command)
-
     bash  = args.get('bash', None)
 
     # ---- set logfolder
