@@ -7,10 +7,6 @@
 #
 
 # - Check which CUDA version is being run and set where GPU probtrackx binary is # bindir=$FSLDIR/bin 
-
-if [[ `nvcc --version | grep "release"` == *"6.0"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_6.0; fi
-if [[ `nvcc --version | grep "release"` == *"6.5"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_6.5; fi
-if [[ `nvcc --version | grep "release"` == *"7.0"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_7.0; fi
 if [[ `nvcc --version | grep "release"` == *"7.5"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_7.5; fi
 if [[ `nvcc --version | grep "release"` == *"8.0"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_8.0; fi
 if [[ `nvcc --version | grep "release"` == *"9.1"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_9.1; fi
