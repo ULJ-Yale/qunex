@@ -412,7 +412,6 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
         # --- compile PALM command
 
         print " --> compiling PALM commands"
-                sargs += v
 
         # --- put together design related arguments
 
@@ -452,6 +451,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
         for k, v in arguments.iteritems():
             sargs += ['-' + k]
             if v is not None:
+		sargs += v
 
         # --- run PALM
 
