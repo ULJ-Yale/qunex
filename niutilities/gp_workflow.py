@@ -803,6 +803,8 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            if not used [].
     --boldname         ... The default name of the bold files in the images
                            folder [bold].
+    --bold_tail        ... Tail of the bold file sin the images folder
+                           []
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
@@ -1033,7 +1035,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
             else:
                 report[tf] = ''
 
-        rcomm = 'g_BoldStats.R --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bolds="%s" -v' % (
+        rcomm = 'g_BoldStats.R --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bold_tail=%s -bolds="%s" -v' % (
             d['s_bold_mov'],            # the folder to look for .dat data [.]
             report['mov_mreport'],      # the file to write movement report to [none]
             report['mov_preport'],      # the file to write movement report after scrubbing to [none]
@@ -1049,6 +1051,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
             plot,                       # root name of the plot file, none to omit plotting [mov_report]
             options['mov_pref'],        # prefix for the reports
             options['boldname'],        # root name for the bold files
+            options['bold_tail'],       # tail for the bold files
             "|".join(procbolds))        # | separated list of bold indeces for which to do the stat report
 
         tfile = os.path.join(d['s_bold_mov'], '.r.ok')
