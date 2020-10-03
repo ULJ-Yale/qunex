@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_commands.py
+``g_commands.py``
 
 Definition of commands used in gmri along with their parameters.
 """
@@ -85,11 +85,11 @@ deprecated_commands = {"HCPLSImport": "importHCP",
                        "getHCPReady": "createSesssionInfo"}
 
 def checkDeprecatedCommands(command):
-    '''
+    """
     checkDeprecatedCommands(options, deprecatedCommands)
     Checks for deprecated commands, remaps deprecated ones
-    and notifes the user.
-    '''
+    and notifies the user.
+    """
 
     # store the command
     newCommand = command
