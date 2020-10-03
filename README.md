@@ -26,19 +26,21 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.61.19
+Qu|Nex suite version: 0.62.1
 
 Submodules:
 
-* connector: 0.61.6
-* library: 0.61.7
-* nitools: 0.60.2
-* niutilities: 0.61.21
+* connector: 0.62.3
+* library: 0.62.2
+* nitools: 0.61.1
+* niutilities: 0.62.3
 
 
 Release notes
 -------------
 
+* 0.62.1  Fixed RunQC_BOLD issues with filenames and a large number of bolds. Increase the robustness of Qu|Nex when processing multiple sessions in parallel.
+* 0.62.0  Documentation rework.
 * 0.61.19 The mapHCPData command now copies only valid movement correction parameter data.
 * 0.61.18 Qu|Nex no longer generates unnecessary folders, added CUDA 9.1 bedpostx support, improved HCPYA dataset support.
 * 0.61.17 hcp_dwi_selectbestb0 in HCP Diffusion pipelines is now a flag.
@@ -78,6 +80,8 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.62.1 [connector, library, niutilities, nitools] RunQC now works both on bold numbers and names, RunQC no longer crashes if there are more than 10 bolds. Cleaned up code that used deprecated CUDA versions. g_ExtractGLMVolumes saveoption values no longer include spaces. Fixed a bug with the bash parameter for specifying bash commands when scheduling.
+* 0.62.0 [connector, library, niutilities, nitools] Documentation rework. Outgoing command calls no longer print the command if an error ocured earlier. hcp_bold_unwarpdir support for HCPYA.
 * 0.61.19 [niutilities] The mapHCPData command now copies only valid movement correction parameter data.
 * 0.61.18 [connector, library, niutilities] Fixed qunex.sh to remove inaccurate logic for folder generation, added CUDA 9.1 bedpostx support, improved HCPYA dataset support by ensuring the import of SE-FM and FM images.
 * 0.61.17 [niutilities] Added a missing import to ge_HCP, hcp_dwi_selectbestb0 is now a flag.
