@@ -30,7 +30,7 @@ import re
 
 
 
-def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
+def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None):
     """
     ::
 
@@ -88,9 +88,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                     standard output and error. See "REDIRECTING OUTPUT" for
                     details
     --bash          Used if any additional commands have to be run in the
-+                   compute node before the execution of the Qu|Nex command
-+                   itself. Use a semicolon separated list to chain multiple
-+                   commands. ['']
+                    compute node before the execution of the Qu|Nex command
+                    itself. Use a semicolon separated list to chain multiple
+                    commands. ['']
 
     If the optional parameters are not specified, they will not be used.
 
@@ -256,7 +256,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     2019-20-01 Jure Demsar
                Upgraded job naming and PBS scheduler
     2020-14-08 Jure Demsar
-+              Added the bash parameter.
+               Added the bash parameter.
     """
 
     # --- check inputs
