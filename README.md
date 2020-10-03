@@ -38,6 +38,7 @@ Quick links
 Change Log
 ----------
 
+* 0.61.1  g_ExtractGLMVolumes saveoption values no longer include spaces.
 * 0.61.0  Documentation rework.
 * 0.60.2  Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
 * 0.60.1  Full support for hcp_suffix in runQC.

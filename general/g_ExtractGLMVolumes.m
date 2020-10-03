@@ -16,8 +16,8 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %                 extracted. []
 %   --frames      Frame indeces to extract. If empty, all frames are extracted. []
 %   --saveoption  Whether to save the extracted estimates in a single file
-%                 organized 'by session', 'by effect', or in separate files for 
-%                 each effect ('effect files'). ['by session']
+%                 organized 'by_session', 'by_effect', or in separate files for 
+%                 each effect ('effect_files'). ['by_session']
 %   --values      What kind of values to save: 'raw' or 'psc'. ['raw']
 %   --verbose     Whether to report on the progress or not [false]
 %   --txtf        An optional designator in what text file to also output the 
@@ -42,8 +42,8 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %   The underlying method extracts the effects of interest by removing those
 %   frames that relate to irrelevant effects. The order of the effects in the
 %   resulting files will be the same as in the original GLM files when saved
-%   organized 'by session' and not as specified in the call to the function.
-%   When the results are organized 'by effect', the order of estimates will
+%   organized 'by_session' and not as specified in the call to the function.
+%   When the results are organized 'by_effect', the order of estimates will
 %   be the same as in the effects variable. To be sure in what order the data
 %   is present in the resulting file, please consult the 'list' structure
 %   present in the extracted file, that for each frame specifies the session,
@@ -59,7 +59,7 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %   ::
 %   
 %       g_ExtractGLMVolumes('wm-glm.list', 'wm-encoding-delay', ...
-%       'encoding,delay', [], 'by session');
+%       'encoding,delay', [], 'by_session');
 %
 
 %   ~~~~~~~~~~~~~~~~~~
@@ -99,9 +99,9 @@ end
 % --------------------------------------------------------------
 %                                               check saveoption
 
-saveoption = strrep(saveoption, '_', ' ');
-if ~ismember(saveoption, {'by effect', 'by session', 'effect files'})
-    error('ERROR: Invalid saveoption value [%s]! Valid options are: by_effect, by_session, effect_files.', strrep(saveoption, ' ', '_'));
+reportmsg = strrep(saveoption, '_', ' ');
+if ~ismember(saveoption, {'by_effect', 'by_session', 'effect_files'})
+    error('ERROR: Invalid saveoption value [%s]! Valid options are: by_effect, by_session, effect_files.', saveoption);
 end
 
 
@@ -169,7 +169,7 @@ end
 
 % --- do we need to reorder?
 
-if strcmp(saveoption, 'by effect')
+if strcmp(saveoption, 'by_effect')
     if verbose, fprintf('\n---> sorting data by effects'); end
     index = [];
     for e = effects(:)'
@@ -191,15 +191,15 @@ end
 
 % --- save
 
-if ismember(saveoption, {'by effect', 'by session'})
-    if verbose, fprintf('\n---> saving data in a single file, sorted %s', saveoption); end
+if ismember(saveoption, {'by_effect', 'by_session'})
+    if verbose, fprintf('\n---> saving data in a single file, sorted %s', reportmsg); end
 
     out = glm.zeroframes(pt);
     out.data = data;
     out = setMeta(out, session, effect, frame, event, verbose);
     out.img_saveimage(outf);
     if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
-        if verbose, fprintf('\n---> saving data in a text file, sorted %s', saveoption); end
+        if verbose, fprintf('\n---> saving data in a text file, sorted %s', reportmsg); end
         tout = fopen([outf '_long.txt'], 'w');
         fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
         [nroi, ndata] = size(out.data);
