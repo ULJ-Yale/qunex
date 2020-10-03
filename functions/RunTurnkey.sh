@@ -1869,7 +1869,7 @@ fi
            # rm -rf ${ProcessingBatchFile} &> /dev/null
            HLinks=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi        
-        ExecuteCall="${QuNexCommand} setupHCP --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --existing='clear' --filename='${HCPFilename}' --hcp_suffix='${HCPSuffix}'"
+        ExecuteCall="${QuNexCommand} setupHCP --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --existing='clear' --hcp_filename='${HCPFilename}' --hcp_suffix='${HCPSuffix}'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         
         eval ${ExecuteCall}
