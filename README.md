@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.62.3  batchTag2NameKey optimizations and documentation update.
 * 0.62.2  Fixed a bug with the bash parameter for specifying bash commands when scheduling.
 * 0.62.1  SLURM scheduling now supports flags (parameters without values).
 * 0.62.0  Documentation rework.
