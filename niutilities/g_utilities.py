@@ -1918,7 +1918,12 @@ def stripQuotes(string):
 
 def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number', prefix="BOLD_"):
     """
-    batchTag2NameKey filename=<path to batch file> sessionid=<session id> bolds=<bold specification string> output=<keytype> prefix=<prefix to use>
+    batchTag2NameKey \\
+      --filename=<path to batch file> \\
+      --sessionid=<session id> \\
+      --bolds=<bold specification string> \\
+      [--output="number"] \\
+      [--prefix="BOLD_"]
 
     The function reads the batch file, extracts the data for the specified 
     session and returns the list of bold numbers or names that correspond to bolds
@@ -1934,10 +1939,11 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
                         type (e.g. 'task'), a pipe separated list (e.g.
                         'WM|Control|rest') or 'all' to process all.
     --output        ... Whether to output numbers ('number') or bold names 
-                        In the latter case the name will be 'boldname', if 
-                        provided in the batch file, or '<prefix>[N]' if one does
-                        not exist.
-    --prefix        ... The default prefix to use if a boldname is not specified
+                        ('name'). In the latter case the name will be extracted
+                        from the 'filename' specification, if provided in the 
+                        batch file, or '<prefix>[N]' if 'filename' is not 
+                        specified.
+    --prefix        ... The default prefix to use if a filename is not specified
                         in the batch file.
     """
 
@@ -1965,8 +1971,8 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
     boldlist = []
     for boldnumber, boldname, boldtask, boldinfo in bolds:
         if output == 'name':
-            if 'boldname' in boldinfo:
-                boldlist.append(boldinfo['boldname'])
+            if 'filename' in boldinfo:
+                boldlist.append(boldinfo['filename'])
             else:
                 boldlist.append("%s%d" % (prefix, boldnumber))
         else:
