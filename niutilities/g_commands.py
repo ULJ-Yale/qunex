@@ -44,7 +44,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'reslice'              : {'com': g_NIfTI.reslice,                'args': ('inf', 'slices', 'outf')},
             'sliceImage'           : {'com': g_img.sliceImage,               'args': ('sourcefile', 'targetfile', 'frames')},
             'nifti24dfp'           : {'com': g_NIfTI.nifti24dfp,             'args': ('inf', 'outf')},
-            'setupHCP'             : {'com': gs_HCP.setupHCP,                'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'filename', 'folderstructure', 'hcp_suffix')},
+            'setupHCP'             : {'com': gs_HCP.setupHCP,                'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'hcp_filename', 'folderstructure', 'hcp_suffix')},
             'createSessionInfo'    : {'com': g_utilities.createSessionInfo,  'args': ('sessions', 'pipelines', 'sessionsfolder', 'sourcefile', 'targetfile', 'mapping', 'filter', 'overwrite')},
             'printniftihdr'        : {'com': g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': g_gimg.modniftihdr,             'args': ('filename', 's')},

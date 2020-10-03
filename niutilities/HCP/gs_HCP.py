@@ -24,9 +24,9 @@ import niutilities.g_exceptions as ge
 import os.path
 import niutilities.g_core
 
-def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls', hcp_suffix=""):
+def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
     """
-    ``setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls'] [hcp_suffix=""]``
+    ``setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=standard] [folderstructure=hcpls] [hcp_suffix=""]``
 
     The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
@@ -51,7 +51,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
                         - clear (remove any existing files and redo hcp 
                           mapping)
 
-    --filename          How to name the bold files in the hcp structure. The 
+    --hcp_filename      How to name the bold files in the hcp structure. The 
                         default is to name them by their bold number 
                         ('standard') (e.g. BOLD_1), the alternative is to use 
                         their actual names ('original') (e.g. rfMRI_REST1_AP).
@@ -224,7 +224,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
     nT1w  = 0
     nT2w  = 0
 
-    filename = filename == 'original'
+    filename = hcp_filename == 'original'
 
     if folderstructure not in ['initial', 'hcpls']:
         raise ge.CommandFailed("setupHCP", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
