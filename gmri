@@ -116,7 +116,7 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 HCP setup commands
 ------------------
 createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_*.txt] [mapping=specs/*_mapping.txt] [filter=None] [overwrite=no]
-setupHCP      [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt]
+setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt] [check="yes"] [existing="add"] [hcp_filename="standard"] [folderstructure="hcpls"] [hcp_suffix=""]
 
 
 Miscellaneous file utilities
