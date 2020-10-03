@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.62.3  RunQC now works both on bold numbers and names, RunQC no longer crashes if there are more than 10 bolds.
 * 0.62.2  Added DWI prefix to all DWI related Qu|Nex commands.
 * 0.62.1  Qunex commands ran through the scheduler can now execute bash commands prior to 
 * 0.62.0  Documentation rework.

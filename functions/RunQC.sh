@@ -819,8 +819,8 @@ previousCompletionCheck() {
                 if [ `echo ${BOLDPrefix} | grep '_'` ]; then BOLD="${BOLDPrefix}${BOLD}"; else BOLD="${BOLDPrefix}_${BOLD}"; fi
             else
                 # Check if BOLD folder with the given number contains additional prefix info and return an exit code if yes
-                NoBOLDDirPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/*${BOLD}`
-                NoBOLDPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/*${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
+                NoBOLDDirPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/${BOLD}`
+                NoBOLDPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
                 if [ ! -z ${NoBOLDDirPreffix} ]; then
                     BOLD=${NoBOLDPreffix}
                 fi
@@ -1459,7 +1459,7 @@ main() {
                         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
                         WorkingSceneFile="${CASEName}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
                         # -- Rsync over template files for a given BOLD
-                        Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
+                        Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
                         Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
                         ComQueue="$Com1; $Com2"
                         echo " --- Copied ${scenetemplatefolder}/${TemplateSceneFile} over to ${OutPath}"
@@ -1491,8 +1491,8 @@ main() {
                         else
                             # -- Check if BOLD folder with the given number contains additional prefix info and return an exit code if yes
                             echo ""
-                            NoBOLDDirPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/*${BOLD}`
-                            NoBOLDPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/*${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
+                            NoBOLDDirPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/${BOLD}`
+                            NoBOLDPreffix=`ls -d ${HCPFolder}/MNINonLinear/Results/${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
                             if [[ ! -z ${NoBOLDDirPreffix} ]]; then
                                 echo " --- Note: A directory with the BOLD number is found but containing a prefix, yet no prefix was specified: "
                                 echo "           --> ${NoBOLDDirPreffix}"
@@ -1533,8 +1533,8 @@ main() {
                                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
                                     # -- Rsync over template files for a given BOLD
                                     runsnr_BOLD
-                                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
-                                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null "
+                                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
+                                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
                                     Com3="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${WorkingSceneFile}"
                                     Com4="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${WorkingSceneFile}"
                                     Com5="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${WorkingSceneFile}"
@@ -1561,8 +1561,8 @@ main() {
                                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.${TemplateSceneFile}"
                                     DummyVariable_Check
                                     # -- Rsync over template files for a given BOLD
-                                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
-                                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null "
+                                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
+                                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
                                     ComQueue="$Com1; $Com2"
                                     runscene_BOLD
                                     CustomRunQUEUE=${ComRunBoldQUEUE}
@@ -1622,7 +1622,7 @@ main() {
                 # -- Check if running defaults w/o UserSceneFile
                 if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ]; then
                     # -- Setup naming conventions before generating scene
-                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
+                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
                     Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
                     Com3="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}" 
                     Com4="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
@@ -1661,7 +1661,7 @@ main() {
                     # -- Perform checks if modality is T1w
                     if [ "$Modality" == "T1w" ]; then
                         # -- Check if Preprocessed T1w files are present
-                        if [ -z ${HCPFolder}/MNINonLinear/T1w_restore.nii.gz ]; then
+                        if [ ! -f ${HCPFolder}/MNINonLinear/T1w_restore.nii.gz ]; then
                             echo ""
                             reho "---> ERROR: Preprocessed T1w data not found: "
                             reho "           --> ${HCPFolder}/MNINonLinear/T1w_restore.nii.gz "
@@ -1696,7 +1696,7 @@ main() {
                             geho "---> T2w mapping found: ${SessionsFolder}/${CASE}/${SessAcqInfoFile}. Checking for T2w data next..."
                             echo ""
                             # -- If ${SessAcqInfoFile} mapping file present check if Preprocessed T2w files are present
-                            if [ -z ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz ]; then
+                            if [ ! -f ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz ]; then
                                 echo ""
                                 reho "---> ERROR: Preprocessed T2w data not found: "
                                 reho "           --> ${HCPFolder}/MNINonLinear/T2w_restore.nii.gz "
@@ -1720,7 +1720,7 @@ main() {
                     # -- Perform checks if modality is Myelin
                     if [ "$Modality" == "Myelin" ]; then
                         # -- Check if Preprocessed Myelin files are present
-                        if [ -z ${HCPFolder}/MNINonLinear/${CASEName}.L.SmoothedMyelinMap.164k_fs_LR.func.gii ] || [ -z ${HCPFolder}/MNINonLinear/${CASEName}.R.SmoothedMyelinMap.164k_fs_LR.func.gii ]; then
+                        if [ ! -f ${HCPFolder}/MNINonLinear/${CASEName}.L.SmoothedMyelinMap.164k_fs_LR.func.gii ] || [ ! -f ${HCPFolder}/MNINonLinear/${CASEName}.R.SmoothedMyelinMap.164k_fs_LR.func.gii ]; then
                             echo ""
                             reho "---> ERROR: Preprocessed Smoothed Myelin data not found: "
                             reho "           --> ${HCPFolder}/MNINonLinear/${CASEName}.*.SmoothedMyelinMap.164k_fs_LR.func.gii  "
@@ -1753,7 +1753,7 @@ main() {
                             NoDiffBrainMask="${HCPFolder}/T1w/${DWIPath}/nodif_brain_mask.nii.gz"
                         fi
                         # -- Check if Preprocessed DWI files are present
-                        if [ -z ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz ]; then
+                        if [ ! -f ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz ]; then
                             echo ""
                             reho "---> ERROR: Preprocessed DWI data not found: "
                             reho "           --> ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz "
@@ -2055,7 +2055,7 @@ main() {
                     for TemplateSceneFile in ${CustomTemplateSceneFiles}; do
                         DummyVariable_Check
                         WorkingSceneFile="${CASEName}.${Modality}.${TemplateSceneFile}"
-                        RunQCCustom1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
+                        RunQCCustom1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
                         RunQCCustom2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
                         RunQCCustom3="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}" 
                         RunQCCustom4="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
@@ -2107,7 +2107,7 @@ main() {
                     TemplateSceneFile"${UserSceneFile}"
                     DummyVariable_Check
                     WorkingSceneFile="${CASEName}.${Modality}.${UserSceneFile}"
-                    RunQCUser1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
+                    RunQCUser1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
                     RunQCUser2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
                     RunQCUser3="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}" 
                     RunQCUser4="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"

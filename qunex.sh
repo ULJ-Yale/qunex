@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-QuNexCommands="nitoolsHelp gmriFunction dataSync organizeDicom mapHCPFiles hcpdLegacy eddyQC DWIDenseParcellation DWIDenseSeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync runQC RunQC QCPreproc runTurnkey commandExecute showVersion environment"
+QuNexCommands="nitoolsHelp gmriFunction dataSync organizeDicom mapHCPFiles hcpdLegacy DWIeddyQC DWIDenseParcellation DWIDenseSeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract DWIFSLDtifit DWIFSLBedpostxGPU autoPtx DWIPreTractography DWIProbtrackxGPUDense AWSHCPSync runQC RunQC QCPreproc runTurnkey commandExecute showVersion environment"
 
 # ------------------------------------------------------------------------------
 #  -- Setup color outputs
@@ -327,24 +327,27 @@ show_allcommands_connector() {
  echo "hcpdLegacy"
  echo "     diffusion image processing for data with or without standard fieldmaps"
  echo ""
- echo "eddyQC"
+ echo "DWIeddyQC"
  echo "     run quality control on diffusion datasets following eddy outputs"
  echo ""
- echo "FSLDtifit"
+ echo "DWIFSLDtifit"
  echo "     run FSL's dtifit tool (cluster usable)"
  echo ""
- echo "FSLBedpostxGPU"
+ echo "DWIFSLBedpostxGPU"
  echo "     run FSL bedpostx with GPU"
  echo ""
- echo "pretractographyDense"
+ echo "DWIPreTractography"
  echo "     generates space for whole-brain dense connectomes"
  echo ""
- echo "ProbtrackxGPUDense"
+ echo "DWIProbtrackxGPUDense"
  echo "     run FSL's probtrackx for whole brain & generates dense whole brain "
  echo "     connectomes"
  echo ""
  echo "DWIDenseSeedTractography"
  echo "     reduce dense DWI tractography data using a seed structure"
+ echo ""
+ echo "DWIDenseParcellation"
+ echo "     parcellate dense dwi tractography data"
  echo ""
  echo "Miscellaneous analyses"
  echo "----------------------"
@@ -357,9 +360,6 @@ show_allcommands_connector() {
  echo ""
  echo "BOLDParcellation"
  echo "     parcellate BOLD data and generate pconn files"
- echo ""
- echo "DWIDenseParcellation"
- echo "     parcellate dense dwi tractography data"
  echo ""
  echo "ROIExtract"
  echo "     extract data from pre-specified ROIs in CIFTI or NIFTI"
@@ -568,12 +568,12 @@ else
     # -- Run the commands via scheduler
     if [[ ${Cluster} == 2 ]]; then
         cd ${MasterRunLogFolder}
-        gmri schedule command="${ComRunAll}" settings="${Scheduler}"
+        gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
         geho "--------------------------------------------------------------"
         echo ""
         geho "   Data successfully submitted to scheduler"
         geho "   Scheduler details: ${Scheduler}"
-        geho "   Command log:     ${Runlog}  "
+        geho "   Command log: ${Runlog}"
         geho "   Command output: ${ComlogTmp} "
         echo ""
         geho "--------------------------------------------------------------"
@@ -829,10 +829,10 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the Qu|Nex connector wrapper
+#  -- DWIeddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-eddyQC() {
+DWIeddyQC() {
 # -- Check if eddy_squad and eddy_quad exist in user path
 EddySquadCheck=`which eddy_squad`
 EddyQuadCheck=`which eddy_quad`
@@ -861,7 +861,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh \
 # -- Connector execute function
 connectorExec
 }
-show_usage_eddyQC() {
+show_usage_DWIeddyQC() {
 echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh
 }
@@ -1111,10 +1111,10 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  -- FSLDtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
+#  -- DWIFSLDtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-FSLDtifit() {
+DWIFSLDtifit() {
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
@@ -1123,16 +1123,16 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
 # -- Connector execute function
 connectorExec
 }
-show_usage_FSLDtifit() {
+show_usage_DWIFSLDtifit() {
 echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  -- FSLBedpostxGPU - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
+#  -- DWIFSLBedpostxGPU - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-FSLBedpostxGPU() {
+DWIFSLBedpostxGPU() {
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
 --sessionsfolder='${SessionsFolder}' \
@@ -1147,7 +1147,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 connectorExec
 }
 
-show_usage_FSLBedpostxGPU() {
+show_usage_DWIFSLBedpostxGPU() {
 echo ""; echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 }
@@ -1187,10 +1187,10 @@ echo ""
 }
 
 # -------------------------------------------------------------------------------------------------------------------
-#  -- pretractographyDense - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
+#  -- DWIPreTractography - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
 # ------------------------------------------------------------------------------------------------------------------
 
-pretractographyDense() {
+DWIPreTractography() {
 # -- Parse general parameters
 LogFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractographydense"
 RunFolder="${SessionsFolder}/${CASE}/hcp/"
@@ -1199,18 +1199,18 @@ QuNexCallToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${
 # -- Connector execute function
 connectorExec
 }
-show_usage_pretractographyDense() {
+show_usage_DWIPreTractography() {
 echo ""; echo "qunex ${UsageInput}"
 ${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- ProbtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
+#  -- DWIProbtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
-ProbtrackxGPUDense() {
+DWIProbtrackxGPUDense() {
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIProbtrackxGPUDense.sh \
 --sessionsfolder='${SessionsFolder}' \
 --scriptsfolder='${ScriptsFolder}' \
 --infolder='${InFolder}' \
@@ -1223,9 +1223,9 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.s
 # -- Connector execute function
 connectorExec
 }
-show_usage_ProbtrackxGPUDense() {
+show_usage_DWIProbtrackxGPUDense() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIProbtrackxGPUDense.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1903,6 +1903,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
     PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
     Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
+    Bash=`opts_GetOpt "${setflag}bash" "$@"`            # Specify bash commands to run on the compute node
     LogFolder=`opts_GetOpt "${setflag}logfolder" $@`  # Log location
     LogSave=`opts_GetOpt "${setflag}log" $@`          # Log save
     # -- If log flag set then set it
@@ -1999,7 +2000,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WayTotal=`opts_GetOpt "${setflag}waytotal" $@`
     # -- DWIDenseSeedTractography input flags
     SeedFile=`opts_GetOpt "${setflag}seedfile" $@`
-    # -- eddyQC input flags
+    # -- DWIeddyQC input flags
     EddyBase=`opts_GetOpt "${setflag}eddybase" $@`
     EddyPath=`opts_GetOpt "${setflag}eddypath" $@`
     Report=`opts_GetOpt "${setflag}report" $@`
@@ -2012,13 +2013,13 @@ if [[ ${setflag} =~ .*-.* ]]; then
     GroupBar=`opts_GetOpt "${setflag}groupvar" $@`
     OutputDir=`opts_GetOpt "${setflag}outputdir" $@`
     Update=`opts_GetOpt "${setflag}update" $@`
-    # -- FSLBedpostxGPU input flags
+    # -- DWIFSLBedpostxGPU input flags
     Fibers=`opts_GetOpt "${setflag}fibers" $@`
     Model=`opts_GetOpt "${setflag}model" $@`
     Burnin=`opts_GetOpt "${setflag}burnin" $@`
     Jumps=`opts_GetOpt "${setflag}jumps" $@`
     Rician=`opts_GetOpt "${setflag}rician" $@`
-    # -- ProbtrackxGPUDense input flags
+    # -- DWIProbtrackxGPUDense input flags
     MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
     MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
     NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
@@ -2478,10 +2479,10 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
 fi
 
 # ------------------------------------------------------------------------------
-#  eddyQC loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
+#  DWIeddyQC loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "eddyQC" ]; then
+if [ "$CommandToRun" == "DWIeddyQC" ]; then
     #unset EddyPath
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
@@ -2666,10 +2667,10 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  FSLDtifit loop
+#  DWIFSLDtifit loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "FSLDtifit" ]; then
+if [ "$CommandToRun" == "DWIFSLDtifit" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2695,10 +2696,10 @@ if [ "$CommandToRun" == "FSLDtifit" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  FSLBedpostxGPU loop
+#  DWIFSLBedpostxGPU loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "FSLBedpostxGPU" ]; then
+if [ "$CommandToRun" == "DWIFSLBedpostxGPU" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study Folder missing"; exit 1; fi
@@ -3135,10 +3136,10 @@ if [ "$CommandToRun" == "autoPtx" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  pretractographyDense loop
+#  DWIPreTractography loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "pretractographyDense" ]; then
+if [ "$CommandToRun" == "DWIPreTractography" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -3161,10 +3162,10 @@ if [ "$CommandToRun" == "pretractographyDense" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  ProbtrackxGPUDense loop
+#  DWIProbtrackxGPUDense loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "ProbtrackxGPUDense" ]; then
+if [ "$CommandToRun" == "DWIProbtrackxGPUDense" ]; then
     # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
