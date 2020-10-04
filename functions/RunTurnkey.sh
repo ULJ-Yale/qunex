@@ -540,6 +540,9 @@ DATAFormat=`opts_GetOpt "--dataformat" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 HCPFilename=`opts_GetOpt "--hcp_filename" $@`
 
+# backwards compatibility
+if [ -z "$HCPFilename" ]; then HCPFilename=`opts_GetOpt "--hcpfilename" $@`; fi
+
 if [ -z "$DATAFormat" ]; then DATAFormat=DICOM; fi
 if [ "${BIDSFormat}" == 'yes' ]; then DATAFormat="BIDS"; fi
 if [ "${DATAFormat}" == 'BIDS' ]; then BIDSFormat="yes"; else BIDSFormat="no"; fi
@@ -975,7 +978,7 @@ getBoldList() {
         unset BOLDnameOutput
         if [[ ! -z ${HCPFilename} ]]; then BOLDnameOutput="name"; fi
         if [[ -f ${ProcessingBatchFile} ]]; then
-            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" output="${BOLDnameOutput}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
+            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" output="${BOLDnameOutput}" prefix="${BOLDPrefix}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
             LBOLDRUNS="${LBOLDRUNS}"
         else
             reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
