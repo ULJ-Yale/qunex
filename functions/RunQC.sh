@@ -1398,7 +1398,7 @@ main() {
                     if [[ -f ${SessionBatchFile} ]]; then
                         # For debugging
                         # echo "   gmri batchTag2NameKey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-                        BOLDS=`gmri batchTag2NameKey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'`
+                        BOLDS=`gmri batchTag2NameKey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" prefix="" | grep "BOLDS:" | sed 's/BOLDS://g'`
                         BOLDLIST="${BOLDS}"
                     else
                         reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
