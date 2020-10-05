@@ -16,16 +16,17 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %                    c - save coefficients in _coeff file
 %                    l - lowpass temporal filtering
 %                    m - motion scrubbing
-%       rgss     ... What to regress in the regression step, a comma separated
-%                    list of with possibilities ['m,V,WM,WB,1d']:
-%                    m   - motion
-%                    V   - ventricles
-%                    WM  - white matter
-%                    WB  - whole brain
-%                    mWB - masked whole brain
-%                    1d  - first derivatives of nuisance signal and movement
-%                    t   - task
-%                    e   - event
+%       rgss      ... A comma separated string specifying what to regress in the
+%                     regression step ['m,V,WM,WB,1d']
+%                       m   - motion
+%                       V   - ventricles
+%                       WM  - white matter
+%                       WB  - whole brain
+%                       1d  - first derivative for movement and nuisance signal regressors
+%                       m1d - first derivative for movement regressors
+%                       n1d - first derivative for nuisance signal regressors
+%                       t   - task
+%                       e   - events
 %       task        ... A matrix of custom regressors to be entered in GLM. []
 %       efile       ... An event (fild) file to be used for removing task structure ['']
 %       TR          ... TR of the data [2.5]
@@ -244,7 +245,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %  (2) to get task beta estimates for further activational analyses. The
 %  following parameters are used in this step:
 %
-%  * rgss       ...  A comma separated list of regressors to include in GLM.
+%  * rgss        ... A comma separated list of regressors to include in GLM.
 %                    Possible values are:
 %                    * m  - motion parameters
 %                    * m1d - motion derivatives
@@ -253,11 +254,16 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %                    * V  - ventricles signal
 %                    * WM - white matter signal
 %                    * WB - whole brain signal
-%                    * 1d - first derivative of above nuisance signals
+%                    * n1d - first derivative of requested above nuisance
+%                            signals (V, WM, WB)
+%                    * 1d - first derivative of both movement regressors 
+%                           and specified nuisance signal regressors
+%                           (V, WM, WB)
 %                    * e  - events listed in the provided fidl files (see
 %                           above), modeled as specified in the event_string
 %                           parameter.
-%                    [m,m1d,mSq,m1dSq,V,WM,WB,1d]
+%                    [m,V,WM,WB,1d]
+%                    Note: `1d` implies `n1d` and `m1d`
 %  * eventstring ... A string describing, how to model the events listed in
 %                    the provided fidl files [].
 %
@@ -405,8 +411,11 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %              - Changed to pretty struct printing.
 %              - Added option to support hcp_bold variant processing.
 %
-%   2018-09-22 Grega Repovs (v0.9.13)
+%   2018-09-22 Grega Repovs (v0.9.16)
 %              - Fixed an issue with conversion of doIt from char to string
+%
+%   2020-10-05 Grega Repovs (v0.9.17)
+%              - Enabled additional movement and nuisance regressor computation
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -425,7 +434,7 @@ if nargin < 3, omit = [];                                   end
 if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
 
 
-fprintf('\nRunning preproces script v0.9.15 [%s]\n--------------------------------\n', tail);
+fprintf('\nRunning preproces script v0.9.17 [%s]\n--------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
 fprintf('\n       subjectf: %s', subjectf);
 fprintf('\n           bold: %s', num2str(bold));
@@ -757,14 +766,14 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
 
     img.data = img.image2D;
 
-    derivatives = ismember('1d', rgss);
+    nuisanceDer = ismember('1d', rgss) || ismember('n1d', rgss);
     movement    = ismember('m', rgss);
-    movementDer = ismember('m1d', rgss);
+    movementDer = ismember('1d', rgss) || ismember('m1d', rgss);
     movementSQ  = ismember('mSq', rgss);
     movementDerSQ = ismember('m1dSq', rgss);
     task        = ismember('t', rgss);
     event       = ismember('e', rgss);
-    rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm','m1d','mSq','m1dSq'}));
+    rgss        = rgss(~ismember(rgss, {'1d', 'n1d', 'e', 't', 'm','m1d','mSq','m1dSq'}));
     hdr         = {};
     hdre        = {};
     hdrf        = [];
@@ -824,7 +833,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
             X = [X [zeros(1,nuisance.nmov); diff(nuisance.mov)]];
         end
         for mi = 1:nuisance.nmov
-            ts = sprintf('mov_%s_d1', nuisance.mov_hdr{mi});
+            ts = sprintf('mov_%s_1d', nuisance.mov_hdr{mi});
             effects{end+1} = ts;
             hdr{end+1}     = ts;
             hdre{end+1}    = ts;
@@ -854,7 +863,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
             X = [X [zeros(1,nuisance.nmov); diff(nuisance.mov).^2]];
         end
         for mi = 1:nuisance.nmov
-            ts = sprintf('mov_%s_d1Sq', nuisance.mov_hdr{mi});
+            ts = sprintf('mov_%s_1dSq', nuisance.mov_hdr{mi});
             effects{end+1} = ts;
             hdr{end+1}     = ts;
             hdre{end+1}    = ts;
@@ -878,10 +887,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
             eindex(end+1)  = 1;
         end
 
-        if derivatives
+        if nuisanceDer
             X = [X [zeros(1, nuisance.nsignal); diff(nuisance.signal(omit+1:end,:))]];
             for mi = 1:nuisance.nsignal
-                ts             = sprintf('%s_d1', nuisance.signal_hdr{mi});
+                ts             = sprintf('%s_1d', nuisance.signal_hdr{mi});
                 effects{end+1} = ts;
                 hdr{end+1}     = ts;
                 hdre{end+1}    = ts;
