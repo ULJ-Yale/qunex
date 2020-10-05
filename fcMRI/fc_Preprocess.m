@@ -16,17 +16,19 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %                    c - save coefficients in _coeff file
 %                    l - lowpass temporal filtering
 %                    m - motion scrubbing
-%       rgss      ... A comma separated string specifying what to regress in the
-%                     regression step ['m,V,WM,WB,1d']
-%                       m   - motion
-%                       V   - ventricles
-%                       WM  - white matter
-%                       WB  - whole brain
-%                       1d  - first derivative for movement and nuisance signal regressors
-%                       m1d - first derivative for movement regressors
+%       rgss     ... A comma separated string specifying what to regress in the
+%                    regression step ['m,V,WM,WB,1d']
+%                       m     - motion
+%                       m1d   - first derivative for movement regressors
+%                       mSq   - squared motion parameters
+%                       m1dSq - squared motion derivatives
+%                       V     - ventricles
+%                       WM    - white matter
+%                       WB    - whole brain                       
 %                       n1d - first derivative for nuisance signal regressors
+%                       1d    - first derivative for movement and nuisance signal regressors
 %                       t   - task
-%                       e   - events
+%                       e   - events   
 %       task        ... A matrix of custom regressors to be entered in GLM. []
 %       efile       ... An event (fild) file to be used for removing task structure ['']
 %       TR          ... TR of the data [2.5]

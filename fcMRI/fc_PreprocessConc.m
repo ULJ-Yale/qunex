@@ -24,13 +24,15 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %       omit      ... The number of frames to omit at the start of each bold []
 %       rgss      ... A comma separated string specifying what to regress in the
 %                     regression step ['m,V,WM,WB,1d']
-%                       m   - motion
-%                       V   - ventricles
-%                       WM  - white matter
-%                       WB  - whole brain
-%                       1d  - first derivative for movement and nuisance signal regressors
-%                       m1d - first derivative for movement regressors
+%                       m     - motion
+%                       m1d   - first derivative for movement regressors
+%                       mSq   - squared motion parameters
+%                       m1dSq - squared motion derivatives
+%                       V     - ventricles
+%                       WM    - white matter
+%                       WB    - whole brain                       
 %                       n1d - first derivative for nuisance signal regressors
+%                       1d    - first derivative for movement and nuisance signal regressors
 %                       t   - task
 %                       e   - events        
 %       task        ... Matrix of custom regressors to be entered in GLM.
