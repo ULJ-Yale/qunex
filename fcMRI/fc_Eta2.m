@@ -1,15 +1,22 @@
 function [eta] = fc_Eta2(a, b)
 
-%function [eta] = fc_Eta2(a, b)
+%``function [eta] = fc_Eta2(a, b)``
 %
-%  Computes Eta2 coefficients
+%   Computes Eta2 coefficients.
 %
-%  If just one argument is given, it computes a matrix of eta coefficients between each pair of columns in the original matrix.
-%  If two matrices of exual size are given, it computes and array of eta coefficients comparing homologous columns from both matrices.
-%  If the first argument is a column vector and the second a matrix, it returns an array of eta coefficients between the vector a and each column of the matrix b.
+%   If just one argument is given, it computes a matrix of eta coefficients
+%   between each pair of columns in the original matrix. If two matrices of
+%   equal size are given, it computes and array of eta coefficients comparing
+%   homologous columns from both matrices. If the first argument is a column
+%   vector and the second a matrix, it returns an array of eta coefficients
+%   between the vector a and each column of the matrix b.
+
+%   ~~~~~~~~~~~~~~~~~~
 %
-%  ---
-%  Written by Grega Repovs, 2009-04-14.
+%   Changelog
+%
+%   2009-04-14 Grega Repovs
+%              Initial version.
 %
 
 if nargin > 1

@@ -1,36 +1,50 @@
 function [report] = g_ExtractROIValues(roif, mfs, sefs, vnames, output, stats, verbose);
 
-%function [report] = g_ExtractROIValues(roif, mfs, sefs, vnames, output, stats, verbose);
+%``function [report] = g_ExtractROIValues(roif, mfs, sefs, vnames, output, stats, verbose)``
 %
-%	Extracts desired statistics from provided files for each ROI
+%	Extracts desired statistics from provided files for each ROI.
 %
-%   roif        - ROI file, either a names file or a mask file
-%   mfs         - comma separated list of files to extract values from
-%	sefs      	- optional list of comma separate files that hold SE for value files
-%   vnames      - optional comma separated list of value names to use for each of the files
-%   output      - comma separated list of files to save to
-%                 if a file contains word long, it will save the data in a long format
-%                 by default it saves the data in a wide format
+%   INPUTS
+%   ======
 %
-%   stats       - a comma separated list of the statistics to save:
-%                 ... rsize - size of ROI in voxels
-%                 ... rmean - location of the geometric mean of the ROI
-%                 ... rpeak - location of the peak value of the ROI
-%                 ... rmin  - location of the minimum value in the ROI
-%                 ... rmax  - location of the maxumal value in the ROI
-%                 ... mean  - mean of values across ROI
-%                 ... median - median value across ROI
-%                 ... min    - minimum value across ROI
-%                 ... max    - mamimum value across ROI
-%                 ... peak   - peak value in the ROI (largest absolute value)
+%   --roif      ROI file, either a names file or a mask file.
+%   --mfs       Comma separated list of files to extract values from.
+%	--sefs      Optional list of comma separate files that hold SE for value 
+%               files.
+%   --vnames    Optional comma separated list of value names to use for each of 
+%               the files.
+%   --output    Comma separated list of files to save to. if a file contains 
+%               word long, it will save the data in a long format. By default it 
+%               saves the data in a wide format
 %
-%	verbose		- to report on progress or not [not]
+%   --stats     A comma separated list of the statistics to save:
 %
-%   ---
-%   Written by Grega Repovs, 2014-08-26
+%               - rsize   ... size of ROI in voxels
+%               - rmean   ... location of the geometric mean of the ROI
+%               - rpeak   ... location of the peak value of the ROI
+%               - rmin    ... location of the minimum value in the ROI
+%               - rmax    ... location of the maxumal value in the ROI
+%               - mean    ... mean of values across ROI
+%               - median  ... median value across ROI
+%               - min     ... minimum value across ROI
+%               - max     ... mamimum value across ROI
+%               - peak    ... peak value in the ROI (largest absolute value)
+%
+%	--verbose   To report on progress or not. [false]
+%
+%   OUTPUT
+%   ======
+%   
+%   report
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2018-06-13 Grega Repovs ... Implemented printing in long format
+%   2014-08-26 Grega Repovs
+%              Initial version
+%   2018-06-13 Grega Repovs
+%              Implemented printing in long format
 %
 
 
@@ -49,7 +63,7 @@ if nargin < 1, error('ERROR: No ROI provided for value extraction!');          e
 %                                                       read roi
 
 if isempty(strfind(roif, '.names'))
-    roi    = gmrimage(roif);
+    roi    = nimage(roif);
     roi.roi.roicodes = sort(unique(reshape(roi.data, [], 1)));
     roi.roi.roicodes = roi.roi.roicodes(roi.roi.roicodes ~= 0);
     roi.roi.roinames = {};
@@ -57,7 +71,7 @@ if isempty(strfind(roif, '.names'))
         roi.roi.roinames = [roi.roi.roinames, ['ROI' num2str(roi.roi.roicodes(r))]];
     end
 else
-    roi = gmrimage.mri_ReadROI(roif);
+    roi = nimage.img_ReadROI(roif);
 end
 roi.data = roi.image2D;
 
@@ -124,14 +138,14 @@ end
 
 for n = 1:nfiles
     mfs{n}    = strtrim(mfs{n});
-    mimg(n)   = gmrimage(mfs{n});
+    mimg(n)   = nimage(mfs{n});
     mimg(n).data = mimg(n).image2D;
     frames(n) = mimg(n).frames;
     if vstatsn, vdata{n}  = zeros([nroi, frames(n), vstatsn]); end
     if vlstatsn, vldata{n} = zeros([nroi, frames(n), vstatsn, 3]); end
     if ~isempty(sefs)
         sefs{n}  = strtrim(sefs{n});
-        seimg(n) = gmrimage(sefs{n});
+        seimg(n) = nimage(sefs{n});
         seimg(n).data = seimg(n).image2D;
         if vstatsn, sedata{n} = zeros([roi, frames(n), vstatsn]); end
         if frames(n) ~= seimg(n).frames

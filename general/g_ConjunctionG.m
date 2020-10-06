@@ -1,24 +1,41 @@
 function [] = g_ConjunctionG(imgf, maskf, method, effect, q, data)
 
-%function [] = g_ConjunctionG(imgf, maskf, method, effect, q, data)
+%``function [] = g_ConjunctionG(imgf, maskf, method, effect, q, data)``
+%
+%	INPUTS
+%	======
 %
 %	Reads image file, computes conjunction using g_Conjunction and saves results.
 %
-%	imgf	- input file, a z-score image file of concatenated individual files
-%	maskf	- optional mask image
-%		: missing or empty -> takes all non-zero voxels
-%		: nonzero -> takes all non-zero voxels
-%		: all -> takes all voxels
+%	--imgf 		input file, a z-score image file of concatenated individual files
+%	--maskf		optional mask image
 %
-%	for the rest of arguments see g_Conjunction.m
+%				- missing or empty -> takes all non-zero voxels
+%				- nonzero -> takes all non-zero voxels
+%				- all -> takes all voxels
 %
-%	saves
-%		: '_Conj_p'   -> conjunction results, zscores for u = 1 to u = n
-%		: '_Conj_FDR' -> above thresholded with FDR
-%		: '_Conj_c'   -> image of frequency of passing threshold
+%	For the rest of arguments see g_Conjunction.m
 %
-%	Grega Repovš
-%	v3.0  2015-10-14
+%	RESULTS
+%	=======
+%
+%	Saves
+%
+%	'_Conj_p'
+%		conjunction results, zscores for u = 1 to u = n
+%
+%	'_Conj_FDR'
+%		above thresholded with FDR
+%
+%	'_Conj_c'
+%		image of frequency of passing threshold
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+%	2015-10-14 Grega Repovs
+%			Initial version
 
 % parsing arguments
 
@@ -46,7 +63,7 @@ fprintf('\n\nComputing conjunction with file %s, thresholding with FDR q=%.4f\n'
 %  ---- reading image, computing conjunction
 
 fprintf('... reading image ');
-img = gmrimage(imgf);
+img = nimage(imgf);
 nim = img.frames;
 fprintf(' volumes: %d ', nim);
 fprintf('... done\n');
@@ -61,7 +78,7 @@ if ~strcmp(maskf, 'all')
 		img.data = img.image2D;
 		mask = sum(img.data, 2) ~= 0;
 	else
-		mask = gmrimage(maskf);
+		mask = nimage(maskf);
 		mask = mask.image2D > 0;
 	end
 
@@ -81,15 +98,15 @@ fprintf('... saving results ');
 
 out = img.zeroframes(nim);
 out.data(mask,:) = mzp;
-out.mri_saveimage(imgpf);       fprintf('.');
+out.img_saveimage(imgpf);       fprintf('.');
 
 out = img.zeroframes(nim);
 out.data(mask,:) = mzt;
-out.mri_saveimage(imgtf);       fprintf('.');
+out.img_saveimage(imgtf);       fprintf('.');
 
 out = img.zeroframes(1);
 out.data(mask) = mzc;
-out.mri_saveimage(imgcf);       fprintf('.');
+out.img_saveimage(imgcf);       fprintf('.');
 
 fprintf(' done.\n\n');
 

@@ -1,50 +1,75 @@
 function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)
 
-%function [] = fc_ComputeABCorr(flist, smask, tmask, verbose)
+%``function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)`
 %
-%	Computes the correlation of each source mask voxel with each target mask voxel.
+%	Computes the correlation of each source mask voxel with each target mask 
+%   voxel.
 %
-%   INPUT
-%       flist   - File list with information on subjects bold runs and segmentation files,
-%                 or a well strucutured string (see g_ReadFileList).
-%       smask   - .names file for source mask definition.
-%       tmask   - .names file for target mask roi definition.
-%       mask    - Either number of frames to omit or a mask of frames to use [0].
-%       root    - The root of the filename where results are to be saved [''].
-%       options - A string specifying what correlations to save ['g']:
-%                   : g - compute mean correlation across subjects (only makes sense with the same sROI for each subject)
-%                   : i - save individual subjects' results
-%       verbose - Whether to report the progress full, script, none. ['none']
+%   INPUTS
+%   ======
+%
+%   --flist      File list with information on sessions bold runs and 
+%                segmentation files, or a well strucutured string (see 
+%                g_ReadFileList).
+%   --smask      .names file for source mask definition.
+%   --tmask      .names file for target mask roi definition.
+%   --mask       Either number of frames to omit or a mask of frames to use [0].
+%   --root       The root of the filename where results are to be saved [''].
+%   --options    A string specifying what correlations to save ['g']:
+%
+%                - 'g' - compute mean correlation across sessions (only makes
+%                  sense with the same sROI for each session)
+%                - 'i' - save individual sessions' results
+%
+%   --verbose    Whether to report the progress full, script, none. ['none']
 %
 %	RESULTS
+%   =======
+%
 %	The resulting files are:
 %
-%   group:
-%   <root>_group_ABCor_Fz   ... Mean Fisher Z value across participants.
-%   <root>_group_ABCor_r    ... Mean Pearson r (converted from Fz) value across participants.
+%   - group:
 %
-%   individual:
-%   <root>_<subject id>_ABCor ... Pearson r correlations for the individual.
+%       <root>_group_ABCor_Fz
+%           Mean Fisher Z value across participants.
+%
+%       <root>_group_ABCor_r
+%           Mean Pearson r (converted from Fz) value across participants.
+%
+%   - individual:
+%
+%       <root>_<session id>_ABCor
+%           Pearson r correlations for the individual.
 %
 %   If root is not specified, it is taken to be the root of the flist.
 %
 %   USE
+%   ===
+%
 %   Use the function to compute individual and/or group correlations of each
 %   smask voxel with each tmask voxel. tmask voxels are spread across the volume
 %   and smask voxels are spread across the volumes. For more details see
-%   mri_ComputeABCorr gmrimage method.
+%   `img_ComputeABCorr` - nimage method.
 %
 %   EXAMPLE USE
-%   fc_ComputeABCorr('scz.list', 'PFC.names', 'ACC.names', 5, 'SCZ_PFC-ACC', 'g', 'full');
+%   ===========
 %
-%	---
-% 	Created by Grega Repovš on 2010-08-09.
+%   ::
+%
+%       fc_ComputeABCorr('scz.list', 'PFC.names', 'ACC.names', 5, ...
+%                        'SCZ_PFC-ACC', 'g', 'full');
+%
+
+%	~~~~~~~~~~~~~~~~~~
 %
 % 	Changelog
+%
+%   2010-08-09 Grega Repovs
+%              Initial version
 %   2017-03-19 Grega Repovs
-%            - Updated documentation, cleaned code.
+%              Updated documentation, cleaned code.
 %   2017-04-18 Grega Repovs
-%            - Adjusted to use g_ReadFileList
+%              Adjusted to use g_ReadFileList
 
 
 if nargin < 7 || isempty(verbose), verbose = 'none'; end
@@ -88,7 +113,7 @@ if script, fprintf('\n\nStarting ...'), end
 
 if script, fprintf('\n ... listing files to process'), end
 
-[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
+[session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 if isempty(root)
     root = listname;
@@ -98,12 +123,12 @@ if script, fprintf(' ... done.'), end
 
 
 %   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
+%   -------------------------------------------- The main loop ... go through all the sessions
 
 %   --- Get variables ready first
 
-sROI = gmrimage.mri_ReadROI(smask, subject(1).roi);
-tROI = gmrimage.mri_ReadROI(tmask, subject(1).roi);
+sROI = nimage.img_ReadROI(smask, session(1).roi);
+tROI = nimage.img_ReadROI(tmask, session(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
     sROIload = false;
@@ -126,38 +151,38 @@ end
 
 %   --- Start the loop
 
-for s = 1:nsubjects
+for s = 1:nsessions
 
     %   --- reading in image files
     if script, tic, end
-	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
+	if script, fprintf('\n------\nProcessing %s', session(s).id), end
 	if script, fprintf('\n... reading file(s) '), end
 
-    % --- check if we need to load the subject region file
+    % --- check if we need to load the session region file
 
-    if ~strcmp(subject(s).roi, 'none')
+    if ~strcmp(session(s).roi, 'none')
         if tROIload | sROIload
-            roif = gmrimage(subject(s).roi);
+            roif = nimage(session(s).roi);
         end
     end
 
     if tROIload
-	    tROI = gmrimage.mri_ReadROI(tmask, roif);
+	    tROI = nimage.img_ReadROI(tmask, roif);
     end
     if sROIload
-	    sROI = gmrimage.mri_ReadROI(smask, roif);
+	    sROI = nimage.img_ReadROI(smask, roif);
     end
 
     % --- load bold data
 
-	nfiles = length(subject(s).files);
+	nfiles = length(session(s).files);
 
-	img = gmrimage(subject(s).files{1});
+	img = nimage(session(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = gmrimage(subject(s).files{n});
+    	    new = nimage(session(s).files{n});
     	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    if script, fprintf(', %d', n), end
@@ -165,13 +190,13 @@ for s = 1:nsubjects
     end
     if script, fprintf('\n'), end
 
-    ABCor = img.mri_ComputeABCor(sROI, tROI, method);
+    ABCor = img.img_ComputeABCor(sROI, tROI, method);
     ABCor = ABCor.unmaskimg;
 
     if indiv
-        ifile = [root '_' subject(s).id '_ABCor'];
+        ifile = [root '_' session(s).id '_ABCor'];
         if script, fprintf('\n... saving %s\n', ifile); end
-        ABCor.mri_saveimage(ifile);
+        ABCor.img_saveimage(ifile);
     end
 
     if group
@@ -189,13 +214,13 @@ if group
     if script, fprintf('\n=======\nSaving group results'), end
 
     if ~tROIload
-        gcnt.data = (tROI.image2D > 0) .* nsubjects;
+        gcnt.data = (tROI.image2D > 0) .* nsessions;
     end
 
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);
-    gres.mri_saveimage([root '_group_ABCor_Fz']);
+    gres.img_saveimage([root '_group_ABCor_Fz']);
     gres.data = fc_FisherInv(gres.data);
-    gres.mri_saveimage([root '_group_ABCor_r']);
+    gres.img_saveimage([root '_group_ABCor_r']);
 end
 
 

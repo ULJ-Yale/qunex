@@ -1,16 +1,20 @@
 function [] = g_CThreshold(fname, tname, csize, t)
 
-%function [] = g_CThreshold(fname, tname, csize, t)
+%``function [] = g_CThreshold(fname, tname, csize, t)`
 %
 %   Thresholding using cluster size for volume images.
 %
-%   INPUT
-%       fname ... A path to a Z image.
-%       tname ... The name for the new, thresholded image.
-%       csize ... Minimal cluster size threshold.
-%       t     ... Z magnitude threshold (allways does positive and negative). [3]
+%   INPUTS
+%	======
+%
+%   --fname 	A path to a Z image.
+%   --tname 	The name for the new, thresholded image.
+%   --csize 	Minimal cluster size threshold.
+%   --t     	Z magnitude threshold (allways does positive and negative). [3]
 %
 %   USE
+%	===
+%
 %   The functions first applies the specified Z threshold zeroing all voxels
 %   between -t and +t. It then identifies all contiguous clusters of voxels
 %   with non-zero values, voxels that share at least an edge (neighboorhood 18).
@@ -19,15 +23,21 @@ function [] = g_CThreshold(fname, tname, csize, t)
 %   least csize voxels remain.
 %
 %   EXAMPLE USE
+%	===========
 %
-%   >>> g_CThreshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
+%	::
 %
-%   ---
-%   Written by Grega Repovs, 2016-04-06
+%   	g_CThreshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%	2016-04-06 Grega Repovs
+%			   Initial version.
 %   2017-03-12 Grega Repovs
-%            - Updated documentation.
+%              Updated documentation.
 %
 
 
@@ -35,7 +45,7 @@ if nargin < 4 || isempty(t), t = 3; end
 if isempty(tname), tname = fname; end
 
 
-img = gmrimage(fname);
+img = nimage(fname);
 img.data(abs(img.data) < t) = 0;
 
 
@@ -53,7 +63,7 @@ mn.data = mn.image4D;
 cn = bwconncomp(mn.data, 18);    % vs 26
 img = zerosmaller(img, cn, csize);
 
-img.mri_saveimage(tname);
+img.img_saveimage(tname);
 
 
 

@@ -1,81 +1,119 @@
-function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
+function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
-%function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
+%``function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
 %
-%   Function for fcMRI preprocessing and GLM analysis a set of BOLD files.
+%	Function for fcMRI preprocessing and GLM analysis a set of BOLD files.
 %
 %   INPUTS
-%       subjectf ... A path to the subject's folder with images and data.
-%       bolds    ... A vector of bold runs in the order of the conc file.
-%       doIt     ... Which steps to perform and in what order ['s,h,r,c,l']:
-%           s - spatial smoothing
-%           h - highpass temporal filter
-%           r - GLM estimation and regression of nuisance signals, with an
-%               optional parameter (e.g. r0):
-%               0 - separate nuisance, joint task regressors across runs [default]
-%               1 - separate nuisance, separate task regressors for each run
-%               2 - joint nuisance, joint task regressors across all runs
-%           c - save coefficients in _Bcoeff file
-%           p - save png image files of nusance ROI mask
-%           l - lowpass temporal filter
-%           m - motion scrubbing
+%   ======
 %
-%       TR        ... TR of the data [2.5]
-%       omit      ... The number of frames to omit at the start of each bold []
-%       rgss      ... A comma separated string specifying what to regress in the
-%                     regression step ['m,V,WM,WB,1d']
-%                       m     - motion
-%                       m1d   - first derivative for movement regressors
-%                       mSq   - squared motion parameters
-%                       m1dSq - squared motion derivatives
-%                       V     - ventricles
-%                       WM    - white matter
-%                       WB    - whole brain                       
-%                       n1d - first derivative for nuisance signal regressors
-%                       1d    - first derivative for movement and nuisance signal regressors
-%                       t   - task
-%                       e   - events        
-%       task        ... Matrix of custom regressors to be entered in GLM.
-%       efile       ... Event (fild) file to be used for estimation of task regressors ['']
-%       eventstring ... A string specifying the events to regress and the regressors to use ['']
-%       variant     ... A string to be prepended to files ['']
-%       overwrite   ... Whether old files should be overwritten [false]
-%       tail        ... what file extension to expect and use for images ['.nii.gz']
-%       scrub       ... the description of how to compute scrubbing - a string in 'param:value|param:value' format
-%                       parameters:
-%                       - radius   : head radius in mm [50]
-%                       - fdt      : frame displacement threshold [0.5]
-%                       - dvarsmt  : dvarsm threshold [3.0]
-%                       - dvarsmet : dvarsme threshold [1.6]
-%                       - after    : how many frames after the bad one to reject [0]
-%                       - before   : how many frames before the bad one to reject [0]
-%                       - reject   : which criteria to use for rejection (mov, dvars, dvarsme, idvars, udvars ...) [udvarsme]
-%                       if empty, the defaults from mri_ComputeScrub are used.
-%       ignores     - How to deal with the frames marked as not used in filering and regression steps
-%                     specified in a single string, separated with pipes
-%                     hipass  : keep / linear / spline
-%                     regress : keep / ignore / mark / linear / spline
-%                     lopass  : keep / linear /spline
-%                     ['hipass:keep|regress:keep|lopass:keep']
-%       options     - Additional options that can be set using the 'key=value|key=value' string:
-%           boldname        : ['bold']
-%           surface_smooth  : [6]
-%           volume_smooth   : [6]
-%           voxel_smooth    : [2]
-%           lopass_filter   : [0.08]
-%           hipass_filter   : [0.009]
-%           framework_path  : ['']
-%           wb_command_path : ['']
-%           omp_threads     : [0]
-%           smooth_mask     : ['false']
-%           dilate_mask     : ['false']
-%           glm_matrix      : ['none']  ('none' / 'text' / 'image' / 'both')
-%           glm_residuals   : ['save']
-%           glm_name        : ['']
-%           bold_tail       : ['']
-%           bold_variant    : ['']
+%   --sessionf 		A path to the sessions's folder with images and data.
+%   --bolds    		A vector of bold runs in the order of the conc file.
+%   --doIt     		Which steps to perform and in what order ['s,h,r,c,l']:
 %
-%       done        - A path to a file to save to confirm all is a-ok. ['']
+%           		s 
+%						spatial smoothing
+%           		h 
+%						highpass temporal filter
+%					r 
+%						GLM estimation and regression of nuisance signals, with
+%						an optional parameter (e.g. r0):
+%
+% 						0
+%							separate nuisance, joint task regressors across runs 
+%							[default]
+%						1	
+%							separate nuisance, separate task regressors for each run
+%						2
+%							joint nuisance, joint task regressors across all runs
+%
+%					c 
+%						save coefficients in _Bcoeff file
+%           		p 
+%						save png image files of nusance ROI mask
+%           		l 
+%						lowpass temporal filter
+%           		m 
+%						motion scrubbing
+%
+%   --TR        	TR of the data [2.5]
+%   --omit      	The number of frames to omit at the start of each bold []
+%   --rgss      	A comma separated string specifying what to regress in the
+%               	regression step ['m,V,WM,WB,1d']:
+%	
+%           		- m   ... motion
+%           		- m1d ... first derivative for movement regressors
+%           		- mSq ... squared motion parameters
+%           		- V   ... ventricles
+%           		- WM  ... white matter
+%           		- WB  ... whole brain
+%           		- n1d ... first derivative for nuisance signal regressors
+%           		- 1d  ... first derivative for movement and nuisance signal
+%           		- t   ... task
+%           		- e   ... events
+%
+%   --task        	Matrix of custom regressors to be entered in GLM.
+%   --efile       	Event (fild) file to be used for estimation of task regressors ['']
+%   --eventstring 	A string specifying the events to regress and the regressors 
+%					to use ['']
+%   --variant     	A string to be prepended to files ['']
+%   --overwrite   	Whether old files should be overwritten [false]
+%   --tail        	what file extension to expect and use for images ['.nii.gz']
+%   --scrub       	the description of how to compute scrubbing - a string in 
+%					`'param:value|param:value'` formatÄšĹž
+%
+%                   Parameters:
+%
+%                   radius   
+%						head radius in mm [50]
+%                   fdt      
+%						frame displacement threshold [0.5]
+%                   dvarsmt  
+%						dvarsm threshold [3.0]
+%                   dvarsmet 
+%						dvarsme threshold [1.6]
+%                   after    
+%						how many frames after the bad one to reject [0]
+%                   before   
+%						how many frames before the bad one to reject [0]
+%                   reject   
+%						which criteria to use for rejection
+%						(mov, dvars, dvarsme, idvars, udvars ...) [udvarsme]
+%                     
+%					If empty, the defaults from img_ComputeScrub are used.
+%
+%	--ignores       How to deal with the frames marked as not used in filtering 
+%					and regression steps specified in a single string, separated
+%					with pipes
+%                   
+%					- hipass  ... keep / linear / spline
+%					- regress ... keep / ignore / mark / linear / spline
+%					- lopass  ... keep / linear /spline
+%                   
+%					['hipass:keep|regress:keep|lopass:keep']
+%
+%	--options       Additional options that can be set using the 
+%				    'key=value|key=value' string:
+%
+%           		- boldname        : ['bold']
+%           		- surface_smooth  : [6]
+%           		- volume_smooth   : [6]
+%           		- voxel_smooth    : [2]
+%           		- lopass_filter   : [0.08]
+%           		- hipass_filter   : [0.009]
+%           		- framework_path  : ['']
+%           		- wb_command_path : ['']
+%           		- omp_threads     : [0]
+%           		- smooth_mask     : ['false']
+%           		- dilate_mask     : ['false']
+%           		- glm_matrix      : ['none']  ('none' / 'text' / 'image' / 'both')
+%           		- glm_residuals   : ['save']
+%           		- glm_name        : ['']
+%           		- bold_tail       : ['']
+%           		- bold_variant    : ['']
+%           		- imf_suffix      : ['']
+%
+%   --done          A path to a file to save to confirm all is a-ok. ['']
 %
 %
 %   USE
@@ -87,10 +125,10 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   GLM files for further second-level analyses. The function enables the
 %   following actions:
 %
-%   * spatial smoothing (3D or 2D for cifti files)
-%   * temporal filtering (high-pass, low-pass)
-%   * removal of nuisance signal
-%   * complex modeling of events
+%   - spatial smoothing (3D or 2D for cifti files)
+%   - temporal filtering (high-pass, low-pass)
+%   - removal of nuisance signal
+%   - complex modeling of events
 %
 %   The function makes use of a number of files and accepts a long list of
 %   arguments that make it very powerfull and flexible but also require care in
@@ -104,48 +142,82 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   Basics specify the files to use for processing and what to do. The relevant
 %   parameters are:
 %
-%   - subjectf  ... Specifies the subject's base folder in which the function
-%                   will look for all the other relevant files.
-%   - bolds     ... Lists the numbers of the bold files to be processed. These
-%                   have to match the order in which the bolds are specified in
-%                   the .conc file and they have to match the order in which
-%                   events follow in the .fidl file.
-%   - do        ... The actions to be performed.
-%   - overwrite ... Whether to overwrite the existing data or not.
-%   - variant   ... A string to prepend to the list of steps done in the
-%                   resulting files saved.
-%   - tail      ... The file (format) extension (e.g. '.nii.gz').
-%   - efile     ... The event (fidl) filename.
+%   sessionf  
+%		Specifies the sessions's base folder in which the function will look for 
+%		all the other relevant files.
+%
+%   bolds     
+%		Lists the numbers of the bold files to be processed. These have to match 
+%		the order in which the bolds are specified in the .conc file and they 
+%		have to match the order in which events follow in the .fidl file.
+%
+%   do        
+%		The actions to be performed.
+%
+%   overwrite 
+%		Whether to overwrite the existing data or not.
+%
+%   variant   
+%		A string to prepend to the list of steps done in the resulting files 
+%		saved.
+%
+%   tail      
+%		The file (format) extension (e.g. '.nii.gz').
+%
+%   efile     
+%		The event (fidl) filename.
 %
 %   Important are also the following optional keys in the options parameter:
 %
-%   - boldname     ... Specifies, how the BOLD files are named in the
-%                      images/functional folder.
-%   - bold_tail    ... Specifies the additional tail that the bold name might
-%                      have (see below).
-%   - bold_variant ... Specifies a possible extension for the images/functional
-%                      and images/segmentation/boldmasks folders
+%   boldname     
+%		Specifies, how the BOLD files are named in the images/functional folder.
+%
+%   bold_tail    
+%		Specifies the additional tail that the bold name might have (see below).
+%
+%   bold_variant 
+%		Specifies a possible extension for the images/functional and 
+%		images/segmentation/boldmasks folders
 %
 %   The files that will be processed / used are:
 %
-%   bolds           : <subjectf>/images/functional<bold_variant>/<boldname>[N]<bold_tail><tail>
-%   movement data   : <subjectf>/images/functional<bold_variant>/movement/<boldname>_mov.dat
-%   scrubbing data  : <subjectf>/images/functional<bold_variant>/movement/<boldname>.scrub
-%   bold stats data : <subjectf>/images/functional<bold_variant>/movement/<boldname>.bstats
-%   nuisance signal : <subjectf>/images/functional<bold_variant>/movement/<boldname>.nuisance
-%   bold brain mask : <subjectf>/images/segmentation/boldmasks<bold_variant>/<boldname>[N]_frame1_brain_mask<tail>
-%   event file      : <subjectf>/images/functional<bold_variant>/events/<efile>
+%   bolds           
+%		<sessionf>/images/functional<bold_variant>/<boldname>[N]<bold_tail><tail>
+%
+%   movement data   
+%		<sessionf>/images/functional<bold_variant>/movement/<boldname>_mov.dat
+%
+%   scrubbing data  
+%		<sessionf>/images/functional<bold_variant>/movement/<boldname>.scrub
+%
+%   bold stats data 
+%		<sessionf>/images/functional<bold_variant>/movement/<boldname>.bstats
+%
+%   nuisance signal 
+%		<sessionf>/images/functional<bold_variant>/movement/<boldname>.nuisance
+%
+%   bold brain mask 
+%		<sessionf>/images/segmentation/boldmasks<bold_variant>/<boldname>[N]_frame1_brain_mask<tail>
+%
+%   event file      
+%		<sessionf>/images/functional<bold_variant>/events/<efile>
 %
 %   The actions that can be performed are denoted by a single letter, and they
 %   will be executed in the sequence listed:
 %
-%   m ... Motion scrubbing.
-%   s ... Spatial smooting.
-%   h ... High-pass filtering.
-%   r ... Regression (nuisance and/or task) with an optional number 0, 1, or 2
-%         specifying the type of regression to use (see REGRESSION below).
-%   c ... Saving of resulting beta coefficients (allways to follow 'r').
-%   l ... Low-pass filtering.
+%   m 
+%		Motion scrubbing.
+%   s 
+%		Spatial smooting.
+%   h 
+%		High-pass filtering.
+%   r 
+%		Regression (nuisance and/or task) with an optional number 0, 1, or 2
+%		specifying the type of regression to use (see REGRESSION below).
+%   c 
+%		Saving of resulting beta coefficients (allways to follow 'r').
+%   l 
+%		Low-pass filtering.
 %
 %   So the default 's,h,r,c,l' do parameter would lead to the image files
 %   first being smoothed, then high-pass filtered. Next a regression step
@@ -160,49 +232,72 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   comuputation on its own (when 'm' is part of the command). In the latter
 %   case, the scrubbing parameters need to be specified in the scrub string:
 %
-%   - radius  ... Estimated head radius (in mm) for computing frame
-%                 displacement statistics [50].
-%   - fd      ... Frame displacement threshold (in mm) to use for
-%                 identifying bad frames [0.5]
-%   - dvars   ... The (mean normalized) dvars threshold to use for
-%                 identifying bad frames [3.0].
-%   - dvarsme ... The (median normalized) dvarsm threshold to use for
-%                 identifying bad frames [1.6].
-%   - after   ... How many frames after each frame identified as bad
-%                 to also exclude from further processing and analysis [0].
-%   - before  ... How many frames before each frame identified as bad
-%                 to also exclude from further processing and analysis [0].
-%   - bad     ... Which criteria to use for identification of bad frames
-%                 [udvarsme].
+%   radius  
+%		Estimated head radius (in mm) for computing frame displacement 
+%		statistics [50].
+%
+%   fd      
+%		Frame displacement threshold (in mm) to use for identifying bad frames [0.5]
+%
+%   dvars   
+%		The (mean normalized) dvars threshold to use for identifying bad frames [3.0].
+%
+%   dvarsme 
+%		The (median normalized) dvarsm threshold to use for identifying bad 
+%		frames [1.6].
+%
+%   after   
+%		How many frames after each frame identified as bad to also exclude from 
+%		further processing and analysis [0].
+%
+%   before  
+%		How many frames before each frame identified as bad to also exclude from 
+%		further processing and analysis [0].
+%
+%   bad     
+%		Which criteria to use for identification of bad frames [udvarsme].
 %
 %   In any case, if scrubbing was done beforehand or as a part of this commmand,
 %   one has to specify, how the scrubbing information is used by specifying it
-%   in the ignores parameter string. The string has the following format:
+%   in the ignores parameter string. The string has the following format::
 %
-%   'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
+%   	'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
 %
 %   Filtering options are:
 %
-%   * keep   ... Keep all the bad frames unchanged.
-%   * linear ... Replace bad frames with linear interpolated values based on
-%                neighbouring good frames.
-%   * spline ... Replace bad frames with spline interpolated values based on
-%                neighouring good frames
+%   keep   
+%		Keep all the bad frames unchanged.
+%
+%   linear 
+%		Replace bad frames with linear interpolated values based on neighbouring 
+%		good frames.
+%
+%   spline 
+%		Replace bad frames with spline interpolated values based on neighouring 
+%		good frames.
 %
 %   To prevent artefacts present in bad frames to be temporaly spread, use
 %   either 'linear' or 'spline' options.
 %
 %   Regression options are:
 %
-%   * keep   ... Keep the bad frames and use them in the regression.
-%   * ignore ... Exclude bad frames from regression and keep the original
-%                values in their place.
-%   * mark   ... Exclude bad frames from regression and mark the bad frames
-%                as NaN.
-%   * linear ... Exclude bad frames from regression and replace them with
-%                linear interpolation after regression.
-%   * spline ... Exclude bad frames from regression and replace them with
-%                spline interpolation after regression.
+%   keep   
+%		Keep the bad frames and use them in the regression.
+%
+%   ignore 
+%		Exclude bad frames from regression and keep the originalvvalues in their 
+%		place.
+%
+%   mark   
+%		Exclude bad frames from regression and mark the bad frames as NaN.
+%
+%   linear 
+%		Exclude bad frames from regression and replace them with linear 
+%		interpolation after regression.
+%
+%   spline 
+%		Exclude bad frames from regression and replace them with spline 
+% 		interpolation after regression.
 %
 %   Please note that when the bad frames are ignored, the original values will
 %   be retained in the residual signal. In this case they have to be excluded
@@ -215,17 +310,21 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   Volume smoothing
 %   ----------------
 %
-%   For volume formats the images will be smoothed using the mri_Smooth3D
-%   gmrimage method. For cifti format the smooting will be done by calling the
+%   For volume formats the images will be smoothed using the img_Smooth3D
+%   nimage method. For cifti format the smooting will be done by calling the
 %   relevant wb_command command. The smoothing specific parameters can be
 %   set in the options string:
 %
-%   * voxel_smooth  ... Gaussian smoothing FWHM in voxels [2]
-%   * smooth_mask   ... Whether to smooth only within a mask, and what mask to
-%                       use (nonzero/brainsignal/brainmask/<filename>)[false].
-%   * dilate_mask   ... Whether to dilate the image after masked smoothing and
-%                       what mask to use (nonzero/brainsignal/brainmask/
-%                       same/<filename>)[false].
+%   voxel_smooth
+%		Gaussian smoothing FWHM in voxels [2]
+%
+%   smooth_mask
+%		Whether to smooth only within a mask, and what mask to use 
+%		(nonzero/brainsignal/brainmask/<filename>)[false].
+%
+%   dilate_mask
+%		Whether to dilate the image after masked smoothing and what mask to use 
+%		(nonzero/brainsignal/brainmask/same/<filename>)[false].
 %
 %   If a smoothing mask is set, only the signal within the specified mask will
 %   be used in the smoothing. If a dilation mask is set, after smoothing within
@@ -234,20 +333,26 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %
 %   For both optional string values the possibilities are:
 %
-%   * nonzero      ... Mask will consist of all the nonzero voxels of the first
-%                      BOLD frame.
-%   * brainsignal  ... Mask will consist of all the voxels that are of value
-%                      300 or higher in the first BOLD frame (this gave a good
-%                      coarse brain mask for images intensity normalized to
-%                      mode 1000 in the NIL preprocessing stream).
-%   * brainmask    ... Mask will be the actual bet extracted brain mask based
-%                      on the first BOLD frame (generated using in the
-%                      creatBOLDBrainMasks command).
-%   * <filename>   ... All the non-zero voxels in a specified volume file will
-%                      be used as a mask.
-%   * false        ... No mask will be used.
-%   * same         ... Only for dilate_mask, the mask used will be the same as
-%                      smooting mask.
+%   nonzero      
+%		Mask will consist of all the nonzero voxels of the first BOLD frame.
+%
+%   brainsignal  
+%		Mask will consist of all the voxels that are of value 300 or higher in 
+%		the first BOLD frame (this gave a good coarse brain mask for images 
+%		intensity normalized to mode 1000 in the NIL preprocessing stream).
+%
+%   brainmask    
+%		Mask will be the actual bet extracted brain mask based on the first BOLD 
+%		frame (generated using in the createBOLDBrainMasks command).
+%
+%   <filename>   
+%		All the non-zero voxels in a specified volume file will be used as a mask.
+%
+%   false        
+%		No mask will be used.
+%
+%   same         
+%		Only for dilate_mask, the mask used will be the same as smooting mask.
 %
 %   Cifti smoothing
 %   ---------------
@@ -255,14 +360,23 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   For cifti format images, smoothing will be run using wb_command. The
 %   following parameters can be set in the options parameter:
 %
-%   * surface_smooth  ... FWHM for gaussian surface smooting in mm [6.0].
-%   * volume_smooth   ... FWHM for gaussian volume smooting in mm [6.0].
-%   * omp_threads     ... Number of cores to be used by wb_command. 0 for no
-%                         change of system settings [0].
-%   * framework_path  ... The path to framework libraries on the Mac system.
-%                         No need to use it currently if installed correctly.
-%   * wb_command_path ... The path to the wb_command executive. No need to
-%                         use it currently if installed correctly.
+%   surface_smooth  
+%		FWHM for gaussian surface smooting in mm [6.0].
+%
+%   volume_smooth   
+%		FWHM for gaussian volume smooting in mm [6.0].
+%
+%   omp_threads     
+%		Number of cores to be used by wb_command. 0 for no change of system 
+%		settings [0].
+%
+%   framework_path  
+%		The path to framework libraries on the Mac system. No need to use it 
+%		currently if installed correctly.
+%
+%   wb_command_path 
+%		The path to the wb_command executive. No need to use it currently if 
+% 		installed correctly.
 %
 %   Results
 %   -------
@@ -274,15 +388,18 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   TEMPORAL FILTERING
 %   ==================
 %
-%   Temporal filtering is accomplished using mri_Filter gmrimage method. The
+%   Temporal filtering is accomplished using img_Filter nimage method. The
 %   code is adopted from the FSL C++ code enabling appropriate handling of
 %   bad frames (as described above - see SCRUBBING). The filtering settings
 %   can be set in the options parameter:
 %
-%   * hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
-%   * lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
+%   hipass_filter
+%		The frequency for high-pass filtering in Hz [0.008].
 %
-%   Please note that the values finaly passed to mri_Filter method are the
+%   lopass_filter  
+%		The frequency for low-pass filtering in Hz [0.09].
+%
+%   Please note that the values finaly passed to img_Filter method are the
 %   respective sigma values computed from the specified frequencies and TR.
 %
 %   Results
@@ -305,38 +422,50 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   (2) to get task beta estimates for further activational analyses. The
 %   following parameters are used in this step:
 %
-%   * rgss       ...  A comma separated list of regressors to include in GLM.
-%                     Possible values are:
-%                     * m  - motion parameters
-%                     * m1d - motion derivatives
-%                     * mSq  - squared motion parameters
-%                     * m1dSq - squared motion derivatives
-%                     * V  - ventricles signal
-%                     * WM - white matter signal
-%                     * WB - whole brain signal
-%                     * n1d - first derivative of requested above nuisance
-%                             signals (V, WM, WB)
-%                     * 1d - first derivative of both movement regressors 
-%                            and specified nuisance signal regressors
-%                            (V, WM, WB)
-%                     * e  - events listed in the provided fidl files (see
-%                            above), modeled as specified in the event_string
-%                            parameter.
-%                     [m,V,WM,WB,1d]
-%                     Note: `1d` implies `n1d` and `m1d`
-%   * eventstring ... A string describing, how to model the events listed in
-%                     the provided fidl files [].
+%   rgss       
+%		A comma separated list of regressors to include in GLM. 
+%		Possible values are:
+%
+%       m  
+%			motion parameters
+%       m1d
+%			motion derivatives
+%       m1dSq
+%			squared motion derivatives
+%       V  
+%			ventricles signal
+%       WM 
+%			white matter signal
+%       WB 
+%			whole brain signal
+%       n1d
+%			first derivative of requested above nuisance signals (V, WM, WB)
+%       1d
+%			first derivative of both movement regressors and specified nuisance signal
+%			regressors (V, WM, WB)
+%       e  
+%			events listed in the provided fidl files (see above), modeled as 
+%			specified in the event_string parameter.
+%       
+%		['m,V,WM,WB,1d']
+%
+%   eventstring 
+%		A string describing, how to model the events listed in the provided fidl files. 
+%		[]
 %
 %   Additionally, the following options can be set using the options string:
 %
-%   * glm_matrix     ... Whether to save the GLM matrix as a text file ('text'),
-%                        a png image file ('image'), both ('both') or not
-%                        ('none') [none].
-%   * glm_residuals  ... Whether to save the residuals after GLM regression
-%                        ('save') or not ('none') [save].
-%   * glm_name       ... An additional name to add to the residuals and GLM
-%                        files to distinguish between different possible models
-%                        used.
+%   glm_matrix     
+%		Whether to save the GLM matrix as a text file ('text'), a png image file 
+%		('image'), both ('both') or not ('none') [none].
+%
+%   glm_residuals  
+%		Whether to save the residuals after GLM regression 'save') or not 
+%		('none') [save].
+%
+%   glm_name       
+%		An additional name to add to the residuals and GLM files to distinguish 
+%		between different possible models used.
 %
 %   GLM modeling
 %   ------------
@@ -346,22 +475,25 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   by the eventstring parameter. The event string is a pipe ('|') separated
 %   list of regressor specifications. The possibilities are:
 %
-%   __Unassumed Modelling__
-%   <fidl code>:<length in frames>
-%   where <fidl code> is the code for the event used in the fidl file, and
-%   <length in frames> specifies, for how many frames of the bold run (since
-%   the onset of the event) the event should be modeled.
+%   **Unassumed Modelling**
 %
-%   __Assumed Modelling__
-%   <fidl code>:<hrf>[:<length>]
-%   where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
-%   response function to use, and <length> is an optional parameter, with its
-%   value dependent on the model used. The allowed <hrf> are:
+%   `<fidl code>:<length in frames>`
+%   	where <fidl code> is the code for the event used in the fidl file, and
+%   	<length in frames> specifies, for how many frames of the bold run (since
+%   	the onset of the event) the event should be modeled.
 %
-%   boynton ... uses the Boynton HRF
-%   SPM     ... uses the SPM double gaussian HRF
-%   u       ... unassumed (see above)
-%   block   ... block response
+%   **Assumed Modelling**
+%
+%   `<fidl code>:<hrf>[:<length>]
+%   	where <fidl code> is the same as above, <hrf> is the type of the 
+%		hemodynamic response function to use, and <length> is an optional 
+%		parameter, with its value dependent on the model used. The allowed <hrf> 
+%		are:
+%
+%   	- boynton ... uses the Boynton HRF
+%   	- SPM     ... uses the SPM double gaussian HRF
+%   	- u       ... unassumed (see above)
+%   	- block   ... block response
 %
 %   For the first two, the <length> parameter is optional and would override the
 %   event duration information provided in the fidl file. For 'u' the length is
@@ -369,26 +501,35 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   length should be two numbers separated by a colon (e.g. 2:9) that specify
 %   the start and end offset (from the event onset) to model as a block.
 %
-%   __Naming And Behavioral Regressors__
+%   **Naming And Behavioral Regressors**
+%
 %   Each of the above (unassumed and assumed modelling specification) can be
 %   followed by a ">" (greater-than character), which signifies additional
-%   information in the form:
+%   information in the form::
 %
-%   <name>[:<column>[:<normalization span>[:<normalization method>]]]
+%   	<name>[:<column>[:<normalization span>[:<normalization method>]]]
 %
-%   name   ... The name of the resulting regressor.
-%   column ... The number of the additional behavioral regressor column in the
-%              fidl file (1-based) to use as a weight for the regressor.
-%   normalization span   ... Whether to normalize the behavioral weight within
-%                            a specific event type ('within') or across all
-%                            events ('across') [within].
-%   normalization method ... The method to use for normalization. Options are
-%                            z   ... compute Z-score
-%                            01  ... normalize to fixed range 0 to 1
-%                            -11 ... normalize to fixed range -1 to 1
+%   name   
+%		The name of the resulting regressor.
 %
-%   Example string:
-%   'block:boynton|target:9|target:9>target_rt:1:within:z'
+%   column 
+%		The number of the additional behavioral regressor column in the fidl 
+%		file (1-based) to use as a weight for the regressor.
+%
+%   normalization span   
+%		Whether to normalize the behavioral weight within a specific event type 
+%		('within') or across all events ('across') [within].
+%
+%   normalization method 
+%		The method to use for normalization. Options are:
+%
+%       - z   ... compute Z-score
+%       - 01  ... normalize to fixed range 0 to 1
+%       - -11 ... normalize to fixed range -1 to 1
+%
+%   Example string::
+%   
+%		'block:boynton|target:9|target:9>target_rt:1:within:z'
 %
 %   This would result in three sets of task regressors: one assumed task
 %   regressor for the sustained activity across the block, one unassumed
@@ -402,73 +543,73 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %
 %   This step results in the following files (if requested):
 %
-%   * residual image:
-%     <root>_res-<regressors><glm name>.<ext>
-%   * GLM image:
-%     <bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>
-%   * text GLM regressor matrix:
-%     glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt
-%   * image of a regressor matrix:
-%     glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png
+%   residual image:
+%   	`<root>_res-<regressors><glm name>.<ext>`
+%
+%   GLM image:
+%   	`<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>`
+%
+%   text GLM regressor matrix:
+%   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt`
+%
+%   image of a regressor matrix:
+%   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png
 %
 %   EXAMPLE USE
 %   ===========
 %
-%   Activation analysis
+%   Activation analysis::
 %
-%   >>> fc_PreprocessConc(subjects/OP234', [1 2 4 5], 's,r,c', 2.5, 0, 'e', [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', '', false, '.nii.gz', '', 'hipass=keep|regress=keep|lopass=keep', 'glm_name:M1');
+%   	fc_PreprocessConc(sessions/OP234', [1 2 4 5], 's,r,c', 2.5, 0, 'e', ...
+%   	[], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', ...
+%		'', false, '.nii.gz', '', 'hipass=keep|regress=keep|lopass=keep', ...
+%		'glm_name:M1');
 %
-%   Functional connectivity preprocessing
+%   Functional connectivity preprocessing::
 %
-%   >>> fc_PreprocessConc(subjects/OP234', [1 2 4 5], 's,h,r', 2.5, 0, 'm,V,WM,WB,1d,e', [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', '', false, '.nii.gz', '', 'hipass=linear|regress=ignore|lopass=linear');
+%   	fc_PreprocessConc(sessions/OP234', [1 2 4 5], 's,h,r', 2.5, 0, ...
+%   	'm,V,WM,WB,1d,e', [], 'flanker.fidl', ...
+%   	'block:boynton|target:9|target:9>target_rt:1:within:z', '', false, ...
+%   	'.nii.gz', '', 'hipass=linear|regress=ignore|lopass=linear');
 %
-%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-%   Written by Grega Repovs
+
+%	~~~~~~~~~~~~~~~~~~
 %
-%   Changelog
+%	Changelog
+%
 %   2011-01-24 Grega Repovs
-%              - Created based on fc_Preprocess.m and other previous code
-%
+%              Created based on fc_Preprocess.m and other previous cod
 %   2013-10-20 Grega Repovs (v0.9.3)
-%              - Added option for ignoring the frames marked as not to be used.
-%
+%              Added option for ignoring the frames marked as not to be used.
 %   2014-07-20 Grega Repovs (v0.9.5)
-%              - Rewrote with separate nuisance signal extraction and parallel processing.
-%
+%              Rewrote with separate nuisance signal extraction and parallel 
+%			   processing.
 %   2014-09-15 Grega Repovs (v0.9.6)
-%              - Added the option to smooth within a mask and use a dilation mask
-%
+%              Added the option to smooth within a mask and use a dilation mask
 %   2015-05-26 Grega Repovs (v0.9.6)
-%              - Added the option to provide alternative root names of bolds (boldname)
-%
+%              Added the option to provide alternative root names of bolds (boldname)
 %   2016-02-02 Grega Repovs (v0.9.8)
-%              - Added additional GLM options
-%
+%              Added additional GLM options
 %   2017-01-07 Grega Repovs (v0.9.9)
-%              - Renamed from fc_PreprocessConc2 to fc_PreprocessConc.
-%
+%              Renamed from fc_PreprocessConc2 to fc_PreprocessConc.
 %   2017-03-11 Grega Repovs (v0.9.10)
-%              - Updated documentation.
-%
+%              Updated documentation.
 %   2017-04-22 Grega Repovs (v0.9.11)
-%              - Added the option for interpolation of bad frames after regression.
-%
+%              Added the option for interpolation of bad frames after regression.
 %   2018-06-17 Grega Repovs (v0.9.12)
-%              - Changes for Octave compatibility.
-%
+%              Changes for Octave compatibility.
 %   2018-06-20 Grega Repovs (v0.9.12)
-%              - Added more detailed reporting of parameters used.
-%
+%              Added more detailed reporting of parameters used.
 %   2018-06-26 Grega Repovs (v0.9.13)
-%              - Changed to pretty struct printing.
-%              - Added option to support hcp_bold variant processing.
-%
-%   2018-09-22 Grega Repovs (v0.9.14)
-%              - Fixed an issue with conversion of doIt from char to string
-%
+%              Changed to pretty struct printing.
+%              Added option to support hcp_bold variant processing.
+%   2018-09-22 Grega Repovs (v0.9.13)
+%              Fixed an issue with conversion of doIt from char to string
+%   2020-07-03 Grega Repovs (v0.9.14)
+%              Added support for img_suffix
 %   2020-10-05 Grega Repovs (v0.9.15)
-%              - Enabled additional movement and nuisance regressor computation
-%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+%              Enabled additional movement and nuisance regressor computation
+%   
 
 if nargin < 16, done = [];                                  end
 if nargin < 15, options = '';                               end
@@ -486,7 +627,7 @@ if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
 fprintf('\nRunning preproces conc script v0.9.15 [%s]\n-------------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
-fprintf('\n       subjectf: %s', subjectf);
+fprintf('\n       sessionf: %s', sessionf);
 fprintf('\n          bolds: [%s]', num2str(bolds));
 fprintf('\n           doIt: %s', doIt);
 fprintf('\n             TR: %.2f', TR);
@@ -504,7 +645,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=|img_suffix=';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -563,24 +704,24 @@ for b = 1:nbolds
     % ---> general paths
 
     bnum = int2str(bolds(b));
-    file(b).froot       = strcat(subjectf, ['/images/functional' options.bold_variant '/' options.boldname bnum options.bold_tail]);
+    file(b).froot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname bnum options.bold_tail]);
 
-    file(b).movdata     = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '_mov.dat']);
-    file(b).oscrub      = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '.scrub']);
-    file(b).tscrub      = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum options.bold_tail variant '.scrub']);
-    file(b).bstats      = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '.bstats']);
-    file(b).nuisance    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '.nuisance']);
-    file(b).fidlfile    = strcat(subjectf, ['/images/functional' options.bold_variant '/events/' efile]);
-    file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum '_frame1_brain_mask' tail]);
+    file(b).movdata     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '_mov.dat']);
+    file(b).oscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.scrub']);
+    file(b).tscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.bold_tail variant '.scrub']);
+    file(b).bstats      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.bstats']);
+    file(b).nuisance    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.nuisance']);
+    file(b).fidlfile    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' efile]);
+    file(b).bmask       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum '_frame1_brain_mask' tail]);
 
     eroot               = strrep(efile, '.fidl', '');
-    file(b).croot       = strcat(subjectf, ['/images/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc_' eroot]);
-    file(b).cfroot      = strcat(subjectf, ['/images/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat '_' eroot]);
+    file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc_' eroot]);
+    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat '_' eroot]);
 
-    file(b).Xroot       = strcat(subjectf, ['/images/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+    file(b).Xroot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
 
-    file(b).lsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
-    file(b).rsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
+    file(b).lsurf       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
+    file(b).rsurf       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
 
 end
 
@@ -627,14 +768,14 @@ for b = 1:nbolds
     if strfind(doIt, 'm')
         [nuisance(b).fstats nuisance(b).fstats_hdr] = g_ReadTable(file(b).bstats);
 
-        timg = gmrimage;
+        timg = nimage;
         timg.frames     = size(nuisance(b).mov, 1);
         timg.fstats     = nuisance(b).fstats;
         timg.fstats_hdr = nuisance(b).fstats_hdr;
         timg.mov        = nuisance(b).mov;
         timg.mov_hdr    = nuisance(b).mov_hdr;
 
-        timg = timg.mri_ComputeScrub(scrub);
+        timg = timg.img_ComputeScrub(scrub);
 
         nuisance(b).scrub     = timg.scrub;
         nuisance(b).scrub_hdr = timg.scrub_hdr;
@@ -783,7 +924,7 @@ end
 ext      = '';
 
 for b = 1:nbolds
-    img(b) = gmrimage();
+    img(b) = nimage();
 end
 
 dor      = true;
@@ -829,14 +970,14 @@ for current = char(doIt)
                     case 's'
                         if strcmp(tail, '.dtseries.nii')
                             wbSmooth(file(b).sfile, file(b).tfile, file(b), options);
-                            img(b) = gmrimage();
+                            img(b) = nimage();
                         elseif strcmp(tail, '.ptseries.nii')
                             fprintf(' WARNING: No spatial smoothing will be performed on ptseries images!')
                         else
                             tmpi = readIfEmpty(img(b), file(b).sfile, omit);
                             tmpi.data = tmpi.image2D;
                             if strcmp(options.smooth_mask, 'false')
-                                tmpi = tmpi.mri_Smooth3D(options.voxel_smooth, true);
+                                tmpi = tmpi.img_Smooth3D(options.voxel_smooth, true);
                             else
 
                                 % --- set up the smoothing mask
@@ -848,7 +989,7 @@ for current = char(doIt)
                                     bmask = tmpi.zeroframes(1);
                                     bmask.data = tmpi.data(:,1) > 300;
                                 elseif strcmp(options.smooth_mask, 'brainmask')
-                                    bmask = gmrimage(file(b).bmask);
+                                    bmask = nimage(file(b).bmask);
                                 else
                                     bmask = options.smooth_mask;
                                 end
@@ -862,12 +1003,12 @@ for current = char(doIt)
                                     dmask = tmpi.zeroframes(1);
                                     dmask.data = tmpi.data(:,1) > 300;
                                 elseif strcmp(options.dilate_mask, 'brainmask')
-                                    dmask = gmrimage(file(b).bmask);
+                                    dmask = nimage(file(b).bmask);
                                 else
                                     dmask = options.dilate_mask;
                                 end
 
-                                tmpi = tmpi.mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
+                                tmpi = tmpi.img_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
                             end
                             img(b) = tmpi;
 
@@ -875,17 +1016,17 @@ for current = char(doIt)
                     case 'h'
                         tmpi = readIfEmpty(img(b), file(b).sfile, omit);
                         hpsigma = ((1/TR)/options.hipass_filter)/2;
-                        tmpi = tmpi.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
+                        tmpi = tmpi.img_Filter(hpsigma, 0, omit, true, ignore.hipass);
                         img(b) = tmpi;
                     case 'l'
                         tmpi = readIfEmpty(tmpi, file(b).sfile, omit);
                         lpsigma = ((1/TR)/options.lopass_filter)/2;
-                        tmpi = tmpi.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
+                        tmpi = tmpi.img_Filter(0, lpsigma, omit, true, ignore.lopass);
                         img(b) = tmpi;
                 end
 
                 if ~img(b).empty
-                    img(b).mri_saveimage(file(b).tfile);
+                    img(b).img_saveimage(file(b).tfile);
                     fprintf(' ... saved!');
                 end
             end
@@ -897,13 +1038,13 @@ for current = char(doIt)
                     case 'h'
                         hpsigma = ((1/TR)/options.hipass_filter)/2;
                         tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
-                        tnimg = tnimg.mri_Filter(hpsigma, 0, omit, false, ignore.hipass);
+                        tnimg = tnimg.img_Filter(hpsigma, 0, omit, false, ignore.hipass);
                         nuisance(b).signal = tnimg.data';
 
                     case 'l'
                         lpsigma = ((1/TR)/options.lopass_filter)/2;
                         tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
-                        tnimg = tnimg.mri_Filter(0, lpsigma, omit, false, ignore.lopass);
+                        tnimg = tnimg.img_Filter(0, lpsigma, omit, false, ignore.lopass);
                         nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';
                         nuisance(b).task   = tnimg.data((nuisance(b).nsignal+1):(nuisance(b).nsignal+nuisance(b).ntask),:)';
                         nuisance(b).events = tnimg.data((nuisance(b).nsignal+nuisance(b).ntask+1):(nuisance(b).nsignal+nuisance(b).ntask+nuisance(b).nevents),:)';
@@ -936,7 +1077,7 @@ for current = char(doIt)
             if strcmp(options.glm_residuals, 'save')
                 for b = 1:nbolds
                     fprintf('\n---> saving %s ', file(b).tfile);
-                    img(b).mri_saveimage(file(b).tfile);
+                    img(b).img_saveimage(file(b).tfile);
                     fprintf('... done!');
                 end
                 saveconc = true;
@@ -948,7 +1089,7 @@ for current = char(doIt)
             if docoeff
                 cname = [file(b).croot ext '_Bcoeff' tail];
                 fprintf('\n---> saving %s ', cname);
-                coeff.mri_saveimage(cname);
+                coeff.img_saveimage(cname);
                 fprintf('... done!');
             end
         end
@@ -960,7 +1101,7 @@ for current = char(doIt)
             fprintf('\n---> conc file already saved!');
         else
             fprintf('\n---> saving conc file ');
-            gmrimage.mri_SaveConcFile(file(b).tconc, {file.tfile});
+            nimage.img_SaveConcFile(file(b).tconc, {file.tfile});
             fprintf('... done!');
         end
     end
@@ -1431,8 +1572,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     % fprintf('\n -> mask %d', sum(nmask==1));
     % fprintf(xevents);
     X = X(nmask==1, :);
-    [coeff res] = Y.mri_GLMFit(X);
-    coeff = [coeff Y.mri_Stats({'m', 'sd'})];
+    [coeff res] = Y.img_GLMFit(X);
+    coeff = [coeff Y.img_Stats({'m', 'sd'})];
 
     %   ----> put data back into images
     fprintf('.');
@@ -1458,7 +1599,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         img(b) = tmpi;
     end
 
-    coeff = coeff.mri_EmbedMeta(xtable, 64, 'GLM');
+    coeff = coeff.img_EmbedMeta(xtable, 64, 'GLM');
 
 return
 
@@ -1472,7 +1613,7 @@ return
 
 function [img] = tmpimg(data, use);
 
-    img = gmrimage();
+    img = nimage();
     img.data = data;
     img.use  = use;
     [img.voxels img.frames] = size(data);
@@ -1486,7 +1627,7 @@ function [img] = readIfEmpty(img, src, omit)
 
     if isempty(img) || img.empty
         fprintf('\n---> reading %s ', src);
-        img = gmrimage(src);
+        img = nimage(src);
         if ~isempty(omit)
             img.use(1:omit) = 0;
         end

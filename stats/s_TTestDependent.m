@@ -1,24 +1,43 @@
 function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)
 
-%function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)
+%``function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)``
 %
 %	Computes t-test of differences between two dependent groups.
 %
-%	filea   - either a single image or a conc file with data of the group to compare to
-%	fileb   - either a single image or a conc file with data of the group to compare with
-%	target  - the base filename (and path) to be used when saving the results
-%   output  - the type of results to save ['medtpz']
-%             m : mean values for each voxel of both groups (A and B)
-%             e : standard errors for each voxel of both groups (A and B) as well as their difference
-%             d : the A - B difference of means of the two groups
-%             t : t-value for each voxel
-%             p : p-value for each voxel
-%             z : Z-score for each voxel
-%   exclude - values to be excluded from computation
-%   verbose - should report each step?
+%   INPUTS
+%   ======
 %
-%   ---
-%   Written by Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+%	--filea     either a single image or a conc file with data of the group to 
+%               compare to
+%	--fileb     either a single image or a conc file with data of the group to 
+%               compare with
+%	--target    the base filename (and path) to be used when saving the results
+%   --output    the type of results to save ['medtpz']
+% 
+%               m
+%                   mean values for each voxel of both groups (A and B)
+%               e
+%                   standard errors for each voxel of both groups (A and B) as 
+%                   well as their difference
+%               d
+%                   the A - B difference of means of the two groups
+%               t
+%                   t-value for each voxel
+%               p
+%                   p-value for each voxel
+%               z
+%                   Z-score for each voxel
+% 
+%   --exclude   values to be excluded from computation []
+%   --verbose   should report each step [false]
+% 
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2011-10-09 Grega Repovs
+%              Rewritten from previous function with the same name.
 %
 
 if nargin < 6
@@ -48,8 +67,8 @@ root = strrep(root, '.conc', '');
 % 	----> read file
 
 if verbose, fprintf('--------------------------\nComputing dependent t-test\n ... reading data (%s and %s) ', filea, fileb), end
-A = gmrimage(filea);
-B = gmrimage(fileb);
+A = nimage(filea);
+B = nimage(fileb);
 
 if ~isempty(exclude)
     A.data(ismember(A.data, exclude)) = NaN;
@@ -61,7 +80,7 @@ end
 % 	----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
-[p Z M D SE t] = A.mri_TTestDependent(B, verbose);
+[p Z M D SE t] = A.img_TTestDependent(B, verbose);
 if verbose, fprintf(' --- \n'), end
 
 
@@ -70,27 +89,27 @@ if verbose, fprintf(' --- \n'), end
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)
-    M.mri_saveimage([root '_M']);
+    M.img_saveimage([root '_M']);
     if verbose, fprintf('\n ---> mean values [%s] ', [root '_M']),end
 end
 if ismember('e', output)
-    SE.mri_saveimage([root '_SE']);
+    SE.img_saveimage([root '_SE']);
     if verbose, fprintf('\n ---> standard errors [%s] ', [root '_SE']),end
 end
 if ismember('d', output)
-    D.mri_saveimage([root '_D']);
+    D.img_saveimage([root '_D']);
     if verbose, fprintf('\n ---> group differences [%s] ', [root '_D']),end
 end
 if ismember('t', output)
-    t.mri_saveimage([root '_t']);
+    t.img_saveimage([root '_t']);
     if verbose, fprintf('\n ---> t-values [%s] ', [root '_t']),end
 end
 if ismember('p', output)
-    p.mri_saveimage([root '_p']);
+    p.img_saveimage([root '_p']);
     if verbose, fprintf('\n ---> p-values [%s] ', [root '_p']),end
 end
 if ismember('z', output)
-    Z.mri_saveimage([root '_Z']);
+    Z.img_saveimage([root '_Z']);
     if verbose, fprintf('\n ---> Z-scores [%s]', [root '_Z']),end
 end
 

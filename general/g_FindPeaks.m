@@ -1,57 +1,101 @@
 function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
 
-%function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
+%``function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)``
 %
-%	Performs smoothing using mri_Smooth() method and the uses mri_FindPeaks
-%   method to define peak ROI using a watershed algorithm to grow regions from peaks.
+%   Performs smoothing using img_Smooth() method and the uses img_FindPeaks
+%   method to define peak ROI using a watershed algorithm to grow regions from
+%   peaks.
 %
-%   INPUT
-%       fin         - input image
-%		fout        - output image
-%       mins        - [minimal size, minimal area] of the resulting ROI  [0, 0]
-%       maxs        - [maximum size, maximum area] of the resulting ROI  [inf, inf]
-%       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') [b]
-%       t           - threshold value [0]
-%       presmooth   - string containing presmoothing parameters: []
-%                     Format -> 'fwhm:[VAL1 VAL2]|ftype:TYPE_NAME|ksize:[]|wb_path:PATH|hcpatlas:PATH'
-%                     fwhm       ... full Width at Half Maximum in mm formatted as:
-%                                     a) [fwhm for volume structure] for NIfTI [2]
-%                                     b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
-%                                         *(if only 1 element is passed, it takes that value for both, volume and surface structures)
-%                     ftype      ... type of smoothing filter:
-%                                     a) 'gaussian' or 'box' for NIfTI files ['gaussian']
-%                                     b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
-%                     ksize      ... size of the smoothing kernel in voxels for NIfTI files, [] (empty) for CIFTI files [6]
-%                     mask       ... specify the cifti mask to select areas on which to perform smoothing
-%                     wb_path    ... path to wb_command
-%                     hcpatlas   ... path to HCPATLAS folder containing projection surf.gii files
-%                     timeSeries ... boolean to indicate whether a thresholded timeseries image should use each frame as a mask for the
-%                                     corresponding frame. By default [false], the first frame is taken a mask for all the frames
-%                     frames     ... list of frames to perform smoothing on [default = options.frames]
-%                     * wb_path and hcpatlas are not required if they are stored as 
-%                       environment variables (wb_command in $PATH and hcpatlas in $HCPATLAS *
-%       projection  - type of surface component projection ('midthickness', 'inflated',...)
-%                          or a string containing the path to the surface files (.surf.gii)
-%                          for both, left and right cortex separated by a pipe:
-%                                a) for a default projection: 'type: midthickness' ['type: midthickness']
-%                                b) for a specific projection:
-%                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
-%       options          - list of options separated with a pipe symbol ("|"):
-%                                a) for the number of frames to be analized:
-%                                           - []                        ... analyze only the first frame
-%                                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
-%                                           - 'frames:all'              ... analyze all the frames
-%                                b) for the type of ROI boundary:
-%                                           - []                        ... boundary left unmodified
-%                                           - 'boundary:remove'         ... remove the boundary regions
-%                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
-%                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
-%       verbose     - whether to be verbose:
-%                           a) on the first level    (1)
-%                           b) on all the sub-levels (2) [false]
+%   INPUTS
+%   ======
+%
+%   --fin         input image
+%	--fout        output image
+%   --mins        [minimal size, minimal area] of the resulting ROI  [0, 0]
+%   --maxs        [maximum size, maximum area] of the resulting ROI  [inf, inf]
+%   --val         whether to find positive, negative or both peaks ('n', 'p', 
+%                 'b') [b]
+%   --t           threshold value [0]
+%   --presmooth   string containing presmoothing parameters: []
+%
+%                 String format::
+%                   
+%                   'fwhm:[VAL1 VAL2]|ftype:TYPE_NAME|ksize:[]|wb_path:PATH|hcpatlas:PATH'
+%
+%                 fwhm
+%                   full Width at Half Maximum in mm formatted as:
+%                       - [fwhm for volume structure] for NIfTI [2]
+%                       - [fwhm for volume structure, fwhm for surface structures] 
+%                         for CIFTI [2]
+%                 
+%                   If only 1 element is passed, it takes that value for both, 
+%                   volume and surface structures.
+%
+%                 ftype
+%                   type of smoothing filter:
+%                       - 'gaussian' or 'box' for NIfTI files ['gaussian']
+%                       - '' (empty argument) for CIFTI files, since geodesic 
+%                         gaussian smoothing is the only option
+%
+%                 ksize
+%                   size of the smoothing kernel in voxels for NIfTI files, [] 
+%                   (empty) for CIFTI files [6]
+%
+%                 mask
+%                   specify the cifti mask to select areas on which to perform 
+%                   smoothing
+%
+%                 wb_path
+%                   path to wb_command
+%
+%                 hcpatlas
+%                   path to HCPATLAS folder containing projection surf.gii files
+%
+%                 timeSeries
+%                   boolean to indicate whether a thresholded timeseries image 
+%                   should use each frame as a mask for the corresponding frame. 
+%                   By default [false], the first frame is taken a mask for all 
+%                   the frames
+%
+%                 frames
+%                   list of frames to perform smoothing on [default = options.frames]
+%
+%                 `wb_path` and `hcpatlas` are not required if they are stored as 
+%                 environment variables (`wb_command` in `$PATH` and `hcpatlas` 
+%                 in `$HCPATLAS`.
+%
+%   --projection  type of surface component projection ('midthickness', 
+%                 'inflated', ...) or a string containing the path to the 
+%                 surface files (.surf.gii) for both, left and right cortex 
+%                 separated by a pipe:
+%
+%                 - for a default projection: 'type: midthickness' ['type: midthickness']
+%                 - for a specific projection:
+%                   'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
+%
+%   --options     list of options separated with a pipe symbol ("|"):
+%
+%                 a) for the number of frames to be analized:
+%                   - []                        ... analyze only the first frame
+%                   - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
+%                   - 'frames:all'              ... analyze all the frames
+%                 b) for the type of ROI boundary:
+%                   - []                    ... boundary left unmodified
+%                   - 'boundary:remove'     ... remove the boundary regions
+%                   - 'boundary:highlight'  ... highlight boundaries with a value 
+%                     of -100
+%                   - 'boundary:wire'       ... remove ROI data and return only 
+%                     ROI boundaries
+%
+%   --verbose     whether to be verbose:
+%
+%                 a) on the first level    (1)
+%                 b) on all the sub-levels (2) [false]
 %
 %   USE
-%   The function is a wrapper to the gmrimage.mri_FindPeaks method and is used
+%   ===
+%
+%   The function is a wrapper to the `nimage.img_FindPeaks` method and is used
 %   to read the image file of interest, save the resulting ROI file and report
 %   the peak statistics (if requested). Please see the method documentation for
 %   algorithm and specifics about the parameters.
@@ -60,64 +104,80 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   the amount of gaussian smoothing in voxels.
 %
 %   RESULTS
-%   The script saves the resulting ROI file under the specified filename. The report statistics
+%   =======
+%
+%   The script saves the resulting ROI file under the specified filename. The
+%   report statistics
 %
 %   EXAMPLE USE 1 (CIFTI-2 image)
+%   =============================
+%   
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
-%   voxels, after smoothing with a kernel of fwhm 2 and kernel size 7 voxels use:
+%   voxels, after smoothing with a kernel of fwhm 2 and kernel size 7 voxels use::
 %
-%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350], 'b', 3, 'fwhm:2|ksize:7', '', [], 1);
+%       g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', ...
+%                   [72 80], [300 350], 'b', 3, 'fwhm:2|ksize:7', '', [], 1);
 %
 %   EXAMPLE USE 2 (CIFTI-2 image)
+%   =============================
+%
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
 %   voxels, after smoothing with a kernel of fwhm 3 for volume and
-%   surfaces structures,
-%   where only frames 1, 6 and 7 are to be analyzed use:
+%   surfaces structures, where only frames 1, 6 and 7 are to be analyzed use::
 %
-%   g_FindPeaks('zscores.dtseries.nii', 'zscores_analyzed.dtseries.nii',...
-%               [72 80], [300 350], 'b', 1, 'fwhm:3', 'inflated', 'frames:[1 5 7]', 1);
+%       g_FindPeaks('zscores.dtseries.nii', 'zscores_analyzed.dtseries.nii', ...
+%                   [72 80], [300 350], 'b', 1, 'fwhm:3', 'inflated', ...
+%                   'frames:[1 5 7]', 1);
 %
 %   EXAMPLE USE 3 (NIfTI image)
+%   ===========================
+%
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)1 and 50 contiguous voxels in size, but no larger than 250
 %   voxels, after applying fwhm 3 gaussian smoothing and a smoothing kernel of
-%   size 6 voxels use:
+%   size 6 voxels use::
 %
-%   presmooth = ;
-%   g_FindPeaks('zscores.nii.gz', 'zscores_analyzed.nii.gz', 50, 250, 'b', 1,...
-%               'fwhm:3|ksize:6|ftype:gaussian', [], [], 2);
+%       presmooth = ;
+%       g_FindPeaks('zscores.nii.gz', 'zscores_analyzed.nii.gz', 50, 250, ...
+%                   'b', 1, 'fwhm:3|ksize:6|ftype:gaussian', [], [], 2);
 %
 %   EXAMPLE USE 4 (CIFTI-2 image)
+%   =============================
+%
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
-%   voxels, after smoothing with a kernel of
-%   fwhm 1:
+%   voxels, after smoothing with a kernel of fwhm 1 use::
 %
-%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350],...
-%               'b', 3, 'fwhm:1', 'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', [], 1);
+%       g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', ...
+%       [72 80], [300 350], 'b', 3, 'fwhm:1', ...
+%       'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', ...
+%       [], 1);
 %
-%   ---
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
 %   Written by Grega Repovs, 2015-04-11
 %
 %   Changelog
+%   2015-04-11 Grega Repovs
+%              Initial version
 %	2016-01-16 Grega Repovs
-%        - Added presmoothing option.
-%		 - Added printing of report file.
-%
+%              Added presmoothing option.
+%		       Added printing of report file.
 %   2017-03-04 Grega Repovs
-%        - Updated documentation.
-%
+%              Updated documentation.
 %   2017-07-10 Aleksij Kraljic
-%        - Added functionality for CIFTI-2 files
-%
+%              Added functionality for CIFTI-2 files
 %   2017-08-02 Aleksij Kraljic
-%        - Fixed mistakes in the help menu and set default values for smoothing to 0
+%              Fixed mistakes in the help menu and set default values for
+%              smoothing to 0
 %
 
 % --- read image and call FindPeaks
-img = gmrimage(fin);
+img = nimage(fin);
 
 % --- load CIFTI brain model data
 load('CIFTI_BrainModel.mat');
@@ -133,7 +193,7 @@ if nargin < 4 || isempty(maxs),       maxs      = inf  ;                    end
 if nargin < 3 || isempty(mins),       mins      = 0    ;                    end
 if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 
-% --- increment verbose for compatibility with the mri_FindPeaks method
+% --- increment verbose for compatibility with the img_FindPeaks method
 verbose = verbose + 1;
 
 frames = [];
@@ -155,12 +215,12 @@ if ~isempty(presmooth)
     if ~isfield(presmooth,'timeSeries'), presmooth.timeSeries =[];   end
     if ~isfield(presmooth,'frames'),     presmooth.frames = frames;  end
     if verbose >= 2, fprintf('\n---> Presmoothing image'); end
-    img = img.mri_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
+    img = img.img_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
         presmooth.ksize, projection, presmooth.mask, presmooth.wb_path,...
         presmooth.hcpatlas, presmooth.timeSeries, presmooth.frames);
 end
 
-[roi, vol_peak, peak] = img.mri_FindPeaks(mins, maxs, val, t, projection, options, verbose);
+[roi, vol_peak, peak] = img.img_FindPeaks(mins, maxs, val, t, projection, options, verbose);
 
 % input parameter data structure
 fp_params.mins = mins;
@@ -179,7 +239,7 @@ if verbose >= 2, fprintf('\n---> Saving image'); end
 
 printReport(img, fin, fout, peak, vol_peak, fp_params, presmooth, cifti)
 
-roi.mri_saveimage(fout);
+roi.img_saveimage(fout);
 if verbose >= 2, fprintf('\n---> Done\n'); end
 
 end

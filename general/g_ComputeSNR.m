@@ -1,24 +1,37 @@
 function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
 
-%function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
+%``function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)``
 %	
 %   Computes SNR for the given image.
 %
-%   Input
-%       - filename	: the filename of the image
-%		- imask		: mask that defines voxels to compute snr over 
-%		- fmask		: which frames to use / skip
-%		- target	: target folder for the figure
-%       - slice		: vector of the two dimensions that define a slice
-%		- fname		: the name to use when saving file
+%   INPUTS
+%	======
 %
-%	Output
-%		- snr		: mean slice snr
-%		- sd		: std of mean whole brain volume signal over the run
-%		- slicesnr	: array of snr values for each slice
+%   --filename	the filename of the image
+%	--imask		mask that defines voxels to compute snr over 
+%	--fmask		which frames to use / skip
+%	--target	target folder for the figure
+%   --slice		vector of the two dimensions that define a slice
+%	--fname		the name to use when saving file
 %
-%	Created by Grega Repovs 2010-11-21
-%	Modified by Grega Repovs 2010-11-22
+%	OUTPUTS
+%   =======
+%
+%	snr
+%		mean slice snr
+%
+%	sd
+%		std of mean whole brain volume signal over the run
+%
+%	slicesnr
+%		array of snr values for each slice
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+%
+%	2010-11-21 Grega Repovs
+%			   Initial version.
 %
 % 	Copyright (c) 2010 Grega Repovs. All rights reserved.
 %
@@ -45,7 +58,7 @@ end
 
 %  ---- loading data
 
-img = gmrimage(filename);
+img = nimage(filename);
 img.data = img.image2D;
 [path, fname] = fileparts(fname);
 
@@ -56,7 +69,7 @@ if fmask
 end
 
 if imask
-	mask = gmrimage(imask);
+	mask = nimage(imask);
 	mask.data = mask.image4D > 0;
 else
 	tm = zeros(img.frames,1);
@@ -102,10 +115,10 @@ sd.data = std(img.image2D,0,2);
 msd = mask;
 msd.data = m.data./sd.data;
 
-m.mri_saveimage(fullfile(target, [fname '_mean']));
-sd.mri_saveimage(fullfile(target, [fname '_sd']));
-msd.mri_saveimage(fullfile(target, [fname '_msd']));
-mask.mri_saveimage(fullfile(target, [fname '_mask']));
+m.img_saveimage(fullfile(target, [fname '_mean']));
+sd.img_saveimage(fullfile(target, [fname '_sd']));
+msd.img_saveimage(fullfile(target, [fname '_msd']));
+mask.img_saveimage(fullfile(target, [fname '_mask']));
 
 slicesnr = snr;
 snr = mean(snr(~isnan(snr)));

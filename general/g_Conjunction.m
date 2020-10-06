@@ -1,44 +1,58 @@
 function [p, t, c] = g_Conjunction(img, method, effect, q, data)
 
+%``[p, t, c] = g_Conjunction(img, method, effect, q, data)``
 %
-%	g_Conjunction
+%	Accepts matrix of significance estimates [voxels, sessions] and computes
+%	conjunction for 1 <= u <= n. Results at each step are thresholded using FDR
+%	q. Based on Heller et al. (2017). NeuroImage 37, 1178–1185.
+%	(https://doi.org/10.1016/j.neuroimage.2007.05.051).
 %
-%	v 2.0 © Grega Repovš, Feb 27 2008
+%	INPUTS
+%	======
 %
-%	Accepts matrix of significance estimates [voxels, subjects] and computes conjunction for 1 <= u <= n.
-%	Results at each step are thresholded using FDR q.
-%	Based on Heller et al, NeuroImage 37 (2007) 1178 – 1185
+%	--img 		data matrix
+%	--method	method of calculating conjunction p ['Fisher']
 %
-%	Arguments:
-%		 img - data matrix
+%		 		- 'Simes' 	 ... pooling dependent p-values (eq. 5)
+%		 		- 'Stouffer' ... pooling independent p-values (eq. 6)
+%		 		- 'Fisher'	 ... pooling independent p-values (eq. 7)
 %
-%		 method - method of calculating conjunction p
-%		 	- 'Simes' 		: pooling dependent p-values (eq. 5)
-%		 	- 'Stouffer' 	: pooling independent p-values (eq. 6)
-%		 	- 'Fisher'		: pooling independent p-values (eq. 7) [default]
+%	--effects 	the effect of interest ['all']
 %
-%		effect - the effect of interest
-%			- 'pos'			: positive effect only (one tailed test)
-%			- 'neg'			: negative effect only (one tailed test)
-%			- 'all'			: both effects (two tailed test) [default]
+%				- 'pos'	... positive effect only (one tailed test)
+%				- 'neg'	... negative effect only (one tailed test)
+%				- 'all'	... both effects (two tailed test)
 %
-%		q - the FDR q value at which to threshold	[default: 0.05]
+%	--q			the FDR q value at which to threshold	[default: 0.05]
+%	--data		the values in data matrix
+%			
+%				- 'z' ... z-values [default]
+%				- 'p' ... p-values
 %
-%		data - the values in data matrix
-%			- 'z'			: z-values [default]
-%			- 'p'			: p-values
 %
-%	Results (always in the same data format as the input )
-%		p : images of conjoined p values for u = 1 to u = n
-%		t : p thresholded with q(FDR)
-%		c : image with number of subjects that show significant effect
+%	OUTPUTS
+%	=======
 %
-%	========= UPDATE LOG =========
+%	Results are always in the same data format as the input.
+%
+%	p
+%		images of conjoined p values for u = 1 to u = n
+%
+%	t
+%		p thresholded with q(FDR)
+%
+%	c
+%		image with number of sessions that show significant effect
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
 %
 %	2015-10-20 Grega Repovs
-%              - updated argument parsing
+%              Updated argument parsing
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf and cdf with norminv and normcdf to support Octave
+%              Replaced icdf and cdf with norminv and normcdf to support Octave
 %
 
 %  ---- parsing arguments

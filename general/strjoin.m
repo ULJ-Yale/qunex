@@ -1,17 +1,29 @@
 function [s] = strjoin(list, delim)
 
-%function [s] = strjoin(list, delim)
+%``function [s] = strjoin(list, delim)``
 %
-%   Joins array of string cells into a single string using the provided delimiter
+%   Joins array of string cells into a single string using the provided
+%   delimiter.
 %
-%   Input
-%       - list  : a cell array of strings to be joined
-%       - delim : delimiter between strings
+%   INPUTS
+%	======
 %
-%   Output
-%       - s     : joined string
+%   --list  	a cell array of strings to be joined
+%   --delim 	delimiter between strings
 %
-%   Grega Repovs - extracted to a separate function 2016.02.05
+%   OUTPUT
+%	======
+%
+%   s
+%		joined string
+%
+
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%   2016-02-05 Grega Repovs
+%			   Extracted to a separate function.
 
 if nargin < 2 || isempty(delim), delim = ' '; end
 

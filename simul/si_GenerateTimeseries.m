@@ -1,23 +1,44 @@
 function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeldata)
 
-%	function [ts] = si_GenerateTimeseries(TR, eventlist, model)
+%``function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeldata)``
 %
-%   Function for generation of simulated BOLD timeseries
+%   Function for generation of simulated BOLD timeseries.
 %
-%   Inputs
-%       - TR:           TR of the simulated timecourse
-%       - eventlist:    matrix or cell array of matrices with columns:
-%           - start time in seconds
-%           - duration in seconds
-%           - weight
-%       - model:        boynton | spm | gamma | empirical | raw | unassumed
-%       - modeldata:    parameters or the actual HRF timecourse depending on model
+%   INPUTS
+%   ======
 %
-%   ---
-% 	Created by Grega Repovš on 2010-10-09.
+%   --TR           TR of the simulated timecourse
+%   --eventlist    matrix or cell array of matrices with columns:
+%
+%                  - start time in seconds
+%                  - duration in seconds
+%                  - weight
+%
+%   --model        boynton | spm | gamma | empirical | raw | unassumed 
+%                  ['boynton']
+%   --modeldata    parameters or the actual HRF timecourse depending on model []
+%
+%   OUTPUTS
+%   =======
+%
+%   ts
+%
+%   hrf
+%
+%   tso
+%
+%   te
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2017-02-11 Grega Repovš: Updated to use the general g_HRF function.
+%
+%   2010-10-09 Grega Repovs
+%              Initial version.
+%   2017-02-11 Grega Repovs
+%              Updated to use the general g_HRF function.
+%
 
 if nargin < 4
     modeldata = [];

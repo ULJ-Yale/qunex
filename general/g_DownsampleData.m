@@ -1,44 +1,64 @@
 function [rd] = g_DownsampleData(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurface, outSphere, wbPath)
-%function [rd] = g_DownsampleSampleData(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurfaceProjection, wbPath)
+%``function [rd] = g_DownsampleSampleData(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurfaceProjection, wbPath)``
 %
-%       Downsample surface data and the corresponding surface file.
+%   Downsample surface data and the corresponding surface file.
 %
-%   INPUT
-%       input                 - input can be in two forms:
-%                                   a) string with the CIFTI file and the surface structure specified as:
-%                                       CL ... cortex_left
-%                                       CR ... cortex_right
-%                                   -> 'img:<CIFTI FILE>|surf:<SURFACE STRUCTURE>'
-%                                   b) data vector
-%       inSurfaceProjection   - surface file to resample
-%       inSphereSurface       - sphere surface file corresponding to the inSurfaceProjection file
-%       targetVertices        - target number of vertices to resample to
-%       outSurface            - name of the resampled output surface file
-%       outSphere             - name of the resampled sphere surface file corresponding to the outSurface
-%       wbPath                - path to wb_command (required if not stored as an environment variable)
+%   INPUTS
+%   ======
+%
+%   --input                 input can be in two forms:
+%                           
+%                           1/ string with the CIFTI file and the surface 
+%                           structure specified as:
+%
+%                               - CL ... cortex_left
+%                               - CR ... cortex_right
+%                               
+%                           Form: 'img:<CIFTI FILE>|surf:<SURFACE STRUCTURE>'
+%
+%                           2/ data vector
+%   --inSurfaceProjection   surface file to resample
+%   --inSphereSurface       sphere surface file corresponding to the 
+%                           inSurfaceProjection file
+%   --targetVertices        target number of vertices to resample to
+%   --outSurface            name of the resampled output surface file
+%   --outSphere             name of the resampled sphere surface file 
+%                           corresponding to the outSurface
+%   --wbPath                path to wb_command (required if not stored as an 
+%                           environment variable)
 %
 %   OUTPUT
-%       rd                    - downsampled data vector
+%   ======
+%   
+%   rd
+%       downsampled data vector
 %
 %   USE
+%   ===
+%
 %   The function is used to downsample the image and surface data to a
 %   desired number of vertices.
 %
 %   EXAMPLE USE
+%   ===========
 %   To downsample a surface data distribution over a midthickness layer of
 %   the left cortex stored in the cifti file 'z_scores.dscalar.nii' from
-%   38492 to 10000 vertices use:
+%   38492 to 10000 vertices use::
 %
-%   rd = g_DownsampleData('img:z_scores.dscalar.nii|surf:CL',...
+%       rd = g_DownsampleData('img:z_scores.dscalar.nii|surf:CL',...
 %                'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii',...
 %                'L.sphere.32k_fs_LR.surf.gii',...
 %                10000,...
 %                'downsampled_L_midthickness.surf.gii',...
 %                'downsampled_L_sphere.surf.gii);
 %
-%   ---
-%   Written by Aleksij Kraljic, June 25, 2017
+
+%   ~~~~~~~~~~~~~~~~~~
 %
+%   2017-06-25 Aleksij Kraljic
+%              Initial version.
+%
+
 deleteOutSphere = false;
 if nargin < 7 || isempty(wbPath),               wbPath = [];                                               end
 if nargin < 6 || isempty(outSphere),            outSphere = 'tempSphere.surf.gii'; deleteOutSphere = true; end
@@ -56,7 +76,7 @@ end
 % --- check whether the input is cifti or data vector
 if ~isnumeric(input)
     input = g_ParseOptions([],input);
-    img = gmrimage(input.img);
+    img = nimage(input.img);
     if strcmp(input.surf,'CL')
         s = 1;
     elseif strcmp(input.surf,'CR')
