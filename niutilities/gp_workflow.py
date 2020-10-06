@@ -1754,14 +1754,21 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --bold_nuisance      A comma separated list of regressors to include in GLM.
                          Possible values are: [m,V,WM,WB,1d]
 
-                         - m  (motion parameters)
-                         - V  (ventricles signal)
-                         - WM (white matter signal)
-                         - WB (whole brain signal)
-                         - 1d (first derivative of above nuisance signals)
-                         - e  (events listed in the provided fidl files (see
+                         - m     ... motion parameters
+                         - m1d   ... first derivative of movement regressors
+                         - mSq   ... squared motion parameters
+                         - m1dSq ... squared motion derivatives
+                         - V     ... ventricles signal
+                         - WM    ... white matter signal
+                         - WB    ... whole brain signal
+                         - n1d   ... first derivative for nuisance signal
+                           regressors
+                         - 1d    ... first derivatives of above nuisance signals
+                           and movement
+                         - e     ... events listed in the provided fidl files (see
                            above), modeled as specified in the event_string
-                           parameter.)
+                           parameter.
+                         - t     ... task
                          
     --event_string       A string describing, how to model the events listed in
                          the provided fidl files. []
@@ -1862,9 +1869,15 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     
     ::
 
-        qunex preprocessBold sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-             overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
-             bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
+        qunex preprocessBold 
+             sessions=fcMRI/sessions_hcp.txt \\
+             sessionsfolder=sessions \\
+             overwrite=no \\
+             parsessions=10 \\ 
+             bolds=rest \\
+             bold_actions="s,h,r,c,l" \\
+             bold_nuisance="m,V,WM,WB,1d" \\
+             mov_bad=udvarsme \\
              pignore="hipass=linear|regress=ignore|lopass=linear" \\
              nprocess=0
     """
