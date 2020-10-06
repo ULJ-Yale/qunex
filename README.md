@@ -42,6 +42,16 @@ Quick links
 Change log
 ----------
 
+* 0.62.4  Renamed filename to hcp_filename in SetupHCP.
+* 0.62.3  batchTag2NameKey optimizations and documentation update.
+* 0.62.2  Fixed a bug with the bash parameter for specifying bash commands when scheduling.
+* 0.62.1  SLURM scheduling now supports flags (parameters without values).
+* 0.62.0  Documentation rework.
+* 0.61.23 hcp_bold_unwarpdir support for HCPYA.
+* 0.61.22 Outgoing command call is not printed if there is an error earlier in execution.
+* 0.61.21 Added correction of invalid movement regressor files upon mapHCPData.
+* 0.61.20 Fixed a bug in MSMAll error reporting.
+* 0.61.19 Improved HCPYA dataset support by ensuring the import of SE-FM and FM images.
 * 0.61.18 Added a missing import to ge_HCP, hcp_dwi_selectbestb0 is now a flag.
 * 0.61.17 Robust parsing of integer parameters in HCP processing commands.
 * 0.61.16 HCP Diffusion now uses pipe (|) as the extra eddy args separator.

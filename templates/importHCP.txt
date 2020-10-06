@@ -31,6 +31,10 @@
             "check": [  
                         ["SpinEchoFieldMap", "AP"],
                         ["SpinEchoFieldMap", "PA"],
+                        ["SpinEchoFieldMap", "LR"],
+                        ["SpinEchoFieldMap", "RL"],
+                        ["FieldMap", "Magnitude"],
+                        ["FieldMap", "Phase"],
                         ["T1w"]                        
                       ]
         },
@@ -39,6 +43,10 @@
             "check": [                        
                         ["SpinEchoFieldMap", "AP"],
                         ["SpinEchoFieldMap", "PA"],
+                        ["SpinEchoFieldMap", "LR"],
+                        ["SpinEchoFieldMap", "RL"],
+                        ["FieldMap", "Magnitude"],
+                        ["FieldMap", "Phase"],
                         ["T2w"]                        
                      ]
         },
@@ -47,6 +55,10 @@
             "check": [
                         ["SpinEchoFieldMap", "AP"],
                         ["SpinEchoFieldMap", "PA"],
+                        ["SpinEchoFieldMap", "LR"],
+                        ["SpinEchoFieldMap", "RL"],
+                        ["FieldMap", "Magnitude"],
+                        ["FieldMap", "Phase"],
                         ["rfMRI", "SBRef"],
                         ["rfMRI", "-SBRef"]
                      ]
@@ -56,6 +68,10 @@
             "check": [
                         ["SpinEchoFieldMap", "AP"],
                         ["SpinEchoFieldMap", "PA"],
+                        ["SpinEchoFieldMap", "LR"],
+                        ["SpinEchoFieldMap", "RL"],
+                        ["FieldMap", "Magnitude"],
+                        ["FieldMap", "Phase"],
                         ["tfMRI", "SBRef"],
                         ["tfMRI", "-SBRef"]
                      ]
