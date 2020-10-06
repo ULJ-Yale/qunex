@@ -969,7 +969,6 @@ checkMappingFile() {
 }
 
 
-
 # -- Code for selecting BOLDS via Tags --> Check if both batch and bolds are specified for QC and if yes read batch explicitly
 getBoldList() {
     if [[ ! -z ${ProcessingBatchFile} ]]; then
@@ -979,6 +978,29 @@ getBoldList() {
         if [[ ! -z ${HCPFilename} ]]; then BOLDnameOutput="name"; fi
         if [[ -f ${ProcessingBatchFile} ]]; then
             LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" output="${BOLDnameOutput}" prefix="" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
+            LBOLDRUNS="${LBOLDRUNS}"
+        else
+            reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
+            exit 1
+        fi
+        if [[ ! -z ${LBOLDRUNS} ]]; then
+            geho "  --> Selected BOLDs: ${LBOLDRUNS} "
+            echo ""
+        else
+            reho " ERROR: No BOLDs found! Something went wrong for ${CASE}. Check your batch file inputs!"; echo ""
+            exit 1
+        fi
+    fi
+}
+
+
+# -- Code for getting BOLD numbers
+getBoldNumberList() {
+    if [[ ! -z ${ProcessingBatchFile} ]]; then
+        LBOLDRUNS="${BOLDRUNS}"
+        geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}' in batch file ${ProcessingBatchFile} ... "; 
+        if [[ -f ${ProcessingBatchFile} ]]; then
+            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" output="number" prefix="" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
             LBOLDRUNS="${LBOLDRUNS}"
         else
             reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
@@ -2451,7 +2473,7 @@ fi
     turnkey_BOLDParcellation() {
         FunctionName="BOLDParcellation"
 
-        getBoldList
+        getBoldNumberList
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ BOLDParcellation on BOLDS: ${LBOLDRUNS}"; echo ""
 
         if [ -z ${RunParcellations} ]; then
