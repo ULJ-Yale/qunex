@@ -41,16 +41,17 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %   --rgss      	A comma separated string specifying what to regress in the
 %               	regression step ['m,V,WM,WB,1d']:
 %	
-%           		- m   ... motion
-%           		- m1d ... first derivative for movement regressors
-%           		- mSq ... squared motion parameters
-%           		- V   ... ventricles
-%           		- WM  ... white matter
-%           		- WB  ... whole brain
-%           		- n1d ... first derivative for nuisance signal regressors
-%           		- 1d  ... first derivative for movement and nuisance signal
-%           		- t   ... task
-%           		- e   ... events
+%           		- m     ... motion
+%           		- m1d   ... first derivative for movement regressors
+%           		- mSq   ... squared motion parameters
+%                   - m1dSq ... squared motion derivatives
+%           		- V     ... ventricles
+%           		- WM    ... white matter
+%           		- WB    ... whole brains
+%           		- n1d   ... first derivative for nuisance signal regressors
+%           		- 1d    ... first derivative for movement and nuisance signal
+%           		- t     ... task
+%           		- e     ... events
 %
 %   --task        	Matrix of custom regressors to be entered in GLM.
 %   --efile       	Event (fild) file to be used for estimation of task regressors ['']
@@ -430,6 +431,8 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %			motion parameters
 %       m1d
 %			motion derivatives
+%		mSq
+%			squared motion parameters
 %       m1dSq
 %			squared motion derivatives
 %       V  
