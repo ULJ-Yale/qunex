@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_commands.py
+``g_commands.py``
 
 Definition of commands used in gmri along with their parameters.
 """
@@ -44,7 +44,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'reslice'              : {'com': g_NIfTI.reslice,                'args': ('inf', 'slices', 'outf')},
             'sliceImage'           : {'com': g_img.sliceImage,               'args': ('sourcefile', 'targetfile', 'frames')},
             'nifti24dfp'           : {'com': g_NIfTI.nifti24dfp,             'args': ('inf', 'outf')},
-            'setupHCP'             : {'com': gs_HCP.setupHCP,                'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'filename', 'folderstructure', 'hcp_suffix')},
+            'setupHCP'             : {'com': gs_HCP.setupHCP,                'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'hcp_filename', 'folderstructure', 'hcp_suffix')},
             'createSessionInfo'    : {'com': g_utilities.createSessionInfo,  'args': ('sessions', 'pipelines', 'sessionsfolder', 'sourcefile', 'targetfile', 'mapping', 'filter', 'overwrite')},
             'printniftihdr'        : {'com': g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': g_gimg.modniftihdr,             'args': ('filename', 's')},
@@ -74,7 +74,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'runList'              : {'com': g_utilities.runList,            'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')}
             }
 
-extraParameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore']
+extraParameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']
 
 # a dictonary of deprecated commands ("oldCommand": "newCommand")
 deprecated_commands = {"HCPLSImport": "importHCP",
@@ -85,11 +85,11 @@ deprecated_commands = {"HCPLSImport": "importHCP",
                        "getHCPReady": "createSesssionInfo"}
 
 def checkDeprecatedCommands(command):
-    '''
+    """
     checkDeprecatedCommands(options, deprecatedCommands)
     Checks for deprecated commands, remaps deprecated ones
-    and notifes the user.
-    '''
+    and notifies the user.
+    """
 
     # store the command
     newCommand = command
