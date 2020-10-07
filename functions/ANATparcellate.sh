@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-#  StructuralParcellation.sh
+#  ANATparcellate.sh
 #
 # ## LICENSE
 #
-# * The StructuralParcellation.sh = the "Software"
+# * The ANATparcellate.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -26,7 +26,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, StructuralParcellation.sh, implements parcellation structural data 
+# This script, ANATparcellate.sh, implements parcellation structural data 
 # such as dense thickness and myelin maps.
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -35,7 +35,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./StructuralParcellation.sh --help
+# See output of usage function: e.g. $./ANATparcellate.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -72,14 +72,14 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/connector/functions/ANATparcellate.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via::"
  echo ""
- echo " qunex structuralParcellation \ "
+ echo " qunex ANATparcellate \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call:"
@@ -91,7 +91,7 @@ usage() {
  echo ""                   
  echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
  echo ""
- echo " qunex structuralParcellation --sessionsfolder='<folder_with_sessions>' \ "
+ echo " qunex ANATparcellate --sessionsfolder='<folder_with_sessions>' \ "
  echo " --session='<case_id>' \ "
  echo " --inputdatatype='MyelinMap_BC' \ "
  echo " --parcellationfile='<dlabel_file_for_parcellation>' \ "

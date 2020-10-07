@@ -103,9 +103,12 @@ weho() {
 # source $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="createStudy mapRawData organizeDicom importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy DWIeddyQC runQC_DWIeddyQC RunQC_DWIeddyQC DWIFSLdtifit runQC_DWIFSLdtifit RunQC_DWIFSLdtifit DWIFSLbedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIbedpostx RunQC_DWIbedpostx pretractographyDense DWIDenseParcellation DWISeedTractography runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+QuNexTurnkeyWorkflow="createStudy mapRawData importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy DWIeddyQC runQC_DWIeddyQC RunQC_DWIeddyQC DWIFSLdtifit runQC_DWIFSLdtifit RunQC_DWIFSLdtifit DWIFSLbedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIbedpostx RunQC_DWIbedpostx DWIpreTractography DWIparcellate DWIseedTractographyDense runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation BOLDparcellate computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
+
 SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5"
+
 QuNexTurnkeyClean="hcp4"
 
 # ------------------------------------------------------------------------------
@@ -595,12 +598,12 @@ UnwarpDir=`opts_GetOpt "--unwarpdir" $@`
 DiffDataSuffix=`opts_GetOpt "--diffdatasuffix" $@`
 Scanner=`opts_GetOpt "--scanner" $@`
 UseFieldmap=`opts_GetOpt "--usefieldmap" $@`
-# -- DWIDenseParcellation input flags
+# -- DWIparcellate input flags
 MatrixVersion=`opts_GetOpt "--matrixversion" $@`
 ParcellationFile=`opts_GetOpt "--parcellationfile" $@`
 OutName=`opts_GetOpt "--outname" $@`
 WayTotal=`opts_GetOpt "--waytotal" $@`
-# -- DWISeedTractography input flags
+# -- DWIseedTractographyDense input flags
 SeedFile=`opts_GetOpt "--seedfile" $@`
 # -- DWIeddyQC input flags
 EddyBase=`opts_GetOpt "--eddybase" $@`
@@ -1240,7 +1243,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-         pretractographyDense|DWISeedTractography|DWIDenseParcellation)
+         DWIpreTractography|DWIseedTractographyDense|DWIparcellate)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
@@ -2148,14 +2151,14 @@ fi
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ probtrackxGPUDense"; echo ""
         ${QuNexCommand} probtrackxGPUDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
-    # -- pretractographyDense for DWI data (after DWIFSLbedpostxGPU)
-    turnkey_pretractographyDense() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ pretractographyDense"; echo ""
-        ${QuNexCommand} pretractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+    # -- DWIpreTractography for DWI data (after DWIFSLbedpostxGPU)
+    turnkey_DWIpreTractography() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIpreTractography"; echo ""
+        ${QuNexCommand} DWIpreTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
-    # -- DWIDenseParcellationfor DWI data (after pretractographyDense)
-    turnkey_DWIDenseParcellation() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIDenseParcellation"; echo ""
+    # -- DWIparcellatefor DWI data (after DWIpreTractography)
+    turnkey_DWIparcellate() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIparcellate"; echo ""
         # Defaults if not specified:
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
@@ -2163,26 +2166,26 @@ fi
         if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
-            ${QuNexCommand} DWIDenseParcellation --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+            ${QuNexCommand} DWIparcellate --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
         done
     }
-    # -- DWISeedTractography for DWI data (after pretractographyDense)
-    turnkey_DWISeedTractography() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWISeedTractography"; echo "" 
+    # -- DWIseedTractographyDense for DWI data (after DWIpreTractography)
+    turnkey_DWIseedTractographyDense() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIseedTractographyDense"; echo "" 
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$SeedFile" ]; then
             # Thalamus SomatomotorSensory
             SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
-            ${QuNexCommand} DWISeedTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
             # Thalamus Prefrontal
             SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
-            ${QuNexCommand} DWISeedTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
         fi
         OutNameGBC="DWI_GBC"
-        ${QuNexCommand} DWISeedTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
+        ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
     }
     #
     # --------------- DWI Processing and analyses end --------------------------

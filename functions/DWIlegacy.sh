@@ -3,7 +3,7 @@
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# # DiffPreprocPipelineLegacy.sh
+# # DWIlegacy.sh
 #
 # ## Copyright Notice
 #
@@ -47,7 +47,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./DiffPreprocPipelineLegacy.sh --help
+# See output of usage function: e.g. $./DWIlegacy.sh --help
 
 # Load Function Libraries
 source ${HCPPIPEDIR}/global/scripts/log.shlib     # log_ functions

@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-#  BOLDParcellation.sh
+#  BOLDparcellate.sh
 #
 # ## LICENSE
 #
-# * The BOLDParcellation.sh = the "Software"
+# * The BOLDparcellate.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -26,7 +26,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, BOLDParcellation.sh, implements parcellation on BOLD data
+# This script, BOLDparcellate.sh, implements parcellation on BOLD data
 # using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -35,7 +35,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./BOLDParcellation.sh --help
+# See output of usage function: e.g. $./BOLDparcellate.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -90,7 +90,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDparcellate.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  echo ""
@@ -98,7 +98,7 @@ usage() {
  echo ""
  echo "Run via:: "
  echo ""
- echo "  qunex BOLDParcellation --<parameter1> --<parameter2> ... --<parameterN> "
+ echo "  qunex BOLDparcellate --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -111,7 +111,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " BOLDParcellation.sh --sessionsfolder='<folder_with_sessions>' \ "
+ echo " BOLDparcellate.sh --sessionsfolder='<folder_with_sessions>' \ "
  echo " --session='<session_id>' \ "
  echo " --inputfile='<name_of_input_file' \ "
  echo " --inputpath='<path_for_input_file>' \ "

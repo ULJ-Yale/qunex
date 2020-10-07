@@ -14,7 +14,7 @@
 #
 # ## PRODUCT
 #
-# DWIDenseParcellation.sh
+# DWIFSLbedpostxGPU.sh
 #
 # ## LICENSE
 #

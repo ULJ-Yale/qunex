@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-# DWIFSLDtifit.sh
+# DWIFSLdtifit.sh
 #
 # ## LICENSE
 #
-# * The DWIFSLDtifit.sh = the "Software"
+# * The DWIFSLdtifit.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -26,7 +26,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIFSLDtifit.sh, implements FSL's DTIFIT functionality within the Qu|Nex Suite
+# This script, DWIFSLdtifit.sh, implements FSL's DTIFIT functionality within the Qu|Nex Suite
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -34,7 +34,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIFSLDtifit.sh --help
+# See output of usage function: e.g. $./DWIFSLdtifit.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 

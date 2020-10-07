@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-# DWIDenseParcellation.sh
+# DWIparcellate.sh
 #
 # ## LICENSE
 #
-# * The DWIDenseParcellation.sh = the "Software"
+# * The DWIparcellate.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -26,7 +26,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIDenseParcellation.sh, implements parcellation on the DWI dense connectomes 
+# This script, DWIparcellate.sh, implements parcellation on the DWI dense connectomes 
 # using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -35,7 +35,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIDenseParcellation.sh --help
+# See output of usage function: e.g. $./DWIparcellate.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -82,14 +82,14 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/connector/functions/DWIparcellate.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via:: "
  echo ""
- echo "  qunex DWIDenseParcellation --<parameter1> --<parameter2> ... --<parameterN> "
+ echo "  qunex DWIparcellate --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -102,7 +102,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " qunex DWIDenseParcellation --sessionsfolder='<folder_with_sessions>' \ "
+ echo " qunex DWIparcellate --sessionsfolder='<folder_with_sessions>' \ "
  echo " --sessions='<comma_separarated_list_of_cases>' \ "
  echo " --matrixversion='3' \ "
  echo " --parcellationfile='<dlabel_file_for_parcellation>' \ "
@@ -111,7 +111,7 @@ usage() {
  echo ""
  echo "Example with flagged parameters for submission to the scheduler::"
  echo ""
- echo " qunex DWIDenseParcellation --sessionsfolder='<folder_with_sessions>' \ "
+ echo " qunex DWIparcellate --sessionsfolder='<folder_with_sessions>' \ "
  echo " --sessions='<comma_separarated_list_of_cases>' \ "
  echo " --matrixversion='3' \ "
  echo " --parcellationfile='<dlabel_file_for_parcellation>' \ "

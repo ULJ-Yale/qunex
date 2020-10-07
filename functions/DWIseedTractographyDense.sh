@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-# DWIDenseSeedTractography.sh 
+# DWIseedTractographyDense.sh 
 #
 # ## LICENSE
 #
-# * The DWIDenseSeedTractography.sh = the "Software"
+# * The DWIseedTractographyDense.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -26,7 +26,7 @@
 #
 # ## DESCRIPTION
 #
-# This script, DWIDenseSeedTractography.sh, is a wrapper for deducting dense 
+# This script, DWIseedTractographyDense.sh, is a wrapper for deducting dense 
 # connectome DWI data with seed input. It implements reduction on the DWI dense 
 # connectomes using a given 'seed' structure (e.g. thalamus)
 #
@@ -36,7 +36,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIDenseSeedTractography.sh --help
+# See output of usage function: e.g. $./DWIseedTractographyDense.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -93,14 +93,14 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseSeedTractography.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/connector/functions/DWIseedTractographyDense.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via:: "
  echo ""
- echo "  qunex DWIDenseSeedTractography --<parameter1> --<parameter2> ... --<parameterN> "
+ echo "  qunex DWIseedTractographyDense --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -113,7 +113,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " qunex DWIDenseSeedTractography --sessionsfolder='<folder_with_sessions>' \ "
+ echo " qunex DWIseedTractographyDense --sessionsfolder='<folder_with_sessions>' \ "
  echo " --session='<case_id>' \ "
  echo " --matrixversion='3' \ "
  echo " --seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "

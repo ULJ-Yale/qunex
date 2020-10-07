@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-QuNexCommands="nitoolsHelp gmriFunction dataSync organizeDicom mapHCPFiles hcpdLegacy DWIeddyQC DWIDenseParcellation DWIDenseSeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract DWIFSLDtifit DWIFSLBedpostxGPU autoPtx DWIPreTractography DWIProbtrackxGPUDense AWSHCPSync runQC RunQC QCPreproc runTurnkey commandExecute showVersion environment"
+QuNexCommands="nitoolsHelp gmriFunction dataSync organizeDicom organizeDICOM mapHCPFiles DWIlegacy DWIeddyQC DWIparcellate DWIseedTractographyDense DWIFSLdtifit DWIFSLbedpostxGPU DWIpreTractography DWIprobtrackxDenseGPU autoPtx computeBOLDfc BOLDcomputeFC ANATparcellate BOLDParcellation BOLDparcellate extractROI AWSHCPsync runQC RunQC QCPreproc runTurnkey commandExecute show_version environment"
 
 # ------------------------------------------------------------------------------
 #  -- Setup color outputs
@@ -118,77 +118,99 @@ show_splash() {
 #  -- General help usage
 # ------------------------------------------------------------------------------
 
+qunex_modules(){
+
+cat << EOF
+
+ Listing of Qu|Nex Modules
+===========================
+
+        'Connector' Commands for Turnkey Processing and Misc. Analyses           
+--------------------------------------------------------------------------------
+
+ DESCRIPTION: Qu|Nex Suite workflows is integrated via 'connector' code written.
+ written in BASH. Connector commands also contain 'stand alone' processing and 
+ analyses tools that can be called either directly or via the qunex wrapper.
+
+  ==> Connector commands are located in:
+
+      $TOOLS/$QUNEXREPO/connector
+
+
+  General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses   
+--------------------------------------------------------------------------------
+
+ DESCRIPTION: Qu|Nex Suite workflows contain python-based general neuroimaging 
+ utilities. NIutilities can be invoked via gmri <NIUtilities_command_name> call 
+ or by invoking the qunex <NIUtilities_command_name> call.
+ 
+  ==> NIUtilities are located in:
+
+      $TOOLS/$QUNEXREPO/niutilities
+
+
+       Neuroimaging Tools (NITools) for Signal Processing and Statistics        
+--------------------------------------------------------------------------------
+
+ DESCRIPTION: The Qu|Nex package contain a number of matlab-based stand-alone tools.
+ These tools are used across various Qu|Nex modules, but can be accessed as stand-alone 
+ commands within Matlab. Help and documentation is embedded within each. 
+ tool which can be invoked by typing: 
+ 
+ qunex <NITools_command_name>
+
+  ==> NITools tools are located in:
+
+      $TOOLS/$QUNEXREPO/nitools
+
+ Display Listing of All Qu|Nex Commands across Modules
+=======================================================
+
+ qunex --allcommands 
+
+
+EOF
+
+}
+
 show_usage() {
- echo ""
- echo "General Qu|Nex Usage                             "
- echo "====================                        "
- echo ""
- echo "General Command Call Syntax:: "
- echo ""
- echo "  qunex --command=<command_name> \ "
- echo "        --parameterA=<parameter_A_specification> \ "
- echo "        --parameterB='<parameter_B_specification>' \ "
- echo "        --parameterC='<parameter_C_specification>' "
- echo "        --parameterN='<parameter_N_specification>' "
- echo ""
- echo "Obtaining Command Help and Usage::"
- echo ""
- echo " qunex ?<command_name> "
- echo " qunex <command_name> "
- echo ""
- echo ""
- echo "Conventions used in help and documentation:"
- echo ""
- echo "- Square brackets []: Specify a value that is optional."
- echo "  Note: Value within brackets is the default value."
- echo "- Angle brackets <>: Contents describe what should go there."
- echo "- Dashes or flags -- : Define input variables."
- echo ""
- echo ""
- echo "Overview of Qu|Nex Commands    "
- echo "==========================="
- echo ""
- echo "To obtain a full listing of all Qu|Nex-supported NITools commands run:: "
- echo ""
- echo " qunex --allcommands "
- echo ""
- echo ""
- geho "'Connector' Commands for Turnkey Processing and Misc. Analyses            "
- geho "--------------------------------------------------------------"
- echo ""
- echo "Connector commands are located in::"
- echo ""
- echo " $TOOLS/$QUNEXREPO/connector"
- echo ""
- echo "Qu|Nex Suite workflows is integrated via BASH 'connector' commands."
- echo "The connector commands also contain 'stand alone' processing or analyses tools."
- echo "These can be called either directly or via the qunex wrapper"
- echo ""
- echo ""
- geho "General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses  "
- geho "--------------------------------------------------------------------------- "
- echo ""
- echo "NIUtilities are located in:: $TOOLS/$QUNEXREPO/niutilities"
- echo ""
- echo "Qu|Nex Suite workflows contain additional python-based 'general mri (gmri) "
- echo "utilities. These are accessed either directly via 'gmri' command from the "
- echo "terminal. Alternatively the 'qunex' connector wrapper parses all commands via "
- echo "'gmri' package as standard input."
- echo ""
- echo ""
- geho "Neuroimaging Tools (NITools) for Signal Processing and Statistics   "
- geho "----------------------------------------------------------------- "
- echo ""
- echo "NITools tools are located in::"
- echo ""
- echo " $TOOLS/$QUNEXREPO/nitools"
- echo ""    
- echo "The Qu|Nex package contain a number of matlab-based stand-alone commands. These "
- echo "tools are used across various Qu|Nex packages, but can be accessed as "
- echo "stand-alone command within Matlab. Help and documentation is embedded within "
- echo "each stand-alone command via standard Matlab help call."
- echo ""
- echo ""
+
+cat << EOF
+
+ General Qu|Nex Usage Syntax
+=============================
+ 
+ qunex <command-name> \
+   --parameterA=<required-parameter-args> \
+   [--parameterB=<optional-parameter-args>]
+
+  =>  --   Dashes or “flags” denote input parameters.
+  =>  []   Square brackets denote optional parameters. 
+        Note: Arguments is shown inside [] denote default behavior of optional parameters. 
+  =>  <>   Angle brackets denote user-specified arguments for a given parameter.
+  => Command names, parameters and arguments are shown in small or “camel” case.
+
+
+ Specific Command Help and Usage
+=================================
+  
+ qunex <command_name> 
+
+
+ Display Info on Qu|Nex Modules
+================================
+
+ qunex --modules
+
+
+ Display Listing of All Qu|Nex Commands across Modules
+=======================================================
+
+  qunex --allcommands
+
+
+EOF
+ 
 }
 
 qunexFailed() {
@@ -289,88 +311,58 @@ show_usage_nitoolsHelp() {
         done
         echo ""
 }
+
 show_allcommands_connector() {
- echo ""
- echo ""
- geho "Listing of all Qu|Nex supported Connector commands"
- geho "--------------------------------------------------"
- echo ""
- echo "Connector functions are located in::"
- echo ""
- echo " $TOOLS/$QUNEXREPO/connector"
- echo ""
- echo "Qu|Nex Suite workflows is integrated via BASH 'connector' functions."
- echo "The connector function also contain 'stand alone' processing or analyses tools."
- echo "These can be called either directly or via the qunex wrapper"
- echo ""
- echo "Qu|Nex Turnkey functions"
- echo "------------------------"
- echo ""
- echo "organizeDicom "
- echo "     sort DICOMs and setup nifti files from DICOMs"
- echo ""
- echo "mapHCPFiles "
- echo "     setup data structure for hcp processing"
- echo ""
- echo "runTurnkey"
- echo "     turnkey execution of Qu|Nex workflow compatible with XNAT Docker engine"
- echo ""
- echo "QC functions"
- echo "------------"
- echo ""
- echo "runQC"
- echo "     run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi"
- echo ""
- echo "DWI processing, QC, analyses & probabilistic tractography functions"
- echo "-------------------------------------------------------------------"
- echo ""
- echo "hcpdLegacy"
- echo "     diffusion image processing for data with or without standard fieldmaps"
- echo ""
- echo "DWIeddyQC"
- echo "     run quality control on diffusion datasets following eddy outputs"
- echo ""
- echo "DWIFSLDtifit"
- echo "     run FSL's dtifit tool (cluster usable)"
- echo ""
- echo "DWIFSLBedpostxGPU"
- echo "     run FSL bedpostx with GPU"
- echo ""
- echo "DWIPreTractography"
- echo "     generates space for whole-brain dense connectomes"
- echo ""
- echo "DWIProbtrackxGPUDense"
- echo "     run FSL's probtrackx for whole brain & generates dense whole brain "
- echo "     connectomes"
- echo ""
- echo "DWIDenseSeedTractography"
- echo "     reduce dense DWI tractography data using a seed structure"
- echo ""
- echo "DWIDenseParcellation"
- echo "     parcellate dense dwi tractography data"
- echo ""
- echo "Miscellaneous analyses"
- echo "----------------------"
- echo ""
- echo "computeBOLDfc"
- echo "     computes seed or GBC BOLD functional connectivity"
- echo ""
- echo "structuralParcellation"
- echo "     parcellate myelin or thickness"
- echo ""
- echo "BOLDParcellation"
- echo "     parcellate BOLD data and generate pconn files"
- echo ""
- echo "ROIExtract"
- echo "     extract data from pre-specified ROIs in CIFTI or NIFTI"
- echo ""
- echo "AWSHCPSync"
- echo "     sync hcp data from aws s3 cloud"
- echo ""
- echo "dataSync"
- echo "     sync/backup data across hpc cluster(s)"
- echo ""
- echo ""
+ 
+cat << EOF
+ 
+ Listing of all Qu|Nex supported Connector commands
+====================================================
+ 
+  Connector functions are located in:
+ 
+    $TOOLS/$QUNEXREPO/connector
+ 
+  Qu|Nex Suite workflows is integrated via BASH 'connector' functions.
+  The connector function also contain 'stand alone' processing or analyses tools.
+  These can be called either directly or via the qunex wrapper
+ 
+ Qu|Nex Turnkey functions
+==========================
+ 
+  runTurnkey                 turnkey execution of Qu|Nex workflow compatible with XNAT Docker engine
+ 
+  QC functions
+  ============
+ 
+  runQC                      run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi
+ 
+ DWI processing, QC, analyses & probabilistic tractography functions
+=====================================================================
+ 
+  DWIlegacy                  diffusion image processing for data with or without standard fieldmaps
+  DWIeddyQC                  run quality control on diffusion datasets following eddy outputs
+  DWIFSLdtifit               run FSL's dtifit tool (cluster usable)
+  DWIFSLbedpostxGPU          run FSL GPU-enabled bedpostx
+  DWIpreTractography         generates space for dense whole-brain connectomes
+  DWIprobtrackxDenseGPU      run FSL's GPU-enabled probtrackx for dense whole-brain connectomes
+  DWIseedTractographyDense   reduce dense tractography data using a seed structure
+  DWIparcellate              parcellate dense tractography data
+ 
+ Miscellaneous analyses
+========================
+ 
+  BOLDcomputeFC     computes seed or GBC BOLD functional connectivity
+  BOLDparcellate    parcellate BOLD data and generate pconn files
+  ANATparcellate    parcellate T1w and T2w derived measures (e.g. myelin or thickness)
+  extractROI        extract data from pre-specified ROIs in CIFTI or NIFTI
+  AWSHCPsync        sync HCP data from aws s3 cloud
+  dataSync          sync/backup data across hpc cluster(s)
+  organizeDICOM     sort DICOMs and setup nifti files from DICOMs
+  mapHCPFiles       setup data structure for hcp processing
+ 
+EOF
+ 
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -801,15 +793,15 @@ show_usage_dataSync() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- hcpdLegacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+#  -- DWIlegacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-hcpdLegacy() {
+DWIlegacy() {
 # -- Unique requirements for This command:
 #    Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
 
 # -- Specify command variable
-QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
+QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIlegacy.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --scanner=${Scanner} \
@@ -823,9 +815,9 @@ QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLega
 # -- Connector execute function
 connectorExec
 }
-show_usage_hcpdLegacy() {
+show_usage_DWIlegacy() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIlegacy.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -867,12 +859,12 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the Qu|Nex connector wrapper
+#  -- DWIparcellate - Executes the Diffusion Parcellation Script (DWIparcellate.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-DWIDenseParcellation() {
+DWIparcellate() {
 #DWIOutput="${SessionsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIparcellate.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --matrixversion=${MatrixVersion} \
@@ -886,16 +878,16 @@ connectorExec
 show_usage_DWIDenseParcellation() {
 echo ""
 echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIparcellate.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- DWIDenseSeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the Qu|Nex connector wrapper
+#  -- DWIseedTractographyDense - Executes the Diffusion Seed Tractography Script (DWIseedTractographyDense.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-DWIDenseSeedTractography() {
+DWIseedTractographyDense() {
 # -- Command to run
-QuNexCallToRun="DWIDenseSeedTractography.sh \
+QuNexCallToRun="DWIseedTractographyDense.sh \
 --sessionsfolder="${SessionsFolder}" \
 --sessions="${CASE}" \
 --matrixversion="${MatrixVersion}" \
@@ -906,13 +898,13 @@ QuNexCallToRun="DWIDenseSeedTractography.sh \
 # -- Connector execute function
 connectorExec
 }
-show_usage_DWIDenseSeedTractography() {
+show_usage_DWIseedTractographyDense() {
 echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseSeedTractography.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIseedTractographyDense.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the Qu|Nex connector wrapper
+#  -- computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (BOLDcomputeFC.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 computeBOLDfc() {
@@ -935,7 +927,7 @@ fi
 if [[ ${Calculation} == "seed" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/BOLDcomputeFC.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -960,7 +952,7 @@ fi
 if [[ ${Calculation} == "gbc" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/BOLDcomputeFC.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -989,7 +981,7 @@ fi
 if [[ ${Calculation} == "dense" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/BOLDcomputeFC.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -1005,16 +997,17 @@ if [[ ${Calculation} == "dense" ]]; then
     connectorExec
 fi
 }
+
 show_usage_computeBOLDfc() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/BOLDcomputeFC.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the Qu|Nex connector wrapper
+#  -- ANATparcellate - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-structuralParcellation() {
+ANATparcellate() {
 # -- Parse general parameters
 QUEUE="$QUEUE"
 SessionsFolder="$SessionsFolder"
@@ -1025,7 +1018,7 @@ ParcellationFile="$ParcellationFile"
 ExtractData="$ExtractData"
 Overwrite="$Overwrite"
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ANATparcellate.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --inputdatatype=${InputDataType} \
@@ -1036,13 +1029,13 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellati
 # -- Connector execute function
 connectorExec
 }
-show_usage_structuralParcellation() {
+show_usage_ANATparcellate() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/ANATparcellate.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the Qu|Nex connector wrapper
+#  -- BOLDparcellate - Executes the BOLD Parcellation Script (BOLDparcellate.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 BOLDParcellation() {
@@ -1053,7 +1046,7 @@ else
     BOLDOutput="${OutPath}"
 fi
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDparcellate.sh \
 --sessionsfolder='${SessionsFolder}' \
 --sessions='${CASE}' \
 --inputfile='${InputFile}' \
@@ -1071,16 +1064,17 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh 
 # -- Connector execute function
 connectorExec
 }
+
 show_usage_BOLDParcellation() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/BOLDparcellate.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the Qu|Nex connector wrapper
+#  -- extractROI - Executes the ROI Extraction Script (extractROI.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-ROIExtract() {
+extractROI() {
 # -- Parse general parameters
 ROIFileSessionSpecific="$ROIFileSessionSpecific"
 SingleInputFile="$SingleInputFile"
@@ -1096,7 +1090,7 @@ else
     ROIFile="${SessionsFolder}/${CASE}/${ROIFile}"
 fi
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/extractROI.sh \
 --roifile='${ROIInputFile}' \
 --inputfile='${InputFile}' \
 --outdir='${OutPath}' \
@@ -1107,34 +1101,34 @@ connectorExec
 show_usage_ROIExtract() {
 echo ""
 echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/extractROI.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  -- DWIFSLDtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
+#  -- DWIFSLdtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-DWIFSLDtifit() {
+DWIFSLdtifit() {
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLdtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --overwrite='${Overwrite}' "
 # -- Connector execute function
 connectorExec
 }
-show_usage_DWIFSLDtifit() {
+show_usage_DWIFSLdtifit() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLdtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  -- DWIFSLBedpostxGPU - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
+#  -- DWIFSLbedpostxGPU - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-DWIFSLBedpostxGPU() {
+DWIFSLbedpostxGPU() {
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLbedpostxGPU.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --fibers='${Fibers}' \
@@ -1147,9 +1141,9 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 connectorExec
 }
 
-show_usage_DWIFSLBedpostxGPU() {
+show_usage_DWIFSLbedpostxGPU() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLbedpostxGPU.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1187,10 +1181,10 @@ echo ""
 }
 
 # -------------------------------------------------------------------------------------------------------------------
-#  -- DWIPreTractography - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
+#  -- DWIpreTractography - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
 # ------------------------------------------------------------------------------------------------------------------
 
-DWIPreTractography() {
+DWIpreTractography() {
 # -- Parse general parameters
 LogFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractographydense"
 RunFolder="${SessionsFolder}/${CASE}/hcp/"
@@ -1199,18 +1193,18 @@ QuNexCallToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${
 # -- Connector execute function
 connectorExec
 }
-show_usage_DWIPreTractography() {
+show_usage_DWIpreTractography() {
 echo ""; echo "qunex ${UsageInput}"
 ${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- DWIProbtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
+#  -- DWIprobtrackxDenseGPU - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
-DWIProbtrackxGPUDense() {
+DWIprobtrackxDenseGPU() {
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIProbtrackxGPUDense.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIprobtrackxDenseGPU.sh \
 --sessionsfolder='${SessionsFolder}' \
 --scriptsfolder='${ScriptsFolder}' \
 --infolder='${InFolder}' \
@@ -1223,15 +1217,15 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIProbtrackxGPUDens
 # -- Connector execute function
 connectorExec
 }
-show_usage_DWIProbtrackxGPUDense() {
+show_usage_DWIprobtrackxDenseGPU() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/connector/functions/DWIProbtrackxGPUDense.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIprobtrackxDenseGPU.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
 #  -- Sync data from AWS buckets - customized for HCP
 # -------------------------------------------------------------------------------------------------------------------------------
-AWSHCPSync() {
+AWSHCPsync() {
 mkdir ${SessionsFolder}/aws.logs &> /dev/null
 cd $SessionsFolder}/aws.logs
 if [ ${RunMethod} == "2" ]; then
@@ -1239,11 +1233,11 @@ if [ ${RunMethod} == "2" ]; then
     if [ -d ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
         mkdir ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
         AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+        time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPsync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
     else
         mkdir -p ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
         AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+        time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPsync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
     fi
 fi
 if [ ${RunMethod} == "1" ]; then
@@ -1251,17 +1245,17 @@ if [ ${RunMethod} == "1" ]; then
     if [ -d ${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
         mkdir ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
         AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+        time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPsync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
     else
         mkdir -p ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
         AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+        time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SessionsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPsync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
     fi
 fi
 }
-show_usage_AWSHCPSync() {
+show_usage_AWSHCPsync() {
 echo ""
-echo "qunex AWSHCPSync"
+echo "qunex AWSHCPsync"
 echo ""
 echo "This command enables syncing of HCP data from the Amazon AWS S3 repository."
 echo "It assumes you have enabled your AWS credentials via the HCP website."
@@ -1280,7 +1274,7 @@ echo "==========="
 echo ""
 echo "Example with flagged parameters for submission to the scheduler::"
 echo ""
-echo "  qunex AWSHCPSync"
+echo "  qunex AWSHCPsync"
 echo "        --sessionsfolder='<path_to_study_sessions_folder>' \ "
 echo "        --sessions='<comma_separated_list_of_cases>' \ "
 echo "        --command='' \ "
@@ -1390,10 +1384,10 @@ done
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 
 # -- Checks for version
-showVersion() {
+show_version() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
-    geho "Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Version: v${QuNexVer}"
+    echo "Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Suite Version: v${QuNexVer}"
     echo ""
 }
 
@@ -1403,28 +1397,28 @@ showVersion() {
 
 # -- Check if version was requested
 if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
-    showVersion
+    show_version
     echo ""
     exit 0
 fi
 if [ $(opts_CheckForHelpRequest $@) ]; then
-    showVersion
+    show_version
     show_usage
     exit 0
 fi
 if [[ -z ${1} ]]; then
-    showVersion
+    show_version
     show_usage
     exit 0
 fi
 if [[ ${1} == "help" ]]; then
-    showVersion
+    show_version
     show_usage
     exit 0
 fi
 
 if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envsetup" ]]; then
-    showVersion
+    show_version
     echo ""
     echo "Printing help call for $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh"
     echo ""
@@ -1526,7 +1520,7 @@ fi
 # -- Get all the functions from the usage calls
 
 # -- Check for input with double flags
-if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]]; then
+if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]] || [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     # -- Check for gmri help inputs (--o --l --c)
     if [[  ${Usage}  == "--o" ]]; then
@@ -1534,10 +1528,15 @@ if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]]; then
         exit 0
     fi
     if [[ ${Usage} == "--a" ]] || [[ ${Usage} == "--all" ]] || [[ ${Usage} == "--allcommands" ]] || [[ ${Usage} == "-a" ]] || [[ ${Usage} == "-all" ]] || [[ ${Usage} == "-allcommands" ]]; then
-    show_splash
+        show_splash
         show_allcommands_connector
         show_allcommands_gmri
         show_usage_nitoolsHelp
+        exit 0
+    fi
+    if [[ ${Usage} == "--modules" ]] || [[ ${Usage} == "--m" ]] || [[ ${Usage} == "-modules" ]] || [[ ${Usage} == "-m" ]]; then
+        show_splash
+        qunex_modules
         exit 0
     fi
     if [[ ${Usage} == "-c" ]] || [[ ${Usage} == "--c" ]]; then
@@ -1551,7 +1550,7 @@ if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]]; then
     UsageInput=`echo ${Usage:2}`
     # -- Check if input part of function list
     isQuNexFunction ${UsageInput}
-    showVersion
+    show_version
     show_usage_"${UsageInput}"
     exit 0
 fi
@@ -1581,7 +1580,7 @@ if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     UsageInput=`echo ${Usage:1}`
     # -- Check if input part of function list
     isQuNexFunction ${UsageInput}
-    showVersion
+    show_version
     show_usage_"${UsageInput}"
     exit 0
 fi
@@ -1592,7 +1591,7 @@ if [[ ${HelpInputUsage:0:1} == "?" ]] && [[ -z ${2} ]]; then
     UsageInput=`echo ${Usage} | cut -c 2-`
     # -- Check if input part of function list
     isQuNexFunction ${UsageInput}
-    showVersion
+    show_version
     show_usage_"${UsageInput}"
     exit 0
 fi
@@ -1601,7 +1600,7 @@ if [[ -z ${2} ]]; then
     UsageInput="$1"
     # -- Check if input part of function list
     isQuNexFunction ${UsageInput}
-    showVersion
+    show_version
     show_usage_"${UsageInput}"
     exit 0
 fi
@@ -1950,7 +1949,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     HCPSessionsFolder=`opts_GetOpt "${setflag}clusterpath" $@`
     Direction=`opts_GetOpt "${setflag}dir" $@`
     ClusterName=`opts_GetOpt "${setflag}cluster" $@`
-    # -- ROIExtract input flags
+    # -- extractROI input flags
     ROIFile=`opts_GetOpt "${setflag}roifile" $@`
     ROIFileSessionSpecific=`opts_GetOpt "${setflag}sessionroifile" $@`
     # -- computeBOLDfc input flags
@@ -1985,7 +1984,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     UseWeights=`opts_GetOpt "${setflag}useweights" $@`
     WeightsFile=`opts_GetOpt "${setflag}weightsfile" $@`
     ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
-    # -- hcpdLegacy input flags
+    # -- DWIlegacy input flags
     EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
     PEdir=`opts_GetOpt "${setflag}PEdir" $@`
     TE=`opts_GetOpt "${setflag}TE" $@`
@@ -1993,12 +1992,12 @@ if [[ ${setflag} =~ .*-.* ]]; then
     DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@`
     Scanner=`opts_GetOpt "${setflag}scanner" $@`
     UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`
-    # -- DWIDenseParcellation input flags
+    # -- DWIparcellate input flags
     MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@`
     ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
     OutName=`opts_GetOpt "${setflag}outname" $@`
     WayTotal=`opts_GetOpt "${setflag}waytotal" $@`
-    # -- DWIDenseSeedTractography input flags
+    # -- DWIseedTractographyDense input flags
     SeedFile=`opts_GetOpt "${setflag}seedfile" $@`
     # -- DWIeddyQC input flags
     EddyBase=`opts_GetOpt "${setflag}eddybase" $@`
@@ -2013,13 +2012,13 @@ if [[ ${setflag} =~ .*-.* ]]; then
     GroupBar=`opts_GetOpt "${setflag}groupvar" $@`
     OutputDir=`opts_GetOpt "${setflag}outputdir" $@`
     Update=`opts_GetOpt "${setflag}update" $@`
-    # -- DWIFSLBedpostxGPU input flags
+    # -- DWIFSLbedpostxGPU input flags
     Fibers=`opts_GetOpt "${setflag}fibers" $@`
     Model=`opts_GetOpt "${setflag}model" $@`
     Burnin=`opts_GetOpt "${setflag}burnin" $@`
     Jumps=`opts_GetOpt "${setflag}jumps" $@`
     Rician=`opts_GetOpt "${setflag}rician" $@`
-    # -- DWIProbtrackxGPUDense input flags
+    # -- DWIprobtrackxGPUDense input flags
     MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
     MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
     NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
@@ -2027,7 +2026,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ScriptsFolder=`opts_GetOpt "${setflag}scriptsfolder" $@`
     InFolder=`opts_GetOpt "${setflag}infolder" $@`
     OutFolder=`opts_GetOpt "${setflag}outfolder" $@`
-    # -- AWSHCPSync input flags
+    # -- AWSHCPsync input flags
     Awsuri=`opts_GetOpt "${setflag}awsuri" $@`
     # -- runQC input flags
     OutPath=`opts_GetOpt "${setflag}outpath" $@`
@@ -2046,7 +2045,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
     GeneralSceneDataFile=`opts_GetOpt "${setflag}datafile" $@`
     GeneralSceneDataPath=`opts_GetOpt "${setflag}datapath" $@`
-    # -- ICAFIXhcp input flags
     ICAFIXFunction=`opts_GetOpt "${setflag}icafixfunction" $@`
     HPFilter=`opts_GetOpt "${setflag}hpfilter" $@`
     MovCorr=`opts_GetOpt "${setflag}movcorr" $@`
@@ -2246,7 +2244,10 @@ fi
 #  organizeDicom loop
 # ------------------------------------------------------------------------------
 
-if [[ ${CommandToRun} == "organizeDicom" ]]; then
+if [[ ${CommandToRun} == "organizeDicom" ]] || [[ ${CommandToRun} == "organizeDICOM" ]]; then
+
+    CommandToRun="organizeDICOM"
+
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then
@@ -2629,10 +2630,10 @@ if [ "$CommandToRun" == "dataSync" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  structuralParcellation loop
+#  ANATparcellate loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "structuralParcellation" ]; then
+if [ "$CommandToRun" == "ANATparcellate" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2667,10 +2668,10 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIFSLDtifit loop
+#  DWIFSLdtifit loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "DWIFSLDtifit" ]; then
+if [ "$CommandToRun" == "DWIFSLdtifit" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2696,43 +2697,26 @@ if [ "$CommandToRun" == "DWIFSLDtifit" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIFSLBedpostxGPU loop
+#  DWIFSLbedpostxGPU loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "DWIFSLBedpostxGPU" ]; then
-    # -- Check all the user-defined parameters:
-    if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
+if [ "$CommandToRun" == "DWIFSLbedpostxGPU" ]; then
+
+    # -- Check required parameters
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study Folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
-    if [ -z "$Fibers" ]; then reho "ERROR: Fibers value missing"; exit 1; fi
-    if [ -z "$Model" ]; then reho "ERROR: Model value missing"; exit 1; fi
-    if [ -z "$Burnin" ]; then reho "ERROR: Burnin value missing"; exit 1; fi
-    if [ -z "$Rician" ]; then echo "NOTE: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
     Cluster=${RunMethod}
-    # -- Report parameters
-    echo ""
-    echo "Running $CommandToRun with the following parameters:"
-    echo "--------------------------------------------------------------"
-    echo "   Study Folder: ${StudyFolder}"
-    echo "   Sessions Folder: ${SessionsFolder}"
-    echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
-    echo "   Number of Fibers: ${Fibers}"
-    echo "   Model Type: ${Model}"
-    echo "   Burnin Period: ${Burnin}"
-    echo "   Rician flag: ${Rician}"
-    echo "   Scheduler Name and Options: ${Scheduler}"
-    echo "   Overwrite prior run: ${Overwrite}"
-    echo ""
+
     # -- Loop through all the cases
     for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
+
 fi
 
 # ------------------------------------------------------------------------------
-#  Diffusion legacy processing loop (hcpdLegacy)
+#  Diffusion legacy processing loop (DWIlegacy)
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "hcpdLegacy" ]; then
+if [ "$CommandToRun" == "DWIlegacy" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$Scanner" ]; then reho "ERROR: Scanner manufacturer missing"; exit 1; fi
@@ -2772,10 +2756,10 @@ if [ "$CommandToRun" == "hcpdLegacy" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  structuralParcellation loop
+#  ANATparcellate loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "structuralParcellation" ]; then
+if [ "$CommandToRun" == "ANATparcellate" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2810,10 +2794,12 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  computeBOLDfc loop
+#  BOLDcomputeFC loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "computeBOLDfc" ]; then
+if [ "$CommandToRun" == "computeBOLDfc" ] || [ "$CommandToRun" == "BOLDcomputeFC" ]; then
+    CommandToRun="computeBOLDfc"
+
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${Calculation} ]]; then reho "ERROR: Type of calculation to run (gbc or seed) missing"; exit 1; fi
@@ -2922,10 +2908,12 @@ if [ "$CommandToRun" == "computeBOLDfc" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  BOLDParcellation loop
+#  BOLDparcellate loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "BOLDParcellation" ]; then
+if [ "$CommandToRun" == "BOLDParcellation" ] || [ "$CommandToRun" == "BOLDparcellate" ]; then
+    CommandToRun="BOLDParcellation"
+
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$InputPath" ]; then reho "ERROR: Input path value missing"; exit 1; fi
@@ -2988,10 +2976,10 @@ if [ "$CommandToRun" == "BOLDParcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIDenseParcellation loop
+#  DWIparcellate loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "DWIDenseParcellation" ]; then
+if [ "$CommandToRun" == "DWIparcellate" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -3024,10 +3012,10 @@ if [ "$CommandToRun" == "DWIDenseParcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  ROIExtract loop
+#  extractROI loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "ROIExtract" ]; then
+if [ "$CommandToRun" == "extractROI" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$OutPath" ]; then reho "ERROR: Output path value missing"; exit 1; fi
@@ -3071,10 +3059,10 @@ if [ "$CommandToRun" == "ROIExtract" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIDenseSeedTractography loop
+#  DWIseedTractographyDense loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "DWIDenseSeedTractography" ]; then
+if [ "$CommandToRun" == "DWIseedTractographyDense" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -3136,10 +3124,10 @@ if [ "$CommandToRun" == "autoPtx" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIPreTractography loop
+#  DWIpreTractography loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "DWIPreTractography" ]; then
+if [ "$CommandToRun" == "DWIpreTractography" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -3162,10 +3150,10 @@ if [ "$CommandToRun" == "DWIPreTractography" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIProbtrackxGPUDense loop
+#  DWIprobtrackxDenseGPU loop
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "DWIProbtrackxGPUDense" ]; then
+if [ "$CommandToRun" == "DWIprobtrackxDenseGPU" ]; then
     # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -3211,10 +3199,10 @@ if [ "$CommandToRun" == "DWIProbtrackxGPUDense" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  AWSHCPSync - AWS S3 Sync command wrapper
+#  AWSHCPsync - AWS S3 Sync command wrapper
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "AWSHCPSync" ]; then
+if [ "$CommandToRun" == "AWSHCPsync" ]; then
     # Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi

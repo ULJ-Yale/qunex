@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-#  DWIEddyQC.sh Wrapper for DWI EDDY QC code
+#  DWIeddyQC.sh Wrapper for DWI EDDY QC code
 #
 # ## LICENSE
 #
-# * The DWIEddyQC.sh = the "Software"
+# * The DWIeddyQC.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -26,7 +26,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIEddyQC.sh, is a wrapper for DWI EDDY QC code. 
+# This script, DWIeddyQC.sh, is a wrapper for DWI EDDY QC code. 
 # It implements DWI eddy QC based on code developed by Matteo Bastiani, FMRIB 
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -40,7 +40,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIEddyQC.sh --help
+# See output of usage function: e.g. $./DWIeddyQC.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 

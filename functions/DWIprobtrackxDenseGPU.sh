@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-#  ProbtrackxGPUDense.sh
+#  DWIprobtrackxDenseGPU.sh
 #
 # ## LICENSE
 #
-# * The ProbtrackxGPUDense.sh = the "Software"
+# * The DWIprobtrackxDenseGPU.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -28,7 +28,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, ProbtrackxGPUDense.sh, implements probtrackX GPU version on HCP-processed DWI data
+# This script, DWIprobtrackxDenseGPU.sh, implements probtrackX GPU version on HCP-processed DWI data
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -37,7 +37,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./ProbtrackxGPUDense.sh --help
+# See output of usage function: e.g. $./DWIprobtrackxDenseGPU.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -161,14 +161,14 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/connector/functions/DWIprobtrackxDenseGPU.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via:: "
  echo ""
- echo " qunex ProbtrackxGPUDense --<parameter1> --<parameter2> ... --<parameterN> "
+ echo " qunex DWIprobtrackxDenseGPU --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -181,7 +181,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " qunex ProbtrackxGPUDense --sessionsfolder='<path_to_study_sessions_folder>' \ "
+ echo " qunex DWIprobtrackxDenseGPU --sessionsfolder='<path_to_study_sessions_folder>' \ "
  echo " --sessions='<comma_separarated_list_of_cases>' \ "
  echo " --scheduler='<name_of_scheduler_and_options>' \ "
  echo " --omatrix1='yes' \ "
@@ -191,7 +191,7 @@ usage() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-# ----------------------------------------- ProbtrackxGPUDense CODE -----------------------------------------------
+# ----------------------------------------- DWIprobtrackxDenseGPU CODE -----------------------------------------------
 # ------------------------------------------------------------------------------------------------------
 
 
@@ -314,57 +314,57 @@ mkdir ${OutFolder}  &> /dev/null
 
 for CASE in $CASES; do
     TimeLog=`date '+%Y-%m-%d-%H-%M-%S'`
-    OutputLogProbtrackxGPUDense="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
+    OutputLogDWIprobtrackxDenseGPU="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/fixica_${CASE}_bold${BOLD}_${TimeLog}.log"
     
     # -- Echo probtrackX log for each case
-            echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-    geho "   --- probtrackX GPU for session $CASE..."                 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
+            echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+    geho "   --- probtrackX GPU for session $CASE..."                 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
     
     for MNum in $MNumber; do
         if [ "$MNum" == "1" ]; then NSamples="${NsamplesMatrixOne}"; fi
         if [ "$MNum" == "3" ]; then NSamples="${NsamplesMatrixThree}"; fi
         # -- Check of overwrite flag was set
         if [ "$Overwrite" == "yes" ]; then
-            echo ""                                                                          2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..." 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo ""                                                                          2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
+            echo ""                                                                          2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..." 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo ""                                                                          2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
             rm -f ${OutFolder}/Conn${MNum}.dconn.nii.gz &> /dev/null
         fi
         # -- Check for Matrix completion
-        echo "" 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-        geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..." 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-        echo "" 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
+        echo "" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+        geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..." 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+        echo "" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
         # -- Check if the file even exists
         if [ -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]; then
             # -- Set file sizes to check for completion
             actualfilesize=`wc -c < "$OutFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
             # -- Then check if Matrix run is complete based on size
             if [ $(echo ${actualfilesize} | bc) -ge $(echo ${minimumfilesize} | bc) ]; then > /dev/null 2>&1
-                echo ""                                                               2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-                cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}" 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-                cyaneho "To re-run set overwrite flag to 'yes'"                       2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-                echo ""                                                               2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-                echo "--------------------------------------------------------------" 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-                echo ""                                                               2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
+                echo ""                                                               2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                cyaneho "To re-run set overwrite flag to 'yes'"                       2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                echo ""                                                               2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                echo "--------------------------------------------------------------" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                echo ""                                                               2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
             fi
         else
             # -- If run is incomplete perform run for Matrix
-            echo "" 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..." 2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
+            echo "" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..." 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
             # -- Command to run
-            ProbtrackxGPUDenseCommand="${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${StudyFolder} ${CASE} ${Nsamples} ${SchedulerType}"
+            DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${StudyFolder} ${CASE} ${Nsamples} ${SchedulerType}"
             # -- Echo the command
-            echo "Running the following probtrackX GPU command: "     2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo "---------------------------"                        2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo "   ${ProbtrackxGPUDenseCommand}"                    2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo ""                                                   2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
-            echo "---------------------------"                        2>&1 | tee -a ${OutputLogProbtrackxGPUDense}
+            echo "Running the following probtrackX GPU command: "     2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo "---------------------------"                        2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo "   ${DWIprobtrackxDenseGPUCommand}"                    2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo "---------------------------"                        2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
             # -- Eval the command
-            eval "${ProbtrackxGPUDenseCommand}"                       2>&1 | tee -a ${OutputLogProbtrackxGPUDense}        
+            eval "${DWIprobtrackxDenseGPUCommand}"                       2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}        
         fi
     done
 done
