@@ -1,23 +1,27 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``gp_workflow.py``
+
 This file holds code for running functional connectivity preprocessing and
 GLM computation workflow. It consists of functions:
 
-* getBOLDData           ... maps NIL preprocessed data to images folder
-* createBOLDBrainMasks  ... extracts the first frame of each BOLD file
-* computeBOLDStats      ... computes per volume image statistics for scrubbing
-* createStatsReport     ... creates a report of movement and image statistics
-* extractNuisanceSignal ... extracts the nuisance signal for regressions
-* preprocessBold        ... processes a single BOLD file
-* preprocessConc        ... processes concatenated BOLD files
+--getBOLDData            Maps NIL preprocessed data to images folder.
+--createBOLDBrainMasks   Extracts the first frame of each BOLD file.
+--computeBOLDStats       Computes per volume image statistics for scrubbing.
+--createStatsReport      Creates a report of movement and image statistics.
+--extractNuisanceSignal  Extracts the nuisance signal for regressions.
+--preprocessBold         Processes a single BOLD file.
+--preprocessConc         Processes concatenated BOLD files.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
-`qunex ?<command>` for command specific help
-`qunex -o` for a list of relevant arguments and options
+- `qunex ?<command>` for command specific help
+- `qunex -o` for a list of relevant arguments and options
+"""
 
+"""
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
@@ -142,90 +146,96 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
 
 def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     """
-    createBOLDBrainMasks [... processing options]
+    ``createBOLDBrainMasks [... processing options]``
 
-    USE AND RESULTS
-    ===============
+    Extracts the brain and creates a brain mask for each BOLD image.
+
+    INPUTS
+    ======
+
+    The relevant processing parameters are:
+
+    --sessions             The batch.txt file with all the sessions information.
+                           [batch.txt]
+    --sessionsfolder       The path to the study/sessions folder, where the
+                           imaging  data is supposed to go. [.]
+    --parsessions          How many sessions to run in parallel. [1]
+    --parelements          How many elements (e.g bolds) to run in
+                           parallel. [1]
+    --overwrite            Whether to overwrite existing data (yes) or not (no).
+                           [no]
+    --bolds                Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all. [rest]
+    --hcp_bold_variant     Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed. []
+    --boldname             The default name of the bold files in the images
+                           folder. [bold]
+    --img_suffix           Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used. []
+    --logfolder            The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default. []
+    --log                  Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed. ['keep']
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are:
+
+                           - 'study'   (for the default: 
+                             `<study>/processing/logs/comlogs` location)
+                           - 'session' (for `<sessionid>/logs/comlogs`)
+                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+                           - '<path>'  (for an arbitrary directory)
+
+    The parameters can be specified in command call or session.txt file.
+
+    USE
+    ===
 
     createBOLDBrainMasks takes the first image of each bold file, and runs FSL
     bet to extract the brain and create a brain mask. The resulting files are
     saved into images/segmentation/boldmasks in the source image format:
 
-    * bold[n]_frame1.*
-    * bold[n]_frame1_brain.*
-    * bold[n]_frame1_brain_mask.*
-
-    RELEVANT PARAMETERS
-    ===================
-
-    The relevant processing parameters are:
-
-    --sessions         ... The batch.txt file with all the sessions information
-                           [batch.txt].
-    --sessionsfolder   ... The path to the study/sessions folder, where the
-                           imaging  data is supposed to go [.].
-    --parsessions      ... How many sessions to run in parallel [1].
-    --parelements      ... How many elements (e.g bolds) to run in
-                           parralel [1].
-    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
-                           [no].
-    --bolds            ... Which bold images (as they are specified in the
-                           batch.txt file) to copy over. It can be a single
-                           type (e.g. 'task'), a pipe separated list (e.g.
-                           'WM|Control|rest') or 'all' to copy all [rest].
-    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
-                           specified, the BOLD images in                            
-                           `images/functional.<hcp_bold_variant>` will be
-                           processed [].
-    --boldname         ... The default name of the bold files in the images
-                           folder [bold].
-    --img_suffix       ... Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty 
-                           if not used [].
-    --logfolder        ... The path to the folder where runlogs and comlogs
-                           are to be stored, if other than default []
-    --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given, 
-                           the log will be created at the first provided location
-                           and then linked or copied to other locations. 
-                           The valid locations are: 
-                           * 'study'   for the default: 
-                                       `<study>/processing/logs/comlogs`
-                                       location,
-                           * 'session' for `<sessionid>/logs/comlogs
-                           * 'hcp'     for `<hcp_folder>/logs/comlogs
-                           * '<path>'  for an arbitrary directory
-
-    The parameters can be specified in command call or session.txt file.
+    - bold[n]_frame1.*
+    - bold[n]_frame1_brain.*
+    - bold[n]_frame1_brain_mask.*
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex createBOLDBrainMasks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-          overwrite=no hcp_cifti_tail=_Atlas bolds=all parelements=8
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex createBOLDBrainMasks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+              overwrite=no hcp_cifti_tail=_Atlas bolds=all parelements=8
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2016-12-24 Grega Repovš
-             - Added documentation, fixed issue with cifti targets, switched
+               Initial version
+    2016-12-24 Grega Repovš
+               Added documentation, fixed issue with cifti targets, switched
                to gmri functions to extract the first frame and convert the
                image.
     2018-06-16 Grega Repovs
-             - Changed to include boldnumber in log and to use useOrSkipBOLD
+               Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
     2018-11-14 Jure Demsar
-            - Parallel implementation.
+               Parallel implementation.
     2019-01-12 Grega Repovš
-             - More robust identification of cifti files
+               More robust identification of cifti files
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations
+               Enabled multiple log file locations
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -396,10 +406,95 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
 def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     """
-    computeBOLDStats [... processing options]
+    ``computeBOLDStats [... processing options]``
 
-    USE AND RESULTS
-    ===============
+    Processes specified BOLD files and saves images/function/movement files.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions             The batch.txt file with all the session information.
+                           [batch.txt]
+    --sessionsfolder       The path to the study/sessions folder, where the
+                           imaging  data is supposed to go. [.]
+    --parsessions          How many sessions to run in parallel. [1]
+    --parelements          How many elements (e.g bolds) to run in
+                           parralel. [1]
+    --overwrite            Whether to overwrite existing data (yes) or not (no).
+                           [no]
+    --bolds                Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all [rest].
+    --hcp_bold_variant     Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed. []
+    --img_suffix           Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used. []
+    --boldname             The default name of the bold files in the images
+                           folder. [bold]
+    --logfolder            The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default []
+    --log                  Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed ['keep'].
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are:
+
+                           - 'study'   (for the default: 
+                             `<study>/processing/logs/comlogs` location)
+                           - 'session' (for `<sessionid>/logs/comlogs`)
+                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+                           - '<path>'  (for an arbitrary directory)
+
+    Specific parameters
+    -------------------
+
+    In addition the following *specific* parameters define the actual results:
+
+    --mov_radius      Estimated head radius (in mm) for computing frame
+                      displacement statistics. [50]
+    --mov_fd          Frame displacement threshold (in mm) to use for
+                      identifying bad frames. [0.5]
+    --mov_dvars       The (mean normalized) dvars threshold to use for
+                      identifying bad frames. [3.0]
+    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
+                      identifying bad frames. [1.5]
+    --mov_after       How many frames after each frame identified as bad
+                      to also exclude from further processing and analysis. [0]
+    --mov_before      How many frames before each frame identified as bad
+                      to also exclude from further processing and analysis. [0]
+    --mov_bad         Which criteria to use for identification of bad frames
+                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
+                      See movement scrubbing documentation for further 
+                      information. [udvarsme]
+    
+    Criteria for identification of bad frames can be one out of:
+
+    --mov           Frame displacement threshold (fdt) is exceeded.
+    --dvars         Image intensity normalized root mean squared error (RMSE) 
+                    threshold (dvarsmt) is exceeded.
+    --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
+    --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
+    --uvars         Either fdt or dvarsmt are exceeded (u for union).
+    --idvarsme      Both fdt and dvarsmet are exceeded.
+    --udvarsme      Either fdt or udvarsmet are exceeded.
+
+    For more detailed description please see wiki entry on Movement scrubbing.
+
+    The listed parameters can be specified in command call or session.txt file.
+
+    USE
+    ===
 
     computeBOLDStats processes each of the specified BOLD files and saves three
     files in the images/functional/movement folder:
@@ -410,15 +505,15 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[n].bstats includes for each frame of the BOLD image the following
     computed statistics:
 
-    * n       ... number of brain voxels
-    * m       ... mean signal intensity across all brain voxels
-    * var     ... signal variance across all brain voxels
-    * sd      ... signal standard variation across all brain voxels
-    * dvars   ... RMDS measure of signal intensity difference between this and
-                  the preceeding frame
-    * dvarsm  ... mean normalized dvars measure
-    * dvarsme ... median normalized dvarsm measure
-    * fd      ... frame displacement
+    --n           Number of brain voxels.
+    --m           Mean signal intensity across all brain voxels.
+    --var         Signal variance across all brain voxels.
+    --sd          Signal standard variation across all brain voxels.
+    --dvars       RMDS measure of signal intensity difference between this and
+                  the preceeding frame.
+    --dvarsm      Mean normalized dvars measure.
+    --dvarsme     Median normalized dvarsm measure.
+    --fd          Frame displacement.
 
     There are three additional lines at the end of the file listing maximum,
     mean and standar deviation of values across all timepoints / volumes.
@@ -430,18 +525,18 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     should be excluded (1) or not (0) based on any othe following criteria
     (note below the relevant settings that specify thresholds etc.):
 
-    * mov      ... Is frame displacement higher from the specified threshold?
-    * dvars    ... Is mean normalized dvars (dvarsm) higher than the specified
+    --mov          Is frame displacement higher from the specified threshold?
+    --dvars        Is mean normalized dvars (dvarsm) higher than the specified
                    threshold?
-    * dvarsme  ... Is the median normalized dvarsm higher than the specified
+    --dvarsme      Is the median normalized dvarsm higher than the specified
                    threshold?
-    * idvars   ... Are both frame displacement as well as dvarsm measures above
+    --idvars       Are both frame displacement as well as dvarsm measures above
                    threshold (intersection of fd and dvarsm).
-    * idvarsme ... Are both frame displacement as well as dvarsme measures above
+    --idvarsme     Are both frame displacement as well as dvarsme measures above
                    threshold (intersection of fd and dvarsme).
-    * udvars   ... Are either frame displacement or dvarsm measures above
+    --udvars       Are either frame displacement or dvarsm measures above
                    threshold (union of fs and dvarsm).
-    * udvarsme ... Are either frame displacement or dvarsme measures above
+    --udvarsme     Are either frame displacement or dvarsme measures above
                    threshold (union of fs and dvarsme).
 
     The last column of the file is a 'use' column, which specifies, based on the
@@ -457,90 +552,6 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[n].use file lists for each frame of the relevant BOLD image, whether
     it is to be used (1) or not (0).
 
-    RELEVANT PARAMETERS
-    ===================
-
-    general parameters
-    ------------------
-
-    When running the command, the following *general* processing parameters are
-    taken into account:
-
-    --sessions         ... The batch.txt file with all the session information
-                           [batch.txt].
-    --sessionsfolder   ... The path to the study/sessions folder, where the
-                           imaging  data is supposed to go [.].
-    --parsessions      ... How many sessions to run in parallel [1].
-    --parelements      ... How many elements (e.g bolds) to run in
-                           parralel [1].
-    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
-                           [no].
-    --bolds            ... Which bold images (as they are specified in the
-                           batch.txt file) to copy over. It can be a single
-                           type (e.g. 'task'), a pipe separated list (e.g.
-                           'WM|Control|rest') or 'all' to copy all [rest].
-    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
-                           specified, the BOLD images in                            
-                           `images/functional.<hcp_bold_variant>` will be
-                           processed [].
-    --img_suffix       ... Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty 
-                           if not used [].
-    --boldname         ... The default name of the bold files in the images
-                           folder [bold].
-    --logfolder        ... The path to the folder where runlogs and comlogs
-                           are to be stored, if other than default []
-    --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given, 
-                           the log will be created at the first provided location
-                           and then linked or copied to other locations. 
-                           The valid locations are: 
-                           * 'study'   for the default: 
-                                       `<study>/processing/logs/comlogs`
-                                       location,
-                           * 'session' for `<sessionid>/logs/comlogs
-                           * 'hcp'     for `<hcp_folder>/logs/comlogs
-                           * '<path>'  for an arbitrary directory
-
-    specific parameters
-    -------------------
-
-    In addition the following *specific* parameters define the actual results:
-
-    --mov_radius  ... Estimated head radius (in mm) for computing frame
-                      displacement statistics [50].
-    --mov_fd      ... Frame displacement threshold (in mm) to use for
-                      identifying bad frames [0.5]
-    --mov_dvars   ... The (mean normalized) dvars threshold to use for
-                      identifying bad frames [3.0].
-    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
-                      identifying bad frames [1.5].
-    --mov_after   ... How many frames after each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_before  ... How many frames before each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_bad     ... Which criteria to use for identification of bad frames
-                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further 
-                      information [udvarsme].
-    
-    Criteria for identification of bad frames can be one out of:
-
-    * mov       ... frame displacement threshold (fdt) is exceeded
-    * dvars     ... image intensity normalized root mean squared error (RMSE) 
-                    threshold (dvarsmt) is exceeded
-    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
-    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
-    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
-    * idvarsme  ... both fdt and dvarsmet are exceeded
-    * udvarsme  ... either fdt or udvarsmet are exceeded
-
-    For more detailed description please see wiki entry on Movement scrubbing.
-
-    The listed parameters can be specified in command call or session.txt file.
-
-
     NOTES AND DEPENDENCIES
     ======================
 
@@ -552,43 +563,42 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     of parameters. It also expects that both bold images and the related
     movement correction parameter files are present in the expected locations.
 
-
     EXAMPLE USE
     ===========
 
-    Using the defaults:
+    Using the defaults::
     
-    ```
-    qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-         overwrite=no bolds=all
-    ```
+        qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+             overwrite=no bolds=all
 
-    Specifying additional parameters for identification of bad frames:
+    Specifying additional parameters for identification of bad frames::
     
-    ```
-    qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-         overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
-         mov_before=1 mov_after= 2
-    ```
+        qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+             overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
+             mov_before=1 mov_after= 2
+    """
 
-    ----------------
-    Written by Grega Repovš
+    """
+    ~~~~~~~~~~~~~~~~~~
 
-    Changelog
+    Change log
+
     2016-12-26 Grega Repovš
-             - Added documentation, fixed the issue with cifti targets, added
+               Initial version
+    2016-12-26 Grega Repovš
+               Added documentation, fixed the issue with cifti targets, added
                summary reporting.
     2018-06-16 Grega Repovs
-             - Changed to include boldnumber in log and to use useOrSkipBOLD
+               Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
     2018-11-16 Jure Demsar
-             - Parallel implementation.
+               Parallel implementation.
     2019-01-12 Grega Repovš
-             - More robust identification of cifti files
+               More robust identification of cifti files
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations
+               Enabled multiple log file locations
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -726,10 +736,123 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
 
 def createStatsReport(sinfo, options, overwrite=False, thread=0):
     """
-    createStatsReport
+    ``createStatsReport(sinfo, options, overwrite=False, thread=0)``
 
-    USE AND RESULTS
-    ===============
+    Processes movement correction parameters and computed BOLD statistics to
+    create per session plots and fidl snippets and group reports.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions             The batch.txt file with all the session information.
+                           [batch.txt]
+    --sessionsfolder       The path to the study/sessions folder, where the
+                           imaging  data is supposed to go. [.]
+    --parsessions          How many sessions to run in parallel. [1]
+    --overwrite            Whether to overwrite existing data (yes) or not (no).
+                           [no]
+    --bolds                Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all. [rest]
+    --hcp_bold_variant     Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed, and the group report will be stored in
+                           `<sessionsfolder>/QC/movement.<hcp_bold_variant>`
+                           folder. []
+    --img_suffix           Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used. []
+    --boldname             The default name of the bold files in the images
+                           folder. [bold]
+    --logfolder            The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default []
+    --log                  Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed ['keep'].
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are:
+
+                           - 'study'   (for the default: 
+                             `<study>/processing/logs/comlogs` location)
+                           - 'session' (for `<sessionid>/logs/comlogs`)
+                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+                           - '<path>'  (for an arbitrary directory)
+
+    Specific parameters
+    -------------------
+
+    In addition the following *specific* parameters define the actual results:
+
+    Scrubbing specific options:
+
+    --mov_radius      Estimated head radius (in mm) for computing frame
+                      displacement statistics. [50]
+    --mov_fd          Frame displacement threshold (in mm) to use for
+                      identifying bad frames. [0.5]
+    --mov_dvars       The (mean normalized) dvars threshold to use for
+                      identifying bad frames. [3.0]
+    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
+                      identifying bad frames. [1.5]
+    --mov_after       How many frames after each frame identified as bad
+                      to also exclude from further processing and analysis. [0]
+    --mov_before      How many frames before each frame identified as bad
+                      to also exclude from further processing and analysis. [0]
+    --mov_bad         Which criteria to use for identification of bad frames
+                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
+                      See movement scrubbing documentation for further 
+                      information. [udvarsme]
+
+    Criteria for identification of bad frames can be one out of:
+
+    --mov           Frame displacement threshold (fdt) is exceeded.
+    --dvars         Image intensity normalized root mean squared error (RMSE) 
+                    threshold (dvarsmt) is exceeded.
+    --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
+    --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
+    --uvars         Either fdt or dvarsmt are exceeded (u for union).
+    --idvarsme      Both fdt and dvarsmet are exceeded.
+    --udvarsme      Either fdt or udvarsmet are exceeded.
+
+    For more detailed description please see wiki entry on Movement scrubbing.
+
+    Reporting specific options:
+
+    --TR              TR of the BOLD files [2.5].
+    --mov_pref        The prefix to be used for the figure plot files [].
+    --mov_plot        The base name of the plot files. If set to empty no plots
+                      are generated [mov_report].
+    --mov_mreport     The name of the group movement report file. If set to
+                      an empty string, no file is generated
+                      [movement_report.txt].
+    --mov_sreport     The name of the group scrubbing report file. If set to
+                      an empty string, no file is generated
+                      [movement_scrubbing_report.txt].
+    --mov_preport     The name of group report file with stats computed with
+                      frames identified as bad exluded from analysis. If set
+                      to an empty string, no file is generated
+                      [movement_report_post.txt].
+    --mov_post        The criterium for identification of bad frames that is
+                      used when generating a post scrubbing statistics
+                      group report (fd/dvars/dvars/dvarsme/idvars/idvarsme/
+                      udvars/udvarsme/none) [udvarsme].
+    --mov_fidl        Whether to create fidl file snippets with listed bad
+                      frames, and what criterium to use for the definition of
+                      bad frames (fd/dvars/dvars/dvarsme/idvars/idvarsme/udvars/
+                      udvarsme). Set to none to not generate them [udvarsme].
+    --mov_pdf         The name of the folder in sessions/QC/movement in which to
+                      copy the individuals' movement plots [movement_plots].
+
+    USE
+    ===
 
     createStatsReport processes movement correction parameters and computed
     BOLD statistics to create per session plots and fidl snippets and group
@@ -737,22 +860,22 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     For each session it saves into images/functional/movement:
 
-    * bold_<mov_plot>_cor.pdf     ... A plot of movement correction parameters
+    --`bold_<mov_plot>_cor.pdf`       A plot of movement correction parameters
                                       for each of the BOLD files.
-    * bold_<mov_plot>_dvars.pdf   ... A plot of frame displacement and dvarsm
+    --`bold_<mov_plot>_dvars.pdf`     A plot of frame displacement and dvarsm
                                       statistics with frames that are identified
                                       as bad marked in blue.
-    * bold_<mov_plot>_dvarsme.pdf ... A plot of frame displacement and dvarsme
+    --`bold_<mov_plot>_dvarsme.pdf`   A plot of frame displacement and dvarsme
                                       statistics with frames that are identified
                                       as bad marked in blue.
-    * bold[n]_scrub.fidl          ... A fidl filesnippet that lists, which
+    --`bold[n]_scrub.fidl`            A fidl filesnippet that lists, which
                                       frames are to be excluded from the
                                       analysis.
 
     For the group level it creates three report files that are stored in the
     <sessionsfolder>/QC/movement folder. These files are:
 
-    * <mov_mreport> (bold_movement_report.txt by default)
+    - ``<mov_mreport>`` (bold_movement_report.txt by default)
       This file lists for each session and bold file mean, sd, range, max, min,
       median, and squared mean divided by max statistics for each of the 6
       movement correction parameters. It also prints mean, median, maximum, and
@@ -760,127 +883,16 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
       file is to enable easy session and group level analysis of movement in
       the scanner.
 
-    * <mov_preport> (bold_movement_report_post.txt by default)
+    - ``<mov_preport>`` (bold_movement_report_post.txt by default)
       This file has the same structure and information as the above, whith
       frames marked as bad excluded from the statistics computation. This
       enables session and group level assessment of the effects of scrubbing.
 
-    * <mov_sreport> (bold_movement_scrubbing_report.txt by default)
+    - ``<mov_sreport>`` (bold_movement_scrubbing_report.txt by default)
       This file lists for each BOLD of each session the number and the
       percentage of frames that would be marked as bad and excluded from the
       analyses when a specific exclusion criteria would be used. Again, the
-      file supports session and group level analysis of movement scrubing.
-
-
-    RELEVANT PARAMETERS
-    ===================
-
-    general parameters
-    ------------------
-
-    When running the command, the following *general* processing parameters are
-    taken into account:
-
-    --sessions         ... The batch.txt file with all the session information
-                           [batch.txt].
-    --sessionsfolder   ... The path to the study/sessions folder, where the
-                           imaging  data is supposed to go [.].
-    --parsessions      ... How many sessions to run in parallel [1].
-    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
-                           [no].
-    --bolds            ... Which bold images (as they are specified in the
-                           batch.txt file) to copy over. It can be a single
-                           type (e.g. 'task'), a pipe separated list (e.g.
-                           'WM|Control|rest') or 'all' to copy all [rest].
-    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
-                           specified, the BOLD images in                            
-                           `images/functional.<hcp_bold_variant>` will be
-                           processed, and the group report will be stored in
-                           `<sessionsfolder>/QC/movement.<hcp_bold_variant>`
-                           folder [].
-    --img_suffix       ... Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty 
-                           if not used [].
-    --boldname         ... The default name of the bold files in the images
-                           folder [bold].
-    --logfolder        ... The path to the folder where runlogs and comlogs
-                           are to be stored, if other than default []
-    --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given, 
-                           the log will be created at the first provided location
-                           and then linked or copied to other locations. 
-                           The valid locations are: 
-                           * 'study'   for the default: 
-                                       `<study>/processing/logs/comlogs`
-                                       location,
-                           * 'session' for `<sessionid>/logs/comlogs
-                           * 'hcp'     for `<hcp_folder>/logs/comlogs
-                           * '<path>'  for an arbitrary directory
-
-    specific parameters
-    -------------------
-
-    In addition the following *specific* parameters define the actual results:
-
-    Scrubbing specific options:
-
-    --mov_radius  ... Estimated head radius (in mm) for computing frame
-                      displacement statistics [50].
-    --mov_fd      ... Frame displacement threshold (in mm) to use for
-                      identifying bad frames [0.5]
-    --mov_dvars   ... The (mean normalized) dvars threshold to use for
-                      identifying bad frames [3.0].
-    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
-                      identifying bad frames [1.5].
-    --mov_after   ... How many frames after each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_before  ... How many frames before each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_bad     ... Which criteria to use for identification of bad frames
-                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further 
-                      information [udvarsme].
-
-    Criteria for identification of bad frames can be one out of:
-
-    * mov       ... frame displacement threshold (fdt) is exceeded
-    * dvars     ... image intensity normalized root mean squared error (RMSE) 
-                    threshold (dvarsmt) is exceeded
-    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
-    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
-    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
-    * idvarsme  ... both fdt and dvarsmet are exceeded
-    * udvarsme  ... either fdt or udvarsmet are exceeded
-
-    For more detailed description please see wiki entry on Movement scrubbing.
-
-    Reporting specific options:
-
-    --TR          ... TR of the BOLD files [2.5].
-    --mov_pref    ... The prefix to be used for the figure plot files [].
-    --mov_plot    ... The base name of the plot files. If set to empty no plots
-                      are generated [mov_report].
-    --mov_mreport ... The name of the group movement report file. If set to
-                      an empty string, no file is generated
-                      [movement_report.txt].
-    --mov_sreport ... The name of the group scrubbing report file. If set to
-                      an empty string, no file is generated
-                      [movement_scrubbing_report.txt].
-    --mov_preport ... The name of group report file with stats computed with
-                      frames identified as bad exluded from analysis. If set
-                      to an empty string, no file is generated
-                      [movement_report_post.txt].
-    --mov_post    ... The criterium for identification of bad frames that is
-                      used when generating a post scrubbing statistics
-                      group report (fd/dvars/dvars/dvarsme/idvars/idvarsme/
-                      udvars/udvarsme/none) [udvarsme].
-    --mov_fidl    ... Whether to create fidl file snippets with listed bad
-                      frames, and what criterium to use for the definition of
-                      bad frames (fd/dvars/dvars/dvarsme/idvars/idvarsme/udvars/
-                      udvarsme). Set to none to not generate them [udvarsme].
-    --mov_pdf     ... The name of the folder in sessions/QC/movement in which to
-                      copy the individuals' movement plots [movement_plots].
+      file supports session and group level analysis of movement scrubbing.
 
     NOTES AND DEPENDENCIES
     ======================
@@ -899,38 +911,41 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     and then the second step with a single core, omitting the slow generation
     of session specific plots.
 
-
     EXAMPLE USE
     ===========
 
-    ```
-    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-          overwrite=no bolds=all parsessions=1
-    ```
+    ::
 
-    ```
-    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-          overwrite=no bolds=all parsessions=10
-    ```
+        qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+              overwrite=no bolds=all parsessions=1
 
-    ```
-    qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-          overwrite=no bolds=all parsessions=1 mov_plot=""
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+              overwrite=no bolds=all parsessions=10
 
-    Changelog
+    ::
+
+        qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+              overwrite=no bolds=all parsessions=1 mov_plot=""
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2016-12-26 Grega Repovš
-             - Added documentation, added summary reporting.
+               Initial version
+    2016-12-26 Grega Repovš
+               Added documentation, added summary reporting.
     2018-06-16 Grega Repovs
-             - Changed to use useOrSkipBOLD to identify and report, which bolds
+               Changed to use useOrSkipBOLD to identify and report, which bolds
                to run on.
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations
+               Enabled multiple log file locations
     """
 
     preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0, 'boldskipped': 0}
@@ -1110,7 +1125,105 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
 def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     """
-    extractNuisanceSignal [... processing options]
+    ``extractNuisanceSignal [... processing options]``
+
+    Extracts nuisance signal from volume BOLD files.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions             The batch.txt file with all the session information.
+                           [batch.txt]
+    --sessionsfolder       The path to the study/sessions folder, where the
+                           imaging  data is supposed to go. [.]
+    --parsessions          How many sessions to run in parallel. [1]
+    --parelements          How many elements (e.g bolds) to run in
+                           parallel. [1]
+    --overwrite            Whether to overwrite existing data (yes) or not (no).
+                           [no]
+    --bolds                Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all. [rest]
+    --hcp_bold_variant     Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed. []
+    --img_suffix           Specifies a suffix for 'images' folder to enable
+                           support for multiple parallel workflows. Empty 
+                           if not used. []
+    --boldname             The default name of the bold files in the images
+                           folder. [bold]
+    --logfolder            The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default. []
+    --log                  Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed ['keep'].
+                           When a comma or pipe ('|') separated list is given, 
+                           the log will be created at the first provided location
+                           and then linked or copied to other locations. 
+                           The valid locations are:
+
+                           - 'study' (for the default: 
+                             `<study>/processing/logs/comlogs` location)
+                           - 'session' (for `<sessionid>/logs/comlogs`)
+                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+                           - '<path>'  (for an arbitrary directory)
+
+    Specific parameters
+    -------------------
+
+    In addition the following *specific* parameters are used:
+
+    --wbmask           A path to an optional file that specifies which regions
+                       are to be excluded from the whole-brain mask. It can be
+                       used in the case of ROI analyses for which one does not
+                       want to include the ROI specific signals in the global
+                       signal regression.
+    --nroi             The path to additional nuisance regressors file. It can
+                       be either a binary mask or a '.names' file that specifies
+                       the ROI to be used. Based on other options, the ROI can
+                       be further masked by session specific files or not masked
+                       at all (see USE above).
+    --sessionroi       A string specifying which session specific mask to use
+                       for further masking the additional roi. The two options
+                       are 'wb' or 'aseg' for whole brain mask or FreeSurfer
+                       aseg+aparc mask, respectively.
+    --shrinknsroi      A string specifying whether to shrink ('true' or 'yes')
+                       the whole brain and white matter masks or not.
+
+    OUTPUTS
+    =======
+
+    The command generates the following files:
+
+    --`bold[n].nuisance`
+      A text file that lists for each volume frame the information on mean
+      intensity across the ventricle, white matter and whole brain voxels, and
+      any additional nuisance ROI specified using specific parameters.
+      The file is stored in images/functional/movement folder.
+
+    --`bold[n]_nuisance.png`
+      A PNG image of axial slices of the first BOLD frame over which the
+      identified nuisance regions are overlayed. Ventricles in green, white
+      matter in red and the rest of the brain in blue. The ventricle and
+      white matter regions are defined based on FreeSurfer segmentation. Each
+      region is "trimmed" before use, so that there is at least one voxel
+      buffer between each nuisance region mask. The image is stored in
+      images/ROI/nuisance.
+
+    --`bold[n]_nuisance.<image format>`
+      An image file of the relevant image format that holds the same information
+      as the above PNG. It is a file of five volumes, the first volume holds
+      the first BOLD frame, the second the whole brain mask, the third the
+      ventricles mask and the fourth the white matter mask. The fifth volume
+      stores all three masks coded as 1 (whole brain), 2 (ventricles), or 3
+      (white matter). The image is stored in images/ROI/nuisance.
 
     USE
     ===
@@ -1148,105 +1261,9 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     ROI names in the .names file), separated from the path by a pipe ('|')
     symbol. For instance if one also would like to include eyes and scull as
     two additional nuiscance regions, one has to create a volume mask + a
-    .names file pair, and pass it as the '--nroi' parameter, e.g.:
+    .names file pair, and pass it as the '--nroi' parameter, e.g.::
 
-    --nroi="<path to ROI>/nroi.names|eyes,scull"
-
-    RESULTS
-    =======
-
-    The command generates the following files:
-
-    * bold[n].nuisance
-      A text file that lists for each volume frame the information on mean
-      intensity across the ventricle, white matter and whole brain voxels, and
-      any additional nuisance ROI specified using specific parameters.
-      The file is stored in images/functional/movement folder.
-
-    * bold[n]_nuisance.png
-      A png image of axial slices of the first BOLD frame over which the
-      identified nuisance regions are overlayed. Ventricles in green, white
-      matter in red and the rest of the brain in blue. The ventricle and
-      white matter regions are defined based on FreeSurfer segmentation. Each
-      region is "trimmed" before use, so that there is at least one voxel
-      buffer between each nuisance region mask. The image is stored in
-      images/ROI/nuisance.
-
-    * bold[n]_nuisance.<image format>
-      An image file of the relevant image format that holds the same information
-      as the above PNG. It is a file of five volumes, the first volume holds
-      the first BOLD frame, the second the whole brain mask, the third the
-      ventricles mask and the fourth the white matter mask. The fifth volume
-      stores all three masks coded as 1 (whole brain), 2 (ventricles), or 3
-      (white matter). The image is stored in images/ROI/nuisance.
-
-    RELEVANT PARAMETERS
-    ===================
-
-    general parameters
-    ------------------
-
-    When running the command, the following *general* processing parameters are
-    taken into account:
-
-    --sessions         ... The batch.txt file with all the session information
-                           [batch.txt].
-    --sessionsfolder   ... The path to the study/sessions folder, where the
-                           imaging  data is supposed to go [.].
-    --parsessions      ... How many sessions to run in parallel [1].
-    --parelements      ... How many elements (e.g bolds) to run in
-                           parralel [1].
-    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
-                           [no].
-    --bolds            ... Which bold images (as they are specified in the
-                           batch.txt file) to copy over. It can be a single
-                           type (e.g. 'task'), a pipe separated list (e.g.
-                           'WM|Control|rest') or 'all' to copy all [rest].
-    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
-                           specified, the BOLD images in                            
-                           `images/functional.<hcp_bold_variant>` will be
-                           processed [].
-    --img_suffix       ... Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty 
-                           if not used [].
-    --boldname         ... The default name of the bold files in the images
-                           folder [bold].
-    --logfolder        ... The path to the folder where runlogs and comlogs
-                           are to be stored, if other than default []
-    --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given, 
-                           the log will be created at the first provided location
-                           and then linked or copied to other locations. 
-                           The valid locations are: 
-                           * 'study'   for the default: 
-                                       `<study>/processing/logs/comlogs`
-                                       location,
-                           * 'session' for `<sessionid>/logs/comlogs
-                           * 'hcp'     for `<hcp_folder>/logs/comlogs
-                           * '<path>'  for an arbitrary directory
-
-    specific parameters
-    -------------------
-
-    In addition the following *specific* parameters are used:
-
-    --wbmask       ... A path to an optional file that specifies which regions
-                       are to be excluded from the whole-brain mask. It can be
-                       used in the case of ROI analyses for which one does not
-                       want to include the ROI specific signals in the global
-                       signal regression.
-    --nroi         ... The path to additional nuisance regressors file. It can
-                       be either a binary mask or a '.names' file that specifies
-                       the ROI to be used. Based on other options, the ROI can
-                       be further masked by session specific files or not masked
-                       at all (see USE above).
-    --sessionroi    ... A string specifying which session specific mask to use
-                       for further masking the additional roi. The two options
-                       are 'wb' or 'aseg' for whole brain mask or FreeSurfer
-                       aseg+aparc mask, respectively.
-    --shrinknsroi  ... A string specifying whether to shrink ('true' or 'yes')
-                       the whole brain and white matter masks or not.
+        --nroi="<path to ROI>/nroi.names|eyes,scull"
 
     NOTES AND DEPENDENCIES
     ======================
@@ -1263,29 +1280,33 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
     
-    ```
-    qunex extractNuisanceSignal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-         overwrite=no bolds=all parsessions=10
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex extractNuisanceSignal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+             overwrite=no bolds=all parsessions=10
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2016-12-26 Grega Repovš
-             - Added documentation, fixed the issue with cifti targets, added
+               Initial version
+    2016-12-26 Grega Repovš
+               Added documentation, fixed the issue with cifti targets, added
                summary reporting.
     2018-06-16 Grega Repovs
-             - Changed to include boldnumber in log and to use useOrSkipBOLD
+               Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
     2018-11-16 Jure Demsar
-            - Parallel implementation.
+               Parallel implementation.
     2019-01-12 Grega Repovš
-             - More robust identification of cifti files
+               More robust identification of cifti files
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations
+               Enabled multiple log file locations
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1444,93 +1465,78 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
 
 def preprocessBold(sinfo, options, overwrite=False, thread=0):
     """
-    preprocessBold [... processing options]
+    ``preprocessBold [... processing options]``
 
-    USE
-    ===
+    Prepares BOLD files for further functional connectivity analysis.
 
-    preprocessBold is a complex command initially used to prepare BOLD files
-    for further functional connectivity analysis. The function enables the
-    following actions:
-
-    * spatial smoothing (3D or 2D for cifti files)
-    * temporal filtering (high-pass, low-pass)
-    * removal of nuisance signal and task structure
-
-    The function makes use of a number of files and accepts a long list of
-    arguments that make it very powerfull and flexible but also require care in
-    its use. What follows is a detailed documentation of its actions and
-    parameters organised by actions in the order they would be most commonly
-    done. Use and parameter description will be intertwined.
-
-    BASICS
+    INPUTS
     ======
 
     Basics specify which files are to be processed
 
-    general parameters
+    General parameters
     ------------------
 
     The function takes the usual general processing parameters:
 
-    --sessions        ... The batch.txt file with all the session information
+    --sessions            The batch.txt file with all the session information
                           [batch.txt].
-    --sessionsfolder  ... The path to the study/sessions folder, where the
+    --sessionsfolder      The path to the study/sessions folder, where the
                           imaging  data is supposed to go [.].
-    --parsessions     ... How many sessions to run in parallel [1].
-    --parelements     ... How many elements (e.g bolds) to run in
-                          parralel [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+    --parsessions         How many sessions to run in parallel [1].
+    --parelements         How many elements (e.g bolds) to run in
+                          parallel [1].
+    --overwrite           Whether to overwrite existing data (yes) or not (no)
                           [no].
-    --boldname        ... The default name of the bold files in the images
+    --boldname            The default name of the bold files in the images
                           folder [bold].
-    --image_target    ... The target format to work with, one of 4dfp, nifti,
+    --image_target        The target format to work with, one of 4dfp, nifti,
                           dtseries or ptseries [nifti].
-    --logfolder       ... The path to the folder where runlogs and comlogs
+    --logfolder           The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
+    --log                 Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
                           When a comma or pipe ('|') separated list is given, 
                           the log will be created at the first provided location
                           and then linked or copied to other locations. 
-                          The valid locations are: 
-                          * 'study'   for the default: 
-                                      `<study>/processing/logs/comlogs`
-                                      location,
-                          * 'session' for `<sessionid>/logs/comlogs
-                          * 'hcp'     for `<hcp_folder>/logs/comlogs
-                          * '<path>'  for an arbitrary directory
+                          The valid locations are:
 
-    specific parameters
+                          - 'study'   (for the default: 
+                            `<study>/processing/logs/comlogs` location)
+                          - 'session' (for `<sessionid>/logs/comlogs`)
+                          - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+                          - '<path>'  (for an arbitrary directory)
+
+    Specific parameters
     -------------------
 
     There are a number of basic specific parameters for this command that are
     relevant for all or most of the actions:
 
-    --bolds            ... A pipe ('|') separated list of bold files to process.
-    --event_file       ... The name of the fidl file to be used with each bold.
-    --bold_actions     ... A string specifying which actions, and in what sequence
+    --bolds                A pipe ('|') separated list of bold files to process.
+    --event_file           The name of the fidl file to be used with each bold.
+    --bold_actions         A string specifying which actions, and in what sequence
                            to perform [s,h,r,c,l]
-    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+    --hcp_bold_variant     Optional variant of HCP BOLD preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].    
-    --bold_prefix      ... An optional prefix to place in front of processing
+    --bold_prefix          An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
                            bold3<bold_prefix>_s_hpss.nii.gz [].
-    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+    --img_suffix           Specifies a suffix for 'images' folder to enable
                            support for multiple parallel workflows. Empty 
                            if not used [].
 
     List of bold files specify, which types of bold files are to be processed,
     as they are specified in the batch.txt file. An example of a list of
-    bolds in batch.txt would be:
+    bolds in batch.txt would be::
 
-    07: bold1:blink       :BOLD blink 3mm 48 2.5s
-    08: bold2:flanker     :BOLD flanker 3mm 48 2.5s
-    09: bold3:EC          :BOLD EC 3mm 48 2.5s
-    10: bold4:mirror      :BOLD mirror 3mm 48 2.5s
-    11: bold5:rest        :RSBOLD 3mm 48 2.5s
+        07: bold1:blink       :BOLD blink 3mm 48 2.5s
+        08: bold2:flanker     :BOLD flanker 3mm 48 2.5s
+        09: bold3:EC          :BOLD EC 3mm 48 2.5s
+        10: bold4:mirror      :BOLD mirror 3mm 48 2.5s
+        11: bold5:rest        :RSBOLD 3mm 48 2.5s
 
     With --bolds set to "blink|EC|rest", bold1, 3, and 5 would be
     processed. If it were set to "all", all would be processed. As each bold
@@ -1547,19 +1553,36 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     The actions that can be performed are denoted by a single letter, and they
     will be executed in the sequence listed:
 
-    m ... Motion scrubbing.
-    s ... Spatial smooting.
-    h ... High-pass filtering.
-    r ... Regression (nuisance and/or task) with an optional number 0, 1, or 2
-          specifying the type of regression to use (see REGRESSION below).
-    c ... Saving of resulting beta coefficients (allways to follow 'r').
-    l ... Low-pass filtering.
+    --m     Motion scrubbing.
+    --s     Spatial smoothing.
+    --h     High-pass filtering.
+    --r     Regression (nuisance and/or task) with an optional number 0, 1, or 2
+            specifying the type of regression to use (see REGRESSION below).
+    --c     Saving of resulting beta coefficients (always to follow 'r').
+    --l     Low-pass filtering.
 
     So the default 's,h,r,c,l' --bold_actions parameter would lead to the files
     first being smoothed, then high-pass filtered. Next a regression step
     would follow in which nuisance signal and/or task related signal would
     be estimated and regressed out, then the related beta estimates would
     be saved. Lastly the BOLDs would be also low-pass filtered.
+
+    USE
+    ===
+
+    preprocessBold is a complex command initially used to prepare BOLD files
+    for further functional connectivity analysis. The function enables the
+    following actions:
+
+    - spatial smoothing (3D or 2D for cifti files)
+    - temporal filtering (high-pass, low-pass)
+    - removal of nuisance signal and task structure
+
+    The function makes use of a number of files and accepts a long list of
+    arguments that make it very powerful and flexible but also require care in
+    its use. What follows is a detailed documentation of its actions and
+    parameters organized by actions in the order they would be most commonly
+    done. Use and parameter description will be intertwined.
 
     SCRUBBING
     =========
@@ -1568,71 +1591,71 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     comuputation on its own (when 'm' is part of the command). In the latter
     case, all the scrubbing parameters need to be specified:
 
-    --mov_radius  ... Estimated head radius (in mm) for computing frame
+    --mov_radius      Estimated head radius (in mm) for computing frame
                       displacement statistics [50].
-    --mov_fd      ... Frame displacement threshold (in mm) to use for
+    --mov_fd          Frame displacement threshold (in mm) to use for
                       identifying bad frames [0.5]
-    --mov_dvars   ... The (mean normalized) dvars threshold to use for
+    --mov_dvars       The (mean normalized) dvars threshold to use for
                       identifying bad frames [3.0].
-    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
+    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
                       identifying bad frames [1.5].
-    --mov_after   ... How many frames after each frame identified as bad
+    --mov_after       How many frames after each frame identified as bad
                       to also exclude from further processing and analysis [0].
-    --mov_before  ... How many frames before each frame identified as bad
+    --mov_before      How many frames before each frame identified as bad
                       to also exclude from further processing and analysis [0].
-    --mov_bad     ... Which criteria to use for identification of bad frames
+    --mov_bad         Which criteria to use for identification of bad frames
                       (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
                       See movement scrubbing documentation for further 
                       information [udvarsme].
 
     Criteria for identification of bad frames can be one out of:
 
-    * mov       ... frame displacement threshold (fdt) is exceeded
-    * dvars     ... image intensity normalized root mean squared error (RMSE) 
-                    threshold (dvarsmt) is exceeded
-    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
-    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
-    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
-    * idvarsme  ... both fdt and dvarsmet are exceeded
-    * udvarsme  ... either fdt or udvarsmet are exceeded
+    --mov       Frame displacement threshold (fdt) is exceeded.
+    --dvars     Image intensity normalized root mean squared error (RMSE) 
+                threshold (dvarsmt) is exceeded.
+    --dvarsme   Median normalised RMSE (dvarsmet) threshold is exceeded.
+    --idvars    Both fdt and dvarsmt are exceeded (i for intersection).
+    --uvars     Either fdt or dvarsmt are exceeded (u for union).
+    --idvarsme  Both fdt and dvarsmet are exceeded.
+    --udvarsme  Either fdt or udvarsmet are exceeded.
 
     For more detailed description please see wiki entry on Movement scrubbing.
 
-    In any case, if scrubbing was done beforehand or as a part of this commmand,
+    In any case, if scrubbing was done beforehand or as a part of this command,
     one has to specify, how the scrubbing information is used:
 
-    --pignore  ... String describing how to deal with bad frames.
+    --pignore  String describing how to deal with bad frames.
 
-    The string has the following format:
+    The string has the following format::
 
-    'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
+        'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
 
     Filtering options are:
 
-    * keep   ... Keep all the bad frames unchanged.
-    * linear ... Replace bad frames with linear interpolated values based on
-                 neighbouring good frames.
-    * spline ... Replace bad frames with spline interpolated values based on
-                 neighouring good frames
+    --keep       Keep all the bad frames unchanged.
+    --linear     Replace bad frames with linear interpolated values based on
+                 neighboring good frames.
+    --spline     Replace bad frames with spline interpolated values based on
+                 neighboring good frames.
 
-    To prevent artefacts present in bad frames to be temporaly spread, use
+    To prevent artifacts present in bad frames to be temporarily spread, use
     either 'linear' or 'spline' options.
 
     Regression options are:
 
-    * keep   ... Keep the bad frames and use them in the regression.
-    * ignore ... Exclude bad frames from regression.
-    * mark   ... Exclude bad frames from regression and mark the bad frames
+    --keep       Keep the bad frames and use them in the regression.
+    --ignore     Exclude bad frames from regression.
+    --mark       Exclude bad frames from regression and mark the bad frames
                  as NaN.
-    * linear ... Replace bad frames with linear interpolated values based on
-                 neighbouring good frames.
-    * spline ... Replace bad frames with spline interpolated values based on
-                 neighouring good frames
+    --linear     Replace bad frames with linear interpolated values based on
+                 neighboring good frames.
+    --spline     Replace bad frames with spline interpolated values based on
+                 neighboring good frames.
 
     Please note that when the bad frames are not kept, the original values will
     be retained in the residual signal. In this case they have to be excluded
     or ignored also in all following analyses, otherwise they can be a
-    significant source of artefacts.
+    significant source of artifacts.
 
     SPATIAL SMOOTHING
     =================
@@ -1641,15 +1664,15 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     ----------------
 
     For volume formats the images will be smoothed using the img_Smooth3D
-    nimage method. For cifti format the smooting will be done by calling the
+    nimage method. For cifti format the smoothing will be done by calling the
     relevant wb_command command. The smoothing specific parameters are:
 
-    --voxel_smooth  ... Gaussian smoothing FWHM in voxels [2]
-    --smooth_mask   ... Whether to smooth only within a mask, and what mask to
-                        use (nonzero/brainsignal/brainmask/<filename>)[false].
-    --dilate_mask   ... Whether to dilate the image after masked smoothing and
+    --voxel_smooth      Gaussian smoothing FWHM in voxels. [2]
+    --smooth_mask       Whether to smooth only within a mask, and what mask to
+                        use (nonzero/brainsignal/brainmask/<filename>). [false]
+    --dilate_mask       Whether to dilate the image after masked smoothing and
                         what mask to use (nonzero/brainsignal/brainmask/
-                        same/<filename>)[false].
+                        same/<filename>). [false]
 
     If a smoothing mask is set, only the signal within the specified mask will
     be used in the smoothing. If a dilation mask is set, after smoothing within
@@ -1658,20 +1681,20 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     For both parameters the possible options are:
 
-    * nonzero      ... Mask will consist of all the nonzero voxels of the first
+    --nonzero          Mask will consist of all the nonzero voxels of the first
                        BOLD frame.
-    * brainsignal  ... Mask will consist of all the voxels that are of value
+    --brainsignal      Mask will consist of all the voxels that are of value
                        300 or higher in the first BOLD frame (this gave a good
                        coarse brain mask for images intensity normalized to
                        mode 1000 in the NIL preprocessing stream).
-    * brainmask    ... Mask will be the actual bet extracted brain mask based
+    --brainmask        Mask will be the actual bet extracted brain mask based
                        on the first BOLD frame (generated using in the
                        creatBOLDBrainMasks command).
-    * <filename>   ... All the non-zero voxels in a specified volume file will
+    --filename         All the non-zero voxels in a specified volume file will
                        be used as a mask.
-    * false        ... No mask will be used.
-    * same         ... Only for dilate_mask, the mask used will be the same as
-                       smooting mask.
+    --false            No mask will be used.
+    --same             Only for dilate_mask, the mask used will be the same as
+                       smoothing mask.
 
     Cifti smoothing
     ---------------
@@ -1679,13 +1702,13 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     For cifti format images, smoothing will be run using wb_command. The
     following parameters can be set:
 
-    --surface_smooth  ... FWHM for gaussian surface smooting in mm [6.0].
-    --volume_smooth   ... FWHM for gaussian volume smooting in mm [6.0].
-    --omp_threads     ... Number of cores to be used by wb_command. 0 for no
+    --surface_smooth      FWHM for Gaussian surface smoothing in mm [6.0].
+    --volume_smooth       FWHM for Gaussian volume smoothing in mm [6.0].
+    --omp_threads         Number of cores to be used by wb_command. 0 for no
                           change of system settings [0].
-    --framework_path  ... The path to framework libraries on the Mac system.
+    --framework_path      The path to framework libraries on the Mac system.
                           No need to use it currently if installed correctly.
-    --wb_command_path ... The path to the wb_command executive. No need to
+    --wb_command_path     The path to the wb_command executive. No need to
                           use it currently if installed correctly.
 
     Results
@@ -1703,10 +1726,10 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     bad frames (as described above - see SCRUBBING). The specific parameters
     are:
 
-    --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
-    --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
+    --hipass_filter      The frequency for high-pass filtering in Hz [0.008].
+    --lopass_filter      The frequency for low-pass filtering in Hz [0.09].
 
-    Please note that the values finaly passed to img_Filter method are the
+    Please note that the values finally passed to img_Filter method are the
     respective sigma values computed from the specified frequencies and TR.
 
     Results
@@ -1715,7 +1738,6 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     The resulting filtered files are saved with '_hpss' or '_bpss' added to the
     BOLD root filename for high-pass and low-pass filtering, respectively.
 
-
     REGRESSION
     ==========
 
@@ -1723,31 +1745,32 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     weights for the specified nuisance regressors and events. The resulting
     beta weights are then stored in a GLM file (a regular file with additional
     information on the design used) and residuals are stored in a separate file.
-    This step can therefore be used for two puposes: (1) to remove nuisance
+    This step can therefore be used for two purposes: (1) to remove nuisance
     signal and event structure from BOLD files, removing unwanted potential
     sources of correlation for further functional connectivity analyses, and
-    (2) to get task beta estimates for further activational analyses. The
+    (2) to get task beta estimates for further activation analyses. The
     following specific parameters are used in this step:
 
-    --bold_nuisance  ... A comma separated list of regressors to include in GLM.
-                         Possible values are:
-                         * m  - motion parameters
-                         * V  - ventricles signal
-                         * WM - white matter signal
-                         * WB - whole brain signal
-                         * 1d - first derivative of above nuisance signals
-                         * e  - events listed in the provided fidl files (see
-                                above), modeled as specified in the event_string
-                                parameter.
-                         [m,V,WM,WB,1d]
-    --event_string   ... A string describing, how to model the events listed in
-                         the provided fidl files [].
-    --glm_matrix     ... Whether to save the GLM matrix as a text file ('text'),
+    --bold_nuisance      A comma separated list of regressors to include in GLM.
+                         Possible values are: [m,V,WM,WB,1d]
+
+                         - m  (motion parameters)
+                         - V  (ventricles signal)
+                         - WM (white matter signal)
+                         - WB (whole brain signal)
+                         - 1d (first derivative of above nuisance signals)
+                         - e  (events listed in the provided fidl files (see
+                           above), modeled as specified in the event_string
+                           parameter.)
+                         
+    --event_string       A string describing, how to model the events listed in
+                         the provided fidl files. []
+    --glm_matrix         Whether to save the GLM matrix as a text file ('text'),
                          a png image file ('image'), both ('both') or not
-                         ('none') [none].
-    --glm_residuals  ... Whether to save the residuals after GLM regression
-                         ('save') or not ('none') [save].
-    --glm_name       ... An additional name to add to the residuals and GLM
+                         ('none'). [none]
+    --glm_residuals      Whether to save the residuals after GLM regression
+                         ('save') or not ('none'). [save]
+    --glm_name           An additional name to add to the residuals and GLM
                          files to distinguish between different possible models
                          used.
 
@@ -1759,22 +1782,30 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     by the --event_string parameter. The event string is a pipe ('|') separated
     list of regressor specifications. The possibilities are:
 
-    __Unassumed Modelling__
-    <fidl code>:<length in frames>
-    where <fidl code> is the code for the event used in the fidl file, and
+    Unassumed Modeling
+    ~~~~~~~~~~~~~~~~~~
+    ::
+
+        <fidl code>:<length in frames>
+
+    Where <fidl code> is the code for the event used in the fidl file, and
     <length in frames> specifies, for how many frames of the bold run (since
     the onset of the event) the event should be modeled.
 
-    __Assumed Modelling__
-    <fidl code>:<hrf>[:<length>]
-    where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
+    Assumed Modeling
+    ~~~~~~~~~~~~~~~~
+    ::
+
+        <fidl code>:<hrf>[:<length>]
+
+    Where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
     response function to use, and <length> is an optional parameter, with its
     value dependent on the model used. The allowed <hrf> are:
 
-    boynton ... uses the Boynton HRF
-    SPM     ... uses the SPM double gaussian HRF
-    u       ... unassumed (see above)
-    block   ... block response
+    - boynton (uses the Boynton HRF)
+    - SPM     (uses the SPM double gaussian HRF)
+    - u       (unassumed (see above))
+    - block   (block response)
 
     For the first two, the <length> parameter is optional and would override the
     event duration information provided in the fidl file. For 'u' the length is
@@ -1782,26 +1813,31 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     length should be two numbers separated by a colon (e.g. 2:9) that specify
     the start and end offset (from the event onset) to model as a block.
 
-    __Naming And Behavioral Regressors__
-    Each of the above (unassumed and assumed modelling specification) can be
+    Naming And Behavioral Regressors
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Each of the above (unassumed and assumed modeling specification) can be
     followed by a ">" (greater-than character), which signifies additional
-    information in the form:
+    information in the form::
 
-    <name>[:<column>[:<normalization span>[:<normalization method>]]]
+        <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
 
-    name   ... The name of the resulting regressor.
-    column ... The number of the additional behavioral regressor column in the
-               fidl file (1-based) to use as a weight for the regressor.
-    normalization span   ... Whether to normalize the behavioral weight within
-                             a specific event type ('within') or across all
-                             events ('across') [within].
-    normalization method ... The method to use for normalization. Options are
-                             z   ... compute Z-score
-                             01  ... normalize to fixed range 0 to 1
-                             -11 ... normalize to fixed range -1 to 1
+    --name                  The name of the resulting regressor.
+    --column                The number of the additional behavioral regressors 
+                            column in the fidl file (1-based) to use as a weight
+                            for the regressors.
+    --normalization_span    Whether to normalize the behavioral weight within
+                            a specific event type ('within') or across all
+                            events ('across'). [within]
+    --normalization_method  The method to use for normalization. Options are:
 
-    Example string:
-    'block:boynton|target:9|target:9>target_rt:1:within:z'
+                            - z  (compute Z-score)
+                            - 01 (normalize to fixed range 0 to 1)
+                            - 11 (normalize to fixed range -1 to 1)
+
+    Example string::
+
+        'block:boynton|target:9|target:9>target_rt:1:within:z'
 
     This would result in three sets of task regressors: one assumed task
     regressor for the sustained activity across the block, one unassumed
@@ -1815,10 +1851,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     This step results in the following files (if requested):
 
-    * residual image:
-      <root>_res-<regressors>.<ext>
-    * GLM coefficient image:
-      <root>_res-<regressors>_coeff.<ext>
+    - residual image (``<root>_res-<regressors>.<ext>``)
+    - GLM coefficient image (``<root>_res-<regressors>_coeff.<ext>``)
 
     If you want more specific GLM results and information, please use
     preprocessConc command.
@@ -1826,33 +1860,37 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
     
-    ```
-    qunex preprocessBold sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-         overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
-         bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
-         pignore="hipass=linear|regress=ignore|lopass=linear" \\
-         nprocess=0
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex preprocessBold sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+             overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
+             bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
+             pignore="hipass=linear|regress=ignore|lopass=linear" \\
+             nprocess=0
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2017-02-11 Grega Repovš
-             - Added additional documentation.
+               Initial version
+    2017-02-11 Grega Repovš
+               Added additional documentation.
     2017-08-11 Grega Repovš
-             - Added ability to process ptseries images.
+               Added ability to process ptseries images.
     2018-06-16 Grega Repovs
-             - Changed to include boldnumber in log and to use useOrSkipBOLD
+               Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
     2018-11-16 Jure Demsar
-             - Parallel implementation.
+               Parallel implementation.
     2019-01-12 Grega Repovš
-             - Changed how bold_tail is identified
+               Changed how bold_tail is identified
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations
+               Enabled multiple log file locations
     """
 
     doOptionsCheck(options, sinfo, 'preprocessBold')  
@@ -2043,7 +2081,10 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
 def preprocessConc(sinfo, options, overwrite=False, thread=0):
     """
-    preprocessConc [... processing options]
+    ``preprocessConc [... processing options]``    
+
+    Performs spatial smoothing, temporal filtering, removal of nuisance signals
+    and complex modeling of events.
 
     USE
     ===
@@ -2055,99 +2096,97 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     GLM files for second-level analyses. The function enables the
     following actions:
 
-    * spatial smoothing (3D or 2D for cifti files)
-    * temporal filtering (high-pass, low-pass)
-    * removal of nuisance signal
-    * complex modeling of events
+    - spatial smoothing (3D or 2D for cifti files)
+    - temporal filtering (high-pass, low-pass)
+    - removal of nuisance signal
+    - complex modeling of events
 
     The function makes use of a number of files and accepts a long list of
-    arguments that make it very powerfull and flexible but also require care in
+    arguments that make it very powerful and flexible but also require care in
     its use. What follows is a detailed documentation of its actions and
-    parameters organised by actions in the order they would be most commonly
+    parameters organized by actions in the order they would be most commonly
     done. Use and parameter description will be intertwined.
 
-    BASICS
+    INPUTS
     ======
 
-    Basics specify which files are to be processed
-
-    general parameters
+    General parameters
     ------------------
 
     The function takes the usual general processing parameters:
 
-    --sessions        ... The batch.txt file with all the session information
+    --sessions            The batch.txt file with all the session information
                           [batch.txt].
-    --sessionsfolder  ... The path to the study/sessions folder, where the
+    --sessionsfolder      The path to the study/sessions folder, where the
                           imaging  data is supposed to go [.].
-    --parsessions     ... How many sessions to run in parallel [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+    --parsessions         How many sessions to run in parallel [1].
+    --overwrite           Whether to overwrite existing data (yes) or not (no)
                           [no].
-    --boldname        ... The default name of the bold files in the images
+    --boldname            The default name of the bold files in the images
                           folder [bold].    
-    --image_target    ... The target format to work with, one of 4dfp, nifti,
+    --image_target        The target format to work with, one of 4dfp, nifti,
                           dtseries or ptseries [nifti].
-    --logfolder       ... The path to the folder where runlogs and comlogs
+    --logfolder           The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
+    --log                 Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
                           When a comma or pipe ('|') separated list is given, 
                           the log will be created at the first provided location
                           and then linked or copied to other locations. 
-                          The valid locations are: 
-                          * 'study'   for the default: 
-                                      `<study>/processing/logs/comlogs`
-                                      location,
-                          * 'session' for `<sessionid>/logs/comlogs
-                          * 'hcp'     for `<hcp_folder>/logs/comlogs
-                          * '<path>'  for an arbitrary directory
+                          The valid locations are:
 
-    specific parameters
+                          - 'study'   (for the default: 
+                            `<study>/processing/logs/comlogs` location)
+                          - 'session' (for `<sessionid>/logs/comlogs`)
+                          - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+                          - '<path>'  (for an arbitrary directory)
+
+    Specific parameters
     -------------------
 
     There are a number of basic specific parameters for this command that are
     relevant for all or most of the actions:
 
-    --bolds            ... A pipe ('|') separated list of conc names to process.
-    --event_file       ... A pipe ('|') separated list of fidl names to use, that
+    --bolds                A pipe ('|') separated list of conc names to process.
+    --event_file           A pipe ('|') separated list of fidl names to use, that
                            matches the conc list.
-    --bold_actions     ... A string specifying which actions, and in what sequence
+    --bold_actions         A string specifying which actions, and in what sequence
                            to perform [s,h,r,c,l]
-    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+    --hcp_bold_variant     Optional variant of HCP BOLD preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
-    --img_suffix       ... Specifies a suffix for 'images' folder to enable
+    --img_suffix           Specifies a suffix for 'images' folder to enable
                            support for multiple parallel workflows. Empty 
                            if not used [].
-    --bold_prefix      ... An optional prefix to place in front of processing
+    --bold_prefix          An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
                            bold3<bold_prefix>_s_hpss.nii.gz [].
-    --conc_use         ... Whether to use information in the conc file as 
+    --conc_use             Whether to use information in the conc file as 
                            relative or absolute ['relative'].
 
 
     The two names give the bases for searching for the appropriate .conc and
-    .fidl files. Both are first searched for in images/functional/concs and
+    .fidl files. Both are first searched for in `images/functional/concs` and
     images/functional/events folders respectively. There they would be named as
-    [<session id>_]<boldname>_<image_target>_<conc name>.conc and
-    [<session id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
+    `[<session id>_]<boldname>_<image_target>_<conc name>.conc` and
+    `[<session id>_]<boldname>_<image_target>_<fidl name>.fidl`. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual session's folders, they are
-    searched for in the <sessionsfolder>/inbox/events and
-    <sessionsfolder>/inbox/concs folder. In that case the "<session id>_" is not
-    optional but required.
+    searched for in the `<sessionsfolder>/inbox/events` and
+    `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_" is
+    not optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
     will be executed in the sequence listed:
 
-    m ... Motion scrubbing.
-    s ... Spatial smooting.
-    h ... High-pass filtering.
-    r ... Regression (nuisance and/or task) with an optional number 0, 1, or 2
-          specifying the type of regression to use (see REGRESSION below).
-    c ... Saving of resulting beta coefficients (allways to follow 'r').
-    l ... Low-pass filtering.
+    --m     Motion scrubbing.
+    --s     Spatial smoothing.
+    --h     High-pass filtering.
+    --r     Regression (nuisance and/or task) with an optional number 0, 1, or 2
+            specifying the type of regression to use (see REGRESSION below).
+    --c     Saving of resulting beta coefficients (always to follow 'r').
+    --l     Low-pass filtering.
 
     So the default 's,h,r,c,l' --bold_actions parameter would lead to the files
     first being smoothed, then high-pass filtered. Next a regression step
@@ -2185,69 +2224,69 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     comuputation on its own (when 'm' is part of the command). In the latter
     case, all the scrubbing parameters need to be specified:
 
-    --mov_radius  ... Estimated head radius (in mm) for computing frame
+    --mov_radius      Estimated head radius (in mm) for computing frame
                       displacement statistics [50].
-    --mov_fd      ... Frame displacement threshold (in mm) to use for
+    --mov_fd          Frame displacement threshold (in mm) to use for
                       identifying bad frames [0.5]
-    --mov_dvars   ... The (mean normalized) dvars threshold to use for
+    --mov_dvars       The (mean normalized) dvars threshold to use for
                       identifying bad frames [3.0].
-    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
+    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
                       identifying bad frames [1.5].
-    --mov_after   ... How many frames after each frame identified as bad
+    --mov_after       How many frames after each frame identified as bad
                       to also exclude from further processing and analysis [0].
-    --mov_before  ... How many frames before each frame identified as bad
+    --mov_before      How many frames before each frame identified as bad
                       to also exclude from further processing and analysis [0].
-    --mov_bad     ... Which criteria to use for identification of bad frames
+    --mov_bad         Which criteria to use for identification of bad frames
                       [udvarsme].
 
     Criteria for identification of bad frames can be one out of:
 
-    * mov       ... frame displacement threshold (fdt) is exceeded
-    * dvars     ... image intensity normalized root mean squared error (RMSE) 
-                    threshold (dvarsmt) is exceeded
-    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
-    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
-    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
-    * idvarsme  ... both fdt and dvarsmet are exceeded
-    * udvarsme  ... either fdt or udvarsmet are exceeded
+    --mov           Frame displacement threshold (fdt) is exceeded.
+    --dvars         Image intensity normalized root mean squared error (RMSE) 
+                    threshold (dvarsmt) is exceeded.
+    --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
+    --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
+    --uvars         Either fdt or dvarsmt are exceeded (u for union).
+    --idvarsme      Both fdt and dvarsmet are exceeded.
+    --udvarsme      Either fdt or udvarsmet are exceeded.
 
     For more detailed description please see wiki entry on Movement scrubbing.
 
-    In any case, if scrubbing was done beforehand or as a part of this commmand,
+    In any case, if scrubbing was done beforehand or as a part of this command,
     one has to specify, how the scrubbing information is used:
 
-    --pignore  ... String describing how to deal with bad frames.
+    --pignore       String describing how to deal with bad frames.
 
-    The string has the following format:
+    The string has the following format::
 
-    'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
+        'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
 
     Filtering options are:
 
-    * keep   ... Keep all the bad frames unchanged.
-    * linear ... Replace bad frames with linear interpolated values based on
-                 neighbouring good frames.
-    * spline ... Replace bad frames with spline interpolated values based on
-                 neighouring good frames
+    --keep       Keep all the bad frames unchanged.
+    --linear     Replace bad frames with linear interpolated values based on
+                 neighboring good frames.
+    --spline     Replace bad frames with spline interpolated values based on
+                 neighboring good frames.
 
-    To prevent artefacts present in bad frames to be temporaly spread, use
+    To prevent artifacts present in bad frames to be temporarily spread, use
     either 'linear' or 'spline' options.
 
     Regression options are:
 
-    * keep   ... Keep the bad frames and use them in the regression.
-    * ignore ... Exclude bad frames from regression.
-    * mark   ... Exclude bad frames from regression and mark the bad frames
+    --keep       Keep the bad frames and use them in the regression.
+    --ignore     Exclude bad frames from regression.
+    --mark       Exclude bad frames from regression and mark the bad frames
                  as NaN.
-    * linear ... Replace bad frames with linear interpolated values based on
-                 neighbouring good frames.
-    * spline ... Replace bad frames with spline interpolated values based on
-                 neighouring good frames
+    --linear     Replace bad frames with linear interpolated values based on
+                 neighboring good frames.
+    --spline     Replace bad frames with spline interpolated values based on
+                 neighboring good frames.
 
     Please note that when the bad frames are not kept, the original values will
     be retained in the residual signal. In this case they have to be excluded
     or ignored also in all following analyses, otherwise they can be a
-    significant source of artefacts.
+    significant source of artifacts.
 
     SPATIAL SMOOTHING
     =================
@@ -2259,10 +2298,10 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     nimage method. For cifti format the smooting will be done by calling the
     relevant wb_command command. The smoothing specific parameters are:
 
-    --voxel_smooth  ... Gaussian smoothing FWHM in voxels [2]
-    --smooth_mask   ... Whether to smooth only within a mask, and what mask to
+    --voxel_smooth      Gaussian smoothing FWHM in voxels [2]
+    --smooth_mask       Whether to smooth only within a mask, and what mask to
                         use (nonzero/brainsignal/brainmask/<filename>)[false].
-    --dilate_mask   ... Whether to dilate the image after masked smoothing and
+    --dilate_mask       Whether to dilate the image after masked smoothing and
                         what mask to use (nonzero/brainsignal/brainmask/
                         same/<filename>)[false].
 
@@ -2273,20 +2312,20 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     For both parameters the possible options are:
 
-    * nonzero      ... Mask will consist of all the nonzero voxels of the first
+    --nonzero          Mask will consist of all the nonzero voxels of the first
                        BOLD frame.
-    * brainsignal  ... Mask will consist of all the voxels that are of value
+    --brainsignal      Mask will consist of all the voxels that are of value
                        300 or higher in the first BOLD frame (this gave a good
                        coarse brain mask for images intensity normalized to
                        mode 1000 in the NIL preprocessing stream).
-    * brainmask    ... Mask will be the actual bet extracted brain mask based
+    --brainmask        Mask will be the actual bet extracted brain mask based
                        on the first BOLD frame (generated using in the
                        creatBOLDBrainMasks command).
-    * <filename>   ... All the non-zero voxels in a specified volume file will
+    --filename         All the non-zero voxels in a specified volume file will
                        be used as a mask.
-    * false        ... No mask will be used.
-    * same         ... Only for dilate_mask, the mask used will be the same as
-                       smooting mask.
+    --false            No mask will be used.
+    --same             Only for dilate_mask, the mask used will be the same as
+                       smoothing mask.
 
     Cifti smoothing
     ---------------
@@ -2294,13 +2333,13 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     For cifti format images, smoothing will be run using wb_command. The
     following parameters can be set:
 
-    --surface_smooth  ... FWHM for gaussian surface smooting in mm [6.0].
-    --volume_smooth   ... FWHM for gaussian volume smooting in mm [6.0].
-    --omp_threads     ... Number of cores to be used by wb_command. 0 for no
+    --surface_smooth      FWHM for Gaussian surface smoothing in mm [6.0].
+    --volume_smooth       FWHM for Gaussian volume smoothing in mm [6.0].
+    --omp_threads         Number of cores to be used by wb_command. 0 for no
                           change of system settings [0].
-    --framework_path  ... The path to framework libraries on the Mac system.
+    --framework_path      The path to framework libraries on the Mac system.
                           No need to use it currently if installed correctly.
-    --wb_command_path ... The path to the wb_command executive. No need to
+    --wb_command_path     The path to the wb_command executive. No need to
                           use it currently if installed correctly.
 
     Results
@@ -2318,8 +2357,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     bad frames (as described above - see SCRUBBING). The specific parameters
     are:
 
-    --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
-    --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
+    --hipass_filter      The frequency for high-pass filtering in Hz [0.008].
+    --lopass_filter      The frequency for low-pass filtering in Hz [0.09].
 
     Please note that the values finaly passed to img_Filter method are the
     respective sigma values computed from the specified frequencies and TR.
@@ -2330,7 +2369,6 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     The resulting filtered files are saved with '_hpss' or '_bpss' added to the
     BOLD root filename for high-pass and low-pass filtering, respectively.
 
-
     REGRESSION
     ==========
 
@@ -2338,31 +2376,32 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     weights for the specified nuisance regressors and events. The resulting
     beta weights are then stored in a GLM file (a regular file with additional
     information on the design used) and residuals are stored in a separate file.
-    This step can therefore be used for two puposes: (1) to remove nuisance
+    This step can therefore be used for two purposes: (1) to remove nuisance
     signal and event structure from BOLD files, removing unwanted potential
     sources of correlation for further functional connectivity analyses, and
-    (2) to get task beta estimates for further activational analyses. The
+    (2) to get task beta estimates for further activation analyses. The
     following specific parameters are used in this step:
 
-    --bold_nuisance  ... A comma separated list of regressors to include in GLM.
-                         Possible values are:
-                         * m  - motion parameters
-                         * V  - ventricles signal
-                         * WM - white matter signal
-                         * WB - whole brain signal
-                         * 1d - first derivative of above nuisance signals
-                         * e  - events listed in the provided fidl files (see
-                                above), modeled as specified in the event_string
-                                parameter.
-                         [m,V,WM,WB,1d]
-    --event_string   ... A string describing, how to model the events listed in
-                         the provided fidl files [].
-    --glm_matrix     ... Whether to save the GLM matrix as a text file ('text'),
+    --bold_nuisance      A comma separated list of regressors to include in GLM.
+                         Possible values are: [m,V,WM,WB,1d]
+
+                         - m  (motion parameters)
+                         - V  (ventricles signal)
+                         - WM (white matter signal)
+                         - WB (whole brain signal)
+                         - 1d (first derivative of above nuisance signals)
+                         - e  (events listed in the provided fidl files (see
+                           above), modeled as specified in the event_string
+                           parameter.)
+                         
+    --event_string       A string describing, how to model the events listed in
+                         the provided fidl files. []
+    --glm_matrix         Whether to save the GLM matrix as a text file ('text'),
                          a png image file ('image'), both ('both') or not
-                         ('none') [none].
-    --glm_residuals  ... Whether to save the residuals after GLM regression
-                         ('save') or not ('none') [save].
-    --glm_name       ... An additional name to add to the residuals and GLM
+                         ('none'). [none]
+    --glm_residuals      Whether to save the residuals after GLM regression
+                         ('save') or not ('none'). [save]
+    --glm_name           An additional name to add to the residuals and GLM
                          files to distinguish between different possible models
                          used.
 
@@ -2371,37 +2410,45 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     There are two important variables that affect the exact GLM model used to
     estimate nuisance and task beta coefficients and regress them from the
-    signal. The first is the optional number follwing the 'r' command in the
+    signal. The first is the optional number following the 'r' command in the
     --bold_actions parameter. There are three options:
 
-    0 ... Estimate nuisance regressors for each bold file separately, however,
-          model events across all bold files (the default if no number is)
-          specified.
-    1 ... Estimate both nuisance regressors and task regressors for each bold
-          run separately.
-    2 ... Estimate both nuisance regressors as well as task regressors across
-          all bold runs.
+    - 0 - Estimate nuisance regressors for each bold file separately, however,
+      model events across all bold files (the default if no number is)
+      specified.
+    - 1 - Estimate both nuisance regressors and task regressors for each bold
+      run separately.
+    - 2 - Estimate both nuisance regressors as well as task regressors across
+      all bold runs.
 
     The second key variable is the event string provided by the --event_string
     parameter. The event string is a pipe ('|') separated list of regressor
     specifications. The possibilities are:
 
-    __Unassumed Modelling__
-    <fidl code>:<length in frames>
-    where <fidl code> is the code for the event used in the fidl file, and
+    Unassumed Modeling
+    ~~~~~~~~~~~~~~~~~~
+    ::
+
+        <fidl code>:<length in frames>
+
+    Where <fidl code> is the code for the event used in the fidl file, and
     <length in frames> specifies, for how many frames of the bold run (since
     the onset of the event) the event should be modeled.
 
-    __Assumed Modelling__
-    <fidl code>:<hrf>[:<length>]
-    where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
+    Assumed Modeling
+    ~~~~~~~~~~~~~~~~
+    ::
+
+        <fidl code>:<hrf>[:<length>]
+
+    Where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
     response function to use, and <length> is an optional parameter, with its
     value dependent on the model used. The allowed <hrf> are:
 
-    boynton ... uses the Boynton HRF
-    SPM     ... uses the SPM double gaussian HRF
-    u       ... unassumed (see above)
-    block   ... block response
+    - boynton (uses the Boynton HRF)
+    - SPM     (uses the SPM double gaussian HRF)
+    - u       (unassumed (see above))
+    - block   (block response)
 
     For the first two, the <length> parameter is optional and would override the
     event duration information provided in the fidl file. For 'u' the length is
@@ -2409,26 +2456,31 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     length should be two numbers separated by a colon (e.g. 2:9) that specify
     the start and end offset (from the event onset) to model as a block.
 
-    __Naming And Behavioral Regressors__
-    Each of the above (unassumed and assumed modelling specification) can be
+    Naming And Behavioral Regressors
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Each of the above (unassumed and assumed modeling specification) can be
     followed by a ">" (greater-than character), which signifies additional
-    information in the form:
+    information in the form::
 
-    <name>[:<column>[:<normalization span>[:<normalization method>]]]
+        <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
 
-    name   ... The name of the resulting regressor.
-    column ... The number of the additional behavioral regressor column in the
-               fidl file (1-based) to use as a weight for the regressor.
-    normalization span   ... Whether to normalize the behavioral weight within
-                             a specific event type ('within') or across all
-                             events ('across') [within].
-    normalization method ... The method to use for normalization. Options are
-                             z   ... compute Z-score
-                             01  ... normalize to fixed range 0 to 1
-                             -11 ... normalize to fixed range -1 to 1
+    --name                  The name of the resulting regressor.
+    --column                The number of the additional behavioral regressors 
+                            column in the fidl file (1-based) to use as a weight
+                            for the regressors.
+    --normalization_span    Whether to normalize the behavioral weight within
+                            a specific event type ('within') or across all
+                            events ('across'). [within]
+    --normalization_method  The method to use for normalization. Options are:
 
-    Example string:
-    'block:boynton|target:9|target:9>target_rt:1:within:z'
+                            - z  (compute Z-score)
+                            - 01 (normalize to fixed range 0 to 1)
+                            - 11 (normalize to fixed range -1 to 1)
+
+    Example string::
+
+        'block:boynton|target:9|target:9>target_rt:1:within:z'
 
     This would result in three sets of task regressors: one assumed task
     regressor for the sustained activity across the block, one unassumed
@@ -2442,60 +2494,56 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     This step results in the following files (if requested):
 
-    * residual image:
-      <root>_res-<regressors><glm name>.<ext>
-    * GLM image:
-      <bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>
-    * text GLM regressor matrix:
-      glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt
-    * image of a regressor matrix:
-      glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png
+    - residual image (``<root>_res-<regressors><glm name>.<ext>``)
+    - GLM image (``<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>``)
+    - text GLM regressor matrix (``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt``)
+    - image of a regressor matrix (``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png``)
 
     EXAMPLE USE
     ===========
 
-    Activation analysis
-    
-    ```
-    qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-         overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
-         bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
-         event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
-         glm_matrix=both glm_residuals=none nprocess=0 \\
-         pignore="hipass=keep|regress=keep|lopass=keep"
-    ```
+    Activation analysis::
 
-    Functional connectivity preprocessing
-    
-    ```
-    qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-         overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
-         bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
-         event_string="block:boynton|target:9" \\
-         glm_matrix=none glm_residuals=save nprocess=0 \\
-         pignore="hipass=linear|regress=ignore|lopass=linear"
-    ```
-    
-    ----------------
-    Written by Grega Repovš
+        qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+             overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
+             bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
+             event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
+             glm_matrix=both glm_residuals=none nprocess=0 \\
+             pignore="hipass=keep|regress=keep|lopass=keep"
 
-    Changelog
+    Functional connectivity preprocessing::
+    
+        qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+             overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
+             bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
+             event_string="block:boynton|target:9" \\
+             glm_matrix=none glm_residuals=save nprocess=0 \\
+             pignore="hipass=linear|regress=ignore|lopass=linear"
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2016-12-26 Grega Repovš
-             - Added initial documentation.
+               Initial version
+    2016-12-26 Grega Repovš
+               Added initial documentation.
     2017-01-07 Grega Repovš
-             - Added additional documentation.
+               Added additional documentation.
     2017-08-11 Grega Repovš
-             - Added ability to work with ptseries images.
+               Added ability to work with ptseries images.
     2018-12-12 Jure Demsar
-             - preprocessConc function uses the conc_use parameter for
+               preprocessConc function uses the conc_use parameter for
                absolute or relative path interpretation from conc files. 
     2019-01-12 Grega Repovš
-             - Changed how bold_tail is identified        
-             - Updated documentation
+               Changed how bold_tail is identified        
+               Updated documentation
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations
+               Enabled multiple log file locations
     """
 
     doOptionsCheck(options, sinfo, 'preprocessConc')  

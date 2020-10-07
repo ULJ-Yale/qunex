@@ -1,8 +1,12 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-Miscellaneous utilities for file processing.
+``g_utilities.py``
 
+Miscellaneous utilities for file processing.
+"""
+
+"""
 Created by Grega Repovs on 2017-09-17.
 Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 """
@@ -63,7 +67,7 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
-    '''
+    """
     manageStudy studyfolder=None action="create"
 
     A helper function called by createStudy and checkStudy that does the
@@ -77,7 +81,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
                      an existing study folder (check)
     --folders      : Path to the file which defines the study folder structure.
                      [$TOOLS/niutilities/templates/study_folders_default.txt]
-    '''
+    """
 
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
@@ -228,7 +232,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
 
 
 def createStudyFolders(folders_spec):
-    '''
+    """
     createStudyFolders folders=None
 
     A helper function called by manageStudy for creating study folder structure
@@ -239,7 +243,7 @@ def createStudyFolders(folders_spec):
 
     --folders ... Path to the file which defines the study folder structure.
                   [$TOOLS/niutilities/templates/study_folders_default.txt]
-    '''
+    """
 
     # variable for storing the structure
     folder_structure = []
@@ -284,57 +288,66 @@ def createStudyFolders(folders_spec):
 
 
 def createStudy(studyfolder=None, folders=None):
-    '''
-    createStudy studyfolder=<path to study base folder> [folders=$TOOLS/niutilities/templates/study_folders_default.txt]
+    """
+    ``createStudy studyfolder=<path to study base folder> [folders=$TOOLS/niutilities/templates/study_folders_default.txt]``
+
+    Creates the base folder and study folders.
+
+    INPUTS
+    ======
+
+    --studyfolder      The path to the study folder to be generated.
+    --folders          Path to the file which defines the subfolder structure.
+                       [$TOOLS/niutilities/templates/study_folders_default.txt]
 
     USE
     ===
 
     Creates the base folder at the provided path location and the study folders. 
     By default $TOOLS/niutilities/templates/study_folders_default.txt will be used
-    for subfolder specification. The default structure is:
+    for subfolder specification. The default structure is::
 
-    <studyfolder>
-    ├── analysis
-    │   └── scripts
-    ├── processing
-    │   ├── logs
-    │   │   ├── batchlogs
-    │   │   ├── comlogs
-    │   │   ├── runchecks
-    │   │   └── runlogs
-    │   ├── lists
-    │   ├── scripts
-    │   └── scenes
-    │       └── QC
-    │           ├── T1w
-    │           ├── T2w
-    │           ├── myelin
-    │           ├── BOLD
-    │           └── DWI
-    ├── info
-    │   ├── demographics
-    │   ├── tasks
-    │   ├── stimuli
-    │   ├── bids
-    │   └── hcpls
-    └── sessions
-        ├── inbox
-        │   ├── MR
-        │   ├── EEG
-        │   ├── BIDS
-        │   ├── HCPLS
-        │   ├── behavior
-        │   ├── concs
-        │   └── events
-        ├── archive
-        │   ├── MR
-        │   ├── EEG
-        │   ├── BIDS
-        │   ├── HCPLS
-        │   └── behavior
-        ├── specs
-        └── QC
+        <studyfolder>
+        ├── analysis
+        │   └── scripts
+        ├── processing
+        │   ├── logs
+        │   │   ├── batchlogs
+        │   │   ├── comlogs
+        │   │   ├── runchecks
+        │   │   └── runlogs
+        │   ├── lists
+        │   ├── scripts
+        │   └── scenes
+        │       └── QC
+        │           ├── T1w
+        │           ├── T2w
+        │           ├── myelin
+        │           ├── BOLD
+        │           └── DWI
+        ├── info
+        │   ├── demographics
+        │   ├── tasks
+        │   ├── stimuli
+        │   ├── bids
+        │   └── hcpls
+        └── sessions
+            ├── inbox
+            │   ├── MR
+            │   ├── EEG
+            │   ├── BIDS
+            │   ├── HCPLS
+            │   ├── behavior
+            │   ├── concs
+            │   └── events
+            ├── archive
+            │   ├── MR
+            │   ├── EEG
+            │   ├── BIDS
+            │   ├── HCPLS
+            │   └── behavior
+            ├── specs
+            └── QC
 
     Do note that the command will create all the missing folders in which the
     specified study is to reside. The command also prepares template
@@ -342,43 +355,42 @@ def createStudy(studyfolder=None, folders=None):
     <studyfolder>/sessions/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
-    PARAMETERS
-    ==========
-
-    --studyfolder  ... The path to the study folder to be generated
-    --folders      ... Path to the file which defines the subfolder structure.
-                       [$TOOLS/niutilities/templates/study_folders_default.txt]
-
     EXAMPLE USE
     ===========
 
-    qunex createStudy studyfolder=/Volumes/data/studies/WM.v4
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex createStudy studyfolder=/Volumes/data/studies/WM.v4
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2017-12-26 Grega Repovš
-             - Added copying of parameters and hcpmap templates.
+               Initial version
+    2017-12-26 Grega Repovš
+               Added copying of parameters and hcpmap templates.
     2018-03-31 Grega Repovs
-             - Added creation of .mnapstudy file.
+               Added creation of .mnapstudy file.
     2018-06-02 Grega Repovs
-             - Changed templates to *_example.txt.
+               Changed templates to *_example.txt.
     2018-07-24 Grega Repovs
-             - Expanded folders to include QC scenes
+               Expanded folders to include QC scenes
     2018-09-17 Grega Repovs
-             - Added BIDS folders
+               Added BIDS folders
     2018-11-14 Grega Repovs
-             - Moved the processing to manageStudy function
+               Moved the processing to manageStudy function
     2018-11-14 Grega Repovs
-             - Added HCPLS folders
+               Added HCPLS folders
     2019-05-28 Grega Repovs
-             - Changes to qunex.
+               Changes to qunex.
     2019-12-07 Grega Repovs
-             - Changed to a version that is parallel processing safe
+               Changed to a version that is parallel processing safe
     2020-06-08 Jure Demsar
-             - Added the folders parameter.
-    '''
+               Added the folders parameter.
+    """
 
     print "Running createStudy\n==================="
 
@@ -389,8 +401,8 @@ def createStudy(studyfolder=None, folders=None):
 
 
 def checkStudy(startfolder=".", folders=None):
-    '''
-    checkStudy startfolder="." [folders=$TOOLS/niutilities/templates/study_folders_default.txt]
+    """
+    ``checkStudy startfolder="." [folders=$TOOLS/niutilities/templates/study_folders_default.txt]``
 
     The function looks for the path to the study folder in the hierarchy 
     starting from the provided startfolder. If found it checks that all the
@@ -400,7 +412,7 @@ def checkStudy(startfolder=".", folders=None):
 
     ---
     Written by Grega Repovš, 2018-11-14
-    '''
+    """
 
     studyfolder = None
     testfolder  = os.path.abspath(startfolder)
@@ -418,44 +430,46 @@ def checkStudy(startfolder=".", folders=None):
 
 
 def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
-    '''
-    createBatch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch.txt]
+    """
+    ``createBatch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch.txt]``
     
-    PARAMETERS
-    =========
+    Creates a joint batch file from source files in all session folders.
 
-    --sessionsfolder  ... The location of the <study>/sessions folder
-    --sourcefiles     ... Comma separated names of source files to take from
+    INPUTS
+    ======
+
+    --sessionsfolder      The location of the <study>/sessions folder
+    --sourcefiles         Comma separated names of source files to take from
                           each specified session folder and add to batch file.
                           [session_hcp.txt]
-    --targetfile      ... The path to the batch file to be generated. By default
+    --targetfile          The path to the batch file to be generated. By default
                           it is created as <study>/processing/batch.txt
-    --sessions        ... If provided, only the specified sessions from the 
+    --sessions            If provided, only the specified sessions from the 
                           sessionsfolder will be processed. They are to be 
                           specified as a pipe or comma separated list, grob 
                           patterns are valid session specifiers.
-    --filter          ... An optional parameter given as "key:value|key:value"
+    --filter              An optional parameter given as "key:value|key:value"
                           string. Only sessions with the specified key-value
                           pairs in their source files will be added to the
                           batch file.
-    --overwrite       ... In case that the specified batch file already exists,
+    --overwrite           In case that the specified batch file already exists,
                           whether to interactively ask ('ask'), overwrite ('yes'),
                           abort action ('no') or append ('append') the found / 
                           specified sessions to the batch file.
-    --paramfile       ... The path to the parameter file header to be used. If 
+    --paramfile           The path to the parameter file header to be used. If 
                           not explicitly provided it defaults to:
                           <sessionsfolder>/specs/batch.txt
-
 
     USE
     ===
 
-    The command combines all the sourcefiles in all session folders in sessionsfolder 
-    to generate a joint batch file and save it as targetfile. If only specific 
-    sessions are to be added or appended, "sessions" parameter can be used. This 
-    can be a pipe, comma or space separated list of session ids, another batch 
-    file or a list file. If a string is provided, grob patterns can be used (e.g.
-    sessions="AP*|OR*") and all matching sessions will be processed.
+    The command combines all the sourcefiles in all session folders in 
+    sessionsfolder to generate a joint batch file and save it as targetfile.
+    If only specific sessions are to be added or appended, "sessions" parameter
+    can be used. This can be a pipe, comma or space separated list of session
+    ids, another batch file or a list file. If a string is provided, grob
+    patterns can be used (e.g. sessions="AP*|OR*") and all matching sessions
+    will be processed.
 
     If no targetfile is specified, it will save the file as batch.txt in a
     processing folder parallel to the sessionsfolder. If the folder does not yet
@@ -463,10 +477,10 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
     If targetfile already exists, depending on "overwrite" parameter it will:
 
-    - ask:    ask interactively
-    - yes:    overwrite the existing file
-    - no:     abort creating the file
-    - append: append sessions to the existing file
+    - ask (ask interactively, what to do)
+    - yes (overwrite the existing file)
+    - no (abort creating a file)
+    - append (append sessions to the existing list file)
 
     Note that if If a batch file already exists then parameter file will not be 
     added to the header of the batch unless --overwrite is set to "yes". If 
@@ -478,48 +492,54 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     prepend its content at the beginning of the batch.txt file. If no paramfile
     is specified and the default template does not exist, the command will print
     a warning and create an empty template (sessions/spec/batch.txt)
-    with all the available parameters. Do note that this file will need to be edited
-    with correct parameter values for your study.
+    with all the available parameters. Do note that this file will need to be
+    edited with correct parameter values for your study.
 
     Alternatively, if you don't have a parameter file prepared, you can use or
     copy and modify one of the following templates:
 
-    legacy data template: qunex/niutilities/templates/batch_legacy_parameters.txt
-    multiband data template: qunex/niutilities/templates/batch_multiband_parameters.txt
+    -legacy data template   
+      ``qunex/niutilities/templates/batch_legacy_parameters.txt``
+    -multiband data template
+      ``qunex/niutilities/templates/batch_multiband_parameters.txt``
 
-    Example
-    =======
+    EXAMPLE USE
+    ===========
     
-    ```
-    qunex createBatch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex createBatch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2017-12-26 Grega Repovš
-             - Renamed to createBatch and batch.txt.
+               Initial version
+    2017-12-26 Grega Repovš
+               Renamed to createBatch and batch.txt.
     2018-01-01 Grega Repovš
-             - Added append option and changed parameter names.
-             - Added the option to specify sessions to add explicitly.
+               Added append option and changed parameter names.
+               Added the option to specify sessions to add explicitly.
     2018-07-16 Grega Repovš
-             - Renamed to createBatch from compileBatch
+               Renamed to createBatch from compileBatch
     2018-07-20 Grega Repovš
-             - Fixed adding paramfile and updated documentation
+               Fixed adding paramfile and updated documentation
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added sessionsfolder to getSessionList call
+               Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
-             - Reports an error if no session is found to add to batch
+               Reports an error if no session is found to add to batch
     2019-05-22 Grega Repovš
-             - Added full path to report
+               Added full path to report
     2019-07-31 Jure Demsar
-             - Added file locking mechanism   
+               Added file locking mechanism   
     2020-01-14 Grega Repovš
-             - Expanded documentation with parameter specification   
-    '''
+               Expanded documentation with parameter specification   
+    """
 
     print "Running createBatch\n==================="
 
@@ -675,81 +695,83 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
 def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
     """
-    createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]``
 
-    The function creates a .list formated file that can be used as input to a
-    number of processing and analysis functions. The function is fairly flexible,
-    its output defined using a number of parameters.
+    Creates a .list formated file that can be used as input to a number of
+    processing and analysis functions. The function is fairly flexible, its
+    output defined using a number of parameters.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
     
-    --sessionsfolder ... The location of the sessions folder where the sessions
+    --sessionsfolder     The location of the sessions folder where the sessions
                          to create the list reside.
-    --sessions       ... Either a comma or pipe separated string of session 
+    --sessions           Either a comma or pipe separated string of session 
                          names to include (can be glob patterns) or a path
                          to a batch.txt file.
-    --filter         ... If a batch.txt file is provided a string of key-value
-                         pairs ("<key>:<value>|<key>:<value>"). Only sessions
+    --filter             If a batch.txt file is provided a string of key-value
+                         pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
                          that match all the key-value pairs will be added to 
                          the list.
-    --listfile       ... The path to the generated list file. If no path is 
+    --listfile           The path to the generated list file. If no path is 
                          provided, the list is created as:
-                         <studyfolder>/processing/lists/sessions.list
-    --bolds          ... If provided the specified bold files will be added to 
+                         `<studyfolder>/processing/lists/sessions.list`
+    --bolds              If provided the specified bold files will be added to 
                          the list. The value should be a string that lists bold 
                          numbers or bold tags in a space, comma or pipe 
                          separated string.
-    --boldname       ... The prefix to be added to the bold number specified 
+    --boldname           The prefix to be added to the bold number specified 
                          in bolds parameter [bold]
-    --boldtail       ... The suffix to be added to the bold number specified
+    --boldtail           The suffix to be added to the bold number specified
                          in bolds parameter or bold names that match the
                          tag specified in the bolds parameeter [.nii.gz].
-    --conc           ... If provided, the specified conc file that resides in
-                         <session id>/images/functional/concs/ folder will
+    --conc               If provided, the specified conc file that resides in
+                         `<session id>/images/functional/concs/` folder will
                          be added to the list.
-    --fidl           ... If provided, the specified fidl file that resides in
-                         <session id>/images/functional/events/ folder will
+    --fidl               If provided, the specified fidl file that resides in
+                         `<session id>/images/functional/events/` folder will
                          be added to the list.
-    --glm            ... If provided, the specified glm file that resides in
-                         <session id>/images/functional/ folder will be
+    --glm                If provided, the specified glm file that resides in
+                         `<session id>/images/functional/` folder will be
                          added to the list.
-    --roi            ... If provided, the specified ROI file that resides in
-                         <session id>/images/<roi> will be added to the list.
-                         Note that <roi> can include a path, e.g.: 
-                         segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz    
-    --overwrite      ... If the specified list file already exists:
-                         - ask    : ask interactively, what to do,
-                         - yes    : overwrite the existing file
-                         - no     : abort creating a file
-                         - append : append sessions to the existing list file
-                         [no].
-    --check          ... Whether to check for existence of files to be included
-                         in the list and what to do if they don't exist:
-                         - yes  ... check for presence and abort if the file to 
-                                    be listed is not found
-                         - no   ... do not check whether files are present or not
-                         - warn ... check for presence and warn if the file to be 
-                                    listed is not found, but do not abort
+    --roi                If provided, the specified ROI file that resides in
+                         `<session id>/images/<roi>` will be added to the list.
+                         Note that `<roi>` can include a path, e.g.: 
+                         `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`    
+    --overwrite          If the specified list file already exists: [no]
 
-    USE DESCRIPTION
-    ===============
+                         - ask (ask interactively, what to do)
+                         - yes (overwrite the existing file)
+                         - no (abort creating a file)
+                         - append (append sessions to the existing list file)
+                         
+    --check              Whether to check for existence of files to be included
+                         in the list and what to do if they don't exist:
+
+                         - yes (check for presence and abort if the file to 
+                           be listed is not found)
+                         - no (do not check whether files are present or not)
+                         - warn (check for presence and warn if the file to be 
+                           listed is not found, but do not abort)
+
+    USE
+    ===
 
     The location of the list file
     -----------------------------
 
     The file is created at the path specified in `listfile` parameter. If no
-    parameter is provided, the resulting list is saved in:
+    parameter is provided, the resulting list is saved in::
 
-    <studyfolder>/processing/lists/sessions.list
+        <studyfolder>/processing/lists/sessions.list
 
     If a file already exists, depending on the `overwrite` parameter the
     function will:
 
-    - ask:    ask interactively, what to do
-    - yes:    overwrite the existing file
-    - no:     abort creating the file
-    - append: append sessions to the existing file
+    - ask (ask interactively, what to do)
+    - yes (overwrite the existing file)
+    - no (abort creating a file)
+    - append (append sessions to the existing list file)
 
     The sessions to list
     --------------------
@@ -760,9 +782,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     used (e.g. sessions="AP*|OR*") and all matching sessions will be included.
 
     If a batch file is provided, sessions can be filtered using the `filter`
-    parameter. The parameter should be provided as a string in the format:
+    parameter. The parameter should be provided as a string in the format::
 
-    "<key>:<value>|<key>:<value>"
+        "<key>:<value>|<key>:<value>"
 
     Only the sessions for which all the specified keys match the specified values
     will be included in the list.
@@ -776,7 +798,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
     The function enables inclusion of bold, conc, fidl, glm and roi files.
 
-    *bold files*
+    bold files
+    ~~~~~~~~~~
+
     To include bold files, specify them using the `bolds` parameter. Provide a
     string that lists bold numbers or bold task names in a space, comma or pipe
     separated string. The numeric values in the string will be interpreted as
@@ -785,36 +809,44 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     tasks listed will be included. If `all` is specified, all the bolds listed
     in the batch file will be included.
 
-    Two other parameters are cruical for generation of bold file entries in the
+    Two other parameters are crucial for generation of bold file entries in the
     list: `boldname` and `boldtail`.
 
-    The bolds will be listed in the list file as:
+    The bolds will be listed in the list file as::
 
-    file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
+        file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
 
-    *conc files*
+    conc files
+    ~~~~~~~~~~
+
     To include conc files, provide a `conc` parameter. In the parameter list the
-    name of the conc file to be include. Conc files will be listed as:
+    name of the conc file to be include. Conc files will be listed as::
 
-    conc:<sessionsfolder>/<session id>/images/functional/concs/<conc>
+        conc:<sessionsfolder>/<session id>/images/functional/concs/<conc>
 
-    *fidl files*
+    fidl files
+    ~~~~~~~~~~
+
     To include fidl files, provide a `fidl` parameter. In the parameter list the
-    name of the fidl file to include. Fidl files will be listed as:
+    name of the fidl file to include. Fidl files will be listed as::
 
-    fidl:<sessionsfolder>/<session id>/images/functional/events/<fidl>
+        fidl:<sessionsfolder>/<session id>/images/functional/events/<fidl>
 
-    *GLM files*
+    GLM files
+    ~~~~~~~~~
+
     To include GLM files, provide a `glm` parameter. In the parameter list the
-    name of the GLM file to include. GLM files will be listed as:
+    name of the GLM file to include. GLM files will be listed as::
 
-    glm:<sessionsfolder>/<session id>/images/functional/<glm>
+        glm:<sessionsfolder>/<session id>/images/functional/<glm>
 
-    *ROI files*
+    ROI files
+    ~~~~~~~~~
+
     To include ROI files, provide a `roi` parameter. In the parameter list the
-    name of the ROI file to include. ROI files will be listed as:
+    name of the ROI file to include. ROI files will be listed as::
 
-    roi:<sessionsfolder>/<session id>/images/<roi>
+        roi:<sessionsfolder>/<session id>/images/<roi>
 
     Note that for all the files the function expects the files to be present in
     the correct places within the Qu|Nex sessions folder structure. For ROI files
@@ -828,65 +860,69 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     The behavior is specified using the `check` parameter that can take the
     following values:
 
-    - yes  ... check for presence and abort if the file to be listed is not found
-    - no   ... do not check whether files are present or not
-    - warn ... check for presence and warn if the file to be listed is not found
+    - yes  (check for presence and abort if the file to be listed is not found)
+    - no   (do not check whether files are present or not)
+    - warn (check for presence and warn if the file to be listed is not found)
 
-    Examples
-    --------
+    EXAMPLE USE
+    ===========
     
-    ```
-    qunex createList bolds="1,2,3"
-    ```
+    ::
+
+        qunex createList bolds="1,2,3"
 
     The command will create a list file in `../processing/list/sessions.list` that
     will list for all the sessions found in the current folder BOLD files 1, 2, 3
-    listed as:
+    listed as::
 
-      file:<current path>/<session id>/images/functional/bold[n].nii.gz
+        file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
-    ```
-    qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
-            bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
-    ```
+    ::
+
+        qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+                bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
 
     The command will create a `lists/rest.list` list file in which for all the
     sessions specified in the `batch.txt` it will list all the BOLD files tagged
-    as rest runs and include them as:
+    as rest runs and include them as::
 
-      file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas_s_hpss_res-mVWMWB1d.dtseries
+        file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas_s_hpss_res-mVWMWB1d.dtseries
 
-    ```
-    qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
-            filter="EC:use" listfile="lists/EC.list" \\
-            conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
-            fidl="EC.fidl" glm="bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
-            roi="segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii"
-    ```
+    ::
 
-    The command will create a list file in `lists/EC.list" that will list for
+        qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+                filter="EC:use" listfile="lists/EC.list" \\
+                conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
+                fidl="EC.fidl" glm="bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
+                roi="segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii"
+
+    The command will create a list file in `lists/EC.list` that will list for
     all the sessions in the conc file, that have the key:value pair "EC:use" the
-    following files:
+    following files::
 
-      conc:<sessionsfolder>/<session id>/images/functional/concs/bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc
-      fidl:<sessionsfolder>/<session id>/images/functional/events/EC.fidl
-      glm:<sessionsfolder>/<session id>/images/functional/bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz
-      roi:<sessionsfolder>/<session id>/images/segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii
+        conc:<sessionsfolder>/<session id>/images/functional/concs/bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc
+        fidl:<sessionsfolder>/<session id>/images/functional/events/EC.fidl
+        glm:<sessionsfolder>/<session id>/images/functional/bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz
+        roi:<sessionsfolder>/<session id>/images/segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii
+    """
 
-    ----------------
-    Written by Grega Repovš 2018-06-26
+    """
+    ~~~~~~~~~~~~~~~~~~
 
     Change log
+
+    2018-06-26 Grega Repovš
+               Initial version
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added sessionsfolder to getSessionList call
+               Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
-             - Reports an error if no session is found to add to the list file
+               Reports an error if no session is found to add to the list file
     2019-05-30 Grega Repovš
-             - Fixed a None checkup bug
+               Fixed a None checkup bug
     2020-01-14 Grega Repovš
-             - Expanded documentation with explicit parameter specification
+               Expanded documentation with explicit parameter specification
     """
 
     print "Running createList\n=================="
@@ -1035,72 +1071,74 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
 def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
     """
-    createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+    ``createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]``
 
-    The function creates a set of .conc formated files that can be used as input
+    Creates a set of .conc formated files that can be used as input
     to a number of processing and analysis functions. The function is fairly
     flexible, its output defined using a number of parameters.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
-    --sessionsfolder ... The location of the sessions folder where the sessions
+    --sessionsfolder     The location of the sessions folder where the sessions
                          to create the list reside.
-    --sessions       ... Either a comma or pipe separated string of session 
+    --sessions           Either a comma or pipe separated string of session 
                          names to include (can be glob patterns) or a path
                          to a batch.txt file.
-    --filter        ... If a batch.txt file is provided a string of key-value
-                         pairs ("<key>:<value>|<key>:<value>"). Only sessions
-                         that match all the key-value pairs will be added to 
-                         the list.
-    --concfolder     ... The path to the folder where conc files are to be
+    --filter             If a batch.txt file is provided a string of key-value
+                         pairs (`"<key>:<value>|<key>:<value>"`). Only
+                         sessions that match all the key-value pairs will be
+                         added to the list.
+    --concfolder         The path to the folder where conc files are to be
                          generated. If not provided, the conc files will be
                          saved to the folder:
-                         <studyfolder>/<session id>/inbox/concs/
-    --concname       ... The name of the conc files to generate. The formula:
-                         <session id><concname>.conc will be used. [""]
-    --bolds          ... A space, comma or pipe separated string that lists bold 
+                         `<studyfolder>/<session id>/inbox/concs/`
+    --concname           The name of the conc files to generate. The formula:
+                         `<session id><concname>.conc` will be used. [""]
+    --bolds              A space, comma or pipe separated string that lists bold 
                          numbers or bold tags to be included in the conc file.
-    --boldname       ... The prefix to be added to the bold number specified 
+    --boldname           The prefix to be added to the bold number specified 
                          in bolds parameter [bold]
-    --boldtail       ... The suffix to be added to the bold number specified
+    --boldtail           The suffix to be added to the bold number specified
                          in bolds parameter or bold names that match the
                          tag specified in the bolds parameter [.nii.gz].
-    --overwrite      ... If the specified list file already exists:
-                         - ask    : ask interactively, what to do,
-                         - yes    : overwrite the existing file
-                         - no     : abort creating a file
-                         - append : append sessions to the existing list file
-                         [no].
-    --check          ... Whether to check for existence of files to be included
-                         in the list and what to do if they don't exist:
-                         - yes  ... check for presence and abort if the file to 
-                                    be listed is not found
-                         - no   ... do not check whether files are present or not
-                         - warn ... check for presence and warn if the file to be 
-                                    listed is not found, but do not abort
+    --overwrite          If the specified list file already exists: [no]
 
-    USE DESCRIPTION
-    ===============    
+                         - ask    (ask interactively, what to do)
+                         - yes    (overwrite the existing file)
+                         - no     (abort creating a file)
+                         - append (append sessions to the existing list file)
+                        
+    --check              Whether to check for existence of files to be included
+                         in the list and what to do if they don't exist:
+
+                         - yes (check for presence and abort if the file to 
+                           be listed is not found)
+                         - no (do not check whether files are present or not)
+                         - warn (check for presence and warn if the file to be 
+                           listed is not found, but do not abort)
+
+    USE
+    ===   
 
     The location of the generated conc files
     ----------------------------------------
 
     The files are created at the path specified in `concfolder` parameter. If no
-    parameter is provided, the resulting files are saved in:
+    parameter is provided, the resulting files are saved in::
 
-    <studyfolder>/<session id>/inbox/concs/
+        <studyfolder>/<session id>/inbox/concs/
 
-    Individual files are named using the following formula:
+    Individual files are named using the following formula::
 
-    <session id><concname>.conc
+        <session id><concname>.conc
 
     If a file already exists, depending on the `overwrite` parameter the
     function will:
 
-    - ask:    ask interactively, what to do
-    - yes:    overwrite the existing file
-    - no:     abort creating the file
+    - ask (ask interactively, what to do)
+    - yes (overwrite the existing file)
+    - no  (abort creating the file)
 
     The sessions to process
     -----------------------
@@ -1112,9 +1150,9 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     sessions will be included.
 
     If a batch file is provided, sessions can be filtered using the `filter`
-    parameter. The parameter should be provided as a string in the format:
+    parameter. The parameter should be provided as a string in the format::
 
-    "<key>:<value>|<key>:<value>"
+        "<key>:<value>|<key>:<value>"
 
     The conc files will be generated only for the sessions for which all the
     specified keys match the specified values.
@@ -1126,7 +1164,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     The files to include in the conc file
     -------------------------------------
 
-    The bold files to incude in the conc file are specified using the `bolds`
+    The bold files to include in the conc file are specified using the `bolds`
     parameter. To specify the bolds to be included in the conc files, provide a
     string that lists bold numbers or bold task names in a space, comma or pipe
     separated string. The numeric values in the string will be interpreted as
@@ -1138,9 +1176,9 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     Two other parameters are cruical for generation of bold file entries in the
     conc files: `boldname` and `boldtail`.
 
-    The bolds will be listed in the list file as:
+    The bolds will be listed in the list file as::
 
-    file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
+        file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
 
     Note that the function expects the files to be present in the correct place
     within the Qu|Nex sessions folder structure.
@@ -1153,66 +1191,70 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     The behavior is specified using the `check` parameter that can take the
     following values:
 
-    - yes  ... check for presence and abort if the file to be listed is not found
-    - no   ... do not check whether files are present or not
-    - warn ... check for presence and warn if the file to be listed is not found
+    - yes  (check for presence and abort if the file to be listed is not found)
+    - no   (do not check whether files are present or not)
+    - warn (check for presence and warn if the file to be listed is not found)
 
-    Examples
-    --------
+    EXAMPLE USE
+    ===========
     
-    ```
-    qunex createConc bolds="1,2,3"
-    ```
+    ::
+
+        qunex createConc bolds="1,2,3"
 
     The command will create set of conc files in `/inbox/concs`,
     each of them named <session id>.conc, one for each of the sessions found in
     the current folder. Each conc file will include BOLD files 1, 2, 3
-    listed as:
+    listed as::
 
-      file:<current path>/<session id>/images/functional/bold[n].nii.gz
+        file:<current path>/<session id>/images/functional/bold[n].nii.gz
     
-    ```
-    qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
-            bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
-    ```
+    ::
+
+        qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+                bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
 
     The command will create for each session listed in the `batch.txt` a
     `<session id>_WM.conc` file in `sessions/inbox/concs` in which it will list
-    all the BOLD files tagged as `WM` as:
+    all the BOLD files tagged as `WM` as::
 
-      file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas.dtseries
+        file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas.dtseries
 
-    ```
-    qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
-            filter="EC:use" concfolder="analysis/EC/concs" \\
-            concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
-            boldtail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
-    ```
+    ::
+
+        qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+                filter="EC:use" concfolder="analysis/EC/concs" \\
+                concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
+                boldtail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
 
     For all the sessions in the `batch.txt` file that have the key:value pair
     "EC:use" set the command will create a conc file in `analysis/EC/concs`
     folder. The conc files will be named `<session id>_EC_s_hpss_res-mVWMWB1de.conc`
-    and will list all the bold files that are marked as `EC` runs as:
+    and will list all the bold files that are marked as `EC` runs as::
 
-      file:<sessionsfolder>/<session id>/images/functional/bold[N]_s_hpss_res-mVWMWB1deEC.dtseries.nii
+        file:<sessionsfolder>/<session id>/images/functional/bold[N]_s_hpss_res-mVWMWB1deEC.dtseries.nii
+    """
 
-    ----------------
-    Written by Grega Repovš 2018-06-30
+    """
+    ~~~~~~~~~~~~~~~~~~
 
     Change log
+
+    2018-06-30 Grega Repovš
+               Initial version
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2019-05-02 Grega Repovš
-             - Added sessionsfolder to getSessionList call
+               Added sessionsfolder to getSessionList call
     2019-05-12 Grega Repovš
-             - Reports an error if no session is found to be processed
+               Reports an error if no session is found to be processed
     2019-05-30 Grega Repovš
-             - Fixed a None checkup bug
+               Fixed a None checkup bug
     2019-06-20 Grega Repovš
-             - Fixed a sessions parameter name bug 
-             - Fixed sorting by bold number
+               Fixed a sessions parameter name bug 
+               Fixed sorting by bold number
     2020-01-14 Grega Repovš
-             - Extended documentation with explicit definition of parameters
+               Extended documentation with explicit definition of parameters
     """
 
     def checkFile(fileName):
@@ -1350,34 +1392,26 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
 
 def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=None):
     """
-    runList listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]
+    ``runList listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]``
 
+    Executes the commands defined in each list.
 
-    USE AND RESULTS
-    ===============
+    INPUTS
+    ======
 
-    runlist takes a `runlist` file and a `runlists` list of lists and executes
-    the commands defined in each list. The runlist file contains commands that 
-    should be run and parameters that it should use.
+    General parameters
+    ------------------
 
-
-    CORE PARAMETERS
-    ===============
-
-    --listfile     ... The runlist file containing runlists and their 
+    --listfile         The runlist file containing runlists and their 
                        parameters.
-    --runlists     ... A comma, space or pipe separated list of lists specified 
+    --runlists         A comma, space or pipe separated list of lists specified 
                        within runlist file to run.
-    --logfolder    ... The folder within which to save the log.
-    --mapvalues    ... Names of values of custom variables that will be injected
+    --logfolder        The folder within which to save the log.
+    --mapvalues        Names of values of custom variables that will be injected
                        into specifically marked fields in the runlist file.
-    --verbose      ... Whether to record in a log a full verbose report of the 
+    --verbose          Whether to record in a log a full verbose report of the 
                        output of each command that was run ('yes') or only a
                        summary success report of each command ran. ['no']
-
-
-    EXTRA PARAMETERS
-    ================
 
     Multiple runList invocations
     ----------------------------
@@ -1385,23 +1419,23 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     These parameters allow spreading processing of multiple sessions across 
     multiple runList invocations:
 
-    --sessions          ... Either a string with pipe `|` or comma separated 
+    --sessions              Either a string with pipe `|` or comma separated 
                             list of sessions (sessions ids) to be processed
                             (use of grep patterns is possible), e.g. 
-                            "OP128,OP139,ER*", or a path to a batch.txt or
-                            *list file with a list of session ids.
-    --sessionids        ... An optional parameter explicitly specifying, which
+                            `"OP128,OP139,ER*"`, or a path to a batch.txt or
+                            `*list` file with a list of session ids.
+    --sessionids            An optional parameter explicitly specifying, which
                             of the sessions from the list provided by the 
                             `sessions` parameter are to be processed in this
                             call. If not specified, all sessions will be 
                             processed.
-    --sperlist          ... An optional parameter specifying, how many sessions
+    --sperlist              An optional parameter specifying, how many sessions
                             to run per individual runList invocation. If not 
                             specified, all sessions will be run through the 
                             same runList invocation. 
-    --runinpar          ... If multiple runList invocations are to be run, how 
+    --runinpar              If multiple runList invocations are to be run, how 
                             many should be run in parallel. The default is 1.
-    --scheduler         ... An optional scheduler settings description string. 
+    --scheduler             An optional scheduler settings description string. 
                             If provided, each runList invocation will be 
                             scheduled to run on a separate cluster node. For 
                             details about the settings string specification see 
@@ -1436,26 +1470,32 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     in a runList invocation. If the following parameters are listed, they will
     take precedence over parameters specified within the `listfile`: 
 
-    --parsessions   ... An optional parameter specifying how many sessions to run
-                        in parallel. If parsessions parameter is already specified
-                        within the `listfile`, then the lower value will 
-                        take precedence.
-    --parelements   ... An optional parameter specifying how many elements to run
-                        in paralel within each of the jobs (e.g. how many bolds
-                        when bold processing). If parelements is already specified
-                        within the `listfile`, then the lower value will
-                        take precedence.
-    --sessionids    ... An optional parameter specifying which sessions are to be 
-                        processed within this runList invocation. If `sessionids` is 
-                        specified within the listfile, then the value passed to 
-                        runList will take precedence.
+    --parsessions    An optional parameter specifying how many sessions to run
+                     in parallel. If parsessions parameter is already specified
+                     within the `listfile`, then the lower value will 
+                     take precedence.
+    --parelements    An optional parameter specifying how many elements to run
+                     in paralel within each of the jobs (e.g. how many bolds
+                     when bold processing). If parelements is already specified
+                     within the `listfile`, then the lower value will
+                     take precedence.
+    --sessionids     An optional parameter specifying which sessions are to be 
+                     processed within this runList invocation. If `sessionids`
+                     is specified within the listfile, then the value passed to 
+                     runList will take precedence.
 
     Sometimes one would wish to ignore a parameter specified in a list when
     running a list. The parameters to ignore can be specified using:
 
-    --ignore    ... An optional comma or pipe separated list of parameters to 
-                    ignore when running any of the specified lists.
+    --ignore            An optional comma or pipe separated list of parameters
+                        to ignore when running any of the specified lists.
 
+    USE
+    ===
+
+    runlist takes a `runlist` file and a `runlists` list of lists and executes
+    the commands defined in each list. The runlist file contains commands that 
+    should be run and parameters that it should use.
 
     LOGS AND FAILURES
     =================
@@ -1466,7 +1506,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     valid folder to save the logs to. If the log can not be created the 
     `runList` command will exit with a failure.
 
-    `runList` is checking for a successfull completion of commands that it runs.
+    `runList` is checking for a successful completion of commands that it runs.
     If any of the commands fail to complete successfully, the execution of the
     commands will stop and the failure will be reported both in stdout as well
     as the log.
@@ -1474,7 +1514,6 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     Individual commands that are run can generate their own logs, the presence
     and location of those logs depend on the specific command and settings 
     specified in the runlist file.
-
 
     RUNLIST FILE
     ============
@@ -1504,144 +1543,144 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     command in the form of `<parameter>:<value>` pairs. The values provided
     here will take priority over the values specified at the beginning of the
     list as well as over the default values provided at the beginning of the
-    runlist file. For readibility puposes it is advised that the 
+    runlist file. For readibility purposes it is advised that the 
     <parameter>:<value> pairs are further indented for additional four spaces.
 
     If a specific parameter specified at a higher level is not to be used at
     this level or below, it can be listed prefixed by a dash / minus sign.
 
-    EXAMPLE RUNLIST FILE
-    ====================
+    Example runlist file
+    --------------------
+    
+    ::
 
-    ```
-    # global settings
-    sessionsfolder : /data/testStudy/sessions
-    overwrite      : yes
-    sessions       : *_baseline
+        # global settings
+        sessionsfolder : /data/testStudy/sessions
+        overwrite      : yes
+        sessions       : *_baseline
 
 
-    ---
-    list: dataImport
+        ---
+        list: dataImport
 
-        command: importBIDS
-            inbox   : /data/datalake/EMBARC/inbox/BIDS
-            archive : leave
+            command: importBIDS
+                inbox   : /data/datalake/EMBARC/inbox/BIDS
+                archive : leave
 
-    ---
-    list: prepareHCP
+        ---
+        list: prepareHCP
 
-        command: createSessionInfo
+            command: createSessionInfo
 
-        command: createBatch
-            tfile: /data/testStudy/processing/batch_baseline.txt
+            command: createBatch
+                tfile: /data/testStudy/processing/batch_baseline.txt
 
-        command: setupHCP
+            command: setupHCP
 
-    ---
-    list: doHCP
-        
-        sessions: /data/testStudy/processing/batch_baseline.txt
-        parsessions: 4
-
-        command: hcp1
-
-        command: hcp2
-
-        command: hcp3
-
-        command: hcp4
-            parsessions : 1
-            parelements : 4
-
-        command: hcp5
-            parsessions : 1
-            parelements : 4
-
-    ---
-    list: prepareFCPreprocessing
-        parsessions : 6
-        sessions    : /data/testStudy/processing/batch_baseline.txt
-        bolds       : all
-
-        command: mapHCPData
+        ---
+        list: doHCP
             
-        command: createBOLDBrainMasks
+            sessions: /data/testStudy/processing/batch_baseline.txt
+            parsessions: 4
 
-        command: computeBOLDStats
-            log: remove
+            command: hcp1
 
-        command : createStatsReport
-            parsessions: 1
+            command: hcp2
 
-        command: extractNuisanceSignal
+            command: hcp3
 
-    ---
-    list: runFCPreprocessing
-        
-        parsessions : 6
-        sessions    : /data/testStudy/processing/batch_baseline.txt
-        scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,ntasks=6,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+            command: hcp4
+                parsessions : 1
+                parelements : 4
 
-        command: preprocessBold
-            bold_actions     : shrc
-            glm_residuals    : save
-            bold_nuisance    : m,V,WM,WB,1d
-            pignore          : hipass=linear|regress=spline|lopass=linear
-            overwrite        : yes
-            bolds            : rest
-            image_target     : cifti
-            hcp_cifti_tail   : _Atlas
+            command: hcp5
+                parsessions : 1
+                parelements : 4
 
-    ---
-    list: doPreFS
-        sessions    : {sessions_var}
-        parsessions : 4
+        ---
+        list: prepareFCPreprocessing
+            parsessions : 6
+            sessions    : /data/testStudy/processing/batch_baseline.txt
+            bolds       : all
 
-        command: hcp1
-    ```
+            command: mapHCPData
+                
+            command: createBOLDBrainMasks
+
+            command: computeBOLDStats
+                log: remove
+
+            command : createStatsReport
+                parsessions: 1
+
+            command: extractNuisanceSignal
+
+        ---
+        list: runFCPreprocessing
+            
+            parsessions : 6
+            sessions    : /data/testStudy/processing/batch_baseline.txt
+            scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,ntasks=6,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+
+            command: preprocessBold
+                bold_actions     : shrc
+                glm_residuals    : save
+                bold_nuisance    : m,V,WM,WB,1d
+                pignore          : hipass=linear|regress=spline|lopass=linear
+                overwrite        : yes
+                bolds            : rest
+                image_target     : cifti
+                hcp_cifti_tail   : _Atlas
+
+        ---
+        list: doPreFS
+            sessions    : {sessions_var}
+            parsessions : 4
+
+            command: hcp1
 
     EXAMPLE USE
     ===========
 
-    ```
-    qunex runList \
-      --listfile="/data/settings/runlist.txt" \
-      --runlists="dataImport,prepareHCP"
-    ```
+    ::
+
+        qunex runList \
+          --listfile="/data/settings/runlist.txt" \
+          --runlists="dataImport,prepareHCP"
     
-    ```
-    qunex runList \
-      --listfile="/data/settings/runlist.txt" \
-      --runlists="doHCP" \
-      --sessions="/data/testStudy/processing/batch_baseline.txt" \
-      --sperlist=4 \
-      --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
-    ```
+    ::
 
-    ```
-    qunex runList \
-      --listfile="/data/settings/runlist.txt" \
-      --runlists="prepareFCPreprocessing" \
-      --sessions="/data/testStudy/processing/batch_baseline.txt" \
-      --sperlist=4 \
-      --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
-    ```
+        qunex runList \
+          --listfile="/data/settings/runlist.txt" \
+          --runlists="doHCP" \
+          --sessions="/data/testStudy/processing/batch_baseline.txt" \
+          --sperlist=4 \
+          --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
-    ```
-    qunex runList
-      --listfile="/data/settings/runlist.txt" \
-      --runlists="runFCPreprocessing"
-    ```  
+    ::
 
-    ```
-    qunex runList
-      --listfile="/data/settings/runlist.txt" \
-      --runlists="doPreFS" \
-      --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt"
-    ```  
+        qunex runList \
+          --listfile="/data/settings/runlist.txt" \
+          --runlists="prepareFCPreprocessing" \
+          --sessions="/data/testStudy/processing/batch_baseline.txt" \
+          --sperlist=4 \
+          --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+
+    ::
+
+        qunex runList
+          --listfile="/data/settings/runlist.txt" \
+          --runlists="runFCPreprocessing" 
+
+    ::
+
+        qunex runList
+          --listfile="/data/settings/runlist.txt" \
+          --runlists="doPreFS" \
+          --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt" 
 
     The first call will execute all the commands in lists `dataImport` and 
-    `prepareHCP` localy.
+    `prepareHCP` locally.
 
     The second call will execute all the steps of the HCP preprocessing pipeline, 
     in sequence. Execution will be spread across the nodes with each `runList` 
@@ -1656,7 +1695,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     and `parsessions`). In this call, the initial steps will be performed
     on all BOLD images.
 
-    The fourth call will start a single `runList` instance localy, however,
+    The fourth call will start a single `runList` instance locally, however,
     this will submit both listed `preprocessBold` commands as jobs to be run with
     six sessions per node in parallel. These two commands will be run only on BOLD
     images tagged as `rest`. 
@@ -1666,27 +1705,31 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     then injected from the command call by using the `mapvalues` parameter.
     Alternatively the value could be injected by setting the environmental variable
     `$sessions_var`.
+    """
 
-    ---
-    Written by Jure Demšar 2019-02-11.
+    """
+    ~~~~~~~~~~~~~~~~~~
 
     Change log
+    
+    2019-02-11 Jure Demšar
+               Initial version
     2019-03-29 Grega Repovš
-             - Updated documentation, implemented running multiple lists
+               Updated documentation, implemented running multiple lists
     2019-04-12 Jure Demšar
-             - Expanded parameter handling and parameter injection
+               Expanded parameter handling and parameter injection
     2019-04-13 Grega Repovš
-             - Updated documentation
-             - Edited multiple runList invocation
-             - Added option to ignore parameters
+               Updated documentation
+               Edited multiple runList invocation
+               Added option to ignore parameters
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2020-01-17 Jure Demšar
-             - Optimized log creation and stopping on command fail.
+               Optimized log creation and stopping on command fail.
     2020-11-02 Jure Demšar
-             - Parameter injections.
+               Parameter injections.
     2020-25-02 Jure Demšar
-             - Parameter injection documentation.
+               Parameter injection documentation.
     """
 
     verbose = verbose.lower() == 'yes'
@@ -1918,26 +1961,32 @@ def stripQuotes(string):
 
 def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number', prefix="BOLD_"):
     """
-    batchTag2NameKey filename=<path to batch file> sessionid=<session id> bolds=<bold specification string> output=<keytype> prefix=<prefix to use>
+    batchTag2NameKey \\
+      --filename=<path to batch file> \\
+      --sessionid=<session id> \\
+      --bolds=<bold specification string> \\
+      [--output="number"] \\
+      [--prefix="BOLD_"]
 
-    The function reads the batch file, extracts the data for the specified 
-    session and returns the list of bold numbers or names that correspond to bolds
+    Reads the batch file, extracts the data for the specified session and
+    returns the list of bold numbers or names that correspond to bolds
     specified using the `bolds` parameter.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
-    --filename      ... Path to batch.txt file.
-    --sessionid     ... Session id to look up.
-    --bolds         ... Which bold images (as they are specified in the
+    --filename          Path to batch.txt file.
+    --sessionid         Session id to look up.
+    --bolds             Which bold images (as they are specified in the
                         batch.txt file) to process. It can be a single
                         type (e.g. 'task'), a pipe separated list (e.g.
                         'WM|Control|rest') or 'all' to process all.
     --output        ... Whether to output numbers ('number') or bold names 
-                        In the latter case the name will be 'boldname', if 
-                        provided in the batch file, or '<prefix>[N]' if one does
-                        not exist.
-    --prefix        ... The default prefix to use if a boldname is not specified
+                        ('name'). In the latter case the name will be extracted
+                        from the 'filename' specification, if provided in the 
+                        batch file, or '<prefix>[N]' if 'filename' is not 
+                        specified.
+    --prefix        ... The default prefix to use if a filename is not specified
                         in the batch file.
     """
 
@@ -1965,8 +2014,8 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
     boldlist = []
     for boldnumber, boldname, boldtask, boldinfo in bolds:
         if output == 'name':
-            if 'boldname' in boldinfo:
-                boldlist.append(boldinfo['boldname'])
+            if 'filename' in boldinfo:
+                boldlist.append(boldinfo['filename'])
             else:
                 boldlist.append("%s%d" % (prefix, boldnumber))
         else:
@@ -1977,14 +2026,13 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
 
 def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="behavior.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
-    gatherBehavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]
+    ``gatherBehavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``
 
-    The function gathers specified individual behavioral data from each 
-    session's behavior folder and compiles it into a specified group behavioral
-    file.
+    Gathers specified individual behavioral data from each session's behavior
+    folder and compiles it into a specified group behavioral file.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
     --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
                       the inbox and individual session folders are. If not 
@@ -1993,14 +2041,14 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     
     --sessions        Either a string with pipe `|` or comma separated list of 
                       sessions (sessions ids) to be processed (use of grep 
-                      patterns is possible), e.g. "AP128,OP139,ER*", or a path
-                      to a batch.txt or *list file with a list of session ids.
+                      patterns is possible), e.g. `"AP128,OP139,ER*"`, or a path
+                      to a `batch.txt` or `*list` file with a list of session ids.
                       [*]
 
     --filter          Optional parameter used to filter sessions to include. It
-                      is specifed as a string in format:
+                      is specifed as a string in format::
     
-                      "<key>:<value>|<key>:<value>"
+                        "<key>:<value>|<key>:<value>"
 
                       Only the sessions for which all the specified keys match
                       the specified values will be included in the list.
@@ -2008,11 +2056,11 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     --sourcefiles     A file or comma or pipe `|` separated list of files or
                       grep patterns that define, which session specific files 
                       from the behavior folder to gather data from. 
-                      ['behavior.txt']
+                      [`'behavior.txt'`]
 
     --targetfile      The path to the target file, a file that will contain
                       the joined data from all the individual session files.
-                      ['<sessionsfolder>/inbox/behavior.txt']
+                      [`'<sessionsfolder>/inbox/behavior.txt'`]
 
     --overwrite       Whether to overwrite an existing group behavioral file or
                       not. ['no']
@@ -2021,19 +2069,19 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
                       include in the compiled group file. The possible options
                       are:
 
-                      * yes   ... Check and report an error if no behavioral
-                                  data exists for a session
-                      * warn  ... Warn and list the sessions for which the 
-                                  behavioral data was not found
-                      * no    ... Do not run a check, ignore sessions for which
-                                  no behavioral data was found
+                      - yes  (check and report an error if no behavioral
+                        data exists for a session)
+                      - warn (warn and list the sessions for which the 
+                        behavioral data was not found)
+                      - no (do not run a check, ignore sessions for which
+                        no behavioral data was found)
 
     --report          Whether to include date when file was generated and the 
                       final report in the compiled file ('yes') or not ('no'). 
                       ['yes']
 
-    USE DESCRIPTION
-    ===============
+    USE
+    ===
     
     The command will use the `sessionsfolders`, `sessions` and `filter` 
     parameters to create a list of sessions to process. For each session, the
@@ -2048,15 +2096,14 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     the missing data will be identified as 'NA'
 
     Group data will be saved to a file specified using `targetfile` parameter. If no
-    path is specified, the default location will be used:
+    path is specified, the default location will be used::
 
-    <sessionsfolder>/inbox/behavior/behavior.txt
+        <sessionsfolder>/inbox/behavior/behavior.txt
 
     If a target file exists, it will be deleted and replaced, if the `overwrite`
     parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
     command will exit with an error.
 
-    
     File format
     -----------
 
@@ -2072,29 +2119,30 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     additional comment lines will list the full report of missing files and 
     errors encounterdd while gathering behavioral data from individual sessions.
 
+    EXAMPLE USE
+    ===========
 
-    Examples
-    --------
+    ::
 
-    $ qunex gatherBehavior sessions="AP*"
+        qunex gatherBehavior sessions="AP*"
 
     The command will compile behavioral data present in `behavior.txt` files 
     present in all `<session id>/behavior` folder that match the "AP*" glob
-    pattern in the current folder. 
+    pattern in the current folder.
 
-    The resulting file will be save in the default location:
+    The resulting file will be save in the default location::
 
-    <current folder>/inbox/behavior
+        <current folder>/inbox/behavior
 
     If any of the identified sessions do not include data or if errors are 
     encountered when processing the data, the command will exit with an error.
     
-    ```
-    qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
-            sessions="AP*|OP*" sourcefiles="*test*|*results*" \\
-            check="warn" overwrite="yes" report="no"
-    ```
+    ::
 
+        qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
+                sessions="AP*|OP*" sourcefiles="*test*|*results*" \\
+                check="warn" overwrite="yes" report="no"
+    
     The command will find all the session folders within `/data/myStudy/sessions`
     that have a `behavior` subfolder. It will then look for presence of any 
     files that match "*test*" or "*results*" glob pattern. The compiled data 
@@ -2104,21 +2152,21 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     The resulting file will not have information on file generation or 
     processing report.
 
-    ```
-    qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
-            sessions="/data/myStudy/processing/batch.txt" \\           
-            filter="group:controls|behavioral:yes" \\
-            sourcefiles="*test*|*results*" \\
-            targetfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
-            check="no" overwrite="yes"
-    ```
+    ::
+
+        qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
+                sessions="/data/myStudy/processing/batch.txt" \\           
+                filter="group:controls|behavioral:yes" \\
+                sourcefiles="*test*|*results*" \\
+                targetfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
+                check="no" overwrite="yes"
 
     The command will read the session information from the provided batch.txt 
     file. It will then process only those sessions that have the following
-    lines in their description:
+    lines in their description::
 
-    group: control
-    behavioral: yes
+        group: control
+        behavioral: yes
 
     For those sessions it will inspect '<session id>/behavior' folder for 
     presence of files that match either '*test*' or '*results*' glob pattern.
@@ -2126,14 +2174,17 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     file exists, it will be overwritten. The command will print a full report 
     of the processing, however, it will exit with reported success even if 
     missing files or errors were encountered.
+    """
 
-    ----------------
-    Written by Grega Repovš 2019-05-02
-    
+    """
+    ~~~~~~~~~~~~~~~~~~
+
     Change log
-
+    
+    2019-05-02 Grega Repovš
+               Initial version
     2019-05-12 Grega Repovš
-             - Reports an error if no session is found to process
+               Reports an error if no session is found to process
     """
 
     # --- Support function
@@ -2312,13 +2363,13 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
 
 def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefiles="session.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
-    pullSequenceNames [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]
+    ``pullSequenceNames [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
 
-    The function gathers a list of all the sequence names across the sessions 
-    and saves it into a specified file.
+    Gathers a list of all the sequence names across the sessions and saves it
+    into a specified file.
 
-    PARAMETERS
-    ==========
+    INPUTS
+    ======
 
     --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
                       the inbox and individual session folders are. If not 
@@ -2328,13 +2379,13 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     --sessions        Either a string with pipe `|` or comma separated list of 
                       sessions (sessions ids) to be processed (use of grep 
                       patterns is possible), e.g. "AP128,OP139,ER*", or a path
-                      to a batch.txt or *list file with a list of session ids.
-                      [*]
+                      to a `batch.txt` or `*list` file with a list of session
+                      ids. [*]
 
     --filter          Optional parameter used to filter sessions to include. It
-                      is specifed as a string in format:
+                      is specified as a string in format::
     
-                      "<key>:<value>|<key>:<value>"
+                        "<key>:<value>|<key>:<value>"
 
                       Only the sessions for which all the specified keys match
                       the specified values will be included in the list.
@@ -2351,47 +2402,46 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     --overwrite       Whether to overwrite an existing file or not. ['no']
 
     --check           Check whether all the identified sessions have the 
-                      specifed information files. The possible options:
+                      specified information files. The possible options:
                       are:
 
-                      * yes   ... Check and report an error if no information
-                                  exists for a session
-                      * warn  ... Warn and list the sessions for which the 
-                                  neuroimaging information was not found
-                      * no    ... Do not run a check, ignore sessions for which
-                                  no imaging data was found
+                      - yes  (check and report an error if no information
+                        exists for a session)
+                      - warn (warn and list the sessions for which the 
+                        neuroimaging information was not found)
+                      - no   (do not run a check, ignore sessions for which
+                        no imaging data was found)
 
     --report          Whether to include date when file was generated and the 
                       final report in the compiled file ('yes') or not ('no'). 
                       ['yes']
 
-    USE DESCRIPTION
-    ===============
+    USE
+    ===
     
     The command will use the `sessionsfolders`, `sessions` and `filter` 
     parameters to create a list of sessions to process. For each session, the
     command will use the `sourcefiles` parameter to identify neuroimaging
-    information files from which to genrate the list from. If no file is found
+    information files from which to generate the list from. If no file is found
     for a session and the `check` parameter is set to `yes`, the command will
     exit with an error.
 
     Once the files for each session are identified, the command will inspect the
     files for imaging data and create a list of sequence names across all 
     sessions. The list will be saved to a file specified using `targetfile` 
-    parameter. If no path is specified, the default location will be used:
+    parameter. If no path is specified, the default location will be used::
 
-    <sessionsfolder>/inbox/MR/sequences.txt
+        <sessionsfolder>/inbox/MR/sequences.txt
 
     If a target file exists, it will be deleted and replaced, if the `overwrite`
     parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
     command will exit with an error.
 
-    
     File formats
     ------------
 
     The command expects the neuroimaging data to be present in the standard 
-    'session.txt' files. Please se online documentation for details. 
+    'session.txt' files. Please see online documentation for details. 
     Specifically, it will extract the first information following the sequence
     name.
 
@@ -2399,33 +2449,30 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     line. In addition, if `report` is set to 'yes' (the default), the resulting 
     file  will start with a comment line stating the date of creation, and at 
     the end additional comment lines will list the full report of missing files 
-    and errors encounterdd while gathering behavioral data from individual 
+    and errors encountered while gathering behavioral data from individual 
     sessions.
 
-
-    Examples
-    --------
+    EXAMPLE USE
+    ===========
     
-    ```
-    qunex pullSequenceNames sessions="AP*"
-    ```
+    ::
+
+        qunex pullSequenceNames sessions="AP*"
 
     The command will compile sequence names present in `session.txt` files 
     present in all `<session id>` folders that match the "AP*" glob
     pattern in the current working directory. 
 
-    The resulting file will be save in the default location:
+    The resulting file will be save in the default location::
 
-    <current folder>/inbox/MR/sequences.txt
+        <current folder>/inbox/MR/sequences.txt
 
     If any of the identified sessions do not include data or if errors are 
     encountered when processing the data, the command will exit with an error.
 
-    ```
-    qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
-            sessions="AP*|OP*" sourcefiles="session.txt|subject.txt" \\
-            check="warn" overwrite="yes" report="no"
-    ```
+        qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
+                sessions="AP*|OP*" sourcefiles="session.txt|subject.txt" \\
+                check="warn" overwrite="yes" report="no"
 
     The command will find all the session folders within `/data/myStudy/sessions`
     It will then look for presence of either session.txt or subject.txt files.
@@ -2435,21 +2482,21 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     report a successful completion of the task. The resulting file will not have 
     information on file generation or processing report.
     
-    ```
-    qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
-            sessions="/data/myStudy/processing/batch.txt" \\           
-            filter="group:controls|behavioral:yes" \\
-            sourcefiles="*.txt" \\
-            targetfile="/data/myStudy/sessions/specs/hcp_mapping.txt" \\
-            check="no" overwrite="yes"
-    ```
+    ::
+
+        qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
+                sessions="/data/myStudy/processing/batch.txt" \\           
+                filter="group:controls|behavioral:yes" \\
+                sourcefiles="*.txt" \\
+                targetfile="/data/myStudy/sessions/specs/hcp_mapping.txt" \\
+                check="no" overwrite="yes"
 
     The command will read the session information from the provided batch.txt 
     file. It will then process only those sessions that have the following
-    lines in their description:
+    lines in their description::
 
-    group: control
-    behavioral: yes
+        group: control
+        behavioral: yes
 
     For those sessions it will find any files that end with `.txt` and process
     them for presence of neuroimaging information. The compiled data will be 
@@ -2457,10 +2504,15 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     overwritten. The command will print a full report of the processing, 
     however, it will exit with reported success even if missing files or errors 
     were encountered.
+    """
 
-    ----------------
-    Written by Grega Repovš 2019-05-12
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
     
+    2019-05-12 Grega Repovš
+               Initial version
     """
 
     # --- Support function
@@ -2652,8 +2704,36 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
 
 # prepares session.txt files for specific pipeline mapping
 def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", sourcefile="session.txt", targetfile=None, mapping=None, filter=None, overwrite="no"):
-    '''
-    createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]
+    """
+    ``createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]``
+
+    Creates session.txt files that hold the information necessary for correct
+    mapping to a folder structure supporting specific pipeline processing.
+
+    INPUTS
+    ======
+
+    --sessions        Either an explicit list (space, comma or pipe separated)
+                      of sessions to process or the path to a batch or list file
+                      with sessions to process. If left unspecified, "*" will be
+                      used and all folders within sessionsfolders will be
+                      processed.
+    --pipelines       Specify a comma separated list of pipelines for which the
+                      session info will be be prepared. [hcp]
+    --sessionsfolder  The directory that holds sessions' folders. [.]
+    --sourcefile      The "source" session.txt file. [session.txt]
+    --targetfile      The "target" session.txt file. [session_<pipeline>.txt]
+    --mapping         The path to the text file describing the mapping.
+                      [specs/<pipeline>_mapping.txt]
+    --filter          An optional "key:value|key:value" string used as a filter
+                      if a batch file is used. Only sessions for which all the
+                      key:value pairs are true will be processed. All the
+                      sessions will be processed if no filter is provided.
+    --overwrite       Whether to overwrite target files that already exist (yes)
+                      or not (no). [no]
+
+    If an explicit list is provided, each element is treated as a glob pattern
+    and the command will process all matching session ids.
 
     USE
     ===
@@ -2665,50 +2745,26 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
     For all the sessions specified, the command checks for the presence of
     specified source file (sourcefile). If the source file is found, each sequence
     name is checked against the source specified in the mapping file (mapping),
-    and the specified label is added. The results are then saved to the specified
+    and the specified label is aded. The results are then saved to the specified
     target file (targetfile). The resulting session information files will have
-    "<pipeline>ready: true" key-value pair added.
-
-    PARAMETERS
-    ==========
-
-    --sessions       Either an explicit list (space, comma or pipe separated) of
-                     sessions to process or the path to a batch or list file with
-                     sessions to process. If left unspecified, "*" will be used 
-                     and all folders within sessionsfolders will be processed.
-    --pipelines      Specify a comma separted list of pipelines for which the
-                     session info will be be prepared. [hcp]
-    --sessionsfolder The directory that holds sessions' folders. [.]
-    --sourcefile     The "source" session.txt file. [session.txt]
-    --targetfile     The "target" session.txt file. [session_<pipeline>.txt]
-    --mapping        The path to the text file describing the mapping.
-                     [specs/<pipeline>_mapping.txt]
-    --filter         An optional "key:value|key:value" string used as a filter
-                     if a batch file is used. Only sessions for which all the
-                     key:value pairs are true will be processed. All the
-                     sessions will be processed if no filter is provided.
-    --overwrite      Whether to overwrite target files that already exist (yes)
-                     or not (no). [no]
-
-    If an explicit list is provided, each element is treated as a glob pattern
-    and the command will process all matching session ids.
+    `"<pipeline>ready: true"` key-value pair added.
 
     Mapping specification
     ---------------------
 
     The mapping file specifies the mapping between original sequence names and
     the desired pipeline labels. There are no limits to the number of mappings
-    specified. Each mapping is to be specified in a single line in a form:
+    specified. Each mapping is to be specified in a single line in a form::
 
-    <original_sequence_name>  => <user_specified_label>
+        <original_sequence_name>  => <user_specified_label>
 
-    or
+    or::
 
-    <sequence number> => <user_specified_label>
+        <sequence number> => <user_specified_label>
 
-    BOLD files should be given a compound label after the => separator:
+    BOLD files should be given a compound label after the => separator::
 
-    <original_sequence_name>  => bold:<user_specified_label>
+        <original_sequence_name>  => bold:<user_specified_label>
 
     as this allows for flexible labeling of distinct BOLD runs based on their
     content. Here the 'bold' part denotes that it is a bold file and the
@@ -2716,80 +2772,88 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
     will automatically number bold images in a sequential order, starting with 1.
 
     Any empty lines, lines starting with #, and lines without the "map to" =>
-    characters in the mapping file will be ingored. In the target file, images
+    characters in the mapping file will be ignored. In the target file, images
     with names that do not match any of the specified mappings will be given
     empty labels. When both sequence number and sequence name match, sequence
     number will have priority
 
-    Example
-    -------
+    Example mapping file
+    --------------------
 
-    Example lines in a mapping file:
+    ::
 
-    C-BOLD 3mm 48 2.5s FS-P => SE-FM-AP
-    C-BOLD 3mm 48 2.5s FS-A => SE-FM-PA
+        Example lines in a mapping file:
 
-    T1w 0.7mm N1 => T1w
-    T1w 0.7mm N2 => T1w
-    T2w 0.7mm N1 => T2w
-    T2w 0.7mm N2 => T2w
+        C-BOLD 3mm 48 2.5s FS-P => SE-FM-AP
+        C-BOLD 3mm 48 2.5s FS-A => SE-FM-PA
 
-    RSBOLD 3mm 48 2.5s  => bold:rest
-    BOLD 3mm 48 2.5s    => bold:WM
+        T1w 0.7mm N1 => T1w
+        T1w 0.7mm N2 => T1w
+        T2w 0.7mm N1 => T2w
+        T2w 0.7mm N2 => T2w
 
-    5 => bold:sleep
+        RSBOLD 3mm 48 2.5s  => bold:rest
+        BOLD 3mm 48 2.5s    => bold:WM
 
-    Example lines in a source session.txt file:
+        5 => bold:sleep
 
-    01: Scout
-    02: T1w 0.7mm N1
-    03: T2w 0.7mm N1
-    04: RSBOLD 3mm 48 2.5s
-    05: RSBOLD 3mm 48 2.5s
+        Example lines in a source session.txt file:
 
-    Resulting lines in target session_<pipeline>.txt file:
+        01: Scout
+        02: T1w 0.7mm N1
+        03: T2w 0.7mm N1
+        04: RSBOLD 3mm 48 2.5s
+        05: RSBOLD 3mm 48 2.5s
 
-    01:                  :Scout
-    02: T1w              :T1w 0.7mm N1
-    03: T2w              :T2w 0.7mm N1
-    04: bold1:rest       :RSBOLD 3mm 48 2.5s
-    05: bold2:sleep      :RSBOLD 3mm 48 2.5s
+        Resulting lines in target session_<pipeline>.txt file:
+
+        01:                  :Scout
+        02: T1w              :T1w 0.7mm N1
+        03: T2w              :T2w 0.7mm N1
+        04: bold1:rest       :RSBOLD 3mm 48 2.5s
+        05: bold2:sleep      :RSBOLD 3mm 48 2.5s
 
     Note, that the old sequence names are preserved.
-
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex createSessionInfo sessions="OP*|AP*" sessionsfolder=session mapping=session/hcp_mapping.txt
-    ```
+    ::
+
+        qunex createSessionInfo sessions="OP*|AP*" sessionsfolder=session mapping=session/hcp_mapping.txt
     
-    ```
-    qunex createSessionInfo sessions="processing/batch_new.txt" sessionsfolder=session mapping=session/hcp_mapping.txt
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex createSessionInfo sessions="processing/batch_new.txt" sessionsfolder=session mapping=session/hcp_mapping.txt
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+    
     2017-02-07 Grega Repovš
-             - Updated documentation.
+               Initial version
+    2017-02-07 Grega Repovš
+               Updated documentation.
     2017-12-26 Grega Repovš
-             - Set to ignore lines that start with # in mapping file.
+               Set to ignore lines that start with # in mapping file.
     2017-12-30 Grega Repovš
-             - Added the option to explicitly specify the session to process.
-             - Adjusted and expanded help string.
-             - Added the option to map sequence names.
+               Added the option to explicitly specify the session to process.
+               Adjusted and expanded help string.
+               Added the option to map sequence names.
     2019-04-07 Grega Repovš
-             - Added more detailed report with explicit failure in case of missing source files.
+               Added more detailed report with explicit failure in case of missing source files.
     2019-04-25 Grega Repovš
-             - Changed subjects to sessions
+               Changed subjects to sessions
     2020-06-03 Jure Demšar
-             - Renamed getHCPReady to createSessionInfo
+               Renamed getHCPReady to createSessionInfo
     2020-07-02 Aleksij Kraljič
-             - Expanded field map correction functionality, so multiple SE/FM scan pairs are allowed.
+               Expanded field map correction functionality, so multiple SE/FM scan pairs are allowed.
     '''
+=======
+               
+    """
 
     print "Running createSessionInfo\n==================="
 

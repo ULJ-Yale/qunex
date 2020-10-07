@@ -1,13 +1,15 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_4dfp.py``
+
 This file holds code for running 4dfp NIL preprocessing commands and volume to
 surface mapping. It implements the following commands:
 
-* runNIL        ... Runs NIL preprocessing of a session.
-* runNILFolder  ... Runs NIL preprocessing of sessins in a folder.
-* map2PALS      ... Maps volume image to PALS Atlas caret image.
-* map2HCP       ... Maps volume image to CIFTI dense scalar image.
+--runNIL            Runs NIL preprocessing of a session.
+--runNILFolder      Runs NIL preprocessing of sessins in a folder.
+--map2PALS          Maps volume image to PALS Atlas caret image.
+--map2HCP           Maps volume image to CIFTI dense scalar image.
 
 Use gmri to run the commands from the terminal.
 """
@@ -49,20 +51,29 @@ set seq = ""
 recode = {True: 'ok', False: 'missing'}
 
 def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
-    '''
-    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
+    """
+    ``runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
 
-    Goes through the folder and runs runNIL on all the subfolders that match the pattern. Setting overwrite
-    to overwrite.
+    Goes through the folder and runs runNIL on all the subfolders that match the
+    pattern. Setting overwrite to overwrite.
 
-    - folder: the base study sessions folder (e.g. WM44/sessions) where OP folders and the inbox folder with the
-      new packages from the scanner reside,
-    - pattern: which sessionsfolders to match (default OP*),
-    - overwrite: whether to overwrite existing (params and BOLD) files.
-    — sourcefile: the name of the session file
+    INPUTS
+    ======
 
-    example: quenx runNILFolder folder=. pattern=OP* overwrite=no sourcefile=session.txt
-    '''
+    --folder          the base study sessions folder (e.g. WM44/sessions) where
+                       OP folders and the inbox folder with the new packages 
+                       from the scanner reside.
+    --pattern         which sessionsfolders to match (default OP*).
+    --overwrite       whether to overwrite existing (params and BOLD) files.
+    --sourcefile      the name of the session file.
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        qunex runNILFolder folder=. pattern=OP* overwrite=no sourcefile=session.txt
+    """
 
     if pattern is None:
         pattern = "OP*"
@@ -116,16 +127,28 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
 
 
 def runNIL(folder=".", overwrite=None, sourcefile=None):
-    '''
-    runNIL [folder=.] [overwrite=no] [sourcefile=session.txt]
+    """
+    ``runNIL [folder=.] [overwrite=no] [sourcefile=session.txt]``
 
-    Runs NIL preprocessing script on the session data in specified folder. Uses session.txt to identify structural and
-    BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
+    Runs NIL preprocessing script on the session data in specified folder.
 
-    - folder: session's folder with nii and dicom folders and session.txt file.
-    - overwrite: whether to overwrite existing params file or exisiting BOLD data
-    — sourcefile: the name of the session file
-    '''
+    INPUTS
+    ======
+
+    --folder          session's folder with nii and dicom folders and 
+                      session.txt file.
+    --overwrite       whether to overwrite existing parameters file or existing 
+                      BOLD data.
+    --sourcefile      the name of the session file.
+
+    USE
+    ===
+
+    Runs NIL preprocessing script on the session data in specified folder. 
+    Uses session.txt to identify structural and BOLD runs and DICOM-report.txt 
+    to get TR value. The processing is saved to a datestamped log in the 4dfp 
+    folder.
+    """
 
     if overwrite is None:
         overwrite = False
@@ -260,23 +283,35 @@ def runNIL(folder=".", overwrite=None, sourcefile=None):
 
 
 def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm'):
-    '''
-    map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
+    """
+    ``map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]``
 
     Maps volume files to metric surface files using PALS12 surface atlas.
-    - volume:   a volume file or a space separated list of volume files - put in quotes
-    - metric:   the name of the metric file that stores the mapping
-    - atlas:    volume atlas from which to map (711-2C by default or 711-2B, AFNI, FLIRT, FNIRT, SPM2, SPM5, SPM95, SPM96, SPM99, MRITOTAL)
-    - method:   intepolated, maximum, enclosing, strongest, gaussian (for other options see caret_command)
-    - mapping:  a single mapping option or a space separated list in quotes, default: afm
-                afm: average fiducial mapping
-                mfm: average of mapping to all PALS cases (multifiducial mapping)
-                min: minimum of mapping to all PALS cases
-                max: maximum of mapping to all PALS cases
-                std-dev: sample standard deviation of mapping to all PALS cases
-                std-error: standard error of mapping to all PALS cases
-                all-cases: mapping to each of the PALS12 cases
-    '''
+
+    INPUTS
+    ======
+
+    --volume       a volume file or a space separated list of volume files - put
+                   in quotes
+    --metric       the name of the metric file that stores the mapping
+    --atlas        volume atlas from which to map (711-2C by default or 711-2B, 
+                   AFNI, FLIRT, FNIRT, SPM2, SPM5, SPM95, SPM96, SPM99, 
+                   MRITOTAL)
+    --method       interpolated, maximum, enclosing, strongest, Gaussian 
+                   (for other options see caret_command)
+    --mapping      a single mapping option or a space separated list in quotes.
+                   [afm] The options are:
+                
+                   - afm (average fiducial mapping)
+                   - mfm (average of mapping to all PALS cases (multifiducial 
+                     mapping))
+                   - min (minimum of mapping to all PALS cases)
+                   - max (maximum of mapping to all PALS cases)
+                   - std-dev (sample standard deviation of mapping to all PALS 
+                     cases)
+                   - std-error (standard error of mapping to all PALS cases)
+                   - all-cases (mapping to each of the PALS12 cases)
+    """
 
     methods = {'interpolated': 'METRIC_INTERPOLATED_VOXEL', 'maximum': 'METRIC_MAXIMUM_VOXEL', 'enclosing': 'METRIC_ENCLOSING_VOXEL', 'strongest': 'METRIC_STRONGEST_VOXEL', 'gaussian': 'METRIC_GAUSSIAN'}
     if method in methods:
@@ -297,13 +332,23 @@ def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
 
 def map2HCP(volume, method='trilinear'):
     '''
-    map2HCP volume=<volume file> [method=trilinear]
+    ``map2HCP volume=<volume file> [method=trilinear]``
 
     Maps volume files to dense scalar files using HCP templates.
-    - volume:   a volume file or a space separated list of volume files - put in quotes
-    - method:   one of: trilinear, enclosing, cubic, ribbon constrained
 
-    It expects "HCPATLAS" environment variable to be set, to be able to find the right templates.
+    INPUTS
+    ======
+
+    --volume      a volume file or a space separated list of volume files - put 
+                  in quotes
+    --method      one of: trilinear, enclosing, cubic, ribbon constrained
+    
+    USE
+    ===
+
+    Maps volume files to dense scalar files using HCP templates. It expects 
+    "HCPATLAS" environment variable to be set, to be able to find the right 
+    templates.
     '''
 
     if not "HCPATLAS" in os.environ:
