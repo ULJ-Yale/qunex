@@ -18,7 +18,7 @@
 #
 # ## LICENSE
 #
-# * The FSLBedpostxGPU.sh = the "Software"
+# * The DWIFSLbedpostxGPU.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -26,7 +26,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, FSLBedpostxGPU.sh, implements FSL's bedpostX functionality within the Qu|Nex Suite with GPU support
+# This script, DWIFSLbedpostxGPU.sh, implements FSL's bedpostX functionality within the Qu|Nex Suite with GPU support
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -34,7 +34,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./FSLBedpostxGPU.sh --help
+# See output of usage function: e.g. $./DWIFSLbedpostxGPU.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -84,12 +84,12 @@ weho() {
 
 usage() {
  echo ""
- echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled node or "
- echo "via a GPU-enabled queue if using the scheduler option."
+ echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled"
+ echo "node or via a GPU-enabled queue if using the scheduler option."
  echo ""
- echo "It explicitly assumes the Human Connectome Project folder structure for "
- echo "preprocessing and completed diffusion processing. DWI data is expected to be in "
- echo "the following folder:"
+ echo "It explicitly assumes the Human Connectome Project folder structure for"
+ echo "preprocessing and completed diffusion processing. DWI data is expected to"
+ echo "be in the following folder:"
  echo ""
  echo " <study_folder>/<case>/hcp/<case>/Diffusion"
  echo ""
@@ -98,20 +98,24 @@ usage() {
  echo "" 
  echo "--sessionsfolder   Path to study folder that contains sessions"
  echo "--sessions         Comma separated list of sessions to run"
- echo "--fibers           Number of fibres per voxel, default 3"
+ echo "--fibers           Number of fibres per voxel. [3]"
  echo "--model            Deconvolution model:"
+ echo "                   - 1 ... with sticks,"
+ echo "                   - 2 ... with sticks with a range of diffusivities,"
+ echo "                   - 3 ... with zeppelins."
+ echo "                   [2]"
  echo ""
- echo "                   - 1 ... with sticks"
- echo "                   - 2 ... with sticks with a range of diffusivities <default>"
- echo "                   - 3 ... with zeppelins"
- echo ""
- echo "--burnin           Burnin period [1000]"
- echo "--rician           Rician value. <yes> or <no>. Default is yes"
- echo "--overwrite        Delete prior run for a given session"
- echo "--scheduler        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                   followed by relevant options, e.g. for SLURM the string "
- echo "                   would look like this: "
- echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+ echo "--burnin           Burnin period. [1000]"
+ echo "--rician           Replace the default Gaussian noise assumption with"
+ echo "                   Rician noise (yes/no). [yes]"
+ echo "--overwrite        Delete prior run for a given session. [no]"
+ echo "--scheduler        A string for the cluster scheduler (LSF, PBS or SLURM)"
+ echo "                   followed by relevant options, e.g. for SLURM the string"
+ echo "                   would look like this:"
+ echo "                   --scheduler='SLURM,jobname=<name_of_job>,"
+ echo "                   time=<job_duration>,ntasks=<numer_of_tasks>,"
+ echo "                   cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,"
+ echo "                   partition=<queue_to_send_job_to>'"
  echo "                   Note: You need to specify a GPU-enabled queue or partition"
  echo ""
  echo "EXAMPLE USE"
@@ -119,27 +123,29 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/connector/functions/FSLBedpostxGPU.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLbedpostxGPU.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via:: "
  echo ""
- echo " qunex FSLBedpostxGPU --<parameter1> --<parameter2> ... --<parameterN> "
+ echo " qunex DWIFSLbedpostxGPU --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
- echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
+ echo "--scheduler       A string for the cluster scheduler (LSF, PBS or SLURM)"
  echo "                  followed by relevant options"
  echo ""
  echo "For SLURM scheduler the string would look like this via the qunex call:: "
  echo ""                   
- echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+ echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,"
+ echo "ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,"
+ echo "mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'"
  echo ""    
  echo "::"
  echo ""
- echo " qunex FSLBedpostxGPU \ "
+ echo " qunex DWIFSLbedpostxGPU \ "
  echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
  echo " --sessions='<comma_separarated_list_of_cases>' \ "
  echo " --fibers='3' \ "
@@ -156,11 +162,11 @@ usage() {
 # ------------------------------------------------------------------------------
 
 reho() {
-    echo -e "\033[31m $1 \033[0m"
+    echo -e "\033[31m $1\033[0m"
 }
 
 geho() {
-    echo -e "\033[32m $1 \033[0m"
+    echo -e "\033[32m $1\033[0m"
 }
 
 # ------------------------------------------------------------------------------
@@ -212,7 +218,6 @@ runcmd=""
 Fibers=`opts_GetOpt "--fibers" $@`
 Model=`opts_GetOpt "--model" $@`
 Burnin=`opts_GetOpt "--burnin" $@`
-Jumps=`opts_GetOpt "--jumps" $@`
 Rician=`opts_GetOpt "--rician" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
 CASE=`opts_GetOpt "--session" $@`
@@ -221,37 +226,35 @@ SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 # -- Check required parameters
 if [ -z "$SessionsFolder" ]; then reho "Error: Sessions folder"; exit 1; fi
 if [ -z "$CASE" ]; then reho "Error: Session missing"; exit 1; fi
-if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
-if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
-if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
-if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
+
+# -- Set defaults if not provided
+if [ -z "$Fibers" ]; then geho "Note: The Fibers parameter is not set, using default [3]"; Fibers=3; fi
+if [ -z "$Model" ]; then geho "Note: Model parameter is not set, using default [2]"; Model=2; fi
+if [ -z "$Burnin" ]; then geho "Note: The Burnin parameter is not set, using default [1000]"; Burnin=1000; fi
+if [ -z "$Rician" ]; then geho "Note: The Rician parameter is not set, using default [yes]"; Rician="yes"; fi
 
 # -- Set StudyFolder
 cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
 
-# -- Report options
+# -- Report run parameters
 echo ""
-echo ""
-echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   Study Folder: ${StudyFolder}"
-echo "   Sessions Folder: ${SessionsFolder}"
-echo "   Session: ${CASE}"
-echo "   Study Log Folder: ${LogFolder}"
-echo "   Number of Fibers: ${Fibers}"
-echo "   Model Type: ${Model}"
-echo "   Burnin Period: ${Burnin}"
-echo "   Rician flag: ${Rician}"
-echo "   Overwrite prior run: ${Overwrite}"
-echo "-- ${scriptName}: Specified Command-Line Options - End --"
-echo ""
-geho "------------------------- Start of work --------------------------------"
-echo ""
+echo " --> Executing ${scriptName} DWIFSLbedpostxGPU:"
+echo "     Study Folder: ${StudyFolder}"
+echo "     Sessions Folder: ${SessionsFolder}"
+echo "     Session: ${CASE}"
+echo "     Number of Fibers: ${Fibers}"
+echo "     Model Type: ${Model}"
+echo "     Burnin Period: ${Burnin}"
+echo "     Rician flag: ${Rician}"
+echo "     Overwrite prior run: ${Overwrite}"
 }
 
 ######################################### DO WORK ##########################################
 
 main() {
+
+geho "------------------------- Start of work --------------------------------"
 
 # -- Get Command Line Options
 get_options $@
@@ -260,32 +263,22 @@ get_options $@
 T1wDiffFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
 BedPostXFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
 LogFolder="$BedPostXFolder"/logs
-Overwrite="$Overwrite"
+
 # -- Check if overwrite flag was set
+Overwrite="$Overwrite"
 if [ "$Overwrite" == "yes" ]; then
     echo ""
-    reho "Removing existing Bedpostx run for $CASE..."
-    echo ""
+    reho "--> Removing existing bedpostx run for $CASE..."
     rm -rf "$BedPostXFolder" > /dev/null 2>&1
 fi
-geho "Checking if Bedpostx was completed on $CASE..."
+echo ""
+geho "--> Checking if bedpostx was completed on $CASE..."
 # Set file depending on model specification
 if [ "$Model" == 2 ]; then
     CheckFile="mean_d_stdsamples.nii.gz"
 fi
 if [ "$Model" == 3 ]; then
     CheckFile="mean_Rsamples.nii.gz"
-fi
-if [ "$Rician" == "no" ] || [ "$Rician" == "NO" ]; then
-    echo ""
-    geho "Omitting --rician flag"
-    RicianFlag=""
-    echo ""
-else
-    echo ""
-    geho "Setting --rician flag"
-    RicianFlag="--rician"
-    echo ""
 fi
 
 checkCompletion() {
@@ -296,6 +289,7 @@ if [ -f ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"$CheckFile
     actualfilesize=`wc -c < ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
     filecount=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
 fi
+
 # -- Then check if run is complete based on file count
 if [ "$filecount" == 9 ]; then > /dev/null 2>&1
     echo ""
@@ -303,19 +297,16 @@ if [ "$filecount" == 9 ]; then > /dev/null 2>&1
     # -- Then check if run is complete based on file size
     if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
         echo ""
-        cyaneho " --> Bedpostx outputs found and completed for $CASE"
+        cyaneho "--> bedpostx outputs found and completed for $CASE"
+        cyaneho "    Check prior output logs here: $LogFolder"
         echo ""
-        cyaneho "Check prior output logs here: $LogFolder"
-        echo ""
-        echo "--------------------------------------------------------------"
-        echo ""
+        echo "-----------------------------------------------------"
         RunCompleted="yes"
     else
         echo ""
-        reho " --> Bedpostx outputs missing or incomplete for $CASE"
+        reho "--> bedpostx outputs missing or incomplete for $CASE"
         echo ""
-        reho "--------------------------------------------------------------"
-        echo ""
+        reho "----------------------------------------------------"
         RunCompleted="no"
     fi
 fi
@@ -326,35 +317,52 @@ if [[ ${RunCompleted} == "yes" ]]; then
    exit 0
 else
    echo ""
-   reho " -- Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
-   echo ""
+   reho "--> Prior bedpostx run not found or incomplete for $CASE. Setting up new run..."
 fi
 
-# -- Generate log folder
+echo ""
+geho "--> Generating log folder"
 mkdir ${BedPostXFolder} > /dev/null 2>&1
+
+# -- Set rician flag
+if [ "$Rician" == "no" ] || [ "$Rician" == "NO" ]; then
+    RicianFlag=""
+else
+    RicianFlag="--rician"
+fi
+
 # -- Command to run
 if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
+    echo ""
+    geho "--> Using gradinent nonlinearities flag -g"
+    echo ""
+    geho "--> Running FSL command:"
+    echo "    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}"
     ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}
 else
+    echo ""
+    geho "--> Using gradinent nonlinearities flag -g"
+    echo ""
+    geho "--> Running FSL command:"
+    echo "    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}"
     ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}
 fi
 
 # -- Perform completion checks
-reho "--- Checking outputs..."
 echo ""
+reho "--> Checking outputs..."
 checkCompletion
 if [[ ${RunCompleted} == "yes" ]]; then
-    geho "BedpostX completed: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
     echo ""
+    geho "--> bedpostx completed: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
 else
    echo ""
-   reho " -- BedpostX run not found or incomplete for $CASE. Something went wrong." 
-   reho "Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
-   echo ""
+   reho "--> bedpostx run not found or incomplete for $CASE. Something went wrong." 
+   reho "    Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
    exit 1
 fi
 
-reho "--- BedpostX successfully completed"
+reho "--> bedpostx successfully completed"
 echo ""
 geho "------------------------- Successful completion of work --------------------------------"
 echo ""
