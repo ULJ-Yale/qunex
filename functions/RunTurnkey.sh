@@ -2628,7 +2628,7 @@ fi
    FunctionName="computeBOLDfc"
        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ computeBOLDfc processing steps for GBC."; echo ""
 
-       getBoldList
+       getBoldNumberList
 
        for BOLDRUN in ${LBOLDRUNS}; do
             if [ -z "$InputFile" ]; then InputFileGBC="bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileGBC="${InputFile}"; fi
