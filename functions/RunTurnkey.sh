@@ -2583,7 +2583,7 @@ fi
            ROINames=${ROIInfo}
         fi
 
-        getBoldList
+        getBoldNumberList
 
         for ROIInfo in ${ROINames}; do
             for BOLDRUN in ${LBOLDRUNS}; do
