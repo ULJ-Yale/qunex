@@ -26,11 +26,11 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.2
+Qu|Nex suite version: 0.62.3
 
 Submodules:
 
-* connector: 0.62.5
+* connector: 0.62.6
 * library: 0.62.2
 * nitools: 0.61.1
 * niutilities: 0.62.5
@@ -39,6 +39,7 @@ Submodules:
 Release notes
 -------------
 
+* 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
 * 0.62.2  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
 * 0.62.1  Fixed RunQC_BOLD issues with filenames and a large number of bolds.Increase the robustness of Qu|Nex when processing multiple sessions in parallel.
 * 0.62.0  Documentation rework.
