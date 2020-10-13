@@ -842,6 +842,32 @@ def underscore(s):
     return s
 
 
+def plist(s):
+    '''
+    plist(s)
+    Processes the string, spliting it by the pipe "|" symbol, trimming
+    any whitespace caracters from start or end of each resulting
+    substring, and retuns an array of substrings of length more than 0.
+    '''
+    s = s.split('|')
+    s = [e.strip() for e in s]
+    s = [e for e in s if len(e) > 0]
+    return s
+
+
+def pcslist(s):
+    '''
+    pcslist(s)
+    Processes the string, spliting it by the pipe "|", comma or space, trimming
+    any whitespace caracters from start or end of each resulting substring, and 
+    retuns an array of substrings of length more than 0.
+    '''
+    s = re.split(' *, *| *\| *| +', s)
+    s = [e.strip() for e in s]
+    s = [e for e in s if len(e) > 0]
+    return s
+
+
 def linkOrCopy(source, target):
     """
     linkOrCopy - documentation not yet available.

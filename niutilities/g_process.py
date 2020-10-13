@@ -135,20 +135,6 @@ def isNone(s):
         return s
 
 
-def plist(s):
-    '''
-    ``plist(s)``
-
-    Processes the string, spliting it by the pipe "|" symbol, trimming
-    any whitespace caracters form start or end of each resulting
-    substring, and retuns an array of substrings of length more than 0.
-    '''
-    s = s.split('|')
-    s = [e.strip() for e in s]
-    s = [e for e in s if len(e) > 0]
-    return s
-
-
 def updateOptions(session, options):
     '''
     ``updateOptions(session, options)``
@@ -230,7 +216,7 @@ arglist = [['# ---- Basic settings'],
            ['event_string',       '' ,                                           str,    "string specifying what and how of task to regress out"],
            ['source_folder',      'True',                                        torf,   "hould we check for source folder (yes/no)"],
            ['wbmask',             '',                                            str,    "mask specifying what ROI to exclude from WB mask"],
-           ['sessionroi',             '',                                        str,    "a mask used to specify session specific WB"],
+           ['sessionroi',         '',                                            str,    "a mask used to specify session specific WB"],
            ['nroi',               '',                                            str,    "additional nuisance regressors ROI and which not to mask by brain mask (e.g. 'nroi.names|eyes,scull')"],
            ['shrinknsroi',        'true',                                        str,    "whether to shrink signal nuisance ROI (V,WM,WB) true or false"],
            ['path_bold',          'bold[N]/*faln_dbnd_xr3d_atl.4dfp.img',        str,    "the mask to use for searching for bold images"],
@@ -239,6 +225,7 @@ arglist = [['# ---- Basic settings'],
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
+           ['use_sequence_info',  'all',                                         g_core.pcslist,    "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
            ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
