@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_process.py``
+
 This file holds the core preprocessing hub functions and information it
 defines the commands that can be run, it specifies the options and their
 default values. It has a few support functions and the key `run` function
@@ -8,26 +10,31 @@ that processes the input, prints some of the help and calls processing
 functions either localy or through supported scheduler systems.
 
 None of the code is run directly from the terminal interface.
+"""
 
-Created by Grega Repovs on 2016-12-17.
-Code merge from dofcMRIp gCodeP/preprocess codebase.
-Copyright (c) Grega Repovs. All rights reserved.
+"""
+~~~~~~~~~~~~~~~~~~
 
----
-Changelog
+Change log
+
+2016-12-17 Grega Repovs
+           Initial version
+           Code merge from dofcMRIp gCodeP/preprocess codebase.
 2017-07-10 Grega Repovs
-         - Simplified scheduler interface, now uses g_scheduler
+           Simplified scheduler interface, now uses g_scheduler
 2018-11-14 Jure Demsar
-         - Added parelements parameter for bold parallelization
+           Added parelements parameter for bold parallelization
 2018-12-12 Jure Demsar
-         - Added conc_use parameter for absolute or relative path
+           Added conc_use parameter for absolute or relative path
            interpretation from conc files.
 2019-01-13 Jure Demsar
-         - Fixed a bug that disabled parsessions parameter with the
+           Fixed a bug that disabled parsessions parameter with the
            introduction of the parelements parameter.
 2019-09-20 Jure Demsar
-         - Have all the files listed with the original name
+           Have all the files listed with the original name
            in session_<pipeline>.txt.
+
+Copyright (c) Grega Repovs. All rights reserved.
 """
 
 # general imports
@@ -59,7 +66,8 @@ logname = ""
 
 def writelog(item):
     '''
-    writelog(item)
+    ``writelog(item)``
+
     Splits the passed item into two parts and appends the first to the
     global log list, and the second to the global stati list. It also
     prints the contents to the file specified in the global logname
@@ -78,7 +86,8 @@ def writelog(item):
 
 def procResponse(r):
     '''
-    procResponse(r)
+    ``procResponse(r)``
+
     It processes the response returned from the utilities functions
     called. It splits it into the report string and status tuple. If
     no status tupple is present, it adds an "Unknown" tupple. If the 
@@ -101,7 +110,8 @@ def procResponse(r):
 
 def torf(s):
     '''
-    torf(s)
+    ``torf(s)``
+
     First checks if string is "None", 'none', or "NONE" and returns
     None, then Checks if s is any of the possible true strings: "True", "true",
     or "TRUE" and retuns a boolean result of the check.
@@ -114,7 +124,8 @@ def torf(s):
 
 def isNone(s):
     '''
-    isNone(s)
+    ``isNone(s)``
+
     Check if the string is "None", "none" or "NONE" and returns None, otherwise
     returns the passed string.
     '''
@@ -126,7 +137,8 @@ def isNone(s):
 
 def plist(s):
     '''
-    plist(s)
+    ``plist(s)``
+
     Processes the string, spliting it by the pipe "|" symbol, trimming
     any whitespace caracters form start or end of each resulting
     substring, and retuns an array of substrings of length more than 0.
@@ -139,7 +151,8 @@ def plist(s):
 
 def updateOptions(session, options):
     '''
-    updateOptions(session, options)
+    ``updateOptions(session, options)``
+
     Returns an updated copy of options dictionary where all keys from 
     sessions that started with an underscore '_' are mapped into options.
     '''
@@ -555,9 +568,10 @@ for line in flaglist:
 
 def mapDeprecated(options, command):
     '''
-    mapDeprecated(options, command)
+    ``mapDeprecated(options, command)``
+    
     Checks for deprecated parameters, remaps deprecated ones
-    and notifes the user.
+    and notifies the user.
     '''
 
     remapped   = []
