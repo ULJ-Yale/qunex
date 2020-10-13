@@ -135,20 +135,6 @@ def isNone(s):
         return s
 
 
-def plist(s):
-    '''
-    ``plist(s)``
-
-    Processes the string, spliting it by the pipe "|" symbol, trimming
-    any whitespace caracters form start or end of each resulting
-    substring, and retuns an array of substrings of length more than 0.
-    '''
-    s = s.split('|')
-    s = [e.strip() for e in s]
-    s = [e for e in s if len(e) > 0]
-    return s
-
-
 def updateOptions(session, options):
     '''
     ``updateOptions(session, options)``
