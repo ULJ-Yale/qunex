@@ -543,13 +543,13 @@ DATAFormat=`opts_GetOpt "--dataformat" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 HCPFilename=`opts_GetOpt "--hcp_filename" $@`
 
-# backwards compatibility
+# backwards compatibility and default value
 if [ -z "$HCPFilename" ]; then HCPFilename=`opts_GetOpt "--hcpfilename" $@`; fi
+if [ -z "$HCPFilename" ]; then HCPFilename="standard"; fi
 
 if [ -z "$DATAFormat" ]; then DATAFormat=DICOM; fi
 if [ "${BIDSFormat}" == 'yes' ]; then DATAFormat="BIDS"; fi
 if [ "${DATAFormat}" == 'BIDS' ]; then BIDSFormat="yes"; else BIDSFormat="no"; fi
-if [ -z "$HCPFilename" ]; then HCPFilename="standard"; fi
 
 AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
 
@@ -977,8 +977,18 @@ getBoldList() {
     if [[ ! -z ${ProcessingBatchFile} ]]; then
         LBOLDRUNS="${BOLDRUNS}"
         geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}' in batch file ${ProcessingBatchFile} ... "; 
+
+        # set output type
         unset BOLDnameOutput
-        if [[ ! -z ${HCPFilename} ]]; then BOLDnameOutput="name"; fi
+        if [[ ! -z ${HCPFilename} ]] && [[ ${HCPFilename} == "original" ]]; then 
+            BOLDnameOutput="name";
+        else
+            HCPFilename="standard"
+            BOLDnameOutput="number";
+        fi
+
+        geho "  --> Using ${HCPFilename} hcp_filename [${BOLDnameOutput}] ... "; 
+
         if [[ -f ${ProcessingBatchFile} ]]; then
             LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" output="${BOLDnameOutput}" prefix="" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
             LBOLDRUNS="${LBOLDRUNS}"

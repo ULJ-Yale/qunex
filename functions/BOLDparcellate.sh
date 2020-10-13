@@ -453,7 +453,7 @@ if [[ ${Overwrite} == "no" ]]; then
     echo " --> Overwrite set to no. If you wish to overwrite, set --overwrite='yes' and re-run."
     echo ""
     echo ""
-    geho "--- BOLD Parcellation completed. Check output log for outputs and errors."
+    geho "--- BOLD Parcellation completed. Check output log for outputs and possible issues."
     echo ""
     geho "------------------------- Successful completion of work --------------------------------"
     echo ""
