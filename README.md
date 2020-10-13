@@ -42,7 +42,7 @@ Quick links
 Change log
 ----------
 
-* 0.62.6  Added the use_sequence_info parameter which spcifies the information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.6  Added the use_sequence_info parameter which specifies the information is extracted from JSON sidecars during dcm2niix conversion.
 * 0.62.5  gmri documentation polish for consistency across the whole suite.
 * 0.62.4  Renamed filename to hcp_filename in SetupHCP.
 * 0.62.3  batchTag2NameKey optimizations and documentation update.
