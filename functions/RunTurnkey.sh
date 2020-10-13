@@ -103,9 +103,12 @@ weho() {
 # source $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="createStudy mapRawData organizeDicom importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy eddyQC runQC_DWIeddyQC RunQC_DWIeddyQC FSLDtifit runQC_DWIDTIFIT RunQC_DWIDTIFIT FSLBedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIBedpostX RunQC_DWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+QuNexTurnkeyWorkflow="createStudy mapRawData importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy DWIeddyQC runQC_DWIeddyQC RunQC_DWIeddyQC DWIFSLdtifit runQC_DWIFSLdtifit RunQC_DWIFSLdtifit DWIFSLbedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIbedpostx RunQC_DWIbedpostx DWIpreTractography DWIparcellate DWIseedTractographyDense runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation BOLDparcellate computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
+
 SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5"
+
 QuNexTurnkeyClean="hcp4"
 
 # ------------------------------------------------------------------------------
@@ -113,158 +116,259 @@ QuNexTurnkeyClean="hcp4"
 # ------------------------------------------------------------------------------
 
 usage() {
-    echo ""
-    echo "  -- DESCRIPTION:"
-    echo ""
-    echo "  This function implements Qu|Nex Suite workflows as a turnkey function."
-    echo "  It operates on a local server or cluster or within the XNAT Docker engine."
-    echo ""
-    echo ""
-    echo "  -- GENERAL PARMETERS:"
-    echo ""
-    echo "    --rawdatainput=<specify_absolute_path_of_raw_data>        If --turnkeytype is not XNAT then specify location of raw data on the file system for a session."
-    echo "                                                                    Default is [] for the XNAT type run as host is used to pull data."
-    echo "    --workingdir=<specify_directory_where_study_is_located>   Absolute path of the folder where the study folder is to be created or resides. Default is [/output]."
-    echo "    --projectname=<specify_project_name>                      Specify name of the project on local file system if XNAT is not specified."
-    echo "    --turnkeytype=<turnkey_run_type>                          Specify type turnkey run. Options are: local or xnat"
-    echo "                                                              If empty default is set to: [xnat]."
-    echo "    --path=<study_path>                                       Absolute path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
-    echo "                                                              Note: --studyfolder will give the same behavior as --path"
-    echo "    --sessionsfoldername=<sessions_folder>                    Name of the folder where sessions are located. If empty RunTurnkey will report an error."
-    echo "    --sessions=<sessions_to_run_turnkey_on>                   Sessions to run locally on the file system if not an XNAT run."
-    echo "    --sessionids=<comma_separated_list_of_session_ids>        Ids to select for a run via gMRI engine from the batch file"
-    echo "    --turnkeysteps=<turnkey_worlflow_steps>                   Specify specific turnkey steps you wish to run:"
-    echo "                                                              Supported:   ${QuNexTurnkeyWorkflow} "
-    echo "    --turnkeycleanstep=<clean_intermediate worlflow_steps>    Specify specific turnkey steps you wish to clean up intermediate files for:"
-    echo "                                                              Supported:   ${QuNexTurnkeyClean}"
-    echo "    --batchfile=<batch_file>                                  Batch file with pre-configured header specifying processing parameters" 
-    echo "                                                              Note: This file needs to be created *manually* prior to starting runTurnkey"
-    echo "                                                              * IF executing a 'local' run then provide the absolute path to the file on the local file system:"
-    echo "                                                                 If no file name is given then by default Qu|Nex RunTurnkey will exit with an error."
-    echo "                                                              * IF executing a run via the XNAT WebUI then provide the name of the file" 
-    echo "                                                                This file should be created and uploaded manually as the project-level resource on XNAT"
-    echo ""
-    echo "    --mappingfile=<mapping_file>                             File for mapping NIFTI files into the desired Qu|Nex file structure (e.g. hcp , fMRIPrep, etc.)"
-    echo "                                                             Note: This file needs to be created *manually* prior to starting runTurnkey"
-    echo "                                                              * IF executing a 'local' run then provide the absolute path to the file on the local file system:"
-    echo "                                                                 If no file name is given then by default Qu|Nex RunTurnkey will exit with an error."
-    echo "                                                              * IF executing a run via the XNAT WebUI then provide the name of the file" 
-    echo "                                                                This file should be created and uploaded manually as the project-level resource on XNAT"
-    echo ""
-    echo "  -- ACCEPTANCE TESTING PARAMETERS:"
-    echo ""
-    echo "    --acceptancetest=<request_acceptance_test>         Specify if you wish to run a final acceptance test after each unit of processing. Default is [no]"
-    echo "                                                       If --acceptancetest='yes', then --turnkeysteps must be provided and will be executed first."
-    echo "                                                       If --acceptancetest='<turnkey_step>', then acceptance test will be run but step won't be executed."
-    echo ""
-    echo "  -- XNAT HOST, PROJECT and USER PARMETERS:"
-    echo ""
-    echo "    --xnathost=<xnat_host_url>                         Specify the XNAT site hostname URL to push data to."
-    echo "    --xnatprojectid=<name_of_xnat_project_id>          Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
-    echo "    --xnatuser=<xnat_host_user_name>                   Specify XNAT username."
-    echo "    --xnatpass=<xnat_host_user_pass>                   Specify XNAT password."
-    echo ""
-    echo "  -- XNAT SUBJECT AND SESSION PARAMETERS:"
-    echo ""
-    echo "    --xnatsubjectid=<xnat_subject_id>                  ID for subject across the entire XNAT database. * Required or --xnatsubjectlabel needs to be set."
-    echo "    --xnatsubjectlabel=<xnat_subject_label>            Label for subject within a project for the XNAT database. * Required or --xnatsubjectid needs to be set."
-    echo "    --xnataccsessionid=<xnat_accesession_id>           ID for subject-specific session within the XNAT project. * Derived from XNAT but can be set manually."
-    echo "    --xnatsessionlabel=<xnat_session_label>            Label for session within XNAT project. Note: may be general across multiple subjects (e.g. rest). * Required."
-    echo ""
-    echo "    --xnatstudyinputpath=<path>                        The path to the previously generated session data as mounted for the container. Default is /input/RESOURCES/qunex_session"
-    echo ""
-    echo ""
-    echo "  -- MISC. PARMETERS:"
-    echo ""
-    echo "    --dataformat=<specify_data_format>                         Specify the format in which the data is. Acceptable values are :"
-    echo "                                                               DICOM - datasets with images in DICOM format"
-    echo "                                                               BIDS  - BIDS compliant datasets"
-    echo "                                                               HCPLS - HCP Life Span datasets"
-    echo "                                                               HCPYA - HCP Young Adults (1200) dataaset"
-    echo "                                                               Default is [DICOM]"
-    echo ""
-    echo "    --hcpfilename=[standard|original]                          Specify how files and folders should be named using HCP processing:"
-    echo "                                                               standard - files should be named using Qu|Nex standard naming (e.g. BOLD_1_PA)"
-    echo "                                                               original - files should be named using their original names (e.g. rfMRI_REST1_AP)"
-    echo "                                                               Note that the filename to be used has to be provided in the session_hcp.txt file or"    
-    echo "                                                               the standard naming will be used. If not provided the default 'standard' will be used."    
-    echo ""
-    echo "    --bidsformat=<specify_bids_input>                          Note: this parameter is deprecated and is kept for backward compatibility. "
-    echo "                                                               If set to yes, it will set --dataformat to BIDS. If left undefined or set to no, the "
-    echo "                                                               --dataformat value will be used. The specification of the parameter follows ..."
-    echo "                                                               Specify if input data is in BIDS format (yes/no). Default is [no]. If set to yes, it overwrites the --dataformat parameter."
-    echo "                                                               Note: If --bidsformat='yes' and XNAT run is requested then --xnatsessionlabel is required."
-    echo "                                                                     If --bidsformat='yes' and XNAT run is NOT requested then "
-    echo "                                                                          BIDS data expected in --> <sessions_folder/inbox/BIDS"
-    echo ""
-    echo "    --bidsname=<specify_bids_name>                             The name of the BIDS dataset. The dataset level information that does not pertain to a specific session will"
-    echo "                                                               be stored in <projectname>/info/bids/<bidsname>. If bidsname is not provided, it will be deduced from the name of the "
-    echo "                                                               folder in which the BIDS database is stored or from the zip package name."
-    echo ""
-    echo "    --overwritestep=<specify_step_to_overwrite>                Specify <yes> or <no> for delete of prior workflow step. Default is [no]."
-    echo "    --overwritesession=<specify_session_overwrite>             Specify <yes> or <no> for delete of prior session run. Default is [no]."
-    echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for delete of entire project prior to run. Default is [no]."
-    echo "    --overwriteprojectxnat=<specify_xnat_project_overwrite>    Specify <yes> or <no> for delete of entire XNAT project folder prior to run. Default is [no]."
-    echo "    --cleanupsession=<specify_session_clean>                   Specify <yes> or <no> for cleanup of session folder after steps are done. Default is [no]."
-    echo "    --cleanupproject=<specify_project_clean>                   Specify <yes> or <no> for cleanup of entire project after steps are done. Default is [no]."
-    echo "    --cleanupoldfiles=<specify_old_clean>                      Specify <yes> or <no> for cleanup of files that are older than start of run (XNAT run only). Default is [no]."
-    echo ""
-    echo "    --bolds=<list_of_bolds_to_process>                         For commands that work with BOLD images this flag specifies which specific BOLD images to process."
-    echo "                                                               The list of BOLDS has to be specified as a comma or pipe '|' separated string of bold numbers or bold tags"
-    echo "                                                               as they are specified in the session_hcp.txt or batch.txt file. "
-    echo "                                                               EXAMPLE: '--bolds=1,2,rest' would process BOLD run 1, BOLD run 2 and any other BOLD image that is tagged with the string 'rest'."
-    echo "                                                               If the parameter is not specified, the default value 'all' will be used. In this scenario every BOLD image that is specified"
-    echo "                                                               in the group batch.txt file for that session will be processed."
-    echo "                                                               NOTE: This parameter takes precedence over the 'bolds' parameter in the batch.txt file. Therefore when RunTurnkey is executed and"
-    echo "                                                                     this parameter is ommitted the '_bolds' specification in the batch.txt file never takes effect, because the default value 'all'"
-    echo "                                                                     will take precedence."
-    echo ""
-    echo "  -- OPTIONAL CUSTOM QC PARAMETERS:"
-    echo ""
-    echo "    --customqc=<yes/no>                          Default is [no]. If set to 'yes' then the script looks into: "
-    echo "                                                 ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
-    echo "                                                       Note: The provided scene has to conform to Qu|Nex QC template standards.xw"
-    echo "                                                             See $TOOLS/$QUNEXREPO/library/data/scenes/qc/ for example templates."
-    echo "                                                             The qc path has to contain relevant files for the provided scene."
-    echo ""
-    echo "    --qcplotimages=<specify_plot_images>         Absolute path to images for g_PlotBoldTS. See 'qunex g_PlotBoldTS' for help. "
-    echo "                                                 Only set if g_PlotBoldTS is requested then this is a required setting."
-    echo "    --qcplotmasks=<specify_plot_masks>           Absolute path to one or multiple masks to use for extracting BOLD data. See 'qunex g_PlotBoldTS' for help. "
-    echo "                                                 Only set if g_PlotBoldTS is requested then this is a required setting."
-    echo "    --qcplotelements=<specify_plot_elements>     Plot element specifications for g_PlotBoldTS. See 'qunex g_PlotBoldTS' for help. "
-    echo "                                                 Only set if g_PlotBoldTS is requested. If not set then the default is: "
-    echo "        ${QCPlotElements}"
-    echo ""
-    echo "" 
-    echo "-- EXAMPLES:"
-    echo ""
-    echo "   --> Run directly via ${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
-    echo ""
-    reho "           * NOTE: --scheduler is not available via direct script call."
-    echo ""
-    echo "   --> Run via qunex runTurnkey --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
-    echo ""
-    geho "           * NOTE: scheduler is available via qunex call:"
-    echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-    echo ""
-    echo "           * For SLURM scheduler the string would look like this via the qunex call: "
-    echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-    echo ""
-    echo ""
-    echo "  RunTurnkey.sh \ "
-    echo "   --turnkeytype=<turnkey_run_type> \ "
-    echo "   --turnkeysteps=<turnkey_worlflow_steps> \ "
-    echo "   --batchfile=<batch_file> \ "
-    echo "   --overwritestep=yes \ "
-    echo "   --mappingfile=<mapping_file> \ "
-    echo "   --xnatsubjectlabel=<XNAT_SUBJECT_LABEL> \ "
-    echo "   --xnatsessionlabel=<XNAT_SESSION_LABEL> \ "
-    echo "   --xnatprojectid=<name_of_xnat_project_id> \ "
-    echo "   --xnathostname=<XNAT_site_URL> \ "
-    echo "   --xnatuser=<xnat_host_user_name> \ "
-    echo "   --xnatpass=<xnat_host_user_pass> \ "
-    echo ""
-    exit 0
+ echo ""
+ echo "qunex runTurnkey"
+ echo ""
+ echo "This function implements Qu|Nex Suite workflows as a turnkey function."
+ echo "It operates on a local server or cluster or within the XNAT Docker engine."
+ echo ""
+ echo ""
+ echo "INPUTS"
+ echo "======"
+ echo ""
+ echo "--turnkeytype         Specify type turnkey run. Options are: local or xnat."
+ echo "                      Default: [xnat]."
+ echo "--path                Path where study folder is located. If empty default "
+ echo "                      is [/output/xnatprojectid] for XNAT run."
+ echo "--sessions            Sessions to run locally on the file system if not an XNAT "
+ echo "                      run."
+ echo "--sessionids          Comma separated list of session IDs to select for a run "
+ echo "                      via gMRI engine from the batch file."
+ echo "--turnkeysteps        Specify specific turnkey steps you wish to run:"
+ echo "                      Supported: ${QuNexTurnkeyWorkflow} "
+ echo "--turnkeycleanstep    Specify specific turnkey steps you wish to clean up "
+ echo "                      intermediate files for."
+ echo "                      Supported: ${QuNexTurnkeyClean}"
+ echo "--batchfile           Batch file with pre-configured header specifying "
+ echo "                      processing parameters" 
+ echo ""
+ echo "                      Note: This file needs to be created *manually* prior to "
+ echo "                      starting runTurnkey."
+ echo ""
+ echo "                      - IF executing a 'local' run then provide the absolute "
+ echo "                        path to the file on the local file system:"
+ echo "                        If no file name is given then by default Qu|Nex "
+ echo "                        RunTurnkey will exit with an error."
+ echo "                      - IF executing a run via the XNAT WebUI then provide the "
+ echo "                        name of the file. This file should be created and "
+ echo "                        uploaded manually as the project-level resource on XNAT"
+ echo ""
+ echo "--mappingfile         File for mapping NIFTI files into the desired Qu|Nex file "
+ echo "                      structure (e.g. hcp, fMRIPrep, etc.)"
+ echo ""
+ echo "                      Note: This file needs to be created *manually* prior to "
+ echo "                      starting runTurnkey"
+ echo ""
+ echo "                      - IF executing a 'local' run then provide the absolute "
+ echo "                        path to the file on the local file system:"
+ echo "                        If no file name is given then by default Qu|Nex "
+ echo "                        RunTurnkey will exit with an error."
+ echo "                      - IF executing a run via the XNAT WebUI then provide the "
+ echo "                        name of the file. This file should be created and "
+ echo "                        uploaded manually as the project-level resource on XNAT"
+ echo ""
+ echo "ACCEPTANCE TESTING INPUT"
+ echo "------------------------"
+ echo ""
+ echo "--acceptancetest      Specify if you wish to run a final acceptance test after "
+ echo "                      each unit of processing. Default is [no]"
+ echo ""
+ echo "                      If --acceptancetest='yes', then --turnkeysteps must be "
+ echo "                      provided and will be executed first."
+ echo ""
+ echo "                      If --acceptancetest='<turnkey_step>', then acceptance "
+ echo "                      test will be run but step won't be executed."
+ echo ""
+ echo "XNAT HOST, PROJECT AND USER INPUTS"
+ echo "----------------------------------"
+ echo ""
+ echo "--xnathost            Specify the XNAT site hostname URL to push data to."
+ echo "--xnatprojectid       Specify the XNAT site project id. This is the Project ID "
+ echo "                      in XNAT and not the Project Title."
+ echo "--xnatuser            Specify XNAT username."
+ echo "--xnatpass            Specify XNAT password."
+ echo ""
+ echo "XNAT SUBJECT AND SESSION INPUTS"
+ echo "-------------------------------"
+ echo ""
+ echo "--xnatsubjectid       ID for subject across the entire XNAT database. "
+ echo "                      Required or --xnatsubjectlabel needs to be set."
+ echo "--xnatsubjectlabel    Label for subject within a project for the XNAT database. "
+ echo "                      Required or --xnatsubjectid needs to be set."
+ echo "--xnataccsessionid    ID for subject-specific session within the XNAT project. "
+ echo "                      Derived from XNAT but can be set manually."
+ echo "--xnatsessionlabel    Label for session within XNAT project. Note: may be "
+ echo "                      general across multiple subjects (e.g. rest). Required."
+ echo "--xnatstudyinputpath  The path to the previously generated session data as "
+ echo "                      mounted for the container. Default is "
+ echo "                      [/input/RESOURCES/qunex_session]"
+ echo ""
+ echo "MISCELLANEOUS INPUTS"
+ echo "--------------------"
+ echo ""
+ echo "--dataformat            Specify the format in which the data is. Acceptable "
+ echo "                        values are:"
+ echo ""
+ echo "                        - DICOM ... datasets with images in DICOM format"
+ echo "                        - BIDS  ... BIDS compliant datasets"
+ echo "                        - HCPLS ... HCP Life Span datasets"
+ echo "                        - HCPYA ... HCP Young Adults (1200) dataset"
+ echo ""
+ echo "                        Default is [DICOM]"
+ echo ""
+ echo "--hcp_filename          Specify how files and folders should be named using HCP "
+ echo "                        processing:"
+ echo ""
+ echo "                        standard"
+ echo "                           files should be named using Qu|Nex standard naming "
+ echo "                           (e.g. BOLD_1_PA)"
+ echo "                        original"
+ echo "                           files should be named using their original names "
+ echo "                           (e.g. rfMRI_REST1_AP)"
+ echo ""
+ echo "                        Note that the filename to be used has to be provided in "
+ echo "                        the session_hcp.txt file or the standard naming will be "
+ echo "                        used. If not provided the default 'standard' will be "
+ echo "                        used."    
+ echo "--bidsformat            Note: this parameter is deprecated and is kept for "
+ echo "                        backward compatibility. "
+ echo ""
+ echo "                        If set to yes, it will set --dataformat to BIDS. If "
+ echo "                        left undefined or set to no, the --dataformat value"
+ echo "                        will be used. The specification of the parameter "
+ echo "                        follows ..."
+ echo ""
+ echo "                        Specify if input data is in BIDS format (yes/no). "
+ echo "                        Default is [no]. If set to yes, it overwrites the "
+ echo "                        --dataformat parameter."
+ echo ""
+ echo "                        Note:"
+ echo ""
+ echo "                        - If --bidsformat='yes' and XNAT run is requested then "
+ echo "                          --xnatsessionlabel is required."
+ echo "                        - If --bidsformat='yes' and XNAT run is NOT requested "
+ echo "                          then BIDS data expected in <sessions_folder/inbox/BIDS"
+ echo "--bidsname              The name of the BIDS dataset. The dataset level "
+ echo "                        information that does not pertain to a specific session "
+ echo "                        will be stored in <projectname>/info/bids/<bidsname>. "
+ echo "                        If bidsname is not provided, it will be deduced from "
+ echo "                        the name of the folder in which the BIDS database is "
+ echo "                        stored or from the zip package name."
+ echo "--rawdatainput          If --turnkeytype is not XNAT then specify location of "
+ echo "                        raw data on the file system for a session. Default is "
+ echo "                        [] for the XNAT type run as host is used to pull data."
+ echo "--workingdir            Specify where the study folder is to be created or "
+ echo "                        resides. Default is [/output]."
+ echo "--projectname           Specify name of the project on local file system if "
+ echo "                        XNAT is not specified."
+ echo "--overwritestep         Specify <yes> or <no> for delete of prior workflow "
+ echo "                        step. Default is [no]."
+ echo "--overwritesession      Specify <yes> or <no> for delete of prior session run. "
+ echo "                        Default is [no]."
+ echo "--overwriteproject      Specify <yes> or <no> for delete of entire project "
+ echo "                        prior to run. Default is [no]."
+ echo "--overwriteprojectxnat  Specify <yes> or <no> for delete of entire XNAT project "
+ echo "                        folder prior to run. Default is [no]."
+ echo "--cleanupsession        Specify <yes> or <no> for cleanup of session folder "
+ echo "                        after steps are done. Default is [no]."
+ echo "--cleanupproject        Specify <yes> or <no> for cleanup of entire project "
+ echo "                        after steps are done. Default is [no]."
+ echo "--cleanupoldfiles       Specify <yes> or <no> for cleanup of files that are "
+ echo "                        older than start of run (XNAT run only). Default is "
+ echo "                        [no]."
+ echo "--bolds                 For commands that work with BOLD images this flag "
+ echo "                        specifies which specific BOLD images to process. The "
+ echo "                        list of BOLDS has to be specified as a comma or pipe "
+ echo "                        '|' separated string of bold numbers or bold tags as "
+ echo "                        they are specified in the session_hcp.txt or batch.txt "
+ echo "                        file. "
+ echo ""
+ echo "                        Example: '--bolds=1,2,rest' would process BOLD run 1, "
+ echo "                        BOLD run 2 and any other BOLD image that is tagged with "
+ echo "                        the string 'rest'."
+ echo ""
+ echo "                        If the parameter is not specified, the default value "
+ echo "                        'all' will be used. In this scenario every BOLD image "
+ echo "                        that is specified in the group batch.txt file for that "
+ echo "                        session will be processed."
+ echo ""
+ echo "                        **Note**: This parameter takes precedence over the " 
+ echo "                        'bolds' parameter in the batch.txt file. Therefore when "
+ echo "                        RunTurnkey is executed and this parameter is ommitted "
+ echo "                        the '_bolds' specification in the batch.txt file never "
+ echo "                        takes effect, because the default value 'all' will take "
+ echo "                        precedence."
+ echo ""
+ echo "CUSTOM QC INPUTS"
+ echo "----------------"
+ echo ""
+ echo "--customqc          Yes or no. Default is [no]. If set to 'yes' then the script"
+ echo "                    ooks into: ~/<study_path>/processing/scenes/QC/ for "
+ echo "                    additional custom QC scenes."
+ echo ""
+ echo "                    Note: The provided scene has to conform to Qu|Nex QC "
+ echo "                    template standards.xw"
+ echo ""
+ echo "                    See $TOOLS/$QUNEXREPO/library/data/scenes/qc/ for example"
+ echo "                    templates."
+ echo ""
+ echo "                    The qc path has to contain relevant files for the provided"
+ echo "                    scene."
+ echo "--qcplotimages      Absolute path to images for g_PlotBoldTS. See "
+ echo "                    'qunex g_PlotBoldTS' for help. "
+ echo ""
+ echo "                    Only set if g_PlotBoldTS is requested then this is a "
+ echo "                    required setting."
+ echo "--qcplotmasks       Absolute path to one or multiple masks to use for "
+ echo "                    extracting BOLD data. See 'qunex g_PlotBoldTS' for help. "
+ echo ""
+ echo "                    Only set if g_PlotBoldTS is requested then this is a "
+ echo "                    required setting."
+ echo "--qcplotelements    Plot element specifications for g_PlotBoldTS. See "
+ echo "                    'qunex g_PlotBoldTS' for help. "
+ echo ""
+ echo "                    Only set if g_PlotBoldTS is requested. If not set then the "
+ echo "                    default is: ${QCPlotElements}"
+ echo ""
+ echo "EXAMPLE USE"
+ echo "==========="
+ echo ""
+ echo "Run directly via::"
+ echo ""
+ echo " ${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh \ "
+ echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+ echo ""
+ reho "NOTE: --scheduler is not available via direct script call."
+ echo ""
+ echo "Run via:: "
+ echo ""
+ echo " qunex runTurnkey --<parameter1> --<parameter2> ... --<parameterN> "
+ echo ""
+ geho "NOTE: scheduler is available via qunex call."
+ echo ""
+ echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
+ echo "                  followed by relevant options"
+ echo ""
+ echo "For SLURM scheduler the string would look like this via the qunex call:: "
+ echo ""                   
+ echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+ echo ""
+ echo "::"
+ echo ""
+ echo " RunTurnkey.sh \ "
+ echo "  --turnkeytype=<turnkey_run_type> \ "
+ echo "  --turnkeysteps=<turnkey_worlflow_steps> \ "
+ echo "  --batchfile=<batch_file> \ "
+ echo "  --overwritestep=yes \ "
+ echo "  --mappingfile=<mapping_file> \ "
+ echo "  --xnatsubjectlabel=<XNAT_SUBJECT_LABEL> \ "
+ echo "  --xnatsessionlabel=<XNAT_SESSION_LABEL> \ "
+ echo "  --xnatprojectid=<name_of_xnat_project_id> \ "
+ echo "  --xnathostname=<XNAT_site_URL> \ "
+ echo "  --xnatuser=<xnat_host_user_name> \ "
+ echo "  --xnatpass=<xnat_host_user_pass> \ "
+ echo ""
+ exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -437,12 +541,15 @@ TURNKEY_CLEAN=`opts_GetOpt "--turnkeycleanstep" $@`
 
 DATAFormat=`opts_GetOpt "--dataformat" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
-HCPFilename=`opts_GetOpt "--hcpfilename" $@`
+HCPFilename=`opts_GetOpt "--hcp_filename" $@`
+
+# backwards compatibility and default value
+if [ -z "$HCPFilename" ]; then HCPFilename=`opts_GetOpt "--hcpfilename" $@`; fi
+if [ -z "$HCPFilename" ]; then HCPFilename="standard"; fi
 
 if [ -z "$DATAFormat" ]; then DATAFormat=DICOM; fi
 if [ "${BIDSFormat}" == 'yes' ]; then DATAFormat="BIDS"; fi
 if [ "${DATAFormat}" == 'BIDS' ]; then BIDSFormat="yes"; else BIDSFormat="no"; fi
-if [ -z "$HCPFilename" ]; then HCPFilename="standard"; fi
 
 AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
 
@@ -491,14 +598,14 @@ UnwarpDir=`opts_GetOpt "--unwarpdir" $@`
 DiffDataSuffix=`opts_GetOpt "--diffdatasuffix" $@`
 Scanner=`opts_GetOpt "--scanner" $@`
 UseFieldmap=`opts_GetOpt "--usefieldmap" $@`
-# -- DWIDenseParcellation input flags
+# -- DWIparcellate input flags
 MatrixVersion=`opts_GetOpt "--matrixversion" $@`
 ParcellationFile=`opts_GetOpt "--parcellationfile" $@`
 OutName=`opts_GetOpt "--outname" $@`
 WayTotal=`opts_GetOpt "--waytotal" $@`
-# -- DWISeedTractography input flags
+# -- DWIseedTractographyDense input flags
 SeedFile=`opts_GetOpt "--seedfile" $@`
-# -- eddyQC input flags
+# -- DWIeddyQC input flags
 EddyBase=`opts_GetOpt "--eddybase" $@`
 EddyPath=`opts_GetOpt "--eddypath" $@`
 Report=`opts_GetOpt "--report" $@`
@@ -511,7 +618,7 @@ Mask=`opts_GetOpt "--mask" $@`
 GroupBar=`opts_GetOpt "--groupvar" $@`
 OutputDir=`opts_GetOpt "--outputdir" $@`
 Update=`opts_GetOpt "--update" $@`
-# -- FSLBedpostxGPU input flags
+# -- DWIFSLbedpostxGPU input flags
 Fibers=`opts_GetOpt "--fibers" $@`
 Model=`opts_GetOpt "--model" $@`
 Burnin=`opts_GetOpt "--burnin" $@`
@@ -865,16 +972,48 @@ checkMappingFile() {
 }
 
 
-
 # -- Code for selecting BOLDS via Tags --> Check if both batch and bolds are specified for QC and if yes read batch explicitly
 getBoldList() {
     if [[ ! -z ${ProcessingBatchFile} ]]; then
         LBOLDRUNS="${BOLDRUNS}"
         geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}' in batch file ${ProcessingBatchFile} ... "; 
+
+        # set output type
+        unset BOLDnameOutput
+        if [[ ! -z ${HCPFilename} ]] && [[ ${HCPFilename} == "original" ]]; then 
+            BOLDnameOutput="name";
+        else
+            HCPFilename="standard"
+            BOLDnameOutput="number";
+        fi
+
+        geho "  --> Using ${HCPFilename} hcp_filename [${BOLDnameOutput}] ... "; 
+
         if [[ -f ${ProcessingBatchFile} ]]; then
-            # For debugging
-            # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionids="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
+            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" output="${BOLDnameOutput}" prefix="" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
+            LBOLDRUNS="${LBOLDRUNS}"
+        else
+            reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
+            exit 1
+        fi
+        if [[ ! -z ${LBOLDRUNS} ]]; then
+            geho "  --> Selected BOLDs: ${LBOLDRUNS} "
+            echo ""
+        else
+            reho " ERROR: No BOLDs found! Something went wrong for ${CASE}. Check your batch file inputs!"; echo ""
+            exit 1
+        fi
+    fi
+}
+
+
+# -- Code for getting BOLD numbers
+getBoldNumberList() {
+    if [[ ! -z ${ProcessingBatchFile} ]]; then
+        LBOLDRUNS="${BOLDRUNS}"
+        geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}' in batch file ${ProcessingBatchFile} ... "; 
+        if [[ -f ${ProcessingBatchFile} ]]; then
+            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" sessionid="${CASE}" bolds="${LBOLDRUNS}" output="number" prefix="" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
             LBOLDRUNS="${LBOLDRUNS}"
         else
             reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
@@ -997,7 +1136,7 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
     echo "   Qu|Nex Mapping file input: ${SCAN_MAPPING_FILENAME}"
 fi
 
-echo "   Qu|Nex Project-specific final Batch file path: ${ProcessingBatchFile}"
+echo "   Qu|Nex Project-specific final Batch file path: ${QuNexProcessingDir}"
 echo "   Qu|Nex Study folder: ${StudyFolder}"
 echo "   Qu|Nex Log folder: ${QuNexMasterLogFolder}"
 echo "   Qu|Nex Session-specific working folder: ${QuNexRawInboxDir}"
@@ -1108,13 +1247,13 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcpd|runQC_DWI|hcpdLegacy|runQC_DWILegacy|eddyQC|runQC_DWIeddyQC|FSLDtifit|runQC_DWIDTIFIT|FSLBedpostxGPU|runQC_DWIProcess|runQC_DWIBedpostX)
+        hcpd|runQC_DWI|hcpdLegacy|runQC_DWILegacy|DWIeddyQC|runQC_DWIeddyQC|DWIFSLdtifit|runQC_DWIFSLdtifit|DWIFSLbedpostxGPU|runQC_DWIProcess|runQC_DWIbedpostx)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-         pretractographyDense|DWISeedTractography|DWIDenseParcellation)
+         DWIpreTractography|DWIseedTractographyDense|DWIparcellate)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
@@ -1618,6 +1757,9 @@ fi
                 FILECHECK="fail"
             fi
         fi
+        
+        # -- Clean up inbox_temp
+        rm -r -p ${QuNexWorkDir}/inbox_temp &> /dev/null
 
         # -- Check if mapping and batch files exist and if content OK
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
@@ -1765,7 +1907,7 @@ fi
            # rm -rf ${ProcessingBatchFile} &> /dev/null
            HLinks=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi        
-        ExecuteCall="${QuNexCommand} setupHCP --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --existing='clear' --filename='${HCPFilename}' --hcp_suffix='${HCPSuffix}'"
+        ExecuteCall="${QuNexCommand} setupHCP --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --existing='clear' --hcp_filename='${HCPFilename}' --hcp_suffix='${HCPSuffix}'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         
         eval ${ExecuteCall}
@@ -1819,14 +1961,15 @@ fi
         runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
         # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`       # --> Commented for massively parallel processing
         rename runQC runQC_${QCLogName} ${QuNexMasterLogFolder}/comlogs/${runQCComLog} 2> /dev/null
-        # rename runQC runQC_${QCLogName} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
-        mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null
-        mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null
-        mkdir -p ${SessionsFolder}/${CASE}/QC/${Modality} 2> /dev/null
-        cp ${QuNexMasterLogFolder}/comlogs/${runQCComLog} ${SessionsFolder}/${CASE}/logs/comlog/ 2> /dev/null
-        cp ${QuNexMasterLogFolder}/comlogs/${runQCRunLog} ${SessionsFolder}/${CASE}/logs/comlog/ 2> /dev/null
-        cp ${SessionsFolder}/QC/${Modality}/*${CASE}*scene ${SessionsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null
-        cp ${SessionsFolder}/QC/${Modality}/*${CASE}*zip ${SessionsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null
+        # rename runQC runQC_${QCLogName} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented out for massively parallel processing
+        
+       # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
+       # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
+       # mkdir -p ${SessionsFolder}/${CASE}/QC/${Modality} 2> /dev/null # --> Commented out for logging consistency
+       # cp ${QuNexMasterLogFolder}/comlogs/${runQCComLog} ${SessionsFolder}/${CASE}/logs/comlog/ 2> /dev/null # --> Commented out for logging consistency
+       # cp ${QuNexMasterLogFolder}/comlogs/${runQCRunLog} ${SessionsFolder}/${CASE}/logs/comlog/ 2> /dev/null # --> Commented out for logging consistency
+       # cp ${SessionsFolder}/QC/${Modality}/*${CASE}*scene ${SessionsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null # --> Commented out logging for consistency
+       # cp ${SessionsFolder}/QC/${Modality}/*${CASE}*zip ${SessionsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null # --> Commented out for logging consistency
     }
 
     # -- runQC_rawNII (after organizing DICOM files)
@@ -1949,9 +2092,9 @@ fi
         QCLogName="DWI"
         runQC_Finalize
     }
-    # -- eddyQC processing steps
+    # -- DWIeddyQC processing steps
     turnkey_eddyQC() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ eddyQC for DWI data."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIeddyQC for DWI data."; echo ""
         # -- Defaults if values not set:
         if [ -z "$EddyBase" ]; then EddyBase="eddy_unwarped_images"; fi
         if [ -z "$Report" ]; then Report="individual"; fi
@@ -1968,12 +2111,12 @@ fi
         # --bvecsfile='DWI_dir74_AP_b1000b2500.bvec' 
         # --mask='DWI_dir74_AP_b1000b2500_nodif_brain_mask.nii.gz' 
         #
-        ${QuNexCommand} eddyQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
+        ${QuNexCommand} DWIeddyQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
     }
-    # -- runQC_DWIeddyQC (after eddyQC)
+    # -- runQC_DWIeddyQC (after DWIeddyQC)
     turnkey_runQC_DWIeddyQC() {
         Modality="DWI"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} eddyQC."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} DWIeddyQC."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIeddyQC"
         runQC_Finalize
@@ -1983,21 +2126,21 @@ fi
 
     # --------------- DWI additional analyses start ------------------------
     #
-    # -- FSLDtifit (after hcpd or hcpdLegacy)
+    # -- DWIFSLdtifit (after hcpd or hcpdLegacy)
     turnkey_FSLDtifit() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ : FSLDtifit for DWI data."; echo ""
-        ${QuNexCommand} FSLDtifit --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}"
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ : DWIFSLdtifit for DWI data."; echo ""
+        ${QuNexCommand} DWIFSLdtifit --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}"
     }
-    # -- FSLBedpostxGPU (after FSLDtifit)
+    # -- DWIFSLbedpostxGPU (after DWIFSLdtifit)
     turnkey_FSLBedpostxGPU() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ FSLBedpostxGPU for DWI data."
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIFSLbedpostxGPU for DWI data."
         if [ -z "$Fibers" ]; then Fibers="3"; fi
         if [ -z "$Model" ]; then Model="3"; fi
         if [ -z "$Burnin" ]; then Burnin="3000"; fi
         if [ -z "$Rician" ]; then Rician="yes"; fi
-        ${QuNexCommand} FSLBedpostxGPU --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
+        ${QuNexCommand} DWIFSLbedpostxGPU --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
     }
-    # -- runQC_DWIDTIFIT (after FSLDtifit)
+    # -- runQC_DWIFSLdtifit (after DWIFSLdtifit)
     turnkey_runQC_DWIDTIFIT() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} FSL's dtifit analyses."; echo ""
@@ -2005,27 +2148,27 @@ fi
         QCLogName="DWIDTIFIT" 
         runQC_Finalize
     }
-    # -- runQC_DWIBedpostX (after FSLBedpostxGPU)
-    turnkey_runQC_DWIBedpostX() {
+    # -- runQC_DWIbedpostx (after DWIFSLbedpostxGPU)
+    turnkey_runQC_DWIbedpostx() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} FSL's BedpostX analyses."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIBedpostX" 
         runQC_Finalize
     }
-    # -- probtrackxGPUDense for DWI data (after FSLBedpostxGPU)
+    # -- probtrackxGPUDense for DWI data (after DWIFSLbedpostxGPU)
     turnkey_probtrackxGPUDense() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ probtrackxGPUDense"; echo ""
         ${QuNexCommand} probtrackxGPUDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
-    # -- pretractographyDense for DWI data (after FSLBedpostxGPU)
-    turnkey_pretractographyDense() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ pretractographyDense"; echo ""
-        ${QuNexCommand} pretractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+    # -- DWIpreTractography for DWI data (after DWIFSLbedpostxGPU)
+    turnkey_DWIpreTractography() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIpreTractography"; echo ""
+        ${QuNexCommand} DWIpreTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
-    # -- DWIDenseParcellationfor DWI data (after pretractographyDense)
-    turnkey_DWIDenseParcellation() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIDenseParcellation"; echo ""
+    # -- DWIparcellatefor DWI data (after DWIpreTractography)
+    turnkey_DWIparcellate() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIparcellate"; echo ""
         # Defaults if not specified:
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
@@ -2033,26 +2176,26 @@ fi
         if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
-            ${QuNexCommand} DWIDenseParcellation --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+            ${QuNexCommand} DWIparcellate --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
         done
     }
-    # -- DWISeedTractography for DWI data (after pretractographyDense)
-    turnkey_DWISeedTractography() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWISeedTractography"; echo "" 
+    # -- DWIseedTractographyDense for DWI data (after DWIpreTractography)
+    turnkey_DWIseedTractographyDense() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIseedTractographyDense"; echo "" 
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$SeedFile" ]; then
             # Thalamus SomatomotorSensory
             SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
-            ${QuNexCommand} DWISeedTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
             # Thalamus Prefrontal
             SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
-            ${QuNexCommand} DWISeedTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
         fi
         OutNameGBC="DWI_GBC"
-        ${QuNexCommand} DWISeedTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
+        ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
     }
     #
     # --------------- DWI Processing and analyses end --------------------------
@@ -2122,11 +2265,13 @@ fi
         geho " ===> RunTurnkey acceptance testing ${TURNKEY_STEP} logs for completion."; echo ""
         
         CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        
         # CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`     # --> Commented for massively parallel processing
-        mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null
-        mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null
-        cp ${CheckComLog} ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null
+        # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
+        # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
+        # cp ${CheckComLog} ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
         # cp ${CheckRunLog} ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null                  # --> Commented for massively parallel processing
+        
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
            reho " ===> ERROR: ComLog file for ${TURNKEY_STEP} step not found during RunTurnkey acceptance test!"
@@ -2341,7 +2486,7 @@ fi
     turnkey_BOLDParcellation() {
         FunctionName="BOLDParcellation"
 
-        getBoldList
+        getBoldNumberList
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ BOLDParcellation on BOLDS: ${LBOLDRUNS}"; echo ""
 
         if [ -z ${RunParcellations} ]; then
@@ -2448,7 +2593,7 @@ fi
            ROINames=${ROIInfo}
         fi
 
-        getBoldList
+        getBoldNumberList
 
         for ROIInfo in ${ROINames}; do
             for BOLDRUN in ${LBOLDRUNS}; do
@@ -2493,7 +2638,7 @@ fi
    FunctionName="computeBOLDfc"
        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ computeBOLDfc processing steps for GBC."; echo ""
 
-       getBoldList
+       getBoldNumberList
 
        for BOLDRUN in ${LBOLDRUNS}; do
             if [ -z "$InputFile" ]; then InputFileGBC="bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileGBC="${InputFile}"; fi
@@ -2675,17 +2820,17 @@ else
         
         # -- Generate single session log folders
         CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
-        #CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`      # ==> Commented to support massively parallel single study run
-        mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null
-        mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null
-        cp ${CheckComLog} ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null
-        #cp ${CheckRunLog} ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null    # ==> Commented to support massively parallel single study run
+        # CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`      # ==> Commented to support massively parallel single study run
+        # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
+        # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
+        # cp ${CheckComLog} ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
+        # cp ${CheckRunLog} ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null    # --> Commented to support massively parallel single study run
         
-        Modalities="T1w T2w myelin BOLD DWI"
-        for Modality in ${Modalities}; do
-            mkdir -p ${SessionsFolder}/${CASE}/QC/${Modality} 2> /dev/null
-        done
-    
+        # Modalities="T1w T2w myelin BOLD DWI" # --> Commented out for QC output consistency
+        # for Modality in ${Modalities}; do
+        #     mkdir -p ${SessionsFolder}/${CASE}/QC/${Modality} 2> /dev/null
+        # done
+    # 
         # -- Specific sets of functions for logging
         ConnectorBOLDFunctions="BOLDParcellation computeBOLDfcGBC computeBOLDfcSeed"
         NiUtilsFunctions="setupHCP hcp1 hcp2 hcp3 hcp4 hcp5 hcpd computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"

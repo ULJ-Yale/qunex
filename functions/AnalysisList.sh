@@ -44,13 +44,11 @@
 # ------------------------------------------------------------------------------
 
 usage() {
-     echo ""
-     echo "-- DESCRIPTION for AnalysisList Function"
-     echo ""
-     echo "This function generates various analyses lists supported by the Qu|Nex Suite."
-     echo ""
-     echo ""
-     exit 0
+ echo ""
+ echo "This function generates various analyses lists supported by the Qu|Nex Suite."
+ echo ""
+ echo ""
+ exit 0
 }
 
 # ------------------------------------------------------------------------------

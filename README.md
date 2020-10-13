@@ -28,6 +28,16 @@ Quick links
 Change Log
 ----------
 
+* 0.62.6  Robust parsing of the hcp_filename parameter.
+* 0.62.5  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
+* 0.62.4  Renamed filename to hcp_filename in SetupHCP.
+* 0.62.3  RunQC now works both on bold numbers and names, RunQC no longer crashes if there are more than 10 bolds.
+* 0.62.2  Added DWI prefix to all DWI related Qu|Nex commands.
+* 0.62.1  Qunex commands ran through the scheduler can now execute bash commands prior to 
+* 0.62.0  Documentation rework.
+* 0.61.6  Added CUDA 9.1 bedpostx support.
+* 0.61.5  Fixed a bug where Qu|nex would create unnecessary folders.
+* 0.61.4  When running single Qu|Nex commands warnings would erroneously state that we are running throgh RunTurnkey.
 * 0.61.3  Added bedpostx and probtrackx CUDA 9.1 binaries.
 * 0.61.2  Added some additional printouts to runQC for user friendliness.
 * 0.61.1  runQC now works properly when overwrite is set to no.
