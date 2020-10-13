@@ -1,42 +1,52 @@
 function [out, done] = img_StatsTime(img, doIt, mask)
 
-%function [out, done] = img_StatsTime(img, doIt, mask)
+%``function [out, done] = img_StatsTime(img, doIt, mask)``
 %
 %	Computes the specified statistics across all voxels of each frame specified
 %   by the mask.
 %
-%   INPUT
-%       img  ... A nimage object to compute statistics on.
-%       do   ... A comma separated string or a cell array of strings specifying
-%                the statistics to compute
-%                ['n, m, me, max, min, sum, sd, var, dvars']
-%           'n'       - number of non-nan voxels
-%           'm'       - mean
-%           'me'      - median
-%           'max'     - max
-%           'min'     - min
-%           'sum'     - sum
-%           'sd'      - standard deviation
-%           'var'     - variability
-%           'dvars'   - RMS of BOLD derivative across voxels
-%       mask  ... A mask of voxels to be included in the statistics
+%   INPUTS
+%   ======
 %
-%   OUTPUT
-%       out  - Structure with results in named fields.
-%       done - A cell array of the executed commands.
+%   --img   A nimage object to compute statistics on.
+%   --do    A comma separated string or a cell array of strings specifying the 
+%           statistics to compute ['n, m, me, max, min, sum, sd, var, dvars']
 %
+%           - 'n'       ...  number of non-nan voxels
+%           - 'm'       ...  mean
+%           - 'me'      ...  median
+%           - 'max'     ...  max
+%           - 'min'     ...  min
+%           - 'sum'     ...  sum
+%           - 'sd'      ...  standard deviation
+%           - 'var'     ...  variability
+%           - 'dvars'   ...  RMS of BOLD derivative across voxels
 %
-%   ---
-%   Written by Grega Repovs, 2011-07-09
+%   --mask  A mask of voxels to be included in the statistics
+%
+%   OUTPUTS
+%   =======
+%
+%   out
+%       Structure with results in named fields.
+%
+%   done
+%       A cell array of the executed commands.
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2011-07-09 Grega Repovs
+%              Initial version.
 %   2011-10-24 Grega Repovš
-%            - checks what was actually executed instead of just returning the
+%              Checks what was actually executed instead of just returning the
 %              do cell array
 %   2017-03-11 Grega Repovs
-%            - updated documentation
-%            - command can now be specified using a comma separated string
-%            - more robust do loop
+%              - updated documentation
+%              - command can now be specified using a comma separated string
+%              - more robust do loop
 %
 
 

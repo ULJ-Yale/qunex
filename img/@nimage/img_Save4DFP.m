@@ -1,19 +1,31 @@
 function [res] = img_Save4DFP(obj, filename, extra)
 
-%   function [res] = img_Save4DFP(obj, filename, extra)
+%   ``function [res] = img_Save4DFP(obj, filename, extra)``
 %
 %   Saves a 4dfp image based on the existing header information.
 %
-%   Required:
-%     obj      - nimage object
-%     filename - the filename to use
+%   INPUTS
+%	======
 %
-%   Optional:
-%     extra    - key, value structure of fields to add to ifh header file
+%   --obj      	 nimage object
+%   --filename 	 the filename to use
+%   --extra    	 key, value structure of fields to add to ifh header file []
 %
-%   Grega Repovs - 2009-11-19
+%	OUTPUT
+%	======
+%	
+%	res
 %
-%   Grega Repovs - 2013-10-19 - Added call for embedding data
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%	2009-11-19 Grega Repovs
+%			   Initial version.
+%	2013-10-19 Grega Repovs
+%			   Added call for embedding data
 
 
 if nargin < 3

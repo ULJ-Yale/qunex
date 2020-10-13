@@ -1,48 +1,70 @@
 function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv, verbose)
 
-%function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv, verbose)
+%``function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv, verbose)``
 %
 %   Computes seed based correlations maps for individuals as well as group maps.
 %
-%   INPUT
-%       flist    - A .list file listing the sessions and their files for which to compute seedmaps,
-%                  or a well strucutured string (see g_ReadFileList).
-%       roiinfo  - A names file for the ROI seeds.
-%       inmask   - An array mask defining which frames to use (1) and which not (0) or the number of frames to skip at start []
-%       event    - A string describing which events to extract timeseries for and the frame offset at start and end
-%                  in format: ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
-%       tagetf   - The folder to save images in ['.'].
-%       method   - method for extracting timeseries - 'mean', 'pca' ['mean']
-%       ignore   - do we omit frames to be ignored (
-%                  -> no:    do not ignore any additional frames
-%                  -> use:   ignore frames as marked in the use field of the bold file
-%                  -> event: ignore frames as marked in .fidl file
-%                  -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
-%       cv       - Whether to compute covariances instead of correlations [false].
-%       verbose  - Whether to be verbose when running the analysis [false].
+%   INPUTS
+%   ======
+%
+%   --flist    A .list file listing the sessions and their files for which to 
+%              compute seedmaps, or a well strucutured string (see 
+%              g_ReadFileList).
+%   --roiinfo  A names file for the ROI seeds.
+%   --inmask   An array mask defining which frames to use (1) and which not (0) 
+%              or the number of frames to skip at start []
+%   --event    A string describing which events to extract timeseries for and 
+%              the frame offset at start and end in format:
+%              ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
+%   --targetf  The folder to save images in ['.'].
+%   --method   method for extracting timeseries - 'mean', 'pca' ['mean']
+%   --ignore   do we omit frames to be ignored ['use']
+%
+%              - no:    do not ignore any additional frames
+%              - use:   ignore frames as marked in the use field of the bold file
+%              - event: ignore frames as marked in .fidl file
+%              - other: the column in `*_scrub.txt` file that matches bold file 
+%              to be used for ignore mask
+%
+%   --cv       Whether to compute covariances instead of correlations [false].
+%   --verbose  Whether to be verbose when running the analysis [false].
 %
 %   RESULTS
+%   =======
+%
 %   It saves group files:
 %
-%   <targetf>/<root>[_<title>]_<roi>_group_r  ... Mean group Pearson correlations (converted from Fz).
-%   <targetf>/<root>[_<title>]_<roi>_group_Fz ... Mean group Fisher Z values.
-%   <targetf>/<root>[_<title>]_<roi>_group_Z  ... Z converted p values testing difference from 0.
-%   <targetf>/<root>[_<title>]_<roi>_all_Fz   ... Fisher Z values for all participants.
+%   `<targetf>/<root>[_<title>]_<roi>_group_r`
+%       Mean group Pearson correlations (converted from Fz).
 %
-%   <targetf>/<root>[_<title>]_<roi>_group_cov ... Mean group covariance.
-%   <targetf>/<root>[_<title>]_<roi>_all_cov   ... Covariances for all participants.
+%   `<targetf>/<root>[_<title>]_<roi>_group_Fz`
+%       Mean group Fisher Z values.
 %
-%   <roi> is the name of the ROI for which the seed map was computed for.
-%   <root> is the root name of the flist.
-%   <title> is the title of the extraction event(s), if event string was
+%   `<targetf>/<root>[_<title>]_<roi>_group_Z`
+%       Z converted p values testing difference from 0.
+%
+%   `<targetf>/<root>[_<title>]_<roi>_all_Fz`
+%       Fisher Z values for all participants.
+%
+%   `<targetf>/<root>[_<title>]_<roi>_group_cov`
+%       Mean group covariance.
+%
+%   `<targetf>/<root>[_<title>]_<roi>_all_cov`
+%       Covariances for all participants.
+%
+%   `<roi>` is the name of the ROI for which the seed map was computed for.
+%   `<root>` is the root name of the flist.
+%   `<title>` is the title of the extraction event(s), if event string was
 %   specified.
 %
 %   USE
+%   ===
+%
 %   The function computes seed maps for the specified ROI. If an event string is
 %   provided, it uses each session's .fidl file to extract only the specified
-%   event related frames. The string format is:
+%   event related frames. The string format is::
 %
-%   <title>:<eventlist>:<frame offset1>:<frame offset2>
+%       <title>:<eventlist>:<frame offset1>:<frame offset2>
 %
 %   and multiple extractions can be specified by separating them using the pipe
 %   '|' separator. Specifically, for each extraction, all the events listed in
@@ -53,36 +75,55 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %   in the .fidl file!
 %
 %   EXAMPLE USE
-%   To compute resting state seed maps using first eigenvariate of each ROI:
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', 'pca', 'udvarsme');
+%   ===========
+%
+%   To compute resting state seed maps using first eigenvariate of each ROI::
+%   
+%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', ...
+%                          'pca', 'udvarsme');
 %
 %   To compute resting state seed maps using mean of each region and covariances
-%   instead of correlation:
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', 'mean', 'udvarsme', true);
+%   instead of correlation::
+%
+%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', ...
+%                          'mean', 'udvarsme', true);
 %
 %   To compute seed maps for third and fourth frame of incongruent and congruent
 %   trials (listed as inc and con events in fidl files with duration 1) using
 %   mean of each region and exclude only frames marked for exclusion in fidl
-%   files:
+%   files::
 %
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'incongruent:inc:2,3|congruent:con:2,3', 'seed-maps', 'mean', 'event');
+%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, ...
+%                          'incongruent:inc:2,3|congruent:con:2,3', ...
+%                          'seed-maps', 'mean', 'event');
 %
 %   To compute seed maps across all the tasks blocks, starting with the third
 %   frame into the block and taking one additional frame after the end of the
-%   block, use:
+%   block, use::
 %
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'task:easyblock,hardblock:2,1', 'seed-maps', 'mean', 'event');
+%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, ...
+%                          'task:easyblock,hardblock:2,1', 'seed-maps', ...
+%                          'mean', 'event');
 %
-%   ---
-%   Written by Grega Repovš 2008-02-07.
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2008-01-23 Grega Repovš - Adjusted for a different file list format and an additional ROI mask.
-%   2011-11-10 Grega Repovš - Changed to make use of nimage and allow ignoring of bad frames.
-%   2013-12-28 Grega Repovš - Moved to a more general name, added block event extraction and use of 'use' info.
-%   2017-03-19 Grega Repovs - Cleaned code, updated documentation.
-%   2017-04-18 Grega Repovs - Adjusted to use updated g_ReadFileList.
-%   2018-03-16 Grega Repovs - Added verbose to the parameter list
+%
+%   2008-02-07 Grega Repovs
+%       Initial version.
+%   2008-01-23 Grega Repovs
+%       Adjusted for a different file list format and an additional ROI mask.
+%   2011-11-10 Grega Repovs
+%        Changed to make use of nimage and allow ignoring of bad frames.
+%   2013-12-28 Grega Repovs
+%        Moved to a more general name, added block event extraction and use of 'use' info.
+%   2017-03-19 Grega Repovs
+%        Cleaned code, updated documentation.
+%   2017-04-18 Grega Repovs
+%        Adjusted to use updated g_ReadFileList.
+%   2018-03-16 Grega Repovs
+%        Added verbose to the parameter list
 %
 
 if nargin < 9 || isempty(verbose), verbose = false;  end

@@ -1,24 +1,35 @@
 function [img] = img_EmbedStats(img)
 
-%function [img] = img_EmbedStats(img)
+%``function [img] = img_EmbedStats(img)``
 %
 %	Embeds the extra data on image signal, movement statistics, and frame use.
 %
 %   INPUT
-%       - img : a nimage image object
+%   =====
+%       
+%   --img   a nimage image object
 %
 %   OUTPUT
-%       - img : a nimage image object
+%   ======
+%
+%   img
+%       a nimage image object
 %
 %   USE
+%   ===
+%
 %   This method is used internaly to embed per frame statistics on image signal
 %   (number of valid voxels in the volume, mean volume intensity, standard
 %   deviation over voxels in a volume, dvars and median normalized dvars
 %   measure, and frame displacement measure), movement statistics (displacement
 %   in each direction, rotation across each axis).
 %
-%   ---
-%   Written by Grega Repovs, 2013-10-19
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%   2013-10-19 Grega Repovs
+%              Initial version.
 %
 
 

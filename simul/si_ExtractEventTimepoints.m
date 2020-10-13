@@ -1,19 +1,30 @@
 function [tp] = si_ExtractEventTimepoints(TR, ts, eventlist, timepoints)
 
-%	function [tp] = si_ExtractEventTimepoints(ts, eventlist, timepoints)
+%``function [tp] = si_ExtractEventTimepoints(ts, eventlist, timepoints)``
 %	
-%   Function that extract specified timepoints from each event
+%   Function that extract specified timepoints from each event.
 %
-%   Inputs
-%       - TR            TR of the timeseries
-%       - ts            timeseries
-%       - eventlist     list of events to extract data for
-%       - timepoints    timepoints within each event to extract values for
+%   INPUTS
+%	======
 %
-%   Outputs
-%       - tp    matrix of extracted timepoints
-%	
-% 	Created by Grega Repovš on 2010-10-09.
+%   --TR            TR of the timeseries
+%   --ts            timeseries
+%   --eventlist     list of events to extract data for
+%   --timepoints    timepoints within each event to extract values for
+%
+%   OUTPUT
+%	======
+%
+%   tp
+%		matrix of extracted timepoints
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+% 	2010-10-09 Grega Repovs
+%			   Initial version.
 %	
 
 if nargin < 3

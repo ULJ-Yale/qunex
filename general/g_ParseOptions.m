@@ -1,113 +1,135 @@
 function [options] = g_ParseOptions(options, s, default)
 
-%function [options] = g_ParseOptions(options, s, default)
+%``function [options] = g_ParseOptions(options, s, default)``
 %
 %   Function for compact passing of values between functions.
 %
-%   INPUT
-%       - options   : A starting structure to work with - everything will be
-%                     added to it / changed in it.
-%       - s         : A "key:value|key:value' string that defines what values
-%                     to be injected into the structure.
-%       - default   : an optional 'key:value|key:value' string with the default
-%                     values to be used.
+%   INPUTS
+%   ======
+%
+%   --options   A starting structure to work with - everything will be added to 
+%               it / changed in it.
+%   --s         A "key:value|key:value' string that defines what values to be 
+%               injected into the structure.
+%   --default   An optional 'key:value|key:value' string with the default values 
+%               to be used.
 %
 %   OUTPUT
-%       - options   : a structure with the embedded values
+%   ======
+%
+%   options
+%       a structure with the embedded values
 %
 %   USE
+%   ===
+%
 %   Use the function for easy creation and modification of structures that can
 %   enable passing of options from function to function.
 %
-%   *Starting structure*
+%   Starting structure
+%   ------------------
+%
 %   The starting structure can hold the initial values. Any value not changed
 %   by the string will remain as is. Any field name not yet exisiting will be
 %   created. If an empty array is passed, the structure will be created anew.
 %
-%   *String format*
+%   String format
+%   -------------
+%
 %   The string defines key:value pairs that will be embedded in the structure.
-%   Keys will be the field names and values will be assigned to them. So:
+%   Keys will be the field names and values will be assigned to them. So::
 %
-%   a = g_ParseOptions([], 'id:66|name:Tom');
+%       a = g_ParseOptions([], 'id:66|name:Tom');
 %
-%   will result in a structure:
+%   will result in a structure::
 %
-%   a.id   = 66
-%   a.name = 'Tom'
+%       a.id   = 66
+%       a.name = 'Tom'
 %
 %   Notice that strings are not embedded in quotes.
 %
-%   *Structure arrays*
+%   Structure arrays
+%   ----------------
+%
 %   The function can generate or edit arrays of structures. To specify key-value
-%   pairs for multiple sets, separate them using semicolon:
+%   pairs for multiple sets, separate them using semicolon::
 %
-%   a = g_ParseOptions([], 'id:66|name:Tom;id=33|name=Mary');
+%       a = g_ParseOptions([], 'id:66|name:Tom;id=33|name=Mary');
 %
-%   will result in a structure:
+%   will result in a structure::
 %
-%   a(1).id   = 66
-%   a(1).name = 'Tom'
-%   a(2).id   = 33
-%   a(2).name = 'Mary'
+%       a(1).id   = 66
+%       a(1).name = 'Tom'
+%       a(2).id   = 33
+%       a(2).name = 'Mary'
 %
 %   Notice that key-value pairs can be separate either using colon or equal
 %   so 'id:66' works the same as 'id=66'.
 %
-%   *Creation of substructures*
+%   Creation of substructures
+%   -------------------------
+%
 %   It is also possible to populate fields with structures. In this case, use
 %   greater than sign to specify that the filed contains a substructure and use
-%   a comma to separate key-value pairs of the substructure:
+%   a comma to separate key-value pairs of the substructure::
 %
-%   a = g_ParseOptions([], 'id:66|name:Tom|demographics>age:37,sex:male');
+%       a = g_ParseOptions([], 'id:66|name:Tom|demographics>age:37,sex:male');
 %
-%   will result in a structure:
+%   will result in a structure::
 %
-%   a.id    = 66
-%   a.name  = 'Tom'
-%   a.demographics.age = 37
-%   a.demographics.sex = 'male'
+%       a.id    = 66
+%       a.name  = 'Tom'
+%       a.demographics.age = 37
+%       a.demographics.sex = 'male'
 %
-%   *Default structure*
+%   Default structure
+%   -----------------
+%
 %   It is possible to define a default structure. In this case the default
 %   strucutre will be generated first and then overwritten by the specification
-%   string:
+%   string::
 %
-%   a = g_ParseOptions([], 'id:66|name:Tom;id=33|name=Mary', 'status:ok|id=0');
+%       a = g_ParseOptions([], 'id:66|name:Tom;id=33|name=Mary', ...
+%                          'status:ok|id=0');
 %
-%   will result in a structure:
+%   will result in a structure::
 %
-%   a(1).status = 'ok'
-%   a(1).id     = 66
-%   a(1).name   = 'Tom'
-%   a(2).status = 'ok'
-%   a(2).id     = 33
-%   a(2).name   = 'Mary'
+%       a(1).status = 'ok'
+%       a(1).id     = 66
+%       a(1).name   = 'Tom'
+%       a(2).status = 'ok'
+%       a(2).id     = 33
+%       a(2).name   = 'Mary'
 %
-%   *Valid values*
+%   Valid values
+%   ------------
+%
 %   Values can be numbers, strings or any other valid expression, also arrays
 %   and cell arrays, just be aware that strings for the cell array need to be
-%   specifed using regular double quotes:
+%   specifed using regular double quotes::
 %
-%   a = g_ParseOptions([], 'id:66|name=Tom|vars={"a", "b", "c"}|values=[1, 2, 3]');
+%       a = g_ParseOptions([], ...
+%           'id:66|name=Tom|vars={"a", "b", "c"}|values=[1, 2, 3]');
 %
-%   will result in a structure:
+%   will result in a structure::
 %
-%   a.id     = 66
-%   a.name   = 'Tom'
-%   a.vars   = {'a', 'b', 'c'}
-%   a.values = [1, 2, 3]
+%       a.id     = 66
+%       a.name   = 'Tom'
+%       a.vars   = {'a', 'b', 'c'}
+%       a.values = [1, 2, 3]
 %
-%   ---
-%   Written by Grega Repovs, 2014-07-22
+
+%   ~~~~~~~~~~~~~~~~~~
 %
-%   ====== Change Log ======
+%   Changelog
 %
+%   2014-07-22 Grega Repovs
+%              Initial version
 %   2015-10-17 Grega Repovs
-%            - Updated to enable structure arrays and specification of single
+%               Updated to enable structure arrays and specification of single
 %              layer depth structures.
-%
 %   2017-03-19 Grega Repovs
-%            - Made the function more robust and updated the documetation.
+%              Made the function more robust and updated the documetation.
 %
 
 

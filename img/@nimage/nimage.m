@@ -1,43 +1,67 @@
 classdef nimage
 %
-%  nimage class
+%   nimage class offers an object to store MR image data. It provides basic
+%   methods for loading and saving image, methods for returning different
+%   representations of the image, methods for extracting data and manipulating
+%   image, and methods for performing basic math with the images.
 %
-%  nimage class offers an object to store MR image data.
-%  It provides basic methods for loading and saving image,
-%  methods for returning different representations of the image,
-%  methods for extracting data and manipulating image, and
-%  methods for performing basic math with the images.
+%   METHODS
+%   =======
 %
-%  Methods:
+%   nimage             
+%       constructor / loader
 %
-%  nimage           - constructor / loader
-%  img_readimage      - reads an image file
-%  img_saveimage      - saves an image file
-%  img_saveimageframe - saves only the specified frame(s) of an image file
-%  image2D            - returns 2D (voxels by frames) representation of image data
-%  image4D            - returns 4D (x by y by z by frames representation of image data)
-%  maskimg            - trims data from all nonzero voxels of the mask
-%  unmaskimg          - restores the full volume from masked image with zeros for missing voxels
-%  standardize        - transforms values to z scores within each voxel's timeseries
-%  correlize          - standardizes and divides by sqrt(N-1) to prepare for efficient correlation computation
+%   img_readimage      
+%       reads an image file
 %
-%  img_ComputeCorrelations - computes correlations with the provided data matrix
+%   img_saveimage      
+%       saves an image file
 %
-%  ---
-%  Written by Grega Repovs, 2009-10-04
+%   img_saveimageframe 
+%       saves only the specified frame(s) of an image file
 %
-%  2011-07-31 Grega Repovs
-%           - Added importing of existing movement, fstat and scrubbing data
-%  2016-01-16 Grega Repovs
-%           - Added GetXY and specifying save format with file extension.
-%  2017-03-21 Grega Repovs
-%           - horzcat now supports concatenation of empty objects.
-%           - img_ReadConcFile returns more information
-%  2017-07-02 Grega Repovs
-%           - horzcat, zeroframes and sliceframe suport img.cifti.maps
-%  2018-03-17 Grega Repovs
-%           - nimage now supports creation of dtseries and dscalar standard CIFTI images
-%             from numeric data
+%   image2D            
+%       returns 2D (voxels by frames) representation of image data
+%
+%   image4D            
+%       returns 4D (x by y by z by frames representation of image data)
+%
+%   maskimg            
+%       trims data from all nonzero voxels of the mask
+%
+%   unmaskimg          
+%       restores the full volume from masked image with zeros for missing voxels
+%
+%   standardize        
+%       transforms values to z scores within each voxel's timeseries
+%
+%   correlize          
+%       standardizes and divides by sqrt(N-1) to prepare for efficient 
+%       correlation computation
+%   
+%   img_ComputeCorrelations
+%       computes correlations with the provided data matrix
+%   
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2009-10-04 Grega Repovs
+%              Initial version.
+%   2011-07-31 Grega Repovs
+%              Added importing of existing movement, fstat and scrubbing data
+%   2016-01-16 Grega Repovs
+%              Added GetXY and specifying save format with file extension.
+%   2017-03-21 Grega Repovs
+%              horzcat now supports concatenation of empty objects.
+%              img_ReadConcFile returns more information
+%   2017-07-02 Grega Repovs
+%              horzcat, zeroframes and sliceframe suport img.cifti.maps
+%   2018-03-17 Grega Repovs
+%              nimage now supports creation of dtseries and dscalar standard 
+%              CIFTI images from numeric data
 %
 
     properties

@@ -1,11 +1,29 @@
 function [m] = si_VoronoiMap(w,h,p)
 
-% function [m] = si_VoronoiMap(w,h,p)
+%``function [m] = si_VoronoiMap(w,h,p)``
 %   
 %   Function for creating w by h Voronoi bitmap with points p.
 %
-%   Created 2011-05-29
-%   (c) Copyright 2011 Grega Repovs. All Rights Reserved. 
+%	INPUTS
+%	======
+%
+%	--w
+%	--h
+%	--p
+%
+%	OUTPUT
+%	======
+%
+%	m
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2011-05-29 Grega Repovs
+%			   Initial version.
+%
 
 if nargin < 3
     error('ERROR: VoronoiMap needs three arguments (w, h, p) to create a map!');

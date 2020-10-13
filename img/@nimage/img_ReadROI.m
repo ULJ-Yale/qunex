@@ -1,31 +1,41 @@
 function [img] = img_ReadROI(roiinfo, roi2, check)
 
-%function [img] = img_ReadROI(roiinfo, roi2, check)
+%``function [img] = img_ReadROI(roiinfo, roi2, check)``
 %
-%	Reads in an ROI file, if a second file is provided, it uses it to mask the first one.
+%   Reads in an ROI file, if a second file is provided, it uses it to mask the
+%   first one.
 %
-%   INPUT
-%       roiinfo - A .names formated ROI information file.
-%       roi2    - A path to the second ROI image file matching ROI codes
+%   INPUTS
+%   ======
+%
+%   --roiinfo   A .names formated ROI information file.
+%   --roi2      A path to the second ROI image file matching ROI codes
 %                  specified in the third column of the .names file. []
-%       check   - how to handle unknown integer codes from the .names file ['warning']
-%         -> 'ignore' (don't do anything)
-%         -> 'warning' (throw a warning)
-%         -> 'error' (throw an error)
+%   --check     How to handle unknown integer codes from the .names file 
+%               ['warning']:
+%
+%                   - 'ignore' (don't do anything)
+%                   - 'warning' (throw a warning)
+%                   - 'error' (throw an error)
 %
 %   OUTPUT
-%       image   - A nimage object with ROI coded using integer values and
-%                 additional data structure describing the ROI sources.
+%   ======
+%
+%   img
+%       A nimage object with ROI coded using integer values and additional data 
+%       structure describing the ROI sources.
 %
 %   USE
+%   ===
+%
 %   The method is used to generate an ROI object. It also supports masking the
 %   original image (usually a group ROI fle) with the second ROI image (usually)
 %   a subject specific segmentation file.
 %
-%   If no file is specified as the second ROI, then no masking is performed.
-%   If a second file exists, it will be used to mask the original data based on
-%   the specified values in the third column of the .names file. For more
-%   specific information see img_MaskROI method.
+%   If no file is specified as the second ROI, then no masking is performed. If
+%   a second file exists, it will be used to mask the original data based on the
+%   specified values in the third column of the .names file. For more specific
+%   information see img_MaskROI method.
 %
 %   The function supports the specification of region codes in the .names file
 %   using either numeric vaues (e.g. 3,8,9) or names. The names are based on
@@ -45,17 +55,19 @@ function [img] = img_ReadROI(roiinfo, roi2, check)
 %   - gray    (whole brain gray matter)
 %
 %   NAMES FILE SPECIFICATION
+%   ========================
+%
 %   Names file is a regular text file with .names ending. It specifies how to
-%   generate a ROI file. It has the following example form:
+%   generate a ROI file. It has the following example form::
 %
-%   /path-to-resources/CCN_ROI.nii.gz
-%   RDLPFC|1|rcgray
-%   LDLPFC|2|lcgray
-%   ACC|3,4|cgray
+%       /path-to-resources/CCN_ROI.nii.gz
+%       RDLPFC|1|rcgray
+%       LDLPFC|2|lcgray
+%       ACC|3,4|cgray
 %
-%   This file specifies three cognitive cotrol regions. The original ROI file
-%   is referenced by the first line of the .names file. If the path starts with
-%   a forward slash ('/'), it is assumed to be an absolute path, otherwise it is
+%   This file specifies three cognitive cotrol regions. The original ROI file is
+%   referenced by the first line of the .names file. If the path starts with a
+%   forward slash ('/'), it is assumed to be an absolute path, otherwise it is
 %   assumed to be a path relative to the location of the roiinfo '.names' file.
 %   If the line is empty or references "none", it is assumed that all the ROI
 %   are defined by the roi2 codes only.
@@ -74,23 +86,33 @@ function [img] = img_ReadROI(roiinfo, roi2, check)
 %   generated with each volume specifying one ROI.
 %
 %   EXAMPLE USE
-%   To create a group level roi file:
+%   ===========
 %
-%   >>> roi = nimage.img_ReadROI('resources/CCN.names')
+%   To create a group level roi file::
 %
-%   To create a subject specific file:
+%       roi = nimage.img_ReadROI('resources/CCN.names')
 %
-%   >>> roi = nimage.img_ReadROI('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
+%   To create a subject specific file::
 %
-%   ---
-%   Written by Grega Repovs, 2010-05-10
+%       roi = nimage.img_ReadROI('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2013-07-24 Grega Repovs - adjusted to create either single or multiple volume ROI
-%   2015-12-08 Grega Repovs - added option for named region codes
-%   2017-03-04 Grega Repovs - updated documentatio
-%   2017-09-29 Grega Repovs - enabled relative paths to roi image
-%   2018-10-19 Aleksij Kraljic - added ROI checking functionality
+%
+%   2010-05-10 Grega Repovs 
+%              Initial version.
+%   2013-07-24 Grega Repovs 
+%              adjusted to create either single or multiple volume ROI
+%   2015-12-08 Grega Repovs 
+%              added option for named region codes
+%   2017-03-04 Grega Repovs 
+%              updated documentatio
+%   2017-09-29 Grega Repovs 
+%              enabled relative paths to roi image
+%   2018-10-19 Aleksij Kraljic 
+%              added ROI checking functionality
 
 
 %   ---- Named region codes

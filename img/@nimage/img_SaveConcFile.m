@@ -1,12 +1,14 @@
 function [] = img_SaveConcFile(file, files)
 
-% function [] = img_SaveConcFile(file, files)
+%``function [] = img_SaveConcFile(file, files)``
 %	
-%	Saves a conc file 
+%	Saves a conc file.
 %
-%   Input
-%	    file    - path to conc file
-%	    files   - list of image files
+%   INPUTS
+%	======
+%
+%	 --file    	path to conc file
+%	 --files   	list of image files
 %	
 
 file = strtrim(file);

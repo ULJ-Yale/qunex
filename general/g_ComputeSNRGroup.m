@@ -1,22 +1,32 @@
 function [snr, sd] = g_ComputeSNRGroup(flist, target, fmask, verbose)
 
+%	``function [snr, sd] = g_ComputeSNRGroup(flist, fmask, target, verbose)``
 %	
-%	function [snr, sd] = g_ComputeSNRGroup(flist, fmask, target, verbose)
+%   Computes SNR and SD for the whole group.
 %	
-%	Computes SNR and SD for the whole group.
+%	INPUTS
+%	======
+%
+%	--flist 	conc-like style list of session image files or conc files: 
+%
+%               - session id:<session_id>
+%               - roi:<path to the individual's ROI file>
+%               - file:<path to bold files - one per line>
+%
+%   --target 	file to save results into
+%	--fmask		an array mask defining which frames to use (1) and which not (0)
+%	--verbose	to report on progress or not [not]
 %	
-%	flist   	- conc-like style list of session image files or conc files: 
-%                  session id:<session_id>
-%                  roi:<path to the individual's ROI file>
-%                  file:<path to bold files - one per line>
-%	mask		- an array mask defining which frames to use (1) and which not (0)
-%   target      - file to save results into
-%	verbose		- to report on progress or not [not]
-%	
-% 	Created by Grega Repovš on 2010-11-22.
-% 	Modified by Grega Repovš on 2010-11-23.
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+%
+%	2010-11-21 Grega Repovs
+%			   Initial version.
 %
 % 	Copyright (c) 2010 Grega Repovs. All rights reserved.
+%
 
 if nargin < 4
 	verbose = false;

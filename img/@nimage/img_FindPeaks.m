@@ -1,124 +1,172 @@
 function [roi vol_peak peak] = img_FindPeaks(img, mindim, maxdim, val, t, projection_type, options, verbose)
 
-%function [roi] = img_FindPeaks(img, minsize, maxsize, val, t, verbose)
+%``function [roi vol_peak peak] = img_FindPeaks(img, mindim, maxdim, val, t, projection_type, options, verbose)``
 %
-%       Find peaks and uses watershed algorithm to grow regions from them.
+%   Find peaks and uses watershed algorithm to grow regions from them.
 %
-%   INPUT
-%       img              - input nimage object
-%       mindim           - [minimum size, minimum area] of the resulting ROI  [0, 0]
-%       maxdim           - [maximum size, maximum area] of the resulting ROI  [inf, inf]
-%       val              - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
-%       t                - threshold value [0]
-%       projection_type  - type of surface component projection ('midthickness', 'inflated',...)
-%                          or a string containing the path to the surface files (.surf.gii)
-%                          for both, left and right cortex separated by a pipe:
-%                        a) for a default projection: 'type: midthickness' ['type:midthickness']
-%                        b) for a specific projection:
-%                           'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
-%       options          - list of options separated with a pipe symbol ("|"):
-%                        a) for the number of frames to be analized:
-%                           - []                        ... analyze only the first frame
-%                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
-%                           - 'frames:all'              ... analyze all the frames
-%                        b) for the type of ROI boundary:
-%                           - []                        ... boundary left unmodified
-%                           - 'boundary:remove'         ... remove the boundary regions
-%                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
-%                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
-%       verbose          - whether to report the peaks (1) and also be verbose:
-%                        a) on the first level (2)
-%                        b) on all the levels  (3) [false]
+%   INPUTS
+%   ======
 %
-%   OUTPUT
-%       roi              - A nimage with the created ROI.
-%       vol_peak         - A datastructure with information about the extracted peaks from volume components.
-%       peak             - A datastructure with information about the extracted peaks from surface components.
+%   --img               input nimage object
+%   --mindim            [minimum size, minimum area] of the resulting ROI  
+%                       [0, 0]
+%   --maxdim            [maximum size, maximum area] of the resulting ROI  
+%                       [inf, inf]
+%   --val               whether to find positive, negative or both peaks 
+%                       ('n', 'p', 'b') ['b']
+%   --t                 threshold value [0]
+%   --projection_type   type of surface component projection ('midthickness', 
+%                       'inflated', ...) or a string containing the path to the 
+%                       surface files (.surf.gii) for both, left and right
+%                       cortex separated by a pipe:
+%
+%                       - for a default projection: 'type: midthickness' 
+%                         ['type:midthickness']
+%                       - for a specific projection:
+%                         'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
+%
+%   --options           list of options separated with a pipe symbol ("|"):
+%                       
+%                       - for the number of frames to be analized:
+%
+%                          []                        
+%                               analyze only the first frame
+%                          'frames:[LIST OF FRAMES]' 
+%                               analyze the list of frames
+%                          'frames:all'              
+%                               analyze all the frames
+%
+%                       - for the type of ROI boundary:
+%
+%                           []                        
+%                               boundary left unmodified
+%                           'boundary:remove'         
+%                               remove the boundary regions
+%                           'boundary:highlight'      
+%                               highlight boundaries with a value of -100
+%                           'boundary:wire'           
+%                               remove ROI data and return only ROI boundaries
+%
+%   --verbose           whether to report the peaks (1) and also be verbose:
+%
+%                       a) on the first level (2)
+%                       b) on all the levels  (3) [false]
+%
+%   OUTPUTS
+%   =======
+%
+%   roi 
+%       A nimage with the created ROI.
+%
+%   vol_peak
+%       A datastructure with information about the extracted peaks from volume components.
+%
+%   peak
+%       A datastructure with information about the extracted peaks from surface components.
 %
 %   USE
+%   ===
+%
 %   The method is used to identify positive and/or negative peaks in the image,
 %   and then generate ROI around them using a watershed algorithm. Specifically,
 %   the method first zeros all the values below the specified threshold (t), it
 %   then finds all the peaks, voxels that have the value higher than the
 %   immediate neighbors. It then uses a wathershed algorithm to flood the peaks,
 %   so that all the peaks that result in regions smaller than the specified
-%   minsize get either removed or flooded in from the adjoining heigher peak
-%   (if one exists). If final peaks are too large, they get reflooded to the
+%   minsize get either removed or flooded in from the adjoining heigher peak (if
+%   one exists). If final peaks are too large, they get reflooded to the
 %   specified maxsize only.
-%   This method supports both NIfTY and CIFTI-2
-%   image types. If the file is NIfTY, the function performs the operations
-%   by calling the function img_FindPeaksVolume, if the file is CIFTI-2, it
-%   extracts the volume components from the image and performs the
-%   operations by calling img_FindPeaksVolume on extracted volume components
-%   and img_FindPeaksSurface on surface components (cortex).
+%
+%   This method supports both NIfTY and CIFTI-2 image types. If the file is
+%   NIfTY, the function performs the operations by calling the function
+%   img_FindPeaksVolume, if the file is CIFTI-2, it extracts the volume
+%   components from the image and performs the operations by calling
+%   img_FindPeaksVolume on extracted volume components and img_FindPeaksSurface
+%   on surface components (cortex).
 %
 %   EXAMPLE USE 1 (CIFTI-2 image)
-%   To get a roi image (dscalar) of both positive and negative peak regions
-%   with miminum z value of (-)3 and 72 contiguous voxels in size, but no
-%   larger than 300 voxels, and surface peak regions of areas between
-%   50 mm^2 and 250 mm^2 on a cortex midthickness projection use:
+%   =============================
 %
-%   roi = img.img_FindPeaks([72 50], [300 250], 'b', 3, 'type:midthickness');
+%   To get a roi image (dscalar) of both positive and negative peak regions with
+%   miminum z value of (-)3 and 72 contiguous voxels in size, but no larger than
+%   300 voxels, and surface peak regions of areas between 50 mm^2 and 250 mm^2
+%   on a cortex midthickness projection use::
+%
+%       roi = img.img_FindPeaks([72 50], [300 250], 'b', 3, 'type:midthickness');
 %
 %   EXAMPLE USE 2 (CIFTI-2 image)
-%   To perform an operation on a time series (dtseries) image with similar
-%   parameters as in the first example on frames 1, 3, 7 with verbose
-%   output and highlighted ROI boundaries use:
+%   =============================
 %
-%   roi = img.img_FindPeaks([72 50], [300 250], 'b', 3, 'type:midthickness',...
-%                           'frames:[1 3 7]|boundary:highlight', 2);
+%   To perform an operation on a time series (dtseries) image with similar
+%   parameters as in the first example on frames 1, 3, 7 with verbose output and
+%   highlighted ROI boundaries use::
+%
+%       roi = img.img_FindPeaks([72 50], [300 250], 'b', 3, ...
+%           'type:midthickness', 'frames:[1 3 7]|boundary:highlight', 2);
 %
 %   EXAMPLE USE 3 (NIfTI image)
+%   ===========================
+%
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)1 and 50 contiguous voxels in size, but no larger than 250
-%   voxels use:
+%   voxels use::
 %
-%   roi = img.img_FindPeaks(50, 250, 'b', 1);
+%       roi = img.img_FindPeaks(50, 250, 'b', 1);
 %
 %   EXAMPLE USE 4 (CIFTI-2 image)
+%   =============================
+%
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
-%   voxels on a projection defined with a specific surface file and
-%   boundaries removed use:
+%   voxels on a projection defined with a specific surface file and boundaries
+%   removed use::
 %
-%   [roi vol_peaks peaks] = img.img_FindPeaks([72 80], [300 350], 'b', 3,...
+%       [roi vol_peaks peaks] = img.img_FindPeaks([72 80], [300 350], 'b', 3, ...
 %       'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii',...
 %       'boundary:remove', 1);
 %
 %   COMPLETE FLOW EXAMPLE
-%   %% import dscalar CIFTI-2 image
-%   img = nimage('example_image.dscalar.nii');
-%   
-%   %% FindPeaks input arguments
-%   % mindim: [min. size of the vol. ROIs (voxels), min. area of the surf. ROIs (mm^2)]
-%   mindim = [30 30];
-%   % maxdim: [max. size of the vol. ROIs (voxels), max. area of the surf. ROIs (mm^2)]
-%   maxdim = [300 300];
-%   % val: find both positive and negative peaks
-%   val = 'b';
-%   % t: threshold value
-%   t = 3;
-%   % projection: type of the projection (required for the max/min surface area arguments)
-%   projection = 'midthickness';
-%   % frames: which frames to consider [1 5 7,...] (can be [] for dscalar)
-%   frames = [];
-%   % verbose: - whether to report the peaks (1) and also be verbose: 
-%   %                  a) on the first level (2)
-%   %                  b) on all the levels  (3)
-%   verbose = 2;
-%   
-%   %% perform ROI operation
-%   [roi vol_peak peak] = img.img_FindPeaks(mindim, maxdim, val, t, projection, frames, verbose);
-%   
-%   %% export the modified image
-%   img_SaveNIfTI(roi,'example_image_ROI.dscalar.nii');
+%   =====================
 %
-%   ---
-%   Written by Aleksij Kraljic, June 7, 2017
+%   ::
+%
+%       %% import dscalar CIFTI-2 image
+%       img = nimage('example_image.dscalar.nii');
+%       
+%       %% FindPeaks input arguments
+%       % mindim: [min. size of the vol. ROIs (voxels), min. area of the surf. ROIs (mm^2)]
+%       mindim = [30 30];
+%       % maxdim: [max. size of the vol. ROIs (voxels), max. area of the surf. ROIs (mm^2)]
+%       maxdim = [300 300];
+%       % val: find both positive and negative peaks
+%       val = 'b';
+%       % t: threshold value
+%       t = 3;
+%       % projection: type of the projection (required for the max/min surface area arguments)
+%       projection = 'midthickness';
+%       % frames: which frames to consider [1 5 7,...] (can be [] for dscalar)
+%       frames = [];
+%       % verbose: - whether to report the peaks (1) and also be verbose: 
+%       %                  a) on the first level (2)
+%       %                  b) on all the levels  (3)
+%       verbose = 2;
+%       
+%       %% perform ROI operation
+%       [roi vol_peak peak] = img.img_FindPeaks(mindim, maxdim, val, t, ...
+%                           projection, frames, verbose);
+%       
+%       %% export the modified image
+%       img_SaveNIfTI(roi,'example_image_ROI.dscalar.nii');
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%   
+%   2017-07-07 Aleksij Kraljic
+%              Initial version.
 %	2017-07-17 Aleksij Kraljic
-%        - Added option for passing specific surf.gii projection files
+%              Added option for passing specific surf.gii projection files
 %
 
 if nargin < 8 || isempty(verbose),    verbose = false;                            end

@@ -1,24 +1,37 @@
 function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
 
-%function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
+%``function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)``
 %	
 %   Computes SNR for the given image.
 %
-%   Input
-%       - filename	: the filename of the image
-%		- imask		: mask that defines voxels to compute snr over 
-%		- fmask		: which frames to use / skip
-%		- target	: target folder for the figure
-%       - slice		: vector of the two dimensions that define a slice
-%		- fname		: the name to use when saving file
+%   INPUTS
+%	======
 %
-%	Output
-%		- snr		: mean slice snr
-%		- sd		: std of mean whole brain volume signal over the run
-%		- slicesnr	: array of snr values for each slice
+%   --filename	the filename of the image
+%	--imask		mask that defines voxels to compute snr over 
+%	--fmask		which frames to use / skip
+%	--target	target folder for the figure
+%   --slice		vector of the two dimensions that define a slice
+%	--fname		the name to use when saving file
 %
-%	Created by Grega Repovs 2010-11-21
-%	Modified by Grega Repovs 2010-11-22
+%	OUTPUTS
+%   =======
+%
+%	snr
+%		mean slice snr
+%
+%	sd
+%		std of mean whole brain volume signal over the run
+%
+%	slicesnr
+%		array of snr values for each slice
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+%
+%	2010-11-21 Grega Repovs
+%			   Initial version.
 %
 % 	Copyright (c) 2010 Grega Repovs. All rights reserved.
 %

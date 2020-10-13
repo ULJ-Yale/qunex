@@ -1,21 +1,31 @@
 function [] = s_TTestZero(dfile, output, exclude, verbose)
 
-%function [] = s_TTestZero(dfile, output, exclude, verbose)
+%``function [] = s_TTestZero(dfile, output, exclude, verbose)``
+%
+%   INPUTS
+%   ======
 %
 %	Computes t-test against zero and saves specified results.
 %
-%	dfile   - the data file to work on - either a single image or a conc file
-%   output  - the type of results to save ['metpz']
-%             m : mean value for each voxel
-%             e : standard error for each voxel
-%             t : t-value for each voxel
-%             p : p-value for each voxel
-%             z : Z-score for each voxel
-%   exclude - values to be excluded from computation
-%   verbose - should report each step?
+%	--dfile     the data file to work on - either a single image or a conc file
+%   --output    the type of results to save ['metpz']
 %
-%   ---
-%   Written by Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+%               - m ... mean value for each voxel
+%               - e ... standard error for each voxel
+%               - t ... t-value for each voxel
+%               - p ... p-value for each voxel
+%               - z ... Z-score for each voxel
+%
+%   --exclude   values to be excluded from computation []
+%   --verbose   should report each step [false]
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2011-10-09 Grega Repovs
+%              Rewriten from previous function with the same name.
 
 
 

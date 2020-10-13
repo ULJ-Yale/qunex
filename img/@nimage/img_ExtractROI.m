@@ -1,32 +1,47 @@
 function ts = img_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 
-%function ts = img_ExtractROI(obj, roi, rcodes, method, weights, criterium)
+%``function ts = img_ExtractROI(obj, roi, rcodes, method, weights, criterium)``
 %
-%	Extracts roi data for all specified ROI in the ROI image
-%   Uses specified method of averaging data
+%   Extracts roi data for all specified ROI in the ROI image. Uses specified
+%   method of averaging data.
 %
-%	obj    - current image
-%   roi    - roi image file
-%   rcodes - roi values to use [all but 0]
-%   method - method name [mean]
-%      'mean'       - average value of the ROI
-%	   'median'     - median value across the ROI
-%      'pca'        - first eigenvariate of the ROI
-%      'threshold'  - average of all voxels above threshold
-%      'maxn'       - average of highest n voxels
-%      'weighted'   - weighted average across ROI voxels
-%      'all'        - all voxels within a ROI 
-%   weights         - image file with weights to use []
-%   criterium       - threshold or number of voxels to extract []
+%   INPUTS
+%   ======
 %
+%	--obj         current image
+%   --roi         roi image file
+%   --rcodes      roi values to use [all but 0]
+%   --method      method name [mean]
 %
-%   Grega Repovš, 2009-11-08
+%                 - 'mean'      ... average value of the ROI
+%	              - 'median'    ... median value across the ROI
+%                 - 'pca'       ... first eigenvariate of the ROI
+%                 - 'threshold' ... average of all voxels above threshold
+%                 - 'maxn'      ... average of highest n voxels
+%                 - 'weighted'  ... weighted average across ROI voxels
+%                 - 'all'       ... all voxels within a ROI 
 %
-%   ---- Changelog ----
+%   --weights     image file with weights to use []
+%   --criterium   threshold or number of voxels to extract []
 %
-%   Grega Repovs, 2013-07-24 ... Adjusted to use multivolume ROI objects
-%   Grega Repovs, 2018-03-18 ... Added 'median' as an option for extraction method
-%   Grega Repovs, 2019-04-25 ... Added 'all' as an option for extraction method
+%   OUTPUT
+%   ======
+%
+%   ts
+%   
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2009-11-08 Grega Repovs
+%              Initial version
+%   2013-07-24 Grega Repovs 
+%              Adjusted to use multivolume ROI objects
+%   2018-03-18 Grega Repovs 
+%              Added 'median' as an option for extraction method
+%   2019-04-25 Grega Repovs 
+%              Added 'all' as an option for extraction method
 
 if nargin < 6; criterium = [];  end
 if nargin < 5; weights = [];    end
