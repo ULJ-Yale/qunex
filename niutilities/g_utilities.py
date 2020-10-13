@@ -2848,6 +2848,11 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                Changed subjects to sessions
     2020-06-03 Jure Demšar
                Renamed getHCPReady to createSessionInfo
+    2020-07-02 Aleksij Kraljič
+               Expanded field map correction functionality, so multiple SE/FM scan pairs are allowed.
+    '''
+=======
+               
     """
 
     print "Running createSessionInfo\n==================="
@@ -2924,14 +2929,32 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
             bold = 0
             nlines = []
             hasref = False
+            index      = 0
+            se, fm     = 0, 0
+            imgtrack   = {}
+            setrack    = {}
+            fmtrack    = {}
+            p_repl     = ""
+            sepattern  = re.compile(r'SE-FM-PA|SE-FM-AP|SE-FM-LR|SE-FM-RL')
+            sepatt_a   = re.compile(r'SE-FM-PA|SE-FM-LR')
+            sepatt_b   = re.compile(r'SE-FM-AP|SE-FM-RL')
+            sa_ctn     = 0
+            sb_ctn     = 0
+            fmpattern  = re.compile(r'FM-Magnitude|FM-Phase')
+            fmpatt_mag = re.compile(r'FM-Magnitude')
+            fmpatt_pha = re.compile(r'FM-Phase')
+            fmag_ctn   = 0
+            fpha_ctn   = 0
             for line in lines:
                 e = line.split(':')
+                sestr, fmstr = "", ""
                 if len(e) > 1:
                     if e[0].strip() == '%sready' % pipeline and e[1].strip() == 'true':
                         pipelineok = True
                     if e[0].strip().isdigit():
                         if not images:
                             nlines.append('%sready: true' % pipeline)
+                            index += 1
                             images = True
 
                         onum = int(e[0].strip())
@@ -2953,13 +2976,61 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                             else:
                                 bold += 1
                             repl = repl.replace('bold', 'bold%d' % (bold))
+                        elif sepattern.search(repl):
+                            if sepattern.search(p_repl) is None and (sa_ctn == sb_ctn):
+                                se += 1
+                                setrack.update({index: {'num': se}})
+                            if sepatt_a.search(repl):
+                                sa_ctn += 1
+                            elif sepatt_b.search(repl):
+                                sb_ctn += 1
+                            repl = repl.replace(repl, '%s' % (repl))
+                        elif fmpattern.search(repl):
+                            if fmpattern.search(p_repl) is None and (fmag_ctn == fpha_ctn):
+                                fm += 1
+                                fmtrack.update({index: {'num': fm}})
+                            if fmpatt_mag.search(repl):
+                                fmag_ctn += 1
+                            elif fmpatt_pha.search(repl):
+                                fpha_ctn += 1
+                            repl = repl.replace(repl, '%s' % (repl))
+                        elif repl in ['FM-GE']:
+                            fm += 1
+                            fmtrack.update({index: {'num': fm}})
+                            repl = repl.replace(repl, '%s' % (repl))
 
-                        e[1] = " %-16s:%s" % (repl, oimg)
+                        explDef = any([re.search(r'se\(\d{1,2}\)|fm\(\d{1,2}\)',element) for element in e])
+                        if re.search(r'(DWI:)', repl) is None and explDef is False:
+                            if (se > 0) and (re.search(r'(?<!SE-)(FM-)', repl) is None):
+                                sestr = ": se(%d)" % (se)
+                            if (fm > 0) and (re.search(r'(SE-FM)', repl) is None):
+                                fmstr = ": fm(%d)" % (fm)
+                            imgtrack.update({index: {'type': repl, 'se': se, 'fm': fm}})
+
+                        p_repl = repl
+
+                        e[1] = " %-16s:%s%s%s" % (repl, oimg, sestr, fmstr)
                         nlines.append(":".join(e))
                     else:
                         nlines.append(line)
                 else:
                     nlines.append(line)
+                index += 1
+
+            if fmag_ctn != fpha_ctn:
+                print "WARNING: Field map correction (Siemens/Philips) requires one or more complete pairs of scans: FM-Magnitude/FM-Phase"
+            if sa_ctn != sb_ctn:
+                print "WARNING: Spin-echo field map correction requires one or more complete pairs of scans: SE-FM-PA/SE-FM-AP or SE-FM-LR/SE-FM-RL"
+
+            for item in imgtrack:
+                if imgtrack[item]['fm'] == 0 and fmtrack and re.search(r'(SE-FM)', nlines[item]) is None:
+                    fmdist = [abs(ln-item) for ln in fmtrack.keys()]
+                    crspfm = min(fmdist)+item
+                    nlines[item] = nlines[item] + ": fm(%d)" % (fmtrack[crspfm]['num'])
+                if imgtrack[item]['se'] == 0 and setrack and re.search(r'(?<!SE-)(FM-)', nlines[item]) is None:
+                    sedist = [abs(ln-item) for ln in setrack.keys()]
+                    crspse = min(sedist)+item
+                    nlines[item] = nlines[item] + ": se(%d)" % (setrack[crspse]['num'])
 
             if pipelineok:
                 print "     ... %s already pipeline ready" % (sourcefile)
