@@ -1,15 +1,19 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``g_palm.py``
+
 This file holds code for running PALM second level analyses, CIFTI map masking
 and concatenation. The specific commands implemented here are:
 
-* runPALM  ... for running PALM resampling
-* maskMap  ... for masking results
-* joinMaps ... for joining individual cifti maps into named concatencated maps
+--runPALM   For running PALM resampling
+--maskMap   For masking results
+--joinMaps  For joining individual cifti maps into named concatenated maps
 
 The functions are to be run using the gmri terminal command.
+"""
 
+"""
 Created by Grega Repovs on 2016-08-30.
 Copyright (c) Grega Repovs. All rights reserved.
 """
@@ -25,8 +29,185 @@ import niutilities.g_exceptions as ge
 import re
 
 def runPALM(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):
-    '''
-    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]
+    """
+    ``runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]``
+
+    Runs second level analysis using PALM permutation resampling.
+
+    REQUIREMENTS
+    ============
+
+    For the PALM processing to run successfully, the input image and the design
+    files need to be prepared and match. Specifically, the input image file
+    should hold first level results (e.g. GLM beta estimates or functional
+    connectivity seed-maps) for all the subjects and conditions. For activation
+    analyses a simple way to generate such a file is to use g_ExtractGLMVolumes
+    Matlab function.
+
+    Design files
+    ------------
+
+    When only a t-test against zero is run across all the volumes in the image,
+    no design files are needed, in all other cases some or all of the design
+    files need to be prepared:
+
+    - design matrix file (d)
+    - exchangibility blocks file (eb)
+    - t-contrasts file (t)
+    - f-contrast file (f)
+
+    The files should be named using the following convention. All the files
+    should start with the same root, the design name, followed by an underscore
+    then a tail that specifies the content of the file and the '.csv' extension.
+    The files are expected to be matrices in the comma separated values format.
+
+    INPUTS
+    ======
+
+    --image: Image file(s) 
+    ----------------------
+
+    One or multiple files can be specified as input. If multiple files are
+    specified, they will be all passed to PALM. If they are cifti files, they
+    will be split into separate structures and run in parallel. To specify
+    multiple files, separate them with pipe ("|") character and take care to
+    put the whole string with files in quotes. Also, if specifying multiple
+    files, do take care, that they are of the same format (nifti, cifti) and
+    do specify the relevant additional parameters (see below) that are relevant
+    for multimodal testing.
+
+    Example string for multiple files::
+
+        image="rs_connectivity.dtseries.nii|task_activation.dtseries.nii"
+
+    --design: Design string
+    -----------------------
+
+    The design name and the specific tails (if the defaults are not used) are
+    specified by a design string. Design string is a pipe separated list of
+    key:value pairs that specify the following (with the defaults in the
+    brackets):
+
+    - name (the root name of the design files [palm])
+    - d    (the design matrix file tail [d])
+    - t    (the t-contrasts file tail [t])
+    - f    (the f-contrasts file tail [f])
+    - eb   (the exchange blocks file tail [eb])
+
+    If "none" is given as value, that file is not to be specified and used.
+
+    Do take into account that the design files are looked for from the location
+    in which you are running the command from. If they are in a different
+    location, then "name" has to specify the full path!
+
+    Example design string and files::
+
+        design='name:sustained|t:taov'
+
+    In this case the following files would be expected:
+
+    - sustained_d.csv      (design matrix file)
+    - sustained_eb.csv     (exchangebility blocks file)
+    - sustained_taov.csv   (t-contrasts file)
+    - sustained_f.csv      (f-contrasts file)
+
+    design='name:designs/transient|t:faov|f:fmain'
+
+    In this case the following files would be expected:
+
+    - designs/transient_d.csv      (design matrix file)
+    - designs/transient_eb.csv     (exchangebility blocks file)
+    - designs/transient_taov.csv   (t-contrasts file)
+    - designs/transient_fmain.csv  (f-contrasts file)
+
+
+    --args: Additional arguments to PALM
+    ------------------------------------
+
+    Additional arguments to palm can be specified using the arguments string.
+    The arguments string is a pipe separated list of arguments and optional
+    values. The format of the string is::
+
+        "<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>".
+
+    The default arguments and values are: "n:100|zstat", which specify that
+    100 permutations should be run and the statistics of interest expressed in
+    z values. To exclude a default argument, specify "<arg>:remove", e.g.:
+    "zstat:remove" if the statistics are not to be converted to z values.
+
+    For full list of possible arguments and values, please consult PALM user
+    guide. Some relevant arguments to consider:
+
+    --accel    Methods to accelerate analysis. Possible values are:
+
+                   - noperm  (do not do any permutations (works with fdr
+                             correction only))
+                   - tail    (estimates tail of the permuted distribution, needs
+                             at least 100 resamples)
+                   - negbin  (runs as many permutations an needed (works with
+                             fdr correction only))
+                   - gamma   (computes the moment of permutation distribution
+                             and fits a gamma function)
+                   - lowrank (runs as many permutations as needed to complete
+                             matrix (fdr, fwer only))
+
+    --twotail  Run two-tailed test for all the contrasts
+    --fonly    Run only f-contrasts and not the individual t-contrasts
+    --fdr      Compute a fdr correction for multiple comparisons
+    --T        Enable TFCE inference
+    --C <z>    Enable cluster inference for univariate tests with z cutoff
+
+    TFCE specific additional arguments
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Sometimes it is desired to specify TFCE parameters that differ from the
+    default values. As the function allows combined surface/volume processing
+    of cifti files, it is useful to be able to set them separately for 2D and
+    3D analysis. runPALM therefore provides two additional optional parameters
+    that are separately expanded to TFCE 2D and 3D settings:
+
+    --T2DHEC    Sets H, E and C parameters for 2D part of analysis.
+    --T3DHEC    Sets H, E and C parameters for 3D part of analysis.
+
+    All three values need to be provided when the parameter is specified, for
+    example::
+
+        args="T2HEC:2:0.5:26|T3DHEC:4:1:6"
+
+    If these two parameters are not specified, the default values specified by
+    PALM are used, specifically, H=2, E=1, C=26 for 2D analysis and H=2, E=0.5
+    for 3D analysis (C value is not listed in PALM documentation).
+
+    Example additional arguments
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    ::
+
+        args="n:500|accel:tail|T|fonly"
+
+    In this case PALM would run 500 permutations and the p-values would be
+    estimated by a help of the tail estimation acceleration method, TFCE
+    inference would be used, and only f-contrasts would be computed.
+
+    Additional optional parameters
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    --options         A | separate string of additional options to be passed to
+                      the command, e.g. specify 'surface' if only left and right
+                      surfaces from dtseries or dscalar files are to be
+                      analyzed.
+    --root            Optional root name for the result images, design name is
+                      used if the optional parameter is not specified.
+    --parelements     Number of elements to run in parallel for grayordinate
+                      decomposition, all available elements (3 max for left
+                      surface, right surface and volume files) will be used if
+                      not specified.
+    --overwrite       Whether to remove preexisting image files, if they exists,
+                      the command will exit with a warning if there are
+                      preexisting files and overwrite is set to 'no'
+                      (the default).
+    --cleanup         Should the command clean all the temporary generated files
+                      or not before the command exits. [yes]
 
     USE
     ===
@@ -47,206 +228,44 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
     For ptseries it might be necessary to specify transposedata in argument
     string for the data to be interpreted correctly.
 
+    EXAMPLE USE
+    ===========
 
-    REQUIREMENTS
-    ============
-
-    For the PALM processing to run successfully, the input image and the design
-    files need to be prepared and match. Specifically, the input image file
-    should hold first level results (e.g. GLM beta estimates or functional
-    connectivity seed-maps) for all the subjects and conditions. For activation
-    analyses a simple way to generate such a file is to use g_ExtractGLMVolumes
-    matlab function.
-
-    Design files
-    ------------
-
-    When only a t-test against zero is run across all the volumes in the image,
-    no design files are needed, in all other cases some or all of the design
-    files need to be prepared:
-
-    * design matrix file (d)
-    * exchangibility blocks file (eb)
-    * t-contrasts file (t)
-    * f-contrast file (f)
-
-    The files should be named using the following convention. All the files
-    should start with the same root, the design name, followed by an underscore
-    then a tail that specifies the content of the file and the '.csv' extension.
-    The files are expected to be matrices in the comma separated values format.
-
-
-    PARAMETERS
-    ==========
-
-    --image: Image file(s) 
-    ----------------------
-
-    One or multiple files can be specified as input. If multiple files are
-    specified, they will be all passed to PALM. If they are cifti files, they
-    will be split into separate structures and run in parallel. To specify
-    multiple files, separate them with pipe ("|") character and take care to
-    put the whole string with files in quotes. Also, if specifying multiple
-    files, do take care, that they are of the same format (nifti, cifti) and
-    do specify the relevant additional parameters (see below) that are relevant
-    for multimodal testing.
-
-    Example string for multiple files:
-
-    image="rs_connectivity.dtseries.nii|task_activation.dtseries.nii"
-
-    --design: Design string
-    -----------------------
-
-    The design name and the specififc tails (if the defaults are not used) are
-    specified by a design string. Design string is a pipe separated list of
-    key:value pairs that specify the following (with the defaults in the
-    brackets):
-
-    * name : the root name of the design files [palm]
-    * d    : the design matrix file tail [d]
-    * t    : the t-contrasts file tail [t]
-    * f    : the f-contrasts file tail [f]
-    * eb   : the exchange blocks file tail [eb]
-
-    If "none" is given as value, that file is not to be specified and used.
-
-    Do take into account that the design files are looked for from the location
-    in which you are running the command from. If they are in a different
-    location, then "name" has to specify the full path!
-
-    Example design string and files
-    -------------------------------
-
-    design='name:sustained|t:taov'
-
-    In this case the following files would be expected:
-
-    * sustained_d.csv      (design matrix file)
-    * sustained_eb.csv     (exchangebility blocks file)
-    * sustained_taov.csv   (t-contrasts file)
-    * sustained_f.csv      (f-contrasts file)
-
-    design='name:designs/transient|t:faov|f:fmain'
-
-    In this case the following files would be expected:
-
-    * designs/transient_d.csv      (design matrix file)
-    * designs/transient_eb.csv     (exchangebility blocks file)
-    * designs/transient_taov.csv   (t-contrasts file)
-    * designs/transient_fmain.csv  (f-contrasts file)
-
-
-    --arg: Additional arguments to PALM
-    -----------------------------------
-
-    Additional arguments to palm can be specified using the arguments string.
-    The arguments string is a pipe separated list of arguments and optional
-    values. The format of the string is:
-
-    "<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>".
-
-    The default arguments and values are: "n:100|zstat", which specify that
-    100 permutations should be run and the statistics of interest expressed in
-    z values. To exclude a default argument, specify "<arg>:remove", e.g.:
-    "zstat:remove" if the statistics are not to be converted to z values.
-
-    For full list of possible arguments and values, please consult PALM user
-    guide. Some relevant arguments to consider:
-
-    accel   : methods to accelerate analysis. Possible values are:
-              - noperm  : do not do any permutations (works with fdr correction only)
-              - tail    : estimates tail of the permuted distribution, needs at least 100 resamples
-              - negbin  : runs as many permutations an needed (works with fdr correction only)
-              - gamma   : computes the moment of permutation distribution and fits a gamma function
-              - lowrank : runs as many permutations as needed to complete matrix (fdr, fwer only)
-    twotail : run two-tailed test for all the contrasts
-    fonly   : run only f-contrasts and not the individual t-contrasts
-    fdr     : compute a fdr correction for multiple comparisons
-    T       : Enable TFCE inference
-    C <z>   : Enable cluster inference for univariate tests with z cutoff
-
-    TFCE specific additional arguments
-    ----------------------------------
-
-    Sometimes it is desired to specify TFCE parameters that differ from the
-    default values. As the function allows combined surface/volume processing
-    of cifti files, it is useful to be able to set them separately for 2D and
-    3D analysis. runPALM therefore provides two additional optional parameters
-    that are separately expanded to TFCE 2D and 3D settings:
-
-    T2DHEC  : sets H, E and C parameters for 2D part of analysis
-    T3DHEC  : sets H, E and C parameters for 3D part of analysis
-
-    All three values need to be provided when the parameter is specified, for
-    example:
-
-    args="T2HEC:2:0.5:26|T3DHEC:4:1:6"
-
-    If these two parameters are not specified, the default values specified by
-    PALM are used, specifically, H=2, E=1, C=26 for 2D analysis and H=2, E=0.5
-    for 3D analysis (C value is not listed in PALM documentation).
-
-    Example additional arguments
-    ----------------------------
-
-    args="n:500|accel:tail|T|fonly"
-
-    In this case PALM would run 500 permutations and the p-values would be
-    estimated by a help of the tail estimation acceleration method, TFCE
-    inference would be used, and only f-contrasts would be computed.
-
-    Additional optional parameters
-    ------------------------------
+    ::
     
-    --options       : a | separate string of additional options to be passed to the
-                      command, e.g. specify 'surface' if only left and right surfaces
-                      from dtseries or dscalar files are to be analysed
-    --root          : optional root name for the result images, design name is used
-                      if the optional parameter is not specified
-    --parelements   : number of elements to run in parallel for grayordinate
-                      decomposition, all available elements (3 max for left surface,
-                      right surface and volume files) will be used if not specified.
-    --overwrite     : whether to remove preexisting image files, if they exists, the
-                      command will exit with a warning if there are preexiting files
-                      and overwrite is set to 'no' (the default)
-    --cleanup       : should the command clean all the temporary generated files or
-                      not before the command exits [yes]
+        qunex runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
+             root=sustained_aov
+    """
 
-    Example use
-    -----------
-    
-    ```
-    qunex runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
-         root=sustained_aov
-    ```
+    """
+    ~~~~~~~~~~~~~~~~~~
 
-    ----------------
-    Written by Grega Repovš
+    Change log
 
-    Changelog
     2017-02-06 Grega Repovš
-             - Updated documentation.
+               Initial version
+    2017-02-06 Grega Repovš
+               Updated documentation.
     2017-05-01 Grega Repovš
-             - Added custom 2D/3D specification of TFCE parameters
+               Added custom 2D/3D specification of TFCE parameters
     2017-05-09 Grega Repovš
-             - Added ability to specify multiple image files for multimodal
+               Added ability to specify multiple image files for multimodal
                analysis.
     2017-07-21 Grega Repovš
-             - Added ability to run ptseries CIFTI images.
+               Added ability to run ptseries CIFTI images.
     2017-09-28 Grega Repovš
-             - Updated documentation regarding location of design files.
+               Updated documentation regarding location of design files.
     2017-10-20 Grega Repovš
-             - Added cleaning of preexisting image files.
+               Added cleaning of preexisting image files.
     2018-03-06 Grega Repovš
-            - Correction to documentation
+               Correction to documentation
     2018-07-26 Grega Repovš
-            - Corrected for new locations of templates
+               Corrected for new locations of templates
     2018-09-10 Grega Repovš
-            - Added additional options and surface only processing
+               Added additional options and surface only processing
     2019-01-25 Grega Repovš
-            - Added cleanup option
-    '''
+               Added cleanup option
+    """
 
     print "Running PALM\n============"
     print " --> checking environment"
@@ -432,7 +451,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
         for k, v in arguments.iteritems():
             sargs += ['-' + k]
             if v is not None:
-                sargs += v
+		sargs += v
 
         # --- run PALM
 
@@ -603,28 +622,22 @@ def setInFiles(root, tail, nimages):
 
 
 def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'):
-    '''
-    maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
+    """
+    ``maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]``
 
-    USE
-    ===
+    Enables easy masking of CIFTI images.
 
-    maskMap is a wb_command wrapper that enables easy masking of CIFTI images
-    (e.g. ztstat image from PALM), using the provided list of mask files (e.g.
-    p-values imaages from PALM) and thresholds. More than one mask can be used
-    in which case they can be combined using a logical OR or AND operator.
+    INPUTS
+    ======
 
-    PARAMETERS
-    ==========
-
-    --image   ... The image file to be masked.
-    --masks   ... A comma separated list of masks to be used.
-    --output  ... An optional image name for the resulting masked image, if
+    --image       The image file to be masked.
+    --masks       A comma separated list of masks to be used.
+    --output      An optional image name for the resulting masked image, if
                   none is provided the original image name will be used with
                   tail "_masked" appended.
-    --minv    ... The minimum threshold value.
-    --maxv    ... The maximum threshold value.
-    --join    ... Whether multiple masks should be joined using logical OR or
+    --minv        The minimum threshold value.
+    --maxv        The maximum threshold value.
+    --join        Whether multiple masks should be joined using logical OR or
                   logical AND operator. [OR]
 
     Join operation
@@ -639,29 +652,43 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
 
     At least minv or maxv needs to be specified.
 
-    If only minv is given, images will be masked with:  mask >= minv.
-    If only maxv is given, images will be masked with:  mask <= maxv.
-    If both are given, images will be masked with:      minv <= mask <= maxv
+    - If only minv is given, images will be masked with: ``mask >= minv``.
+    - If only maxv is given, images will be masked with: ``mask <= maxv``.
+    - If both are given, images will be masked with:     
+      ``minv <= mask <= maxv``.
 
-    If there is just one minv or maxv value, all the masks will be thresholded using the same value. If more values are
-    provided as comma separated list, they should match the number of masks.
+    If there is just one minv or maxv value, all the masks will be thresholded
+    using the same value. If more values are provided as comma separated list,
+    they should match the number of masks.
+
+    USE
+    ===
+
+    maskMap is a wb_command wrapper that enables easy masking of CIFTI images
+    (e.g. ztstat image from PALM), using the provided list of mask files (e.g.
+    p-values imaages from PALM) and thresholds. More than one mask can be used
+    in which case they can be combined using a logical OR or AND operator.
 
     EXAMPLE USE
     ===========
     
-    ```
-    qunex maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
-        masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
-        maxv=0.017
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
+            masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
+            maxv=0.017
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2017-02-06 Grega Repovš
-             - Updated documentation.
-    '''
+               Initial version
+    2017-02-06 Grega Repovš
+               Updated documentation
+    """
 
     print "Running maskMap\n==============="
 
@@ -729,8 +756,19 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
 
 
 def joinMaps(images=None, output=None, names=None, originals=None):
-    '''
-    joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
+    """
+    ``joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]``
+
+    Concatenates the listed cifti images and names the individual volumes.
+
+    INPUTS
+    ======
+
+    --images         A comma separated list of images to be concatenated
+    --output         The name of the resulting file.
+    --names          A comma separated list of image names.
+    --originals      Whether to keep or remove the original images after the
+                     concatenation. [keep]
 
     USE
     ===
@@ -738,35 +776,30 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     joinMaps is a wb_command wrapper that concatenates the listed cifti images
     and names the individual volumes, if names are provided.
 
-    PARAMETERS
-    ==========
-
-    --images     ... A comma separated list of images to be concatenated
-    --output     ... The name of the resulting file.
-    --names      ... A comma separated list of image names.
-    --originals  ... Whether to keep or remove the original images after the
-                     concatenation. [keep]
-
     EXAMPLE USE
     ===========
     
-    ```
-    qunex joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
-                          sustained_BvsC_p.017.dscalar.nii, \\
-                          sustained_AvsC_p.017.dscalar.nii, \\
-                          sustained_aov_p.017.dscalar.nii" \\
-                  names="A > B, B > C, A > C, ANOVA" \\
-                  output="sustained_results.dscalar.nii" \\
-                  originals=remove
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš
+        qunex joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
+                              sustained_BvsC_p.017.dscalar.nii, \\
+                              sustained_AvsC_p.017.dscalar.nii, \\
+                              sustained_aov_p.017.dscalar.nii" \\
+                      names="A > B, B > C, A > C, ANOVA" \\
+                      output="sustained_results.dscalar.nii" \\
+                      originals=remove
+    """
 
-    Changelog
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
     2017-02-06 Grega Repovš
-             - Updated documentation.
-    '''
+               Initial version
+    2017-02-06 Grega Repovš
+               Updated documentation
+    """
 
     print "Running joinMaps\n================"
 
@@ -837,13 +870,22 @@ def fNuissance(n):
 
 
 def createWSPALMDesign(factors=None, nsubjects=None, root=None):
-    '''
-    createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
+    """
+    ``createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>``
+
+    Prepares the design file.
+
+    INPUTS
+    ======
+
+    --factors        A comma separated list of number of factor levels.
+    --nsubjects      Number of subjects.
+    --root           Root name for the created files. ['wspalm']
 
     USE
     ===
 
-    createWSPALMDesign prepares design file, t-contrasts, f-contrasts and
+    createWSPALMDesign prepares the design file, t-contrasts, f-contrasts and
     exchangebility block files for a single group within-subject PALM designs.
     It supports full factorial designs with up to three factors.
 
@@ -852,37 +894,42 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     interactions and subject intercepts will be specified in the following
     order in the design matrix:
 
-    1 factor design:
-    F1, subjects
+    1. factor design::
 
-    2 factor design:
-    F1, F2, F1*F2, subjects
+        F1, subjects
 
-    3 factor design:
-    F1, F2, F3, F1*F2, F1*F3, F2*F3, F1*F2*F3, subjects
+    2. factor design::
 
-    4 factor design:
-    F1, F2, F3, F4, F1*F2, F1*F3, F1*F4, F2*F3, F2*F4, F3*F4, F1*F2*F3, F1*F2*F4, F2*F3*F4, F1*F2*F3*F4, subjects
+        F1, F2, F1*F2, subjects
+
+    3. factor design::
+
+        F1, F2, F3, F1*F2, F1*F3, F2*F3, F1*F2*F3, subjects
+
+    4. factor design::
+
+        F1, F2, F3, F4, F1*F2, F1*F3, F1*F4, F2*F3, F2*F4, F3*F4, F1*F2*F3, 
+        F1*F2*F4, F2*F3*F4, F1*F2*F3*F4, subjects
 
     t-tests will be specified in order and f-tests will be specified in the same
     order as above.
 
-    PARAMETERS
-    ==========
-
-    --factors    ... A comma separated list of number of factor levels.
-    --nsubjects  ... Number of subjects.
-    --root       ... Root name for the created files ['wspalm'].
-
     EXAMPLE USE
     ===========
     
-    ```
-    qunex createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
-    ```
+    ::
 
-    ----------------
-    Written by Grega Repovš, 2017-07-14'''
+        qunex createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
+    2017-07-14 Grega Repovš
+               Initial version 
+    """
 
     if factors is None:
         raise ge.CommandError("createWSPALMDesign", "Missing parameter", "No factors specified!", "Please, check your command!")

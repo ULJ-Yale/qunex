@@ -1,8 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-g_MeltMovFidl
+``g_MeltMovFidl``
+"""
 
+"""
 Created by Grega Repovs on 2011-07-30
 Copyright (c) Grega Repovs. All rights reserved.
 """
@@ -15,17 +17,17 @@ import os.path
 import glob
 import g_img
 
-help_message = '''
-g_MeltMovFidl <conc_file> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>
+help_message = """
+``g_MeltMovFidl <conc_file> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
 
-g_MeltMovFidl checks movement folder for each bold file specified in 
+Checks movement folder for each bold file specified in 
 <conc_file> for corresponding scrub fidl file matching <ignore_fild_pattern>
 It then melts information on frames to be ignored into the <input_fidl_file> 
 and saves it to <output_fidl_file>.
 
 Take into account that it expects bold runs and ignore .fidl files to both
 match b.*[1-9] pattern.
-'''
+"""
 
 class Usage(Exception):
     def __init__(self, msg):

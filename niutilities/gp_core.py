@@ -1,10 +1,14 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
+``gp_core.py``
+
 This file holds code for core support functions used by other code for
 preprocessing and analysis. The functions are for internal use
-and can not be called externaly.
+and can not be called externally.
+"""
 
+"""
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
@@ -97,27 +101,38 @@ def root4dfp(filename):
 
 def useOrSkipBOLD(sinfo, options, r=""):
     """
-    useOrSkipBOLD
+    ``useOrSkipBOLD(sinfo, options, r="")``
+
     Internal function to determine which bolds to use and which to skip.
 
-    returns:
-    * bolds ... list of bolds to process
-    * bskip ... list of bolds to skip
-    * nskip ... number of bolds to skip
-    * r     ... report
+    OUTPUTS
+    =======
 
-    lists contain tuples with the following elements:
-    * the bold number as integer
-    * the numbered bold name (bold[N])
-    * the task tag (e.g. 'rest')
-    * the dictionary with all the info
+    --bolds  List of bolds to process.
+    --bskip  List of bolds to skip.
+    --nskip  Number of bolds to skip.
+    --r      Report.
+
+    Lists contain tuples with the following elements:
+
+    - the bold number as integer
+    - the numbered bold name (bold[N])
+    - the task tag (e.g. 'rest')
+    - the dictionary with all the info
+    """
+
+    """
+    ~~~~~~~~~~~~~~~~~~
 
     Change log
+
     2019-06-06 Grega Repovš
-             - Changed processing to be more explicit and allow also 
+               Initial version
+    2019-06-06 Grega Repovš
+               Changed processing to be more explicit and allow also 
                selection by bold name and bold sequence name
     2020-01-28 Grega Repovš
-             - Added the option to select by sequence name
+               Added the option to select by sequence name
     """
     bsearch  = re.compile('bold([0-9]+)')
     btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
@@ -581,15 +596,20 @@ def missingReport(missing, message, prefix):
    
 
 def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False):
-    '''
+    """
+    ``checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False)``
+
     The function checks the presence of a test file.
     If specified it runs also full test.
-    it returns:
+    
+    OUTPUTS
+    =======
 
-    * None - test file is missing
-    * incomplete - test file is present, but full test was incomplete
-    * done - test file is present, and if full test was specified, all files were present as well
-    '''
+    --None        test file is missing
+    --incomplete  test file is present, but full test was incomplete
+    --done        test file is present, and if full test was specified, all
+                  files were present as well
+    """
     
     if fullTest and 'specfolder' in fullTest:
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
@@ -637,37 +657,46 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
 
 def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
     """
-    runExternalForFile
+    ``runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True)``
 
-    Runs the specified command and checks whether it was executed against a checkfile, 
-    and if provided a full list of files as specified in fullTest.
+    Runs the specified command and checks whether it was executed against a 
+    checkfile, and if provided a full list of files as specified in fullTest.
 
-    Parameters
+    INPUTS
+    ======
 
-    - checkfile    ... the file to run a check agains (file path)
-    - run          ... the specific command to run (string)
-    - description  ... a description of the command that will be run (string)
-    - overwrite    ... whether to overwrite existing data (checkfile present; boolean)
-    - thread       ... thread count if multiple are run
-    - remove       ... whether to remove a log file once done (boolean)
-    - task         ... a short name of the task to run
-    - logfolder    ... a folder or a list of folders in which to place the log
-    - logtags      ... an array of tags used to create a log name
-    - fullTest     ... a dictionary describing how to check against a full list of files:
-      -> tfolder       ... a target folder with the results
-      -> tfile         ... a path to the file describing the files to check for 
-      -> fields        ... list of tuple key, value pairs, describing which {} keys to replace with specific values
-      -> specfolder    ... a folder to check for tfile if tfile might be relative to it
-    - shell        ... whether to run the command in a shell (boolean)
-    - r            ... a string to which to append the report
+    --checkfile        The file to run a check against (file path)
+    --run              The specific command to run (string)
+    --description      A description of the command that will be run (string)
+    --overwrite        Whether to overwrite existing data (checkfile present;
+                       boolean)
+    --thread           Thread count if multiple are run
+    --remove           Whether to remove a log file once done (boolean)
+    --task             A short name of the task to run
+    --logfolder        A folder or a list of folders in which to place the log
+    --logtags          An array of tags used to create a log name
+    --fullTest         A dictionary describing how to check against a full list
+                       of files:
 
-    Output
+                       - tfolder    (a target folder with the results)
+                       - tfile      (a path to the file describing the files to 
+                         check for)
+                       - fields     (list of tuple key, value pairs, describing
+                         which {} keys to replace with specific values
+                       - specfolder (a folder to check for tfile if tfile might
+                         be relative to it)
+
+    --shell            Whether to run the command in a shell (boolean).
+    --r                A string to which to append the report.
+
+    OUTPUTS
+    =======
     
-    - r         ... the report string
-    - endlog    ... the path to the final log file
-    - status    ... description of whether the command failed, is fully done or incomplete based on the test files
-    - failed    ... 0 for ok, 1 or more for failed or incomplete runs
-
+    --r             The report string.
+    --endlog        The path to the final log file.
+    --status        Description of whether the command failed, is fully done or
+                    incomplete based on the test files.
+    --failed        0 for ok, 1 or more for failed or incomplete runs.
     """
 
     def closeLog(logfile, logname, logfolders, status, remove, r):
