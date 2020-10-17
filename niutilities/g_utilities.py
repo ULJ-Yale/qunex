@@ -704,58 +704,58 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     INPUTS
     ======
     
-    --sessionsfolder     The location of the sessions folder where the sessions
-                         to create the list reside.
-    --sessions           Either a comma or pipe separated string of session 
-                         names to include (can be glob patterns) or a path
-                         to a batch.txt file.
-    --filter             If a batch.txt file is provided a string of key-value
-                         pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
-                         that match all the key-value pairs will be added to 
-                         the list.
-    --listfile           The path to the generated list file. If no path is 
-                         provided, the list is created as:
-                         `<studyfolder>/processing/lists/sessions.list`
-    --bolds              If provided the specified bold files will be added to 
-                         the list. The value should be a string that lists bold 
-                         numbers or bold tags in a space, comma or pipe 
-                         separated string.
-    --boldname           The prefix to be added to the bold number specified 
-                         in bolds parameter [bold]
-    --boldtail           The suffix to be added to the bold number specified
-                         in bolds parameter or bold names that match the
-                         tag specified in the bolds parameeter [.nii.gz].
-    --conc               If provided, the specified conc file that resides in
-                         `<session id>/images/functional/concs/` folder will
-                         be added to the list.
-    --fidl               If provided, the specified fidl file that resides in
-                         `<session id>/images/functional/events/` folder will
-                         be added to the list.
-    --glm                If provided, the specified glm file that resides in
-                         `<session id>/images/functional/` folder will be
-                         added to the list.
-    --roi                If provided, the specified ROI file that resides in
-                         `<session id>/images/<roi>` will be added to the list.
-                         Note that `<roi>` can include a path, e.g.: 
-                         `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`    
-    --overwrite          If the specified list file already exists: [no]
+    --sessionsfolder    The location of the sessions folder where the sessions
+                        to create the list reside.
+    --sessions          Either a comma or pipe separated string of session 
+                        names to include (can be glob patterns) or a path
+                        to a batch.txt file.
+    --filter            If a batch.txt file is provided a string of key-value
+                        pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
+                        that match all the key-value pairs will be added to 
+                        the list.
+    --listfile          The path to the generated list file. If no path is 
+                        provided, the list is created as:
+                        `<studyfolder>/processing/lists/sessions.list`
+    --bolds             If provided the specified bold files will be added to 
+                        the list. The value should be a string that lists bold 
+                        numbers or bold tags in a space, comma or pipe 
+                        separated string.
+    --boldname          The prefix to be added to the bold number specified 
+                        in bolds parameter [bold]
+    --boldtail          The suffix to be added to the bold number specified
+                        in bolds parameter or bold names that match the
+                        tag specified in the bolds parameeter [.nii.gz].
+    --conc              If provided, the specified conc file that resides in
+                        `<session id>/images/functional/concs/` folder will
+                        be added to the list.
+    --fidl              If provided, the specified fidl file that resides in
+                        `<session id>/images/functional/events/` folder will
+                        be added to the list.
+    --glm               If provided, the specified glm file that resides in
+                        `<session id>/images/functional/` folder will be
+                        added to the list.
+    --roi               If provided, the specified ROI file that resides in
+                        `<session id>/images/<roi>` will be added to the list.
+                        Note that `<roi>` can include a path, e.g.: 
+                        `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`    
+    --overwrite         If the specified list file already exists: [no]
 
-                         - ask (ask interactively, what to do)
-                         - yes (overwrite the existing file)
-                         - no (abort creating a file)
-                         - append (append sessions to the existing list file)
+                        - ask (ask interactively, what to do)
+                        - yes (overwrite the existing file)
+                        - no (abort creating a file)
+                        - append (append sessions to the existing list file)
                          
-    --check              Whether to check for existence of files to be included
-                         in the list and what to do if they don't exist:
+    --check             Whether to check for existence of files to be included
+                        in the list and what to do if they don't exist:
 
-                         - yes (check for presence and abort if the file to 
-                           be listed is not found)
-                         - no (do not check whether files are present or not)
-                         - warn (check for presence and warn if the file to be 
-                           listed is not found, but do not abort)
-                         - present (check for presence, warn if the file to be
-                           listed is not found, but do not include missing files
-                           in the list)
+                        - yes (check for presence and abort if the file to 
+                          be listed is not found)
+                        - no (do not check whether files are present or not)
+                        - warn (check for presence and warn if the file to be 
+                          listed is not found, but do not abort)
+                        - present (check for presence, warn if the file to be
+                          listed is not found, but do not include missing files
+                          in the list)
 
     USE
     ===
@@ -1000,7 +1000,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         overwrite = 'yes'
 
     targetFolder = os.path.dirname(listfile)
-    if not os.path.exists(targetFolder):
+    if targetFolder and not os.path.exists(targetFolder):
         print "---> Creating target folder %s" % (targetFolder)
         os.makedirs(targetFolder)
 
