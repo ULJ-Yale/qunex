@@ -42,6 +42,9 @@ Quick links
 Change log
 ----------
 
+* 0.62.7  Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps.
+* 0.62.6  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.5  gmri documentation polish for consistency across the whole suite.
 * 0.62.4  Renamed filename to hcp_filename in SetupHCP.
 * 0.62.3  batchTag2NameKey optimizations and documentation update.
 * 0.62.2  Fixed a bug with the bash parameter for specifying bash commands when scheduling.
