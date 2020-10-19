@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.62.8  Added the option to include only available files for the parameter check within createList command.
 * 0.62.7  Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps.
 * 0.62.6  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
 * 0.62.5  gmri documentation polish for consistency across the whole suite.
