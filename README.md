@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.4
+Qu|Nex suite version: 0.62.5
 
 Submodules:
 
 * connector: 0.62.6
 * library: 0.62.2
 * nitools: 0.61.1
-* niutilities: 0.62.7
+* niutilities: 0.62.8
 
 
 Release notes
 -------------
 
+* 0.62.5  Improved parameter checking in the createList command.
 * 0.62.4  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
 * 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
 * 0.62.2  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
@@ -83,6 +84,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.62.5 [niutilities] Added the option to include only available files for the parameter check within createList command.
 * 0.62.4 [niutilities] Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps. Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
 * 0.62.3 [connector] Robust parsing of the hcp_filename parameter in RunTurnkey.
 * 0.62.2 [connector, niutilities] Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
