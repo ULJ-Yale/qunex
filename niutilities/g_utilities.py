@@ -693,9 +693,9 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
 
 
-def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
+def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", img_suffix=None, overwrite='no', check='yes'):
     """
-    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]``
+    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [img_suffix=None] [overwrite="no"] [check="yes"]``
 
     Creates a .list formated file that can be used as input to a number of
     processing and analysis functions. The function is fairly flexible, its
@@ -725,6 +725,10 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     --boldtail          The suffix to be added to the bold number specified
                         in bolds parameter or bold names that match the
                         tag specified in the bolds parameeter [.nii.gz].
+    --img_suffix        Specifies a suffix for 'images' folder to enable
+                        support for multiple parallel workflows (e.g. 
+                        <session id>/images<img_suffix>). Empty if not used. 
+                        []
     --conc              If provided, the specified conc file that resides in
                         `<session id>/images/functional/concs/` folder will
                         be added to the list.
@@ -930,6 +934,8 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                Expanded documentation with explicit parameter specification
     2020-07-30 Andraz Matkovic
                Added option to exclude missing files from the list.
+    2020-10-22 Andraz Matkovic
+               Added support for img_suffix.
     """
 
     print "Running createList\n=================="
@@ -1026,7 +1032,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + boldnum + boldtail)
                 includeFile = checkFile(tfile)
                 if includeFile:
                     lines.append("    file:" + tfile)
@@ -1042,31 +1048,31 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + boldnum + boldtail)
                 includeFile = checkFile(tfile)
                 if includeFile:
                     lines.append("    file:" + tfile)
 
         if roi:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images', roi)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, roi)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    roi:" + tfile)
 
         if glm:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', glm)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', glm)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    glm:" + tfile)
 
         if conc:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'concs', conc)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', 'concs', conc)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    conc:" + tfile)
 
         if fidl:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'events', fidl)
+            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', 'events', fidl)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    fidl:" + tfile)
