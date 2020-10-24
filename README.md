@@ -28,6 +28,8 @@ Quick links
 Change Log
 ----------
 
+* 0.62.8  qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
+* 0.62.7  runTurnkey patch to include T2 to rsync command for hcp2 step.
 * 0.62.6  Robust parsing of the hcp_filename parameter.
 * 0.62.5  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
 * 0.62.4  Renamed filename to hcp_filename in SetupHCP.

@@ -1345,6 +1345,12 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh
 # set -e
 
 # ------------------------------------------------------------------------------
+#  Capture current working directory
+# ------------------------------------------------------------------------------
+dirs -c  &> /dev/null
+pushd `pwd`  &> /dev/null 
+
+# ------------------------------------------------------------------------------
 #  Load relevant libraries for logging and parsing options
 # ------------------------------------------------------------------------------
 if [[ ! -z $HCPPIPEDIR ]]; then
@@ -1729,6 +1735,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
         if [[ ! -z ${SessionsFolder} ]] && [[ -d ${SessionsFolder} ]]; then
             cd ${SessionsFolder}/../ &> /dev/null
             StudyFolder=`pwd` &> /dev/null
+            popd  &> /dev/null
+            
             StudyFolderPath="${StudyFolder}"
             STUDY_PATH="${StudyFolder}"
         else
@@ -2090,72 +2098,74 @@ fi
 # -- subjects vs. sessions folder backwards compatibility settings
 # ------------------------------------------------------------------------------
 
-if [[ ${SessionsFolderName} != "subjects" ]]; then
-  if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-      mageho "WARNING: You are attempting to execute a Qu|Nex command using a conflicting Qu|Nex file hierarchy:"
-      echo ""
-      echo "     Found: --> ${StudyFolder}/subjects"
-      echo "     Found: --> ${StudyFolder}/${SessionsFolderName}"
-      echo ""
-      if [[ ${SessionsFolderName} != "sessions" ]]; then
-          echo ""
-          echo "     Note: Current version of Qu|Nex supports the following default specification: "
-          echo "            --> ${StudyFolder}/sessions"
-          echo ""
-      fi
-      echo "     To avoid the possibility of a backwards incompatible or duplicate "
-      echo "     Qu|Nex runs please review the study directory structure and consider" 
-      echo "     resolving the conflict such that a consistent folder specification is used. "
-      echo ""
-      echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
-      echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
-      echo ""
-  fi
-  if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-      SessionsFolderBase=`base $SessionsFolder`
-      if [[ ${SessionsFolderBase} == "subjects" ]]; then 
-          SessionsFolderName="${SessionsFolderBase}"
-          mageho "WARNING: You are attempting to execute Qu|Nex command using an outdated Qu|Nex file hierarchy:"
-          echo ""
-          echo "     Found: --> ${StudyFolder}/${SessionsFolderName}"
-          echo ""
-          echo "     Note: Current version of Qu|Nex supports the following default specification: "
-          echo "            --> ${StudyFolder}/sessions"
-          echo ""
-          echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
-          echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
-          echo ""
-      else
-          mageho "WARNING: You are attempting to execute Qu|Nex command using a conflicting Qu|Nex file hierarchy:"
-          echo ""
-          echo "     Found: --> ${StudyFolder}/subjects"
-          echo "     Found: --> ${StudyFolder}/${SessionsFolderBase}"
-          echo ""
-          echo "     Note: Current version of Qu|Nex supports the following default specification: "
-          echo "            --> ${StudyFolder}/sessions"
-          echo ""
-          echo "     To avoid the possibility of a backwards incompatible or duplicate "
-          echo "     Qu|Nex runs please review the study directory structure and consider" 
-          echo "     resolving the conflict such that a consistent folder specification is used. "
-          echo ""
-          echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
-          echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
-          echo ""
-      fi
-  fi
-fi
+if [[ -z ${GmriCommandToRun} ]]; then
+    if [[ ${SessionsFolderName} != "subjects" ]]; then
+    if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
+        mageho "WARNING: You are attempting to execute a Qu|Nex command using a conflicting Qu|Nex file hierarchy:"
+        echo ""
+        echo "     Found: --> ${StudyFolder}/subjects"
+        echo "     Found: --> ${StudyFolder}/${SessionsFolderName}"
+        echo ""
+        if [[ ${SessionsFolderName} != "sessions" ]]; then
+            echo ""
+            echo "     Note: Current version of Qu|Nex supports the following default specification: "
+            echo "            --> ${StudyFolder}/sessions"
+            echo ""
+        fi
+        echo "     To avoid the possibility of a backwards incompatible or duplicate "
+        echo "     Qu|Nex runs please review the study directory structure and consider" 
+        echo "     resolving the conflict such that a consistent folder specification is used. "
+        echo ""
+        echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
+        echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+        echo ""
+    fi
+    if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
+        SessionsFolderBase=`base $SessionsFolder`
+        if [[ ${SessionsFolderBase} == "subjects" ]]; then 
+            SessionsFolderName="${SessionsFolderBase}"
+            mageho "WARNING: You are attempting to execute Qu|Nex command using an outdated Qu|Nex file hierarchy:"
+            echo ""
+            echo "     Found: --> ${StudyFolder}/${SessionsFolderName}"
+            echo ""
+            echo "     Note: Current version of Qu|Nex supports the following default specification: "
+            echo "            --> ${StudyFolder}/sessions"
+            echo ""
+            echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
+            echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+            echo ""
+        else
+            mageho "WARNING: You are attempting to execute Qu|Nex command using a conflicting Qu|Nex file hierarchy:"
+            echo ""
+            echo "     Found: --> ${StudyFolder}/subjects"
+            echo "     Found: --> ${StudyFolder}/${SessionsFolderBase}"
+            echo ""
+            echo "     Note: Current version of Qu|Nex supports the following default specification: "
+            echo "            --> ${StudyFolder}/sessions"
+            echo ""
+            echo "     To avoid the possibility of a backwards incompatible or duplicate "
+            echo "     Qu|Nex runs please review the study directory structure and consider" 
+            echo "     resolving the conflict such that a consistent folder specification is used. "
+            echo ""
+            echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
+            echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+            echo ""
+        fi
+    fi
+    fi
 
-if [[ ${SessionsFolderName} == "subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-    mageho "WARNING: You are attempting to execute Qu|Nex command using an outdated Qu|Nex file hierarchy:"
-    echo ""
-    echo "       Found: --> ${StudyFolder}/${SessionsFolderName}"
-    echo ""
-    echo "     Note: Current version of Qu|Nex supports the following default specification: "
-    echo "       --> ${StudyFolder}/sessions"
-    echo ""
-    echo "       Qu|Nex will proceed but please consider renaming your directories per latest specs:"
-    echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
-    echo ""
+    if [[ ${SessionsFolderName} == "subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
+        mageho "WARNING: You are attempting to execute Qu|Nex command using an outdated Qu|Nex file hierarchy:"
+        echo ""
+        echo "       Found: --> ${StudyFolder}/${SessionsFolderName}"
+        echo ""
+        echo "     Note: Current version of Qu|Nex supports the following default specification: "
+        echo "       --> ${StudyFolder}/sessions"
+        echo ""
+        echo "       Qu|Nex will proceed but please consider renaming your directories per latest specs:"
+        echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+        echo ""
+    fi
 fi
 
 if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
