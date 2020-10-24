@@ -26,11 +26,11 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.5
+Qu|Nex suite version: 0.62.7
 
 Submodules:
 
-* connector: 0.62.6
+* connector: 0.62.8
 * library: 0.62.2
 * nitools: 0.61.1
 * niutilities: 0.62.8
@@ -39,6 +39,8 @@ Submodules:
 Release notes
 -------------
 
+* 0.62.7  qunex.sh patched to include pushd and popd functionality to preserve initial user working directory
+* 0.62.6  runTurnkey patch to include T2 to rsync command for hcp2 step
 * 0.62.5  Improved parameter checking in the createList command.
 * 0.62.4  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
 * 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
@@ -84,6 +86,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.62.6 [connector] runTurnkey patch to include T2 to rsync command for hcp2 step
 * 0.62.5 [niutilities] Added the option to include only available files for the parameter check within createList command.
 * 0.62.4 [niutilities] Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps. Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
 * 0.62.3 [connector] Robust parsing of the hcp_filename parameter in RunTurnkey.
