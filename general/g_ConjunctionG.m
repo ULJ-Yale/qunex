@@ -1,24 +1,41 @@
 function [] = g_ConjunctionG(imgf, maskf, method, effect, q, data)
 
-%function [] = g_ConjunctionG(imgf, maskf, method, effect, q, data)
+%``function [] = g_ConjunctionG(imgf, maskf, method, effect, q, data)``
+%
+%	INPUTS
+%	======
 %
 %	Reads image file, computes conjunction using g_Conjunction and saves results.
 %
-%	imgf	- input file, a z-score image file of concatenated individual files
-%	maskf	- optional mask image
-%		: missing or empty -> takes all non-zero voxels
-%		: nonzero -> takes all non-zero voxels
-%		: all -> takes all voxels
+%	--imgf 		input file, a z-score image file of concatenated individual files
+%	--maskf		optional mask image
 %
-%	for the rest of arguments see g_Conjunction.m
+%				- missing or empty -> takes all non-zero voxels
+%				- nonzero -> takes all non-zero voxels
+%				- all -> takes all voxels
 %
-%	saves
-%		: '_Conj_p'   -> conjunction results, zscores for u = 1 to u = n
-%		: '_Conj_FDR' -> above thresholded with FDR
-%		: '_Conj_c'   -> image of frequency of passing threshold
+%	For the rest of arguments see g_Conjunction.m
 %
-%	Grega Repovš
-%	v3.0  2015-10-14
+%	RESULTS
+%	=======
+%
+%	Saves
+%
+%	'_Conj_p'
+%		conjunction results, zscores for u = 1 to u = n
+%
+%	'_Conj_FDR'
+%		above thresholded with FDR
+%
+%	'_Conj_c'
+%		image of frequency of passing threshold
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+%	2015-10-14 Grega Repovs
+%			Initial version
 
 % parsing arguments
 

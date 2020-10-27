@@ -1,22 +1,32 @@
 function [snr, sd] = g_ComputeSNRGroup(flist, target, fmask, verbose)
 
+%	``function [snr, sd] = g_ComputeSNRGroup(flist, fmask, target, verbose)``
 %	
-%	function [snr, sd] = g_ComputeSNRGroup(flist, fmask, target, verbose)
+%   Computes SNR and SD for the whole group.
 %	
-%	Computes SNR and SD for the whole group.
+%	INPUTS
+%	======
+%
+%	--flist 	conc-like style list of session image files or conc files: 
+%
+%               - session id:<session_id>
+%               - roi:<path to the individual's ROI file>
+%               - file:<path to bold files - one per line>
+%
+%   --target 	file to save results into
+%	--fmask		an array mask defining which frames to use (1) and which not (0)
+%	--verbose	to report on progress or not [not]
 %	
-%	flist   	- conc-like style list of subject image files or conc files: 
-%                  subject id:<subject_id>
-%                  roi:<path to the individual's ROI file>
-%                  file:<path to bold files - one per line>
-%	mask		- an array mask defining which frames to use (1) and which not (0)
-%   target      - file to save results into
-%	verbose		- to report on progress or not [not]
-%	
-% 	Created by Grega Repovš on 2010-11-22.
-% 	Modified by Grega Repovš on 2010-11-23.
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%	Changelog
+%
+%	2010-11-21 Grega Repovs
+%			   Initial version.
 %
 % 	Copyright (c) 2010 Grega Repovs. All rights reserved.
+%
 
 if nargin < 4
 	verbose = false;
@@ -32,7 +42,7 @@ end
 
 if verbose, fprintf('\n\nStarting ...'); end
 
-[subject nsubjects nallfiles] = g_ReadFileList(flist, verbose);
+[session nsessions nallfiles] = g_ReadFileList(flist, verbose);
 
 snr = zeros(nallfiles,1);
 sd  = zeros(nallfiles,1);
@@ -41,16 +51,16 @@ fout = fopen(fullfile(target, [fname '_SNR_report.txt']), 'w');
 fprintf(fout, 'image\tSNR\tSD\n');
 
 c = 1;
-for s = 1:nsubjects
+for s = 1:nsessions
     
     %   --- reading in image files
     tic; 
-	if verbose, fprintf('\n ... processing %s', subject(s).id); end
+	if verbose, fprintf('\n ... processing %s', session(s).id); end
 	
-	nfiles = length(subject(s).files);
+	nfiles = length(session(s).files);
 	for n = 1:nfiles
-		[snr(c) sd(c)] = g_ComputeSNR(subject(s).files{n}, [], fmask, target, [], [subject(s).id '_file_' num2str(n)]);
-		fprintf(fout, '%s\t%.3f\t%.3f\n', subject(s).files{n}, snr(c), sd(c));
+		[snr(c) sd(c)] = g_ComputeSNR(session(s).files{n}, [], fmask, target, [], [session(s).id '_file_' num2str(n)]);
+		fprintf(fout, '%s\t%.3f\t%.3f\n', session(s).files{n}, snr(c), sd(c));
 		c = c +1;
 	end
 

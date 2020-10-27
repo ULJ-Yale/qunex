@@ -1,32 +1,55 @@
 function [p F Z M SE] = img_ANOVA2WayRepeated(obj, a, b, verbose)
-
-%function [p F Z M SE] = img_ANOVA2WayRepeated(obj, a, b, verbose)
+%``function [p F Z M SE] = img_ANOVA2WayRepeated(obj, a, b, verbose)``
 %
 %	Computes ANOVA with two repeated measures factors with a and b levels.
 %
-%	obj     - the images to work on
-%             The images have to be organized as a series of volumes with
-%             subject, factor A, factor B in the order of faster to slowest
-%             varying variable. The data has to be fully balanced with no
-%             missing values.
-%   a       - number of levels for factor A
-%   b       - number of levels for factor B
-%   verbose - should it talk a lot [no]
+%   INPUTS
+%   ======
 %
-%   Returns
-%       p   - an image with 3 frames for p-values related to factors A, B and their interaction
-%       F   - an image with 3 frames for F-values related to factors A, B and their interaction
-%       Z   - an image with 3 frames for Z-scores related to factors A, B and their interaction
-%       M   - an image with a*b frames for all cell means in a series with A as fastest varying factor
-%       SE  - an image with a*b frames for standard errors of all cell means in a series with A as fastest varying factor
+%	--obj       The images to work on. The images have to be organized as a 
+%               series of volumes with session, factor A, factor B in the order 
+%               of faster to slowest varying variable. The data has to be fully 
+%               balanced with no missing values.
+%   --a         Number of levels for factor A
+%   --b         Number of levels for factor B
+%   --verbose   Should it talk a lot [no]
 %
-%   The algorithm was created based on the rm_anova2 function created by Aron Schurger (2005.02.04)
+%   OUTPUTS
+%   =======
 %
-%   Grega Repovš, 2011-10-07
+%   p
+%       an image with 3 frames for p-values related to factors A, B and their 
+%       interaction
 %
-%   Change log
+%   F
+%       an image with 3 frames for F-values related to factors A, B and their 
+%       interaction
+%
+%   Z
+%       an image with 3 frames for Z-scores related to factors A, B and their 
+%       interaction
+%
+%   M
+%       an image with a*b frames for all cell means in a series with A as 
+%       fastest varying factor
+%
+%   SE
+%       an image with a*b frames for standard errors of all cell means in a 
+%       series with A as fastest varying factor
+%
+%
+%   The algorithm was created based on the rm_anova2 function created by 
+%   Aron Schurger (2005-02-04).
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2011-10-07 Grega Repovs
+%              Initial version
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf with norminv to support Octave
+%              Replaced icdf with norminv to support Octave
 %
 
 if nargin < 4

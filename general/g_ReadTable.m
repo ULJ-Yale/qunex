@@ -1,35 +1,52 @@
 function [data, hdr, meta] = g_ReadTable(instr)
 
-%function [data, hdr, meta] = g_ReadTable(instr)
+%``function [data, hdr, meta] = g_ReadTable(instr)``
 %
 %   A general function for reading whitespace separated data tables.
 %
 %   INPUT
-%       - instr     Either a path to file or a multiline string to parse.
+%   =====
+%   
+%   -- instr     Either a path to file or a multiline string to parse.
 %
-%   OUTPUT
-%       - data      A data matrix with file contents.
-%       - hdr       Cell array of strings with column names.
-%       - meta      A structure with metadata specified in the string
+%   OUTPUTS
+%   =======
+%
+%   data
+%       A data matrix with file contents.
+%   hdr
+%       Cell array of strings with column names.
+%   meta
+%       A structure with metadata specified in the string
 %
 %   USE
+%   ===
+%
 %   The function is used to read a text file or convert a text string into a
 %   data matrix. All the # commented lines are excluded from reading the data.
 %   Comment lines in the form of '# key: value' are added to the meta structure
 %   that has fields with key names and values ascribed to them. The last
 %   commented line that is not a '# key: value' line is considered a
-%   white-character separated header
+%   white-character separated header.
 %
 %   EXAMPLE USE
-%   [data, hdr, meta] = g_ReadTable('movement.dat');
+%   ===========
 %
+%   ::
 %
-%   ---
-%   Written by Grega Repovs, 2014-07-18
+%       [data, hdr, meta] = g_ReadTable('movement.dat');
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   2016-08-18 Grega Repovs - Adapted to work with strings
-%   2017-03-19 Grega Repovs - Updated documentation
+%
+%   2014-07-18 Grega Repovs
+%              Initial version
+%   2016-08-18 Grega Repovs
+%              Adapted to work with strings
+%   2017-03-19 Grega Repovs
+%              Updated documentation
 %
 
 

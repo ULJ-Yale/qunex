@@ -1,20 +1,27 @@
 function img = img_Smooth3D(img, fwhm, verbose, ftype, ksize)
 
-%function img = img_Smooth3D(img, fwhm, verbose, ftype, ksize)
+%``function img = img_Smooth3D(img, fwhm, verbose, ftype, ksize)``
 %
 %   Does 3D gaussian smoothing of the gmri image.
 %
-%   INPUT
-%       img     ... A nimage object with data in volume representation.
-%       fwhm    ... Full Width at Half Maximum in voxels
-%       verbose ... Whether to report the progress. [false]
-%       ftype   ... Type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
-%       ksize   ... Size of the smoothing kernel. [7]
+%   INPUTS
+%	======
+%
+%   --img     	A nimage object with data in volume representation.
+%   --fwhm    	Full Width at Half Maximum in voxels
+%   --verbose 	Whether to report the progress. [false]
+%   --ftype   	Type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
+%   --ksize   	Size of the smoothing kernel. [7]
 %
 %   OUTPUT
-%       img     ... Image with data smoothed.
+%	======
+%
+%   img
+%		Image with data smoothed.
 %
 %   USE
+%	===
+%
 %   The method enables smoothing of (isometric) volume MR data. The smoothing is
 %   specified in voxels. The default smoothing kernel is 'gaussian' with kernel
 %   size 7. The function checks for the availability of smooth3f function, which
@@ -22,16 +29,24 @@ function img = img_Smooth3D(img, fwhm, verbose, ftype, ksize)
 %   smooth3 function.
 %
 %   smooth3f and the supporting functions can be found at:
-%   https://github.com/VincentToups/matlab-utils/tree/master/chronux/spikesort/utility
+%   `<https://github.com/VincentToups/matlab-utils/tree/master/chronux/spikesort/utility>`_
 %
 %   EXAMPLE
-%   smooth = img.img_Smooth3D(3, true);
+%	=======
 %
-%   ---
-%   Written by Grega Repov?? 2008-7-11
+%	::
+%
+%   	smooth = img.img_Smooth3D(3, true);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   Grega Repov??, 2017-02-10: Adapted to use either smooth3 or smooth3f.
+%
+%	2007-07-11 Grega Repovs
+%			   Initial version
+%   2017-02-10 Grega Repovs
+%			   Adapted to use either smooth3 or smooth3f.
 %
 
 if nargin < 5 || isempty(ksize),   ksize   = 7;          end

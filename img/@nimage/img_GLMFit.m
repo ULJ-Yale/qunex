@@ -1,38 +1,58 @@
 function [B, res, rvar, Xdof] = img_GLMFit(obj, X)
 
-%function [B, res, rvar, Xdof] = img_GLMFit(obj, X)
+%``function [B, res, rvar, Xdof] = img_GLMFit(obj, X)``.
 %
 %	Computes GLM fit to whole brain
 %
-%   INPUT
-%	    obj     - nimage image object
-%       X       - predictor matrix (frames x predictors)
+%   INPUTS
+%	======
 %
-%   Outputs
-%       B       - beta weights image
-%       rvar    - variance of the residual
-%       Xdof    - model degrees of freedom
-%       res     - residual image
+%	--obj   nimage image object
+%   --X     predictor matrix (frames x predictors)
+%
+%   OUTPUTS
+%	=======
+%
+%   B
+%		beta weights image
+%   rvar
+%		variance of the residual
+%   Xdof
+%		model degrees of freedom
+%   res
+%		residual image
 %
 %   USE
-%   The method computes a linear regression between dataseries of each voxel and all the columns
-%   of the X regressor matrix. The image can be a series of activation values for a set of subjects,
-%   and columns of X behavioral, demographic or other variables. X can have whatever number of columns,
-%   but the number of rows need to match the number of frames in the image.
+%	===
 %
-%   The results in an image of beta values for each voxel of the image, each frame holding the beta value for
-%   each of the columns of the X matrix. res is an image holding the residual remaining after regression.
-%   Xdof holds the model's degrees of freedom (ncols - nrows). rvar holds the variance image, the sum of squares
-%   of the residuals divided by the model degrees of freedom.
+%   The method computes a linear regression between dataseries of each voxel and
+%   all the columns of the X regressor matrix. The image can be a series of
+%   activation values for a set of sessions, and columns of X behavioral,
+%   demographic or other variables. X can have whatever number of columns, but
+%   the number of rows need to match the number of frames in the image.
+%
+%   The results in an image of beta values for each voxel of the image, each
+%   frame holding the beta value for each of the columns of the X matrix. res is
+%   an image holding the residual remaining after regression. Xdof holds the
+%   model's degrees of freedom (ncols - nrows). rvar holds the variance image,
+%   the sum of squares of the residuals divided by the model degrees of freedom.
 %
 %   EXAMPLE USE
-%   [B, res, rvar, Xdof] = img.img_GLMFit2(behmatrix);
+%	===========
 %
-%   ---
-%   (c) Grega Repovš, 2010-03-18
+%   ::
+%	
+%		[B, res, rvar, Xdof] = img.img_GLMFit2(behmatrix);
 %
-%   Change log
-%   2016-11-26 - Grega Repovš - Updated documentation
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%	2010-03-18 Grega Repovs
+%			   Initial version.
+%   2016-11-26 Grega Repovs
+%			   Updated documentation.
 %
 
 % ---- check input

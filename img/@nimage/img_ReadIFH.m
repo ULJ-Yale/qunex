@@ -1,14 +1,28 @@
 function [ifh] = img_ReadIFH(img, file)
 
-%function [ifh] = img_ReadIFH(img, file)
+%``function [ifh] = img_ReadIFH(img, file)``
 %
 %	Reads .ifh header from a 4dfp file
 %
-%   Requires:
-%       img  - nimage object
-%       file - filename
+%   INPUTS
+%   ======
 %
-%   Grega Repovs 2009-11-19
+%   --img       nimage object
+%   --file      filename
+%
+%   OUTPUT
+%   ======
+%
+%   ifh
+%
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2009-11-19 Grega Repovs
+%              Initial version.
 %
 
 file = strtrim(file);

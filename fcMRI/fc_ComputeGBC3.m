@@ -1,73 +1,97 @@
 function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
 
-%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
+%``function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)``
 %
-% Computes GBC maps for individuals as well as group maps.
+%   Computes GBC maps for individuals as well as group maps.
 %
-% INPUT
+%   INPUTS
+%   ======
 %
-%    flist       - conc-like style list of subject image files or conc files:
-%                     subject id:<subject_id>
-%                     roi:<path to the individual's ROI file>
-%                     file:<path to bold files - one per line>
-%                  or a well strucutured string (see g_ReadFileList).
-%    command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
-%                  mFzp, aFzp, ...
-%                  <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
-%    mask        - An array mask defining which frames to use (1) and
-%                  which not (0). All if empty.
-%    verbose     - Report what is going on. [false]
-%    target      - Array of ROI codes that define target ROI [default:
-%                  FreeSurfer cortex codes]
-%    targetf     - Target folder for results.
-%    rsmooth     - Radius for smoothing (no smoothing if empty). []
-%    rdilate     - Radius for dilating mask (no dilation if empty). []
-%    ignore      - The column in *_scrub.txt file that matches bold file to
-%                  be used for ignore mask. All if empty. []
-%    time        - Whether to print timing information. [false]
-%    cv          - Whether to compute covariances instead of correlations.
-%                  [false]
-%    vstep       - How many voxels to process in a single step. [1200]
+%   --flist     Conc-like style list of session image files or conc files:
 %
-% USE
+%                   - session id:<session_id>
+%                   - roi:<path to the individual's ROI file>
+%                   - file:<path to bold files - one per line>
 %
-% This function is a wrapper for nimage.img_ComputeGBC method. It enables computing GBC for a list of subjects.
-% flist specifies the subject identities, bold files to compute GBC on and roi to use for specifying the volume mask,
-% voxels over which to compute GBC. mask specifies what frames of an image to work on. target specifies the ROI codes
-% that define ROI from the subject specific ROI files over which to compute GBC for. Usually the subject specific
-% roi file would be that subject's FreeSurfer aseg or aseg+aparc segmentation. And if no target is specified all
-% gray matter voxels are used for computing GBC.
+%               or a well strucutured string (see g_ReadFileList).
+%   --command   The type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, 
+%               aFzp, ...
 %
-% What specifically gets computed is defined in the command string. For specifics see help for the nimage.img_ComputeGBC
-% method.
+%                   ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
 %
-% In addition, if rsmoot and rdilate are specified, each subjects bold image will be 3D smoothed with the specifed FWHM
-% in voxels. As subjects gray matter masks differ and do not overlap precisely, rdilate will dilate the borders with the
-% provided number of voxels. Here it is important to note tha values from the expanded mask will not be used, rather the
-% values from the valid mask will be smeared into the dilated area.
+%   --mask      An array mask defining which frames to use (1) and which not (0). 
+%               All if empty.
+%   --verbose   Report what is going on. [false]
+%   --target    Array of ROI codes that define target ROI
+%               [default: FreeSurfer cortex codes]
+%   --targetf   Target folder for results.
+%   --rsmooth   Radius for smoothing (no smoothing if empty). []
+%   --rdilate   Radius for dilating mask (no dilation if empty). []
+%   --ignore    The column in `*_scrub.txt` file that matches bold file to be 
+%               used for ignore mask. All if empty. []
+%   --time      Whether to print timing information. [false]
+%   --cv        Whether to compute covariances instead of correlations. [false]
+%   --vstep     How many voxels to process in a single step. [1200]
 %
-% The results will be saved in the targetf folder. The results of each command will be saved in a separate file holding
-% the computed GBC values for all the subjects. The files will be named with the root of the flist with _gbc_ and code
-% for the specific gbc computed added.
+%   USE
+%   ===
 %
-% For more information see documentation for nimage.img_ComputeGBC method.
+%   This function is a wrapper for nimage.img_ComputeGBC method. It enables
+%   computing GBC for a list of sessions. flist specifies the session
+%   identities, bold files to compute GBC on and roi to use for specifying the
+%   volume mask, voxels over which to compute GBC. mask specifies what frames of
+%   an image to work on. target specifies the ROI codes that define ROI from the
+%   session specific ROI files over which to compute GBC for. Usually the
+%   session specific roi file would be that session's FreeSurfer aseg or
+%   aseg+aparc segmentation. And if no target is specified all gray matter
+%   voxels are used for computing GBC.
+%   
+%   What specifically gets computed is defined in the command string. For
+%   specifics see help for the nimage.img_ComputeGBC method.
+%   
+%   In addition, if rsmoot and rdilate are specified, each sessions bold image
+%   will be 3D smoothed with the specifed FWHM in voxels. As sessions gray
+%   matter masks differ and do not overlap precisely, rdilate will dilate the
+%   borders with the provided number of voxels. Here it is important to note tha
+%   values from the expanded mask will not be used, rather the values from the
+%   valid mask will be smeared into the dilated area.
+%   
+%   The results will be saved in the targetf folder. The results of each command
+%   will be saved in a separate file holding the computed GBC values for all the
+%   sessions. The files will be named with the root of the flist with _gbc_ and
+%   code for the specific gbc computed added.
+%   
+%   For more information see documentation for nimage.img_ComputeGBC method.
 %
-% EXAMPLE USE
-% fc_ComputeGBC3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3', 0, 'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
+%   EXAMPLE USE
+%   ===========
 %
-% ---
-% Written by Grega Repovš on 2009-11-04.
+%   ::
+% 
+%       fc_ComputeGBC3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3', 0, ...
+%       'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
 %
-% Change log
-% 2009-11-04 - Created by Grega Repovš.
-% 2010-11-16 - Grega Repovš.
-% 2010-11-22 - Grega Repovš.
-% 2010-12-01 - Grega Repovš - added in smoothing and dilation of images.
-% 2014-01-22 - Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
-% 2016-02-08 - Grega Repovš - added an option to specify how many voxels to work with in a single step.
-% 2016-11-26 - Grega Repovš - updated documentation.
-% 2017-04-18 - Grega Repovš - adopted use of g_ReadFileList.
-% 2018-06-20 - Grega Repovš - updated for Octave compatibility.
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2009-11-04 Grega Repovš
+%              Initial version.
+%   2010-11-16 Grega Repovš
+%   2010-11-22 Grega Repovš
+%   2010-12-01 Grega Repovš
+%              Added in smoothing and dilation of images.
+%   2014-01-22 Grega Repovs
+%              Took care of commands that return mulitple volumes (e.g. mFzp).
+%   2016-02-08 Grega Repovš
+%              Added an option to specify how many voxels to work with in a single step.
+%   2016-11-26 Grega Repovš
+%              Updated documentation.
+%   2017-04-18 Grega Repovš
+%              Adopted use of g_ReadFileList.
+%   2018-06-20 Grega Repovš
+%              Updated for Octave compatibility.
 %
 
 fprintf('\n\nStarting ...');
@@ -94,54 +118,54 @@ end
 
 fprintf('\n ... listing files to process');
 
-[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
+[session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 
 
 %   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
+%   -------------------------------------------- The main loop ... go through all the sessions
 
 %   --- Get variables ready first
 
-template  = nimage(subject(1).files{1}, 'single', 1);
+template  = nimage(session(1).files{1}, 'single', 1);
 nvoxels   = template.voxels;
 desc      = parseCommand(command);
 nvolumes  = length(desc);
 
 
-template = template.zeroframes(nsubjects);
+template = template.zeroframes(nsessions);
 for n = 1:nvolumes
     gbc(n) = template;
 end
 clear('template');
 
-for s = 1:nsubjects
+for s = 1:nsessions
 
-    %   --- do we use a subject specific mask
+    %   --- do we use a session specific mask
 
     usemask = false;
-    if isfield(subject(s), 'roi') && (~isempty(subject(s).roi))
+    if isfield(session(s), 'roi') && (~isempty(session(s).roi))
         usemask = true;
     end
 
     %   --- reading in image files
     tic;
-	fprintf('\n ... processing %s', subject(s).id);
+	fprintf('\n ... processing %s', session(s).id);
 	fprintf('\n     ... reading image file(s) ');
 
 	y = [];
 
-	nfiles = length(subject(s).files);
+	nfiles = length(session(s).files);
 
-	img = nimage(subject(s).files{1});
+	img = nimage(session(s).files{1});
 
 	if ~isempty(mask),   img = img.sliceframes(mask); end
     if ~isempty(ignore), img = scrub(img, ignore); end
 
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = nimage(subject(s).files{n});
+    	    new = nimage(session(s).files{n});
             fprintf(', %d', n);
     	    if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = scrub(new, ignore); end
@@ -150,7 +174,7 @@ for s = 1:nsubjects
     end
 
     if usemask
-        imask = nimage(subject(s).roi);
+        imask = nimage(session(s).roi);
         imask = imask.ismember(target);
 
         if rsmooth

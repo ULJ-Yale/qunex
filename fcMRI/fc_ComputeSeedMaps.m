@@ -1,18 +1,18 @@
 function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 
-%function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
+%``function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)``
 %
 %   Computes seed based functional connectivity maps for individual subject / session.
 %
-%   INPUT
-%   =====
+%   INPUTS
+%   ======
 %
-%   bolds     - A string with a pipe separated list of paths to .conc or bold files. 
+%   --bolds     A string with a pipe separated list of paths to .conc or bold files. 
 %               The first element has to be the name of the file or group to be used when saving the data. 
 %               E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'
-%   roidef    - A path to the names file specifying group based seeds. Additionaly, separated by a pipe '|'
+%   --roidef    A path to the names file specifying group based seeds. Additionaly, separated by a pipe '|'
 %               symbol, a path to an image file holding subject/session specific ROI definition.
-%   frames    - The definition of which frames to extract, specifically:
+%   --frames    The definition of which frames to extract, specifically:
 %               ->  a numeric array mask defining which frames to use (1) and which not (0), or 
 %               ->  a single number, specifying the number of frames to skip at the start of each bold, or
 %               ->  a string describing which events to extract timeseries for, and the frame offset from 
@@ -32,8 +32,8 @@ function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 %                       e-2 ... the two frames before the event end
 %                      example:
 %                       '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
-%   tagetf    - The folder to save images in ['.'].
-%   options   - A string specifying additional analysis options formated as pipe separated pairs of colon separated
+%   --tagetf    The folder to save images in ['.'].
+%   --options   A string specifying additional analysis options formated as pipe separated pairs of colon separated
 %               key, value pairs: "<key>:<value>|<key>:<value>"
 %               It takes the following keys and values:
 %               -> roimethod ... what method to use to compute ROI signal, 'mean', 'median', or 'pca' ['mean']
@@ -83,25 +83,34 @@ function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 %   data extraction:
 %
 %   fcmaps
-%        -> title ... the title of the extraction as specifed in the frames string, 
+%
+%        - title:     the title of the extraction as specifed in the frames string, 
 %                     empty if extraction was specified using a numeric value 
-%        -> fc    ... the functional connectivity map, with one seed-map per frame
-%        -> roi   ... a cell array with the names of the ROI used in the order 
+%        - fc:        the functional connectivity map, with one seed-map per frame
+%        - roi:       a cell array with the names of the ROI used in the order 
 %                     of their seed-maps in the fc image
-%        -> N     ... number of frames over which the map was computed
+%        - N:         number of frames over which the map was computed
 %
 %   Based on saveind option specification the following files may be saved:
 %
-%   <targetf>/<name>[_<title>]_<roi>_r  ... Pearson correlations
-%   <targetf>/<name>[_<title>]_<roi>_Fz ... Fisher Z values
-%   <targetf>/<name>[_<title>]_<roi>_Z  ... Z converted p values testing difference from 0.
-%   <targetf>/<name>[_<title>]_<roi>_p  ... p values testing difference from 0.
+%   `<targetf>/<name>[_<title>]_<roi>_r`
+%       Pearson correlations
 %
-%   <targetf>/<name>[_<title>]_<roi>_cv ... covariance
+%   `<targetf>/<name>[_<title>]_<roi>_Fz`
+%       Fisher Z values
 %
-%   <roi> is the name of the ROI for which the seed map was computed for.
-%   <name> is the provided name of the bold(s).
-%   <title> is the title of the extraction event(s), if event string was
+%   `<targetf>/<name>[_<title>]_<roi>_Z`
+%       Z converted p values testing difference from 0.
+%
+%   `<targetf>/<name>[_<title>]_<roi>_p`
+%       p values testing difference from 0.
+%
+%   `<targetf>/<name>[_<title>]_<roi>_cv`
+%       covariance
+%
+%   `<roi>` is the name of the ROI for which the seed map was computed for.
+%   `<name>` is the provided name of the bold(s).
+%   `<title>` is the title of the extraction event(s), if event string was
 %   specified.
 %
 %   USE
@@ -111,7 +120,7 @@ function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 %   provided, it has to start with a path to the .fidl file to be used to extract 
 %   the events, following by a pipe separated list of event extraction definitions:
 %
-%   <title>:<eventlist>:<frame offset1>:<frame offset2>
+%       <title>:<eventlist>:<frame offset1>:<frame offset2>
 %
 %   multiple extractions can be specified by separating them using the pipe '|' 
 %   separator. Specifically, for each extraction, all the events listed in a

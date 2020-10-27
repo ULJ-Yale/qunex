@@ -1,89 +1,146 @@
 classdef nimage
 %
-%  nimage class
+%   nimage class offers an object to store MR image data. It provides basic
+%   methods for loading and saving image, methods for returning different
+%   representations of the image, methods for extracting data and manipulating
+%   image, and methods for performing basic math with the images.
 %
-%  nimage class offers an object to store MR image data.
-%  It provides basic methods for loading and saving image,
-%  methods for returning different representations of the image,
-%  methods for extracting data and manipulating image, and
-%  methods for performing basic math with the images.
+%   METHODS
+%   =======
 %
-%  Methods
-%  -------
+%   nimage             
+%       constructor / loader
 %
-%  nimage             - constructor / loader
-%  img_readimage      - reads an image file
-%  img_saveimage      - saves an image file
-%  img_saveimageframe - saves only the specified frame(s) of an image file
-%  image2D            - returns 2D (voxels by frames) representation of image data
-%  image4D            - returns 4D (x by y by z by frames representation of image data)
-%  maskimg            - trims data from all nonzero voxels of the mask
-%  unmaskimg          - restores the full volume from masked image with zeros for missing voxels
-%  standardize        - transforms values to z scores within each voxel's timeseries
-%  correlize          - standardizes and divides by sqrt(N-1) to prepare for efficient correlation computation
+%   img_readimage      
+%       reads an image file
 %
-%  img_ComputeCorrelations - computes correlations with the provided data matrix
+%   img_saveimage      
+%       saves an image file
 %
-%  Properties
-%  ----------
-%  
-%  data          - [grayordinates, frames] or [x, y, z, frames] matrix of imaging data
-%  imageformat   - The image format of the source file: 4dfp, NIfTI, CIFTI, CIFTI-1, CIFTI-2
-%  mformat       - The number format of the source file: l - littleendian, b - bigendian
-%  hdrnifti      - The structure with the NIfTI header
-%  hdr4dfp       - The structure with the 4dfp header
-%  dim           - The x, y, z dimensions or grayordinates dimensions of the original image
-%  voxels        - The number of voxels / grayordinates in a single frame
-%  vsizes        - The size of voxels in x, y, z direction
-%  TR            - TR of the image
-%  frames        - Number of frames in the image
-%  runframes     - A vector with the number of frames from each run in the order the images were concatenated
-%  filename      - The original image filename
-%  filetype      - The type of the CIFTI file: .dtseries | .ptseries | .pconn | .pscalar | .dscalar 
-%  rootfilename  - Filename without the file type extension
-%  mask          - Boolean vector specifying the spatial voxel / grayordinate mask used to mask the data
-%  masked        - Has the data been spatially masked: true | false
-%  empty         - Is the image data empty: true | false
-%  standardized  - Has the timeseries been converted to z-scores: true / false
-%  correlized    - Has the standardized values been deleted by sqrt(obj.frames -1) to allow easy computation of correlations: true | false
-%  info          - Information on what operations were completed on the image
-%  roi           - If the image is an ROI mask, a structure with the information about the ROI
-%  glm           - If the image contains results of GLM, the structure with the GLM information
-%  xml           - For CIFTI images, the content of the xml metadata
-%  meta          - A structure that describes metadata
-%  metadata      - uint8 encoded metadata 
-%  list          - S structure with list information
-%  events        - A [2, frames] vector. The first row list index of the event from which the frame originates, the second row lists the frame number from the event.  
-%  use           - A row vector specifying which frame of the timeseries to use (1) and which not (0)
-%  mov           - A [frame, parameter] matrix of movement parameters
-%  mov_hdr       - A cell array providing header information for mov matrix
-%  fstats        - A [frame, statistics] matrix of per frame statistics
-%  fstats_hdr    - A cell array providing header information for fstats matrix
-%  scrub         - A [frame, parameter] matrix of scrubbing parameters
-%  scrub_hdr     - A cell array providing header information for scrub matrix
-%  nuisance      - A [frame, signal] matrix of nuisance signals
-%  nuisance_hdr  - A cell array providing header information for nuisance matrix
-%  cifti         - A structure providing CIFTI information
+%   img_saveimageframe 
+%       saves only the specified frame(s) of an image file
 %
-%  ---
-%  Written by Grega Repovs, 2009-10-04
+%   image2D            
+%       returns 2D (voxels by frames) representation of image data
 %
-%  2011-07-31 Grega Repovs
-%           - Added importing of existing movement, fstat and scrubbing data
-%  2016-01-16 Grega Repovs
-%           - Added GetXY and specifying save format with file extension.
-%  2017-03-21 Grega Repovs
-%           - horzcat now supports concatenation of empty objects.
-%           - img_ReadConcFile returns more information
-%  2017-07-02 Grega Repovs
-%           - horzcat, zeroframes and sliceframe suport img.cifti.maps
-%  2018-03-17 Grega Repovs
-%           - nimage now supports creation of dtseries and dscalar standard CIFTI images
-%             from numeric data
-%  2020-04-24 Grega Repovs
-%           - added events field
-%           - added nimage field specifications
+%   image4D            
+%       returns 4D (x by y by z by frames representation of image data)
 %
+%   maskimg            
+%       trims data from all nonzero voxels of the mask
+%
+%   unmaskimg          
+%       restores the full volume from masked image with zeros for missing voxels
+%
+%   standardize        
+%       transforms values to z scores within each voxel's timeseries
+%
+%   correlize          
+%       standardizes and divides by sqrt(N-1) to prepare for efficient 
+%       correlation computation
+%   
+%   img_ComputeCorrelations
+%       computes correlations with the provided data matrix
+%   
+%   PROPERTIES
+%   ==========
+%
+%   data          
+%       [grayordinates, frames] or [x, y, z, frames] matrix of imaging data
+%   imageformat   
+%       The image format of the source file: 4dfp, NIfTI, CIFTI, CIFTI-1, CIFTI-2
+%   mformat       
+%       The number format of the source file: l - littleendian, b - bigendian
+%   hdrnifti      
+%       The structure with the NIfTI header
+%   hdr4dfp       
+%       The structure with the 4dfp header
+%   dim           
+%       The x, y, z dimensions or grayordinates dimensions of the original image
+%   voxels        
+%       The number of voxels / grayordinates in a single frame
+%   vsizes        
+%       The size of voxels in x, y, z direction
+%   TR            
+%       TR of the image
+%   frames        
+%       Number of frames in the image
+%   runframes     
+%       A vector with the number of frames from each run in the order the images were concatenated
+%   filename      
+%       The original image filename
+%   filetype      
+%       The type of the CIFTI file: .dtseries | .ptseries | .pconn | .pscalar | .dscalar
+%   rootfilename  
+%       Filename without the file type extension
+%   mask          
+%       Boolean vector specifying the spatial voxel / grayordinate mask used to mask the data
+%   masked        
+%       Has the data been spatially masked: true | false
+%   empty         
+%       Is the image data empty: true | false
+%   standardized  
+%       Has the timeseries been converted to z-scores: true / false
+%   correlized    
+%       Has the standardized values been deleted by sqrt(obj.frames -1) to allow easy computation of correlations: true | false
+%   info          
+%       Information on what operations were completed on the image
+%   roi           
+%       If the image is an ROI mask, a structure with the information about the ROI
+%   glm           
+%       If the image contains results of GLM, the structure with the GLM information
+%   xml           
+%       For CIFTI images, the content of the xml metadata
+%   meta          
+%       A structure that describes metadata
+%   metadata      
+%       uint8 encoded metadata
+%   list          
+%       S structure with list information
+%   events        
+%       A [2, frames] vector. The first row list index of the event from which the frame originates, the second row lists the frame number from the event.
+%   use           
+%       A row vector specifying which frame of the timeseries to use (1) and which not (0)
+%   mov           
+%       A [frame, parameter] matrix of movement parameters
+%   mov_hdr       
+%       A cell array providing header information for mov matrix
+%   fstats        
+%       A [frame, statistics] matrix of per frame statistics
+%   fstats_hdr    
+%       A cell array providing header information for fstats matrix
+%   scrub         
+%       A [frame, parameter] matrix of scrubbing parameters
+%   scrub_hdr     
+%       A cell array providing header information for scrub matrix
+%   nuisance      
+%       A [frame, signal] matrix of nuisance signals
+%   nuisance_hdr  
+%       A cell array providing header information for nuisance matrix
+%   cifti         
+%       A structure providing CIFTI information
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2009-10-04 Grega Repovs
+%              Initial version.
+%   2011-07-31 Grega Repovs
+%              Added importing of existing movement, fstat and scrubbing data
+%   2016-01-16 Grega Repovs
+%              Added GetXY and specifying save format with file extension.
+%   2017-03-21 Grega Repovs
+%              horzcat now supports concatenation of empty objects.
+%              img_ReadConcFile returns more information
+%   2017-07-02 Grega Repovs
+%              horzcat, zeroframes and sliceframe suport img.cifti.maps
+%   2018-03-17 Grega Repovs
+%              nimage now supports creation of dtseries and dscalar standard 
+%              CIFTI images from numeric data
+%   2020-04-24 Grega Repovs
+%              added events field
+%              added nimage field specifications
 
     properties
         data

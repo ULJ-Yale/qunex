@@ -1,39 +1,56 @@
 function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
 
-%function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
+%``function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
 %
-%	Segments the voxels in smask based on their connectivity pattern with tmask voxels.
-%   Uses k-means to group voxels in smask.
+%   Segments the voxels in smask based on their connectivity pattern with tmask 
+%   voxels. Uses k-means to group voxels in smask.
 %
 %   INPUTS
-%       flist    - A file list with information on subjects bold runs and segmentation files,
-%                  or a well strucutured string (see g_ReadFileList).
-%       smask    - .names file for source mask definition.
-%       tmask    - .names file for target mask roi definition.
-%       nc       - List of the number(s) of clusters to compute k-means on.
-%       mask     - Either number of frames to omit or a mask of frames to use [0].
-%       root     - The root of the filename where results are to be saved [flist].
-%       options  - A string with ['g']:
-%                   : g - save results based on group average correlations
-%                   : i - save individual subjects' results
-%       dmeasure - Distance measure to used ['correlation'].
-%       nrep     - Number of replications to run [10].
-%       verbose - whether to report the progress full, script, none [none]
+%   ======
+%
+%   --flist       A file list with information on sessions bold runs and 
+%                 segmentation files, or a well strucutured string (see 
+%                 g_ReadFileList).
+%   --smask       .names file for source mask definition.
+%   --tmask       .names file for target mask roi definition.
+%   --nc          List of the number(s) of clusters to compute k-means on.
+%   --mask        Either number of frames to omit or a mask of frames to use [0].
+%   --root        The root of the filename where results are to be saved [flist].
+%   --options     A string with ['g']:
+%
+%                 - g - save results based on group average correlations
+%                 - i - save individual sessions' results
+%
+%   --dmeasure    Distance measure to used ['correlation'].
+%   --nrep        Number of replications to run [10].
+%   --verbose     whether to report the progress full, script, none [none]
 %
 %	RESULTS
+%   =======
+%
 %   The resulting files are:
 %
-%   group:
-%   <root>_group_k[N]       ... Group based cluster assignments for k=N.
-%   <root>_group_k[N]_cent  ... Group based centroids for k=N.
+%   - group:
 %
-%   individual:
-%   <root>_<subject id>_group_k[N]      ... Individual's cluster assignments for k=N.
-%   <root>_<subject id>_group_k[N]_cent ... Individual's centroids for k=N.
+%       <root>_group_k[N]
+%           Group based cluster assignments for k=N.
 %
-%   If root is not specified, it is taken to be the root of the flist.%
+%       <root>_group_k[N]_cent
+%           Group based centroids for k=N.
+%
+%   - individual:
+%
+%       <root>_<session id>_group_k[N]
+%           Individual's cluster assignments for k=N.
+%
+%       <root>_<session id>_group_k[N]_cent
+%           Individual's centroids for k=N.
+%
+%   If root is not specified, it is taken to be the root of the flist.
 %
 %   USE
+%   ===
+%
 %   Use the function to cluster source voxels (specified by smask) based on their
 %   correlation pattern with target voxels (specified by tmask). The clustering
 %   is computed using k-means for the number of clusters specified in the nc
@@ -45,17 +62,24 @@ function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, 
 %   taking the best of nrep replications.
 %
 %   EXAMPLE USE
-%   fc_ComputeABCorrKCA('study.list', 'thalamus.names', 'PFC.names', [3:9], 0, 'Th-PFC', 'g', 'correlations', 15);
+%   ===========
 %
-%   ---
-% 	Written by Grega Repovš on 2010-08-13.
+%   ::
+%
+%       fc_ComputeABCorrKCA('study.list', 'thalamus.names', 'PFC.names', [3:9], ...
+%                       0, 'Th-PFC', 'g', 'correlations', 15);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2010-08-13 Grega Repovš
+%              Initial version
 %   2017-03-19 Grega Repovs
-%            - Cleaned up the code
-%            - Updated documentation
+%              Cleaned up the code and updated documentation
 %   2017-04-18 Grega Repovs
-%            - Adjusted to use g_ReadFileList
+%              Adjusted to use g_ReadFileList
 %
 
 if nargin < 10 || isempty(verbose),  verbose  = 'none';            end
@@ -105,7 +129,7 @@ if script, fprintf('\n\nStarting ...'), end
 
 if script, fprintf('\n ... listing files to process'), end
 
-[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
+[session, nsessions, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 if isempty(root)
     root = listname;
@@ -116,12 +140,12 @@ if script, fprintf(' ... done.'), end
 
 
 %   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
+%   -------------------------------------------- The main loop ... go through all the sessions
 
 %   --- Get variables ready first
 
-sROI = nimage.img_ReadROI(smask, subject(1).roi);
-tROI = nimage.img_ReadROI(tmask, subject(1).roi);
+sROI = nimage.img_ReadROI(smask, session(1).roi);
+tROI = nimage.img_ReadROI(tmask, session(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
     sROIload = false;
@@ -144,18 +168,18 @@ end
 
 %   --- Start the loop
 
-for s = 1:nsubjects
+for s = 1:nsessions
 
     %   --- reading in image files
     if script, tic, end
-	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
+	if script, fprintf('\n------\nProcessing %s', session(s).id), end
 	if script, fprintf('\n... reading file(s) '), end
 
-    % --- check if we need to load the subject region file
+    % --- check if we need to load the session region file
 
-    if ~strcmp(subject(s).roi, 'none')
+    if ~strcmp(session(s).roi, 'none')
         if tROIload | sROIload
-            roif = nimage(subject(s).roi);
+            roif = nimage(session(s).roi);
         end
     end
 
@@ -168,14 +192,14 @@ for s = 1:nsubjects
 
     % --- load bold data
 
-	nfiles = length(subject(s).files);
+	nfiles = length(session(s).files);
 
-	img = nimage(subject(s).files{1});
+	img = nimage(session(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = nimage(subject(s).files{n});
+    	    new = nimage(session(s).files{n});
     	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    if script, fprintf(', %d', n), end
@@ -194,7 +218,7 @@ for s = 1:nsubjects
             k = nc(c);
 
             if script, fprintf('\n... computing %d individual CA solution', k), end
-            ifile = [root '_' subject(s).id '_k' num2str(k)];
+            ifile = [root '_' session(s).id '_k' num2str(k)];
 
             Cent = Cent.zeroframes(k);
             [CA.data Cent.data] = kmeans(data, k, 'distance', dmeasure, 'replicates', nrep);
@@ -222,7 +246,7 @@ if group
     if script, fprintf('\n=======\nComputing group CA solution'), end
 
     if ~tROIload
-        gcnt.data = (tROI.image2D > 0) .* nsubjects;
+        gcnt.data = (tROI.image2D > 0) .* nsessions;
     end
 
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);

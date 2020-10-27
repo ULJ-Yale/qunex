@@ -1,31 +1,41 @@
 function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)
 
-%function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)
+%``function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)``
 %
-%   Returns timecourse of an assumed response to an event
+%   Returns timecourse of an assumed response to an event.
 %
-%   INPUT
-%   - TR        - TR of the bold run
-%   - frames    - number of frames over which to create response
-%   - delay     - delay in s from the TR boundary
-%   - elength   - duration of event in seconds
-%   - hrf_type  - the type of assumed response to use
-%       -> 'boynton'
-%       -> 'SPM'
-%       -> 'gamma'
-%       -> 'empirical' (not yet implemented)
+%   INPUTS
+%	======
 %
-%   OUTPUT
+%   --TR		 TR of the bold run
+%   --frames	 number of frames over which to create response
+%   --delay		 delay in s from the TR boundary
+%   --elength	 duration of event in seconds
+%   --hrf_type	 the type of assumed response to use
+%
+%       		 - 'boynton'
+%       		 - 'SPM'
+%       		 - 'gamma'
+%       		 - 'empirical' (not yet implemented)
+%
+%   OUTPUTS
+%	=======
+%
 %   - ts       - a timeseries of the task regressor
+%
+
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   NOTES
 %   - would be good to include other HRF types as well as estimated HRF
 %
-%   ---
-%   Written by Grega Repovš - 2008.7.12
-%
 %   Changelog
-%   2017-02-11 Grega Repovš: Updated to use general g_HRF function.
+%
+%	2008-07-12 Grega Repovš
+%			   Initial version
+%   2017-02-11 Grega Repovš
+%			   Updated to use general g_HRF function.
 %
 
 

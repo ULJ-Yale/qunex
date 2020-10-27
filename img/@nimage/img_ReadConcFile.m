@@ -1,32 +1,48 @@
 function [files, boldnum, sfolder] = img_ReadConcFile(file)
 
-%function [files, boldnum, sfolder] = img_ReadConcFile(file)
+%``function [files, boldnum, sfolder] = img_ReadConcFile(file)``
 %
 %	Reads a .conc file and returns a list of files.
 %
 %   INPUT
-%       file  ... a path to the conc file
+%   =====
 %
-%   OUTPUT
-%       files   ... a cell array of file paths specified in the .conc file.
-%       boldnum ... the number for the bold files if it can be extracted
-%       sfolder ... the subject folder where the files are located
+%   --file      a path to the conc file
+%
+%   OUTPUTS
+%   =======
+%
+%   files
+%       a cell array of file paths specified in the .conc file.
+%
+%   boldnum
+%       the number for the bold files if it can be extracted
+%
+%   sfolder
+%       the session folder where the files are located
 %
 %   USE
+%   ===
+%
 %   Use the method to get the list of files specified in the conc file.
 %
 %   EXAMPLE USE
-%	>>> files = nimage.img_ReadConcFile('OP236-WM.conc');
+%   ===========
 %
-%   ---
-%	Written by Grega Repovs
+%	::
+%
+%       files = nimage.img_ReadConcFile('OP236-WM.conc');
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
 %   2017-03-11 Grega Repovs
-%            - Updated documentation.
+%              Updated documentation.
 %   2017-03-21 Grega Repovs
-%            - Added output of bold numbers and subject folders in which the bolds are located.
-%            - Can also process a cell array of file paths.
+%              Added output of bold numbers and session folders in which the bolds are located.
+%              Can also process a cell array of file paths.
 %
 
 files = {};
@@ -81,7 +97,7 @@ if nargout > 1
     end
 end
 
-% --- Extract subject folders
+% --- Extract session folders
 
 if nargout > 2
     sfolder = {};

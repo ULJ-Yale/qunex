@@ -1,64 +1,79 @@
 function [out, doIt] = img_StatsDiff(img1, img2, doIt, exclude)
 
-%function [out, doIt] = img_StatsDiff(img1, img2, doIt, exclude)
+%``function [out, doIt] = img_StatsDiff(img1, img2, doIt, exclude)``
 %
 %	Compares the specified statistics for each voxel across frames for the two
 %   specified images and/or computes a statistical test of differences.
 %
-%   INPUT
-%       img1  ... The first nimage object to compute statistics on.
-%       img2  ... The second nimage object to compute statistics on.
-%       do    ... The comma separated string or cell array of strings specifying
-%                 the difference / test to compute ['dm']:
-%           'dm'   ... difference in mean values
-%           'dme'  ... difference in median values
-%           'dsum' ... difference in sum values
-%           'dsd'  ... difference in standard deviation
-%           'dvar' ... difference in variability
-%           'f'    ... f-test for difference in variability
-%           'fp'   ... p values of f-test for difference in variability
-%           'fz'   ... z values of f-test for difference in variability
-%           't'    ... t value of dependent t-test
-%           'tp'   ... p values of dependent t-test
-%           'tz'   ... z values of dependent t-test
-%           't2'   ... t value of independent t-test
-%           't2p'  ... p values of independent t-test
-%           't2z'  ... z values of independent t-test
-%       exclude ... values to be omitted from computing the statistics
+%   INPUTS
+%   ======
 %
-%   OUTPUT
-%       out  ... A nimage object with one frame for each difference / test
-%                computed.
-%       do   ... The differences / tests computed
+%   --img1       The first nimage object to compute statistics on.
+%   --img2       The second nimage object to compute statistics on.
+%   --do         The comma separated string or cell array of strings specifying
+%                the difference / test to compute ['dm']:
+%
+%                - 'dm'   ... difference in mean values
+%                - 'dme'  ... difference in median values
+%                - 'dsum' ... difference in sum values
+%                - 'dsd'  ... difference in standard deviation
+%                - 'dvar' ... difference in variability
+%                - 'f'    ... f-test for difference in variability
+%                - 'fp'   ... p values of f-test for difference in variability
+%                - 'fz'   ... z values of f-test for difference in variability
+%                - 't'    ... t value of dependent t-test
+%                - 'tp'   ... p values of dependent t-test
+%                - 'tz'   ... z values of dependent t-test
+%                - 't2'   ... t value of independent t-test
+%                - 't2p'  ... p values of independent t-test
+%                - 't2z'  ... z values of independent t-test
+%
+%   --exclude    values to be omitted from computing the statistics
+%
+%   OUTPUTS
+%   =======
+%   
+%   out
+%       A nimage object with one frame for each difference / test computed.
+%
+%   do
+%        The differences / tests computed.
 %
 %   USE
+%   ===
+%
 %   The method computes differences between two images and/or tests of
 %   significance of differences. The statistic of the second image is subtracted
 %   from the first. All values matching exclude parameter are set to NaN and all
 %   NaN values are excluded from computation of statistics.
 %
 %   EXAMPLE USE
-%   Compare the means of two images and compute a (two-tailed) t-test for
-%   dependent samples, returning z transformed p values:
+%   ===========
 %
-%   >>> diff = imga.img_StatDiff(imgb, 'm, tpz');
+%   Compare the means of two images and compute a (two-tailed) t-test for
+%   dependent samples, returning z transformed p values::
+%
+%       diff = imga.img_StatDiff(imgb, 'm, tpz');
 %
 %   Compare variance of the two images and compute an f-test, returning
-%   difference and p-values of the test:
+%   difference and p-values of the test::
 %
-%   >>> vdiff = imga.img_StatDiff(imgb, 'dvar, fp');
+%       vdiff = imga.img_StatDiff(imgb, 'dvar, fp');
 %
-%   ---
-%   Written by Grega Repovs, 2011-03-18
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2011-03-18 Grega Repovs
+%              Initial version.
 %   2017-03-11 Grega Repovs
-%            - updated documentation
-%            - made the loop more robust
-%            - added ability to specify commands in comma separated string
-%            - renamed to img_StatsDiff
+%              - updated documentation
+%              - made the loop more robust
+%              - added ability to specify commands in comma separated string
+%              - renamed to img_StatsDiff
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf and cdf with norminv and tcdf to support Octave
+%              Replaced icdf and cdf with norminv and tcdf to support Octave
 
 if nargin < 4,  exclude = []; end
 if nargin < 3 || isempty(doIt), doIt = 'dm'; end

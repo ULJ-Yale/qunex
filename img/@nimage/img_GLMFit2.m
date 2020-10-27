@@ -1,36 +1,55 @@
 function [B, rss, p] = img_GLMFit2(obj, X)
 
-%function [B, rss, p] = img_GLMFit2(obj, X)
+%`function [B, rss, p] = img_GLMFit2(obj, X)``
 %
-%	Computes GLM fit to whole brain, optimized for ANOVA
+%	Computes GLM fit to whole brain, optimized for ANOVA.
 %
-%   INPUT
-%	    obj  - nimage image object
-%       X    - predictor matrix (frames x predictors)
+%   INPUTS
+%	======
+%
+%	--obj   nimage image object
+%   --X     predictor matrix (frames x predictors)
 %
 %   OUTPUTS
-%       B    - beta weights image
-%       rss  - residual sum of squares
-%       p    - number of parameters
+%	=======
+%
+%   B
+%		beta weights image
+%   rss
+%		residual sum of squares
+%   p
+%		number of parameters
 %
 %   USE
-%   The method computes a linear regression between dataseries of each voxel and all the columns
-%   of the X regressor matrix. The image can be a series of activation values for a set of subjects,
-%   and columns of X behavioral, demographic or other variables. X can have whatever number of columns,
-%   but the number of rows need to match the number of frames in the image.
+%	===
 %
-%   The results in an image of beta values for each voxel of the image, each frame holding the beta value for
-%   each of the columns of the X matrix. rss is an image holding the residual sum of squares and p is the
-%   number of data points
+%   The method computes a linear regression between dataseries of each voxel and
+%   all the columns of the X regressor matrix. The image can be a series of
+%   activation values for a set of sessions, and columns of X behavioral,
+%   demographic or other variables. X can have whatever number of columns, but
+%   the number of rows need to match the number of frames in the image.
+%
+%   The results in an image of beta values for each voxel of the image, each
+%   frame holding the beta value for each of the columns of the X matrix. rss is
+%   an image holding the residual sum of squares and p is the number of data
+%   points
 %
 %   EXAMPLE USE
-%   [B, rss, p] = img.img_GLMFit2(behmatrix);
+%	===========
 %
-%   ---
-%   (c) Grega Repovš, 2010-03-18
+%   ::
 %
-%   Change log
-%   2016-11-26 - Grega Repovs - Updated documentation.
+%		[B, rss, p] = img.img_GLMFit2(behmatrix);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%	2010-03-18 Grega Repovs
+%			   Initial version.
+%   2016-11-26 Grega Repovs
+%				Updated documentation.
 %
 
 % ---- check input

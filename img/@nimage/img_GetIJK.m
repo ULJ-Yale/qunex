@@ -1,28 +1,43 @@
 function [ijk] = img_GetIJK(img, xyz)
 
-%function [xyz] = img_GetIJK(img, xyz)
+%``function [xyz] = img_GetIJK(img, xyz)``
 %
 %	Returns the IJK voxel indices of a given world coordinates matrix.
 %
-%   INPUT
-%       xyz  - A matrix of world coordinates x, y, z
+%   INPUTS
+%	======
+%
+%	--img
+%   --xyz 	A matrix of world coordinates x, y, z
 %
 %   OUTPUT
-%       ijk  - A matrix of voxel indeces or a weight matrix, weight image.
+%	======
 %
+%   ijk
+%		A matrix of voxel indeces or a weight matrix, weight image.
 %
 %   NOTES
-%   - The coordinates are computed based on the 1-based indeces x = 1 .. N, not 0-based indeces!
-%   - The coordinates are computed based on the nifti header affine transform matrix (srow_x/y/z)
+%	=====
 %
-%   USE EXAMPLE
+%   - The coordinates are computed based on the 1-based indeces x = 1 .. N, not
+%     0-based indeces!
+%   - The coordinates are computed based on the nifti header affine transform
+%     matrix (srow_x/y/z).
 %
-%   To get vertex indices for specific world coordinates:
+%   EXAMPLE USE
+%	===========
 %
-%   >>> ijk = img.img_GetIJK([34, 60, 24; 25, 52, 18]);
+%   To get vertex indices for specific world coordinates::
 %
-%   %   ---
-%   Written by Aleksij Kraljic, 2017-08-07
+%   	ijk = img.img_GetIJK([34, 60, 24; 25, 52, 18]);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%   
+%	2017-08-07 Aleksij Kraljic
+%		       Initial version.
 %
 
 if nargin < 2, xyz = []; end

@@ -1,14 +1,21 @@
 function [] = g_PrintStruct(info, ftitle);
 
-%function [] = g_PrintStruct(info, ftitle);
+%``function [] = g_PrintStruct(info, ftitle)``
 %
 %   Function for printing the content of a struct field
 %
-%   info   : a structure to print
-%   ftitle : a title to print above the report
+%   INPUTS
+%   ======
 %
-%   ---
-%   Written by Grega Repovš on 2018-07-26.
+%   --info      a structure to print
+%   --ftitle    a title to print above the report
+%
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2018-07-26 Grega Repovs
+%              Initial version.
 %
 
 if nargin < 2 || isempty(ftitle), ftitle = ''; end

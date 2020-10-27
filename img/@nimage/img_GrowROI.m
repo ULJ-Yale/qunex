@@ -1,33 +1,45 @@
 function [img] = img_GrowROI(img, voxels)
 
-%function [img] = img_GrowROI(img, voxels)
+%``function [img] = img_GrowROI(img, voxels)``
 %
-%	Grows regions by radius of specified voxels
+%	Grows regions by radius of specified voxels.
 %
-%   INPUT
-%       voxels - The radius in voxels by which to the ROI. [1]
+%   INPUTS
+%   ======
+%
+%   --img
+%   --voxels    The radius in voxels by which to the ROI. [1]
 %
 %   OUTPUT
-%       img    - The resulting image with grown ROI.
+%   ======
+%
+%   img
+%       The resulting image with grown ROI.
 %
 %   NOTICE
-%   The function works with volume representation only.
-%   If ROI are too close, the one grown second can grow into the
-%   neighbouring ROI.
+%   ======
+%
+%   The function works with volume representation only. If ROI are too close,
+%   the one grown second can grow into the neighbouring ROI.
 %
 %   EXAMPLE USE
-%   To grow all regions by two voxels:
+%   ===========
 %
-%   >>> grownroi = roi.img_GrowROI(2);
+%   To grow all regions by two voxels::
 %
-%   ---
-%   Written by Grega Repovs, 2010-05-10
+%       grownroi = roi.img_GrowROI(2);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2010-05-10 Grega Repovs
+%              Initial version
 %   2013-07-24 Grega Repovs
-%            - Adjusted to use multiframe ROI images
+%              Adjusted to use multiframe ROI images
 %   2017-03-04 Grega Repovs
-%            - Updated documentation
+%              Updated documentation
 %
 
 if nargin < 2

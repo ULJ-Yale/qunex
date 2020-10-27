@@ -17,9 +17,11 @@ utilities, and a modified version of HCP (Human Connectome Project)
 preprocessing tools. They are best utilized as a part of Qu|Nex (Multimodal
 Neuroimaging Analysis Platform).
 
-The `nitools` code is is co-developed and co-maintained by the 
-[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
-and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+The `nitools` code is is co-developed and co-maintained by:
+
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
+* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
 
 
 Quick links
@@ -36,7 +38,13 @@ Quick links
 Change Log
 ----------
 
-* 0.50.0 Renamed gmrimage class to nimage and methods names from mri_ to img_.
+* 0.61.1  g_ExtractGLMVolumes saveoption values no longer include spaces.
+* 0.61.0  Documentation rework.
+* 0.60.2  Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
+* 0.60.1  Full support for hcp_suffix in runQC.
+* 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
+* 0.50.1  License and README updates.
+* 0.50.0  Renamed gmrimage class to nimage and methods names from mri_ to img_.
 * 0.49.10 Initial submodule versioning.
 
 

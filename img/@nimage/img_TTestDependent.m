@@ -1,29 +1,48 @@
 function [p Z M D SE t] = img_TTestDependent(A, B, verbose)
 
-%function [p Z M D SE t] = img_TTestDependent(A, B, verbose)
+%``function [p Z M D SE t] = img_TTestDependent(A, B, verbose)``
 %
-%	Computes dependent t-test comparing the called image object (A) to B
+%	Computes dependent t-test comparing the called image object (A) to B.
 %
-%	A       - the image object the method is called on
-%	B       - the image object to compare to
-%   verbose - should it talk a lot [no]
+%   INPUTS
+%   ======
 %
-%   Returns
-%       p   - an image with p-values
-%       t   - an image with t-values
-%       Z   - an image with Z-scores converted from p-values
-%       M   - on image with means of both groups
-%       D   - an image with A - B difference in group means
-%       SE  - an image with standard errors of both groups and their differences
+%	--A         the image object the method is called on
+%	--B         the image object to compare to
+%   --verbose   should it talk a lot [false]
 %
-%   ---
-%   Written by Grega Repovš, 2011-10-09
+%   OUTPUTS
+%   =======
+%
+%   p
+%       an image with p-values
+%
+%   t
+%       an image with t-values
+%
+%   Z
+%       an image with Z-scores converted from p-values
+%
+%   M
+%       on image with means of both groups
+%
+%   D
+%       an image with A - B difference in group means
+%
+%   SE
+%       an image with standard errors of both groups and their differences
+%
+
+%   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
+%
+%   2011-10-09 Grega Repovs
+%              Initial version.
 %   2018-06-19 Grega Repovs
-%            - Changed ttest call to use named parameters.
+%              Changed ttest call to use named parameters.
 %   2018-06-25 Grega Repovs
-%            - Replaced icdf with norminv to support Octave
+%              Replaced icdf with norminv to support Octave
 %
 
 if nargin < 3

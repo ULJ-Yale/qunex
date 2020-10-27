@@ -1,18 +1,29 @@
 function [img] = img_ReadGLM(img, fname, dtype, verbose)
 
-%function [img] = img_ReadGLM(img, fname, dtype, verbose)
+%``function [img] = img_ReadGLM(img, fname, dtype, verbose)``
 %
-%		Reads in a fidl glm image into an image object
+%   Reads in a fidl glm image into an image object
 %
-%       required:
-%		    img   - mrimage object
-%           fname - filename (an .glm file)
+%   INPUTS
+%   ======
 %
-%		optional:
-%           dtype   - number format to use ['single']
-%           verbose - whether to be talkative [false]
+%	img         mrimage object
+%   fname       filename (a .glm file)
+%   dtype       number format to use ['single']
+%   verbose     whether to be talkative [false]
 %
-%       Grega Repovs - 2013-11-16
+%   OUTPUT
+%   ======
+%
+%   img
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2013-11-16 Grega Repovs
+%              Initial version.
 %
 
 if nargin < 4

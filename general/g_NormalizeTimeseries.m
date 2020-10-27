@@ -1,10 +1,28 @@
 function [ts] = g_NormalizeTimeseries(ts)
 
+%``function [ts] = g_NormalizeTimeseries(ts)``
 %
-%    It normalizes timeseries to range 1, mean 0
-%    It works along columns
+%   This function normalizes timeseries to range 1, mean 0.
+%   It works along columns.
 %
-%    Grega Repovs - created: 2008.7.16
+%   INPUT
+%   =====
+%
+%	--ts 	timeseries (time x regions/voxels)
+%
+%	OUTPUT
+%	======
+%
+%	ts
+%		normalized timeseries matrix
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2008-07-16 Grega Repovs
+%			   Initial version.
 %
 
 tsize = size(ts);

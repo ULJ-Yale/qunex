@@ -1,39 +1,66 @@
 function [roi peak] = img_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)
 
-%function [roi peak] = img_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, fp_param.verbose)
+%``function [roi peak] = img_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)``
 %
-%       Find peaks and uses watershed algorithm to grow regions from them on the brain
-%       model components constructed with surface elements (ex. left and right cortex).
+%   Find peaks and uses watershed algorithm to grow regions from them on the
+%   brain model components constructed with surface elements (ex. left and right
+%   cortex).
 %
-%   INPUT
-%       img              - input nimage object
-%       surfaceComponent - brain component of type surface to perform ROI operation on ('cortex_left', 'cortex_right') ['cortex_left']
-%       projection       - type of surface component projection ('midthickness', 'inflated',...)
-%                          or a path to the surface file (.surf.gii) of the left or right cortex:
-%                        a) for a default projection: 'midthickness' ['midthickness']
-%                        b) for a specific projection:
-%                           'CL_projection.surf.gii'
-%       minarea          - minimal size of the resulting ROI  [0]
-%       maxarea          - maximum size of the resulting ROI  [inf]
-%       val              - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
-%       t                - threshold value [0]
-%       options          - list of options separated with a pipe symbol ("|"):
-%                        a) for the number of frames to be analized:
-%                           - []                        ... analyze only the first frame
-%                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
-%                           - 'frames:all'              ... analyze all the frames
-%                        b) for the type of ROI boundary:
-%                           - []                        ... boundary left unmodified
-%                           - 'boundary:remove'         ... remove the boundary regions
-%                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
-%                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
-%       fp_param.verbose          - whether to report the peaks (1) and also be fp_param.verbose (2) [false]
+%   INPUTS
+%   ======
 %
-%   OUTPUT
-%       roi              - A nimage with the created ROI.
-%       peak             - A datastructure with information about the extracted peaks.
+%   --img                input nimage object
+%   --surfaceComponent   brain component of type surface to perform ROI 
+%                        operation on ('cortex_left', 'cortex_right') 
+%                        ['cortex_left']
+%   --projection         type of surface component projection ('midthickness', 
+%                        'inflated', ...) or a path to the surface file 
+%                        (.surf.gii) of the left or right cortex:
+%
+%                        a. for a default projection: 'midthickness' ['midthickness']
+%                        b. for a specific projection: 'CL_projection.surf.gii'
+%
+%   --minarea            minimal size of the resulting ROI [0]
+%   --maxarea            maximum size of the resulting ROI [inf]
+%   --val                whether to find positive, negative or both peaks 
+%                        ('n', 'p', 'b') ['b']
+%   --t                  threshold value [0]
+%   --options            list of options separated with a pipe symbol ("|"):
+%
+%                        - for the number of frames to be analized:
+%
+%                           []
+%                               analyze only the first frame
+%                           'frames:[LIST OF FRAMES]'
+%                               analyze the list of frames
+%                           'frames:all'
+%                               analyze all the frames
+%
+%                        - for the type of ROI boundary:
+%
+%                           []
+%                               boundary left unmodified
+%                           'boundary:remove'
+%                               remove the boundary regions
+%                           'boundary:highlight'
+%                               highlight boundaries with a value of -100
+%                           'boundary:wire'
+%                               remove ROI data and return only ROI boundaries
+%
+%    --verbose           whether to report the peaks (1) and also be verbose (2) 
+%                        [false]
+%
+%   OUTPUTS
+%   =======
+%
+%   roi
+%       A nimage with the created ROI.
+%   peak
+%       A datastructure with information about the extracted peaks.
 %
 %   USE
+%   ===
+%
 %   The method is used to identify positive and/or negative peaks in the image,
 %   and then generate ROI around them using a watershed algorithm. Specifically,
 %   the method first zeros all the values below the specified threshold (t), it
@@ -43,26 +70,38 @@ function [roi peak] = img_FindPeaksSurface(img, surfaceComponent, projection, mi
 %   minsize get either removed or flooded in from the adjoining heigher peak (if
 %   if one exists). If final peaks are too large, they get reflooded to the
 %   specified maxsize only.
-%   This method is used specifically for the surface type brain models,
-%   such as the cortex in CIFTI-2 image format. It performs the operations
-%   on a triangular surface mesh.
+%
+%   This method is used specifically for the surface type brain models, such as
+%   the cortex in CIFTI-2 image format. It performs the operations on a
+%   triangular surface mesh.
 %
 %   EXAMPLE USE 1
-%   To get a roi image (dscalar) of both positive and negative peak regions
-%   with miminum z value of (-)3 and surface peak regions of areas between
-%   50 mm^2 and 250 mm^2 on a cortex_left with midthickness projection use:
+%   =============
 %
-%   roi = img.img_FindPeaksSurface('cortex_left', 'midthickness', 50, 250, 'b', 3);
+%   To get a roi image (dscalar) of both positive and negative peak regions with
+%   miminum z value of (-)3 and surface peak regions of areas between 50 mm^2
+%   and 250 mm^2 on a cortex_left with midthickness projection use::
+%
+%       roi = img.img_FindPeaksSurface('cortex_left', 'midthickness', 50, ...
+%               250, 'b', 3);
 %
 %   EXAMPLE USE 2
+%   =============
+%
 %   To perform an operation on a time series (dtseries) image with similar
 %   parameters as in the first example on frames 1, 3, 7 with fp_param.verbose
-%   output use:
+%   output use::
 %
-%   roi = img.img_FindPeaksSurface('cortex_left', 'midthickness', 50, 250, 'b', 3, 'frames:[1 3 7]', 2);
+%       roi = img.img_FindPeaksSurface('cortex_left', 'midthickness', 50, ...
+%           250, 'b', 3, 'frames:[1 3 7]', 2);
 %
-%   ---
-%   Written by Aleksij Kraljic, July 5, 2017
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%
+%   2017-07-05 Aleksij Kraljic
+%              Initial version.   
 %
 %   ToDo
 %   - add statistics calculations for the peak data structure

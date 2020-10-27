@@ -1,33 +1,53 @@
 function [roi peak] = img_FindPeaksVolume(img, minsize, maxsize, val, t, options, verbose)
 
-%function [roi peak] = img_FindPeaksVolume(img, minsize, maxsize, val, t, verbose)
+%function [roi peak] = img_FindPeaksVolume(img, minsize, maxsize, val, t, options, verbose)
 %
-%       Find peaks and uses watershed algorithm to grow regions from them on the brain 
-%       model components modeled in 3D space (voxels).
+%   Find peaks and uses watershed algorithm to grow regions from them on the
+%   brain model components modeled in 3D space (voxels).
 %
-%   INPUT
-%       image       - input nimage object
-%       minsize     - minimal size of the resulting ROI  [0]
-%       maxize      - maximum size of the resulting ROI  [inf]
-%       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
-%       t           - threshold value [0]
-%       options     - list of options separated with a pipe symbol ("|"):
-%                   a) for the number of frames to be analized:
-%                      - []                        ... analyze only the first frame
-%                      - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
-%                      - 'frames:all'              ... analyze all the frames
-%                   b) for the type of ROI boundary:
-%                      - []                        ... boundary left unmodified
-%                      - 'boundary:remove'         ... remove the boundary regions
-%                      - 'boundary:highlight'      ... highlight boundaries with a value of -100
-%                      - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
-%       verbose     - whether to report the peaks (1) and also be verbose (2) [false]
+%   INPUTS
+%   ======
 %
-%   OUTPUT
-%       roi         - A nimage with the created ROI.
-%       peak        - A datastructure with information about the extracted peaks.
+%   --image       input nimage object
+%   --minsize     minimal size of the resulting ROI  [0]
+%   --maxize      maximum size of the resulting ROI  [inf]
+%   --val         whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
+%   --t           threshold value [0]
+%   --options     list of options separated with a pipe symbol ("|"):
+%                 
+%                 - for the number of frames to be analized:
+%
+%                    []              
+%                       analyze only the first frame
+%                    'frames:[LIST OF FRAMES]'
+%                       analyze the list of frames
+%                    'frames:all'     
+%                       analyze all the frames
+%
+%                 - for the type of ROI boundary:
+%
+%                     []            
+%                       boundary left unmodified
+%                     'boundary:remove'
+%                       remove the boundary regions
+%                     'boundary:highlight'
+%                       highlight boundaries with a value of -100
+%                     'boundary:wire'  
+%                       remove ROI data and return only ROI boundaries
+%
+%    --verbose     whether to report the peaks (1) and also be verbose (2) [false]
+%
+%   OUTPUTS
+%   =======
+%
+%   roi
+%       A nimage with the created ROI.
+%   peak
+%       A datastructure with information about the extracted peaks.
 %
 %   USE
+%   ===
+%
 %   The method is used to identify positive and/or negative peaks in the image,
 %   and then generate ROI around them using a watershed algorithm. Specifically,
 %   the method first zeros all the values below the specified threshold (t), it
@@ -37,40 +57,49 @@ function [roi peak] = img_FindPeaksVolume(img, minsize, maxsize, val, t, options
 %   minsize get either removed or flooded in from the adjoining heigher peak (if
 %   if one exists). If final peaks are too large, they get reflooded to the
 %   specified maxsize only.
+%
 %   This method is used specifically for the brain models constructed from
 %   voxels in 3D space.
 %
 %   EXAMPLE USE 1
-%   To get a roi image (dscalar) of both positive and negative peak regions with miminum z
-%   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
-%   voxels, use:
+%   =============
 %
-%   roi = zimg.img_FindPeaksVolume(72, 300, 'b', 3);
+%   To get a roi image (dscalar) of both positive and negative peak regions with
+%   miminum z value of (-)3 and 72 contiguous voxels in size, but no larger than
+%   300 voxels, use::
+%
+%       roi = img.img_FindPeaksVolume(72, 300, 'b', 3);
 %
 %   EXAMPLE USE 2
+%   =============
+%
 %   To perform an operation on a time series (dtseries) image with similar
-%   parameters as in the first example on frames 1, 3, 7 with verbose
-%   output use:
+%   parameters as in the first example on frames 1, 3, 7 with verbose output
+%   use::
 %
-%   roi = img.img_FindPeaksVolume([72 50], [300 250], 'b', 3, 'frames:[1 3 7]', 2);
+%       roi = img.img_FindPeaksVolume([72 50], [300 250], 'b', 3, ...
+%           'frames:[1 3 7]', 2);
 %
-%   ---
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
 %   Written by Grega Repovs, 2015-04-11
 %
 %   Changelog
+%
+%   2015-04-11 Grega Repovs
+%              Initial version.
 %   2015-12-19 Grega Repovs,
-%            ??? A faster flooding implementation.
-%            ??? Optimised reflooding of small ROI.
-%            ??? Flipped verbosity.
-%
+%              A faster flooding implementation.
+%              Optimised reflooding of small ROI.
+%              Flipped verbosity.
 %   2016-01-16 Grega Repovs,
-%            - Now uses img_GetXYZ to get world coordinates of peaks and centroids.
-%
+%              Now uses img_GetXYZ to get world coordinates of peaks and centroids.
 %   2017-03-04 Grega Repovs
-%            - Updated documentation
-%
+%              Updated documentation
 %   2017-06-27 Aleksij Kraljic
-%            - Added functionality for images with multiple frames.
+%              Added functionality for images with multiple frames.
 %            
 %
 %    ToDo
