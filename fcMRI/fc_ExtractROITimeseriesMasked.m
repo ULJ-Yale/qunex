@@ -75,6 +75,13 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %   data.<title>.timeseries
 %       cell array of extracted timeseries
 %
+%   data.<title>.usevec
+%       cell array of vectors of frames to use (i.e. not discarded after 
+%       movement scrubbing)
+%
+%   data.<title>.runframes
+%       cell array of vectors with number of frames for each concatenated run
+%
 %   or in a tab separated text file in which data for each frame of each session
 %   is in its own line, the first column is the session code, the second the
 %   dataset title, the third the frame number and the following columns are for
@@ -140,6 +147,8 @@ if nargin < 7 || isempty(ignore),  ignore  = 'no';   end
 if nargin < 6 || isempty(method),  method  = 'mean'; end
 if nargin < 5 || isempty(options), options = 'm';    end
 
+verbose = true;  % --> to be set by options in the future
+
 if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
 end
@@ -184,7 +193,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-[session, nsub, nfiles, listname] = g_ReadFileList(flist);
+[session, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 
@@ -303,6 +312,7 @@ for n = 1:nsub
 
         fprintf('%d ', t.frames);
         data.(ana(a).name).timeseries{n} = t.img_ExtractROI(roi, rcodes, method);
+        data.(ana(a).name).runframes{n}  = t.runframes;
         data.(ana(a).name).usevec{n}     = t.use;
 
     end
