@@ -97,7 +97,7 @@ classdef nimage
 %       uint8 encoded metadata
 %   list          
 %       S structure with list information
-%   events        
+%   tevents        
 %       A [2, frames] vector. The first row list index of the event from which the frame originates, the second row lists the frame number from the event.
 %   use           
 %       A row vector specifying which frame of the timeseries to use (1) and which not (0)
@@ -141,6 +141,9 @@ classdef nimage
 %   2020-04-24 Grega Repovs
 %              added events field
 %              added nimage field specifications
+%   2020-11-04 Grega Repovš
+%              Changed variable name 'events' to 'tevents' to not conflict with
+%              reserved word 'events'
 
     properties
         data
@@ -169,7 +172,7 @@ classdef nimage
         meta            = [];
         metadata        = [];
         list            = [];
-        events          = [];
+        tevents         = [];
 
         % ---> various statistical data
 
@@ -763,7 +766,7 @@ classdef nimage
 
             % --> combine events data
 
-            obj.events = [obj.events add.events];
+            obj.tevents = [obj.tevents add.tevents];
 
             % --> combine maps data
             if isfield(obj.cifti, 'maps') && ~isempty(obj.cifti.maps)
@@ -924,7 +927,7 @@ classdef nimage
 
                 % ---> mask events data
 
-                obj.events = obj.events(:, fmask);
+                obj.tevents = obj.tevents(:, fmask);
 
                 % ---> mask glm data
 
