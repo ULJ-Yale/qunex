@@ -45,8 +45,6 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
     except:
         pass
 
-    folder   = os.path.join(os.path.dirname(sessionsfolder), 'info', 'hcpls', hcplsname)
-
     if '\\' in file:
         pathsep = "\\"
     else:
