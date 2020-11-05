@@ -151,6 +151,7 @@ runcmd=""
 CASE=`opts_GetOpt "--session" $@`
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
+Species=`opts_GetOpt "--species" $@`
 
 # -- Check required parameters
 if [ -z "$SessionsFolder" ]; then reho "Error: Sessions Folder"; exit 1; fi
@@ -169,6 +170,12 @@ echo "   Sessions Folder: ${SessionsFolder}"
 echo "   Session: ${CASE}"
 echo "   Study Log Folder: ${LogFolder}"
 echo "   Overwrite prior run: ${Overwrite}"
+
+# Report species if not default
+if [[ -n ${Species} ]]; then
+    echo "   Species: ${Species}"
+fi
+
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
@@ -183,19 +190,28 @@ main() {
 # -- Get Command Line Options
 get_options $@
 
+# -- Set paths
+if [[ ${Species} == "macaque" ]]; then
+    DiffusionFolder=${SessionsFolder}/${CASE}/NHP/dMRI
+    DiffusionFile=${DiffusionFolder}/data.nii.gz
+else
+    DiffusionFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
+    DiffusionFile=${DiffusionFolder}/dti_FA.nii.gz
+fi
+
 # -- Check if overwrite flag was set
 minimumfilesize=100000
 if [ "$Overwrite" == "yes" ]; then
     echo ""
     reho "Removing existing dtifit run for $CASE..."
     echo ""
-    rm -rf ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_* > /dev/null 2>&1
+    rm -rf DiffusionFolder/dti_* > /dev/null 2>&1
 fi
 
 checkCompletion() {
 # -- Check file presence
-if [ -a ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz ]; then
-    actualfilesize=$(wc -c <${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz)
+if [ -a DiffusionFolder/dti_FA.nii.gz ]; then
+    actualfilesize=$(wc -c <${DiffusionFile})
 else
     actualfilesize="0"
 fi
@@ -223,19 +239,19 @@ if [[ ${Overwrite} == "no" ]]; then
 fi
 
 # -- Command to run
-dtifit --data=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals
+dtifit --data=${DiffusionFolder}/data --out=${DiffusionFolder}/dti --mask=${DiffusionFolder}/nodif_brain_mask --bvecs=${DiffusionFolder}/bvecs --bvals=${DiffusionFolder}/bvals
 
 # -- Perform completion checks
 reho "--- Checking outputs..."
 echo ""
 checkCompletion
 if [[ ${RunCompleted} == "yes" ]]; then
-    geho "DTI FIT completed: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
+    geho "DTI FIT completed: ${DiffusionFolder}"
     echo ""
 else
    echo ""
    reho " -- DTI FIT run not found or incomplete for $CASE. Something went wrong." 
-   reho "    Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
+   reho "    Check output: ${DiffusionFolder}"
    echo ""
    exit 1
 fi

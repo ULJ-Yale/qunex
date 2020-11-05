@@ -1109,11 +1109,13 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/extractROI.sh
 # ------------------------------------------------------------------------------------------------------
 
 DWIFSLdtifit() {
+
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLdtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
---overwrite='${Overwrite}' "
+--overwrite='${Overwrite}' \
+--species='${Species}' "
 # -- Connector execute function
 connectorExec
 }
@@ -2092,6 +2094,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo ""
         CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
     fi
+
+    # -- Get species flag for NHP pipelines
+    Species=`opts_GetOpt "${setflag}species" $@`
 fi
 
 # ------------------------------------------------------------------------------
