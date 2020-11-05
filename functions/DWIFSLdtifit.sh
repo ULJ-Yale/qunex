@@ -62,6 +62,8 @@ usage() {
  echo "--sessionsfolder   Path to study folder that contains sessions"
  echo "--sessions         Comma separated list of sessions to run"
  echo "--overwrite        Delete prior run for a given session (yes / no)"
+ echo "--species          dtifit currently supports processing of human and macaque
+                          data. If processing macaques set this parameter to macaque."
  echo "--scheduler        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
  echo "                   followed by relevant options; e.g. for SLURM the string "
  echo "                   would look like this: "
