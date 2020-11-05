@@ -655,7 +655,7 @@ file.bmask     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/b
 
 eroot          = strrep(efile, '.fidl', '');
 file.nuisance  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.nuisance']);
-file.Xroot     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+file.Xroot     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname int2str(bold) options.bold_tail '_GLM-X_' eroot]);
 
 file.lsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
 file.rsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);

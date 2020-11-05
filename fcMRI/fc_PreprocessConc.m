@@ -612,6 +612,8 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %              Added support for img_suffix
 %   2020-10-05 Grega Repovs (v0.9.15)
 %              Enabled additional movement and nuisance regressor computation
+%   2020-11-05 Grega Repovs (v0.9.16)
+%              Corrected embedding of additional movement regressors
 %   
 
 if nargin < 16, done = [];                                  end
@@ -628,7 +630,7 @@ if nargin < 6 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-fprintf('\nRunning preproces conc script v0.9.15 [%s]\n-------------------------------------\n', tail);
+fprintf('\nRunning preproces conc script v0.9.16 [%s]\n-------------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
 fprintf('\n       sessionf: %s', sessionf);
 fprintf('\n          bolds: [%s]', num2str(bolds));
@@ -1168,12 +1170,13 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     nB = 2;
     nS = nuisance(1).nsignal;
-    if task,     nT = nuisance(1).ntask;   else nT = 0; end
-    if movement, nM = nuisance(1).nmov;    else nM = 0; end
-    if movementDer, nM = nM + nuisance(1).nmov;    end
-    if movementSQ, nM = nM + nuisance(1).nmov;    end
-    if movementDerSQ, nM = nM + nuisance(1).nmov;    end
-    if event,    nE = nuisance(1).nevents; else nE = 0; end
+    if task,          nT   = nuisance(1).ntask;   else nT   = 0; end
+    if movement,      nM   = nuisance(1).nmov;    else nM   = 0; end
+    if movementDer,   nMd  = nuisance(1).nmov;    else nMd  = 0; end
+    if movementSQ,    nMS  = nuisance(1).nmov;    else nMS  = 0; end
+    if movementDerSQ, nMdS = nuisance(1).nmov;    else nMdS = 0; end
+    if event,         nE   = nuisance(1).nevents; else nE   = 0; end
+    nMT = nM + nMd + nMS + nMdS;
     nBj = nB*nbolds;
     nTj = nT;
 
@@ -1189,9 +1192,9 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             joine = true;
     end
 
-    if joine, nEj = nE; else nEj = nE * nbolds; end
-    if joinn, nMj = nM; else nMj = nM * nbolds; end
-    if joinn, nSj = nS; else nSj = nS * nbolds; end
+    if joine, nEj = nE;  else nEj = nE  * nbolds; end
+    if joinn, nMj = nMT; else nMj = nMT * nbolds; end
+    if joinn, nSj = nS;  else nSj = nS  * nbolds; end
 
     if nuisanceDer
         nX = nBj + nTj + nMj + nSj*2 + nEj;   %movement derivatives are already included
@@ -1229,11 +1232,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     %   ----> movement
 
-    for mi = 1:nM
-        effects{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
-    end
-
     if movement
+        for mi = 1:nM
+            effects{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+        end
         for b = 1:nbolds
             xE = xS + nM - 1;
             X(bS(b):bE(b), xS:xE) = nuisance(b).mov;
@@ -1264,17 +1266,16 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
  %----- movement derivatives
 
-    for mi = 1:nM
-        effects{end+1}  = sprintf('mov_%s_1d', nuisance(1).mov_hdr{mi});
-    end
-
     if movementDer
+        for mi = 1:nMd
+            effects{end+1}  = sprintf('mov_%s_1d', nuisance(1).mov_hdr{mi});
+        end
         for b = 1:nbolds
-            xE = xS + nM - 1;
+            xE = xS + nMd - 1;
             X(bS(b):bE(b), xS:xE) = [zeros(1,nuisance(b).nmov); diff(nuisance(b).mov)];
             if ~joinn
-                xS = xS+nM;
-                for mi = 1:nM
+                xS = xS+nMd;
+                for mi = 1:nMd
                     ts = sprintf('mov_%s_1d', nuisance(1).mov_hdr{mi});
                     hdr{end+1}  = sprintf('%s.b%d', ts, b);
                     hdre{end+1} = sprintf('%s.b%d', ts, b);
@@ -1285,8 +1286,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             end
         end
         if joinn
-            xS = xS+nM;
-            for mi = 1:nM
+            xS = xS+nMd;
+            for mi = 1:nMd
                 ts = sprintf('mov_%s_1d', nuisance(1).mov_hdr{mi});
                 hdr{end+1}  = ts;
                 hdre{end+1} = ts;
@@ -1299,17 +1300,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     
     %------ Squared motion parameters
     
-    for mi = 1:nM
-        effects{end+1}  = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
-    end
-    
     if movementSQ
+        for mi = 1:nMS
+            effects{end+1}  = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
+        end
+
         for b = 1:nbolds
-            xE = xS + nM - 1;
+            xE = xS + nMS - 1;
             X(bS(b):bE(b), xS:xE) = nuisance(b).mov.^2;
             if ~joinn
-                xS = xS+nM;
-                for mi = 1:nM
+                xS = xS+nMS;
+                for mi = 1:nMS
                     ts = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
                     hdr{end+1}  = sprintf('%s_b%d', ts, b);
                     hdre{end+1} = sprintf('%s.b%d', ts, b);
@@ -1320,8 +1321,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             end
         end
         if joinn
-            xS = xS+nM;
-            for mi = 1:nM
+            xS = xS+nMS;
+            for mi = 1:nMS
                 ts = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
                 hdr{end+1}  = ts;
                 hdre{end+1} = ts;
@@ -1334,17 +1335,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     
     % ------ Squared motion derivatives
     
-    for mi = 1:nM
+    for mi = 1:nMdS
         effects{end+1}  = sprintf('mov_%s_1dSq', nuisance(1).mov_hdr{mi});
     end
 
     if movementDerSQ
         for b = 1:nbolds
-            xE = xS + nM - 1;
+            xE = xS + nMdS - 1;
             X(bS(b):bE(b), xS:xE) = [zeros(1,nuisance(b).nmov); diff(nuisance(b).mov).^2];
             if ~joinn
-                xS = xS+nM;
-                for mi = 1:nM
+                xS = xS+nMdS;
+                for mi = 1:nMdS
                     ts = sprintf('mov_%s_1dSq', nuisance(1).mov_hdr{mi});
                     hdr{end+1}  = sprintf('%s.b%d', ts, b);
                     hdre{end+1} = sprintf('%s.b%d', ts, b);
@@ -1355,8 +1356,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             end
         end
         if joinn
-            xS = xS+nM;
-            for mi = 1:nM
+            xS = xS+nMdS;
+            for mi = 1:nMdS
                 ts = sprintf('mov_%s_1dSq', nuisance(1).mov_hdr{mi});
                 hdr{end+1}  = ts;
                 hdre{end+1} = ts;
