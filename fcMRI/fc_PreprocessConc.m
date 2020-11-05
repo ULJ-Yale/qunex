@@ -61,7 +61,7 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %   --overwrite   	Whether old files should be overwritten [false]
 %   --tail        	what file extension to expect and use for images ['.nii.gz']
 %   --scrub       	the description of how to compute scrubbing - a string in 
-%					`'param:value|param:value'` formatÄšĹž
+%					`'param:value|param:value'` format
 %
 %                   Parameters:
 %
