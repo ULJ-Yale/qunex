@@ -203,15 +203,15 @@ fi
 minimumfilesize=100000
 if [ "$Overwrite" == "yes" ]; then
     echo ""
-    reho "Removing existing dtifit run for $CASE..."
+    reho "Removing existing dtifit run for $CASE..."x
     echo ""
     rm -rf DiffusionFolder/dti_* > /dev/null 2>&1
 fi
 
 checkCompletion() {
 # -- Check file presence
-if [ -a DiffusionFolder/dti_FA.nii.gz ]; then
-    actualfilesize=$(wc -c <${DiffusionFile})
+if [ -a ${DiffusionFolder}/dti_FA.nii.gz ]; then
+    actualfilesize=$(wc -c <${DiffusionFolder}/dti_FA.nii.gz)
 else
     actualfilesize="0"
 fi
