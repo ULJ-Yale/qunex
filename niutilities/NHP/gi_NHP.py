@@ -69,7 +69,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
         return False
 
     # target folder and file
-    tfile = os.path.join(sessionsfolder, session, "NHP", data_file)
+    tfile = os.path.join(sessionsfolder, session, "NHP", "dMRI", data_file)
     print prefix + "--> Processing session %s, file %s" % (session, data_file)
 
     # overwrite?
