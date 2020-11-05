@@ -1752,22 +1752,22 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     following specific parameters are used in this step:
 
     --bold_nuisance      A comma separated list of regressors to include in GLM.
-                         Possible values are: [m,V,WM,WB,1d]
+                         Possible values are: [m,m1d,mSq,m1dSq,V,WM,WB,1d]
 
                          - m     ... motion parameters
                          - m1d   ... first derivative of movement regressors
                          - mSq   ... squared motion parameters
-                         - m1dSq ... squared motion derivatives
+                         - m1dSq ... squared motion first derivatives
                          - V     ... ventricles signal
                          - WM    ... white matter signal
                          - WB    ... whole brain signal
                          - n1d   ... first derivative for nuisance signal
-                           regressors
+                                     regressors
                          - 1d    ... first derivatives of above nuisance signals
-                           and movement
-                         - e     ... events listed in the provided fidl files (see
-                           above), modeled as specified in the event_string
-                           parameter.
+                                     and movement
+                         - e     ... events listed in the provided fidl files 
+                                     (see above), modeled as specified in the 
+                                     event_string parameter.
                          - t     ... task
                          
     --event_string       A string describing, how to model the events listed in
@@ -2054,7 +2054,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldnum,                            # --- number of bold file to process
             options['omit'],                    # --- number of frames to skip at the start of each run
             options['bold_actions'],            # --- which steps to perform (s, h, r, c, p, p)
-            options['bold_nuisance'],           # --- what to regress (m, v, wm, wb, d, t, e, 1b)
+            options['bold_nuisance'],           # --- what to regress (m, m1d, mSq, m1dSq, V, WM, WB, d, t, e, 1d)
             '[]',                               # --- matrix of task regressors
             options['event_file'],              # --- fidl file to be used
             float(options['TR']),               # --- TR of the data
@@ -2396,14 +2396,17 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     following specific parameters are used in this step:
 
     --bold_nuisance      A comma separated list of regressors to include in GLM.
-                         Possible values are: [m,V,WM,WB,1d]
+                         Possible values are: [m,m1d,mSq,m1dSq,V,WM,WB,1d]
 
-                         - m  (motion parameters)
-                         - V  (ventricles signal)
-                         - WM (white matter signal)
-                         - WB (whole brain signal)
-                         - 1d (first derivative of above nuisance signals)
-                         - e  (events listed in the provided fidl files (see
+                         - m     (motion parameters)
+                         - m1d   (first derivative of motion parameters)
+                         - mSq   (squared motion parameters)
+                         - m1dSq (squared first derivative of motion parameters)
+                         - V     (ventricles signal)
+                         - WM    (white matter signal)
+                         - WB    (whole brain signal)
+                         - 1d    (first derivative of above nuisance signals)
+                         - e     (events listed in the provided fidl files (see
                            above), modeled as specified in the event_string
                            parameter.)
                          
