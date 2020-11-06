@@ -2509,7 +2509,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     -------
 
     This step results in the following files (if requested):
-
+    
     - residual image (``<root>_res-<regressors><glm name>.<ext>``)
     - GLM image (``<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>``)
     - text GLM regressor matrix (``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt``)
@@ -2560,6 +2560,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                Changed subjects to sessions
     2019-06-06 Grega Repovš
                Enabled multiple log file locations
+    2020-11-06 Grega Repovš
+               Updated documentation and file naming               
     """
 
     doOptionsCheck(options, sinfo, 'preprocessConc')  
@@ -2575,10 +2577,16 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     else:
         options['bold_variant'] = '.' + options['hcp_bold_variant']  
 
-    concs = options['bolds'].split("|")
-    fidls = options['event_file'].split("|")
+    # --- extract conc and fidl names
+    concs = [e.strip().replace(".conc", "") for e in options['bolds'].split("|")]
+    fidls = [e.strip().replace(".fidl", "") for e in options['event_file'].split("|")]
 
-    concroot = options['boldname'] + '_' + options['image_target'] + '_'
+    # --- define the tail
+    options['bold_tail'] = ""
+    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
+        options['bold_tail'] = options['hcp_cifti_tail']
+
+    concroot = "_".join(e for e in [options['boldname'] + options['bold_tail'], options['image_target'].replace('cifti', 'dtseries')] if e)
     report = ''
 
     failed = 0
@@ -2587,15 +2595,20 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     else:
         for nb in range(0, len(concs)):
-            tconc = concs[nb].strip().replace(".conc", "")
-            tfidl = fidls[nb].strip().replace(".fidl", "")
+            tconc = concs[nb]
+            tfidl = fidls[nb]
+            options['concname'] = tconc
+            if tfidl:
+                options['fidlname'] = tfidl
+            else:
+                options['fidlname'] = ""
 
             try:
                 r += "\n\nConc bundle: %s" % (tconc)
 
                 d = getSessionFolders(sinfo, options)
                 f = {}
-                f_conc = os.path.join(d['s_bold_concs'], concroot + tconc + ".conc")
+                f_conc = os.path.join(d['s_bold_concs'], concroot + "_" + tconc + ".conc")
                 f_fidl = os.path.join(d['s_bold_events'], tfidl + ".fidl")
 
                 # --- find conc data
@@ -2653,11 +2666,6 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     boldnum  = c[1]
                     boldname = options['boldname'] + boldnum
                     bolds.append(boldnum)
-
-                    # --- define the tail
-                    options['bold_tail'] = ""
-                    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
-                        options['bold_tail'] = options['hcp_cifti_tail']
 
                     # if absolute path flag use session folder from conc file
                     if (options['conc_use'] == 'absolute'):
@@ -2742,7 +2750,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
+                opts  = "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- session folder
