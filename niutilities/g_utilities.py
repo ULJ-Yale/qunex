@@ -76,11 +76,11 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
     PARAMETERS
     ==========
 
-    --studyfolder  : the location of the study folder
-    --action       : whether to create a new study folder (create) or check
-                     an existing study folder (check)
-    --folders      : Path to the file which defines the study folder structure.
-                     [$TOOLS/niutilities/templates/study_folders_default.txt]
+    --studyfolder  the location of the study folder
+    --action       whether to create a new study folder (create) or check an
+                   existing study folder (check)
+    --folders      Path to the file which defines the study folder structure.
+                   [$TOOLS/niutilities/templates/study_folders_default.txt]
     """
 
     # template folder
@@ -241,7 +241,7 @@ def createStudyFolders(folders_spec):
     PARAMETERS
     ==========
 
-    --folders ... Path to the file which defines the study folder structure.
+    --folders     Path to the file which defines the study folder structure.
                   [$TOOLS/niutilities/templates/study_folders_default.txt]
     """
 
@@ -704,55 +704,58 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     INPUTS
     ======
     
-    --sessionsfolder     The location of the sessions folder where the sessions
-                         to create the list reside.
-    --sessions           Either a comma or pipe separated string of session 
-                         names to include (can be glob patterns) or a path
-                         to a batch.txt file.
-    --filter             If a batch.txt file is provided a string of key-value
-                         pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
-                         that match all the key-value pairs will be added to 
-                         the list.
-    --listfile           The path to the generated list file. If no path is 
-                         provided, the list is created as:
-                         `<studyfolder>/processing/lists/sessions.list`
-    --bolds              If provided the specified bold files will be added to 
-                         the list. The value should be a string that lists bold 
-                         numbers or bold tags in a space, comma or pipe 
-                         separated string.
-    --boldname           The prefix to be added to the bold number specified 
-                         in bolds parameter [bold]
-    --boldtail           The suffix to be added to the bold number specified
-                         in bolds parameter or bold names that match the
-                         tag specified in the bolds parameeter [.nii.gz].
-    --conc               If provided, the specified conc file that resides in
-                         `<session id>/images/functional/concs/` folder will
-                         be added to the list.
-    --fidl               If provided, the specified fidl file that resides in
-                         `<session id>/images/functional/events/` folder will
-                         be added to the list.
-    --glm                If provided, the specified glm file that resides in
-                         `<session id>/images/functional/` folder will be
-                         added to the list.
-    --roi                If provided, the specified ROI file that resides in
-                         `<session id>/images/<roi>` will be added to the list.
-                         Note that `<roi>` can include a path, e.g.: 
-                         `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`    
-    --overwrite          If the specified list file already exists: [no]
+    --sessionsfolder    The location of the sessions folder where the sessions
+                        to create the list reside.
+    --sessions          Either a comma or pipe separated string of session 
+                        names to include (can be glob patterns) or a path
+                        to a batch.txt file.
+    --filter            If a batch.txt file is provided a string of key-value
+                        pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
+                        that match all the key-value pairs will be added to 
+                        the list.
+    --listfile          The path to the generated list file. If no path is 
+                        provided, the list is created as:
+                        `<studyfolder>/processing/lists/sessions.list`
+    --bolds             If provided the specified bold files will be added to 
+                        the list. The value should be a string that lists bold 
+                        numbers or bold tags in a space, comma or pipe 
+                        separated string.
+    --boldname          The prefix to be added to the bold number specified 
+                        in bolds parameter [bold]
+    --boldtail          The suffix to be added to the bold number specified
+                        in bolds parameter or bold names that match the
+                        tag specified in the bolds parameeter [.nii.gz].
+    --conc              If provided, the specified conc file that resides in
+                        `<session id>/images/functional/concs/` folder will
+                        be added to the list.
+    --fidl              If provided, the specified fidl file that resides in
+                        `<session id>/images/functional/events/` folder will
+                        be added to the list.
+    --glm               If provided, the specified glm file that resides in
+                        `<session id>/images/functional/` folder will be
+                        added to the list.
+    --roi               If provided, the specified ROI file that resides in
+                        `<session id>/images/<roi>` will be added to the list.
+                        Note that `<roi>` can include a path, e.g.: 
+                        `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`    
+    --overwrite         If the specified list file already exists: [no]
 
-                         - ask (ask interactively, what to do)
-                         - yes (overwrite the existing file)
-                         - no (abort creating a file)
-                         - append (append sessions to the existing list file)
+                        - ask (ask interactively, what to do)
+                        - yes (overwrite the existing file)
+                        - no (abort creating a file)
+                        - append (append sessions to the existing list file)
                          
-    --check              Whether to check for existence of files to be included
-                         in the list and what to do if they don't exist:
+    --check             Whether to check for existence of files to be included
+                        in the list and what to do if they don't exist:
 
-                         - yes (check for presence and abort if the file to 
-                           be listed is not found)
-                         - no (do not check whether files are present or not)
-                         - warn (check for presence and warn if the file to be 
-                           listed is not found, but do not abort)
+                        - yes (check for presence and abort if the file to 
+                          be listed is not found)
+                        - no (do not check whether files are present or not)
+                        - warn (check for presence and warn if the file to be 
+                          listed is not found, but do not abort)
+                        - present (check for presence, warn if the file to be
+                          listed is not found, but do not include missing files
+                          in the list)
 
     USE
     ===
@@ -863,6 +866,8 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     - yes  (check for presence and abort if the file to be listed is not found)
     - no   (do not check whether files are present or not)
     - warn (check for presence and warn if the file to be listed is not found)
+    - present (check for presence, warn if the file to be listed is not found,
+      but do not include the file in the list)
 
     EXAMPLE USE
     ===========
@@ -923,17 +928,27 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                Fixed a None checkup bug
     2020-01-14 Grega Repovš
                Expanded documentation with explicit parameter specification
+    2020-07-30 Andraz Matkovic
+               Added option to exclude missing files from the list.
     """
 
     print "Running createList\n=================="
 
     def checkFile(fileName):
         if check == 'no':
-            pass
-        elif not os.path.exists(fileName):
-            if check == 'warn':
+            return True
+        elif check == 'present':
+            if not os.path.exists(fileName):
                 print "WARNING: File does not exist [%s]!" % (fileName)
+                return False
             else:
+                return True
+        elif check == 'warn':
+            if not os.path.exists(fileName):
+                print "WARNING: File does not exist, but will be included in the list anyway [%s]!" % (fileName)
+            return True
+        else:
+            if not os.path.exists(fileName):
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
 
     # --- check sessions
@@ -985,7 +1000,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         overwrite = 'yes'
 
     targetFolder = os.path.dirname(listfile)
-    if not os.path.exists(targetFolder):
+    if targetFolder and not os.path.exists(targetFolder):
         print "---> Creating target folder %s" % (targetFolder)
         os.makedirs(targetFolder)
 
@@ -1012,8 +1027,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         if boldnums:
             for boldnum in boldnums:
                 tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
-                checkFile(tfile)
-                lines.append("    file:" + tfile)
+                includeFile = checkFile(tfile)
+                if includeFile:
+                    lines.append("    file:" + tfile)
 
         if boldtags:
             try:
@@ -1027,28 +1043,33 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                 pass
             for boldnum in bolds:
                 tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
-                checkFile(tfile)
-                lines.append("    file:" + tfile)
+                includeFile = checkFile(tfile)
+                if includeFile:
+                    lines.append("    file:" + tfile)
 
         if roi:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', roi)
-            checkFile(tfile)
-            lines.append("    roi:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    roi:" + tfile)
 
         if glm:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', glm)
-            checkFile(tfile)
-            lines.append("    glm:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    glm:" + tfile)
 
         if conc:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'concs', conc)
-            checkFile(tfile)
-            lines.append("    conc:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    conc:" + tfile)
 
         if fidl:
             tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', 'events', fidl)
-            checkFile(tfile)
-            lines.append("    fidl:" + tfile)
+            includeFile = checkFile(tfile)
+            if includeFile:
+                lines.append("    fidl:" + tfile)
 
     # --- write to target file
 
@@ -2848,6 +2869,11 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                Changed subjects to sessions
     2020-06-03 Jure Demšar
                Renamed getHCPReady to createSessionInfo
+    2020-07-02 Aleksij Kraljič
+               Expanded field map correction functionality, so multiple SE/FM scan pairs are allowed.
+    '''
+=======
+               
     """
 
     print "Running createSessionInfo\n==================="
@@ -2924,14 +2950,32 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
             bold = 0
             nlines = []
             hasref = False
+            index      = 0
+            se, fm     = 0, 0
+            imgtrack   = {}
+            setrack    = {}
+            fmtrack    = {}
+            p_repl     = ""
+            sepattern  = re.compile(r'SE-FM-PA|SE-FM-AP|SE-FM-LR|SE-FM-RL')
+            sepatt_a   = re.compile(r'SE-FM-PA|SE-FM-LR')
+            sepatt_b   = re.compile(r'SE-FM-AP|SE-FM-RL')
+            sa_ctn     = 0
+            sb_ctn     = 0
+            fmpattern  = re.compile(r'FM-Magnitude|FM-Phase')
+            fmpatt_mag = re.compile(r'FM-Magnitude')
+            fmpatt_pha = re.compile(r'FM-Phase')
+            fmag_ctn   = 0
+            fpha_ctn   = 0
             for line in lines:
                 e = line.split(':')
+                sestr, fmstr = "", ""
                 if len(e) > 1:
                     if e[0].strip() == '%sready' % pipeline and e[1].strip() == 'true':
                         pipelineok = True
                     if e[0].strip().isdigit():
                         if not images:
                             nlines.append('%sready: true' % pipeline)
+                            index += 1
                             images = True
 
                         onum = int(e[0].strip())
@@ -2953,13 +2997,61 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                             else:
                                 bold += 1
                             repl = repl.replace('bold', 'bold%d' % (bold))
+                        elif sepattern.search(repl):
+                            if sepattern.search(p_repl) is None and (sa_ctn == sb_ctn):
+                                se += 1
+                                setrack.update({index: {'num': se}})
+                            if sepatt_a.search(repl):
+                                sa_ctn += 1
+                            elif sepatt_b.search(repl):
+                                sb_ctn += 1
+                            repl = repl.replace(repl, '%s' % (repl))
+                        elif fmpattern.search(repl):
+                            if fmpattern.search(p_repl) is None and (fmag_ctn == fpha_ctn):
+                                fm += 1
+                                fmtrack.update({index: {'num': fm}})
+                            if fmpatt_mag.search(repl):
+                                fmag_ctn += 1
+                            elif fmpatt_pha.search(repl):
+                                fpha_ctn += 1
+                            repl = repl.replace(repl, '%s' % (repl))
+                        elif repl in ['FM-GE']:
+                            fm += 1
+                            fmtrack.update({index: {'num': fm}})
+                            repl = repl.replace(repl, '%s' % (repl))
 
-                        e[1] = " %-16s:%s" % (repl, oimg)
+                        explDef = any([re.search(r'se\(\d{1,2}\)|fm\(\d{1,2}\)',element) for element in e])
+                        if re.search(r'(DWI:)', repl) is None and explDef is False:
+                            if (se > 0) and (re.search(r'(?<!SE-)(FM-)', repl) is None):
+                                sestr = ": se(%d)" % (se)
+                            if (fm > 0) and (re.search(r'(SE-FM)', repl) is None):
+                                fmstr = ": fm(%d)" % (fm)
+                            imgtrack.update({index: {'type': repl, 'se': se, 'fm': fm}})
+
+                        p_repl = repl
+
+                        e[1] = " %-16s:%s%s%s" % (repl, oimg, sestr, fmstr)
                         nlines.append(":".join(e))
                     else:
                         nlines.append(line)
                 else:
                     nlines.append(line)
+                index += 1
+
+            if fmag_ctn != fpha_ctn:
+                print "WARNING: Field map correction (Siemens/Philips) requires one or more complete pairs of scans: FM-Magnitude/FM-Phase"
+            if sa_ctn != sb_ctn:
+                print "WARNING: Spin-echo field map correction requires one or more complete pairs of scans: SE-FM-PA/SE-FM-AP or SE-FM-LR/SE-FM-RL"
+
+            for item in imgtrack:
+                if imgtrack[item]['fm'] == 0 and fmtrack and re.search(r'(SE-FM)', nlines[item]) is None:
+                    fmdist = [abs(ln-item) for ln in fmtrack.keys()]
+                    crspfm = min(fmdist)+item
+                    nlines[item] = nlines[item] + ": fm(%d)" % (fmtrack[crspfm]['num'])
+                if imgtrack[item]['se'] == 0 and setrack and re.search(r'(?<!SE-)(FM-)', nlines[item]) is None:
+                    sedist = [abs(ln-item) for ln in setrack.keys()]
+                    crspse = min(sedist)+item
+                    nlines[item] = nlines[item] + ": se(%d)" % (setrack[crspse]['num'])
 
             if pipelineok:
                 print "     ... %s already pipeline ready" % (sourcefile)
