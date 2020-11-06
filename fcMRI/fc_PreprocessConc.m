@@ -556,7 +556,7 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt`
 %
 %   image of a regressor matrix:
-%   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png
+%   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png`
 %
 %   EXAMPLE USE
 %   ===========
@@ -650,7 +650,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=|img_suffix=';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -700,6 +700,15 @@ case '.ptseries.nii'
     fformat = 'ptseries';
 end
 
+eroot = strrep(efile, '.fidl', '');
+if options.fidlname
+    eroot = ['_' options.fidlname];
+else
+    if eroot
+        eroot = ['_' eroot];
+    end
+end
+
 
 % ======================================================
 %                                     ---> prepare paths
@@ -719,11 +728,10 @@ for b = 1:nbolds
     file(b).fidlfile    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' efile]);
     file(b).bmask       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum '_frame1_brain_mask' tail]);
 
-    eroot               = strrep(efile, '.fidl', '');
-    file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc_' eroot]);
-    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat '_' eroot]);
+    file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc'  eroot]);                % using conc instead of options.concname
+    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);   % missing options.concname  before eroot
 
-    file(b).Xroot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+    file(b).Xroot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X' eroot]);            % not using options.concname
 
     file(b).lsurf       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
     file(b).rsurf       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
@@ -967,7 +975,7 @@ for current = char(doIt)
             fprintf('\n---> %s ', file(b).sfile)
 
             if exist(file(b).tfile, 'file') && ~overwrite
-                fprintf('... already completed!');
+                fprintf('... already completed! [%s]', file(b).tfile);
                 img(b).empty = true;
             else
 
@@ -1103,7 +1111,7 @@ for current = char(doIt)
 
     if saveconc
         if exist(file(b).tconc, 'file') && ~overwrite
-            fprintf('\n---> conc file already saved!');
+            fprintf('\n---> conc file already saved! [%s]', file(b).tconc);
         else
             fprintf('\n---> saving conc file ');
             nimage.img_SaveConcFile(file(b).tconc, {file.tfile});
