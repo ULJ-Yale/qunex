@@ -727,20 +727,19 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                         tag specified in the bolds parameeter [.nii.gz].
     --img_suffix        Specifies a suffix for 'images' folder to enable
                         support for multiple parallel workflows (e.g. 
-                        <session id>/images<img_suffix>). Empty if not used. 
-                        []
+                        <session id>/images<img_suffix>). Empty if not used. []
     --conc              If provided, the specified conc file that resides in
-                        `<session id>/images/functional/concs/` folder will
-                        be added to the list.
+                        `<session id>/images<img_suffix>/functional/concs/` 
+                        folder will be added to the list.
     --fidl              If provided, the specified fidl file that resides in
-                        `<session id>/images/functional/events/` folder will
-                        be added to the list.
+                        `<session id>/images<img_suffix>/functional/events/` 
+                        folder will be added to the list.
     --glm               If provided, the specified glm file that resides in
-                        `<session id>/images/functional/` folder will be
-                        added to the list.
+                        `<session id>/images<img_suffix>/functional/` folder 
+                        will be added to the list.
     --roi               If provided, the specified ROI file that resides in
-                        `<session id>/images/<roi>` will be added to the list.
-                        Note that `<roi>` can include a path, e.g.: 
+                        `<session id>/images<img_suffix>/<roi>` will be added 
+                        to the list. Note that `<roi>` can include a path, e.g.: 
                         `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`    
     --overwrite         If the specified list file already exists: [no]
 
@@ -750,7 +749,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                         - append (append sessions to the existing list file)
                          
     --check             Whether to check for existence of files to be included
-                        in the list and what to do if they don't exist:
+                        in the list and what to do if they don't exist [yes]:
 
                         - yes (check for presence and abort if the file to 
                           be listed is not found)
@@ -956,6 +955,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         else:
             if not os.path.exists(fileName):
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
+            return True
 
     # --- check sessions
 
@@ -971,7 +971,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
     boldtags, boldnums = None, None
 
-    if bolds:
+    if bolds:        
         bolds = [e.strip() for e in re.split(' *, *| *\| *| +', bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
@@ -1096,9 +1096,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
 
 
-def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
+def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", img_suffix='', overwrite='no', check='yes'):
     """
-    ``createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]``
+    ``createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [img_suffix=''] [overwrite="no"] [check="yes"]``
 
     Creates a set of .conc formated files that can be used as input
     to a number of processing and analysis functions. The function is fairly
@@ -1107,43 +1107,46 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     INPUTS
     ======
 
-    --sessionsfolder     The location of the sessions folder where the sessions
-                         to create the list reside.
-    --sessions           Either a comma or pipe separated string of session 
-                         names to include (can be glob patterns) or a path
-                         to a batch.txt file.
-    --filter             If a batch.txt file is provided a string of key-value
-                         pairs (`"<key>:<value>|<key>:<value>"`). Only
-                         sessions that match all the key-value pairs will be
-                         added to the list.
-    --concfolder         The path to the folder where conc files are to be
-                         generated. If not provided, the conc files will be
-                         saved to the folder:
-                         `<studyfolder>/<session id>/inbox/concs/`
-    --concname           The name of the conc files to generate. The formula:
-                         `<session id><concname>.conc` will be used. [""]
-    --bolds              A space, comma or pipe separated string that lists bold 
-                         numbers or bold tags to be included in the conc file.
-    --boldname           The prefix to be added to the bold number specified 
-                         in bolds parameter [bold]
-    --boldtail           The suffix to be added to the bold number specified
-                         in bolds parameter or bold names that match the
-                         tag specified in the bolds parameter [.nii.gz].
-    --overwrite          If the specified list file already exists: [no]
+    --sessionsfolder    The location of the sessions folder where the sessions
+                        to create the list reside.
+    --sessions          Either a comma or pipe separated string of session 
+                        names to include (can be glob patterns) or a path
+                        to a batch.txt file.
+    --filter            If a batch.txt file is provided a string of key-value
+                        pairs (`"<key>:<value>|<key>:<value>"`). Only
+                        sessions that match all the key-value pairs will be
+                        added to the list.
+    --concfolder        The path to the folder where conc files are to be
+                        generated. If not provided, the conc files will be
+                        saved to the folder:
+                        `<studyfolder>/<session id>/inbox/concs/`
+    --concname          The name of the conc files to generate. The formula:
+                        `<session id><concname>.conc` will be used. [""]
+    --bolds             A space, comma or pipe separated string that lists bold 
+                        numbers or bold tags to be included in the conc file.
+    --boldname          The prefix to be added to the bold number specified 
+                        in bolds parameter [bold]
+    --boldtail          The suffix to be added to the bold number specified
+                        in bolds parameter or bold names that match the
+                        tag specified in the bolds parameter [.nii.gz].
+    --img_suffix        Specifies a suffix for 'images' folder to enable
+                        support for multiple parallel workflows (e.g. 
+                        <session id>/images<img_suffix>). Empty if not used. []                        
+    --overwrite         If the specified list file already exists: [no]
 
-                         - ask    (ask interactively, what to do)
-                         - yes    (overwrite the existing file)
-                         - no     (abort creating a file)
-                         - append (append sessions to the existing list file)
+                        - ask    (ask interactively, what to do)
+                        - yes    (overwrite the existing file)
+                        - no     (abort creating a file)
+                        - append (append sessions to the existing list file)
                         
-    --check              Whether to check for existence of files to be included
-                         in the list and what to do if they don't exist:
+    --check             Whether to check for existence of files to be included
+                        in the list and what to do if they don't exist:
 
-                         - yes (check for presence and abort if the file to 
-                           be listed is not found)
-                         - no (do not check whether files are present or not)
-                         - warn (check for presence and warn if the file to be 
-                           listed is not found, but do not abort)
+                        - yes (check for presence and abort if the file to 
+                          be listed is not found)
+                        - no (do not check whether files are present or not)
+                        - warn (check for presence and warn if the file to be 
+                          listed is not found, but do not abort)
 
     USE
     ===   
@@ -1205,7 +1208,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
 
     The bolds will be listed in the list file as::
 
-        file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
+        file:<sessionsfolder>/<session id>/images<img_suffix>/functional/<boldname><boldnumber><boldtail>
 
     Note that the function expects the files to be present in the correct place
     within the Qu|Nex sessions folder structure.
@@ -1282,6 +1285,8 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
                Fixed sorting by bold number
     2020-01-14 Grega Repovš
                Extended documentation with explicit definition of parameters
+    2020-11-17 Grega Repovš
+               Added support for img_suffix.
     """
 
     def checkFile(fileName):
@@ -1344,7 +1349,6 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     if not sessions:
         raise ge.CommandFailed("createConc", "No session found", "No sessions found to add to the list file!", "Please check your data!")
 
-
     # --- generate list entries
 
     error = False
@@ -1356,7 +1360,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + boldnum + boldtail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
@@ -1371,7 +1375,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images', 'functional', boldname + str(boldnum) + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + str(boldnum) + boldtail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 

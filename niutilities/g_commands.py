@@ -52,7 +52,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'manageStudy'          : {'com': g_utilities.manageStudy,        'args': ('studyfolder', 'action', 'folders', 'verbose')},
             'createStudy'          : {'com': g_utilities.createStudy,        'args': ('studyfolder', 'folders', )},
             'createList'           : {'com': g_utilities.createList,         'args': ('sessionsfolder', 'sessions', 'filter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'img_suffix', 'overwrite', 'check')},
-            'createConc'           : {'com': g_utilities.createConc,         'args': ('sessionsfolder', 'sessions', 'filter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
+            'createConc'           : {'com': g_utilities.createConc,         'args': ('sessionsfolder', 'sessions', 'filter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'img_suffix', 'overwrite', 'check')},
             'gatherBehavior'       : {'com': g_utilities.gatherBehavior,     'args': ('sessionsfolder', 'sessions', 'filter', 'sourcefiles', 'targetfile', 'overwrite', 'check', 'report')},
             'pullSequenceNames'    : {'com': g_utilities.pullSequenceNames,  'args': ('sessionsfolder', 'sessions', 'filter', 'sourcefiles', 'targetfile', 'overwrite', 'check', 'report')},
             'batchTag2NameKey'     : {'com': g_utilities.batchTag2NameKey,   'args': ('filename', 'sessionid', 'bolds', 'output', 'prefix')},
