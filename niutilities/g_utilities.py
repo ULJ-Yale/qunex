@@ -693,9 +693,9 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
 
 
-def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", img_suffix=None, overwrite='no', check='yes'):
+def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", img_suffix='', overwrite='no', check='yes'):
     """
-    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [img_suffix=None] [overwrite="no"] [check="yes"]``
+    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [img_suffix=''] [overwrite="no"] [check="yes"]``
 
     Creates a .list formated file that can be used as input to a number of
     processing and analysis functions. The function is fairly flexible, its
