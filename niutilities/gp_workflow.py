@@ -1755,16 +1755,23 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     following specific parameters are used in this step:
 
     --bold_nuisance      A comma separated list of regressors to include in GLM.
-                         Possible values are: [m,V,WM,WB,1d]
+                         Possible values are: [m,m1d,mSq,m1dSq,V,WM,WB,1d]
 
-                         - m  (motion parameters)
-                         - V  (ventricles signal)
-                         - WM (white matter signal)
-                         - WB (whole brain signal)
-                         - 1d (first derivative of above nuisance signals)
-                         - e  (events listed in the provided fidl files (see
-                           above), modeled as specified in the event_string
-                           parameter.)
+                         - m     ... motion parameters
+                         - m1d   ... first derivative of movement regressors
+                         - mSq   ... squared motion parameters
+                         - m1dSq ... squared motion first derivatives
+                         - V     ... ventricles signal
+                         - WM    ... white matter signal
+                         - WB    ... whole brain signal
+                         - n1d   ... first derivative for nuisance signal
+                                     regressors
+                         - 1d    ... first derivatives of above nuisance signals
+                                     and movement
+                         - e     ... events listed in the provided fidl files 
+                                     (see above), modeled as specified in the 
+                                     event_string parameter.
+                         - t     ... task
                          
     --event_string       A string describing, how to model the events listed in
                          the provided fidl files. []
@@ -1865,9 +1872,15 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     
     ::
 
-        qunex preprocessBold sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-             overwrite=no parsessions=10 bolds=rest bold_actions="s,h,r,c,l" \\
-             bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
+        qunex preprocessBold 
+             sessions=fcMRI/sessions_hcp.txt \\
+             sessionsfolder=sessions \\
+             overwrite=no \\
+             parsessions=10 \\ 
+             bolds=rest \\
+             bold_actions="s,h,r,c,l" \\
+             bold_nuisance="m,V,WM,WB,1d" \\
+             mov_bad=udvarsme \\
              pignore="hipass=linear|regress=ignore|lopass=linear" \\
              nprocess=0
     """
@@ -2044,7 +2057,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldnum,                            # --- number of bold file to process
             options['omit'],                    # --- number of frames to skip at the start of each run
             options['bold_actions'],            # --- which steps to perform (s, h, r, c, p, p)
-            options['bold_nuisance'],           # --- what to regress (m, v, wm, wb, d, t, e, 1b)
+            options['bold_nuisance'],           # --- what to regress (m, m1d, mSq, m1dSq, V, WM, WB, d, t, e, 1d)
             '[]',                               # --- matrix of task regressors
             options['event_file'],              # --- fidl file to be used
             float(options['TR']),               # --- TR of the data
@@ -2386,14 +2399,17 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     following specific parameters are used in this step:
 
     --bold_nuisance      A comma separated list of regressors to include in GLM.
-                         Possible values are: [m,V,WM,WB,1d]
+                         Possible values are: [m,m1d,mSq,m1dSq,V,WM,WB,1d]
 
-                         - m  (motion parameters)
-                         - V  (ventricles signal)
-                         - WM (white matter signal)
-                         - WB (whole brain signal)
-                         - 1d (first derivative of above nuisance signals)
-                         - e  (events listed in the provided fidl files (see
+                         - m     (motion parameters)
+                         - m1d   (first derivative of motion parameters)
+                         - mSq   (squared motion parameters)
+                         - m1dSq (squared first derivative of motion parameters)
+                         - V     (ventricles signal)
+                         - WM    (white matter signal)
+                         - WB    (whole brain signal)
+                         - 1d    (first derivative of above nuisance signals)
+                         - e     (events listed in the provided fidl files (see
                            above), modeled as specified in the event_string
                            parameter.)
                          
@@ -2496,7 +2512,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     -------
 
     This step results in the following files (if requested):
-
+    
     - residual image (``<root>_res-<regressors><glm name>.<ext>``)
     - GLM image (``<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>``)
     - text GLM regressor matrix (``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt``)
@@ -2547,6 +2563,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                Changed subjects to sessions
     2019-06-06 Grega Repovš
                Enabled multiple log file locations
+    2020-11-06 Grega Repovš
+               Updated documentation and file naming               
     """
 
     doOptionsCheck(options, sinfo, 'preprocessConc')  
@@ -2562,10 +2580,16 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     else:
         options['bold_variant'] = '.' + options['hcp_bold_variant']  
 
-    concs = options['bolds'].split("|")
-    fidls = options['event_file'].split("|")
+    # --- extract conc and fidl names
+    concs = [e.strip().replace(".conc", "") for e in options['bolds'].split("|")]
+    fidls = [e.strip().replace(".fidl", "") for e in options['event_file'].split("|")]
 
-    concroot = options['boldname'] + '_' + options['image_target'] + '_'
+    # --- define the tail
+    options['bold_tail'] = ""
+    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
+        options['bold_tail'] = options['hcp_cifti_tail']
+
+    concroot = "_".join(e for e in [options['boldname'] + options['bold_tail'], options['image_target'].replace('cifti', 'dtseries')] if e)
     report = ''
 
     failed = 0
@@ -2574,15 +2598,20 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     else:
         for nb in range(0, len(concs)):
-            tconc = concs[nb].strip().replace(".conc", "")
-            tfidl = fidls[nb].strip().replace(".fidl", "")
+            tconc = concs[nb]
+            tfidl = fidls[nb]
+            options['concname'] = tconc
+            if tfidl:
+                options['fidlname'] = tfidl
+            else:
+                options['fidlname'] = ""
 
             try:
                 r += "\n\nConc bundle: %s" % (tconc)
 
                 d = getSessionFolders(sinfo, options)
                 f = {}
-                f_conc = os.path.join(d['s_bold_concs'], concroot + tconc + ".conc")
+                f_conc = os.path.join(d['s_bold_concs'], concroot + "_" + tconc + ".conc")
                 f_fidl = os.path.join(d['s_bold_events'], tfidl + ".fidl")
 
                 # --- find conc data
@@ -2640,11 +2669,6 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     boldnum  = c[1]
                     boldname = options['boldname'] + boldnum
                     bolds.append(boldnum)
-
-                    # --- define the tail
-                    options['bold_tail'] = ""
-                    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
-                        options['bold_tail'] = options['hcp_cifti_tail']
 
                     # if absolute path flag use session folder from conc file
                     if (options['conc_use'] == 'absolute'):
@@ -2729,7 +2753,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
+                opts  = "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- session folder

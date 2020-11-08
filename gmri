@@ -22,27 +22,26 @@ print "Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Suite Version", 
 print 
 
 help = '''
+  General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses   
+--------------------------------------------------------------------------------
+
+ DESCRIPTION: Qu|Nex Suite workflows contain python-based general neuroimaging 
+ utilities. NIutilities can be invoked via `gmri <command>` call or by invoking 
+ the "qunex <command>" call.
+ 
+
+                        General Qu|Nex Usage Syntax
 ================================================================================
 
-Neuro Imaging utilities (niutilities) for processing and analysis.
+ qunex <command> \
+   --parameterA=<value> \
+   [--parameterB=<value>]
+  =>  --   Dashes or "flags" denote parameters.
+  =>  []   Square brackets denote optional parameters. 
+             Note: What is shown inside [] denotes default values of optional parameters. 
+  =>  <>   Angle brackets denote user-specified values for a given parameter.
+  => commands, parameters and values are shown in small or "camel" case.
 
-usage: qunex <command> [option=value] [option=value] ...
-       qunex            (prints this help)
-       qunex ?<command> (print help for a given command)
-
-       -------------------------------------------------------------------------
-       Note the following conventions used in help and documentation:
-
-       * Square brackets [] denote an option or argument that is optional. The
-         value listed in the brackets is the default value used, if the argument
-         is not explicitly specified
-       * Angle brackets <> describe the value that should be provided
-       * Dashes or "flags" (-) in the documentation define input variables.
-       * Commands, arguments, and option names are either in small or "camel"
-         case.
-       * Use descriptions are in regular "sentence" case.
-       * Option values are usually specified in capital case (e.g. YES/NO).
-       -------------------------------------------------------------------------
 '''
 
 #
@@ -53,29 +52,12 @@ usage: qunex <command> [option=value] [option=value] ...
 # hcpdb hcp_Bedpostx     Run FSL Bedpostx GPU.
 
 comlist = '''
-================================================================================
-
-General magnetic resonance Imaging (Qu|Nex) utilities for processing and analysis.
-
-use: qunex <command> [option=value] [option=value] ...
-
+  General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses   
 --------------------------------------------------------------------------------
 
-Note the following conventions used in help and documentation:
 
-* Square brackets [] denote an option or argument that is optional. The
-  value listed in the brackets is the default value used, if the argument
-  is not explicitly specified.
-* Angle brackets <> describe the value that should be provided.
-* Dashes or "flags" (-) in the documentation define input variables.
-* Commands, arguments, and option names are either in small or "camel" case.
-* Use descriptions are in regular "sentence" case.
-* Option values are usually specified in capital case (e.g. YES/NO).
-
---------------------------------------------------------------------------------
-
-dicom utilities
----------------
+DICOM commands
+--------------
 listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
@@ -84,27 +66,27 @@ dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [ver
 importDICOM  [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
-import utilities
-----------------
+Import commands
+---------------
 importBIDS   [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
 mapBIDS2nii  [sourcefolder='.'] [overwrite='no']
 importHCP    [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
 mapHCPLS2nii [sourcefolder='.'] [overwrite='no']
 
 
-WUSTL NIL pipeline utilities
-----------------------------
+WUSTL NIL pipeline commands
+---------------------------
 runNIL       [folder=.] [overwrite=no] [sourcefile=session.txt]
 runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
 
 
-General image file utilities
-----------------------------
+General image file commands
+---------------------------
 sliceImage    sourcefile=<source image> targetfile=<target image> [frames=1]
 
 
-NIfTI file conversions
-----------------------
+NIfTI file conversion commands
+------------------------------
 fz2zf         inf=<input_image> [outf=<output_image>]
 reorder       inf=<input_image> [outf=<output_image>]
 reslice       inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
@@ -119,8 +101,8 @@ createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfol
 setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt] [check="yes"] [existing="add"] [hcp_filename="standard"] [folderstructure="hcpls"] [hcp_suffix=""]
 
 
-Miscellaneous file utilities
-----------------------------
+Miscellaneous file commands
+---------------------------
 createStudy  studyfolder=<path to study base folder> [subfolders=$TOOLS/niutilities/templates/study_folders_default.txt]
 createBatch  [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch.txt]
 createList  [sessionsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
@@ -128,7 +110,7 @@ createConc  [sessionsfolder=.] [sessions=None] [filter=None] [concfolder=None] [
 runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
-Fidl file utilities
+FIDL file commands
 -------------------
 joinFidl       concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidlname to append>]
 joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>] [fidlname=<optional fidl name to append>]
@@ -136,21 +118,21 @@ splitFidl      concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [out
 checkFidl      [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
 
 
-Caret & Workbench surface mapping utilities
--------------------------------------------
+Workbench surface mapping commands
+----------------------------------
 map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
 map2HCP volume=<volume file> [method=trilinear]
 maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
 joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
 
 
-PALM utilities
+PALM commands
 --------------
 createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
 runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of proceeses to run in parallel>]  [overwite=no]
 
-Scheduling utilities
---------------------
+Scheduling command
+------------------
 schedule [command=<command string>] [script=<path to script>] \
          settings=<settings string> \
          [replace=<"key:value|key:value" string>] \
@@ -160,8 +142,8 @@ schedule [command=<command string>] [script=<path to script>] \
 
 
 Processing commands
-===================
-In contrast to utilities listed above, processing commands can be submitted to
+-------------------
+In contrast to commands listed above, processing commands can be submitted to
 run on a computer cluster using either a PBS or LSF scheduling. The commands
 operate on a list of sessions specified in a `batch.txt` file that provides
 information about each session and his or her images and other information.
@@ -170,16 +152,16 @@ file or on the command line, the latter having priority if a parameter is
 specified at both levels. No options need to be set for any of the commands
 listed below. The key parameters with their default values are:
 
-    sessions=batch.txt   ... the path to the batch.txt file
-    sessionsfolder=.     ... the path to the study sessions folder
-    overwrite=no         ... whether to overwrite existing results
-    parsessions=1        ... how many sessions to run in parallel
-    nprocess=0           ... how many sessions to process (0=all)
-    log=remove           ... whether to remove logs of commands that have
-                             ran and finished successfully
-    run=run              ... whether to run (run) the listed command or
-                             test (test) if all the data is ready for the
-                             specific command to run successfully
+    --sessions=batch.txt    the path to the batch.txt file
+    --sessionsfolder=.      the path to the study sessions folder
+    --overwrite=no          whether to overwrite existing results
+    --parsessions=1         how many sessions to run in parallel
+    --nprocess=0            how many sessions to process (0=all)
+    --log=remove            whether to remove logs of commands that have
+                            ran and finished successfully
+    --run=run               whether to run (run) the listed command or
+                            test (test) if all the data is ready for the
+                            specific command to run successfully
 
 Please note that each of the commands can be run by specifying its short 
 (listed first) or full (listed second) name followed by specfication of
@@ -212,40 +194,45 @@ cpp  preprocessConc          Preprocess conc bundles of BOLD images.
 
 General purpose commands
 ------------------------
-
 rsc  runShellScript   Runs the specified script.
 
 
 Legacy commands
 ---------------
-
 seg    runBasicSegmentation     Run basic structural image segmentation using BET and FAST.
 gfs    getFSData                Copy existing FreeSurfer data to sessions' images folder.
 fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
 fsf    runFullFS                Run full freesurfer segmentation
 
 
-NiTools functions
-================
-A number of Matlab functions provided as part of Qu|Nex/nitools package can be run.
-A list of functions available is provided below. For more information on each
-function run `qunex ?<function name>`. Arguments can be specified in any order.
-Arguments that are not provided will be passed as empty strings / vectors to be
-processed with default values. Take care to embed vectors in square brackets
-(e.g. "[1 8 6 12]") and cell arrays in curly braces (e.g. "{'DLPFC', 'ACC',
-'FEF'}"). In addition, 'saveOutput' argument can be specified to redirect Matlab
-output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 
-An example call of a Matlab function:
+NItools commands supported via NIUtilities
+------------------------------------------
+A number of NItools module commands provided as part of Qu|Nex can be 
+invoked via the NIUtilities engine. A list of commands currently supported is 
+provided below. For more information run `qunex <command>`. 
 
-$ qunex g_FindPeaks fin='map_zstat.dscalar.nii' fout='map_peaks.dscalar.nii' \\
-     mins="[50 50]" maxs="[300 350]" val=n t=3.5 projection=midthickness
+Note that parameters can be specified in any order. Parameters that are not provided 
+will be passed as empty and will be processed with default values. Take care to embed 
+vectors in square brackets (e.g. "[1 8 6 12]") and cell arrays in curly braces 
+(e.g. "{'DLPFC', 'ACC', 'FEF'}"). In addition, 'saveOutput' parameter can be specified 
+to redirect Matlab output to a file: (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 
-List of available functions:
+Example call of a Qu|Nex NITools command:
+
+ qunex g_FindPeaks \\
+  --fin='map_zstat.dscalar.nii' \\
+  --fout='map_peaks.dscalar.nii' \\
+  --mins="[50 50]" --maxs="[300 350]" \\
+  --val=n t=3.5 \\
+  --projection=midthickness
+
+
+ ==> List of NItools commands supported via NIUtilities:
 '''
 
 for mcom in gn.functionList:
-    comlist += "\n" + mcom
+    comlist += "\n " + mcom
 
 def runCommand(command, args):
 

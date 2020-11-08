@@ -244,10 +244,9 @@ def getFileNames(sinfo, options):
     d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
-    rgss = rgss.translate(None, ' ,;|')
+    rgss = rgss.translate(None, ' ,;|') + options['glm_name']
 
-    concroot = options['boldname'] + '_'
-    fformat  = options['image_target'] + '_'
+    concname = "_".join(e for e in [options['boldname'] + options.get('bold_tail', ''), options['image_target'].replace('cifti', 'dtseries'), options.get('concname', 'conc'), options.get('fidlname', '')] if e)
 
     # --- structural images
 
@@ -271,8 +270,8 @@ def getFileNames(sinfo, options):
 
     f['fs_lhpial']          = os.path.join(d['s_fs_surf'], 'lh.pial')
 
-    f['conc']               = os.path.join(d['s_bold_concs'], concroot + fformat + options['event_file'] + '.conc')
-    f['conc_final']         = os.path.join(d['s_bold_concs'], concroot + fformat + options['event_file'] + options['bold_prefix'] + '.conc')
+    f['conc']               = os.path.join(d['s_bold_concs'], concname + '.conc')
+    f['conc_final']         = os.path.join(d['s_bold_concs'], options['bold_prefix'] + concname + '.conc')
 
     for ch in options['bold_actions']:
         if ch == 's':
