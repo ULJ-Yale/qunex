@@ -26,14 +26,14 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.8
+Qu|Nex suite version: 0.62.9
 
 Submodules:
 
 * connector: 0.62.8
 * library: 0.62.2
 * nitools: 0.61.2
-* niutilities: 0.62.9
+* niutilities: 0.62.10
 
 
 Release notes
@@ -86,6 +86,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.62.9 [niutilities] The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
 * 0.62.8 [niutilities, nitools] More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention.
 * 0.62.7 [connector] qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
 * 0.62.6 [connector] runTurnkey patch to include T2 to rsync command for hcp2 step
