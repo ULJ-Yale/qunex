@@ -442,7 +442,7 @@ if (plot) {
     major <- (nframes %/% 300 + 2) * 10
 
     if (verbose) cat("\n     ... _cor.pdf")
-    pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_cor.pdf", sep=""), sep="/"), width=10, height=3.3*nruns)
+    pdf(file=paste(folder, paste(rname, bold_tail, '_', pref, plotr, "_cor.pdf", sep=""), sep="/"), width=10, height=3.3*nruns)
     d$run <- factor(as.character(d$run), levels=boldnames, labels=boldnames, ordered=TRUE)
     with(d, levels(run))
     print(qplot(frame, value, data = d, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement correction parameters", session, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("mm / deg"))
@@ -457,7 +457,7 @@ if (plot) {
     dfd <- rbind(dfd, ddvm)
 
     if (verbose) cat("\n     ... _dvars.pdf")
-    pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_dvars.pdf", sep=""), sep="/"), width=10, height=2*nruns)
+    pdf(file=paste(folder, paste(rname, bold_tail, '_', pref, plotr, "_dvars.pdf", sep=""), sep="/"), width=10, height=2*nruns)
     dbadm <- dbadm[dbadm$value > 0, ]
     ylim <- max(dfd$value)
     ylim <- 10
@@ -475,7 +475,7 @@ if (plot) {
     if (verbose) cat(" ... ok")
 
     if (verbose) cat("\n     ... _dvarsme.pdf")
-    pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_dvarsme.pdf", sep=""), sep="/"), width=10, height=2*nruns)
+    pdf(file=paste(folder, paste(rname, bold_tail, '_', pref, plotr, "_dvarsme.pdf", sep=""), sep="/"), width=10, height=2*nruns)
     dbadme <- dbadme[dbadme$value > 0, ]
     ylim <- max(dad$value)
     ylim <- 6

@@ -360,10 +360,16 @@ def getBOLDFileNames(sinfo, boldname, options):
     d = getSessionFolders(sinfo, options)
     f = {}
 
-    if 'bold_tail' not in options:
-        options['bold_tail'] = ""
+    # identify bold_tail based on the type of image
+    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
+        target_bold_tail = options['hcp_cifti_tail']
+    else:
+        target_bold_tail = options['hcp_nifti_tail']
+    
+    # if bold_tail is set, use that instead
+    target_bold_tail = options.get('bold_tail', target_bold_tail)
 
-    boldnumber = re.search('\d+$',boldname).group()
+    boldnumber = re.search('\d+$', boldname).group()
 
     ext = getExtension(options['image_target'])
 
@@ -386,17 +392,17 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # --- bold masks
 
-    f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + '_frame1' + ext)
-    f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + '_frame1_brain' + ext)
-    f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + '_frame1_brain_mask' + ext)
+    f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1' + ext)
+    f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain' + ext)
+    f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain_mask' + ext)
 
     # --- bold masks internals
 
-    f['bold1_nifti']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + '_frame1_flip.4dfp.nii.gz')
-    f['bold1_brain_nifti']      = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + '_frame1_brain_flip.4dfp.nii.gz')
-    f['bold1_brain_mask_nifti'] = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + '_frame1_brain_flip.4dfp_mask.nii.gz')
+    f['bold1_nifti']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_flip.4dfp.nii.gz')
+    f['bold1_brain_nifti']      = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain_flip.4dfp.nii.gz')
+    f['bold1_brain_mask_nifti'] = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain_flip.4dfp_mask.nii.gz')
 
-    f['bold_n_png']             = os.path.join(d['s_nuisance'], options['boldname'] + boldnumber + '_nuisance.png')
+    f['bold_n_png']             = os.path.join(d['s_nuisance'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_nuisance.png')
 
     # --- movement files
 
@@ -418,13 +424,13 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # --- bold preprocessed files
 
-    f['bold']                   = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['bold_tail'] + ext)
-    f['bold_final']             = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['bold_tail'] + options['bold_prefix'] + ext)
-    f['bold_stats']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['bold_tail'] +  '.bstats')
-    f['bold_nuisance']          = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['bold_tail'] + '.nuisance')
-    f['bold_scrub']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['bold_tail'] + '.scrub')
+    f['bold']                   = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + ext)
+    f['bold_final']             = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + options['bold_prefix'] + ext)
+    f['bold_stats']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.bstats')
+    f['bold_nuisance']          = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.nuisance')
+    f['bold_scrub']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.scrub')
 
-    f['bold_vol']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['bold_tail'] + '.nii.gz')
+    f['bold_vol']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.nii.gz')
     f['bold_dts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_cifti_tail'] + '.dtseries.nii')
     f['bold_pts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_cifti_tail'] + '.ptseries.nii')
 
@@ -480,15 +486,12 @@ def getSessionFolders(sinfo, options):
     """
     d = {}
 
+    #!# Add a check and thow an error if options['image_source'] is hcp but d['hcp'] is not set
+
     if options['image_source'] == 'hcp':
         d['s_source'] = sinfo['hcp']
     else:
         d['s_source'] = sinfo['data']
-
-    if options['hcp_bold_variant'] == "":
-        bvar = ''
-    else:
-        bvar = '.' + options['hcp_bold_variant']
 
     if "hcp" in sinfo:
         d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
@@ -497,14 +500,14 @@ def getSessionFolders(sinfo, options):
     d['s_images']           = os.path.join(d['s_base'], 'images' + options['img_suffix'])
     d['s_struc']            = os.path.join(d['s_images'], 'structural')
     d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
-    d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks' + bvar)
-    d['s_bold']             = os.path.join(d['s_images'], 'functional' + bvar)
+    d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks' + options['bold_variant'])
+    d['s_bold']             = os.path.join(d['s_images'], 'functional' + options['bold_variant'])
     d['s_bold_mov']         = os.path.join(d['s_bold'], 'movement')
     d['s_bold_events']      = os.path.join(d['s_bold'], 'events')
     d['s_bold_concs']       = os.path.join(d['s_bold'], 'concs')
     d['s_bold_glm']         = os.path.join(d['s_bold'], 'glm')
     d['s_roi']              = os.path.join(d['s_images'], 'ROI')
-    d['s_nuisance']         = os.path.join(d['s_roi'], 'nuisance' + bvar)
+    d['s_nuisance']         = os.path.join(d['s_roi'], 'nuisance' + options['bold_variant'])
     d['s_fs']               = os.path.join(d['s_seg'], 'freesurfer')
     d['s_hcp']              = os.path.join(d['s_seg'], 'hcp')
     d['s_s32k']             = os.path.join(d['s_hcp'], 'fsaverage_LR32k')
@@ -514,7 +517,7 @@ def getSessionFolders(sinfo, options):
     d['inbox']              = os.path.join(options['sessionsfolder'], 'inbox')
 
     d['qc']                 = os.path.join(options['sessionsfolder'], 'QC')
-    d['qc_mov']             = os.path.join(d['qc'], 'movement' + bvar)
+    d['qc_mov']             = os.path.join(d['qc'], 'movement' + options['img_suffix'] + options['bold_variant'])
 
     if not os.path.exists(d['s_source']) and options['source_folder']:
         print "WARNING: Source folder not found, waiting 15s to give it a chance to come online!"
