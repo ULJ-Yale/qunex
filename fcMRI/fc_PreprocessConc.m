@@ -650,7 +650,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -721,15 +721,15 @@ for b = 1:nbolds
     file(b).froot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname bnum options.bold_tail]);
 
     file(b).movdata     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '_mov.dat']);
-    file(b).oscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.scrub']);
+    file(b).oscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.scrub']);
     file(b).tscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.bold_tail variant '.scrub']);
-    file(b).bstats      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.bstats']);
-    file(b).nuisance    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.nuisance']);
+    file(b).bstats      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.bstats']);
+    file(b).nuisance    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.nuisance']);
     file(b).fidlfile    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' efile]);
-    file(b).bmask       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum '_frame1_brain_mask' tail]);
+    file(b).bmask       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum options.ref_bold_tail '_frame1_brain_mask' tail]);
 
     file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc'  eroot]);                % using conc instead of options.concname
-    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);   % missing options.concname  before eroot
+    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);       % missing options.concname  before eroot
 
     file(b).Xroot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X' eroot]);            % not using options.concname
 
@@ -1157,6 +1157,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     effects     = {};
     effect      = [];
     eindex      = [];
+
+    for b = 1:nbolds
+        img(b).data = img(b).image2D;
+    end
 
     % ---> bold starts, ends, frames, selection of nuisance
 
