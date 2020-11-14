@@ -17,8 +17,8 @@ if fout == -1
     error('\n\nERROR: Could not open %s for saving. Please check your paths!\n\nMatlab message: %s', file, message);
 end
 
-fprintf(fout, '    number_of_files: %d\n', length(files));
+fprintf(fout, 'number_of_files: %d\n', length(files));
 for n = 1:length(files)
-	fprintf(fout, '               file:%s\n', files{n});
+	fprintf(fout, '    file:%s\n', files{n});
 end
 fclose(fout);
