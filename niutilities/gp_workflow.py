@@ -170,7 +170,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                         'WM|Control|rest') or 'all' to copy all [rest].
     --boldname          The default name of the bold files in the images
                         folder. [bold]
-    --hcp_nifti_tail    The tail of NIfTI volume images to use. []
+    --nifti_tail        The tail of NIfTI volume images to use. []
     --bold_variant      Optional variant of bold preprocessing. If
                         specified, the BOLD images in                            
                         `images/functional<bold_variant>` will be
@@ -202,9 +202,9 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     bet to extract the brain and create a brain mask. The resulting files are
     saved into images/segmentation/boldmasks in the source image format:
 
-    - bold[N]<hcp_nifti_tail>_frame1.*
-    - bold[N]<hcp_nifti_tail>_frame1_brain.*
-    - bold[N]<hcp_nifti_tail>_frame1_brain_mask.*
+    - bold[N]<nifti_tail>_frame1.*
+    - bold[N]<nifti_tail>_frame1_brain.*
+    - bold[N]<nifti_tail>_frame1_brain_mask.*
 
     EXAMPLE USE
     ===========
@@ -212,7 +212,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     ::
 
         qunex createBOLDBrainMasks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no hcp_cifti_tail=_Atlas bolds=all parelements=8
+              overwrite=no nifti_tail=_hp2000_clean bolds=all parelements=8
     """
 
     """
@@ -240,6 +240,8 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     2020-11-09 Grega Repovš
                Added use and information on hcp_nifti_tail and bold_variant
                Made sure that the volume image is used for computing stats
+    2020-11-13 Grega Repovš
+               Changed hcp_nifti_tail to nifti_tail
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -436,7 +438,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            'WM|Control|rest') or 'all' to copy all [rest].
     --boldname             The default name of the bold files in the images
                            folder. [bold]
-    --hcp_nifti_tail       The tail of NIfTI volume images to use. []
+    --nifti_tail           The tail of NIfTI volume images to use. []
     --bold_variant         Optional variant of bold preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional<bold_variant>` will be
@@ -505,7 +507,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[N].bstats
     --------------
 
-    bold[N]<hcp_nifti_tail>.bstats includes for each frame of the BOLD image the 
+    bold[N]<nifti_tail>.bstats includes for each frame of the BOLD image the 
     following computed statistics:
 
     --n           Number of brain voxels.
@@ -524,7 +526,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[N].scrub
     -------------
 
-    bold[N]<hcp_nifti_tail>.scrub includes for each frame the information on 
+    bold[N]<nifti_tail>.scrub includes for each frame the information on 
     whether the frame should be excluded (1) or not (0) based on the following 
     criteria (note below the relevant settings that specify thresholds etc.):
 
@@ -552,7 +554,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[N].use
     -----------
 
-    bold[N]<hcp_nifti_tail>.use file lists for each frame of the relevant BOLD 
+    bold[N]<nifti_tail>.use file lists for each frame of the relevant BOLD 
     image, whether it is to be used (1) or not (0).
 
     NOTES AND DEPENDENCIES
@@ -605,6 +607,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     2020-11-09 Grega Repovš
                Added use and information on hcp_nifti_tail and bold_variant
                Made sure that the volume image is used for computing stats
+    2020-11-13 Grega Repovš
+               Changed hcp_nifti_tail to nifti_tail
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -766,7 +770,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            'WM|Control|rest') or 'all' to copy all [rest].
     --boldname             The default name of the bold files in the images
                            folder. [bold]
-    --hcp_nifti_tail       The tail of NIfTI volume images to use. []
+    --nifti_tail           The tail of NIfTI volume images to use. []
     --bold_variant         Optional variant of bold preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional<bold_variant>` will be
@@ -862,22 +866,22 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     For each session it saves into images/functional/movement:
 
-    --`bold_<mov_plot>_cor.pdf`       A plot of movement correction parameters
-                                      for each of the BOLD files.
-    --`bold_<mov_plot>_dvars.pdf`     A plot of frame displacement and dvarsm
-                                      statistics with frames that are identified
-                                      as bad marked in blue.
-    --`bold_<mov_plot>_dvarsme.pdf`   A plot of frame displacement and dvarsme
-                                      statistics with frames that are identified
-                                      as bad marked in blue.
-    --`bold[N]_scrub.fidl`            A fidl filesnippet that lists, which
-                                      frames are to be excluded from the
-                                      analysis.
+    --`bold<nifti_tail>_<mov_plot>_cor.pdf`       
+            A plot of movement correction parameters for each of the BOLD files.
+    --`bold<nifti_tail>_<mov_plot>_dvars.pdf`     
+            A plot of frame displacement and dvarsm statistics with frames that 
+            are identified as bad marked in blue.
+    --`bold<nifti_tail>_<mov_plot>_dvarsme.pdf`   
+            A plot of frame displacement and dvarsme statistics with frames that 
+            are identified as bad marked in blue.
+    --`bold[N]<nifti_tail>_scrub.fidl`            
+            A fidl filesnippet that lists, which frames are to be excluded from 
+            the analysis.
 
     For the group level it creates three report files that are stored in the
     <sessionsfolder>/QC/movement folder. These files are:
 
-    - ``<mov_mreport>`` (bold_movement_report.txt by default)
+    - ``<mov_mreport>`` (bold<nifti_tail>_movement_report.txt by default)
       This file lists for each session and bold file mean, sd, range, max, min,
       median, and squared mean divided by max statistics for each of the 6
       movement correction parameters. It also prints mean, median, maximum, and
@@ -885,12 +889,12 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
       file is to enable easy session and group level analysis of movement in
       the scanner.
 
-    - ``<mov_preport>`` (bold_movement_report_post.txt by default)
+    - ``<mov_preport>`` (bold<nifti_tail>_movement_report_post.txt by default)
       This file has the same structure and information as the above, whith
       frames marked as bad excluded from the statistics computation. This
       enables session and group level assessment of the effects of scrubbing.
 
-    - ``<mov_sreport>`` (bold_movement_scrubbing_report.txt by default)
+    - ``<mov_sreport>`` (bold<nifti_tail>_movement_scrubbing_report.txt by default)
       This file lists for each BOLD of each session the number and the
       percentage of frames that would be marked as bad and excluded from the
       analyses when a specific exclusion criteria would be used. Again, the
@@ -918,18 +922,21 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no bolds=all parsessions=1
+        qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
+              --sessionsfolder=sessions --overwrite=no --bolds=all \\
+              --parsessions=1
 
     ::
 
-        qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no bolds=all parsessions=10
+        qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
+              --sessionsfolder=sessions --overwrite=no --bolds=all 
+              --parsessions=10
 
     ::
 
-        qunex createStatsReport sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no bolds=all parsessions=1 mov_plot=""
+        qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
+              --sessionsfolder=sessions --overwrite=no --bolds=all 
+              --nifti_tail=_hp2000_clean --parsessions=1 --mov_plot=""
     """
 
     """
@@ -950,6 +957,8 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                Enabled multiple log file locations
     2020-11-09 Grega Repovš
                Added use and information on hcp_nifti_tail and bold_variant
+    2020-11-13 Grega Repovš
+               Changed hcp_nifti_tail to nifti_tail
     """
 
     preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0, 'boldskipped': 0}
@@ -1044,7 +1053,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
         for tf in ['mov_mreport', 'mov_sreport', 'mov_preport']:
             if options[tf] != '':
-                tmpf = os.path.join(d['qc_mov'], options['boldname'] + options['hcp_nifti_tail'] + '_' + options[tf])
+                tmpf = os.path.join(d['qc_mov'], options['boldname'] + options['nifti_tail'] + '_' + options[tf])
                 report[tf] = tmpf
                 if os.path.exists(tmpf) and thread == 1:
                     os.remove(tmpf)
@@ -1067,7 +1076,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
             plot,                       # root name of the plot file, none to omit plotting [mov_report]
             options['mov_pref'],        # prefix for the reports
             options['boldname'],        # root name for the bold files
-            options['hcp_nifti_tail'],  # tail for the volume bold files
+            options['nifti_tail'],      # tail for the volume bold files
             "|".join(procbolds))        # | separated list of bold indeces for which to do the stat report
 
         tfile = os.path.join(d['s_bold_mov'], '.r.ok')
@@ -1087,7 +1096,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                 if not os.path.exists(tfolder):
                     os.makedirs(tfolder)
 
-                froot = "%s%s_%s%s_%s.pdf" % (options['boldname'], options['hcp_nifti_tail'], options['mov_pref'], options['mov_plot'], sf)
+                froot = "%s%s_%s%s_%s.pdf" % (options['boldname'], options['nifti_tail'], options['mov_pref'], options['mov_plot'], sf)
                 if os.path.exists(os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot))):
                     os.remove(os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
                 linkOrCopy(os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
@@ -1157,7 +1166,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            'WM|Control|rest') or 'all' to copy all [rest].
     --boldname             The default name of the bold files in the images
                            folder. [bold]
-    --hcp_nifti_tail       The tail of NIfTI volume images to use. []
+    --nifti_tail           The tail of NIfTI volume images to use. []
     --bold_variant         Optional variant of bold preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional<bold_variant>` will be
@@ -1207,14 +1216,14 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     The command generates the following files:
 
-    --`bold[N]<hcp_nifti_tail>.nuisance`
+    --`bold[N]<nifti_tail>.nuisance`
       A text file that lists for each volume frame the information on mean
       intensity across the ventricle, white matter and whole brain voxels, and
       any additional nuisance ROI specified using specific parameters.
       The file is stored in 
       `images<img_suffix>/functional<bold_variant>/movement` folder.
 
-    --`bold[N]<hcp_nifti_tail>_nuisance.png`
+    --`bold[N]<nifti_tail>_nuisance.png`
       A PNG image of axial slices of the first BOLD frame over which the
       identified nuisance regions are overlayed. Ventricles in green, white
       matter in red and the rest of the brain in blue. The ventricle and
@@ -1223,7 +1232,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
       buffer between each nuisance region mask. The image is stored in
       `images<img_suffix>/ROI/nuisance<bold_variant>`.
 
-    --`bold[N]<hcp_nifti_tail>_nuisance.<image format>`
+    --`bold[N]<nifti_tail>_nuisance.<image format>`
       An image file of the relevant image format that holds the same information
       as the above PNG. It is a file of five volumes, the first volume holds
       the first BOLD frame, the second the whole brain mask, the third the
@@ -1316,6 +1325,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                Enabled multiple log file locations
     2020-11-09 Grega Repovš
                Added use and information on img_suffix, hcp_nifti_tail and bold_variant
+    2020-11-13 Grega Repovš
+               Changed hcp_nifti_tail to nifti_tail
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1324,7 +1335,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\nExtracting BOLD nuisance signal ..."
     r += "\n\n    Files in 'images%s/functional%s will be processed." % (options['img_suffix'], options['bold_variant'])
-    r += "\n\n    The command will extract nuisance signal from each of the specified BOLD files.\n    The results will be saved as %s[N]%s.nuisance files in the images%s/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal." % (options['boldname'], options['hcp_nifti_tail'], options['img_suffix'])
+    r += "\n\n    The command will extract nuisance signal from each of the specified BOLD files.\n    The results will be saved as %s[N]%s.nuisance files in the images%s/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal." % (options['boldname'], options['nifti_tail'], options['img_suffix'])
     r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sessionroi: %(sessionroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
     r += "\n\n    when extracting nuisance signal."
     r += "\n\n........................................................"
@@ -1525,8 +1536,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                         to perform [s,h,r,c,l]
     --image_target      The target format to work with, one of 4dfp, nifti,
                         dtseries or ptseries [nifti].
-    --hcp_nifti_tail    The tail of NIfTI volume images to use. []
-    --hcp_cifti_tail    The tail of CIFTI images to use. []    
+    --nifti_tail        The tail of NIfTI volume images to use. []
+    --cifti_tail        The tail of CIFTI images to use. []    
     --bold_prefix       An optional prefix to place in front of processing
                         name extensions in the resulting files, e.g. 
                         bold3<bold_prefix>_s_hpss.nii.gz [].
@@ -1916,6 +1927,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                Enabled multiple log file locations
     2020-11-09 Grega Repovš
                Added use and information on hcp_nifti/cifti_tail and bold_variant
+    2020-11-13 Grega Repovš
+               Changed hcp_nifti_tail to nifti_tail
     """
 
     doOptionsCheck(options, sinfo, 'preprocessBold')  
@@ -1992,9 +2005,9 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
         # --- define the tail
         
-        options['bold_tail'] = options['hcp_nifti_tail']
+        options['bold_tail'] = options['nifti_tail']
         if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
-            options['bold_tail'] = options['hcp_cifti_tail']
+            options['bold_tail'] = options['cifti_tail']
 
         # --- filenames and folders
 
@@ -2052,7 +2065,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldow = 'false'
 
         scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(hcp_nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
+        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
         mcomm = 'fc_Preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
             d['s_base'],                        # --- sessions folder
@@ -2172,8 +2185,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                         to perform [s,h,r,c,l]
     --image_target      The target format to work with, one of 4dfp, nifti,
                         dtseries or ptseries [nifti].
-    --hcp_nifti_tail    The tail of NIfTI volume images to use. []
-    --hcp_cifti_tail    The tail of CIFTI images to use. []    
+    --nifti_tail        The tail of NIfTI volume images to use. []
+    --cifti_tail        The tail of CIFTI images to use. []    
     --bold_prefix       An optional prefix to place in front of processing
                         name extensions in the resulting files, e.g. 
                         bold3<bold_prefix>_s_hpss.nii.gz [].
@@ -2222,7 +2235,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     the session's sesion folder present in the batch file, and the 
     `bold_variant` setting, whereas the specific bold file name and file 
     format (e.g. .nii.gz vs. .dtseries.nii) to use will depend on `boldname`, 
-    `image_target`, `hcp_nifti_tail` and `hcp_cifti_tail` settings. This allows 
+    `image_target`, `nifti_tail` and `cifti_tail` settings. This allows for
     flexible use of conc files. That is, the same conc files can be used for 
     NIfTI and CIFTI versions of bold files, across bold variants, and even when
     the actual study location changes, e.g. when moving the study from one 
@@ -2234,7 +2247,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     both the specific location as well as the specific filename specified in 
     the conc file will be used exactly as specified. In this case, do check
     and make sure that the information in the conc file is valid and it matches 
-    with `boldname` and `image_target` parameters, and that the `hcp_nifti_tail`
+    with `boldname` and `image_target` parameters, and that the `nifti_tail`
     is specified correctly, as it will be used to obtain bold statistics and 
     nuisance information!
 
@@ -2570,7 +2583,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     2019-06-06 Grega Repovš
                Enabled multiple log file locations
     2020-11-06 Grega Repovš
-               Updated documentation and file naming               
+               Updated documentation and file naming
+    2020-11-13 Grega Repovš
+               Changed hcp_nifti_tail and hcp_cifti_tail to nifti_tail and cifti_tail
     """
 
     doOptionsCheck(options, sinfo, 'preprocessConc')  
@@ -2585,9 +2600,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     fidls = [e.strip().replace(".fidl", "") for e in options['event_file'].split("|")]
 
     # --- define the tail
-    options['bold_tail'] = options['hcp_nifti_tail']
+    options['bold_tail'] = options['nifti_tail']
     if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
-        options['bold_tail'] = options['hcp_cifti_tail']
+        options['bold_tail'] = options['cifti_tail']
 
     concroot = "_".join(e for e in [options['boldname'] + options['bold_tail'], options['image_target'].replace('cifti', 'dtseries')] if e)
     report = ''
@@ -2753,7 +2768,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(hcp_nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
+                opts  = "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- session folder

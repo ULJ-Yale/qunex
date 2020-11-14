@@ -7214,8 +7214,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                                             -> images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
                                                (2mm iso downsampled version)
     * fsaverage_LR32k/*                     -> images/segmentation/hcp/fsaverage_LR32k
-    * BOLD_[N][hcp_nifti_tail].nii.gz       -> images/functional/[boldname][N][hcp_nifti_tail].nii.gz
-    * BOLD_[N][hcp_cifti_tail].dtseries.nii -> images/functional/[boldname][N][hcp_cifti_tail].dtseries.nii
+    * BOLD_[N][hcp_nifti_tail].nii.gz       -> images/functional/[boldname][N][qx_nifti_tail].nii.gz
+    * BOLD_[N][hcp_cifti_tail].dtseries.nii -> images/functional/[boldname][N][qx_cifti_tail].dtseries.nii
     * Movement_Regressors.txt               -> images/functional/movement/[boldname][N]_mov.dat
 
     INPUTS
@@ -7232,10 +7232,6 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                             (no). [no]
     --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
-    --hcp_nifti_tail        The tail (see above) that specifies, which version
-                            of the nifti (volume) files to copy over [].
-    --hcp_cifti_tail        The tail (see above) that specifies, which version
-                            of the cifti files to copy over. []
     --hcp_bold_variant      Optional variant of HCP BOLD preprocessing. If
                             specified, the results will be copied/linked from
                             `Results<hcp_bold_variant>`. []
@@ -7248,6 +7244,12 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     --img_suffix            Specifies a suffix for 'images' folder to enable
                             support for multiple parallel workflows. Empty 
                             if not used. []
+    --qx_nifti_tail         The tail to use for the mapped volume files in the
+                            QuNex file structure. If not specified or if set 
+                            to 'None', the value of hcp_nifti_tail will be used. 
+    --qx_cifti_tail         The tail to use for the mapped cifti files in the
+                            QuNex file structure. If not specified or if set
+                            to 'None', the value of hcp_cifti_tail will be used.
     --bold_variant          Optional variant for functional images. If 
                             specified, functional images will be mapped into 
                             `functional<bold_variant>` folder. []
@@ -7257,11 +7259,13 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     save space. If hard links can not be created, the files are copied.
 
     Specific attention needs to be paid to the use of `hcp_nifti_tail`, 
-    `hcp_cifti_tail`, `hcp_suffix`, `img_suffix` and `hcp_bold_variant` 
-    parameters.
+    `hcp_cifti_tail`, `hcp_suffix`, and `hcp_bold_variant` that relate to 
+    file location and naming within the HCP folder structure and 
+    `qx_nifti_tail`, `qx_cifti_tail`, `img_suffix`, and `bold_variant` that 
+    relate to file and folder naming within the QuNex folder structure.
     
     `hcp_suffix` parameter enables the use of a parallel HCP minimal processing
-    stream. To enable the separation in the QuNex folder structure as well, 
+    stream. To enable the same separation in the QuNex folder structure, 
     `img_suffix` parameter has to be set. In this case HCP data will be mapped 
     to `<sessionsfolder>/<session id>/images<img_suffix>` folder instead of the
     default `<sessionsfolder>/<session id>/images` folder.
@@ -7269,9 +7273,10 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     Similarly, if separate variants of bold image processing were run, and the
     results were stored in `MNINonLinear/Results<hcp_bold_variant>`, the 
     `hcp_bold_variant` parameter needs to be set to map the data from the 
-    correct location. `bold_variant` parameter enables continued parallel
-    processing of bold data by mapping bold data to `functional<bold_variant>`
-    folder instead of the default `functional` folder.
+    correct location. `bold_variant` parameter on the other hand enables 
+    continued parallel processing of bold data in the QuNex folder structure
+    by mapping bold data to `functional<bold_variant>` folder instead of the 
+    default `functional` folder.
 
     Based on HCP minimal preprocessing choices, both CIFTI and NIfTI volume 
     files can be marked using different tails. E.g. CIFT files are marked with
@@ -7279,14 +7284,11 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     employing ICAFIX procedure. When mapping the data, it is important that
     the correct files are mapped. The correct tails for NIfTI volume, and 
     CIFTI files are specified using the `hcp_nifti_tail` and `hcp_cifti_tail`
-    parameters. The same tails will then be used for the file names when they 
-    are mapped into the `images/functional` folders. Specifically, 
-    with `boldname=bold`, `hcp_nifti_tail`='' and `hcp_cifti_tail=_Atlas`, 
-    NIfTI volume files will be named using formula: 
-    `<boldname>[N]<hcp_nifti_tail>.nii.gz` resulting in e.g. `bold1.nii.gz`, 
-    and CIFTI files will be named using formula: 
-    `<boldname>[N]<hcp_cifti_tail>.dtseries.nii` resulting in e.g. 
-    `bold1_Atlas.dtseries.nii`.
+    parameters. When the data is mapped into QuNex folder structure the tails 
+    to be used for NIfTI and CIFTI data are specified with `qx_nifti_tail` and 
+    `qx_cifti_tail` parameters, respectively. If the `qx_*_tail` parameters
+    are not provided explicitly, the values specified in the `hcp_*_tail` 
+    parameters will be used.
 
     USE
     ===
@@ -7303,9 +7305,9 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     - fsaverage_LR32k/*
         - images<img_suffix>/segmentation/hcp/fsaverage_LR32k
     - BOLD_[N]<hcp_nifti_tail>.nii.gz
-        - images<img_suffix>/functional<bold variant>/<boldname>[N]<hcp_nifti_tail>.nii.gz
+        - images<img_suffix>/functional<bold variant>/<boldname>[N]<qx_nifti_tail>.nii.gz
     - BOLD_[N]<hcp_cifti_tail>.dtseries.nii
-        - images<img_suffix>/functional<bold variant>/<boldname>[N]<hcp_cifti_tail>.dtseries.nii
+        - images<img_suffix>/functional<bold variant>/<boldname>[N]<qx_cifti_tail>.dtseries.nii
     - Movement_Regressors.txt
         - images<img_suffix>/functional<bold variant>/movement/<boldname>[N]_mov.dat
 
@@ -7341,6 +7343,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                Fixed use of hcp_suffix and added use of img_suffix
     2020-11-08 Grega Repovš
                Added the use of hcp_nifti_tail and bold_variant
+    2020-11-13 Grega Repovš
+               Added the use of qx_nifti_tail and qx_cifti_tail
     """
 
     
@@ -7456,7 +7460,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     # ------------------------------------------------------------------------------------------------------------
     #                                                                                          map functional data
 
-    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' nifti tail\n ... using '%s' cifti tail\n" % (", ".join(options['bolds'].split("|")), options['hcp_nifti_tail'], options['hcp_cifti_tail'])
+    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... mapping '%s' hcp nifti tail to '%s' qx nifti tail\n ... mapping '%s' hcp cifti tail to '%s' qx cifti tail\n" % (", ".join(options['bolds'].split("|")), options['hcp_nifti_tail'], options['qx_nifti_tail'], options['hcp_cifti_tail'], options['qx_cifti_tail'])
 
     report['boldok'] = 0
     report['boldfail'] = 0
@@ -7469,7 +7473,6 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         r += "\n ... " + boldname
 
         # --- filenames
-        options['image_target'] = 'nifti'        # -- needs to be set to correctly copy volume files
         f.update(getBOLDFileNames(sinfo, boldname, options))
 
         status = True
@@ -7498,13 +7501,13 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... volume image ready"
                 else:
                     # r += "\n     ... linking volume image \n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + '.nii.gz'), f['bold'])
-                    status, r = linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_nifti_tail'] + '.nii.gz'), f['bold_vol'], r, status, "volume image", "\n     ... ")
+                    status, r = linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_nifti_tail'] + '.nii.gz'), f['bold_qx_vol'], r, status, "volume image", "\n     ... ")
 
                 if os.path.exists(f['bold_dts']) and not overwrite:
                     r += "\n     ... grayordinate image ready"
                 else:
                     # r += "\n     ... linking cifti image\n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
-                    status, r = linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'], r, status, "grayordinate image", "\n     ... ")
+                    status, r = linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_qx_dts'], r, status, "grayordinate image", "\n     ... ")
 
                 if os.path.exists(f['bold_mov']) and not overwrite:
                     r += "\n     ... movement data ready"

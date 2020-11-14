@@ -974,6 +974,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         else:
             if not os.path.exists(fileName):
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
+        return True
 
     # --- check sessions
 

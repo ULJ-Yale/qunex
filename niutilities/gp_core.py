@@ -241,6 +241,17 @@ def getFileNames(sinfo, options):
     getFileNames - documentation not yet available.
     """
 
+    """
+    ~~~~~~~~~~~~~~~~~~
+
+    Change log
+
+    2020-11-13 Grega Repovš
+               The function now distinguishes between qx_*_tail used just for mapping
+               files to the QuNex folder structure and *_tail options, used to specify
+               which files to process.
+    """
+
     d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
@@ -362,9 +373,9 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # identify bold_tail based on the type of image
     if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
-        target_bold_tail = options['hcp_cifti_tail']
+        target_bold_tail = options['cifti_tail']
     else:
-        target_bold_tail = options['hcp_nifti_tail']
+        target_bold_tail = options['nifti_tail']
     
     # if bold_tail is set, use that instead
     target_bold_tail = options.get('bold_tail', target_bold_tail)
@@ -392,17 +403,17 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # --- bold masks
 
-    f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1' + ext)
-    f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain' + ext)
-    f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain_mask' + ext)
+    f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1' + ext)
+    f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain' + ext)
+    f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_mask' + ext)
 
     # --- bold masks internals
 
-    f['bold1_nifti']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_flip.4dfp.nii.gz')
-    f['bold1_brain_nifti']      = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain_flip.4dfp.nii.gz')
-    f['bold1_brain_mask_nifti'] = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_frame1_brain_flip.4dfp_mask.nii.gz')
+    f['bold1_nifti']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_flip.4dfp.nii.gz')
+    f['bold1_brain_nifti']      = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp.nii.gz')
+    f['bold1_brain_mask_nifti'] = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp_mask.nii.gz')
 
-    f['bold_n_png']             = os.path.join(d['s_nuisance'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '_nuisance.png')
+    f['bold_n_png']             = os.path.join(d['s_nuisance'], options['boldname'] + boldnumber + options['nifti_tail'] + '_nuisance.png')
 
     # --- movement files
 
@@ -426,13 +437,17 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     f['bold']                   = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + ext)
     f['bold_final']             = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + options['bold_prefix'] + ext)
-    f['bold_stats']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.bstats')
-    f['bold_nuisance']          = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.nuisance')
-    f['bold_scrub']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.scrub')
+    f['bold_stats']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.bstats')
+    f['bold_nuisance']          = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.nuisance')
+    f['bold_scrub']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.scrub')
 
-    f['bold_vol']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_nifti_tail'] + '.nii.gz')
-    f['bold_dts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_cifti_tail'] + '.dtseries.nii')
-    f['bold_pts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['hcp_cifti_tail'] + '.ptseries.nii')
+    f['bold_vol']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['nifti_tail'] + '.nii.gz')
+    f['bold_dts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['cifti_tail'] + '.dtseries.nii')
+    f['bold_pts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['cifti_tail'] + '.ptseries.nii')
+
+    f['bold_qx_vol']            = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['qx_nifti_tail'] + '.nii.gz')
+    f['bold_qx_dts']            = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['qx_cifti_tail'] + '.dtseries.nii')
+    f['bold_qx_pts']            = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['qx_cifti_tail'] + '.ptseries.nii')
 
     for ch in options['bold_actions']:
         if ch == 's':
