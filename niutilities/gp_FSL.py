@@ -145,12 +145,13 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
         # --- check for existing F99 results
         # TODO target_file = ....
         target_file = "todo.txt"
+        fullTest = None
 
         # set up the command
         comm = "%(script)s \
                 %(input)s \
                 %(output)s" % {
-                "script"  : os.path.join(fsl_dir, "/etc/xtract_data/standard/F99", "do_reg_F99.sh"),
+                "script"  : os.path.join(fsl_dir, "data/xtract_data/standard/F99", "do_reg_F99.sh"),
                 "input"   : dti_file,
                 "output"  : str(f99_dir) + "/F99"}
 
