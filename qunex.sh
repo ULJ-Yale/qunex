@@ -1134,11 +1134,14 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLbedpostxGPU.sh
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --fibers='${Fibers}' \
---model='${Model}' \
+--weight='${Weight}' \
 --burnin='${Burnin}' \
 --jumps='${Jumps}' \
+--sample='${Sample}' \
+--model='${Model}' \
 --rician='${Rician}' \
---overwrite='${Overwrite}' "
+--overwrite='${Overwrite}' \
+--species=${Species}"
 # -- Connector execute function
 connectorExec
 }
@@ -2024,9 +2027,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Update=`opts_GetOpt "${setflag}update" $@`
     # -- DWIFSLbedpostxGPU input flags
     Fibers=`opts_GetOpt "${setflag}fibers" $@`
-    Model=`opts_GetOpt "${setflag}model" $@`
+    Weight=`opts_GetOpt "${setflag}weight" $@`
     Burnin=`opts_GetOpt "${setflag}burnin" $@`
     Jumps=`opts_GetOpt "${setflag}jumps" $@`
+    Sample=`opts_GetOpt "${setflag}sample" $@`
+    Model=`opts_GetOpt "${setflag}model" $@`
     Rician=`opts_GetOpt "${setflag}rician" $@`
     # -- DWIprobtrackxGPUDense input flags
     MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
