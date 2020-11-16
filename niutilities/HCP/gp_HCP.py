@@ -57,8 +57,6 @@ from functools import partial
 
 
 # ---- some definitions
-
-
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
 PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL', 'LR': 'i-', 'i-': 'LR'}
@@ -3212,7 +3210,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nHCP fMRIVolume %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
-    # rint r
+    # print r
     return (r, report)
 
 def executeSingleHCPfMRIVolume(sinfo, options, overwrite, hcp, b, r, report):

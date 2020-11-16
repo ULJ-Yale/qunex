@@ -181,6 +181,10 @@ hcp9  hcp_MSMAll                Run HCP MSMAll pipeline.
 hcp10 hcp_DeDriftAndResample    Run HCP MSMAll pipeline.
 hcpd  hcp_Diffusion             Run HCP DWI pipeline.
 
+FSL commands
+--------------------------
+f99 fsl_f99                     Run FSL F99 command.
+
 Functional connectivity preprocessing commands
 ----------------------------------------------
 mhd  mapHCPData              Map HCP preprocessed data to sessions' image folder.

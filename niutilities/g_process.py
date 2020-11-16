@@ -42,6 +42,7 @@ import g_core
 import gp_workflow
 import gp_simple
 import gp_FS
+import gp_FSL
 import g_scheduler
 import os
 import os.path
@@ -94,6 +95,7 @@ def procResponse(r):
     third element is missing, it assumes it ran ok and sets it to
     0.
     '''
+
     if type(r) is tuple:
         if len(r) == 2:
             if len(r[1]) == 2:
@@ -504,6 +506,8 @@ calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,         
           # ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."],
           [],
           ['rsc',     'runShellScript',              gp_simple.runShellScript,                       "Runs the specified script."],
+          [],
+          ['f99',    'fsl_f99',                      gp_FSL.fsl_f99,                                 "Run FSL F99 command."],
           ]
 
 lalist = [['lfs',     'longitudinalFS',              gp_HCP.longitudinalFS,                          "Runs longitudinal FreeSurfer across sessions."]
