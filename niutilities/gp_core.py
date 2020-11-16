@@ -403,9 +403,9 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # --- bold masks
 
-    f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1' + ext)
-    f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain' + ext)
-    f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_mask' + ext)
+    f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1' + '.nii.gz')
+    f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain' + '.nii.gz')
+    f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_mask' + '.nii.gz')
 
     # --- bold masks internals
 
