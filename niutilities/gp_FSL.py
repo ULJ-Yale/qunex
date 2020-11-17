@@ -454,8 +454,6 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
         r += comm.replace("                ", "")
         r += "\n------------------------------------------------------------\n"
 
-        print("!!!!! options ", options)
-
         # check for existing XTRACT results
         # TODO
         target_file = "TODO.TXT"
