@@ -381,7 +381,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
             print("Session %s: " % s)
 
             # basic data
-            sfolder = os.path.join(sessionsfolder, s, "NHP")
+            sfolder = os.path.join(sessionsfolder, s)
             sfile = os.path.join(sfolder, "session_nhp.txt")
             subjectid = s.split('_')[0]
 
