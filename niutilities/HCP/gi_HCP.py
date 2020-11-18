@@ -960,7 +960,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print "--> removed existing session.txt file"
+            print "--> removed existing session_hcp.txt file"
         else:
             raise ge.CommandFailed("mapHCPLS2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 

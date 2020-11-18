@@ -962,9 +962,9 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
         else:
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
-def createSessionFile(command, sfolder, session, subject, overwrite):
+def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     """
-    ``createSessionFile(command, sfolder, session, subject, overwrite)``
+    ``createSessionFile(command, sfolder, session, subject, overwrite, prefix)``
     
     Creates the generic, non pipeline specific, session file.
     """
@@ -982,7 +982,7 @@ def createSessionFile(command, sfolder, session, subject, overwrite):
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print "--> removed existing session.txt file"
+            print prefix + "--> removed existing session.txt file"
         else:
             raise ge.CommandFailed(command, "session.txt file already present!", "A session.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 

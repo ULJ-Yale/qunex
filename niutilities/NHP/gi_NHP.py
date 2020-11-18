@@ -371,8 +371,51 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
     if not all_ok:
         raise ge.CommandFailed("import_nhp", "Some actions failed", "Please check report!")
 
-    print "\nFinal report\n============\n"
-    for s in report:
-        print("Session %s: " %s)
-        for f in report[s]:
-          print("    --> mapped file %s" %f)
+
+    # final report and session.txt creation
+    if len(report) > 0:
+        print "\nFinal report\n============\n"
+
+        for s in report:
+            # print session info
+            print("Session %s: " % s)
+
+            # basic data
+            sfolder = os.path.join(sessionsfolder, s, "NHP")
+            sfile = os.path.join(sfolder, "session_nhp.txt")
+            subjectid = s.split('_')[0]
+
+            # create session.txt
+            sout = gc.createSessionFile("import_nhp", sfolder, s, subjectid, overwrite, prefix="    ")
+
+            # create session_nhp.txt
+            if os.path.exists(sfile):
+                if overwrite == 'yes':
+                    os.remove(sfile)
+                    print "    --> removed existing session_nhp.txt file"
+                else:
+                    raise ge.CommandFailed("import_nhp", "session_nhp.txt file already present!", "A session_nhp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+
+            sout_nhp = open(sfile, 'w')
+            print >> sout_nhp, 'id:', s
+            print >> sout_nhp, 'subject:', subjectid
+            print >> sout_nhp, 'raw_data:', inbox
+            print >> sout_nhp, 'nhp:', sfolder
+            print >> sout_nhp
+
+            # file info
+            i = 1
+            for f in report[s]:
+                # report
+                print("    --> mapped file %s" %f)
+
+                # add to subject
+                out = "%02d: %s" % (i, f)
+                print >> sout, out
+                print >> sout_nhp, out
+
+                # increase index
+                i = i + 1
+
+            # for nicer output
+            print ""
