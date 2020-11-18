@@ -286,8 +286,8 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
     --xtract_protocols      Protocols folder (all masks in same standard space)
                             [$FSLDIR/data/xtract_data/<species>].
     --xtract_stdwarp        Standard2diff and Diff2standard transforms.
-                            Default for humans is set to:
-                            [bedpostx_dir/xfms/standard2diff or diff2standard],
+                            Default for humans is set to session's:
+                            [acpc_dc2standard.nii.gz and standard2acpc_dc.nii.gz],
                             for macaques warp fields from F99 registration
                             command (fsl_f99) are used by default.
     --xtract_resolution     Output resolution in mm. Default is the same as in
@@ -375,7 +375,9 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_dir = os.path.join(nhp_dir, "dMRI.bedpostX")
             output_dir = os.path.join(nhp_dir, "xtract")
         else:
-            t1w_dir = os.path.join(sinfo["hcp"], sinfo["id"] + options["hcp_suffix"], "T1w")
+            hcp_dir = os.path.join(sinfo["hcp"], sinfo["id"] + options["hcp_suffix"])
+            xfms_dir = os.path.join(hcp_dir, "MNINonLinear", "xfms") 
+            t1w_dir = os.path.join(hcp_dir, "T1w")
             bedpostx_dir = os.path.join(t1w_dir, "Diffusion.bedpostX")
             output_dir = os.path.join(t1w_dir, "xtract")
 
@@ -429,6 +431,10 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
             std2diff=os.path.join(f99reg_dir, "F99_F99_to_anat_warp.nii.gz")
             diff2std=os.path.join(f99reg_dir, "F99_anat_to_F99_warp.nii.gz")
             comm = comm + " -stdwarp %s %s" % (std2diff, diff2std)
+        else:
+            std2diff=os.path.join(xfms_dir, "standard2acpc_dc.nii.gz")
+            diff2std=os.path.join(xfms_dir, "acpc_dc2standard.nii.gz")
+            comm = comm + " -stdwarp %s %s" % (std2diff, diff2std)
 
         # xtract_resolution
         if "xtract_resolution" in options:
@@ -455,8 +461,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
         r += "\n------------------------------------------------------------\n"
 
         # check for existing XTRACT results
-        # TODO
-        target_file = "TODO.TXT"
+        target_file = os.path.join(output_dir, "tracts", "vof_r", "density.nii.gz")
         fullTest = None
 
         # run
