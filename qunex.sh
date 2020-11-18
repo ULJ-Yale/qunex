@@ -1156,6 +1156,8 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLbedpostxGPU.sh
 # -------------------------------------------------------------------------------------------------------------------------------
 
 autoPtx() {
+geho "WARNING: autoPtx is deprecated, you should probably use fsl_xtract instead!"
+
 # -- Check inputs
 if [[ -d ${BedPostXFolder} ]]; then 
     reho "ERROR: Prior BedpostX run not found or incomplete for $CASE. Check work and re-run."
