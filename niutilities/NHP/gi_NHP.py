@@ -371,7 +371,6 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
     if not all_ok:
         raise ge.CommandFailed("import_nhp", "Some actions failed", "Please check report!")
 
-
     # final report and session.txt creation
     if len(report) > 0:
         print "\nFinal report\n============\n"
@@ -381,7 +380,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
             print("Session %s: " % s)
 
             # basic data
-            sfolder = os.path.join(sessionsfolder, s, "NHP")
+            sfolder = os.path.join(sessionsfolder, s)
             sfile = os.path.join(sfolder, "session_nhp.txt")
             subjectid = s.split('_')[0]
 
