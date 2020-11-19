@@ -1,13 +1,13 @@
-function [] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
+function [fcset] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
 
-%function [] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
+%function [fcset] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
 %
-%   Computes seed based correlations maps for individuals as well as group maps.
+%   Computes ROI functional connectivity matrices for a group of sujects/sessions.
 %
 %   INPUT
-%       flist     - A .list file listing the subjects and their files for which to compute seedmaps,
+%       flist     - A .list file listing the subjects and their files for which to compute ROI functional connectivity,
 %                   or a well strucutured string (see g_ReadFileList).
-%       roiinfo   - A names file for the ROI seeds.
+%       roiinfo   - A names file for definition of ROI to include in the analysis.
 %       frames    - The definition of which frames to use, it can be one of:
 %                   -> a numeric array mask defining which frames to use (1) and which not (0) 
 %                   -> a single number, specifying the number of frames to skip at start
@@ -30,7 +30,7 @@ function [] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
 %                                    -> use      ... ignore frames as marked in the use field of the bold file
 %                                    -> fidl     ... ignore frames as marked in .fidl file
 %                                    -> <column> ... the column name in *_scrub.txt file that matches bold file to be used for ignore mask
-%                                    ['use']
+%                                    ['use,fidl']
 %                   -> badevents ... what to do with events that have frames marked as bad, options are:
 %                                    -> use      ... use any frames that are not marked as bad
 %                                    -> <number> ... use the frames that are not marked as bad if at least <number> ok frames exist
@@ -44,6 +44,7 @@ function [] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
 %                                    -> txt      ... save the resulting data in a long format txt file
 %                                    -> mat      ... save the resulting data in a matlab .mat file
 %                                    ['']
+%                   -> fcname    ... an optional name to add to the output files, if empty, it won't be used ['']
 %                   -> saveind   ... a comma separated list of formats to use to save the invidvidual data:
 %                                    -> txt      ... save the resulting data in a long format txt file
 %                                    -> mat      ... save the resulting data in a matlab .mat file
@@ -58,72 +59,77 @@ function [] = fc_ComputeROIFCGroup(flist, roiinfo, frames, targetf, options)
 %   RESULTS
 %   =======
 %
-%   Based on specification it saves group files:
+%   The function returns a structure array with the following fields for each specified
+%   data extraction:
 %
-%   <targetf>/<root>[_<title>]_<roi>_group_r  ... Mean group Pearson correlations (converted from Fz).
-%   <targetf>/<root>[_<title>]_<roi>_group_Fz ... Mean group Fisher Z values.
-%   <targetf>/<root>[_<title>]_<roi>_group_Z  ... Z converted p values testing difference from 0.
-%   <targetf>/<root>[_<title>]_<roi>_all_Fz   ... Fisher Z values for all participants.
+%   fcset
+%        -> title   ... the title of the extraction as specifed in the frames string, 
+%                       empty if extraction was specified using a numeric value 
+%        -> roi     ... a cell array with the names of the ROI used in the order 
+%                       of columns & rows in the functional connectivity matrix
+%        -> subject ... a structure array with the following fields for each subject/
+%                       session included in the analysis:
+%           -> id   ... an id of the subject/session
+%           -> r    ... correlation matrix between all ROI for that subject/session
+%           -> fz   ... Fisher z transformed correlation matrix between all ROI for 
+%                       that subject/session
+%           -> z    ... z-scores for the correlations
+%           -> p    ... p-values for the correlations
 %
-%   <targetf>/<root>[_<title>]_<roi>_group_cov ... Mean group covariance.
-%   <targetf>/<root>[_<title>]_<roi>_all_cov   ... Covariances for all participants.
+%   Based on saveind option specification a file may be saved with the functional 
+%   connectivity data saved in a matlab.mat file and/or in a text long format:
 %
-%   <roi> is the name of the ROI for which the seed map was computed for.
-%   <root> is the root name of the flist.
-%   <title> is the title of the extraction event(s), if event string was specified.
+%   <targetf>/<listname>[_<fcname>]_<cor|cov>.<txt|mat>
+%
+%   `<listname>` is the filename of the provided <flist> w/o the extension.
+%   `<fcname>` is the provided name of the functional connectivity computed,
+%   if it was specified.
+%
+%   The text file will have the following columns (depending on the fcmethod):
+%   
+%   -> name
+%   -> title
+%   -> subject
+%   -> roi1
+%   -> roi2
+%   -> cv
+%   -> r
+%   -> Fz
+%   -> Z
+%   -> p
 %
 %   USE
 %   ===
 %
-%   The function computes seed maps for the specified ROI. If an event string is
-%   provided, it uses each subject's .fidl file to extract only the specified
-%   event related frames. The string format is:
+%   The function computes functional connectivity matrices for the specified ROI
+%   for each subject/session listed in the `flist` list file. If an event string 
+%   is provided, it has to describe how to extract event related data using the
+%   following specification:
 %
 %   <title>:<eventlist>:<frame offset1>:<frame offset2>
 %
-%   and multiple extractions can be specified by separating them using the pipe
-%   '|' separator. Specifically, for each extraction, all the events listed in
-%   a comma-separated eventlist will be considered (e.g. 'task1,task2') and for
-%   each event all the frames starting from event start + offset1 to event end
-%   + offset2 will be extracted and concatenated into a single timeseries. Do
-%   note that the extracted frames depend on the length of the event specified
-%   in the .fidl file!
+%   multiple extractions can be specified by separating them using the pipe '|' 
+%   separator. Specifically, for each extraction, all the events listed in a
+%   comma-separated eventlist will be considered (e.g. 'congruent,incongruent'). 
+%   For each event all the frames starting from the specified beginning and ending
+%   offset will be extracted. If options eventdata is specified as 'all', all the
+%   specified frames will be concatenated in a single timeseries, otherwise, each
+%   event will be summarised by a single frame in a newly generated events series image.
+%   
+%   From the resulting timeseries, ROI series will be extracted for each specified ROI as 
+%   specified by the roimethod option. A functional connectivity matrix between ROI
+%   will be computed.
+%
+%   The results will be returned in a fcset structure and, if so specified, saved.
 %
 %   EXAMPLE USE
 %   ===========
 % 
-%   To compute resting state seed maps using first eigenvariate of each ROI:
-%
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', 'pca', 'udvarsme');
-%
-%   To compute resting state seed maps using mean of each region and covariances
-%   instead of correlation:
-%
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', 'mean', 'udvarsme', true);
-%
-%   To compute seed maps for third and fourth frame of incongruent and congruent
-%   trials (listed as inc and con events in fidl files with duration 1) using
-%   mean of each region and exclude only frames marked for exclusion in fidl
-%   files:
-%
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'incongruent:inc:2,3|congruent:con:2,3', 'seed-maps', 'mean', 'event');
-%
-%   To compute seed maps across all the tasks blocks, starting with the third
-%   frame into the block and taking one additional frame after the end of the
-%   block, use:
-%
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'task:easyblock,hardblock:2,1', 'seed-maps', 'mean', 'event');
-%
 %   ---
-%   Written by Grega Repovš 2008-02-07.
+%   Written by Grega Repovš 2020-02-03.
 %
 %   Changelog
-%   2008-01-23 Grega Repovš - Adjusted for a different file list format and an additional ROI mask.
-%   2011-11-10 Grega Repovš - Changed to make use of gmrimage and allow ignoring of bad frames.
-%   2013-12-28 Grega Repovš - Moved to a more general name, added block event extraction and use of 'use' info.
-%   2017-03-19 Grega Repovs - Cleaned code, updated documentation.
-%   2017-04-18 Grega Repovs - Adjusted to use updated g_ReadFileList.
-%   2018-03-16 Grega Repovs - Added verbose to the parameter list
+%   2020-11-19 Grega Repovš - Updated the code and documentation.
 %
 
 if nargin < 5 || isempty(options), options = '';  end
@@ -133,7 +139,7 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 
 % ----- parse options
 
-default = 'roimethod=mean|eventdata=all|badframes=none|badevents=use|fcmeasure=r|savegroup=|saveind=|itargetf=gfolder|verbose=false';
+default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=|fcname=|saveind=|itargetf=gfolder|verbose=false';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -265,8 +271,8 @@ for n = 1:nsub
 
     for s = 1:nset
 
-        fcset(s).name = fcmat(s).title;            
-        fcset(s).roi  = fcmat(s).roi;                
+        fcset(s).title = fcmat(s).title;            
+        fcset(s).roi   = fcmat(s).roi;                
 
         % -------> Embedd data
 
@@ -299,10 +305,18 @@ end
 
 if verbose; fprintf('\n----------------------------------\nSaving group results\n'); end
 
+% set fcname
+
+if options.fcname
+    fcname = [options.fcname, '_'];
+else
+    fcname = '';
+end
+
 ftail = {'cor', 'cov'};
 ftail = ftail{ismember({'r', 'cv'}, options.fcmeasure)};
 
-basefilename = fullfile(targetf, sprintf('%s_%s', lname, ftail));
+basefilename = fullfile(targetf, sprintf('%s_%s%s', lname, fcname, ftail));
 
 if ismember({'mat'}, options.savegroup)
     if verbose; fprintf('... saving mat file'); end
@@ -323,7 +337,7 @@ if ismember({'txt'}, options.savegroup)
     end
 
     for n = 1:length(fcset)
-        if fcset(n).name, settitle = fcset(n).name; else settitle = 'ts'; end
+        if fcset(n).title, settitle = fcset(n).title; else settitle = 'ts'; end
 
         % --- set ROI names
 

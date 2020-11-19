@@ -62,28 +62,42 @@ function [fcmat] = fc_ComputeROIFC(bolds, roiinfo, frames, targetf, options)
 %                                 -> txt      ... save the resulting data in a long format txt file
 %                                 -> mat      ... save the resulting data in a matlab .mat file
 %                                 ['']
+%               -> fcname     ... an optional name describing the functional connectivity computed to 
+%                                 add to the output files, if empty, it won't be used ['']
+%               -> subjectname...an optional subject/session name to add to the output files, if empty, it won't be used ['']
 %               -> verbose    ... Whether to be verbose 'true' or not 'false', when running the analysis ['false']
 %
 %   RESULTS
 %   =======
 %
-%   The method returns a structure array with the following fields for each specified
+%   The function returns a structure array with the following fields for each specified
 %   data extraction:
 %
 %   fcmat
 %        -> title ... the title of the extraction as specifed in the frames string, 
 %                     empty if extraction was specified using a numeric value 
-%        -> fc    ... functional connectivity matrix
 %        -> roi   ... a cell array with the names of the ROI used in the order 
 %                     of columns & rows in the functional connectivity matrix
 %        -> N     ... number of frames over which the matrix was computed
+%        -> r     ... correlation matrix between all ROI for that subject/session
+%        -> fz    ... Fisher z transformed correlation matrix between all ROI for 
+%                     that subject/session
+%        -> z     ... z-scores for the correlations
+%        -> p     ... p-values for the correlations
+%        -> cv    ... covariance matrix between all ROI for that subject/session
+%
+%   Please note, that `cv` will only be present if it was specified as the fcmeasure.
+%   `r`, `fz`, `z`, `p` will only be present if `r` was specified as the fcmeasure.
 %
 %   Based on saveind option specification a file may be saved with the functional connectivity
 %   data saved in a matlab.mat file and/or in a text long format:
 %
-%   <targetf>/<name>_<cor|cov>.<txt|mat>
+%   <targetf>/<name>[_<fcname>][_<subjectname>]_<cor|cov>.<txt|mat>
 %
-%   <name> is the provided name of the bold(s).
+%   `<name>` is the provided name of the bold(s).
+%   `<fcname>` is the provided name of the functional connectivity computed,
+%   if it was specified.
+%   `<subjectname>` is the provided name of the subject, if it was specified.
 %
 %   The text file will have the following columns (depending on the fcmethod):
 %   
@@ -114,9 +128,9 @@ function [fcmat] = fc_ComputeROIFC(bolds, roiinfo, frames, targetf, options)
 %   For each event all the frames starting from the specified beginning and ending
 %   offset will be extracted. If options eventdata is specified as 'all', all the
 %   specified frames will be concatenated in a single timeseries, otherwise, each
-%   event will be summrised by a single frame in a newly generated events series image.
+%   event will be summarised by a single frame in a newly generated events series image.
 %   
-%   From the resulting image, ROI series will be extracted for each specified ROI as 
+%   From the resulting timeseries, ROI series will be extracted for each specified ROI as 
 %   specified by the roimethod option. A functional connectivity matrix between ROI
 %   will be computed.
 %
@@ -131,6 +145,7 @@ function [fcmat] = fc_ComputeROIFC(bolds, roiinfo, frames, targetf, options)
 %   Written by Grega Repovš 2020-02-03.
 %
 %   Changelog
+%   2020-11-19 Grega Repovš - Updated the code and documentation.
 %
 
 if nargin < 5 || isempty(options), options = '';  end
@@ -140,7 +155,7 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 
 % ----- parse options
 
-default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false';
+default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname=';
 options = g_ParseOptions([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
@@ -165,6 +180,9 @@ end
 % ----- What should be saved
 
 options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
+if ismember({'none'}, options.saveind)
+    options.saveind = {};
+end
 sdiff = setdiff(options.saveind, {'mat', 'txt', ''});
 if ~isempty(sdiff)
     error('ERROR: Invalid save format specified: %s', strjoin(sdiff,","));
@@ -248,7 +266,7 @@ for n = 1:nsets
 
     if strcmp(options.fcmeasure, 'cv')
         fc = rs';
-        fc = bsxfun(@minus, fc', mean(fc)) ./ sqrt(ts.voxels-1);
+        fc = bsxfun(@minus, fc, mean(fc)) ./ sqrt(ts.voxels-1);
         fc = fc' * fc;
     else
         fc = zscore(rs', 0, 1);
@@ -286,10 +304,26 @@ end
 
 if verbose; fprintf('     ... saving results\n'); end
 
+% set fcname
+
+if options.fcname
+    fcname = [options.fcname, '_'];
+else
+    fcname = '';
+end
+
+% set subjectname
+
+if options.subjectname
+    subjectname = [options.subjectname, '_'];
+else
+    subjectname = '';
+end
+
 ftail = {'cor', 'cov'};
 ftail = ftail{ismember({'r', 'cv'}, options.fcmeasure)};
 
-basefilename = fullfile(targetf, sprintf('%s_%s', name, ftail));
+basefilename = fullfile(targetf, sprintf('%s_%s%s%s', name, fcname, subjectname, ftail));
 
 if ismember({'mat'}, options.saveind)
     if verbose; fprintf('         ... saving mat file'); end
