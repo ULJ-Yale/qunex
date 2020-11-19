@@ -927,7 +927,9 @@ classdef nimage
 
                 % ---> mask events data
 
-                obj.tevents = obj.tevents(:, fmask);
+                if ~isempty(obj.tevents)
+                    obj.tevents = obj.tevents(:, fmask);
+                end
 
                 % ---> mask glm data
 

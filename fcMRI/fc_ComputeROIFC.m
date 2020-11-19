@@ -1,6 +1,6 @@
-function [fcmat] = fc_ComputeROIFC(bolds, roidef, frames, targetf, options)
+function [fcmat] = fc_ComputeROIFC(bolds, roiinfo, frames, targetf, options)
 
-%function [fcmat] = fc_ComputeROIFC(bolds, roidef, frames, targetf, options)
+%function [fcmat] = fc_ComputeROIFC(bolds, roiinfo, frames, targetf, options)
 %
 %   Computes ROI functional connectivity matrices for individual subject / session.
 %
@@ -10,7 +10,7 @@ function [fcmat] = fc_ComputeROIFC(bolds, roidef, frames, targetf, options)
 %   bolds     - A string with a pipe separated list of paths to .conc or bold files. 
 %               The first element has to be the name of the file or group to be used when saving the data. 
 %               E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'
-%   roidef    - A path to the names file specifying group based ROI. Additionaly, separated by a pipe '|'
+%   roiinfo   - A path to the names file specifying group based ROI. Additionaly, separated by a pipe '|'
 %               symbol, a path to an image file holding subject/session specific ROI definition.
 %   frames    - The definition of which frames to extract, specifically:
 %               ->  a numeric array mask defining which frames to use (1) and which not (0), or 
@@ -176,7 +176,7 @@ end
 bolds = bolds(2:end);
 boldlist = strtrim(regexp(bolds, '\|', 'split'));
 
-[roiinfo, sroifile] = strtok(roidef, '|');
+[roideffile, sroifile] = strtok(roiinfo, '|');
 if sroifile
     sroifile = sroifile(2:end);
 else
@@ -192,7 +192,7 @@ if verbose; fprintf('\nChecking ...\n'); end
 for bold = boldlist
     go = go & g_CheckFile(bold{1}, bold{1}, 'error');
 end
-go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
+go = go & g_CheckFile(roideffile, 'ROI definition file', 'error');
 if sroifile
     go = go & g_CheckFile(sroifile, 'individual ROI file', 'error');
 end
@@ -210,7 +210,7 @@ end
 
 if verbose; fprintf('     ... creating ROI mask\n'); end
 
-roi  = nimage.img_ReadROI(roiinfo, sroifile);
+roi  = nimage.img_ReadROI(roideffile, sroifile);
 nroi = length(roi.roi.roinames);
 
 

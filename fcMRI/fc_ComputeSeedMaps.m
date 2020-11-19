@@ -1,6 +1,6 @@
-function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
+function [fcmaps] = fc_ComputeSeedMaps(bolds, roiinfo, frames, targetf, options)
 
-%``function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)``
+%``function [fcmaps] = fc_ComputeSeedMaps(bolds, roiinfo, frames, targetf, options)``
 %
 %   Computes seed based functional connectivity maps for individual subject / session.
 %
@@ -10,7 +10,7 @@ function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 %   --bolds     A string with a pipe separated list of paths to .conc or bold files. 
 %               The first element has to be the name of the file or group to be used when saving the data. 
 %               E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'
-%   --roidef    A path to the names file specifying group based seeds. Additionaly, separated by a pipe '|'
+%   --roiinfo   A path to the names file specifying group based seeds. Additionaly, separated by a pipe '|'
 %               symbol, a path to an image file holding subject/session specific ROI definition.
 %   --frames    The definition of which frames to extract, specifically:
 %               ->  a numeric array mask defining which frames to use (1) and which not (0), or 
@@ -74,6 +74,7 @@ function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 %                                -> none     ... do not save any individual level results
 %                                ['none']
 %                                Default is 'none'. Any invalid options will be ignored without a warning.
+%               -> subjectname   an optional name to add to the output files, if empty, it won't be used ['']
 %               -> verbose   ... Whether to be verbose 'true' or not 'false', when running the analysis ['false']
 %
 %   RESULTS
@@ -93,23 +94,24 @@ function [fcmaps] = fc_ComputeSeedMaps(bolds, roidef, frames, targetf, options)
 %
 %   Based on saveind option specification the following files may be saved:
 %
-%   `<targetf>/<name>[_<title>]_<roi>_r`
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_r`
 %       Pearson correlations
 %
-%   `<targetf>/<name>[_<title>]_<roi>_Fz`
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Fz`
 %       Fisher Z values
 %
-%   `<targetf>/<name>[_<title>]_<roi>_Z`
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Z`
 %       Z converted p values testing difference from 0.
 %
-%   `<targetf>/<name>[_<title>]_<roi>_p`
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_p`
 %       p values testing difference from 0.
 %
-%   `<targetf>/<name>[_<title>]_<roi>_cv`
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_cv`
 %       covariance
 %
 %   `<roi>` is the name of the ROI for which the seed map was computed for.
 %   `<name>` is the provided name of the bold(s).
+%   `<subjectname>` is the provided name of the subject, if it was specified.
 %   `<title>` is the title of the extraction event(s), if event string was
 %   specified.
 %
@@ -155,7 +157,7 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 
 % ----- parse options
 
-default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false';
+default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|subjectname=|verbose=false|debug=false';
 options = g_ParseOptions([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
@@ -181,17 +183,23 @@ end
 
 options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 
+if ismember({'allbyroi'}, options.saveind)    
+    options.saveind = options.saveind(~ismember(options.saveind, {'allbyroi', 'r', 'fz', 'z', 'p', 'cv'}));
+    options.saveind = [options.saveind, 'r', 'fz', 'z', 'p', 'cv'];
+end
+if ismember({'alljoint'}, options.saveind)
+    options.saveind = options.saveind(~ismember(options.saveind, {'alljoint', 'jr', 'jfz', 'jz', 'jp', 'jcv'}));
+    options.saveind = [options.saveind, 'jr', 'jfz', 'jz', 'jp', 'jcv'];
+end
 if ismember({'none'}, options.saveind)
     options.saveind = [];
-elseif ismember({'all'}, options.saveind)
-    options.saveind = {'r', 'fz', 'z', 'p', 'cv'};
 end
 
 if length(options.saveind) 
     if strcmp(options.fcmeasure, 'r')
-        options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p'});
+        options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p', 'jr', 'jfz', 'jz', 'jp'});
     else
-        options.saveind = intersect(options.saveind, {'cv'});
+        options.saveind = intersect(options.saveind, {'cv', 'jcv'});
     end
 end
 
@@ -201,7 +209,7 @@ end
 bolds = bolds(2:end);
 boldlist = strtrim(regexp(bolds, '\|', 'split'));
 
-[roiinfo, sroifile] = strtok(roidef, '|');
+[roideffile, sroifile] = strtok(roiinfo, '|');
 if sroifile
     sroifile = sroifile(2:end);
 else
@@ -217,7 +225,7 @@ if verbose; fprintf('\n\nChecking ...\n'); end
 for bold = boldlist
     go = go & g_CheckFile(bold{1}, bold{1}, 'error');
 end
-go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
+go = go & g_CheckFile(roideffile, 'ROI definition file', 'error');
 if sroifile
     go = go & g_CheckFile(sroifile, 'individual ROI file', 'error');
 end
@@ -231,11 +239,12 @@ end
 %   ------------------------------------------------------------------------------------------
 %                                                                            do the processing
 
-if verbose; fprintf('     ... creating ROI mask\n'); end
+if verbose; fprintf('     ... creating ROI mask'); end
 
-roi  = nimage.img_ReadROI(roiinfo, sroifile);
+roi  = nimage.img_ReadROI(roideffile, sroifile);
 nroi = length(roi.roi.roinames);
 
+if verbose; fprintf(' ... read %d ROI\n', nroi); end
 
 % ---> reading image files
 
@@ -290,6 +299,14 @@ if ~isempty(options.saveind)
 
     if verbose; fprintf('     ... saving seedmaps\n'); end
 
+    % set subjectname
+
+    if options.subjectname
+        subjectname = [options.subjectname, '_'];
+    else
+        subjectname = '';
+    end
+
     % set up filetype for single images
 
     if strcmp(y.filetype, '.dtseries')
@@ -303,22 +320,21 @@ if ~isempty(options.saveind)
     for n = 1:nsets
         if fcmaps(n).title, settitle = ['_' fcmaps(n).title]; else settitle = ''; end
 
-
         % --- prepare computed data
 
         if verbose; fprintf('         ... preparing data'); end
             
-        if any(ismember(options.saveind, {'fz', 'p', 'z'}))
+        if any(ismember(options.saveind, {'fz', 'p', 'z', 'jfz', 'jp', ',z'}))
             fz = fcmaps(n).fc;
             fz.data = fc_Fisher(fz.data);
         end
 
-        if any(ismember(options.saveind, {'p', 'z'}))
+        if any(ismember(options.saveind, {'p', 'z', 'jp', 'jz'}))
             Z = fcmaps(n).fc;
             Z.data = fz.data/(1/sqrt(fcmaps(n).N-3));
         end
 
-        if ismember('p', options.saveind)
+        if any(ismember(options.saveind, {'p', 'jp'}))
             p = fcmaps(n).fc;
             p.data = (1 - normcdf(abs(Z.data), 0, 1)) * 2 .* sign(fz.data);
         end
@@ -329,41 +345,84 @@ if ~isempty(options.saveind)
 
         if verbose; fprintf('         ... saving set %s, roi:', fcmaps(n).title); end
 
-        for r = 1:nroi
+        % --- print for each ROI separately
+        
+        if any(ismember(options.saveind, {'r', 'fz', 'z', 'p', 'cv'}));
 
-            if verbose; fprintf(' %s', fcmaps(n).roi{r}); end
+            for r = 1:nroi
 
-            % --- prepare basename
+                if verbose; fprintf(' %s', fcmaps(n).roi{r}); end
 
-            basefilename = sprintf('seed_%s%s_%s', name, settitle, fcmaps(n).roi{r});
+                % --- prepare basename
+
+                basefilename = sprintf('seed_%s%s%s_%s', subjectname, name, settitle, fcmaps(n).roi{r});
+
+                % --- save images
+
+                for sn = 1:length(options.saveind)
+                    switch options.saveind{sn}
+                        case 'r'
+                            t = fcmaps(n).fc.sliceframes([1:nroi] == r);                                              
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_r']));
+                        case 'fz'
+                            t = fz.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_Fz']));
+                        case 'z'
+                            t = Z.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_Z']));
+                        case 'p'
+                            t = p.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_p']));
+                        case 'cv'
+                            t = fcmaps(n).fc.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_cov']));
+                    end
+                end
+            end
+        end
+
+        % --- print for all ROI jointly
+
+        if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jcv'}));
+
+            allroi = strjoin(fcmaps(n).roi, '-');
+            basefilename = sprintf('seed_%s%s%s_%s', subjectname, name, settitle, allroi);
+
+            if verbose; fprintf(' %s', allroi); end
 
             % --- save images
 
             for sn = 1:length(options.saveind)
                 switch options.saveind{sn}
-                    case 'r'
-                        t = fcmaps(n).fc.sliceframes([1:nroi] == r);                                              
+                    case 'jr'
+                        t = fcmaps(n).fc;  
                         t.filetype = tfiletype;
                         t.img_saveimage(fullfile(targetf, [basefilename '_r']));
                     case 'fz'
-                        t = fz.sliceframes([1:nroi] == r);
+                        t = fz;
                         t.filetype = tfiletype;
                         t.img_saveimage(fullfile(targetf, [basefilename '_Fz']));
                     case 'z'
-                        t = Z.sliceframes([1:nroi] == r);
+                        t = Z;
                         t.filetype = tfiletype;
                         t.img_saveimage(fullfile(targetf, [basefilename '_Z']));
                     case 'p'
-                        t = p.sliceframes([1:nroi] == r);
+                        t = p;
                         t.filetype = tfiletype;
                         t.img_saveimage(fullfile(targetf, [basefilename '_p']));
-                    case 'fz'
-                        t = fcmaps(n).fc.sliceframes([1:nroi] == r);
+                    case 'cv'
+                        t = fcmaps(n).fc;
                         t.filetype = tfiletype;
                         t.img_saveimage(fullfile(targetf, [basefilename '_cov']));
                 end
             end
         end
+
         if verbose; fprintf(' done.\n'); end
     end
 end

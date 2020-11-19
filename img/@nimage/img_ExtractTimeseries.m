@@ -24,7 +24,7 @@ function [simg] = img_ExtractTimeseries(obj, exmat, method, eind)
 %   ======
 %
 %   simg   - a nimage object with the new timeseries
-%            simg.events field will list for each frame the index of the row from which the 
+%            simg.tevents field will list for each frame the index of the row from which the 
 %                        frame was extracted. If eind was provided, that information will be
 %                        used instead of the row index. 
 %
@@ -49,11 +49,16 @@ if size(exmat, 2) ~= obj.frames
    error('ERROR: The extraction matrix length [%d] does not match the number of image frames [%d]!', size(exmat, 2), obj.frames); 
 end
 
+if sum(exmat, 2) == 0
+   error('ERROR: No frames are specified to extract (exmat only holds 0s)!'); 
+end
+
+
 % --- prepare event indeces
 
 nevents = size(exmat, 1);
 
-if isempty(eid)
+if isempty(eind)
     eind = [1:nevents];
 end
 
@@ -63,11 +68,11 @@ exmat = exmat == 1;
 
 if strcmp(method, 'all')
     nframes = sum(exmat, 2);
-    simg = obj.zeroframes(nframes);
-    simg.events = zeros(1,nframes);
+    simg = obj.zeroframes(sum(nframes));
+    simg.tevents = zeros(1, sum(nframes));
     fend = 0;
 else
-    simg.events = eind(:)';
+    simg.tevents = eind(:)';
     simg = obj.zeroframes(nevents);
 end
 
@@ -84,7 +89,7 @@ for n = 1:nevents
         case 'all'
             fstart = fend + 1;
             fend = fend + nframes(n);
-            simg.events(fstart:fend) = eind(n):
+            simg.tevents(fstart:fend) = eind(n);
             simg.data(:,fstart:fend) = obj.data(:,exmat(n,:));
     end
 end
