@@ -6990,27 +6990,27 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
-                    report['failed'].append(groupname)
+                    report['failed'].append(grouptargets)
                 else:
-                    report['done'].append(groupname)
+                    report['done'].append(grouptargets)
 
             # -- just checking
             else:
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP DeDriftAndResample can be run"
-                    report['ready'].append(groupname)
+                    report['ready'].append(grouptargets)
                 else:
-                    report['skipped'].append(groupname)
+                    report['skipped'].append(grouptargets)
 
         elif run:
-            report['not ready'].append(groupname)
+            report['not ready'].append(grouptargets)
             if options['run'] == "run":
                 r += "\n---> ERROR: images missing, skipping this group!"
             else:
                 r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
-            report['not ready'].append(groupname)
+            report['not ready'].append(grouptargets)
             if options['run'] == "run":
                 r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
             else:
@@ -7019,10 +7019,10 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
-        report['failed'].append(groupname)
+        report['failed'].append(grouptargets)
     except:
         r += "\n --- Failed during processing of group %s with error:\n %s\n" % ("DeDriftAndResample", traceback.format_exc())
-        report['failed'].append(groupname)
+        report['failed'].append(grouptargets)
 
     return {'r': r, 'report': report}
 
