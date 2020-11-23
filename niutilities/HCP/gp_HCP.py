@@ -2088,8 +2088,9 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     Distortion correction details
     -----------------------------
 
-    --hcp_dwi_PEdir         The direction of unwarping. Use 1 for LR/RL
-                            Use 2 for AP/PA. Default is [2]
+    --hcp_dwi_phasepos      The direction of unwarping for positive phase.
+                            Can be AP, PA, LR, or RL. Negative phase is 
+                            set automatically based on this setting. [PA]
     --hcp_dwi_gdcoeffs      A path to a file containing gradient distortion
                             coefficients, alternatively a string describing
                             multiple options (see below), or "NONE", if not 
@@ -2105,6 +2106,50 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     --hcp_dwi_combinedata   Specified value is passed as the CombineDataFlag 
                             value for the eddy_postproc.sh script. If JAC 
                             resampling has been used in eddy, this value 
+                            determines what to do with the output file.
+                            2 - include in the output all volumes uncombined
+                                (i.e. output file of eddy)
+                            1 - include in the output and combine only 
+                                volumes where both LR/RL (or AP/PA) pairs 
+                                have been acquired
+                            0 - As 1, but also include uncombined single 
+                                volumes
+                            [1]
+    --hcp_dwi_selectbestb0  If set selects the best b0 for each phase
+                            encoding direction to pass on to topup rather
+                            than the default behaviour of using equally
+                            spaced b0's throughout the scan. The best b0
+                            is identified as the least distorted (i.e., most
+                            similar to the average b0 after registration).
+                            [FALSE]
+    --hcp_dwi_extraeddyarg  A string specifying additional arguments to pass
+                            to the DiffPreprocPipeline_Eddy.sh script and
+                            subsequently to the run_eddy.sh script and
+                            finally to the command that actually invokes the
+                            eddy binary. The string is to be written as a
+                            contiguous set of arguments to be added. Each
+                            argument needs to be provided together with
+                            dashes if it needs them. To provide multiple
+                            arguments divide them with the pipe (|)
+                            character,
+                            e.g. --hcp_dwi_extraeddyarg="--niter=8|--nvoxhp=2000".
+                            ['']
+
+    Additional parameters
+    ---------------------
+
+    --hcp_dwi_name          name to give DWI output directories. [Diffusion]
+    --hcp_dwi_cudaversion   If using the GPU-enabled version of eddy, then
+                            this option can be used to specify which
+                            eddy_cuda binary version to use. If X.Y is
+                            specified, then FSLDIR/bin/eddy_cudaX.Y will be
+                            used. Note that CUDA 9.1 is installed in the
+                            container. []
+    --hcp_dwi_nogpu         If specified, use the non-GPU-enabled version
+                            of eddy. Defaults to using the GPU-enabled
+                            version of eddy. []
+
+    Gradient Coefficient File Specification:
     ----------------------------------------
 
     `--hcp_dwi_gdcoeffs` parameter can be set to either 'NONE', a path to a 
