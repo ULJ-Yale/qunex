@@ -20,6 +20,8 @@
 #       -bolds          | separated list of bold indeces for which to do the stat report
 #       -pref           prefix for the reports
 #       -verbose, -v    be talkative when running the script
+#       -rname          root name for the bold files ['bold']
+#       -bold_tail      tail of bold files ['']
 #
 #
 #       (c) Grega Repovs
@@ -42,57 +44,59 @@ library(filelock)
 
 # ---> defaults
 
-folder  <- "."
-mreport <- ""
-preport <- ""
-sreport <- ""
-session <- ""
-dvarst  <- 3.0
-dvarsmet<- 1.5
-movt    <- 0.5
-plotr   <- "mov_report"
-radius  <- 50
-TR      <- 2.5
-fidl    <- "none"
-post    <- "none"
-bolds   <- ""
-pref    <- ""
-verbose <- TRUE
-plot    <- FALSE
-rname   <- "bold"
+folder    <- "."
+mreport   <- ""
+preport   <- ""
+sreport   <- ""
+session   <- ""
+dvarst    <- 3.0
+dvarsmet  <- 1.5
+movt      <- 0.5
+plotr     <- "mov_report"
+radius    <- 50
+TR        <- 2.5
+fidl      <- "none"
+post      <- "none"
+bolds     <- ""
+pref      <- ""
+verbose   <- TRUE
+plot      <- FALSE
+rname     <- "bold"
+bold_tail <- ''
 
 # ---> processing commands
 
 args <- commandArgs(TRUE)
 
 for (arg in args){
-    if (grepl("-f=", arg))        folder    <- sub("-f=(.*)", "\\1", arg)
-    if (grepl("-folder=", arg))   folder    <- sub("-folder=(.*)", "\\1", arg)
-    if (grepl("-mr=", arg))       mreport   <- sub("-mr=(.*)", "\\1", arg)
-    if (grepl("-mreport=", arg))  mreport   <- sub("-mreport=(.*)", "\\1", arg)
-    if (grepl("-sr=", arg))       sreport   <- sub("-sr=(.*)", "\\1", arg)
-    if (grepl("-sreport=", arg))  sreport   <- sub("-sreport=(.*)", "\\1", arg)
-    if (grepl("-pr=", arg))       preport   <- sub("-pr=(.*)", "\\1", arg)
-    if (grepl("-preport=", arg))  preport   <- sub("-preport=(.*)", "\\1", arg)
-    if (grepl("-s=", arg))        session   <- sub("-s=(.*)", "\\1", arg)
-    if (grepl("-session=", arg))  session   <- sub("-session=(.*)", "\\1", arg)
-    if (grepl("-d=", arg))        dvarst    <- as.numeric(sub("-d=(.*)", "\\1", arg))
-    if (grepl("-dvars=", arg))    dvarst    <- as.numeric(sub("-dvars=(.*)", "\\1", arg))
-    if (grepl("-e=", arg))        dvarsmet  <- as.numeric(sub("-e=(.*)", "\\1", arg))
-    if (grepl("-dvarsme=", arg))  dvarsmet  <- as.numeric(sub("-dvarsme=(.*)", "\\1", arg))
-    if (grepl("-m=", arg))        movt      <- as.numeric(sub("-m=(.*)", "\\1", arg))
-    if (grepl("-movement=", arg)) movt      <- as.numeric(sub("-movement=(.*)", "\\1", arg))
-    if (grepl("-rd=", arg))       radius    <- as.numeric(sub("-rd=(.*)", "\\1", arg))
-    if (grepl("-radius=", arg))   radius    <- as.numeric(sub("-radius=(.*)", "\\1", arg))
-    if (grepl("-tr=", arg))       TR        <- as.numeric(sub("-tr=(.*)", "\\1", arg))
-    if (grepl("-verbose", arg))   verbose   <- TRUE
-    if (grepl("-v", arg))         verbose   <- TRUE
-    if (grepl("-fidl=", arg))     fidl      <- sub("-fidl=(.*)", "\\1", arg)
-    if (grepl("-post=", arg))     post      <- sub("-post=(.*)", "\\1", arg)
-    if (grepl("-plot=", arg))     plotr     <- sub("-plot=(.*)", "\\1", arg)
-    if (grepl("-bolds=", arg))    bolds     <- sub('-bolds="?([0-9|]*)"?', "\\1", arg)
-    if (grepl("-pref=", arg))     pref      <- sub("-pref=(.*)", "\\1", arg)
-    if (grepl("-rname=", arg))    rname     <- sub("-rname=(.*)", "\\1", arg)
+    if (grepl("-f=", arg))        folder     <- sub("-f=(.*)", "\\1", arg)
+    if (grepl("-folder=", arg))   folder     <- sub("-folder=(.*)", "\\1", arg)
+    if (grepl("-mr=", arg))       mreport    <- sub("-mr=(.*)", "\\1", arg)
+    if (grepl("-mreport=", arg))  mreport    <- sub("-mreport=(.*)", "\\1", arg)
+    if (grepl("-sr=", arg))       sreport    <- sub("-sr=(.*)", "\\1", arg)
+    if (grepl("-sreport=", arg))  sreport    <- sub("-sreport=(.*)", "\\1", arg)
+    if (grepl("-pr=", arg))       preport    <- sub("-pr=(.*)", "\\1", arg)
+    if (grepl("-preport=", arg))  preport    <- sub("-preport=(.*)", "\\1", arg)
+    if (grepl("-s=", arg))        session    <- sub("-s=(.*)", "\\1", arg)
+    if (grepl("-session=", arg))  session    <- sub("-session=(.*)", "\\1", arg)
+    if (grepl("-d=", arg))        dvarst     <- as.numeric(sub("-d=(.*)", "\\1", arg))
+    if (grepl("-dvars=", arg))    dvarst     <- as.numeric(sub("-dvars=(.*)", "\\1", arg))
+    if (grepl("-e=", arg))        dvarsmet   <- as.numeric(sub("-e=(.*)", "\\1", arg))
+    if (grepl("-dvarsme=", arg))  dvarsmet   <- as.numeric(sub("-dvarsme=(.*)", "\\1", arg))
+    if (grepl("-m=", arg))        movt       <- as.numeric(sub("-m=(.*)", "\\1", arg))
+    if (grepl("-movement=", arg)) movt       <- as.numeric(sub("-movement=(.*)", "\\1", arg))
+    if (grepl("-rd=", arg))       radius     <- as.numeric(sub("-rd=(.*)", "\\1", arg))
+    if (grepl("-radius=", arg))   radius     <- as.numeric(sub("-radius=(.*)", "\\1", arg))
+    if (grepl("-tr=", arg))       TR         <- as.numeric(sub("-tr=(.*)", "\\1", arg))
+    if (grepl("-verbose", arg))   verbose    <- TRUE
+    if (grepl("-v", arg))         verbose    <- TRUE
+    if (grepl("-fidl=", arg))     fidl       <- sub("-fidl=(.*)", "\\1", arg)
+    if (grepl("-post=", arg))     post       <- sub("-post=(.*)", "\\1", arg)
+    if (grepl("-plot=", arg))     plotr      <- sub("-plot=(.*)", "\\1", arg)
+    if (grepl("-bolds=", arg))    bolds      <- sub('-bolds="?([0-9|]*)"?', "\\1", arg)
+    if (grepl("-pref=", arg))     pref       <- sub("-pref=(.*)", "\\1", arg)
+    if (grepl("-rname=", arg))    rname      <- sub("-rname=(.*)", "\\1", arg)
+    if (grepl("-bold_tail=", arg)) bold_tail <- sub("-bold_tail=(.*)", "\\1", arg)
 }
 
 
@@ -203,7 +207,7 @@ dvfirst <- TRUE
 nframes <- 0
 boldnames <- c()
 for (b in bolds){
-    m <- paste(rname, b)
+    m <- paste(rname, b, bold_tail, sep='')
     boldnames <- c(boldnames, m)
 
     if (verbose) cat("\n\nBOLD", b, "\n---> reading data")
@@ -216,10 +220,10 @@ for (b in bolds){
 
     t  <- read.table(paste(folder, paste(rname, b, '_mov.dat',   sep=''), sep="/"))
     if (verbose) cat("\n     ... ", paste(rname, b, '_mov.dat',   sep=''), sep="")
-    sc <- read.delim(paste(folder, paste(rname, b, '.scrub',     sep=''), sep="/"), comment.char = "#", sep="")
-    if (verbose) cat("\n     ... ", paste(rname, b, '.scrub',   sep=''), sep="")
-    dv <- read.delim(paste(folder, paste(rname, b, '.bstats',    sep=''), sep="/"), comment.char = "#", sep="")
-    if (verbose) cat("\n     ... ", paste(rname, b, '.bstats',   sep=''), sep="")
+    sc <- read.delim(paste(folder, paste(rname, b, bold_tail, '.scrub',     sep=''), sep="/"), comment.char = "#", sep="")
+    if (verbose) cat("\n     ... ", paste(rname, b, bold_tail, '.scrub',   sep=''), sep="")
+    dv <- read.delim(paste(folder, paste(rname, b, bold_tail, '.bstats',    sep=''), sep="/"), comment.char = "#", sep="")
+    if (verbose) cat("\n     ... ", paste(rname, b, bold_tail, '.bstats',   sep=''), sep="")
 
     if (verbose) cat("\n---> processing")
 
@@ -380,11 +384,11 @@ for (b in bolds){
 
     if (fidl != "none"){
 
-        if (verbose) cat("\n---> creating fidl scrubbing file", paste(rname, b, '_scrub.fidl', sep=''), sep="")
+        if (verbose) cat("\n---> creating fidl scrubbing file ", paste(rname, b, bold_tail, '_scrub.fidl', sep=''), sep="")
 
         # --- open file and print header
 
-        ffile <- file(paste(folder, paste(rname, b, '_scrub.fidl', sep=''), sep='/'), "w")
+        ffile <- file(paste(folder, paste(rname, b, bold_tail, '_scrub.fidl', sep=''), sep='/'), "w")
         cat(TR, "\n", file=ffile, sep="\t")
         ts <- sc[[fidl]]
 
@@ -438,7 +442,7 @@ if (plot) {
     major <- (nframes %/% 300 + 2) * 10
 
     if (verbose) cat("\n     ... _cor.pdf")
-    pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_cor.pdf", sep=""), sep="/"), width=10, height=3.3*nruns)
+    pdf(file=paste(folder, paste(rname, bold_tail, '_', pref, plotr, "_cor.pdf", sep=""), sep="/"), width=10, height=3.3*nruns)
     d$run <- factor(as.character(d$run), levels=boldnames, labels=boldnames, ordered=TRUE)
     with(d, levels(run))
     print(qplot(frame, value, data = d, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement correction parameters", session, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("mm / deg"))
@@ -453,7 +457,7 @@ if (plot) {
     dfd <- rbind(dfd, ddvm)
 
     if (verbose) cat("\n     ... _dvars.pdf")
-    pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_dvars.pdf", sep=""), sep="/"), width=10, height=2*nruns)
+    pdf(file=paste(folder, paste(rname, bold_tail, '_', pref, plotr, "_dvars.pdf", sep=""), sep="/"), width=10, height=2*nruns)
     dbadm <- dbadm[dbadm$value > 0, ]
     ylim <- max(dfd$value)
     ylim <- 10
@@ -471,7 +475,7 @@ if (plot) {
     if (verbose) cat(" ... ok")
 
     if (verbose) cat("\n     ... _dvarsme.pdf")
-    pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_dvarsme.pdf", sep=""), sep="/"), width=10, height=2*nruns)
+    pdf(file=paste(folder, paste(rname, bold_tail, '_', pref, plotr, "_dvarsme.pdf", sep=""), sep="/"), width=10, height=2*nruns)
     dbadme <- dbadme[dbadme$value > 0, ]
     ylim <- max(dad$value)
     ylim <- 6
