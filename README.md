@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.62.11  Implemented the ability for processing different bold files and variates.
 * 0.62.10 The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
 * 0.62.9  More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention. 
 * 0.62.8  Added the option to include only available files for the parameter check within createList command.
