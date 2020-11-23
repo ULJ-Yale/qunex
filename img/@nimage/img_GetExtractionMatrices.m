@@ -92,7 +92,7 @@ for ti = toignore
     else 
         useScrub = find(ismember(obj.scrub_hdr, ti));
         if isempty(useScrub)
-            error('ERROR: The specified badframes field (%s) is not valid!', ti{1});
+            error('ERROR: The specified ignore field (%s) is not valid!', ti{1});
         end
         useframes = useframes & obj.scrub(:, useScrub)' == 0;
     end
@@ -158,7 +158,7 @@ if ~isnumeric(options.badevents)
     if ~ismember(options.badevents, {'use', 'ignore'})
         [options.badevents, ok] = str2num(options.badevents);
         if ~ok
-            error('ERROR: badevents option is neither a number of a valid option [%s]!\n\n', options.badevents);
+            error('ERROR: badevents option is neither a number nor a valid option [%s]!\n\n', options.badevents);
         end
     end
 end
