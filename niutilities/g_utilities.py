@@ -693,9 +693,9 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
 
 
 
-def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", img_suffix='', overwrite='no', check='yes'):
+def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
     """
-    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [img_suffix=''] [overwrite="no"] [check="yes"]``
+    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Creates a .list formated file that can be used as input to a number of
     processing and analysis functions. The function is fairly flexible, its
@@ -716,13 +716,20 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     --listfile          The path to the generated list file. If no path is 
                         provided, the list is created as:
                         `<studyfolder>/processing/lists/sessions.list`
+    --img_suffix        Specifies an optional suffix for 'images' folder when 
+                        files are to be taken from a folder that enables a
+                        parallel workflow [].
+    --bold_variant      Specifies an optional suffix for 'functional` folder
+                        when functional files are to be taken from a folder
+                        that enables a parallel workflow with functional 
+                        images []. 
     --bolds             If provided the specified bold files will be added to 
                         the list. The value should be a string that lists bold 
                         numbers or bold tags in a space, comma or pipe 
                         separated string.
     --boldname          The prefix to be added to the bold number specified 
                         in bolds parameter [bold]
-    --boldtail          The suffix to be added to the bold number specified
+    --bold_tail         The full tail to be added to the bold number specified
                         in bolds parameter or bold names that match the
                         tag specified in the bolds parameeter [.nii.gz].
     --img_suffix        Specifies a suffix for 'images' folder to enable
@@ -799,6 +806,21 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     and include all the sessions for which an `images` folder exists as a
     subfolder in the sessions's folder.
 
+    The location of files to include
+    --------------------------------
+
+    By default the files to incude in the list are searched for in the 
+    standard location of image and functional files:: 
+
+        <session id>/images/functional`
+
+    The optional `img_suffix` and `bold_variant` parameters enable specifying
+    alternate folders, when imaging and functional data is being processed in
+    multiple parallel workflows. When these parameters are used the files are
+    added to the list from the following location::
+
+        <session id/images<img_suffix>/functional<bold_variant>
+
     The files to include in the list
     --------------------------------
 
@@ -816,11 +838,11 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     in the batch file will be included.
 
     Two other parameters are crucial for generation of bold file entries in the
-    list: `boldname` and `boldtail`.
+    list: `boldname` and `bold_tail`.
 
     The bolds will be listed in the list file as::
 
-        file:<sessionsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
+        file:<sessionsfolder>/<session id>/images<img_suffix>/functional<bold_variant>/<boldname><boldnumber><bold_tail>
 
     conc files
     ~~~~~~~~~~
@@ -828,7 +850,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     To include conc files, provide a `conc` parameter. In the parameter list the
     name of the conc file to be include. Conc files will be listed as::
 
-        conc:<sessionsfolder>/<session id>/images/functional/concs/<conc>
+        conc:<sessionsfolder>/<session id>/images<img_suffix>/functional<bold_variant>/concs/<conc>
 
     fidl files
     ~~~~~~~~~~
@@ -836,7 +858,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     To include fidl files, provide a `fidl` parameter. In the parameter list the
     name of the fidl file to include. Fidl files will be listed as::
 
-        fidl:<sessionsfolder>/<session id>/images/functional/events/<fidl>
+        fidl:<sessionsfolder>/<session id>/images<img_suffix>/functional<bold_variant>/events/<fidl>
 
     GLM files
     ~~~~~~~~~
@@ -844,7 +866,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     To include GLM files, provide a `glm` parameter. In the parameter list the
     name of the GLM file to include. GLM files will be listed as::
 
-        glm:<sessionsfolder>/<session id>/images/functional/<glm>
+        glm:<sessionsfolder>/<session id>/images<img_suffix>/functional<bold_variant>/<glm>
 
     ROI files
     ~~~~~~~~~
@@ -852,11 +874,11 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     To include ROI files, provide a `roi` parameter. In the parameter list the
     name of the ROI file to include. ROI files will be listed as::
 
-        roi:<sessionsfolder>/<session id>/images/<roi>
+        roi:<sessionsfolder>/<session id>/images<img_suffix>/<roi>
 
     Note that for all the files the function expects the files to be present in
     the correct places within the Qu|Nex sessions folder structure. For ROI files
-    provide the relative path from the `images` folder.
+    provide the relative path from the `images<img_suffix>` folder.
 
     Checking for presence of files
     ------------------------------
@@ -888,7 +910,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     ::
 
         qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
-                bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
+                bolds="rest" listfile="lists/rest.list" bold_tail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
 
     The command will create a `lists/rest.list` list file in which for all the
     sessions specified in the `batch.txt` it will list all the BOLD files tagged
@@ -935,6 +957,8 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                Added option to exclude missing files from the list.
     2020-10-22 Andraz Matkovic
                Added support for img_suffix.
+    2020-11-13 Grega Repovš
+               Added the option to specify img_suffix and bold_variant
     """
 
     print "Running createList\n=================="
@@ -955,7 +979,8 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         else:
             if not os.path.exists(fileName):
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
-            return True
+
+        return True
 
     # --- check sessions
 
@@ -977,6 +1002,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         boldnums = [e for e in bolds if e.isdigit()]
 
     bsearch  = re.compile('bold([0-9]+)')
+
+    images_folder     = 'images' + img_suffix
+    functional_folder = 'functional' + bold_variant
 
     # --- prepare target file name and folder
 
@@ -1014,7 +1042,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
     if sessions is None:
         print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
-        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'images'))
+        sessions = glob.glob(os.path.join(sessionsfolder, '*', images_folder))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
@@ -1032,7 +1060,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], images_folder, functional_folder, boldname + boldnum + bold_tail)
                 includeFile = checkFile(tfile)
                 if includeFile:
                     lines.append("    file:" + tfile)
@@ -1048,31 +1076,31 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], images_folder, functional_folder, boldname + boldnum + bold_tail)
                 includeFile = checkFile(tfile)
                 if includeFile:
                     lines.append("    file:" + tfile)
 
         if roi:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, roi)
+            tfile = os.path.join(sessionsfolder, session['id'], images_folder, roi)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    roi:" + tfile)
 
         if glm:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', glm)
+            tfile = os.path.join(sessionsfolder, session['id'], images_folder, functional_folder, glm)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    glm:" + tfile)
 
         if conc:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', 'concs', conc)
+            tfile = os.path.join(sessionsfolder, session['id'], images_folder, functional_folder, 'concs', conc)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    conc:" + tfile)
 
         if fidl:
-            tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', 'events', fidl)
+            tfile = os.path.join(sessionsfolder, session['id'], images_folder, functional_folder, 'events', fidl)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    fidl:" + tfile)
@@ -1096,9 +1124,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
 
 
-def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", img_suffix='', overwrite='no', check='yes'):
+def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
     """
-    ``createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [img_suffix=''] [overwrite="no"] [check="yes"]``
+    ``createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Creates a set of .conc formated files that can be used as input
     to a number of processing and analysis functions. The function is fairly
@@ -1116,6 +1144,13 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
                         pairs (`"<key>:<value>|<key>:<value>"`). Only
                         sessions that match all the key-value pairs will be
                         added to the list.
+    --img_suffix        Specifies an optional suffix for 'images' folder when 
+                        files are to be taken from a folder that enables a
+                        parallel workflow [].
+    --bold_variant      Specifies an optional suffix for 'functional` folder
+                        when functional files are to be taken from a folder
+                        that enables a parallel workflow with functional 
+                        images [].
     --concfolder        The path to the folder where conc files are to be
                         generated. If not provided, the conc files will be
                         saved to the folder:
@@ -1126,12 +1161,9 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
                         numbers or bold tags to be included in the conc file.
     --boldname          The prefix to be added to the bold number specified 
                         in bolds parameter [bold]
-    --boldtail          The suffix to be added to the bold number specified
+    --bold_tail         The full tail to be added to the bold number specified
                         in bolds parameter or bold names that match the
-                        tag specified in the bolds parameter [.nii.gz].
-    --img_suffix        Specifies a suffix for 'images' folder to enable
-                        support for multiple parallel workflows (e.g. 
-                        <session id>/images<img_suffix>). Empty if not used. []                        
+                        tag specified in the bolds parameeter [.nii.gz].
     --overwrite         If the specified list file already exists: [no]
 
                         - ask    (ask interactively, what to do)
@@ -1204,11 +1236,11 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     in the batch file will be included.
 
     Two other parameters are cruical for generation of bold file entries in the
-    conc files: `boldname` and `boldtail`.
+    conc files: `boldname` and `bold_tail`.
 
     The bolds will be listed in the list file as::
 
-        file:<sessionsfolder>/<session id>/images<img_suffix>/functional/<boldname><boldnumber><boldtail>
+        file:<sessionsfolder>/<session id>/images<img_suffix>/functional<bold_variant>/<boldname><boldnumber><bold_tail>
 
     Note that the function expects the files to be present in the correct place
     within the Qu|Nex sessions folder structure.
@@ -1242,7 +1274,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     ::
 
         qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
-                bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
+                bolds="WM" concname="_WM" bold_tail="_Atlas.dtseries.nii"
 
     The command will create for each session listed in the `batch.txt` a
     `<session id>_WM.conc` file in `sessions/inbox/concs` in which it will list
@@ -1255,7 +1287,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
         qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                 filter="EC:use" concfolder="analysis/EC/concs" \\
                 concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
-                boldtail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
+                bold_tail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
 
     For all the sessions in the `batch.txt` file that have the key:value pair
     "EC:use" set the command will create a conc file in `analysis/EC/concs`
@@ -1285,8 +1317,8 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
                Fixed sorting by bold number
     2020-01-14 Grega Repovš
                Extended documentation with explicit definition of parameters
-    2020-11-17 Grega Repovš
-               Added support for img_suffix.
+    2020-11-13 Grega Repovš
+               Added the option to specify img_suffix and bold_variant
     """
 
     def checkFile(fileName):
@@ -1326,6 +1358,9 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
 
     bsearch  = re.compile('bold([0-9]+)')
 
+    images_folder     = 'images' + img_suffix
+    functional_folder = 'functional' + bold_variant
+
     # --- prepare target file name and folder
 
     if concfolder is None:
@@ -1340,7 +1375,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
 
     if sessions is None:
         print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
-        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'images'))
+        sessions = glob.glob(os.path.join(sessionsfolder, '*', images_folder))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
@@ -1360,7 +1395,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], images_folder, functional_folder, boldname + boldnum + bold_tail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
@@ -1375,7 +1410,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(sessionsfolder, session['id'], 'images' + img_suffix, 'functional', boldname + str(boldnum) + boldtail)
+                tfile = os.path.join(sessionsfolder, session['id'], images_folder, functional_folder, boldname + str(boldnum) + bold_tail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 

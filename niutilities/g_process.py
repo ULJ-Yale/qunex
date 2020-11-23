@@ -209,7 +209,12 @@ arglist = [['# ---- Basic settings'],
            ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
            ['bolds',              'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
            ['boldname',           'bold',                                        str,    "the default name for the bold files"],
+           ['qx_nifti_tail',      'None',                                        isNone, "The tail of the nifti (volume) file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_nifti_tail"],          
+           ['qx_cifti_tail',      'None',                                        isNone, "The tail of the cifti file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_cifti_tail"],
+           ['nifti_tail',         'None',                                        isNone, "The tail of the nifti (volume) file to be processed. If not set or set to 'None', it defaults to the value of qx_nifti_tail"],
+           ['cifti_tail',         'None',                                        isNone, "The tail of the cifti file to be processed. If not set or set to 'None', it defaults to the value of qx_cifti_tail"],           
            ['bold_prefix',        '',                                            str,    "an optional prefix to place in front of processing name extensions in the resulting files"],
+           ['bold_variant',       '',                                            str,    "The suffix to add to 'images/functional' folders. '' by default"],
            ['img_suffix',         '',                                            str,    "an optional suffix for the images folder, to be used when working with multiple parallel workflows"],
            ['pignore',            '',                                            str,    "what to do with frames marked as bad"],
            ['event_file',         '',                                            str,    "the root name of the fidl event file for task regression"],
@@ -318,9 +323,10 @@ arglist = [['# ---- Basic settings'],
            ['hcp_regname',            'MSMSulc',                                  str,    "What registration is used FS or MSMSulc. FS if none is provided."],
            ['hcp_mcsigma',            '',                                         str,    "Correction sigma used for metric smooting (sqrt(200): 14.14213562373095048801) ['']."],
            ['hcp_inflatescale',       '1',                                        str,    "Inflate extra scale parameter [1]."],
-           ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder."],
+           ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
+           ['hcp_nifti_tail',          '',                                        str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results"],
-           ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default"],
+           ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' folder. '' by default"],
            ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE, LEGACY or SEBASED (for TOPUP DC only). HCP Pipelines only!"],
            ['hcp_bold_usejacobian',   '',                                         str,    "Whether to apply the jacobian of the distortion correction to fMRI data. HCP Pipelines only!"],
            ['hcp_bold_echospacing',   '',                                         str,    "Echo Spacing or Dwelltime of fMRI image in seconds"],
@@ -413,6 +419,15 @@ tomap = {'bppt':                    'bolds',
 # The "mapValues" dictionary specifies remapping of values
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
              'hcp_filename': {'name': 'original', 'number': 'standard'}}
+
+# The "to_impute" list specifies, which (target) options have to be checked whether 
+# they were not specified and therefore have value None, and in those cases use values from
+# other (source) options. The specification is provided as a list of tuples pairs where the first
+# string in the pair identifies the target option (the option to check) and the second string
+# identifies the source option (the option from which to take the value to impute). Please note
+# that the imputation will follow the order in which tuples are listed.
+
+to_impute = [('qx_cifti_tail', 'hcp_cifti_tail'), ('qx_nifti_tail', 'hcp_nifti_tail'), ('cifti_tail', 'qx_cifti_tail'), ('nifti_tail', 'qx_nifti_tail')]
 
 # The "deprecated" dictionary specifies parameters that are no longer in use
 deprecatedParameters = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
@@ -639,6 +654,27 @@ def mapDeprecated(options, command):
 
 
 # ==============================================================================
+#                                                IMPUTING UNSPECIFIED PARAMETERS
+#
+
+def imputeParameters(options, command):
+    '''
+    ``imputeParameters(options, command)``
+    
+    Checks if specific parameters are not specified and assigns them the value
+    of another relevant parameter.
+    '''
+
+    for target_option, source_option in to_impute:
+        if options[target_option] is None:
+            options[target_option] = options[source_option]
+            print "WARNING: Parameter %s was not specified. Its value was imputed from parameter %s and set to '%s'!" % (target_option, source_option, str(options[source_option])) 
+    
+    return options
+
+
+
+# ==============================================================================
 #                                                               RUNNING COMMANDS
 #
 
@@ -713,7 +749,6 @@ def run(command, args):
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
-
     # ---- Set key parameters
 
     overwrite    = options['overwrite']
@@ -732,6 +767,10 @@ def run(command, args):
     options['comlogs']    = comlogfolder
     options['logfolder']  = logfolder
     options['specfolder'] = specfolder
+
+    # -- impute unspecified parameters
+    
+    options = imputeParameters(options, command)
 
     # --------------------------------------------------------------------------
     #                                                       start writing runlog
