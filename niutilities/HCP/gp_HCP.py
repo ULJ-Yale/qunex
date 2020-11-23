@@ -2039,18 +2039,18 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                           variants are run, empty otherwise. []
     --logfolder           The path to the folder where runlogs and comlogs
                           are to be stored, if other than default. []
-    --log                 Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed. ['keep']
-                          When a comma or pipe ('|') separated list is given, 
+    --log                 Whether to keep ("keep") or remove ("remove") the
+                          temporary logs once jobs are completed. ["keep"]
+                          When a comma or pipe ("|") separated list is given, 
                           the log will be created at the first provided location
                           and then linked or copied to other locations. 
                           The valid locations are: 
                           
-                          - 'study' (for the default: 
-                            `<study>/processing/logs/comlogs` location)
-                          - 'session' (for `<sessionid>/logs/comlogs`)
-                          - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-                          - '<path>' (for an arbitrary directory)
+                          - "study" (for the default: 
+                            "<study>/processing/logs/comlogs" location)
+                          - "session" (for "<sessionid>/logs/comlogs")
+                          - "hcp" (for "<hcp_folder>/logs/comlogs")
+                          - "<path>" (for an arbitrary directory)
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -2066,24 +2066,24 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                                 
                             Example specifications:
 
-                            - `all`: use all present inline information for
+                            - "all": use all present inline information for
                               all modalities,
-                            - 'DwellTime': use DwellTime information for all
+                            - "DwellTime": use DwellTime information for all
                               modalities,
-                            - `T1w:all': use all present inline information 
+                            - "T1w:all": use all present inline information 
                               for T1w modality,
-                            - `SE:EchoSpacing': use EchoSpacing information
+                            - "SE:EchoSpacing": use EchoSpacing information
                               for Spin-Echo fieldmap images.
-                            - 'none': do not use inline information
+                            - "none": do not use inline information
 
                             Modalities: T1w, T2w, SE, BOLD, dMRI
                             Inline information: TR, PEDirection, EchoSpacing
                             DwellTime, ReadoutDirection
 
                             If information is not specified it will not be 
-                            used. More general specification (e.g. `all`) 
-                            implies all more specific cases (e.g. `T1w:all`).
-                            ['all']
+                            used. More general specification (e.g. "all") 
+                            implies all more specific cases (e.g. "T1w:all").
+                            ["all"]
 
     Distortion correction details
     -----------------------------
@@ -2133,7 +2133,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                             arguments divide them with the pipe (|)
                             character,
                             e.g. --hcp_dwi_extraeddyarg="--niter=8|--nvoxhp=2000".
-                            ['']
+                            [""]
 
     Additional parameters
     ---------------------
@@ -2152,25 +2152,25 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     Gradient Coefficient File Specification:
     ----------------------------------------
 
-    `--hcp_dwi_gdcoeffs` parameter can be set to either 'NONE', a path to a 
+    --hcp_dwi_gdcoeffs parameter can be set to either "NONE", a path to a 
     specific file to use, or a string that describes, which file to use in which
-    case. Each option of the string has to be divided by a pipe '|' character 
+    case. Each option of the string has to be divided by a pipe "|" character 
     and it has to specify, which information to look up, a possible value, and a
-    file to use in that case, separated by a colon ':' character. The 
+    file to use in that case, separated by a colon ":" character. The 
     information too look up needs to be present in the description of that 
     session. Standard options are e.g.::
 
         institution: Yale
         device: Siemens|Prisma|123456
 
-    Where device is formatted as `<manufacturer>|<model>|<serial number>`.
+    Where device is formatted as "<manufacturer>|<model>|<serial number>".
 
-    If specifying a string it also has to include a `default` option, which 
+    If specifying a string it also has to include a "default" option, which 
     will be used in the information was not found. An example could be::
 
         "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
 
-    With the information present above, the file `/data/gc/Prisma.conf` would
+    With the information present above, the file "/data/gc/Prisma.conf" would
     be used.
 
     OUTPUTS
@@ -2190,7 +2190,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     current distortions and subject motion. Gradient distortion is corrected and
     the b0 image is registered to the T1w image using BBR. The diffusion data 
     output from eddy are then resampled into 1.25mm native structural space and 
-    masked.Diffusion directions and the gradient deviation estimates are also 
+    masked. Diffusion directions and the gradient deviation estimates are also 
     appropriately rotated and registered into structural space. The function 
     enables the use of a number of parameters to customize the specific
     preprocessing steps. A short name 'hcpd' can be used for this command.
