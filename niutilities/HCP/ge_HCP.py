@@ -263,7 +263,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
 
     for sfile, tfile in toMap:
         if not os.path.exists(sfile):
-            missing.append((sfile, tifile))
+            missing.append((sfile, tfile))
         elif os.path.isfile(tfile):
             existing.append((sfile, tfile))
         else:
