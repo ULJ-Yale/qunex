@@ -2132,27 +2132,44 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         # --- set up data
         if 'hcp_dwi_phasepos' not in options or options['hcp_dwi_phasepos'] == "PA":
             direction = [('pos', 'PA'), ('neg', 'AP')]
-            PEdir = 2
+            pe_dir = 2
         elif options['hcp_dwi_phasepos'] == "AP":
             direction = [('pos', 'AP'), ('neg', 'PA')]
-            PEdir = 2
+            pe_dir = 2
         elif options['hcp_dwi_phasepos'] == "LR":
             direction = [('pos', 'LR'), ('neg', 'RL')]
-            PEdir = 1
+            pe_dir = 1
         elif options['hcp_dwi_phasepos'] == "RL":
             direction = [('pos', 'RL'), ('neg', 'LR')]
-            PEdir = 1
+            pe_dir = 1
         else:
             r += "\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]" % options['hcp_dwi_phasepos']
             run = False
 
         if run:
-            dwiData = dict()
+            # get subject's DWIs
+            dwis = dict()
+            for k, v in sinfo.items():
+                if k.isdigit() and v['name'] == 'DWI':
+                    dwis[int(k)] = v["filename"]
+
+            # get dwi files
+            dwi_data = dict()
             for ddir, dext in direction:
-                dwiData[ddir] = "@".join(glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext))))
+                dwi_files = glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
+
+                # sort by temporal order as specified in batch
+                for dwi in sorted(dwis):
+                    for dwi_file in dwi_files:
+                        if dwis[dwi] in dwi_file:
+                            if ddir in dwi_data:
+                                dwi_data[ddir] = dwi_data[ddir] + "@" + dwi_file
+                            else:
+                                dwi_data[ddir] = dwi_file
+                            break
 
             for ddir in ['pos', 'neg']:
-                dfiles = dwiData[ddir].split("@")
+                dfiles = dwi_data[ddir].split("@")
 
                 if dfiles and dfiles != ['']:
                     r += "\n---> The following %s direction files were found:" % (ddir)
@@ -2163,16 +2180,14 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                     run = False
 
         # --- lookup gdcoeffs file if needed
-
         gdcfile, r, run = checkGDCoeffFile(options['hcp_dwi_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # -- set echospacing
-
         dwiinfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'DWI'][0]
 
         if 'EchoSpacing' in dwiinfo:
             echospacing = dwiinfo['EchoSpacing']
-            r += "\n---> Using image specific EchoSpacing: %s ms" % (echospacing)                
+            r += "\n---> Using image specific EchoSpacing: %s ms" % (echospacing)
         else:
             echospacing = options['hcp_dwi_echospacing']
             r += "\n---> Using study general EchoSpacing: %s ms" % (echospacing)
@@ -2182,9 +2197,9 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
-                --PEdir=%(PEdir)s \
-                --posData="%(posData)s" \
-                --negData="%(negData)s" \
+                --PEdir=%(pe_dir)s \
+                --posData="%(pos_data)s" \
+                --negData="%(neg_data)s" \
                 --echospacing="%(echospacing)s" \
                 --gdcoeffs="%(gdcoeffs)s" \
                 --dof="%(dof)s" \
@@ -2192,12 +2207,12 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                 --combine-data-flag="%(combinedataflag)s" \
                 --printcom="%(printcom)s"' % {
                     'script'            : os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
-                    'posData'           : dwiData['pos'],
-                    'negData'           : dwiData['neg'],
+                    'pos_data'          : dwi_data['pos'],
+                    'neg_data'          : dwi_data['neg'],
                     'path'              : sinfo['hcp'],
                     'subject'           : sinfo['id'] + options['hcp_suffix'],
                     'echospacing'       : echospacing,
-                    'PEdir'             : PEdir,
+                    'pe_dir'            : pe_dir,
                     'gdcoeffs'          : gdcfile,
                     'dof'               : options['hcp_dwi_dof'],
                     'b0maxbval'         : options['hcp_dwi_b0maxbval'],
@@ -2236,22 +2251,21 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             tfile = os.path.join(hcp['T1w_folder'], 'Diffusion', 'data.nii.gz')
 
             if hcp['hcp_dwi_check']:
-                fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_dwi_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
+                full_test = {'tfolder': hcp['base'], 'tfile': hcp['hcp_dwi_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
             else:
-                fullTest = None
+                full_test = None
 
         # -- Run
-
         if run:
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed  = runExternalForFile(tfile, comm, 'Running HCP Diffusion Preprocessing', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                r, endlog, report, failed  = runExternalForFile(tfile, comm, 'Running HCP Diffusion Preprocessing', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=full_test, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP Diffusion', r, overwrite=overwrite)
+                passed, report, r, failed = checkRun(tfile, full_test, 'HCP Diffusion', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
