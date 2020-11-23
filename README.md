@@ -42,12 +42,13 @@ Quick links
 Change log
 ----------
 
-* 0.62.11  Implemented the ability for processing different bold files and variates.
-* 0.62.10 The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
-* 0.62.9  More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention. 
-* 0.62.8  Added the option to include only available files for the parameter check within createList command.
-* 0.62.7  Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps.
-* 0.62.6  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.12  Implemented the ability for processing different bold files and variates.
+* 0.62.11 The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
+* 0.62.10  More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention. 
+* 0.62.9  Added the option to include only available files for the parameter check within createList command.
+* 0.62.8  Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps.
+* 0.62.7  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.6  The order of images in the hcpDiffusion command is now correct.
 * 0.62.5  gmri documentation polish for consistency across the whole suite.
 * 0.62.4  Renamed filename to hcp_filename in SetupHCP.
 * 0.62.3  batchTag2NameKey optimizations and documentation update.
