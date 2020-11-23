@@ -613,7 +613,7 @@ fprintf('\n        options: %s', options);
 fprintf('\n');
 
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -647,17 +647,17 @@ doIt = strrep(doIt, ' ', '');
 froot = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
 
 file.movdata   = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '_mov.dat']);
-file.oscrub    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.scrub']);
+file.oscrub    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.ref_bold_tail '.scrub']);
 file.tscrub    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.bold_tail variant '.scrub']);
-file.bstats    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.bstats']);
-file.fidlfile  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' options.boldname   int2str(bold) efile]);
-file.bmask     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
+file.bstats    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.ref_bold_tail '.bstats']);
+file.fidlfile  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/'   options.boldname int2str(bold) efile]);
+file.bmask     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname int2str(bold) options.ref_bold_tail '_frame1_brain_mask' tail]);
 
 eroot          = strrep(efile, '.fidl', '');
 if eroot
     eroot = ['_' eroot];
 end
-file.nuisance  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.nuisance']);
+file.nuisance  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.ref_bold_tail '.nuisance']);
 file.Xroot     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname int2str(bold) options.bold_tail '_GLM-X' eroot]);
 
 file.lsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
