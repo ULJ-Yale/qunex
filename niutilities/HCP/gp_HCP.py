@@ -2151,7 +2151,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             dwis = dict()
             for k, v in sinfo.items():
                 if k.isdigit() and v['name'] == 'DWI':
-                    dwis[int(k)] = v["filename"]
+                    dwis[int(k)] = v["task"]
 
             # get dwi files
             dwi_data = dict()
