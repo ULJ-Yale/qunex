@@ -35,19 +35,23 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %						lowpass temporal filter
 %           		m 
 %						motion scrubbing
-%	
+%
 %   --TR        	TR of the data [2.5]
 %   --omit      	The number of frames to omit at the start of each bold []
 %   --rgss      	A comma separated string specifying what to regress in the
 %               	regression step ['m,V,WM,WB,1d']:
 %	
-%           		- m  ... motion
-%           		- V  ... ventricles
-%           		- WM ... white matter
-%           		- WB ... whole brain
-%           		- 1d ... first derivative
-%           		- t  ... task
-%           		- e  ... events
+%           		- m     ... motion
+%           		- m1d   ... first derivative for movement regressors
+%           		- mSq   ... squared motion parameters
+%                   - m1dSq ... squared motion derivatives
+%           		- V     ... ventricles
+%           		- WM    ... white matter
+%           		- WB    ... whole brains
+%           		- n1d   ... first derivative for nuisance signal regressors
+%           		- 1d    ... first derivative for movement and nuisance signal
+%           		- t     ... task
+%           		- e     ... events
 %
 %   --task        	Matrix of custom regressors to be entered in GLM.
 %   --efile       	Event (fild) file to be used for estimation of task regressors ['']
@@ -57,7 +61,7 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %   --overwrite   	Whether old files should be overwritten [false]
 %   --tail        	what file extension to expect and use for images ['.nii.gz']
 %   --scrub       	the description of how to compute scrubbing - a string in 
-%					`'param:value|param:value'` formatĹž
+%					`'param:value|param:value'` format
 %
 %                   Parameters:
 %
@@ -79,7 +83,7 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %                     
 %					If empty, the defaults from img_ComputeScrub are used.
 %
-%	--ignores       How to deal with the frames marked as not used in filering 
+%	--ignores       How to deal with the frames marked as not used in filtering 
 %					and regression steps specified in a single string, separated
 %					with pipes
 %                   
@@ -425,14 +429,23 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %
 %       m  
 %			motion parameters
+%       m1d
+%			motion derivatives
+%		mSq
+%			squared motion parameters
+%       m1dSq
+%			squared motion derivatives
 %       V  
 %			ventricles signal
 %       WM 
 %			white matter signal
 %       WB 
 %			whole brain signal
-%       1d 
-%			first derivative of above nuisance signals
+%       n1d
+%			first derivative of requested above nuisance signals (V, WM, WB)
+%       1d
+%			first derivative of both movement regressors and specified nuisance signal
+%			regressors (V, WM, WB)
 %       e  
 %			events listed in the provided fidl files (see above), modeled as 
 %			specified in the event_string parameter.
@@ -440,8 +453,8 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %		['m,V,WM,WB,1d']
 %
 %   eventstring 
-%		A string describing, how to model the events listed in
-%                     the provided fidl files [].
+%		A string describing, how to model the events listed in the provided fidl files. 
+%		[]
 %
 %   Additionally, the following options can be set using the options string:
 %
@@ -543,7 +556,7 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt`
 %
 %   image of a regressor matrix:
-%   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png
+%   	`glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png`
 %
 %   EXAMPLE USE
 %   ===========
@@ -568,7 +581,7 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %	Changelog
 %
 %   2011-01-24 Grega Repovs
-%              Created based on fc_Preprocess.m and other previous code
+%              Created based on fc_Preprocess.m and other previous cod
 %   2013-10-20 Grega Repovs (v0.9.3)
 %              Added option for ignoring the frames marked as not to be used.
 %   2014-07-20 Grega Repovs (v0.9.5)
@@ -597,6 +610,11 @@ function [] = fc_PreprocessConc(sessionf, bolds, doIt, TR, omit, rgss, task, efi
 %              Fixed an issue with conversion of doIt from char to string
 %   2020-07-03 Grega Repovs (v0.9.14)
 %              Added support for img_suffix
+%   2020-10-05 Grega Repovs (v0.9.15)
+%              Enabled additional movement and nuisance regressor computation
+%   2020-11-05 Grega Repovs (v0.9.16)
+%              Corrected embedding of additional movement regressors
+%   
 
 if nargin < 16, done = [];                                  end
 if nargin < 15, options = '';                               end
@@ -612,7 +630,7 @@ if nargin < 6 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-fprintf('\nRunning preproces conc script v0.9.13 [%s]\n-------------------------------------\n', tail);
+fprintf('\nRunning preproces conc script v0.9.16 [%s]\n-------------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
 fprintf('\n       sessionf: %s', sessionf);
 fprintf('\n          bolds: [%s]', num2str(bolds));
@@ -632,7 +650,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = g_ParseOptions([], options, default);
 
 g_PrintStruct(options, 'Options used');
@@ -682,6 +700,15 @@ case '.ptseries.nii'
     fformat = 'ptseries';
 end
 
+eroot = strrep(efile, '.fidl', '');
+if options.fidlname
+    eroot = ['_' options.fidlname];
+else
+    if eroot
+        eroot = ['_' eroot];
+    end
+end
+
 
 % ======================================================
 %                                     ---> prepare paths
@@ -694,18 +721,17 @@ for b = 1:nbolds
     file(b).froot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname bnum options.bold_tail]);
 
     file(b).movdata     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '_mov.dat']);
-    file(b).oscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.scrub']);
+    file(b).oscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.scrub']);
     file(b).tscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.bold_tail variant '.scrub']);
-    file(b).bstats      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.bstats']);
-    file(b).nuisance    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum '.nuisance']);
+    file(b).bstats      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.bstats']);
+    file(b).nuisance    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.nuisance']);
     file(b).fidlfile    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' efile]);
-    file(b).bmask       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum '_frame1_brain_mask' tail]);
+    file(b).bmask       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum options.ref_bold_tail '_frame1_brain_mask' tail]);
 
-    eroot               = strrep(efile, '.fidl', '');
-    file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc_' eroot]);
-    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat '_' eroot]);
+    file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc'  eroot]);                % using conc instead of options.concname
+    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);       % missing options.concname  before eroot
 
-    file(b).Xroot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+    file(b).Xroot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X' eroot]);            % not using options.concname
 
     file(b).lsurf       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
     file(b).rsurf       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
@@ -949,7 +975,7 @@ for current = char(doIt)
             fprintf('\n---> %s ', file(b).sfile)
 
             if exist(file(b).tfile, 'file') && ~overwrite
-                fprintf('... already completed!');
+                fprintf('... already completed! [%s]', file(b).tfile);
                 img(b).empty = true;
             else
 
@@ -1085,7 +1111,7 @@ for current = char(doIt)
 
     if saveconc
         if exist(file(b).tconc, 'file') && ~overwrite
-            fprintf('\n---> conc file already saved!');
+            fprintf('\n---> conc file already saved! [%s]', file(b).tconc);
         else
             fprintf('\n---> saving conc file ');
             nimage.img_SaveConcFile(file(b).tconc, {file.tfile});
@@ -1117,17 +1143,24 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     nbolds = length(img);
     frames = zeros(1, nbolds);
 
-    derivatives = ismember('1d', rgss);
+    nuisanceDer = ismember('1d', rgss) || ismember('n1d', rgss);
     movement    = ismember('m', rgss);
+    movementDer = ismember('1d', rgss) || ismember('m1d', rgss);
+    movementSQ  = ismember('mSq', rgss);
+    movementDerSQ = ismember('m1dSq', rgss);
     task        = ismember('t', rgss);
     event       = ismember('e', rgss);
-    rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm'}));
+    rgss        = rgss(~ismember(rgss, {'1d', 'n1d', 'e', 't', 'm','m1d','mSq','m1dSq'}));
     hdr         = {};
     hdre        = {};
     hdrf        = [];
     effects     = {};
     effect      = [];
     eindex      = [];
+
+    for b = 1:nbolds
+        img(b).data = img(b).image2D;
+    end
 
     % ---> bold starts, ends, frames, selection of nuisance
 
@@ -1149,9 +1182,13 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     nB = 2;
     nS = nuisance(1).nsignal;
-    if task,     nT = nuisance(1).ntask;   else nT = 0; end
-    if movement, nM = nuisance(1).nmov;    else nM = 0; end
-    if event,    nE = nuisance(1).nevents; else nE = 0; end
+    if task,          nT   = nuisance(1).ntask;   else nT   = 0; end
+    if movement,      nM   = nuisance(1).nmov;    else nM   = 0; end
+    if movementDer,   nMd  = nuisance(1).nmov;    else nMd  = 0; end
+    if movementSQ,    nMS  = nuisance(1).nmov;    else nMS  = 0; end
+    if movementDerSQ, nMdS = nuisance(1).nmov;    else nMdS = 0; end
+    if event,         nE   = nuisance(1).nevents; else nE   = 0; end
+    nMT = nM + nMd + nMS + nMdS;
     nBj = nB*nbolds;
     nTj = nT;
 
@@ -1167,12 +1204,12 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             joine = true;
     end
 
-    if joine, nEj = nE; else nEj = nE * nbolds; end
-    if joinn, nMj = nM; else nMj = nM * nbolds; end
-    if joinn, nSj = nS; else nSj = nS * nbolds; end
+    if joine, nEj = nE;  else nEj = nE  * nbolds; end
+    if joinn, nMj = nMT; else nMj = nMT * nbolds; end
+    if joinn, nSj = nS;  else nSj = nS  * nbolds; end
 
-    if derivatives
-        nX = nBj + nTj + nMj*2 + nSj*2 + nEj;
+    if nuisanceDer
+        nX = nBj + nTj + nMj + nSj*2 + nEj;   %movement derivatives are already included
     else
         nX = nBj + nTj + nMj + nSj + nEj;
     end
@@ -1207,11 +1244,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     %   ----> movement
 
-    for mi = 1:nM
-        effects{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
-    end
-
     if movement
+        for mi = 1:nM
+            effects{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+        end
         for b = 1:nbolds
             xE = xS + nM - 1;
             X(bS(b):bE(b), xS:xE) = nuisance(b).mov;
@@ -1240,7 +1276,111 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         end
     end
 
+ %----- movement derivatives
 
+    if movementDer
+        for mi = 1:nMd
+            effects{end+1}  = sprintf('mov_%s_1d', nuisance(1).mov_hdr{mi});
+        end
+        for b = 1:nbolds
+            xE = xS + nMd - 1;
+            X(bS(b):bE(b), xS:xE) = [zeros(1,nuisance(b).nmov); diff(nuisance(b).mov)];
+            if ~joinn
+                xS = xS+nMd;
+                for mi = 1:nMd
+                    ts = sprintf('mov_%s_1d', nuisance(1).mov_hdr{mi});
+                    hdr{end+1}  = sprintf('%s.b%d', ts, b);
+                    hdre{end+1} = sprintf('%s.b%d', ts, b);
+                    hdrf(end+1) = 1;
+                    effect(end+1) = find(ismember(effects, ts));
+                    eindex(end+1) = b;
+                end
+            end
+        end
+        if joinn
+            xS = xS+nMd;
+            for mi = 1:nMd
+                ts = sprintf('mov_%s_1d', nuisance(1).mov_hdr{mi});
+                hdr{end+1}  = ts;
+                hdre{end+1} = ts;
+                hdrf(end+1) = 1;
+                effect(end+1) = find(ismember(effects, ts));
+                eindex(end+1) = 1;
+            end
+        end
+    end
+    
+    %------ Squared motion parameters
+    
+    if movementSQ
+        for mi = 1:nMS
+            effects{end+1}  = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
+        end
+
+        for b = 1:nbolds
+            xE = xS + nMS - 1;
+            X(bS(b):bE(b), xS:xE) = nuisance(b).mov.^2;
+            if ~joinn
+                xS = xS+nMS;
+                for mi = 1:nMS
+                    ts = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
+                    hdr{end+1}  = sprintf('%s_b%d', ts, b);
+                    hdre{end+1} = sprintf('%s.b%d', ts, b);
+                    hdrf(end+1) = 1;
+                    effect(end+1) = find(ismember(effects, ts));
+                    eindex(end+1) = b;
+                end
+            end
+        end
+        if joinn
+            xS = xS+nMS;
+            for mi = 1:nMS
+                ts = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
+                hdr{end+1}  = ts;
+                hdre{end+1} = ts;
+                hdrf(end+1) = 1;
+                effect(end+1) = find(ismember(effects, ts));
+                eindex(end+1) = 1;
+            end
+        end
+    end
+    
+    % ------ Squared motion derivatives
+    
+    for mi = 1:nMdS
+        effects{end+1}  = sprintf('mov_%s_1dSq', nuisance(1).mov_hdr{mi});
+    end
+
+    if movementDerSQ
+        for b = 1:nbolds
+            xE = xS + nMdS - 1;
+            X(bS(b):bE(b), xS:xE) = [zeros(1,nuisance(b).nmov); diff(nuisance(b).mov).^2];
+            if ~joinn
+                xS = xS+nMdS;
+                for mi = 1:nMdS
+                    ts = sprintf('mov_%s_1dSq', nuisance(1).mov_hdr{mi});
+                    hdr{end+1}  = sprintf('%s.b%d', ts, b);
+                    hdre{end+1} = sprintf('%s.b%d', ts, b);
+                    hdrf(end+1) = 1;
+                    effect(end+1) = find(ismember(effects, ts));
+                    eindex(end+1) = b;
+                end
+            end
+        end
+        if joinn
+            xS = xS+nMdS;
+            for mi = 1:nMdS
+                ts = sprintf('mov_%s_1dSq', nuisance(1).mov_hdr{mi});
+                hdr{end+1}  = ts;
+                hdre{end+1} = ts;
+                hdrf(end+1) = 1;
+                effect(end+1) = find(ismember(effects, ts));
+                eindex(end+1) = 1;
+            end
+        end
+    end
+
+    
     %   ----> signal
 
     for mi = 1:nS
@@ -1274,49 +1414,14 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     end
 
 
-    %   ----> movement & signal derivatives
+    %   ----> signal derivatives
 
-    if derivatives
-
-        %   ----> movement
-
-        for mi = 1:nM
-            effects{end+1}  = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
-        end
-
-        if movement
-            for b = 1:nbolds
-                xE = xS + nM - 1;
-                X(bS(b):bE(b), xS:xE) = [zeros(1,nuisance(b).nmov); diff(nuisance(b).mov)];
-                if ~joinn
-                    xS = xS+nM;
-                    for mi = 1:nM
-                        ts = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
-                        hdr{end+1}  = sprintf('%s.b%d', ts, b);
-                        hdre{end+1} = sprintf('%s.b%d', ts, b);
-                        hdrf(end+1) = 1;
-                        effect(end+1) = find(ismember(effects, ts));
-                        eindex(end+1) = b;
-                    end
-                end
-            end
-            if joinn
-                xS = xS+nM;
-                for mi = 1:nM
-                    ts = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
-                    hdr{end+1}  = ts;
-                    hdre{end+1} = ts;
-                    hdrf(end+1) = 1;
-                    effect(end+1) = find(ismember(effects, ts));
-                    eindex(end+1) = 1;
-                end
-            end
-        end
+    if nuisanceDer
 
         %   ----> signal
 
         for mi = 1:nS
-            effects{end+1}  = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+            effects{end+1}  = sprintf('%s_1d', nuisance(1).signal_hdr{mi});
         end
 
         for b = 1:nbolds
@@ -1325,7 +1430,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             if ~joinn
                 xS = xS+nS;
                 for mi = 1:nS
-                    ts = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+                    ts = sprintf('%s_1d', nuisance(1).signal_hdr{mi});
                     hdr{end+1}  = sprintf('%s.b%d', ts, b);
                     hdre{end+1} = sprintf('%s.b%d', ts, b);
                     hdrf(end+1) = 1;
@@ -1337,9 +1442,9 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         if joinn
             xS = xS+nS;
             for mi = 1:nS
-                ts = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
-                hdr{end+1}  = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
-                hdre{end+1} = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+                ts = sprintf('%s_1d', nuisance(1).signal_hdr{mi});
+                hdr{end+1}  = sprintf('%s_1d', nuisance(1).signal_hdr{mi});
+                hdre{end+1} = sprintf('%s_1d', nuisance(1).signal_hdr{mi});
                 hdrf(end+1) = 1;
                 effect(end+1) = find(ismember(effects, ts));
                 eindex(end+1) = 1;
