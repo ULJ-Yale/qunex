@@ -1,396 +1,428 @@
-function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv, verbose)
+function [fcmaps] = fc_ComputeSeedMaps(bolds, roiinfo, frames, targetf, options)
 
-%``function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv, verbose)``
+%``function [fcmaps] = fc_ComputeSeedMaps(bolds, roiinfo, frames, targetf, options)``
 %
-%   Computes seed based correlations maps for individuals as well as group maps.
+%   Computes seed based functional connectivity maps for individual subject / session.
 %
 %   INPUTS
 %   ======
 %
-%   --flist    A .list file listing the sessions and their files for which to 
-%              compute seedmaps, or a well strucutured string (see 
-%              g_ReadFileList).
-%   --roiinfo  A names file for the ROI seeds.
-%   --inmask   An array mask defining which frames to use (1) and which not (0) 
-%              or the number of frames to skip at start []
-%   --event    A string describing which events to extract timeseries for and 
-%              the frame offset at start and end in format:
-%              ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
-%   --targetf  The folder to save images in ['.'].
-%   --method   method for extracting timeseries - 'mean', 'pca' ['mean']
-%   --ignore   do we omit frames to be ignored ['use']
-%
-%              - no:    do not ignore any additional frames
-%              - use:   ignore frames as marked in the use field of the bold file
-%              - event: ignore frames as marked in .fidl file
-%              - other: the column in `*_scrub.txt` file that matches bold file 
-%              to be used for ignore mask
-%
-%   --cv       Whether to compute covariances instead of correlations [false].
-%   --verbose  Whether to be verbose when running the analysis [false].
+%   --bolds     A string with a pipe separated list of paths to .conc or bold files. 
+%               The first element has to be the name of the file or group to be used when saving the data. 
+%               E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'
+%   --roiinfo   A path to the names file specifying group based seeds. Additionaly, separated by a pipe '|'
+%               symbol, a path to an image file holding subject/session specific ROI definition.
+%   --frames    The definition of which frames to extract, specifically:
+%               ->  a numeric array mask defining which frames to use (1) and which not (0), or 
+%               ->  a single number, specifying the number of frames to skip at the start of each bold, or
+%               ->  a string describing which events to extract timeseries for, and the frame offset from 
+%                   the start and end of the event in format: 
+%                   '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>') 
+%                   where:
+%                   -> fidlfile         ... is a path to the fidle file that defines the events    
+%                   -> extraction name  ... is the name for the specific extraction definition    
+%                   -> event list       ... is a comma separated list of events for which data is to be extracted    
+%                   -> extraction start ... is a frame number relative to event start or end when the extraction should start    
+%                   -> extraction end   ... is a frame number relative to event start or end when the extraction should start    
+%                      the extraction start and end should be given as '<s|e><frame number>'. E.g.:
+%                       s0  ... the frame of the event onset 
+%                       s2  ... the second frame from the event onset 
+%                       e1  ... the first frame from the event end 
+%                       e0  ... the last frame of the event 
+%                       e-2 ... the two frames before the event end
+%                      example:
+%                       '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%   --tagetf    The folder to save images in ['.'].
+%   --options   A string specifying additional analysis options formated as pipe separated pairs of colon separated
+%               key, value pairs: "<key>:<value>|<key>:<value>"
+%               It takes the following keys and values:
+%               -> roimethod ... what method to use to compute ROI signal, 'mean', 'median', or 'pca' ['mean']
+%               -> eventdata ... what data to use from each event:
+%                                -> all      ... use all identified frames of all events
+%                                -> mean     ... use the mean across frames of each identified event
+%                                -> min      ... use the minimum value across frames of each identified event
+%                                -> max      ... use the maximum value across frames of each identified event
+%                                -> median   ... use the median value across frames of each identified event
+%                                ['all']
+%               -> ignore    ... a comma separated list of information to identify frames to ignore, options are:
+%                                -> use      ... ignore frames as marked in the use field of the bold file
+%                                -> fidl     ... ignore frames as marked in .fidl file (only available with event extraction)
+%                                -> <column> ... the column name in *_scrub.txt file that matches bold file to be used for ignore mask
+%                                ['use,fidl']
+%               -> badevents ... what to do with events that have frames marked as bad, options are:
+%                                -> use      ... use any frames that are not marked as bad
+%                                -> <number> ... use the frames that are not marked as bad if at least <number> ok frames exist
+%                                -> ignore   ... if any frame is marked as bad, ignore the full event
+%                                ['use']
+%               -> fcmeasure ... which functional connectivity measure to compute, the options are:
+%                                -> r        ... pearson's r value
+%                                -> cv       ... covariance estimate
+%                                ['r']
+%               -> saveind   ... a comma separted list of individual session / subject files to save
+%                                -> r        ... save Pearson correlation coefficients (r only) separately for each roi
+%                                -> fz       ... save Fisher Z values (r only) separately for each roi
+%                                -> z        ... save Z statistic (r only) separately for each roi
+%                                -> p        ... save p value (r only) separately for each roi
+%                                -> cv       ... save covariances (cv only) separately for each roi
+%                                -> allbyroi ... save all relevant values by roi
+%                                -> jr       ... save Pearson correlation coefficients (r only) in a single file for all roi
+%                                -> jfz      ... save Fisher Z values (r only) in a single file for all roi
+%                                -> jz       ... save Z statistic (r only) in a single file for all roi
+%                                -> jp       ... save p value (r only) in a single file for all roi
+%                                -> jcv      ... save covariances (cv only) in a single file for all roi
+%                                -> alljoint ... save all relevant values in a joint file
+%                                -> none     ... do not save any individual level results
+%                                ['none']
+%                                Default is 'none'. Any invalid options will be ignored without a warning.
+%               -> subjectname   an optional name to add to the output files, if empty, it won't be used ['']
+%               -> verbose   ... Whether to be verbose 'true' or not 'false', when running the analysis ['false']
 %
 %   RESULTS
 %   =======
 %
-%   It saves group files:
+%   The method returns a structure array with the following fields for each specified
+%   data extraction:
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_r`
-%       Mean group Pearson correlations (converted from Fz).
+%   fcmaps
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_Fz`
-%       Mean group Fisher Z values.
+%        - title:     the title of the extraction as specifed in the frames string, 
+%                     empty if extraction was specified using a numeric value 
+%        - fc:        the functional connectivity map, with one seed-map per frame
+%        - roi:       a cell array with the names of the ROI used in the order 
+%                     of their seed-maps in the fc image
+%        - N:         number of frames over which the map was computed
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_Z`
+%   Based on saveind option specification the following files may be saved:
+%
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_r`
+%       Pearson correlations
+%
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Fz`
+%       Fisher Z values
+%
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Z`
 %       Z converted p values testing difference from 0.
 %
-%   `<targetf>/<root>[_<title>]_<roi>_all_Fz`
-%       Fisher Z values for all participants.
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_p`
+%       p values testing difference from 0.
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_cov`
-%       Mean group covariance.
-%
-%   `<targetf>/<root>[_<title>]_<roi>_all_cov`
-%       Covariances for all participants.
+%   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_cv`
+%       covariance
 %
 %   `<roi>` is the name of the ROI for which the seed map was computed for.
-%   `<root>` is the root name of the flist.
+%   `<name>` is the provided name of the bold(s).
+%   `<subjectname>` is the provided name of the subject, if it was specified.
 %   `<title>` is the title of the extraction event(s), if event string was
 %   specified.
 %
 %   USE
 %   ===
-%
+% 
 %   The function computes seed maps for the specified ROI. If an event string is
-%   provided, it uses each session's .fidl file to extract only the specified
-%   event related frames. The string format is::
+%   provided, it has to start with a path to the .fidl file to be used to extract 
+%   the events, following by a pipe separated list of event extraction definitions:
 %
 %       <title>:<eventlist>:<frame offset1>:<frame offset2>
 %
-%   and multiple extractions can be specified by separating them using the pipe
-%   '|' separator. Specifically, for each extraction, all the events listed in
-%   a comma-separated eventlist will be considered (e.g. 'task1,task2') and for
-%   each event all the frames starting from event start + offset1 to event end
-%   + offset2 will be extracted and concatenated into a single timeseries. Do
-%   note that the extracted frames depend on the length of the event specified
-%   in the .fidl file!
+%   multiple extractions can be specified by separating them using the pipe '|' 
+%   separator. Specifically, for each extraction, all the events listed in a
+%   comma-separated eventlist will be considered (e.g. 'congruent,incongruent'). 
+%   For each event all the frames starting from the specified beginning and ending
+%   offset will be extracted. If options eventdata is specified as 'all', all the
+%   specified frames will be concatenated in a single timeseries, otherwise, each
+%   event will be summrised by a single frame in a newly generated events series image.
+%   
+%   From the resulting image, ROI series will be extracted for each specified ROI as 
+%   specified by the roimethod option. A seed-map will be computed for each ROI where
+%   for each voxel or grayordinate, a correlation or covariance of its dataseries with 
+%   the ROI will be entered.
+%
+%   The results will be returned in a fcmaps structure and, if so specified, saved.
+%   
 %
 %   EXAMPLE USE
 %   ===========
 %
-%   To compute resting state seed maps using first eigenvariate of each ROI::
-%   
-%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', ...
-%                          'pca', 'udvarsme');
 %
-%   To compute resting state seed maps using mean of each region and covariances
-%   instead of correlation::
-%
-%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', ...
-%                          'mean', 'udvarsme', true);
-%
-%   To compute seed maps for third and fourth frame of incongruent and congruent
-%   trials (listed as inc and con events in fidl files with duration 1) using
-%   mean of each region and exclude only frames marked for exclusion in fidl
-%   files::
-%
-%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, ...
-%                          'incongruent:inc:2,3|congruent:con:2,3', ...
-%                          'seed-maps', 'mean', 'event');
-%
-%   To compute seed maps across all the tasks blocks, starting with the third
-%   frame into the block and taking one additional frame after the end of the
-%   block, use::
-%
-%       fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, ...
-%                          'task:easyblock,hardblock:2,1', 'seed-maps', ...
-%                          'mean', 'event');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
+%   ---
+%   Written by Grega Repovš 2020-02-02.
 %
 %   Changelog
 %
-%   2008-02-07 Grega Repovs
-%       Initial version.
-%   2008-01-23 Grega Repovs
-%       Adjusted for a different file list format and an additional ROI mask.
-%   2011-11-10 Grega Repovs
-%        Changed to make use of nimage and allow ignoring of bad frames.
-%   2013-12-28 Grega Repovs
-%        Moved to a more general name, added block event extraction and use of 'use' info.
-%   2017-03-19 Grega Repovs
-%        Cleaned code, updated documentation.
-%   2017-04-18 Grega Repovs
-%        Adjusted to use updated g_ReadFileList.
-%   2018-03-16 Grega Repovs
-%        Added verbose to the parameter list
-%
 
-if nargin < 9 || isempty(verbose), verbose = false;  end
-if nargin < 8 || isempty(cv),      cv      = false;  end
-if nargin < 7 || isempty(ignore),  ignore  = 'use';  end
-if nargin < 6 || isempty(method),  method  = 'mean'; end
-if nargin < 5 || isempty(targetf), targetf = '.';    end
-if nargin < 4 event   = []; end
-if nargin < 3 inmask  = []; end
+if nargin < 5 || isempty(options), options = '';  end
+if nargin < 4 || isempty(targetf), targetf = '.'; end
+if nargin < 3 frames  = []; end
 if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be specified!'); end
 
-if ~ischar(ignore)  error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!'); end
+% ----- parse options
 
-fignore = 'ignore';
-eventbased = false;
-if isa(inmask, 'char')
-    eventbased = true;
-    if strcmp(ignore, 'fidl')
-        fignore = 'ignore';
+default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|subjectname=|verbose=false|debug=false';
+options = g_ParseOptions([], options, default);
+
+verbose = strcmp(options.verbose, 'true');
+printdebug = strcmp(options.debug, 'true');
+
+if printdebug
+    g_PrintStruct(options, 'Options used');
+end
+
+if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
+    error('ERROR: Invalid eventdata option: %s', options.eventdata);
+end
+
+if ~ismember(options.roimethod, {'mean', 'pca', 'median'})
+    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
+end
+
+if ~ismember(options.fcmeasure, {'r', 'cv'})
+    error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
+end
+
+% ----- What should be saved
+
+options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
+
+if ismember({'allbyroi'}, options.saveind)    
+    options.saveind = options.saveind(~ismember(options.saveind, {'allbyroi', 'r', 'fz', 'z', 'p', 'cv'}));
+    options.saveind = [options.saveind, 'r', 'fz', 'z', 'p', 'cv'];
+end
+if ismember({'alljoint'}, options.saveind)
+    options.saveind = options.saveind(~ismember(options.saveind, {'alljoint', 'jr', 'jfz', 'jz', 'jp', 'jcv'}));
+    options.saveind = [options.saveind, 'jr', 'jfz', 'jz', 'jp', 'jcv'];
+end
+if ismember({'none'}, options.saveind)
+    options.saveind = [];
+end
+
+if length(options.saveind) 
+    if strcmp(options.fcmeasure, 'r')
+        options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p', 'jr', 'jfz', 'jz', 'jp'});
     else
-        fignore = 'no';
+        options.saveind = intersect(options.saveind, {'cv', 'jcv'});
     end
+end
+
+% ----- Get the list of files
+
+[name, bolds] = strtok(bolds, '|');
+bolds = bolds(2:end);
+boldlist = strtrim(regexp(bolds, '\|', 'split'));
+
+[roideffile, sroifile] = strtok(roiinfo, '|');
+if sroifile
+    sroifile = sroifile(2:end);
+else
+    sroifile = [];
 end
 
 
 % ----- Check if the files are there!
 
 go = true;
+if verbose; fprintf('\n\nChecking ...\n'); end
 
-fprintf('\n\nChecking ...\n');
-% go = go & g_CheckFile(flist, 'image file list', 'error');
-go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
-g_CheckFolder(targetf, 'results folder');
+for bold = boldlist
+    go = go & g_CheckFile(bold{1}, bold{1}, 'error');
+end
+go = go & g_CheckFile(roideffile, 'ROI definition file', 'error');
+if sroifile
+    go = go & g_CheckFile(sroifile, 'individual ROI file', 'error');
+end
+g_CheckFolder(targetf, 'results folder', true, verbose);
 
 if ~go
     error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
 end
 
-% ---- Start
-
-fprintf('\n\nStarting ...');
 
 %   ------------------------------------------------------------------------------------------
-%                                                                      parse events if present
+%                                                                            do the processing
 
-if isempty(event)
-    ana.name = '';
-    fstring  = '';
-else
-    [ana fstring] = parseEvent(event);
+if verbose; fprintf('     ... creating ROI mask'); end
+
+roi  = nimage.img_ReadROI(roideffile, sroifile);
+nroi = length(roi.roi.roinames);
+
+if verbose; fprintf(' ... read %d ROI\n', nroi); end
+
+% ---> reading image files
+
+if verbose; fprintf('     ... reading image file(s)'); end
+y = nimage(bolds);
+if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
+
+
+% ---> create extraction sets
+
+if verbose; fprintf('     ... generating extraction sets ...'); end
+exsets = y.img_GetExtractionMatrices(frames, options);
+if verbose; fprintf(' done.\n'); end
+
+% ---> loop through extraction sets
+
+if verbose; fprintf('     ... computing seedmaps\n'); end
+
+nsets = length(exsets);
+for n = 1:nsets
+
+    if verbose; fprintf('         ... set %s', exsets(n).title); end
+    
+    % --> get the extracted timeseries
+
+    ts = y.img_ExtractTimeseries(exsets(n).exmat, options.eventdata);
+
+    if verbose; fprintf(' ... extracted ts'); end
+    
+    % --> generate seedmaps
+
+    rs = ts.img_ExtractROI(roi, [], options.roimethod);
+    fc = ts.img_ComputeCorrelations(rs', [], strcmp(options.fcmeasure, 'cv'));
+
+    if verbose; fprintf(' ... computed seedmap'); end
+
+    % ------> Embedd results
+
+    fcmaps(n).title = exsets(n).title;
+    fcmaps(n).fc    = fc;
+    fcmaps(n).roi   = roi.roi.roinames;
+    fcmaps(n).N     = ts.frames;
+
+    if verbose; fprintf(' ... embedded\n'); end
+
 end
-nana = length(ana);
 
 
-%   ------------------------------------------------------------------------------------------
-%                                                      make a list of all the files to process
+% ---> save individual results
 
-fprintf('\n ... listing files to process');
+if ~isempty(options.saveind)
 
-[session, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
+    if verbose; fprintf('     ... saving seedmaps\n'); end
 
-lname = strrep(listname, '.list', '');
-lname = strrep(lname, '.conc', '');
-lname = strrep(lname, '.4dfp', '');
-lname = strrep(lname, '.img', '');
+    % set subjectname
 
-fprintf(' ... done.');
-
-
-%   ------------------------------------------------------------------------------------------
-%                                                The main loop ... go through all the sessions
-
-
-for n = 1:nsub
-
-    fprintf('\n ... processing %s', session(n).id);
-
-    % ---> reading ROI file
-
-    fprintf('\n     ... creating ROI mask');
-
-    if isfield(session(n), 'roi')
-        sroifile = session(n).roi;
+    if options.subjectname
+        subjectname = [options.subjectname, '_'];
     else
-        sroifile = [];
+        subjectname = '';
     end
 
-    roi  = nimage.img_ReadROI(roiinfo, sroifile);
-    nroi = length(roi.roi.roinames);
+    % set up filetype for single images
 
-
-    % ---> reading image files
-
-    fprintf('\n     ... reading image file(s)');
-
-    y = nimage(session(n).files{1});
-    for f = 2:length(session(n).files)
-        y = [y nimage(session(n).files{f})];
-    end
-
-    fprintf(' ... %d frames read, done.', y.frames);
-
-    % ---> creating use mask
-
-    if ~ismember(ignore, {'use', 'fidl'})
-        useScrub = find(ismember(y.scrub_hdr, ignore));
-        if isempty(useScrub)
-            error('ERROR: The specified ignore field (%s) is not valid!', ignore);
-        end
-        y.use = y.scrub(:, useScrub)' == 0;
-        y.use = y.use;
-    end
-
-
-    % ---> creating task mask
-
-    if isempty(fstring)
-        finfo = [];
+    if strcmp(y.filetype, '.dtseries')
+        tfiletype = '.dscalar';
     else
-        finfo = g_CreateTaskRegressors(session(n).fidl, y.runframes, fstring, fignore);
-        finfo = finfo.run;
-        matrix = [];
-        for r = 1:length(finfo)
-            matrix = [matrix; finfo(r).matrix];
-        end
+        tfiletype = y.filetype;
     end
 
-    % ---> creating timeseries mask
+    % --- loop through sets
 
-    fprintf('\n     ... computing seed maps [');
+    for n = 1:nsets
+        if fcmaps(n).title, settitle = ['_' fcmaps(n).title]; else settitle = ''; end
 
-    for a = 1:nana
+        % --- prepare computed data
 
-        % --- if no events take all, otherwise take the mask of this regressor
-        if isempty(finfo)
-            mask = ones(1, y.frames);
-        else
-            mask = matrix(:, a)';
+        if verbose; fprintf('         ... preparing data'); end
+            
+        if any(ismember(options.saveind, {'fz', 'p', 'z', 'jfz', 'jp', ',z'}))
+            fz = fcmaps(n).fc;
+            fz.data = fc_Fisher(fz.data);
         end
 
-        % --- if we have a long inmask, use it
-        if length(inmask) > 1
-            mask = mask & inmask;
+        if any(ismember(options.saveind, {'p', 'z', 'jp', 'jz'}))
+            Z = fcmaps(n).fc;
+            Z.data = fz.data/(1/sqrt(fcmaps(n).N-3));
         end
 
-        % --- ignore frames that are marked not to be used
-        mask = mask & y.use;
+        if any(ismember(options.saveind, {'p', 'jp'}))
+            p = fcmaps(n).fc;
+            p.data = (1 - normcdf(abs(Z.data), 0, 1)) * 2 .* sign(fz.data);
+        end
 
-        % --- if we need to omit n starting frames - do it
-        if length(inmask) == 1
-            if length(y.runframes) == 1
-                mask(1:inmask) = false;
-            else
-                for o = cumsum([0 y.runframes(1:end-1)])
-                    mask(o+1:o+inmask) = false;
+        if verbose; fprintf(' ... done\n'); end
+
+        % --- loop through roi
+
+        if verbose; fprintf('         ... saving set %s, roi:', fcmaps(n).title); end
+
+        % --- print for each ROI separately
+        
+        if any(ismember(options.saveind, {'r', 'fz', 'z', 'p', 'cv'}));
+
+            for r = 1:nroi
+
+                if verbose; fprintf(' %s', fcmaps(n).roi{r}); end
+
+                % --- prepare basename
+
+                basefilename = sprintf('seed_%s%s%s_%s', subjectname, name, settitle, fcmaps(n).roi{r});
+
+                % --- save images
+
+                for sn = 1:length(options.saveind)
+                    switch options.saveind{sn}
+                        case 'r'
+                            t = fcmaps(n).fc.sliceframes([1:nroi] == r);                                              
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_r']));
+                        case 'fz'
+                            t = fz.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_Fz']));
+                        case 'z'
+                            t = Z.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_Z']));
+                        case 'p'
+                            t = p.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_p']));
+                        case 'cv'
+                            t = fcmaps(n).fc.sliceframes([1:nroi] == r);
+                            t.filetype = tfiletype;
+                            t.img_saveimage(fullfile(targetf, [basefilename '_cov']));
+                    end
                 end
             end
         end
 
-        % --- we might add other frames to be ignored!
+        % --- print for all ROI jointly
 
+        if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jcv'}));
 
-        % ---> slice up the timeseries, extract data
+            allroi = strjoin(fcmaps(n).roi, '-');
+            basefilename = sprintf('seed_%s%s%s_%s', subjectname, name, settitle, allroi);
 
-        fprintf('%d ', sum(mask));
+            if verbose; fprintf(' %s', allroi); end
 
-        t  = y.sliceframes(mask);
-        ts = t.img_ExtractROI(roi, [], method);
-        pr = t.img_ComputeCorrelations(ts', [], cv);
+            % --- save images
 
-        % ------> Embedd results
-
-        nroi = length(roi.roi.roinames);
-        for r = 1:nroi
-
-            % -------> Create data files if it is the first run
-
-            if n == 1
-                if cv
-                    ana(a).group(r).cv = roi.zeroframes(nsub);
-                else
-                    ana(a).group(r).Fz = roi.zeroframes(nsub);
+            for sn = 1:length(options.saveind)
+                switch options.saveind{sn}
+                    case 'jr'
+                        t = fcmaps(n).fc;  
+                        t.filetype = tfiletype;
+                        t.img_saveimage(fullfile(targetf, [basefilename '_r']));
+                    case 'fz'
+                        t = fz;
+                        t.filetype = tfiletype;
+                        t.img_saveimage(fullfile(targetf, [basefilename '_Fz']));
+                    case 'z'
+                        t = Z;
+                        t.filetype = tfiletype;
+                        t.img_saveimage(fullfile(targetf, [basefilename '_Z']));
+                    case 'p'
+                        t = p;
+                        t.filetype = tfiletype;
+                        t.img_saveimage(fullfile(targetf, [basefilename '_p']));
+                    case 'cv'
+                        t = fcmaps(n).fc;
+                        t.filetype = tfiletype;
+                        t.img_saveimage(fullfile(targetf, [basefilename '_cov']));
                 end
-                ana(a).group(r).roi = roi.roi.roinames{r};
             end
-
-            % -------> Embedd data
-
-            if cv
-                ana(a).group(r).cz.data(:,n) = pr.data(:,r);
-            else
-                ana(a).group(r).Fz.data(:,n) = fc_Fisher(pr.data(:,r));
-            end
-
-       end
-    end
-
-    fprintf('frames]');
-end
-
-
-%   ---------------------------------------------
-%   --- And now group results
-
-fprintf('\n\n... computing group results');
-
-for s = 1:nsub
-    extra(s).key = ['session ' int2str(s)];
-    extra(s).value = session(s).id;
-end
-
-for a = 1:nana
-    fprintf('\n -> %s', ana(a).name);
-
-    for r = 1:nroi
-
-        fprintf('\n    ... for region %s', ana(a).group(r).roi);
-
-        if cv
-            [p Z M] = ana(a).group(r).cv.img_TTestZero();
-        else
-            [p Z M] = ana(a).group(r).Fz.img_TTestZero();
-            pr = M.img_FisherInv();
         end
 
-        fprintf('... saving ...');
-        if isempty(ana(a).name)
-            tname = lname;
-        else
-            tname = [lname '_' ana(a).name];
-        end
-
-        if cv
-            M.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_cv'], extra);                  fprintf(' cv');
-            ana(a).group(r).cv.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_cv'], extra);   fprintf(' all cv');
-        else
-            pr.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_r'], extra);                  fprintf(' r');
-            M.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Fz'], extra);                  fprintf(' Fz');
-            ana(a).group(r).Fz.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_Fz'], extra);   fprintf(' all Fz');
-        end
-
-        Z.img_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Z'], extra);                   fprintf(' Z');
-
-        fprintf(' ... done.');
-
+        if verbose; fprintf(' done.\n'); end
     end
 end
-
-
-
-fprintf('\n\n FINISHED!\n\n');
-
-
-%   ------------------------------------------------------------------------------------------
-%                                                                         event string parsing
-
-function [ana, fstring] = parseEvent(event)
-
-    smaps   = regexp(event, '\|', 'split');
-    nsmaps  = length(smaps);
-    fstring = '';
-    for m = 1:nsmaps
-        fields = regexp(smaps{m}, ':', 'split');
-        ana(m).name = fields{1};
-        fstring     = [fstring fields{2} ':block:' fields{3} ':' fields{4}];
-        if m < nsmaps, fstring = [fstring '|']; end
-    end
-
-
-

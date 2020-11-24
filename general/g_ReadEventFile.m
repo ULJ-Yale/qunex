@@ -35,6 +35,9 @@ function [out] = g_ReadEventFile(file, tunit)
 %			   Added checking for event length in ms
 %   2018-07-27 Grega Repovš
 %			   Updated checking for event length in ms
+%   2020-11-04 Grega Repovš
+%              Changed variable name 'events' to 'tevents' to not conflict with
+%              reserved word 'events'
 %
 
 if nargin < 2 || isempty(tunit), tunit = 's'; end
@@ -45,9 +48,9 @@ if fin == -1
 end
 
 s = fgetl(fin);
-events = strread(s, '%s');
-TR = str2num(char(events(1)));
-events = events(2:length(events));
+tevents = strread(s, '%s');
+TR = str2num(char(tevents(1)));
+tevents = tevents(2:length(tevents));
 
 frame 	= [];
 elength = [];
@@ -105,7 +108,7 @@ out.elength = elength';
 out.event_s = event_s';
 out.event_l = event_l';
 out.event   = event';
-out.events  = events;
+out.events  = tevents;
 out.beh     = beh;
 out.TR      = TR;
 out.nevents = length(frame);

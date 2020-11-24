@@ -121,6 +121,9 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, check)
 %   2017-10-18 Aleksij Kraljic
 %              Added an option for handling event name mismatch between fidlf 
 %              and model
+%   2020-11-04 Grega Repovš
+%              Changed variable name 'events' to 'tevents' to not conflict with
+%              reserved word 'events'
 %
 
 
@@ -134,7 +137,7 @@ end
 
 % ---> get event data
 
-events = g_ReadEventFile(fidlf);
+tevents = g_ReadEventFile(fidlf);
 
 % ---> get data on run lengths
 
@@ -157,9 +160,9 @@ nregressors = length(model.regressor);
 
 for m = 1:nregressors
     if isempty(model.regressor(m).code)
-        model.regressor(m).code = find(ismember(events.events, model.regressor(m).event)) - 1;
+        model.regressor(m).code = find(ismember(tevents.events, model.regressor(m).event)) - 1;
     end
-    % if ~any(strcmp(events.events,model.regressor(m).name))
+    % if ~any(strcmp(tevents.events,model.regressor(m).name))
     %     switch lower(check)
     %         case 'warning'
     %             warning('\ng_CreateTaskRegressors: Event [%s] from the model not found in the fidl file!\n', model.regressor(m).name);
@@ -173,13 +176,13 @@ end
 %=========================================================================
 %                         loop over all the models and compute the weights
 
-events.weights = ones(events.nevents, nregressors);
-valide  = events.event >= 0;
+tevents.weights = ones(tevents.nevents, nregressors);
+valide  = tevents.event >= 0;
 nvalide = sum(valide);
 
 for m = 1:nregressors
     if ~isempty(model.regressor(m).weight.column)
-        w = events.beh(:, model.regressor(m).weight.column);
+        w = tevents.beh(:, model.regressor(m).weight.column);
         
         % --- are we normalizing at all
         
@@ -189,7 +192,7 @@ for m = 1:nregressors
             
             wm = ones(nvalide, 1) == 1;
             if model.regressor(m).weight.normalize(1) == 'w'
-                wm = ismember(events.event(valide), model.regressor(m).code);
+                wm = ismember(tevents.event(valide), model.regressor(m).code);
             end
             
             tw = w(wm);
@@ -218,7 +221,7 @@ for m = 1:nregressors
             w(~wm) = 0;
         end
         
-        events.weights(valide, m) = w;
+        tevents.weights(valide, m) = w;
     end
 end
 
@@ -241,7 +244,7 @@ for r = 1:nruns
     end
     end_frame = start_frame + nframes - 1;
     
-    in_run = (events.frame >= start_frame) & (events.frame <= end_frame);
+    in_run = (tevents.frame >= start_frame) & (tevents.frame <= end_frame);
     
     run(r).matrix = [];
     run(r).regressors = {};
@@ -250,7 +253,7 @@ for r = 1:nruns
     
     for m = 1:nregressors
         
-        relevant = in_run & ismember(events.event, model.regressor(m).code);
+        relevant = in_run & ismember(tevents.event, model.regressor(m).code);
         nrelevant = sum(relevant);
         
         basename = model.regressor(m).name;
@@ -262,8 +265,8 @@ for r = 1:nruns
         if strcmp(model.regressor(m).hrf_type, 'u')
             
             mtx = zeros(nframes, model.regressor(m).length);
-            rel_frame  = events.frame(relevant);
-            rel_weight = events.weights(relevant, m);
+            rel_frame  = tevents.frame(relevant);
+            rel_weight = tevents.weights(relevant, m);
             
             for ievent = 1:nrelevant
                 for iframe = 1:model.regressor(m).length
@@ -300,9 +303,9 @@ for r = 1:nruns
                 end
             end
             
-            rel_start   = events.frame(relevant) - start_frame + 1;
-            rel_end     = events.frame(relevant) - start_frame + events.elength(relevant);
-            rel_weights = events.weights(relevant, m);
+            rel_start   = tevents.frame(relevant) - start_frame + 1;
+            rel_end     = tevents.frame(relevant) - start_frame + tevents.elength(relevant);
+            rel_weights = tevents.weights(relevant, m);
             
             for ievent = 1:nrelevant
                 e_start = rel_start(ievent) + soff;
@@ -311,7 +314,7 @@ for r = 1:nruns
                     e_end = length(ts);
                 end
                 if(e_start < 1)
-                    fprintf('r:%d, m:%d, ie:%d, sf:%d, tr:%.4f\n', r, m, ievent, e_start, events.TR);
+                    fprintf('r:%d, m:%d, ie:%d, sf:%d, tr:%.4f\n', r, m, ievent, e_start, tevents.TR);
                     fprintf('\n');
                     fprintf('%d ', relevant);
                     fprintf('\n');
@@ -319,7 +322,7 @@ for r = 1:nruns
                     fprintf('\n');
                     fprintf('%d ', frames);
                     fprintf('\n');
-                    fprintf('%.2f ', events.event_s(relevant));
+                    fprintf('%.2f ', tevents.event_s(relevant));
                 end
                 % fprintf('\n -> e_start: %d, e_end: %d', e_start, e_end);
                 ts(e_start:e_end, 1) = rel_weights(ievent);
@@ -340,19 +343,19 @@ for r = 1:nruns
             %======================================================================
             %                                                  create the right HRF
             
-            hrf = g_HRF(events.TR/100, model.regressor(m).hrf_type);
+            hrf = g_HRF(tevents.TR/100, model.regressor(m).hrf_type);
             
             %======================================================================
             %                                           create the event timeseries
             
-            % ts = zeros(round(events.TR*100)*nframes),1);
+            % ts = zeros(round(tevents.TR*100)*nframes),1);
             ts = zeros(100*nframes,1);
             
-            rel_times   = events.event_s(relevant);
-            rel_times   = rel_times - (start_frame-1) * events.TR;
-            rel_weights = events.weights(relevant, m);
+            rel_times   = tevents.event_s(relevant);
+            rel_times   = rel_times - (start_frame-1) * tevents.TR;
+            rel_weights = tevents.weights(relevant, m);
             
-            rel_lengths = events.event_l(relevant);
+            rel_lengths = tevents.event_l(relevant);
             if (~isempty(model.regressor(m).length))
                 rel_lengths(:) = model.regressor(m).length;
             end
@@ -360,14 +363,14 @@ for r = 1:nruns
             for ievent = 1:nrelevant
                 % e_start = floor(rel_times(ievent)*100)+1;
                 % e_end = e_start + floor(rel_lengths(ievent)*100) -1;
-                e_start = floor(rel_times(ievent)/events.TR*100)+1;
-                e_end   = e_start + floor(rel_lengths(ievent)/events.TR*100)-1;
+                e_start = floor(rel_times(ievent)/tevents.TR*100)+1;
+                e_end   = e_start + floor(rel_lengths(ievent)/tevents.TR*100)-1;
                 
                 if e_end > length(ts)
                     e_end = length(ts);
                 end
                 if(e_start < 1)
-                    fprintf('r:%d, m:%d, ie:%d, sf:%d, tr:%.4f\n', r, m, ievent, start_frame, events.TR);
+                    fprintf('r:%d, m:%d, ie:%d, sf:%d, tr:%.4f\n', r, m, ievent, start_frame, tevents.TR);
                     fprintf('\n');
                     fprintf('%d ', relevant);
                     fprintf('\n');
@@ -375,7 +378,7 @@ for r = 1:nruns
                     fprintf('\n');
                     fprintf('%d ', frames);
                     fprintf('\n');
-                    fprintf('%.2f ', events.event_s(relevant));
+                    fprintf('%.2f ', tevents.event_s(relevant));
                 end
                 ts(e_start:e_end,1) = rel_weights(ievent);
             end
@@ -410,11 +413,11 @@ for r = 1:nruns
         
         ts = zeros(nframes, 1);
         
-        relevant  = in_run & (events.event == -1);
+        relevant  = in_run & (tevents.event == -1);
         nrelevant = sum(relevant);
         
-        rel_start = events.frame(relevant) - start_frame + 1;
-        rel_end   = events.frame(relevant) - start_frame + events.elength(relevant);
+        rel_start = tevents.frame(relevant) - start_frame + 1;
+        rel_end   = tevents.frame(relevant) - start_frame + tevents.elength(relevant);
         
         for ievent = 1:nrelevant
             e_start = rel_start(ievent);
@@ -440,7 +443,7 @@ end
 
 model.run    = run;
 model.ignore = ignore;
-model.fidl   = events;
+model.fidl   = tevents;
 
 
 

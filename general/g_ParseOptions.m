@@ -129,23 +129,69 @@ function [options] = g_ParseOptions(options, s, default)
 %               Updated to enable structure arrays and specification of single
 %              layer depth structures.
 %   2017-03-19 Grega Repovs
-%              Made the function more robust and updated the documetation.
-%
+%              Made the function more robust and updated the documentation.
+%   2020-02-02 Grega Repovs
+%              Added the option for input to be structs
 
 
 if nargin < 3, default = ''; end
 if nargin < 2, error('ERROR: Not enough arguments passed to g_ParseOptions!'); end
 
 if ~isempty(default)
-    options = matchLength(options, default, []);
+    if ischar(default)
+        options = matchLength(options, default);
+    elseif isstruct(default)
+        options = matchLengthStruct(options, default);
+    else
+        error('ERROR: Default is neither a string or a struct!')
+    end
 end
 
 if ~isempty(s)
-    options = matchLength(options, s, default);
+    if ischar(s)
+        options = matchLength(options, s);
+    elseif isstruct(s)
+        options = matchLengthStruct(options, s);
+    else
+        error('ERROR: Default is neither a string or a struct!')
+    end     
 end
 
+% --- Support functions for struct inputs
 
-function [options] = matchLength(options, s, default)
+function [options] = matchLengthStruct(options, s)
+    if length(options) == length(s)
+        for n = 1:length(s)
+            options = parseStruct(options, s(n), n);
+        end
+    elseif isempty(options)
+        options = s;
+    elseif length(options) == 1;
+        for n = 1:length(s)
+            options = parseStruct(options, s(n), n);
+        end
+    elseif length(s) == 1
+        for n = 1:length(options)
+            options = parseStruct(options, s, n);
+        end
+    else
+        error('ERROR: Length of existing structure [%d] and given structure [%s] do not match!', length(options), length(s));
+    end
+
+
+function [options] = parseStruct(options, s, fn)
+    fields = fieldnames(s);
+    for n = 1:length(fields)
+        if isfield(options(fn), fields{n}) && isstruct(s.(fields{n})) && isstruct(options(fn).(fields{n}))
+            options(fn).(fields{n}) = matchLengthStruct(options(fn).(fields{n}), s.(fields{n}));            
+        else
+            options(fn).(fields{n}) = s.(fields{n});
+        end
+    end
+
+% --- Support functions for string inputs
+
+function [options] = matchLength(options, s)
     s = strtrim(regexp(s, ';', 'split'));
     if length(options) == length(s)
         for n = 1:length(s)
@@ -157,9 +203,6 @@ function [options] = matchLength(options, s, default)
         end
     elseif length(options) == 1;
         for n = 1:length(s)
-            if ~isempty(default)
-                options = parseString(options, default, n);
-            end
             options = parseString(options, s{n}, n);
         end
     elseif length(s) == 1

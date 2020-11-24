@@ -42,7 +42,7 @@ nameStr = sprintf('%%+%ds', nameLength);
 fprintf('\n%s:', ftitle);
 
 for r = 1:nrecords
-    fprintf('\n%s', repmat('-', 1, nameLength));
+    fprintf('\n%s', repmat('-', 1, max(nameLength, length(ftitle))));
     for name = names'
         name = name{1};
         lineStr = sprintf(nameStr, name);
