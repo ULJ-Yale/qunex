@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.62.13  Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
 * 0.62.12  Implemented the ability for processing different bold files and variates.
 * 0.62.11 The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
 * 0.62.10  More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention. 
