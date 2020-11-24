@@ -734,13 +734,19 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
     # -- Report command
     printComm = "------------------------------------------------------------\n"
-    printComm += "Running external command via Qu|Nex:\n\n"
+    printComm += "Running external command via Qu|Nex:\n"
     comm = run.replace(" --", "\n     --").replace("             ", "")
     comm += "\n"
     printComm += comm
     if checkfile is not None or checkfile != "":
-        printComm += "\nTest file: %s\n" % checkfile
-    printComm += "------------------------------------------------------------\n"
+        printComm += "\nTest file: \n%s\n" % checkfile
+    printComm += "------------------------------------------------------------"
+
+    # report for local runs
+    print(printComm)
+
+    # add an empty line for log purposes
+    printComm += "\n"
 
     if overwrite or not os.path.exists(checkfile):
         r += '\n\n%s' % (description)
@@ -768,6 +774,11 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
                 raise ExternalFailed(r)
 
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+
+        # --- report
+        print("You can follow command's progress in:")
+        print(tmplogfile)
+        print("------------------------------------------------------------")
 
         # --- open log file
         nf = open(tmplogfile, 'a')
