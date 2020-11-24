@@ -38,6 +38,7 @@ Quick links
 Change Log
 ----------
 
+* 0.61.4  Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
 * 0.61.3  Implemented the ability for processing different bold files and variates.
 * 0.61.2  More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention.
 * 0.61.1  g_ExtractGLMVolumes saveoption values no longer include spaces.
