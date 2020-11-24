@@ -140,7 +140,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
             r += "\n---> dtifit results present."
         else:
             r += "\n---> ERROR: Could not find dtifit results."
-            report = ("not ready for FSL F99", 1)
+            report = (sinfo['id'], "Not ready for FSL F99", 1)
             run = False
 
         # script location
@@ -191,12 +191,10 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
                 if failed:
                     r += "\n---> FSL F99 processing for session %s failed" % session
-                    report = ("FSL F99 failed", 1)
-                    report["failed"].append(session)
+                    report = (sinfo['id'], "FSL F99 failed", 1)
                 else:
                     r += "\n---> FSL F99 processing for session %s completed" % session
-                    report = ("FSL F99 completed", 0)
-                    report["done"].append(session)
+                    report = (sinfo['id'], "FSL F99 completed", 0)
 
             # just checking
             else:
@@ -204,13 +202,11 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
                 if passed is None:
                     r += "\n---> FSL F99 can be run"
-                    report = ("FSL F99 ready", 0)
+                    report = (sinfo['id'], "FSL F99 ready", 0)
                 else:
                     r += "\n---> FSL F99 processing for session %s would be skipped" % session
-                    report = ("FSL F99 would be skipped", 1)
+                    report = (sinfo['id'], "FSL F99 would be skipped", 1)
 
-        # prepare final report
-        report = (sinfo['id'], report[0], report[1])
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
@@ -391,7 +387,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
             r += "\n---> f results present."
         else:
             r += "\n---> ERROR: Could not find bedpostx results."
-            report = ("not ready for XTRACT", 1)
+            report = (sinfo['id'], "Not ready for XTRACT", 1)
             run = False
 
         # script location
@@ -477,12 +473,10 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
                 if failed:
                     r += "\n---> FSL XTRACT processing for session %s failed" % session
-                    report = ("FSL XTRACT failed", 1)
-                    report["failed"].append(session)
+                    report = (sinfo['id'], "FSL XTRACT failed", 1)
                 else:
                     r += "\n---> FSL XTRACT processing for session %s completed" % session
-                    report = ("FSL XTRACT completed", 0)
-                    report["done"].append(session)
+                    report = (sinfo['id'], "FSL XTRACT completed", 0)
 
             # just checking
             else:
@@ -490,13 +484,10 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
                 if passed is None:
                     r += "\n---> FSL XTRACT can be run"
-                    report = ("FSL XTRACT ready", 0)
+                    report = (sinfo['id'], "FSL XTRACT ready", 0)
                 else:
                     r += "\n---> FSL XTRACT processing for session %s would be skipped" % session
-                    report = ("FSL XTRACT would be skipped", 1)
-
-        # prepare final report
-        report = (sinfo['id'], report[0], report[1])
+                    report = (sinfo['id'], "FSL XTRACT would be skipped", 1)
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
