@@ -2320,7 +2320,7 @@ fi
         createBOLDBrainMasks_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createBOLDBrainMasks_${CASE}_${TimeStamp}.log"; touch ${createBOLDBrainMasks_ComlogTmp}; chmod 777 ${createBOLDBrainMasks_ComlogTmp}
         createBOLDBrainMasks_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createBOLDBrainMasks_${CASE}_${TimeStamp}.log"
         createBOLDBrainMasks_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createBOLDBrainMasks_${CASE}_${TimeStamp}.log"
-        ExecuteCall="${QuNexCommand} createBOLDBrainMasks --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}'"        
+        ExecuteCall="${QuNexCommand} createBOLDBrainMasks --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds='${BOLDS}'}"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${createBOLDBrainMasks_ComlogTmp}
         if [[ ! -z `cat ${createBOLDBrainMasks_ComlogTmp} | grep 'Successful completion'` ]]; then createBOLDBrainMasksCheck="pass"; else createBOLDBrainMasksCheck="fail"; fi
@@ -2340,7 +2340,8 @@ fi
         --sessionsfolder="${SessionsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --sessionids="${SESSIONIDS}"
+        --sessionids="${SESSIONIDS}" \
+        ${BOLDS:+--bolds='${BOLDS}'}
     }
     # -- Create final BOLD statistics report
     turnkey_createStatsReport() {
@@ -2350,7 +2351,8 @@ fi
         --sessionsfolder="${SessionsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --sessionids="${SESSIONIDS}"
+        --sessionids="${SESSIONIDS}" \
+        ${BOLDS:+--bolds='${BOLDS}'}
     }
     # -- Extract nuisance signal for further de-noising
     turnkey_extractNuisanceSignal() {
@@ -2367,7 +2369,7 @@ fi
         mageho " -- NOTE: comlog file for ${TURNKEY_STEP} is not generated directly via NIUtilities but is generated directly via RunTurnkey."
         
     
-        ExecuteCall="${QuNexCommand} extractNuisanceSignal --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}'"
+        ExecuteCall="${QuNexCommand} extractNuisanceSignal --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds='${BOLDS}'}"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         
         eval ${ExecuteCall} 2>&1 | tee -a ${extractNuisanceSignal_ComlogTmp}
@@ -2388,7 +2390,8 @@ fi
         --sessionsfolder="${SessionsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --sessionids="${SESSIONIDS}"
+        --sessionids="${SESSIONIDS}" \
+        ${BOLDS:+--bolds='${BOLDS}'}
     }
     # -- Process via CONC file
     turnkey_preprocessConc() {
@@ -2398,7 +2401,8 @@ fi
         --sessionsfolder="${SessionsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${QuNexMasterLogFolder}" \
-        --sessionids="${SESSIONIDS}"
+        --sessionids="${SESSIONIDS}" \
+        ${BOLDS:+--bolds='${BOLDS}'}
     }
     # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
     turnkey_g_PlotBoldTS() {
