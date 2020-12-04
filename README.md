@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.4
+Qu|Nex suite version: 0.62.5
 
 Submodules:
 
-* connector: 0.62.6
+* connector: 0.62.7
 * library: 0.62.2
 * nitools: 0.61.1
-* niutilities: 0.62.6
+* niutilities: 0.62.7
 
 
 Release notes
 -------------
 
+* 0.62.5  Bolds parameter is now properly passed to all commands.
 * 0.62.4  The order of images in the hcpDiffusion command is now correct.
 * 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
 * 0.62.2  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
@@ -83,6 +84,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.62.5 [connector, niutilities] Bolds parameter is now properly passed to all commands.
 * 0.62.4 [niutilities] The order of images in the hcpDiffusion command is now correct.
 * 0.62.3 [connector] Robust parsing of the hcp_filename parameter in RunTurnkey.
 * 0.62.2 [connector, niutilities] Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
