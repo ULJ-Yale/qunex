@@ -2065,7 +2065,7 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
     if bolds is None:
         raise ge.CommandError("batchTag2Num", "No bolds specified!")
 
-    sessions, _ = gc.getSessionList(filename, sessionids=sessionid)
+    sessions, options = gc.getSessionList(filename, sessionids=sessionid)
 
     if not sessions:
         raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (sessionid, filename), "Please check your data!")
@@ -2074,8 +2074,9 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
         raise ge.CommandFailed("batchTag2Num", "More than one session id found", "More than one [%s] instance of session id [%s] is present in the batch file [%s]" % (len(sessions), sessionid, filename), "Please check your data!")
 
     session = sessions[0]
+    options['bolds'] = bolds
 
-    bolds, _, _, _ = gpc.useOrSkipBOLD(session, {'bolds': bolds})
+    bolds, _, _, _ = gpc.useOrSkipBOLD(session, options)
 
     boldlist = []
     for boldnumber, boldname, boldtask, boldinfo in bolds:
