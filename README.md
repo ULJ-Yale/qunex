@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.62.7  Bolds parameter is now properly passed to all commands.
 * 0.62.6  Robust parsing of the hcp_filename parameter.
 * 0.62.5  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
 * 0.62.4  Renamed filename to hcp_filename in SetupHCP.
