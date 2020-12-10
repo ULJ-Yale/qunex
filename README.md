@@ -26,23 +26,24 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.13
+Qu|Nex suite version: 0.62.14
 
 Submodules:
 
 * connector: 0.62.9
 * library: 0.62.2
 * nitools: 0.61.4
-* niutilities: 0.62.14
+* niutilities: 0.62.15
 
 Release notes
 -------------
 
 * 0.62.X  TODO COPY FROM RELEASE CARD AT RELEASE.
-* 0.62.9  qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
-* 0.62.8  runTurnkey patch to include T2 to rsync command for hcp2 step.
-* 0.62.7  Improved parameter checking in the createList command.
-* 0.62.6  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.10 qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
+* 0.62.9  runTurnkey patch to include T2 to rsync command for hcp2 step.
+* 0.62.8  Improved parameter checking in the createList command.
+* 0.62.7  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.6  MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.5  Bolds parameter is now properly passed to all commands.
 * 0.62.4  The order of images in the hcpDiffusion command is now correct.
 * 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
@@ -88,20 +89,21 @@ PMC4034208.
 Detailed change log
 -------------------
 
-* 0.62.13 [nitools, niutilities] Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
-* 0.62.12 [nitools, niutilities] Implemented the ability for processing different bold files and variates.
-* 0.62.11  [niutilities] The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
-* 0.62.10  [niutilities, nitools] More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention.
-* 0.62.9  [connector] qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
-* 0.62.8  [connector] runTurnkey patch to include T2 to rsync command for hcp2 step
-* 0.62.7  [niutilities] Added the option to include only available files for the parameter check within createList command.
-* 0.62.6  [niutilities] Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps. Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
-* 0.62.5 [connector, niutilities] Bolds parameter is now properly passed to all commands.
-* 0.62.4 [niutilities] The order of images in the hcpDiffusion command is now correct.
-* 0.62.3 [connector] Robust parsing of the hcp_filename parameter in RunTurnkey.
-* 0.62.2 [connector, niutilities] Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
-* 0.62.1 [connector, library, niutilities, nitools] RunQC now works both on bold numbers and names, RunQC no longer crashes if there are more than 10 bolds. Cleaned up code that used deprecated CUDA versions. g_ExtractGLMVolumes saveoption values no longer include spaces. Fixed a bug with the bash parameter for specifying bash commands when scheduling.
-* 0.62.0 [connector, library, niutilities, nitools] Documentation rework. Outgoing command calls no longer print the command if an error ocured earlier. hcp_bold_unwarpdir support for HCPYA.
+* 0.62.14 [nitools, niutilities] Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
+* 0.62.13 [nitools, niutilities] Implemented the ability for processing different bold files and variates.
+* 0.62.12 [niutilities] The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
+* 0.62.11 [niutilities, nitools] More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention.
+* 0.62.10 [connector] qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
+* 0.62.9  [connector] runTurnkey patch to include T2 to rsync command for hcp2 step
+* 0.62.8  [niutilities] Added the option to include only available files for the parameter check within createList command.
+* 0.62.7  [niutilities] Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps. Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.6  [niutilities] MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
+* 0.62.5  [connector, niutilities] Bolds parameter is now properly passed to all commands.
+* 0.62.4  [niutilities] The order of images in the hcpDiffusion command is now correct.
+* 0.62.3  [connector] Robust parsing of the hcp_filename parameter in RunTurnkey.
+* 0.62.2  [connector, niutilities] Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
+* 0.62.1  [connector, library, niutilities, nitools] RunQC now works both on bold numbers and names, RunQC no longer crashes if there are more than 10 bolds. Cleaned up code that used deprecated CUDA versions. g_ExtractGLMVolumes saveoption values no longer include spaces. Fixed a bug with the bash parameter for specifying bash commands when scheduling.
+* 0.62.0  [connector, library, niutilities, nitools] Documentation rework. Outgoing command calls no longer print the command if an error ocured earlier. hcp_bold_unwarpdir support for HCPYA.
 * 0.61.19 [niutilities] The mapHCPData command now copies only valid movement correction parameter data.
 * 0.61.18 [connector, library, niutilities] Fixed qunex.sh to remove inaccurate logic for folder generation, added CUDA 9.1 bedpostx support, improved HCPYA dataset support by ensuring the import of SE-FM and FM images.
 * 0.61.17 [niutilities] Added a missing import to ge_HCP, hcp_dwi_selectbestb0 is now a flag.
