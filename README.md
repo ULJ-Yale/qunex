@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.5
+Qu|Nex suite version: 0.62.6
 
 Submodules:
 
 * connector: 0.62.7
 * library: 0.62.2
 * nitools: 0.61.1
-* niutilities: 0.62.7
+* niutilities: 0.62.8
 
 
 Release notes
 -------------
 
+* 0.62.6  MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.5  Bolds parameter is now properly passed to all commands.
 * 0.62.4  The order of images in the hcpDiffusion command is now correct.
 * 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
@@ -84,6 +85,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.62.6 [niutilities] MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.5 [connector, niutilities] Bolds parameter is now properly passed to all commands.
 * 0.62.4 [niutilities] The order of images in the hcpDiffusion command is now correct.
 * 0.62.3 [connector] Robust parsing of the hcp_filename parameter in RunTurnkey.
