@@ -5749,13 +5749,13 @@ def parseMSMAllBolds(options, bolds, r):
     # parse the same way as with icafix first
     singleRun, hcpBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r, True)
 
+    # extract the first one
     icafixGroup = icafixGroups[0]
 
-    if singleRun:
-        # if more than one group print a WARNING
-        if (len(icafixGroups) > 1):
-            # extract the first group
-            r += "\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
+    # if more than one group print a WARNING
+    if (len(icafixGroups) > 1):
+        # extract the first group
+        r += "\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
 
     # validate that msmall bolds is a subset of icafixGroups
     if 'hcp_msmall_bolds' in options:
@@ -6016,7 +6016,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
                     result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
                 # multi-run
                 else:
-                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, [msmallGroup])
 
                 r += result['r']
                 report = result['report']

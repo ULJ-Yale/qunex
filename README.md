@@ -42,13 +42,14 @@ Quick links
 Change log
 ----------
 
-* 0.62.14  Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
-* 0.62.13  Implemented the ability for processing different bold files and variates.
-* 0.62.12 The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
-* 0.62.11  More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention. 
-* 0.62.10  Added the option to include only available files for the parameter check within createList command.
-* 0.62.9  Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps.
-* 0.62.8  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.15  Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
+* 0.62.14  Implemented the ability for processing different bold files and variates.
+* 0.62.13 The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
+* 0.62.12  More precise specification of movement and nuisance parameters in GLM regression in `preprocessBold` and `preprocessConc`. Additional options of using squared motion parameters and squared first derivatives of motion parameters in GLM regression. More robust naming of conc and glm files that allows possible future optimizations of the naming convention. 
+* 0.62.11  Added the option to include only available files for the parameter check within createList command.
+* 0.62.10  Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps.
+* 0.62.9  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.8  MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.7  Bolds parameter is now properly passed to all commands.
 * 0.62.6  The order of images in the hcpDiffusion command is now correct.
 * 0.62.5  gmri documentation polish for consistency across the whole suite.
