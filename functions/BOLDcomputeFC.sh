@@ -908,7 +908,7 @@ if [ ${Calculation} == "dense" ]; then
                 echo ""
             else
                 echo ""
-                reho "--- Result for ${OutDense} not found" 
+                reho "ERROR --- Result for ${OutDense} not found" 
                 reho "    Something went wrong."
                 echo ""
                 RunError="yes"
@@ -945,7 +945,7 @@ if [[ ${RunType} == "group" ]] && [[ ${Calculation} != "dense" ]]; then
         echo ""
     else
         echo ""
-        reho "--- Result for ${OutPath}/${OutName} not found. Something went wrong."
+        reho "ERROR --- Result for ${OutPath}/${OutName} not found. Something went wrong."
         echo ""
         RunError="yes"
     fi
@@ -959,7 +959,7 @@ if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
         echo ""
     else
         echo ""
-        reho "--- Result for ${OutPath}/${OutName} not found. Something went wrong."
+        reho "ERROR --- Result for ${OutPath}/${OutName} not found. Something went wrong."
         echo ""
         RunError="yes"
     fi
@@ -970,7 +970,7 @@ if [[ -z ${RunError} ]]; then
     echo ""
 else
     echo ""
-    reho "--- Results missing. Something went wrong with ${Calculation} calculation."
+    reho "ERROR --- Results missing. Something went wrong with ${Calculation} calculation."
     echo ""
     exit 1
 fi
