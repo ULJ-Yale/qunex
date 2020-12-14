@@ -129,7 +129,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
     2019-06-06 Grega Repovš
                Initial version
     2019-06-06 Grega Repovš
-               Changed processing to be more explicit and allow also 
+               Changed processing to be more explicit and allow also
                selection by bold name and bold sequence name
     2020-01-28 Grega Repovš
                Added the option to select by sequence name
@@ -376,7 +376,7 @@ def getBOLDFileNames(sinfo, boldname, options):
         target_bold_tail = options['cifti_tail']
     else:
         target_bold_tail = options['nifti_tail']
-    
+
     # if bold_tail is set, use that instead
     target_bold_tail = options.get('bold_tail', target_bold_tail)
 
@@ -609,8 +609,8 @@ def missingReport(missing, message, prefix):
     for file in missing:
         r += prefix + file + "\n"
 
-    return r 
-   
+    return r
+
 
 def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False):
     """
@@ -618,7 +618,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
 
     The function checks the presence of a test file.
     If specified it runs also full test.
-    
+
     OUTPUTS
     =======
 
@@ -627,7 +627,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
     --done        test file is present, and if full test was specified, all
                   files were present as well
     """
-    
+
     if fullTest and 'specfolder' in fullTest:
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
             fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
@@ -656,7 +656,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
                 report += ", full file check could not be completed (%s)" % e.report[0]
                 passed = 'incomplete'
                 failed = 1
-            
+
             except:
                 report += ", full file check could not be completed"
                 passed = 'incomplete'
@@ -672,11 +672,11 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
 
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=False, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
     """
     ``runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True)``
 
-    Runs the specified command and checks whether it was executed against a 
+    Runs the specified command and checks whether it was executed against a
     checkfile, and if provided a full list of files as specified in fullTest.
 
     INPUTS
@@ -696,7 +696,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
                        of files:
 
                        - tfolder    (a target folder with the results)
-                       - tfile      (a path to the file describing the files to 
+                       - tfile      (a path to the file describing the files to
                          check for)
                        - fields     (list of tuple key, value pairs, describing
                          which {} keys to replace with specific values
@@ -708,7 +708,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
     OUTPUTS
     =======
-    
+
     --r             The report string.
     --endlog        The path to the final log file.
     --status        Description of whether the command failed, is fully done or
@@ -717,7 +717,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     """
 
     def closeLog(logfile, logname, logfolders, status, remove, r):
-        
+
         # -- close the log
         if logfile:
             logfile.close()
@@ -832,7 +832,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         if status and status == 'done':
             print >> nf, "\n\n===> Successful completion of task\n"
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
-        else:            
+        else:
             if status and status == 'incomplete':
                 endlog, r = closeLog(nf, tmplogfile, logfolders, "incomplete", remove, r)
             else:
@@ -847,7 +847,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
                 r += '\n%s --- already completed' % (description)
             else:
                 r += '\n%s --- already ran, incomplete file check' % (description)
-    
+
     if task:
         task += " "
     else:
@@ -865,7 +865,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     """
     runScriptThroughShell - documentation not yet available.
     """
-    
+
     r = '\n\n%s' % (description)
 
     if isinstance(logtags, basestring):

@@ -172,22 +172,22 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                         folder. [bold]
     --nifti_tail        The tail of NIfTI volume images to use. []
     --bold_variant      Optional variant of bold preprocessing. If
-                        specified, the BOLD images in                            
+                        specified, the BOLD images in
                         `images/functional<bold_variant>` will be
-                        processed. []    
+                        processed. []
     --img_suffix        Specifies a suffix for 'images' folder to enable
-                        support for multiple parallel workflows. Empty 
+                        support for multiple parallel workflows. Empty
                         if not used. []
     --logfolder         The path to the folder where runlogs and comlogs
                         are to be stored, if other than default. []
     --log               Whether to keep ('keep') or remove ('remove') the
                         temporary logs once jobs are completed. ['keep']
-                        When a comma or pipe ('|') separated list is given, 
+                        When a comma or pipe ('|') separated list is given,
                         the log will be created at the first provided location
-                        and then linked or copied to other locations. 
+                        and then linked or copied to other locations.
                         The valid locations are:
 
-                         - 'study'   (for the default: 
+                         - 'study'   (for the default:
                            `<study>/processing/logs/comlogs` location)
                          - 'session' (for `<sessionid>/logs/comlogs`)
                          - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
@@ -208,7 +208,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-    
+
     ::
 
         qunex createBOLDBrainMasks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
@@ -254,7 +254,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bolds parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
     r += "\n\n........................................................"
 
-    doOptionsCheck(options, sinfo, 'createBOLDBrainMasks')    
+    doOptionsCheck(options, sinfo, 'createBOLDBrainMasks')
     d = getSessionFolders(sinfo, options)
 
     if overwrite:
@@ -289,7 +289,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(parelements)
-        # process 
+        # process
         f = partial(executeCreateBOLDBrainMasks, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
 
@@ -327,7 +327,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
         # template file
         templatefile = f['bold_template']
-    
+
 
         # --- copy over bold data
 
@@ -358,8 +358,8 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         bmtarget = f['bold1_brain_mask'].replace(getImgFormat(f['bold1_brain_mask']), '.nii.gz')
         if getImgFormat(f['bold1']) == '.4dfp.img':
             bsource = f['bold1'].replace('.4dfp.img', '.nii.gz')
-            r, endlog, status, failed = runExternalForFile(bsource, 'g_FlipFormat %s %s' % (f['bold1'], bsource), '    ... converting %s to nifti' % (f['bold1']), overwrite=overwrite, thread=sinfo['id'], task='FlipFormat' % (boldnum), logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
-            r, endlog, status, failed = runExternalForFile(bsource, 'caret_command -file-convert -vc %s %s' % (f['bold1'].replace('img', 'ifh'), bsource), 'converting %s to nifti' % (f['bold1']), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(bsource, 'g_FlipFormat %s %s' % (f['bold1'], bsource), '    ... converting %s to nifti' % (f['bold1']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='FlipFormat' % (boldnum), logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(bsource, 'caret_command -file-convert -vc %s %s' % (f['bold1'].replace('img', 'ifh'), bsource), 'converting %s to nifti' % (f['bold1']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
 
         # --- run BET
 
@@ -367,15 +367,15 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
             r += '\n    ... bet on %s already run' % (os.path.basename(bsource))
             report['bolddone'] += 1
         else:
-            r, endlog, status, failed = runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite=overwrite, thread=sinfo['id'], task='bet', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='bet', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
             report['boldok'] += 1
 
         if options['image_target'] == '4dfp':
             # --- convert nifti to 4dfp
-            r, endlog, status, failed = runExternalForFile(bbtarget, 'gunzip -f %s.gz' % (bbtarget), '    ... gunzipping %s.gz' % (os.path.basename(bbtarget)), overwrite=overwrite, thread=sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
-            r, endlog, status, failed = runExternalForFile(bmtarget, 'gunzip -f %s.gz' % (bmtarget), '    ... gunzipping %s.gz' % (os.path.basename(bmtarget)), overwrite=overwrite, thread=sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
-            r, endlog, status, failed = runExternalForFile(f['bold1_brain'], 'g_FlipFormat %s %s' % (bbtarget, f['bold1_brain'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_nifti']), overwrite=overwrite, thread=sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
-            r, endlog, status, failed = runExternalForFile(f['bold1_brain_mask'], 'g_FlipFormat %s %s' % (bmtarget, f['bold1_brain_mask'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_mask_nifti']), overwrite=overwrite, thread=sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(bbtarget, 'gunzip -f %s.gz' % (bbtarget), '    ... gunzipping %s.gz' % (os.path.basename(bbtarget)), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(bmtarget, 'gunzip -f %s.gz' % (bmtarget), '    ... gunzipping %s.gz' % (os.path.basename(bmtarget)), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(f['bold1_brain'], 'g_FlipFormat %s %s' % (bbtarget, f['bold1_brain'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_nifti']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(f['bold1_brain_mask'], 'g_FlipFormat %s %s' % (bmtarget, f['bold1_brain_mask'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_mask_nifti']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
 
         else:
             # --- link a template
@@ -440,22 +440,22 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            folder. [bold]
     --nifti_tail           The tail of NIfTI volume images to use. []
     --bold_variant         Optional variant of bold preprocessing. If
-                           specified, the BOLD images in                            
+                           specified, the BOLD images in
                            `images/functional<bold_variant>` will be
-                           processed. []    
+                           processed. []
     --img_suffix           Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty 
-                           if not used. []  
+                           support for multiple parallel workflows. Empty
+                           if not used. []
     --logfolder            The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log                  Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given, 
+                           When a comma or pipe ('|') separated list is given,
                            the log will be created at the first provided location
-                           and then linked or copied to other locations. 
+                           and then linked or copied to other locations.
                            The valid locations are:
 
-                           - 'study'   (for the default: 
+                           - 'study'   (for the default:
                              `<study>/processing/logs/comlogs` location)
                            - 'session' (for `<sessionid>/logs/comlogs`)
                            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
@@ -480,13 +480,13 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                       to also exclude from further processing and analysis. [0]
     --mov_bad         Which criteria to use for identification of bad frames
                       (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further 
+                      See movement scrubbing documentation for further
                       information. [udvarsme]
-    
+
     Criteria for identification of bad frames can be one out of:
 
     --mov           Frame displacement threshold (fdt) is exceeded.
-    --dvars         Image intensity normalized root mean squared error (RMSE) 
+    --dvars         Image intensity normalized root mean squared error (RMSE)
                     threshold (dvarsmt) is exceeded.
     --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
     --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
@@ -507,7 +507,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[N].bstats
     --------------
 
-    bold[N]<nifti_tail>.bstats includes for each frame of the BOLD image the 
+    bold[N]<nifti_tail>.bstats includes for each frame of the BOLD image the
     following computed statistics:
 
     --n           Number of brain voxels.
@@ -526,8 +526,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[N].scrub
     -------------
 
-    bold[N]<nifti_tail>.scrub includes for each frame the information on 
-    whether the frame should be excluded (1) or not (0) based on the following 
+    bold[N]<nifti_tail>.scrub includes for each frame the information on
+    whether the frame should be excluded (1) or not (0) based on the following
     criteria (note below the relevant settings that specify thresholds etc.):
 
     --mov          Is frame displacement higher from the specified threshold?
@@ -554,7 +554,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bold[N].use
     -----------
 
-    bold[N]<nifti_tail>.use file lists for each frame of the relevant BOLD 
+    bold[N]<nifti_tail>.use file lists for each frame of the relevant BOLD
     image, whether it is to be used (1) or not (0).
 
     NOTES AND DEPENDENCIES
@@ -572,12 +572,12 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     ===========
 
     Using the defaults::
-    
+
         qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no bolds=all
 
     Specifying additional parameters for identification of bad frames::
-    
+
         qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
              mov_before=1 mov_after= 2
@@ -622,7 +622,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     r += "\n\n    for computing scrubbing information."
     r += "\n\n........................................................"
 
-    doOptionsCheck(options, sinfo, 'computeBOLDStats')  
+    doOptionsCheck(options, sinfo, 'computeBOLDStats')
     d = getSessionFolders(sinfo, options)
 
     if overwrite:
@@ -653,11 +653,11 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
             report['bolddone'] += tempReport['bolddone']
             report['boldok'] += tempReport['boldok']
             report['boldfail'] += tempReport['boldfail']
-            report['boldmissing'] += tempReport['boldmissing']     
+            report['boldmissing'] += tempReport['boldmissing']
     else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(parelements)
-        # process 
+        # process
         f = partial(executeComputeBOLDStats, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
 
@@ -772,22 +772,22 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                            folder. [bold]
     --nifti_tail           The tail of NIfTI volume images to use. []
     --bold_variant         Optional variant of bold preprocessing. If
-                           specified, the BOLD images in                            
+                           specified, the BOLD images in
                            `images/functional<bold_variant>` will be
-                           processed. []    
+                           processed. []
     --img_suffix           Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty 
-                           if not used. []    
+                           support for multiple parallel workflows. Empty
+                           if not used. []
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log                  Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given, 
+                           When a comma or pipe ('|') separated list is given,
                            the log will be created at the first provided location
-                           and then linked or copied to other locations. 
+                           and then linked or copied to other locations.
                            The valid locations are:
 
-                           - 'study'   (for the default: 
+                           - 'study'   (for the default:
                              `<study>/processing/logs/comlogs` location)
                            - 'session' (for `<sessionid>/logs/comlogs`)
                            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
@@ -814,13 +814,13 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                       to also exclude from further processing and analysis. [0]
     --mov_bad         Which criteria to use for identification of bad frames
                       (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further 
+                      See movement scrubbing documentation for further
                       information. [udvarsme]
 
     Criteria for identification of bad frames can be one out of:
 
     --mov           Frame displacement threshold (fdt) is exceeded.
-    --dvars         Image intensity normalized root mean squared error (RMSE) 
+    --dvars         Image intensity normalized root mean squared error (RMSE)
                     threshold (dvarsmt) is exceeded.
     --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
     --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
@@ -866,16 +866,16 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     For each session it saves into images/functional/movement:
 
-    --`bold<nifti_tail>_<mov_plot>_cor.pdf`       
+    --`bold<nifti_tail>_<mov_plot>_cor.pdf`
             A plot of movement correction parameters for each of the BOLD files.
-    --`bold<nifti_tail>_<mov_plot>_dvars.pdf`     
-            A plot of frame displacement and dvarsm statistics with frames that 
+    --`bold<nifti_tail>_<mov_plot>_dvars.pdf`
+            A plot of frame displacement and dvarsm statistics with frames that
             are identified as bad marked in blue.
-    --`bold<nifti_tail>_<mov_plot>_dvarsme.pdf`   
-            A plot of frame displacement and dvarsme statistics with frames that 
+    --`bold<nifti_tail>_<mov_plot>_dvarsme.pdf`
+            A plot of frame displacement and dvarsme statistics with frames that
             are identified as bad marked in blue.
-    --`bold[N]<nifti_tail>_scrub.fidl`            
-            A fidl filesnippet that lists, which frames are to be excluded from 
+    --`bold[N]<nifti_tail>_scrub.fidl`
+            A fidl filesnippet that lists, which frames are to be excluded from
             the analysis.
 
     For the group level it creates three report files that are stored in the
@@ -929,13 +929,13 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     ::
 
         qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
-              --sessionsfolder=sessions --overwrite=no --bolds=all 
+              --sessionsfolder=sessions --overwrite=no --bolds=all
               --parsessions=10
 
     ::
 
         qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
-              --sessionsfolder=sessions --overwrite=no --bolds=all 
+              --sessionsfolder=sessions --overwrite=no --bolds=all
               --nifti_tail=_hp2000_clean --parsessions=1 --mov_plot=""
     """
 
@@ -972,7 +972,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s" % (options)
         r += "\n\n........................................................"
 
-        doOptionsCheck(options, sinfo, 'createStatsReport')  
+        doOptionsCheck(options, sinfo, 'createStatsReport')
         d = getSessionFolders(sinfo, options)
 
         if overwrite:
@@ -1168,22 +1168,22 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            folder. [bold]
     --nifti_tail           The tail of NIfTI volume images to use. []
     --bold_variant         Optional variant of bold preprocessing. If
-                           specified, the BOLD images in                            
+                           specified, the BOLD images in
                            `images/functional<bold_variant>` will be
-                           processed. []    
+                           processed. []
     --img_suffix           Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty 
+                           support for multiple parallel workflows. Empty
                            if not used. []
     --logfolder            The path to the folder where runlogs and comlogs
                            are to be stored, if other than default. []
     --log                  Whether to keep ('keep') or remove ('remove') the
                            temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given, 
+                           When a comma or pipe ('|') separated list is given,
                            the log will be created at the first provided location
-                           and then linked or copied to other locations. 
+                           and then linked or copied to other locations.
                            The valid locations are:
 
-                           - 'study' (for the default: 
+                           - 'study' (for the default:
                              `<study>/processing/logs/comlogs` location)
                            - 'session' (for `<sessionid>/logs/comlogs`)
                            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
@@ -1220,7 +1220,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
       A text file that lists for each volume frame the information on mean
       intensity across the ventricle, white matter and whole brain voxels, and
       any additional nuisance ROI specified using specific parameters.
-      The file is stored in 
+      The file is stored in
       `images<img_suffix>/functional<bold_variant>/movement` folder.
 
     --`bold[N]<nifti_tail>_nuisance.png`
@@ -1238,7 +1238,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
       the first BOLD frame, the second the whole brain mask, the third the
       ventricles mask and the fourth the white matter mask. The fifth volume
       stores all three masks coded as 1 (whole brain), 2 (ventricles), or 3
-      (white matter). The image is stored in 
+      (white matter). The image is stored in
       `images<img_suffix>/ROI/nuisance<bold_variant>` folder.
 
     USE
@@ -1295,7 +1295,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-    
+
     ::
 
         qunex extractNuisanceSignal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
@@ -1340,7 +1340,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     r += "\n\n    when extracting nuisance signal."
     r += "\n\n........................................................"
 
-    doOptionsCheck(options, sinfo, 'extractNuisanceSignal')  
+    doOptionsCheck(options, sinfo, 'extractNuisanceSignal')
     d = getSessionFolders(sinfo, options)
 
     if overwrite:
@@ -1371,11 +1371,11 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
             report['bolddone'] += tempReport['bolddone']
             report['boldok'] += tempReport['boldok']
             report['boldfail'] += tempReport['boldfail']
-            report['boldmissing'] += tempReport['boldmissing']   
+            report['boldmissing'] += tempReport['boldmissing']
     else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(parelements)
-        # process 
+        # process
         f = partial(executeExtractNuisanceSignal, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
 
@@ -1513,12 +1513,12 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           are to be stored, if other than default []
     --log                 Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma or pipe ('|') separated list is given, 
+                          When a comma or pipe ('|') separated list is given,
                           the log will be created at the first provided location
-                          and then linked or copied to other locations. 
+                          and then linked or copied to other locations.
                           The valid locations are:
 
-                          - 'study'   (for the default: 
+                          - 'study'   (for the default:
                             `<study>/processing/logs/comlogs` location)
                           - 'session' (for `<sessionid>/logs/comlogs`)
                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
@@ -1537,16 +1537,16 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --image_target      The target format to work with, one of 4dfp, nifti,
                         dtseries or ptseries [nifti].
     --nifti_tail        The tail of NIfTI volume images to use. []
-    --cifti_tail        The tail of CIFTI images to use. []    
+    --cifti_tail        The tail of CIFTI images to use. []
     --bold_prefix       An optional prefix to place in front of processing
-                        name extensions in the resulting files, e.g. 
+                        name extensions in the resulting files, e.g.
                         bold3<bold_prefix>_s_hpss.nii.gz [].
     --bold_variant      Optional variant of HCP BOLD preprocessing. If
-                        specified, the BOLD images in                            
+                        specified, the BOLD images in
                         `images/functional<bold_variant>` will be
-                        processed [].    
+                        processed [].
     --img_suffix        Specifies a suffix for 'images' folder to enable
-                        support for multiple parallel workflows. Empty 
+                        support for multiple parallel workflows. Empty
                         if not used [].
 
     List of bold files specify, which types of bold files are to be processed,
@@ -1626,13 +1626,13 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                       to also exclude from further processing and analysis [0].
     --mov_bad         Which criteria to use for identification of bad frames
                       (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further 
+                      See movement scrubbing documentation for further
                       information [udvarsme].
 
     Criteria for identification of bad frames can be one out of:
 
     --mov       Frame displacement threshold (fdt) is exceeded.
-    --dvars     Image intensity normalized root mean squared error (RMSE) 
+    --dvars     Image intensity normalized root mean squared error (RMSE)
                 threshold (dvarsmt) is exceeded.
     --dvarsme   Median normalised RMSE (dvarsmet) threshold is exceeded.
     --idvars    Both fdt and dvarsmt are exceeded (i for intersection).
@@ -1786,11 +1786,11 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                                      regressors
                          - 1d    ... first derivatives of above nuisance signals
                                      and movement
-                         - e     ... events listed in the provided fidl files 
-                                     (see above), modeled as specified in the 
+                         - e     ... events listed in the provided fidl files
+                                     (see above), modeled as specified in the
                                      event_string parameter.
                          - t     ... task
-                         
+
     --event_string       A string describing, how to model the events listed in
                          the provided fidl files. []
     --glm_matrix         Whether to save the GLM matrix as a text file ('text'),
@@ -1851,7 +1851,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
         <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
 
     --name                  The name of the resulting regressor.
-    --column                The number of the additional behavioral regressors 
+    --column                The number of the additional behavioral regressors
                             column in the fidl file (1-based) to use as a weight
                             for the regressors.
     --normalization_span    Whether to normalize the behavioral weight within
@@ -1887,14 +1887,14 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-    
+
     ::
 
-        qunex preprocessBold 
+        qunex preprocessBold
              sessions=fcMRI/sessions_hcp.txt \\
              sessionsfolder=sessions \\
              overwrite=no \\
-             parsessions=10 \\ 
+             parsessions=10 \\
              bolds=rest \\
              bold_actions="s,h,r,c,l" \\
              bold_nuisance="m,V,WM,WB,1d" \\
@@ -1931,7 +1931,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                Changed hcp_nifti_tail to nifti_tail
     """
 
-    doOptionsCheck(options, sinfo, 'preprocessBold')  
+    doOptionsCheck(options, sinfo, 'preprocessBold')
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -1961,11 +1961,11 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
             report['processed'] += tempReport['processed']
             report['failed'] += tempReport['failed']
             report['ready'] += tempReport['ready']
-            report['not ready'] += tempReport['not ready']      
+            report['not ready'] += tempReport['not ready']
     else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(parelements)
-        # process 
+        # process
         f = partial(executePreprocessBold, sinfo, options, overwrite)
         results = processPoolExecutor.map(f, bolds)
 
@@ -2004,7 +2004,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
     try:
 
         # --- define the tail
-        
+
         options['bold_tail'] = options['nifti_tail']
         if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['bold_tail'] = options['cifti_tail']
@@ -2112,7 +2112,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
 def preprocessConc(sinfo, options, overwrite=False, thread=0):
     """
-    ``preprocessConc [... processing options]``    
+    ``preprocessConc [... processing options]``
 
     Performs spatial smoothing, temporal filtering, removal of nuisance signals
     and complex modeling of events.
@@ -2154,19 +2154,19 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --overwrite           Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname            The default name of the bold files in the images
-                          folder [bold].    
+                          folder [bold].
     --image_target        The target format to work with, one of 4dfp, nifti,
                           dtseries or ptseries [nifti].
     --logfolder           The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log                 Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep'].
-                          When a comma or pipe ('|') separated list is given, 
+                          When a comma or pipe ('|') separated list is given,
                           the log will be created at the first provided location
-                          and then linked or copied to other locations. 
+                          and then linked or copied to other locations.
                           The valid locations are:
 
-                          - 'study'   (for the default: 
+                          - 'study'   (for the default:
                             `<study>/processing/logs/comlogs` location)
                           - 'session' (for `<sessionid>/logs/comlogs`)
                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
@@ -2186,28 +2186,28 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --image_target      The target format to work with, one of 4dfp, nifti,
                         dtseries or ptseries [nifti].
     --nifti_tail        The tail of NIfTI volume images to use. []
-    --cifti_tail        The tail of CIFTI images to use. []    
+    --cifti_tail        The tail of CIFTI images to use. []
     --bold_prefix       An optional prefix to place in front of processing
-                        name extensions in the resulting files, e.g. 
+                        name extensions in the resulting files, e.g.
                         bold3<bold_prefix>_s_hpss.nii.gz [].
     --bold_variant      Optional variant of HCP BOLD preprocessing. If
-                        specified, the BOLD images in                            
+                        specified, the BOLD images in
                         `images/functional<bold_variant>` will be
-                        processed [].    
+                        processed [].
     --img_suffix        Specifies a suffix for 'images' folder to enable
-                        support for multiple parallel workflows. Empty 
+                        support for multiple parallel workflows. Empty
                         if not used [].
 
-    The --bolds and --event_file parameters provide names based on which the 
-    the appropriate .conc and .fidl files are searched for. Both are first 
+    The --bolds and --event_file parameters provide names based on which the
+    the appropriate .conc and .fidl files are searched for. Both are first
     searched for in `images<img_suffix>/functional<bold_variant>/concs` and
-    images<img_suffix>/functional<bold_variant>/events folders respectively. 
+    images<img_suffix>/functional<bold_variant>/events folders respectively.
     There they would be named as
     `[<session id>_]<boldname>_<image_target>_<conc name>.conc` and
     `[<session id>_]<boldname>_<image_target>_<fidl name>.fidl`. If the files
     are not present in the relevant individual session's folders, they are
     searched for in the `<sessionsfolder>/inbox/events` and
-    `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_" 
+    `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_"
     in the *.fidl and *.conc file name is not optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -2227,28 +2227,28 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     be estimated and regressed out, then the related beta estimates would
     be saved. Lastly the BOLDs would be also low-pass filtered.
 
-    **Relative vs. absolute use of conc files.**  
-    
-    If `conc_use` is set to relative (the default), then the only information 
-    taken from the conc files will be the bold numbers. The actual location of 
-    the bold files will be constructed from the information on the location of 
-    the session's sesion folder present in the batch file, and the 
-    `bold_variant` setting, whereas the specific bold file name and file 
-    format (e.g. .nii.gz vs. .dtseries.nii) to use will depend on `boldname`, 
+    **Relative vs. absolute use of conc files.**
+
+    If `conc_use` is set to relative (the default), then the only information
+    taken from the conc files will be the bold numbers. The actual location of
+    the bold files will be constructed from the information on the location of
+    the session's sesion folder present in the batch file, and the
+    `bold_variant` setting, whereas the specific bold file name and file
+    format (e.g. .nii.gz vs. .dtseries.nii) to use will depend on `boldname`,
     `image_target`, `nifti_tail` and `cifti_tail` settings. This allows for
-    flexible use of conc files. That is, the same conc files can be used for 
+    flexible use of conc files. That is, the same conc files can be used for
     NIfTI and CIFTI versions of bold files, across bold variants, and even when
-    the actual study location changes, e.g. when moving the study from one 
+    the actual study location changes, e.g. when moving the study from one
     server, volume or folder to another. In most cases this use will be prefered.
 
-    If the information in the conc file is to be used literally, e.g. in 
+    If the information in the conc file is to be used literally, e.g. in
     cases when you want to work with a specific preprocessed version of the
     BOLD files, then `conc_use` should be set to `absolute`. In this case
-    both the specific location as well as the specific filename specified in 
+    both the specific location as well as the specific filename specified in
     the conc file will be used exactly as specified. In this case, do check
-    and make sure that the information in the conc file is valid and it matches 
+    and make sure that the information in the conc file is valid and it matches
     with `boldname` and `image_target` parameters, and that the `nifti_tail`
-    is specified correctly, as it will be used to obtain bold statistics and 
+    is specified correctly, as it will be used to obtain bold statistics and
     nuisance information!
 
 
@@ -2277,7 +2277,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Criteria for identification of bad frames can be one out of:
 
     --mov           Frame displacement threshold (fdt) is exceeded.
-    --dvars         Image intensity normalized root mean squared error (RMSE) 
+    --dvars         Image intensity normalized root mean squared error (RMSE)
                     threshold (dvarsmt) is exceeded.
     --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
     --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
@@ -2431,7 +2431,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                          - e     (events listed in the provided fidl files (see
                            above), modeled as specified in the event_string
                            parameter.)
-                         
+
     --event_string       A string describing, how to model the events listed in
                          the provided fidl files. []
     --glm_matrix         Whether to save the GLM matrix as a text file ('text'),
@@ -2504,7 +2504,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
         <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
 
     --name                  The name of the resulting regressor.
-    --column                The number of the additional behavioral regressors 
+    --column                The number of the additional behavioral regressors
                             column in the fidl file (1-based) to use as a weight
                             for the regressors.
     --normalization_span    Whether to normalize the behavioral weight within
@@ -2531,7 +2531,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     -------
 
     This step results in the following files (if requested):
-    
+
     - residual image (``<root>_res-<regressors><glm name>.<ext>``)
     - GLM image (``<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>``)
     - text GLM regressor matrix (``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt``)
@@ -2550,7 +2550,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
              pignore="hipass=keep|regress=keep|lopass=keep"
 
     Functional connectivity preprocessing::
-    
+
         qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
              bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
@@ -2574,9 +2574,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                Added ability to work with ptseries images.
     2018-12-12 Jure Demsar
                preprocessConc function uses the conc_use parameter for
-               absolute or relative path interpretation from conc files. 
+               absolute or relative path interpretation from conc files.
     2019-01-12 Grega Repovš
-               Changed how bold_tail is identified        
+               Changed how bold_tail is identified
                Updated documentation
     2019-04-25 Grega Repovš
                Changed subjects to sessions
@@ -2588,7 +2588,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                Changed hcp_nifti_tail and hcp_cifti_tail to nifti_tail and cifti_tail
     """
 
-    doOptionsCheck(options, sinfo, 'preprocessConc')  
+    doOptionsCheck(options, sinfo, 'preprocessConc')
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -2831,4 +2831,3 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo['id'], report, failed))
-
