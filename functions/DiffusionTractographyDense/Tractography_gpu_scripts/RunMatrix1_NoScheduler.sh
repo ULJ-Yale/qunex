@@ -11,7 +11,7 @@
 # ## Author(s)
 #
 # Originally developed by Stam Sotiropoulos (Oxford)
-# Modified by Alan Anticevic for LSF, PBS and SLURM compatibility via MNAP code (07/01/2017)
+# Modified by Alan Anticevic for LSF, PBS and SLURM compatibility via QuNex code (07/01/2017)
 #
 # ## Product
 #

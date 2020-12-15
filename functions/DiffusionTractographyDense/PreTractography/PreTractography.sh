@@ -18,8 +18,8 @@
 # ## LICENCE
 #
 # * The PreTractography.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -30,7 +30,7 @@
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
-# * MNAP Suite
+# * QuNex Suite
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #

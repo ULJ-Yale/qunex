@@ -3,7 +3,7 @@
 #
 # 	Original code developed by Stam Sotiropoulos (Oxford University)
 #
-#	Modified by Alan Anticevic (Yale University) for LSF, PBS and SLURM compatibility via MNAP code (09/22/2017)
+#	Modified by Alan Anticevic (Yale University) for LSF, PBS and SLURM compatibility via QuNex code (09/22/2017)
 #
 
 # - Check which CUDA version is being run and set where GPU probtrackx binary is # bindir=$FSLDIR/bin 
