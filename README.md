@@ -1,11 +1,11 @@
-# README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
+# README File for Quantitative Neuroimaging Environment & ToolboX (QuNex)
 
-The Quantitative Neuroimaging Environment & ToolboX (Qu|Nex) integrates a number of 
+The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number of 
 modules that support a flexible and extensible framework for data organization, preprocessing, 
-quality assurance, and various analytics across neuroimaging modalities. The Qu|Nex suite is 
+quality assurance, and various analytics across neuroimaging modalities. The QuNex suite is 
 designed to be flexible and can be developed by adding functions developed around its component tools.
 
-The Qu|Nex code is is co-developed and co-maintained by the:
+The QuNex code is is co-developed and co-maintained by the:
 
 * [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
 * [Mind and Brain Lab, University of Ljubljana](http://psy.ff.uni-lj.si/mblab/en),
@@ -16,22 +16,22 @@ Quick links
 -----------
 
 * [Website](http://qunex.yale.edu/)
-* [Qu|Nex Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
+* [QuNex Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
 * [SDK Wiki](https://bitbucket.org/oriadev/qunexsdk/wiki/Home)
-* [Qu|Nex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
-* [Qu|Nex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
+* [QuNex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
+* [QuNex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 * [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 
 
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.14
+QuNex suite version: 0.62.15
 
 Submodules:
 
 * connector: 0.62.9
-* library: 0.62.2
+* library: 0.62.3
 * nitools: 0.61.4
 * niutilities: 0.62.15
 
@@ -48,10 +48,10 @@ Release notes
 * 0.62.4  The order of images in the hcpDiffusion command is now correct.
 * 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
 * 0.62.2  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
-* 0.62.1  Fixed RunQC_BOLD issues with filenames and a large number of bolds.Increase the robustness of Qu|Nex when processing multiple sessions in parallel.
+* 0.62.1  Fixed RunQC_BOLD issues with filenames and a large number of bolds.Increase the robustness of QuNex when processing multiple sessions in parallel.
 * 0.62.0  Documentation rework.
 * 0.61.19 The mapHCPData command now copies only valid movement correctionparameter data.
-* 0.61.18 Qu|Nex no longer generates unnecessary folders, added CUDA 9.1bedpostx support, improved HCPYA dataset support.
+* 0.61.18 QuNex no longer generates unnecessary folders, added CUDA 9.1bedpostx support, improved HCPYA dataset support.
 * 0.61.17 hcp_dwi_selectbestb0 in HCP Diffusion pipelines is now a flag.
 * 0.61.16 HCP Diffusion now uses pipe (|) as the extra eddy args separator.
 * 0.61.15 Beautified and debugged extra-eddy-arg printout in HCP Diffusion pipeline.
@@ -72,7 +72,7 @@ Release notes
 * 0.51.2  Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1  Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
 * 0.51.0  MSMAll and DeDriftAndResample HCP pipelines, qunex_envstatus upgrade and hcp_suffix harmonization.
-* 0.50.4  Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
+* 0.50.4  Fixed a bug that crashed the QuNex suite instead of reporting an error in hcp_PreFS.
 * 0.50.2  Support for the HCP ICAFix pipelines, removed some bugs and implemented some minor optimizations.
 
 
@@ -89,6 +89,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.62.15 [library] Removed the latest suffix from the QuNex folder structure.
 * 0.62.14 [nitools, niutilities] Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
 * 0.62.13 [nitools, niutilities] Implemented the ability for processing different bold files and variates.
 * 0.62.12 [niutilities] The createList and createConc commands now also support multiple parallel processing workflows throught the img_suffix parameter. Fixed a file checking bug in the createList command. 
@@ -96,7 +97,7 @@ Detailed change log
 * 0.62.10 [connector] qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
 * 0.62.9  [connector] runTurnkey patch to include T2 to rsync command for hcp2 step
 * 0.62.8  [niutilities] Added the option to include only available files for the parameter check within createList command.
-* 0.62.7  [niutilities] Extended Qu|Nex functionality so it supports multiple B0 FieldMap images and Philips field maps. Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.7  [niutilities] Extended QuNex functionality so it supports multiple B0 FieldMap images and Philips field maps. Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
 * 0.62.6  [niutilities] MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.5  [connector, niutilities] Bolds parameter is now properly passed to all commands.
 * 0.62.4  [niutilities] The order of images in the hcpDiffusion command is now correct.
@@ -114,7 +115,7 @@ Detailed change log
 * 0.61.12 [library] When running through Singularity CUDA is not loaded from inside the container.
 * 0.61.11 [nitools] Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
 * 0.61.10 [niutilities] Removed a bug in single-run HCP ICAFix
-* 0.61.9  [niutilities, connector] HCP Diffusion pipeline upgrades, support for running bash commands before the Qu|Nex command when scheduling, added CUDA 9.1 bedpostx and probtrackx binaries, removed race conditions in createBOLDBrainMasks and mapHCPData.
+* 0.61.9  [niutilities, connector] HCP Diffusion pipeline upgrades, support for running bash commands before the QuNex command when scheduling, added CUDA 9.1 bedpostx and probtrackx binaries, removed race conditions in createBOLDBrainMasks and mapHCPData.
 * 0.61.8  [niutilities] All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  [niutilities] Added additional parameters to DeDriftAndResample and updated HCP diffusion.
 * 0.61.6  [connector] runQC now works properly when overwrite is set to no.
@@ -145,7 +146,7 @@ Detailed change log
 * 0.50.7  [library] qunex_envstatus now reports OS info.
 * 0.50.6  [niutilities] Consistent parameter injection notation.
 * 0.50.5  [niutilities] Harmonized the use of hcp_suffix.
-* 0.50.4  [niutilities] Fixed a bug that crashed the Qu|Nex suite instead of reporting an error in hcp_PreFS.
+* 0.50.4  [niutilities] Fixed a bug that crashed the QuNex suite instead of reporting an error in hcp_PreFS.
 * 0.50.3  [niutilities] Debug of hcpFS/hcp2 command when --hcp_fs_existing_subject is set to TRUE.
 * 0.50.2  [niutilities library] ICAFix ordering of bolds now matches the hcp_icafix_bolds parameter. Removed double slash in logs for MATLABDIR. HCP glob search debug, nicer lookings exceptions in ICAFix. Revised the documentation for the hcp_icafix_bolds parameter.
 * 0.50.1  [niutilities] ICAFix regname debug and optimized bold comparison.
@@ -157,11 +158,11 @@ Detailed change log
 * 0.49.7  [library niutilities] Fixed and expanded functionality for PBS scheduler
 * 0.49.6  [library] Added reporting of HCPpipelines version
 * 0.49.5  [niutilities library] Updated parameters
-* 0.49.4  [Qu|Nex] Removal of hcp and qunexaccept subrepositories
+* 0.49.4  [QuNex] Removal of hcp and qunexaccept subrepositories
 * 0.49.3  [niutilities] Separate parameters for use of TOPUP in fMRIVolume, more robust handling of SE files in fMRIVolume
 * 0.49.2  [niutilities] A fix to linkOrCopy function, expanded documentation
 * 0.49.1  [niutilities] Additional changes to niutilities to match parameter names with HCPpipelines
-* 0.49.0  [connector library niutilities] Initial changes to switch from Qu|Nex HCP clone to use of updated HCPpipelines
+* 0.49.0  [connector library niutilities] Initial changes to switch from QuNex HCP clone to use of updated HCPpipelines
 * 0.48.46 [connector] Fixed ls search for parcellated timeseries in ComputeFunctionalConnecivity
 * 0.48.45 [niutilities] Fixed handling of files that go missing during BIDSImport
 * 0.48.44 [connector] Fixed XNAT acceptance test bug for processInbox
@@ -234,7 +235,7 @@ Detailed change log
 * 0.43.3  [niutilities] Fixed a None checkup bug
 * 0.43.2  [niutilities] Updated mapIO documentation with examples
 * 0.43.1  [niutilities] Added initial version of mapIO
-* 0.43.0  [qunex] Major update to entire suite to reflect new public beta name change from MNAP to Qu|Nex
+* 0.43.0  [qunex] Major update to entire suite to reflect new public beta name change from MNAP to QuNex
 * 0.42.0  [niutilities librarry] Major update to niutilities functionality and compliance with latest HCP Pipelines
 * 0.41.10 [niutilities] Updated processInbox with nameformat parameter
 * 0.41.9  [niutilities] Updated processInbox to work with existing session folders
