@@ -268,10 +268,10 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
                 raise
             
             if gdcfile in ['', 'NONE']:
-                r += "\n---> WARNING: Specific gradient distorsion coefficients file could not be identified! None will be used."
+                r += "\n---> WARNING: Specific gradient distortion coefficients file could not be identified! None will be used."
                 gdcfile = "NONE"
             else:
-                r += "\n---> Specific gradient distorsion coefficients file identified (%s):\n     %s" % (gdcfileused, gdcfile)
+                r += "\n---> Specific gradient distortion coefficients file identified (%s):\n     %s" % (gdcfileused, gdcfile)
 
         else: 
             gdcfile = gdcstring
@@ -280,12 +280,12 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
             if not os.path.exists(gdcfile):
                 gdcoeffs = os.path.join(hcp['hcp_Config'], gdcfile)
                 if not os.path.exists(gdcoeffs):
-                    r += "\n---> ERROR: Could not find gradient distorsion coefficients file: %s." % (gdcfile)
+                    r += "\n---> ERROR: Could not find gradient distortion coefficients file: %s." % (gdcfile)
                     run = False
                 else:
-                    r += "\n---> Gradient distorsion coefficients file present."
+                    r += "\n---> Gradient distortion coefficients file present."
             else:
-                r += "\n---> Gradient distorsion coefficients file present."
+                r += "\n---> Gradient distortion coefficients file present."
     else:
         gdcfile = "NONE"
 
