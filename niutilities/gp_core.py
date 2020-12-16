@@ -672,7 +672,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
 
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=False, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
     """
     ``runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True)``
 

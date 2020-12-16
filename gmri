@@ -375,6 +375,9 @@ def runCommand(command, args):
 
         # -- a basic call
         elif sessions is None:
+            # TODO: reroute the command below through runWithLog
+            # prepare args and logfile similarly as below (lines 385 - 393)
+            # runWithLog usage can be seen in g_core.py 624
             gcom.commands[command]['com'](**args)
             print "\n===> Successful completion of task"
 
