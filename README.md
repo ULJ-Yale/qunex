@@ -30,15 +30,15 @@ QuNex suite version: 0.62.15
 
 Submodules:
 
-* connector: 0.62.9
+* connector: 0.63.0
 * library: 0.62.3
 * nitools: 0.61.4
-* niutilities: 0.62.15
+* niutilities: 0.63.0
 
 Release notes
 -------------
 
-* 0.62.X  TODO COPY FROM RELEASE CARD AT RELEASE.
+* 0.63.X  TODO COPY FROM RELEASE CARD AT RELEASE.
 * 0.62.10 qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
 * 0.62.9  runTurnkey patch to include T2 to rsync command for hcp2 step.
 * 0.62.8  Improved parameter checking in the createList command.
@@ -89,6 +89,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.63.0  [connector, niutilities] Added support for processing post mortem macaque images.
 * 0.62.15 [library] Removed the latest suffix from the QuNex folder structure.
 * 0.62.14 [nitools, niutilities] Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
 * 0.62.13 [nitools, niutilities] Implemented the ability for processing different bold files and variates.
