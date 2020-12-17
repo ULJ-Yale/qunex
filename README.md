@@ -28,6 +28,7 @@ Quick links
 Change Log
 ----------
 
+* 0.63.0  Added support for processing post mortem macaque images.
 * 0.62.10 BOLDcomputeFC now reports errors in a QuNex compliant fashion.
 * 0.62.9  qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
 * 0.62.8  runTurnkey patch to include T2 to rsync command for hcp2 step.
