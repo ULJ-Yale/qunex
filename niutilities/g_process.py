@@ -42,6 +42,7 @@ import g_core
 import gp_workflow
 import gp_simple
 import gp_FS
+import gp_FSL
 import g_scheduler
 import os
 import os.path
@@ -94,6 +95,7 @@ def procResponse(r):
     third element is missing, it assumes it ran ok and sets it to
     0.
     '''
+
     if type(r) is tuple:
         if len(r) == 2:
             if len(r[1]) == 2:
@@ -183,7 +185,8 @@ def updateOptions(session, options):
 #
 
 
-arglist = [['# ---- Basic settings'],
+arglist = [
+           ['# ---- Basic settings'],
            ['sessions',           'batch.txt',                                   str,    "The file with sessions information."],
            ['sessionsfolder',     '',                                            os.path.abspath, 'The path to study sessions folder.'],
            ['logfolder',          '',                                            isNone, 'The path to log folder.'],
@@ -364,8 +367,8 @@ arglist = [['# ---- Basic settings'],
 
            ['# --- Processing options'],
            ['run',                    'run',                                      str,    "run type: run - do the task, test - perform checks"],
-           ['log',                    'keep',                                     str,    "Whether to remove ('remove') the temporary logs once jobs are completed, keep them in the study level processing/logs/comlogs folder ('keep' or 'study') in the hcp folder ('hcp') or in a <session id>/logs/comlogs folder ('sessions'). Multiple options can be specified separated by '|'."]
-          ]
+           ['log',                    'keep',                                     str,    "Whether to remove ('remove') the temporary logs once jobs are completed, keep them in the study level processing/logs/comlogs folder ('keep' or 'study') in the hcp folder ('hcp') or in a <session id>/logs/comlogs folder ('sessions'). Multiple options can be specified separated by '|'."],
+]
 
 
 #   --------------------------------------------------------- PARAMETER MAPPING
@@ -460,8 +463,9 @@ towarn = {
 #   3/ what value does it set to the parameter it maps to
 #   4/ short description
 
-flaglist = [['test',                  'run',                                      'test', "run a test only"]
-            ]
+flaglist = [
+    ['test',            'run',              'test', 'Run a test only.']
+]
 
 #   ------------------------------------------------------------------ OPTIONS
 #   The options dictionary
@@ -519,6 +523,9 @@ calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,         
           # ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."],
           [],
           ['rsc',     'runShellScript',              gp_simple.runShellScript,                       "Runs the specified script."],
+          [],
+          ['f99',    'fsl_f99',                      gp_FSL.fsl_f99,                                 "Run FSL F99 command."],
+          ['fslx',   'fsl_xtract',                   gp_FSL.fsl_xtract,                              "Run FSL XTRACT command."],
           ]
 
 lalist = [['lfs',     'longitudinalFS',              gp_HCP.longitudinalFS,                          "Runs longitudinal FreeSurfer across sessions."]

@@ -45,8 +45,6 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
     except:
         pass
 
-    folder   = os.path.join(os.path.dirname(sessionsfolder), 'info', 'hcpls', hcplsname)
-
     if '\\' in file:
         pathsep = "\\"
     else:
@@ -962,7 +960,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print "--> removed existing session.txt file"
+            print "--> removed existing session_hcp.txt file"
         else:
             raise ge.CommandFailed("mapHCPLS2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 

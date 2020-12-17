@@ -21,6 +21,7 @@ import g_dicomdeid
 
 # pipeline imports
 from HCP import gi_HCP, gs_HCP, gp_HCP, ge_HCP
+from NHP import gi_NHP
 
 # all command mappings
 commands = {'listDicom'            : {'com': g_dicom.listDicom,              'args': ('folder', )},
@@ -29,12 +30,9 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'dicom2nii'            : {'com': g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'parelements', 'debug')},
             'dicom2niix'           : {'com': g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'parelements', 'debug', 'tool', 'options')},
             'importDICOM'          : {'com': g_dicom.importDICOM,            'args': ('sessionsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose', 'overwrite')},
-            'processInbox'         : {'com': g_dicom.importDICOM,            'args': ('sessionsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose', 'overwrite')},
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
             'importBIDS'           : {'com': g_bids.importBIDS,              'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
-            'BIDSImport'           : {'com': g_bids.importBIDS,              'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sourcefolder', 'overwrite', 'fileinfo')},
-            'HCPLSImport'          : {'com': gi_HCP.importHCP,               'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
             'importHCP'            : {'com': gi_HCP.importHCP,               'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
             'mapHCPLS2nii'         : {'com': gi_HCP.mapHCPLS2nii,            'args': ('sourcefolder', 'overwrite', 'filesort')},
             'runNILFolder'         : {'com': g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'sourcefile')},
@@ -71,7 +69,8 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'schedule'             : {'com': g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'getDICOMFields'       : {'com': g_dicomdeid.getDICOMFields,     'args': ('folder', 'targetfile', 'limit')},
             'changeDICOMFiles'     : {'com': g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')},
-            'runList'              : {'com': g_utilities.runList,            'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')}
+            'runList'              : {'com': g_utilities.runList,            'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')},
+            'import_nhp'           : {'com': gi_NHP.import_nhp,              'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'nameformat')},
             }
 
 extraParameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']

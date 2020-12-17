@@ -66,6 +66,7 @@ dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [ver
 importDICOM  [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
+
 Import commands
 ---------------
 importBIDS   [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
@@ -131,6 +132,7 @@ PALM commands
 createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
 runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of proceeses to run in parallel>]  [overwite=no]
 
+
 Scheduling command
 ------------------
 schedule [command=<command string>] [script=<path to script>] \
@@ -167,6 +169,7 @@ Please note that each of the commands can be run by specifying its short
 (listed first) or full (listed second) name followed by specfication of
 processing options. 
 
+
 HCP preprocessing commands
 --------------------------
 hcp1  hcp_PreFS                 Run HCP Pre FreeSurfer pipeline.
@@ -180,6 +183,13 @@ hcp8  hcp_ReApplyFix            Run HCP ReApplyFix pipeline.
 hcp9  hcp_MSMAll                Run HCP MSMAll pipeline.
 hcp10 hcp_DeDriftAndResample    Run HCP MSMAll pipeline.
 hcpd  hcp_Diffusion             Run HCP DWI pipeline.
+
+
+FSL commands
+--------------------------
+f99     fsl_f99                 Run FSL F99 command.
+fslx    fsl_xtract              Run FSL XTRACT command.
+
 
 Functional connectivity preprocessing commands
 ----------------------------------------------
@@ -203,7 +213,6 @@ seg    runBasicSegmentation     Run basic structural image segmentation using BE
 gfs    getFSData                Copy existing FreeSurfer data to sessions' images folder.
 fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
 fsf    runFullFS                Run full freesurfer segmentation
-
 
 
 NItools commands supported via NIUtilities
