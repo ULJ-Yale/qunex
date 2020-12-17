@@ -99,13 +99,15 @@ usage() {
  echo "--sessionsfolder   Path to study folder that contains sessions"
  echo "--sessions         Comma separated list of sessions to run"
  echo "--fibers           Number of fibres per voxel. [3]"
+ echo "--weight           ARD weight, more weight means less secondary"
+ echo "                   fibres per voxel [1]"
+ echo "--burnin           Burnin period. [1000]"
+ echo "--jumps            Number of jumps. [1250]"
+ echo "--sample           Sample every. [25]"
  echo "--model            Deconvolution model:"
  echo "                   - 1 ... with sticks,"
  echo "                   - 2 ... with sticks with a range of diffusivities,"
- echo "                   - 3 ... with zeppelins."
- echo "                   [2]"
- echo ""
- echo "--burnin           Burnin period. [1000]"
+ echo "                   - 3 ... with zeppelins. [2]"
  echo "--rician           Replace the default Gaussian noise assumption with"
  echo "                   Rician noise (yes/no). [yes]"
  echo "--overwrite        Delete prior run for a given session. [no]"
@@ -216,10 +218,14 @@ runcmd=""
 
 # -- Parse arguments
 Fibers=`opts_GetOpt "--fibers" $@`
-Model=`opts_GetOpt "--model" $@`
+Weight=`opts_GetOpt "--weight" $@`
 Burnin=`opts_GetOpt "--burnin" $@`
+Jumps=`opts_GetOpt "--jumps" $@`
+Sample=`opts_GetOpt "--sample" $@`
+Model=`opts_GetOpt "--model" $@`
 Rician=`opts_GetOpt "--rician" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
+Species=`opts_GetOpt "--species" $@`
 CASE=`opts_GetOpt "--session" $@`
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 
@@ -228,9 +234,12 @@ if [ -z "$SessionsFolder" ]; then reho "Error: Sessions folder"; exit 1; fi
 if [ -z "$CASE" ]; then reho "Error: Session missing"; exit 1; fi
 
 # -- Set defaults if not provided
-if [ -z "$Fibers" ]; then geho "Note: The Fibers parameter is not set, using default [3]"; Fibers=3; fi
-if [ -z "$Model" ]; then geho "Note: Model parameter is not set, using default [2]"; Model=2; fi
-if [ -z "$Burnin" ]; then geho "Note: The Burnin parameter is not set, using default [1000]"; Burnin=1000; fi
+if [ -z "$Fibers" ]; then geho "Note: The fibers parameter is not set, using default [3]"; Fibers=3; fi
+if [ -z "$Weight" ]; then geho "Note: The weight parameter is not set, using default [1]"; Weight=1; fi
+if [ -z "$Burnin" ]; then geho "Note: The burnin parameter is not set, using default [1000]"; Burnin=1000; fi
+if [ -z "$Jumps" ]; then geho "Note: The jumps parameter is not set, using default [1250]"; Jumps=1250; fi
+if [ -z "$Sample" ]; then geho "Note: The sample parameter is not set, using default [25]"; Sample=25; fi
+if [ -z "$Model" ]; then geho "Note: The model parameter is not set, using default [2]"; Model=2; fi
 if [ -z "$Rician" ]; then geho "Note: The Rician parameter is not set, using default [yes]"; Rician="yes"; fi
 
 # -- Set StudyFolder
@@ -244,10 +253,19 @@ echo "     Study Folder: ${StudyFolder}"
 echo "     Sessions Folder: ${SessionsFolder}"
 echo "     Session: ${CASE}"
 echo "     Number of Fibers: ${Fibers}"
-echo "     Model Type: ${Model}"
+echo "     ARD weights: ${Weight}"
 echo "     Burnin Period: ${Burnin}"
+echo "     Number of jumps: ${Jumps}"
+echo "     Sample every: ${Sample}"
+echo "     Model Type: ${Model}"
 echo "     Rician flag: ${Rician}"
 echo "     Overwrite prior run: ${Overwrite}"
+
+# Report species if not default
+if [[ -n ${Species} ]]; then
+    echo "   Species: ${Species}"
+fi
+
 }
 
 ######################################### DO WORK ##########################################
@@ -260,8 +278,14 @@ geho "------------------------- Start of work --------------------------------"
 get_options $@
 
 # -- Establish global directory paths
-T1wDiffFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
-BedPostXFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
+if [[ ${Species} == "macaque" ]]; then
+    DiffusionFolder=${SessionsFolder}/${CASE}/NHP/dMRI
+    BedPostXFolder=${SessionsFolder}/${CASE}/NHP/dMRI.bedpostX
+else
+    DiffusionFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
+    BedPostXFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
+fi
+
 LogFolder="$BedPostXFolder"/logs
 
 # -- Check if overwrite flag was set
@@ -332,21 +356,24 @@ else
 fi
 
 # -- Command to run
-if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
+if [ -f "$DiffusionFolder"/grad_dev.nii.gz ]; then
     echo ""
-    geho "--> Using gradinent nonlinearities flag -g"
+    geho "--> Using gradient nonlinearities flag -g"
     echo ""
-    geho "--> Running FSL command:"
-    echo "    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}"
-    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}
+    GradientNonlinearitiesFlag="-g"
 else
     echo ""
-    geho "--> Using gradinent nonlinearities flag -g"
+    geho "--> Not using gradient nonlinearities flag -g"
     echo ""
-    geho "--> Running FSL command:"
-    echo "    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}"
-    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}
+    GradientNonlinearitiesFlag=""
 fi
+
+# -- Report
+geho "--> Running FSL command:"
+echo "    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model}  ${GradientNonlinearitiesFlag} ${RicianFlag}"
+
+# -- Execute
+${FSLGPUBinary}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model} ${GradientNonlinearitiesFlag} ${RicianFlag}
 
 # -- Perform completion checks
 echo ""

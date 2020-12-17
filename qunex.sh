@@ -1109,11 +1109,13 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/extractROI.sh
 # ------------------------------------------------------------------------------------------------------
 
 DWIFSLdtifit() {
+
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLdtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
---overwrite='${Overwrite}' "
+--overwrite='${Overwrite}' \
+--species='${Species}' "
 # -- Connector execute function
 connectorExec
 }
@@ -1132,11 +1134,14 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLbedpostxGPU.sh
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --fibers='${Fibers}' \
---model='${Model}' \
+--weight='${Weight}' \
 --burnin='${Burnin}' \
 --jumps='${Jumps}' \
+--sample='${Sample}' \
+--model='${Model}' \
 --rician='${Rician}' \
---overwrite='${Overwrite}' "
+--overwrite='${Overwrite}' \
+--species=${Species}"
 # -- Connector execute function
 connectorExec
 }
@@ -1151,6 +1156,8 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLbedpostxGPU.sh
 # -------------------------------------------------------------------------------------------------------------------------------
 
 autoPtx() {
+geho "WARNING: autoPtx is deprecated, you should probably use fsl_xtract instead!"
+
 # -- Check inputs
 if [[ -d ${BedPostXFolder} ]]; then 
     reho "ERROR: Prior BedpostX run not found or incomplete for $CASE. Check work and re-run."
@@ -2022,9 +2029,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Update=`opts_GetOpt "${setflag}update" $@`
     # -- DWIFSLbedpostxGPU input flags
     Fibers=`opts_GetOpt "${setflag}fibers" $@`
-    Model=`opts_GetOpt "${setflag}model" $@`
+    Weight=`opts_GetOpt "${setflag}weight" $@`
     Burnin=`opts_GetOpt "${setflag}burnin" $@`
     Jumps=`opts_GetOpt "${setflag}jumps" $@`
+    Sample=`opts_GetOpt "${setflag}sample" $@`
+    Model=`opts_GetOpt "${setflag}model" $@`
     Rician=`opts_GetOpt "${setflag}rician" $@`
     # -- DWIprobtrackxGPUDense input flags
     MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
@@ -2092,6 +2101,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo ""
         CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
     fi
+
+    # -- Get species flag for NHP pipelines
+    Species=`opts_GetOpt "${setflag}species" $@`
 fi
 
 # ------------------------------------------------------------------------------
