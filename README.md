@@ -35,14 +35,16 @@ Submodules:
 * nitools: 0.61.4
 * niutilities: 0.63.0
 
+
 Release notes
 -------------
 
 * 0.63.X  TODO COPY FROM RELEASE CARD AT RELEASE.
-* 0.62.10 qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
-* 0.62.9  runTurnkey patch to include T2 to rsync command for hcp2 step.
-* 0.62.8  Improved parameter checking in the createList command.
-* 0.62.7  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.11 qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
+* 0.62.10 runTurnkey patch to include T2 to rsync command for hcp2 step.
+* 0.62.9  Improved parameter checking in the createList command.
+* 0.62.8  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.7  Importing HCP data now works propely for dwi and HCPYA, diffusion processing now warns users when using legacy parameter names.
 * 0.62.6  MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.5  Bolds parameter is now properly passed to all commands.
 * 0.62.4  The order of images in the hcpDiffusion command is now correct.
