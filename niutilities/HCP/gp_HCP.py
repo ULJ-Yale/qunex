@@ -2257,6 +2257,11 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
+        # --- using a legacy parameter?
+        if 'hcp_dwi_PEdir' in options:
+            r += "\n---> ERROR: hcp_dwi_PEdir parameter has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it."
+            run = False
+
         # --- set up data
         if 'hcp_dwi_phasepos' not in options or options['hcp_dwi_phasepos'] == "PA":
             direction = [('pos', 'PA'), ('neg', 'AP')]
