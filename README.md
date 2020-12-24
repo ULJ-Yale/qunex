@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.62.9  Updated importHCP.txt for HCPYA support, hcpDiffusion now warns users when using legacy parameter names.
 * 0.62.8  MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.7  Bolds parameter is now properly passed to all commands.
 * 0.62.6  The order of images in the hcpDiffusion command is now correct.

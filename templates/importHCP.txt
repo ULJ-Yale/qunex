@@ -88,10 +88,16 @@
                         ["dMRI", "dir99", "PA", "SBRef"],
                         ["dMRI", "dir99", "PA", "-SBRef"],
                         ["DWI",  "dir95", "LR", "SBRef"],
+                        ["DWI",  "dir95", "LR", "-SBRef"],
+                        ["DWI",  "dir95", "RL", "SBRef"],
                         ["DWI",  "dir95", "RL", "-SBRef"],
                         ["DWI",  "dir96", "LR", "SBRef"],
+                        ["DWI",  "dir96", "LR", "-SBRef"],
+                        ["DWI",  "dir96", "RL", "SBRef"],
                         ["DWI",  "dir96", "RL", "-SBRef"],
                         ["DWI",  "dir97", "LR", "SBRef"],
+                        ["DWI",  "dir97", "LR", "-SBRef"],
+                        ["DWI",  "dir97", "RL", "SBRef"]
                         ["DWI",  "dir97", "RL", "-SBRef"]
                     ]
         }
