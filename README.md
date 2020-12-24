@@ -26,19 +26,20 @@ Quick links
 Versioning
 ----------
 
-Qu|Nex suite version: 0.62.6
+Qu|Nex suite version: 0.62.7
 
 Submodules:
 
 * connector: 0.62.7
 * library: 0.62.2
 * nitools: 0.61.1
-* niutilities: 0.62.8
+* niutilities: 0.62.9
 
 
 Release notes
 -------------
 
+* 0.62.7  Importing HCP data now works propely for dwi and HCPYA, diffusion processing now warns users when using legacy parameter names.
 * 0.62.6  MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.5  Bolds parameter is now properly passed to all commands.
 * 0.62.4  The order of images in the hcpDiffusion command is now correct.
