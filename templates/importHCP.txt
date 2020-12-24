@@ -97,7 +97,7 @@
                         ["DWI",  "dir96", "RL", "-SBRef"],
                         ["DWI",  "dir97", "LR", "SBRef"],
                         ["DWI",  "dir97", "LR", "-SBRef"],
-                        ["DWI",  "dir97", "RL", "SBRef"]
+                        ["DWI",  "dir97", "RL", "SBRef"],
                         ["DWI",  "dir97", "RL", "-SBRef"]
                     ]
         }
