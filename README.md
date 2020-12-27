@@ -26,12 +26,12 @@ Quick links
 Versioning
 ----------
 
-QuNex suite version: 0.62.15
+QuNex suite version: 0.63.1
 
 Submodules:
 
 * connector: 0.63.0
-* library: 0.62.3
+* library: 0.62.4
 * nitools: 0.61.4
 * niutilities: 0.63.0
 
@@ -91,6 +91,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.63.1  [library] More thorough qunexContainer documentation.
 * 0.63.0  [connector, niutilities] Added support for processing post mortem macaque images.
 * 0.62.15 [library] Removed the latest suffix from the QuNex folder structure.
 * 0.62.14 [nitools, niutilities] Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
