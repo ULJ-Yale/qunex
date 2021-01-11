@@ -487,9 +487,26 @@ def record(response):
         else:
             print "%s%s finished successfully%s" % (prepend, name, see)
 
+# Logger class that prints both to stdour and to console
+class Logger(object):
+    def __init__(self, logfile):
+        self.terminal = sys.stdout
+        self.log = open(logfile, "a")
 
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)  
 
-def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
+    def close(self):
+        self.log.close()
+
+    def flush(self):
+        #this flush method is needed for python 3 compatibility.
+        #this handles the flush command by doing nothing.
+        #you might want to specify some extra behavior here.
+        pass
+
+def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
     """
     ``runWithLog(function, args=None, logfile=None, name=None)``
 
@@ -511,19 +528,20 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
         name = function.__name__
 
     if logfile:
-        logFolder, logName = os.path.split(logfile)
-        logNameBase, logNameExt = os.path.splitext(logName)
-        logName  = logNameBase + "_" + datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f") + logNameExt
-        tlogfile = os.path.join(logFolder, 'running_' + logName)
+        logfolder, logname = os.path.split(logfile)
 
-        if not os.path.exists(logFolder):
-            os.makedirs(logFolder)
+        base_logname, ext_logname = os.path.splitext(logname)
+        logname  = base_logname + "_" + datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f") + ext_logname
+        tlogfile = os.path.join(logfolder, 'running_' + logname)
+
+        if not os.path.exists(logfolder):
+            os.makedirs(logfolder)
         with lock:
             print prepend + "started running %s at %s, track progress in %s" % (name, str(datetime.datetime.now()).split('.')[0], tlogfile)
 
         sysstdout = sys.stdout
         sysstderr = sys.stderr
-        sys.stdout = open(tlogfile, 'w', 1)
+        sys.stdout = Logger(tlogfile)
         sys.stderr = sys.stdout
     else:
         with lock:
@@ -548,6 +566,10 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
     with lock:
         print "\n-----------------------------------------\nFinished at %s" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+    # schedule command fix
+    if name == "schedule":
+        result = False
+
     if not result:
         print "\n===> Successful completion of task"
 
@@ -556,16 +578,55 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
         sys.stdout = sysstdout
         sys.stderr = sysstderr
 
+        # log prefix
+        log_prefix = "done_"
         if result:
-            targetLog = os.path.join(logFolder, 'error_' + logName)            
+            log_prefix = "error_"
+        comlogname = os.path.join(logfolder, log_prefix + logname)
+
+        os.rename(os.path.join(logfolder, 'running_' + logname), comlogname)
+
+        # create runlog
+        if "comlog" in logfolder:
+            logfolder = logfolder.replace("comlog", "runlog")
+            
+            if not os.path.exists(logfolder):
+                try:
+                    os.makedirs(logfolder)
+                except:
+                    r += "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
+                    raise ExternalFailed(r)
+
+        # runlog file
+        runlogname = "Log-" + logname
+
+        # print to runlog file and close
+        logfile = os.path.join(logfolder, runlogname)
+        lf = open(logfile, 'a')
+        # print command and arguments
+        lf.write("%s\n" % name)
+        for k, v in args.items():
+            lf.write("  --%s=\"%s\"\n" % (k, v))
+
+        # print final status
+        if result:
+            lf.write("\nERROR running %s\n" % name)
         else:
-            targetLog = os.path.join(logFolder, 'done_' + logName)
-        os.rename(os.path.join(logFolder, 'running_' + logName), targetLog)
+            lf.write("\n===> Successful completion of task\n")
+
+        lf.close()
+
+        # remove logs for exceptions
+        if "batchTag2NameKey" in name:
+            if os.path.exists(comlogname):
+                os.remove(comlogname)
+            if os.path.exists(runlogname):
+                os.remove(runlogname)
+
     else:
-        targetLog = None
+        comlogname = None
 
-    return name, result, targetLog, prepend
-
+    return name, result, comlogname, prepend
 
 
 def runInParallel(calls, cores=None, prepend=""):

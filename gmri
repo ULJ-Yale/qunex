@@ -375,11 +375,25 @@ def runCommand(command, args):
 
         # -- a basic call
         elif sessions is None:
-            # TODO: reroute the command below through runWithLog
-            # prepare args and logfile similarly as below (lines 385 - 393)
-            # runWithLog usage can be seen in g_core.py 624
-            gcom.commands[command]['com'](**args)
-            print "\n===> Successful completion of task"
+            # logfolder
+            if not folders['logfolder']:
+                folders['logfolder'] = "."
+
+            # createstudy exception
+            if command == "createStudy" and "studyfolder" in args:
+                folders['logfolder'] = args["studyfolder"] + "/processing/logs"
+            elif command == "createStudy":
+                folders['logfolder'] = "./processing/logs"
+
+            # if case is provided
+            sufix = ""
+            if "sessions" in args:
+                sufix = "_" + args["sessions"]
+
+            logfile = os.path.join(folders['logfolder'], 'comlogs', "%s%s.log" % (command, sufix))
+
+            # run
+            _, result, _, _ = gc.runWithLog(gcom.commands[command]['com'], args=args, logfile=logfile)
 
         # -- sessions loop
         else:

@@ -321,16 +321,13 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
     try:
         # --- filenames
-
         f = getFileNames(sinfo, options)
         f.update(getBOLDFileNames(sinfo, boldname, options))
 
         # template file
         templatefile = f['bold_template']
 
-
         # --- copy over bold data
-
         # --- bold
         r, status = checkForFile2(r, f['bold_vol'], '\n    ... bold data present', '\n    ... bold data missing, skipping bold', status=True)
         if not status:
@@ -339,7 +336,6 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
             return {'r': r, 'report': report}
 
         # --- extract first bold frame
-
         if not os.path.exists(f['bold1']) or overwrite:
             sliceImage(f['bold_vol'], f['bold1'], 1)
             if os.path.exists(f['bold1']):
@@ -351,31 +347,65 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         else:
             r += '\n    ... first %s frame already present' % (os.path.basename(f['bold_vol']))
 
-        # --- convert to NIfTI
+        # --- logs storage
+        endlogs = []
 
+        # --- convert to NIfTI
         bsource  = f['bold1']
         bbtarget = f['bold1_brain'].replace(getImgFormat(f['bold1_brain']), '.nii.gz')
         bmtarget = f['bold1_brain_mask'].replace(getImgFormat(f['bold1_brain_mask']), '.nii.gz')
         if getImgFormat(f['bold1']) == '.4dfp.img':
             bsource = f['bold1'].replace('.4dfp.img', '.nii.gz')
+
+            # run g_FlipFormat
             r, endlog, status, failed = runExternalForFile(bsource, 'g_FlipFormat %s %s' % (f['bold1'], bsource), '    ... converting %s to nifti' % (f['bold1']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='FlipFormat' % (boldnum), logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+
+            # append to endlogs
+            endlogs.append(endlog)
+
+            # run caret_command
             r, endlog, status, failed = runExternalForFile(bsource, 'caret_command -file-convert -vc %s %s' % (f['bold1'].replace('img', 'ifh'), bsource), 'converting %s to nifti' % (f['bold1']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
 
-        # --- run BET
+            # append to endlogs
+            endlogs.append(endlog)
 
+        # --- run BET
         if os.path.exists(bbtarget) and not overwrite:
             r += '\n    ... bet on %s already run' % (os.path.basename(bsource))
             report['bolddone'] += 1
         else:
+            # run BET
             r, endlog, status, failed = runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='bet', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
             report['boldok'] += 1
 
+            # append to endlogs
+            endlogs.append(endlog)
+
         if options['image_target'] == '4dfp':
             # --- convert nifti to 4dfp
+            # run gunzip
             r, endlog, status, failed = runExternalForFile(bbtarget, 'gunzip -f %s.gz' % (bbtarget), '    ... gunzipping %s.gz' % (os.path.basename(bbtarget)), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+
+            # append to endlogs
+            endlogs.append(endlog)
+
+            # run gunzip
             r, endlog, status, failed = runExternalForFile(bmtarget, 'gunzip -f %s.gz' % (bmtarget), '    ... gunzipping %s.gz' % (os.path.basename(bmtarget)), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+
+            # append to endlogs
+            endlogs.append(endlog)
+
+            # run g_FlipFormat
             r, endlog, status, failed = runExternalForFile(f['bold1_brain'], 'g_FlipFormat %s %s' % (bbtarget, f['bold1_brain'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_nifti']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+
+            # append to endlogs
+            endlogs.append(endlog)
+
+            # run g_FlipFormat
             r, endlog, status, failed = runExternalForFile(f['bold1_brain_mask'], 'g_FlipFormat %s %s' % (bmtarget, f['bold1_brain_mask'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_mask_nifti']), overwrite=overwrite, remove=options['log'] == 'remove', thread=sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+
+            # append to endlogs
+            endlogs.append(endlog)
 
         else:
             # --- link a template
@@ -404,6 +434,63 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         report['boldfail'] += 1
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         time.sleep(1)
+
+    # merge into final comlog
+    log_prefix = "done"
+
+    # final_ log storage
+    final_log = ""
+
+    # if remove option is set do nothinng
+    remove = options['log'] == 'remove'
+    if not remove:
+        for el in endlogs:
+            if os.path.exists(el):
+                # did the command error out?
+                el_log = os.path.basename(el)
+                if "error" in el_log:
+                    log_prefix = "error"
+
+                # read log
+                with open(el, 'r') as f:
+                    log_content = f.read()
+                
+                # concatenate
+                final_log = final_log + log_content + "\n\n"
+
+                # delete the partial log
+                os.remove(el)
+
+    # fails?
+    if report['boldfail'] > 0:
+        log_prefix = "error"
+    elif not overwrite and final_log == "":
+            final_log = "Previous results present, overwrite set to no.\n\n"
+            final_log = final_log + "===> Successful completion of task"
+
+    # print to log file
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logname = "%s_createBOLDBrainMasks_%s_%s_%s_%s.log" % (log_prefix, sinfo['id'], boldname, boldnum, logstamp)
+
+    # setup log folder
+    logfolder = options['comlogs']
+    logfolders = []
+    if type(logfolder)in [list, set, tuple]:
+        logfolders = list(logfolder)
+        logfolder  = logfolders.pop(0)
+
+    if not os.path.exists(logfolder):
+        try:
+            os.makedirs(logfolder)
+        except:
+            r += "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
+            raise ExternalFailed(r)
+
+    # print to file and close
+    logfile = os.path.join(logfolder, logname)
+    lf = open(logfile, 'a')
+    lf.write(final_log)
+    lf.close()
 
     return {'r': r, 'report': report}
 
