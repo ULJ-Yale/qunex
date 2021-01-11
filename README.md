@@ -26,14 +26,14 @@ Quick links
 Versioning
 ----------
 
-QuNex suite version: 0.63.1
+QuNex suite version: 0.63.2
 
 Submodules:
 
-* connector: 0.63.0
+* connector: 0.63.1
 * library: 0.62.4
 * nitools: 0.61.4
-* niutilities: 0.63.0
+* niutilities: 0.63.1
 
 
 Release notes
@@ -91,6 +91,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.63.2  [connector, niutilities] Fixed the issue where some QuNex functions did not create a runlog or a comlog.
 * 0.63.1  [library] More thorough qunexContainer documentation.
 * 0.63.0  [connector, niutilities] Added support for processing post mortem macaque images.
 * 0.62.15 [library] Removed the latest suffix from the QuNex folder structure.
