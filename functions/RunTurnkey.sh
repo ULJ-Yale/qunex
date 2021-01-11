@@ -13,6 +13,7 @@
 # * Alan Anticevic, N3 Division, Yale University
 # * Zailyn Tamayo, N3 Division, Yale University
 # * Grega Repovs, MBLAB, University of Ljubljana
+# * Jure Demsar, University of Ljubljana
 #
 # ## PRODUCT
 #
@@ -1324,29 +1325,25 @@ fi
     turnkey_createStudy() {
 
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ createStudy"; echo ""
-        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createStudy_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createStudy_${TimeStamp}.log"
-        createStudy_ComlogTmp="${QuNexMasterLogFolder}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
-        createStudy_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createStudy_${CASE}_${TimeStamp}.log"
-        createStudy_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createStudy_${CASE}_${TimeStamp}.log"
+
         geho " -- Checking for and generating study folder ${StudyFolder}"; echo ""
         if [ ! -d ${WORKDIR} ]; then
             mkdir -p ${WORKDIR} &> /dev/null
         fi
         if [ ! -d ${StudyFolder} ]; then
-            mageho " --> Note: ${StudyFolder} not found. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}
-            echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
+            mageho " --> Note: ${StudyFolder} not found. Regenerating now..."
+            echo ""
             ${QuNexCommand} createStudy "${StudyFolder}"
             mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
             createStudy_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
         else
-            geho " -- Study folder ${StudyFolder} already exists!" 2>&1 | tee -a ${createStudy_ComlogTmp}
+            geho " -- Study folder ${StudyFolder} already exists!"
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
                     reho "    Overwrite set to 'yes' for XNAT run. Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
                     rm -rf ${StudyFolder}/ &> /dev/null
-                    mageho " --> Note: ${StudyFolder} removed. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}
-                    echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
+                    mageho " --> Note: ${StudyFolder} removed. Regenerating now..."
+                    echo ""
                     ${QuNexCommand} createStudy "${StudyFolder}"
                     mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
                     createStudy_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
@@ -1361,23 +1358,6 @@ fi
         mkdir -p ${QuNexWorkDir} &> /dev/null
         mkdir -p ${QuNexWorkDir}/inbox &> /dev/null
         mkdir -p ${QuNexWorkDir}/inbox_temp &> /dev/null
-
-        if [ -f ${StudyFolder}/.qunexstudy ]; then CREATESTUDYCHECK="pass"; else CREATESTUDYCHECK="fail"; fi
-
-        if [[ ${CREATESTUDYCHECK} == "pass" ]]; then
-            echo "" >> ${createStudy_ComlogTmp}
-            echo "------------------------- Successful completion of work --------------------------------" >> ${createStudy_ComlogTmp}
-            echo "" >> ${createStudy_ComlogTmp}
-            cp ${createStudy_ComlogTmp} ${createStudy_ComlogDone}
-            createStudy_Comlog=${createStudy_ComlogDone}
-        else
-           echo "" >> ${createStudy_ComlogTmp}
-           echo "Error. Something went wrong." >> ${createStudy_ComlogTmp}
-           echo "" >> ${createStudy_ComlogTmp}
-           cp ${createStudy_ComlogTmp} ${createStudy_ComlogError}
-           createStudy_Comlog=${createStudy_ComlogError}
-        fi
-        rm ${createStudy_ComlogTmp}
     }
 
     # -- Get data from original location & organize DICOMs
@@ -1421,7 +1401,7 @@ fi
         fi
 
         # -- Define specific logs
-        mapRawData_Runlog="${QuNexMasterLogFolder}/runlogs/Log-mapRawData_${TimeStamp}.log"
+        mapRawData_Runlog="${QuNexMasterLogFolder}/runlogs/Log-mapRawData_${TimeStamp}.log"; touch ${mapRawData_Runlog}; chmod 777 ${mapRawData_Runlog}
         mapRawData_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_mapRawData_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
         mapRawData_ComlogError="${QuNexMasterLogFolder}/comlogs/error_mapRawData_${CASE}_${TimeStamp}.log"
         mapRawData_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_mapRawData_${CASE}_${TimeStamp}.log"
@@ -1796,80 +1776,69 @@ fi
             echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogDone}
             mapRawData_Comlog=${mapRawData_ComlogDone}
+
+            # runlog
+            echo "mapRawData" 2>&1 | tee -a ${mapRawData_Runlog}
+            echo "" 2>&1 | tee -a ${mapRawData_Runlog}
+            geho "------------------------- Successful completion of work --------------------------------" 2>&1 | tee -a ${mapRawData_Runlog}
         else
             echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-            echo "Error. Something went wrong." 2>&1 | tee -a ${mapRawData_ComlogTmp}
+            echo "ERROR. Something went wrong." 2>&1 | tee -a ${mapRawData_ComlogTmp}
             echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
             mapRawData_Comlog=${mapRawData_ComlogError}
+
+            # runlog
+            echo "mapRawData"  2>&1 | tee -a ${mapRawData_Runlog}
+            echo "" 2>&1 | tee -a ${mapRawData_Runlog}
+            geho "ERROR. Something went wrong." 2>&1 | tee -a ${mapRawData_Runlog}
         fi
     }
 
     # -- importDICOM
     turnkey_importDICOM() {
-        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        importDICOM_Runlog="${QuNexMasterLogFolder}/runlogs/Log-importDICOM_${TimeStamp}.log"
-        importDICOM_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_importDICOM_${CASE}_${TimeStamp}.log"; touch ${importDICOM_ComlogTmp}; chmod 777 ${importDICOM_ComlogTmp}
-        importDICOM_ComlogError="${QuNexMasterLogFolder}/comlogs/error_importDICOM_${CASE}_${TimeStamp}.log"
-        importDICOM_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_importDICOM_${CASE}_${TimeStamp}.log"
         if [[ ${DATAFormat} == "DICOM" ]]; then
             # ------------------------------ non-XNAT code
-            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
-            cyaneho " ===> RUNNING RunTurnkey step ~~~ importDICOM" 2>&1 | tee -a ${importDICOM_ComlogTmp}
-            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
+            echo ""
+            cyaneho " ===> RUNNING RunTurnkey step ~~~ importDICOM"
+            echo ""
 
             ExecuteCall="${QuNexCommand} importDICOM --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"
             echo ""
-            eval ${ExecuteCall} 2>&1 | tee -a ${importDICOM_ComlogTmp}
+            eval ${ExecuteCall}
             cd ${SessionsFolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
 
             # ------------------------------ XNAT code
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
-                echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
-                geho "---> Cleaning up XNAT run working directory and removing inbox folder" 2>&1 | tee -a ${importDICOM_ComlogTmp}
-                echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
+                echo ""
+                geho "---> Cleaning up XNAT run working directory and removing inbox folder"
+                echo ""
                 rm -rf ${QuNexWorkDir}/inbox &> /dev/null
             fi
             # ------------------------------ END XNAT code
-
-            if [[ ! -z `cat ${importDICOM_ComlogTmp} | grep 'Successful completion'` ]]; then importDICOMCheck="pass"; else importDICOMCheck="fail"; fi
-            if [[ ${importDICOMCheck} == "pass" ]]; then
-                mv ${importDICOM_ComlogTmp} ${importDICOM_ComlogDone}
-                importDICOM_Comlog=${importDICOM_ComlogDone}
-            else
-               mv ${importDICOM_ComlogTmp} ${importDICOM_ComlogError}
-               importDICOM_Comlog=${importDICOM_ComlogError}
-            fi
         else
-            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
-            cyaneho " ===> RunTurnkey ~~~ SKIPPING: importDICOM because data is not in DICOM format." 2>&1 | tee -a ${importDICOM_ComlogTmp}
-            echo "" 2>&1 | tee -a ${importDICOM_ComlogTmp}
-            mv "${importDICOM_ComlogTmp}" "${importDICOM_ComlogDone}"
+            echo ""
+            cyaneho " ===> RunTurnkey ~~~ SKIPPING: importDICOM because data is not in DICOM format."
+            echo ""
         fi
     }
 
     # -- Generate session_hcp.txt file
     turnkey_createSessionInfo() {
-        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createSessionInfo_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createSessionInfo_${TimeStamp}.log"
-        createSessionInfo_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createSessionInfo_${CASE}_${TimeStamp}.log"; touch ${createSessionInfo_ComlogTmp}; chmod 777 ${createSessionInfo_ComlogTmp}
-        createSessionInfo_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createSessionInfo_${CASE}_${TimeStamp}.log"
-        createSessionInfo_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createSessionInfo_${CASE}_${TimeStamp}.log"
-
-        echo ""  2>&1 | tee -a ${createSessionInfo_ComlogTmp}
-        cyaneho " ===> RUNNING RunTurnkey step ~~~ createSessionInfo" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
-        echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
+        echo ""
+        cyaneho " ===> RUNNING RunTurnkey step ~~~ createSessionInfo"
+        echo ""
 
         if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
             rm -rf ${SessionsFolder}/${CASE}/session_hcp.txt &> /dev/null
         fi
         if [ -f ${SessionsFolder}/session_hcp.txt ]; then
-            echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
-            geho " ===> ${SessionsFolder}/session_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
-            echo "" 2>&1 | tee -a ${createSessionInfo_ComlogTmp}
+            echo ""
+            geho " ===> ${SessionsFolder}/session_hcp.txt exists. Set --overwrite='yes' to re-run."
+            echo ""
             return 0
         fi
         # ------------------------------
@@ -1878,15 +1847,7 @@ fi
         echo " -- Executed call:"
         echo "    $ExecuteCall"
         echo ""
-        eval ${ExecuteCall}  2>&1 | tee -a ${createSessionInfo_ComlogTmp}
-        if [[ ! -z `cat ${createSessionInfo_ComlogTmp} | grep 'Successful completion'` ]]; then createSessionInfoCheck="pass"; else createSessionInfoCheck="fail"; fi
-        if [[ ${createSessionInfoCheck} == "pass" ]]; then
-            mv ${createSessionInfo_ComlogTmp} ${createSessionInfo_ComlogDone}
-            createSessionInfo_Comlog=${createSessionInfo_ComlogDone}
-        else
-           mv ${createSessionInfo_ComlogTmp} ${createSessionInfo_ComlogError}
-           createSessionInfo_Comlog=${createSessionInfo_ComlogError}
-        fi
+        eval ${ExecuteCall}
         # ------------------------------
     }
 
@@ -1894,62 +1855,26 @@ fi
     turnkey_setupHCP() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ setupHCP"; echo ""
 
-        # -- Patched for unified logging purposes
-        # ------------------------------
-        # TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        # setupHCP_Runlog="${QuNexMasterLogFolder}/runlogs/Log-setupHCP_${TimeStamp}.log"
-        # setupHCP_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_setupHCP_${CASE}_${TimeStamp}.log"; touch ${setupHCP_ComlogTmp}; chmod 777 ${setupHCP_ComlogTmp}
-        # setupHCP_ComlogError="${QuNexMasterLogFolder}/comlogs/error_setupHCP_${CASE}_${TimeStamp}.log"
-        # setupHCP_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_setupHCP_${CASE}_${TimeStamp}.log"
-
         if [[ ${OVERWRITE_STEP} == "yes" ]]; then
            echo "  -- Removing prior hard link mapping."; echo ""
-           # rm -rf ${ProcessingBatchFile} &> /dev/null
            HLinks=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi
         ExecuteCall="${QuNexCommand} setupHCP --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --existing='clear' --hcp_filename='${HCPFilename}' --hcp_suffix='${HCPSuffix}'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
 
         eval ${ExecuteCall}
-
-        # eval ${ExecuteCall} 2>&1 | tee -a ${setupHCP_ComlogTmp}
-        # if [[ ! -z `cat ${setupHCP_ComlogTmp} | grep 'Successful completion'` ]]; then setupHCPCheck="pass"; else setupHCPCheck="fail"; fi
-        # if [[ ${setupHCPCheck} == "pass" ]]; then
-        #      mv ${setupHCP_ComlogTmp} ${setupHCP_ComlogDone}
-        #      setupHCP_Comlog=${setupHCP_ComlogDone}
-        # else
-        #     mv ${setupHCP_ComlogTmp} ${setupHCP_ComlogError}
-        #     setupHCP_Comlog=${setupHCP_ComlogError}
-        # fi
         # ------------------------------
     }
 
     # -- Generate batch file for the study
     turnkey_createBatch() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ createBatch"; echo ""
-        # -- Patched for unified logging purposes
+
         # ------------------------------
-        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createBatch_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createBatch_${TimeStamp}.log"
-        createBatch_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createBatch_${CASE}_${TimeStamp}.log"; touch ${createBatch_ComlogTmp}; chmod 777 ${createBatch_ComlogTmp}
-        createBatch_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createBatch_${CASE}_${TimeStamp}.log"
-        createBatch_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createBatch_${CASE}_${TimeStamp}.log"
         ExecuteCall="${QuNexCommand} createBatch --sessionsfolder='${SessionsFolder}' --targetfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='append'"
-
         echo ""
-        mageho " -- NOTE: comlog file for ${TURNKEY_STEP} is not generated directly via NIUtilities but is generated directly via RunTurnkey."
-
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
-        eval ${ExecuteCall} 2>&1 | tee -a ${createBatch_ComlogTmp}
-
-        if [[ ! -z `cat ${createBatch_ComlogTmp} | grep 'Successful completion'` ]]; then createBatchCheck="pass"; else createBatchCheck="fail"; fi
-        if [[ ${createBatchCheck} == "pass" ]]; then
-            mv ${createBatch_ComlogTmp} ${createBatch_ComlogDone}
-            createBatch_Comlog=${createBatch_ComlogDone}
-        else
-           mv ${createBatch_ComlogTmp} ${createBatch_ComlogError}
-           createBatch_Comlog=${createBatch_ComlogError}
-        fi
+        eval ${ExecuteCall}
         # ------------------------------
     }
 
@@ -2293,47 +2218,17 @@ fi
     # -- Map HCP processed outputs for further FC BOLD analyses
     turnkey_mapHCPData() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ mapHCPData"; echo ""
-        # # ------------------------------
-        # TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        # mapHCPData_Runlog="${QuNexMasterLogFolder}/runlogs/Log-mapHCPData_${TimeStamp}.log"
-        # mapHCPData_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_mapHCPData_${CASE}_${TimeStamp}.log"; touch ${mapHCPData_ComlogTmp}; chmod 777 ${mapHCPData_ComlogTmp}
-        # mapHCPData_ComlogError="${QuNexMasterLogFolder}/comlogs/error_mapHCPData_${CASE}_${TimeStamp}.log"
-        # mapHCPData_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_mapHCPData_${CASE}_${TimeStamp}.log"
-        ${QuNexCommand} mapHCPData --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}
-        # ExecuteCall="${QuNexCommand} mapHCPData --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}"
-        # echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
-        # eval ${ExecuteCall} 2>&1 | tee -a ${mapHCPData_ComlogTmp}
-        # if [[ ! -z `cat ${mapHCPData_ComlogTmp} | grep 'Successful completion'` ]]; then mapHCPDataCheck="pass"; else mapHCPDataCheck="fail"; fi
-        # if [[ ${mapHCPDataCheck} == "pass" ]]; then
-        #      mv ${mapHCPData_ComlogTmp} ${mapHCPData_ComlogDone}
-        #      mapHCPData_Comlog=${mapHCPData_ComlogDone}
-        # else
-        #     mv ${mapHCPData_ComlogTmp} ${mapHCPData_ComlogError}
-        #     mapHCPData_Comlog=${mapHCPData_ComlogError}
-        # fi
+        # ------------------------------
+        ExecuteCall="${QuNexCommand} mapHCPData --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}"
+        echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
+        eval ${ExecuteCall}
     }
     # -- Generate brain masks for de-noising
     turnkey_createBOLDBrainMasks() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ createBOLDBrainMasks"; echo ""
-        ${QuNexCommand} createBOLDBrainMasks --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}
-
-        # # ------------------------------
-        # TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        # createBOLDBrainMasks_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createBOLDBrainMasks_${TimeStamp}.log"
-        # createBOLDBrainMasks_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createBOLDBrainMasks_${CASE}_${TimeStamp}.log"; touch ${createBOLDBrainMasks_ComlogTmp}; chmod 777 ${createBOLDBrainMasks_ComlogTmp}
-        # createBOLDBrainMasks_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createBOLDBrainMasks_${CASE}_${TimeStamp}.log"
-        # createBOLDBrainMasks_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createBOLDBrainMasks_${CASE}_${TimeStamp}.log"
-        # ExecuteCall="${QuNexCommand} createBOLDBrainMasks --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}"
-        # echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
-        # eval ${ExecuteCall} 2>&1 | tee -a ${createBOLDBrainMasks_ComlogTmp}
-        # if [[ ! -z `cat ${createBOLDBrainMasks_ComlogTmp} | grep 'Successful completion'` ]]; then createBOLDBrainMasksCheck="pass"; else createBOLDBrainMasksCheck="fail"; fi
-        # if [[ ${createBOLDBrainMasksCheck} == "pass" ]]; then
-        #      mv ${createBOLDBrainMasks_ComlogTmp} ${createBOLDBrainMasks_ComlogDone}
-        #      createBOLDBrainMasks_Comlog=${createBOLDBrainMasks_ComlogDone}
-        # else
-        #     mv ${createBOLDBrainMasks_ComlogTmp} ${createBOLDBrainMasks_ComlogError}
-        #     createBOLDBrainMasks_Comlog=${createBOLDBrainMasks_ComlogError}
-        # fi
+        ExecuteCall="${QuNexCommand} createBOLDBrainMasks --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}"
+        echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
+        eval ${ExecuteCall}
     }
     # -- Compute BOLD statistics
     turnkey_computeBOLDStats() {
@@ -2360,31 +2255,11 @@ fi
     # -- Extract nuisance signal for further de-noising
     turnkey_extractNuisanceSignal() {
         cyaneho " ===> RUNNING RunTurnkey step ~~~ extractNuisanceSignal"; echo ""
-        # # -- Patched for unified logging purposes
-        # # ----------------------------------------
-        # TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        # extractNuisanceSignal_Runlog="${QuNexMasterLogFolder}/runlogs/Log-extractNuisanceSignal_${TimeStamp}.log"
-        # extractNuisanceSignal_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_extractNuisanceSignal_${CASE}_${TimeStamp}.log"; touch ${extractNuisanceSignal_ComlogTmp}; chmod 777 ${extractNuisanceSignal_ComlogTmp}
-        # extractNuisanceSignal_ComlogError="${QuNexMasterLogFolder}/comlogs/error_extractNuisanceSignal_${CASE}_${TimeStamp}.log"
-        # extractNuisanceSignal_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_extractNuisanceSignal_${CASE}_${TimeStamp}.log"
-        #
-        # echo ""
-        # mageho " -- NOTE: comlog file for ${TURNKEY_STEP} is not generated directly via NIUtilities but is generated directly via RunTurnkey."
-
-        ${QuNexCommand} extractNuisanceSignal --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}
-
-    #     ExecuteCall="${QuNexCommand} extractNuisanceSignal --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}"
-    #     echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
-    #
-    #     eval ${ExecuteCall} 2>&1 | tee -a ${extractNuisanceSignal_ComlogTmp}
-    #     if [[ ! -z `cat ${extractNuisanceSignal_ComlogTmp} | grep 'Successful completion'` ]]; then extractNuisanceSignalCheck="pass"; else extractNuisanceSignalCheck="fail"; fi
-    #     if [[ ${extractNuisanceSignalCheck} == "pass" ]]; then
-    #          mv ${extractNuisanceSignal_ComlogTmp} ${extractNuisanceSignal_ComlogDone}
-    #          extractNuisanceSignal_Comlog=${extractNuisanceSignal_ComlogDone}
-    #     else
-    #         mv ${extractNuisanceSignal_ComlogTmp} ${extractNuisanceSignal_ComlogError}
-    #         extractNuisanceSignal_Comlog=${extractNuisanceSignal_ComlogError}
-    #     fi
+        echo ""
+        ExecuteCall="${QuNexCommand} extractNuisanceSignal --sessions='${ProcessingBatchFile}' --sessionsfolder='${SessionsFolder}' --overwrite='${OVERWRITE_STEP}' --logfolder='${QuNexMasterLogFolder}' --sessionids='${SESSIONIDS}' ${BOLDS:+--bolds=\"${BOLDS}\"}"
+        echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
+        echo ""
+        eval ${ExecuteCall}
     }
     # -- Process BOLDs
     turnkey_preprocessBold() {
@@ -2827,7 +2702,12 @@ else
         turnkey_${TURNKEY_STEP}
 
         # -- Generate single session log folders
-        CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        if [ ${TURNKEY_STEP} == "createStudy" ]; then
+            CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+        else
+            CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}*${CASE}*log 2> /dev/null | head -n 1`
+        fi
+
         # CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`      # ==> Commented to support massively parallel single study run
         # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
         # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
