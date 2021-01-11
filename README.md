@@ -42,6 +42,7 @@ Quick links
 Change log
 ----------
 
+* 0.63.1  Fixed the issue where some QuNex functions did not create a runlog or a comlog.
 * 0.63.0  Added support for processing post mortem macaque images.
 * 0.62.17 Fixed the distorsion typo throughout all reporting and documentation.
 * 0.62.16 Functional connectivity functions now support working with a single subject/sessions and they now allow easy computation of task based FC where each trial is represented by an average activity across a number of frames from that trial.
