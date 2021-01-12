@@ -406,7 +406,6 @@ arglist = [
            ['hcp_resample_reg_files', '',                                         isNone, "Comma separated paths to the spheres output from the MSMRemoveGroupDrift pipeline."],
            ['hcp_resample_maps',      'sulc,curvature,corrThickness,thickness',   str,    "Comma separated paths to maps that will have the MSMAll registration applied that are not myelin maps."],
            ['hcp_resample_myelinmaps', 'MyelinMap,SmoothedMyelinMap',             str,    "Comma separated paths to myelin maps."],
-           ['hcp_bold_smoothFWHM',    '2',                                        int,    "Smoothing FWHM that matches what was used in the fMRISurface pipeline."],
            ['hcp_resample_dontfixnames', 'NONE',                                  str,    "A list of comma separated bolds that will not have HCP ICAFix reapplied to them. Only applicable if single-run ICAFix was used. Generally not recommended."],
            ['hcp_resample_myelintarget', 'NONE',                                  str,    "A myelin target file is required to run this pipeline when using a different mesh resolution than the original MSMAll registration."],
            ['hcp_resample_inregname', 'NONE',                                     str,    "A string to enable multiple fMRI resolutions (e.g._1.6mm)."],

@@ -554,7 +554,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     # get sfiles from sourcefiles parameter
     if sourcefiles is None:
         sfiles = []
-        sfiles.append("session.txt")
+        sfiles.append("session_hcp.txt")
     else:
         sfiles = sourcefiles.split(",")
 
