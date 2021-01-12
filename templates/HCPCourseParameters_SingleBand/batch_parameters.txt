@@ -16,7 +16,6 @@ _hcp_processing_mode     : LegacyStyleData # For HCP compliant data set to ==> H
 _hcp_suffix             :
 _hcp_brainsize          : 150     #
 _hcp_t2                 : t2      # For HCP compliant data set to ==> t2
-_hcp_fmap               : NONE    # For HCP compliant data set to ==> 0.0000071
 _hcp_t1samplespacing    : NONE    # For HCP compliant data set to ==> 0.0000021
 _hcp_t2samplespacing    : NONE    # For HCP compliant data set to ==> z
 _hcp_unwarpdir          : NONE    #
@@ -49,7 +48,6 @@ _hcp_lowresmesh         : 32
 # ---> Diffusion preprocessing - N/A
 # -------------------------------------
 # _hcp_dwi_echospacing    : 0.689998      # Set if HCP DWI data present
-# _hcp_dwi_PEdir          : 2             # Set if HCP DWI data present
 
 
 # -------------------------------------

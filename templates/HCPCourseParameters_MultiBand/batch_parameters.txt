@@ -16,7 +16,6 @@ _hcp_processing_mode     : HCPStyleData
 _hcp_suffix             :
 _hcp_brainsize          : 150
 _hcp_t2                 : t2
-_hcp_fmap               : NONE
 _hcp_t1samplespacing    : 0.0000071
 _hcp_t2samplespacing    : 0.0000021
 _hcp_unwarpdir          : z
@@ -48,7 +47,6 @@ _hcp_lowresmesh         : 32
 # ---> Diffusion preprocessing - N/A
 # -------------------------------------
 _hcp_dwi_echospacing    : 0.689998
-_hcp_dwi_PEdir          : 2
 
 
 # -------------------------------------

@@ -1175,7 +1175,6 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                         print >> rout, "\n" + "_".join(fileInfo['parts'])
                         print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
                         print >> rout, "%-25s : %.8f" % ("_hcp_dwi_echospacing", fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
-                        print >> rout, "%-25s : %d" % ("_hcp_dwi_PEdir", PEDir[phenc])
 
                     # add filename
                     out = ": filename(%s)" % "_".join(fileInfo['parts'])

@@ -16,7 +16,6 @@ _hcp_processing_mode    : LegacyStyleData
 _hcp_suffix             :
 _hcp_brainsize          : 150
 _hcp_t2                 : NONE
-_hcp_fmap               : NONE
 _hcp_t1samplespacing    : NONE
 _hcp_t2samplespacing    : NONE
 _hcp_unwarpdir          : NONE
@@ -42,9 +41,9 @@ _hcp_hiresmesh          : 164
 _hcp_lowresmesh         : 32
  
 # ---> Diffusion preprocessing (qunex hcpd)
- 
+
 _hcp_dwi_echospacing    : NONE
-_hcp_dwi_PEdir          : NONE
+
   
 # ---> fMRI Volume (qunex hcp3)
 
