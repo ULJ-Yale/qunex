@@ -91,6 +91,7 @@ PMC4034208.
 Detailed change log
 -------------------
 
+* 0.63.3  [niutilities] Revised batch examples, default parameter values and definitions.
 * 0.63.2  [connector, niutilities] Fixed the issue where some QuNex functions did not create a runlog or a comlog.
 * 0.63.1  [library] More thorough qunexContainer documentation.
 * 0.63.0  [connector, niutilities] Added support for processing post mortem macaque images.
