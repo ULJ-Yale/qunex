@@ -3,9 +3,9 @@
 """
 ``gi_HCP.py``
 
-Functions for importing HCP style data into Qu|Nex:
+Functions for importing HCP style data into QuNex:
 
---importHCP      Maps HCP style data to Qu|Nex structure.
+--importHCP      Maps HCP style data to QuNex structure.
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -116,7 +116,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     """
     ``importHCP [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]``
     
-    Maps HCPLS data to the Qu|Nex Suite file structure. 
+    Maps HCPLS data to the QuNex Suite file structure. 
 
     INPUTS
     ======
@@ -150,7 +150,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                         'HCPA' with match any zip file that contains string
                         'HCPA' or any session id that contains 'HCPA'!
 
-    --action            How to map the files to Qu|Nex structure. ['link']
+    --action            How to map the files to QuNex structure. ['link']
                         The following actions are supported:
                         
                         - link (files will be mapped by creating hard links if 
@@ -226,14 +226,14 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     =======
 
     After running the `importHCP` command the HCPLS dataset will be mapped 
-    to the Qu|Nex folder structure and image files will be prepared for further
+    to the QuNex folder structure and image files will be prepared for further
     processing along with required metadata.
 
     - The original HCPL session-level data is stored in:
 
         ``<sessionsfolder>/<session>/hcpls``
 
-    - Image files mapped to new names for Qu|Nex are stored in:
+    - Image files mapped to new names for QuNex are stored in:
 
         ``<sessionsfolder>/<session>/nii``
 
@@ -250,7 +250,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     
     The importHCP command consists of two steps:
     
-    1. Mapping HCPLS dataset to Qu|Nex Suite folder structure
+    1. Mapping HCPLS dataset to QuNex Suite folder structure
     
         The `inbox` parameter specifies the location of the HCPLS dataset. This
         path is inspected for a HCPLS compliant dataset. The path can point to a
@@ -274,15 +274,15 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
         
         When the files are mapped, their filenames will be preserved.
 
-    2. Mapping image files to Qu|Nex Suite `nii` folder
+    2. Mapping image files to QuNex Suite `nii` folder
     
         For each session separately, images from the `hcpls` folder are 
         mapped to the `nii` folder and appropriate `session.txt` file is created per
-        standard Qu|Nex specification.
+        standard QuNex specification.
 
         The second step is achieved by running `mapHCPLS2nii` on each session folder.
         This step is run automatically, but can be invoked independently if mapping 
-        of HCPLS dataset to Qu|Nex Suite folder structure was already completed. For 
+        of HCPLS dataset to QuNex Suite folder structure was already completed. For 
         detailed information about this step, please review `mapHCPLS2nii` inline 
         help.
 
@@ -402,7 +402,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
         raise ge.CommandFailed("importHCP", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
     # ---> mapping data to sessions' folders
-    print "--> mapping files to Qu|Nex hcpls folders"
+    print "--> mapping files to QuNex hcpls folders"
 
     for file in sourceFiles:
         if file.endswith('.zip'):
@@ -503,7 +503,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
         print "\nFinal report\n============"
         raise ge.CommandFailed("importHCP", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
 
-    # ---> mapping data to Qu|Nex nii folder
+    # ---> mapping data to QuNex nii folder
     report = []
     for execute in ['map', 'clean']:
         for session in sessionsList[execute]:
@@ -559,7 +559,7 @@ def processHCPLS(sessionfolder, filesort):
     hcplsStructure = os.path.join(niuTemplateFolder, "importHCP.txt")
 
     if not os.path.exists(hcplsStructure):
-        raise ge.CommandFailed("processHCPLS", "No HCPLS structure file present!", "There is no HCPLS structure file %s" % (hcplsStructure), "Please check your Qu|Nex installation")
+        raise ge.CommandFailed("processHCPLS", "No HCPLS structure file present!", "There is no HCPLS structure file %s" % (hcplsStructure), "Please check your QuNex installation")
 
     hcpls_file = open(hcplsStructure)
     content = hcpls_file.read()
@@ -696,7 +696,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     ``mapHCPLS2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``
 
     Maps data organized according to HCPLS specification to `nii` folder
-    structure as expected by Qu|Nex functions.
+    structure as expected by QuNex functions.
 
     INPUTS
     ======
@@ -787,7 +787,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     ===
 
     The command is used to map data organized according to HCPLS specification,
-    residing in `hcpls` session subfolder to `nii` folder as expected by Qu|Nex
+    residing in `hcpls` session subfolder to `nii` folder as expected by QuNex
     functions. The command checks the imaging data and compiles a list in the
     following order:
 

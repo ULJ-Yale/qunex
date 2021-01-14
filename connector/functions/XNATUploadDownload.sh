@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The XNATUploadDownload.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -76,7 +76,7 @@ usage() {
  echo "                       found"
  echo "--runtype              Select --runtype='upload' or --runtype='download' "
  echo ""
- echo "Local system variables if using Qu|Nex hierarchy:"
+ echo "Local system variables if using QuNex hierarchy:"
  echo ""
  echo "--studyfolder          Path to study on local file system"
  echo "--sessionsfolder       Path to study data folder where the sessions folders "
@@ -348,7 +348,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             exit 1
         fi
     else 
-        ## -- Generic DICOM path is set outside of Qu|Nex hierarchy
+        ## -- Generic DICOM path is set outside of QuNex hierarchy
         reho "Note: --dicompath=${DICOMPath} specified, which assumes DICOM location for a single XNAT upload."; echo ""
         ## -- Check XNAT session label if DICOMPath is set
         if [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
@@ -456,7 +456,7 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
         echo "   BIDS format input specified: ${BIDSFormat}"
         echo "   Combined BIDS-formatted session name: ${CASE}"
     else 
-        echo "   Qu|Nex Session variable name: ${CASE}" 
+        echo "   QuNex Session variable name: ${CASE}" 
     fi
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
@@ -514,7 +514,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
                 CASE="${XNAT_SUBJECT_LABEL}_${XNAT_SESSION_LABEL}"
                 CASE=`echo ${CASE} | sed 's|MR||g'`
                 echo " -- Note: --bidsformat='yes' " 
-                echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for Qu|Nex run: ${CASE}"
+                echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for QuNex run: ${CASE}"
                 echo ""
             else
                 CASE="${XNAT_SUBJECT_LABEL}"
@@ -730,18 +730,18 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                 ##    -b "JSESSIONID=$JSESSION" --> XNAT Site Open Session Variable
                 ##    -X --> Here $XNAT_HOST_NAME corresponds to the XNAT URL; 
                 ##  
-                ##     INFO ON XNAT VARIABLE MAPPING FROM Qu|Nex --> JSON --> XML specification
+                ##     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
                 ##
-                ## project               --xnatprojectid        #  --> mapping in Qu|Nex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
+                ## project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
                 ##   │ 
-                ##   └──subject          --xnatsubjectid        #  --> mapping in Qu|Nex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+                ##   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
                 ##        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-                ##        │              --xnatsubjectlabel     #  --> mapping in Qu|Nex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+                ##        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
                 ##        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
                 ##        │ 
-                ##        └──experiment  --xnataccsessionid     #  --> mapping in Qu|Nex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+                ##        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
                 ##                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-                ##                       --xnatsessionlabel     #  --> mapping in Qu|Nex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+                ##                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
                 ##                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
                 ##      
                 ##    -F "${DCM}=@${DCM}"       --> What you are sending to the XNAT Site
@@ -805,7 +805,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     rm -r ${SessionsFolder}/xnatupload/temp_${TimeStamp}/working &> /dev/null
     
     # -------------------------------------------------------------------------
-    # -- XNAT DICOM upload over multiple cases assuming the Qu|Nex data hierarchy
+    # -- XNAT DICOM upload over multiple cases assuming the QuNex data hierarchy
     # -------------------------------------------------------------------------
     
     if [ -z ${DICOMPath} ]; then

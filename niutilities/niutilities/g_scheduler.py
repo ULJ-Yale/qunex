@@ -88,7 +88,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                     standard output and error. See "REDIRECTING OUTPUT" for
                     details
     --bash          Used if any additional commands have to be run in the
-                    compute node before the execution of the Qu|Nex command
+                    compute node before the execution of the QuNex command
                     itself. Use a semicolon separated list to chain multiple
                     commands. ['']
 
@@ -484,7 +484,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     environment = args.get('scheduler_environment', None)
     sleeptime   = args.get('scheduler_sleep', 0)
 
-    # ---- setup bash (commands to run inside compute node before the Qu|Nex command)
+    # ---- setup bash (commands to run inside compute node before the QuNex command)
     bash  = args.get('bash', None)
 
     # --- set logfolder

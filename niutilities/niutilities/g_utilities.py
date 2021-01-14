@@ -31,17 +31,17 @@ import niutilities.g_filelock as fl
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
 #
-#  This file is used to specify the default parameters used by various Qu|Nex commands for
+#  This file is used to specify the default parameters used by various QuNex commands for
 #  HCP minimal preprocessing pipeline, additional bold preprocessing commands,
 #  and other analytic functions. The content of this file should be prepended to the list
 #  that contains all the sessions that is passed to the commands. It can added manually or
-#  automatically when making use of the compileLists Qu|Nex command.
+#  automatically when making use of the compileLists QuNex command.
 #
 #  This template file should be edited to include the parameters relevant for
 #  a given study/analysis and provide the appropriate values. For detailed description of
-#  parameters and their valid values, please consult the Qu|Nex documentation
+#  parameters and their valid values, please consult the QuNex documentation
 *  (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
-#  preprocessing) and online help for the relevant Qu|Nex commands.
+#  preprocessing) and online help for the relevant QuNex commands.
 #
 #
 #  File format
@@ -877,7 +877,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
         roi:<sessionsfolder>/<session id>/images<img_suffix>/<roi>
 
     Note that for all the files the function expects the files to be present in
-    the correct places within the Qu|Nex sessions folder structure. For ROI files
+    the correct places within the QuNex sessions folder structure. For ROI files
     provide the relative path from the `images<img_suffix>` folder.
 
     Checking for presence of files
@@ -1243,7 +1243,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
         file:<sessionsfolder>/<session id>/images<img_suffix>/functional<bold_variant>/<boldname><boldnumber><bold_tail>
 
     Note that the function expects the files to be present in the correct place
-    within the Qu|Nex sessions folder structure.
+    within the QuNex sessions folder structure.
 
     Checking for presence of files
     ------------------------------

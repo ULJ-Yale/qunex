@@ -3,9 +3,9 @@
 """
 ``ge_HCP.py``
 
-Functions for exporting HCP style data out of the Qu|Nex suite:
+Functions for exporting HCP style data out of the QuNex suite:
 
---exportHCP         Maps HCP style data to Qu|Nex structure.
+--exportHCP         Maps HCP style data to QuNex structure.
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -29,12 +29,12 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     """
     ``exportHCP [sessionsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]`` 
 
-    Maps HCP style data out of Qu|Nex Suite file strucutre.
+    Maps HCP style data out of QuNex Suite file strucutre.
 
     INPUTS
     ======
 
-    --sessionsfolder  Specifies the base study sessions folder within the Qu|Nex
+    --sessionsfolder  Specifies the base study sessions folder within the QuNex
                       folder structure to or from which the data are to be 
                       mapped. If not specified explicitly, the current working 
                       folder will be taken as the location of the
@@ -43,7 +43,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     --sessions        Either a string with pipe `|` or comma separated list of 
                       sessions (sessions ids) to be mapped (use of grep patterns
                       is possible), e.g. "AP128,OP139,ER*". When mapping out of 
-                      Qu|Nex it is best (or even required) to provide a path to 
+                      QuNex it is best (or even required) to provide a path to 
                       a batch.txt file with information on the sessions. [*]
 
     --filter          And optional parameter used in combination with a 
@@ -72,8 +72,8 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
                         location)
 
     --mapto           The external target of the mapping when starting with the 
-                      Qu|Nex. This flag is optional and only has to be specified 
-                      when mapping out of the Qu|Nex folder structure. []
+                      QuNex. This flag is optional and only has to be specified 
+                      when mapping out of the QuNex folder structure. []
 
     --overwrite       Whether existing files at the target location should be
                       overwritten.['no'] Possible options are:
@@ -99,7 +99,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     USE
     ===
 
-    The function maps HCP style data out of Qu|Nex data structure. How to do the 
+    The function maps HCP style data out of QuNex data structure. How to do the 
     mapping (move, copy, link) is specified by the `mapaction` parameter. The
     `overwrite` parameter specifies whether to replace any existing data at the
     target location if it already exist. The target location has to be provided

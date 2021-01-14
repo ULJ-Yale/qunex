@@ -98,3 +98,6 @@ ENV/
 2
 *.out
 .qunexstudy
+
+# DS* files
+.DS*

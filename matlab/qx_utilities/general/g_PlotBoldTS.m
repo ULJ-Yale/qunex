@@ -211,7 +211,7 @@ sfunction [] = g_PlotBoldTS(images, elements, masks, filename, skip, sessionid, 
 %		'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', ...
 %		'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
 %
-%   Via Qu|Nex from terminal::
+%   Via QuNex from terminal::
 % 
 %   	qunex g_PlotBoldTS \
 %			--images="<Path_to_Study>/sessions/AP1937/images/functional/bold1.nii.gz" \

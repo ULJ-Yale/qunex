@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The SessionsBatch.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -30,7 +30,7 @@
 #
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
-# Qu|Nex Suite
+# QuNex Suite
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
@@ -49,7 +49,7 @@
 usage() {
  echo ""
  echo "This function generates a batch file for processing for a given session."
- echo "It is designed to be invoked directly via Qu|Nex call::"
+ echo "It is designed to be invoked directly via QuNex call::"
  echo ""
  echo " qunex createLists"
  echo ""

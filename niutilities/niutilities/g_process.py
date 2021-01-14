@@ -501,13 +501,13 @@ deprecatedParameters = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams',
 # 2 - the warning message that gets printer if the value is found
 towarn = {
           'sessionsfolder': ['subject',
-                             'The sessionfolder parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
+                             'The sessionfolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
           'sourcefolder': ['subject',
-                           'The sourcefolder parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
+                           'The sourcefolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
           'sourcefile': ['subject',
-                         'The sourcefile parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
+                         'The sourcefile parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
           'sourcefiles': ['subject',
-                         'The sourcefiles parameter includes "subject", in a recent Qu|Nex update "subject" was renamed to "session". Please check if the value you provided is correct.']
+                         'The sourcefiles parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.']
         }
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION

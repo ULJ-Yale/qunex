@@ -20,7 +20,7 @@
 # ## LICENSE
 #
 # * The RunQC.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -229,7 +229,7 @@ usage() {
  echo "                    ~/<study_path>/processing/scenes/QC/ for additional custom "
  echo "                    QC scenes."
  echo ""
- echo "                    Note: The provided scene has to conform to Qu|Nex QC "
+ echo "                    Note: The provided scene has to conform to QuNex QC "
  echo "                    template standards.xw"
  echo ""
  echo "                    See $TOOLS/$QUNEXREPO/library/data/scenes/qc/ for example "
@@ -530,12 +530,12 @@ if [ -z "$UserSceneFile" ]; then
         reho "---> Provided --userscenepath but --userscenefile not specified."
         reho "     Check your inputs and re-run.";
         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
-        reho "---> Reverting to Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
+        reho "---> Reverting to QuNex defaults: ${scenetemplatefolder}"; echo ""
     fi
     if [ -z "$scenetemplatefolder" ]; then
         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
         echo "---> Template folder path value not explicitly specified."; echo ""
-        echo "---> Using Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
+        echo "---> Using QuNex defaults: ${scenetemplatefolder}"; echo ""
     fi
     if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
         echo ""

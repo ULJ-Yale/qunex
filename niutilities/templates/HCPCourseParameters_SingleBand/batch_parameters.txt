@@ -1,5 +1,5 @@
 # -------------------------------------------------
-# -- Qu|Nex Environment Preprocessing Parameters --
+# -- QuNex Environment Preprocessing Parameters --
 # -------------------------------------------------
 
 # -------------------------------------

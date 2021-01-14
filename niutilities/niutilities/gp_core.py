@@ -751,7 +751,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
     # -- Report command
     printComm = "------------------------------------------------------------\n"
-    printComm += "Running external command via Qu|Nex:\n"
+    printComm += "Running external command via QuNex:\n"
     comm = run.replace(" --", "\n     --").replace("             ", "")
     comm += "\n"
     printComm += comm

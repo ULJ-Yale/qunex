@@ -862,7 +862,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -1290,7 +1290,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             for f in options['hcp_fs_extra_reconall'].split('|'):
                 elements.append(('extra-reconall-arg', f))
 
-        # -> additional Qu|Nex passed parameters
+        # -> additional QuNex passed parameters
 
         if options['hcp_expert_file']:
             elements.append(('extra-reconall-arg', '-expert'))
@@ -1308,7 +1308,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -1664,7 +1664,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -1951,7 +1951,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -2382,7 +2382,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             # -- Report command
             if run:
                 r += "\n\n------------------------------------------------------------\n"
-                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
 
@@ -3416,7 +3416,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         # -- Report command
         if boldok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -3831,7 +3831,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         # -- Report command
         if boldok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -4136,7 +4136,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    The code expects the input images to be named and present in the Qu|Nex
+    The code expects the input images to be named and present in the QuNex
     folder structure. The function will look into folder::
 
         <session id>/hcp/<session id>
@@ -4483,7 +4483,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         # -- Report command
         if boldok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -4616,7 +4616,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         # -- Report command
         if groupok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -4687,7 +4687,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    The code expects the input images to be named and present in the Qu|Nex
+    The code expects the input images to be named and present in the QuNex
     folder structure. The function will look into folder::
 
         <session id>/hcp/<session id>
@@ -5017,7 +5017,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # -- Report command
         if boldok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -5084,7 +5084,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    The code expects the input images to be named and present in the Qu|Nex
+    The code expects the input images to be named and present in the QuNex
     folder structure. The function will look into folder::
 
         <session id>/hcp/<session id>
@@ -5427,7 +5427,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             # -- Report command
             if boldok:
                 r += "\n------------------------------------------------------------\n"
-                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
                 r += comm.replace("--", "\n    --").replace("             ", "")
                 r += "\n------------------------------------------------------------\n"
 
@@ -5590,7 +5590,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             # -- Report command
             if groupok:
                 r += "\n------------------------------------------------------------\n"
-                r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
                 r += comm.replace("--", "\n    --").replace("             ", "")
                 r += "\n------------------------------------------------------------\n"
 
@@ -5685,7 +5685,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         # -- Report command
         if boldok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -5776,7 +5776,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    The code expects the input images to be named and present in the Qu|Nex
+    The code expects the input images to be named and present in the QuNex
     folder structure. The function will look into folder::
 
         <session id>/hcp/<session id>
@@ -6153,7 +6153,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         # -- Report command
         if boldsok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -6325,7 +6325,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         # -- Report command
         if boldok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -6389,7 +6389,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    The code expects the input images to be named and present in the Qu|Nex
+    The code expects the input images to be named and present in the QuNex
     folder structure. The function will look into folder::
 
         <session id>/hcp/<session id>
@@ -6716,7 +6716,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         # -- Report command
         if boldsok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -6970,7 +6970,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         # -- Report command
         if runok:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -7067,7 +7067,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
@@ -7157,7 +7157,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via Qu|Nex:\n\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 

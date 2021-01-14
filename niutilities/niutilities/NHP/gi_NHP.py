@@ -3,9 +3,9 @@
 """
 ``gi_NHP.py``
 
-Functions for importing non-human primate (NHP) data into Qu|Nex:
+Functions for importing non-human primate (NHP) data into QuNex:
 
---import_nhp      Maps NHP dMRI data to Qu|Nex structure.
+--import_nhp      Maps NHP dMRI data to QuNex structure.
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -88,7 +88,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
     """
     ``import_nhp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/NHP] [sessions=""] [action=link] [overwrite=no] [archive=move]``
 
-    Maps NHP data to the Qu|Nex Suite file structure. 
+    Maps NHP data to the QuNex Suite file structure. 
 
     INPUTS
     ======
@@ -117,7 +117,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
                         "NHP" with match any zip file that contains string
                         "NHP" or any session id that contains "NHP"!
 
-    --action            How to map the files to Qu|Nex structure. ["link"]
+    --action            How to map the files to QuNex structure. ["link"]
                         The following actions are supported:
                         
                         - link (files will be mapped by creating hard links if 
@@ -154,7 +154,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
     =======
 
     After running the `import_nhp` command the NHP dataset will be mapped 
-    to the Qu|Nex folder structure and image files will be prepared for further
+    to the QuNex folder structure and image files will be prepared for further
     processing along with required metadata.
 
     - dMRI images for each session will be stored in:
@@ -251,7 +251,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
         raise ge.CommandFailed("import_nhp", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
     # mapping data to sessions" folders
-    print "--> mapping files to Qu|Nex NHP folders"
+    print "--> mapping files to QuNex NHP folders"
     report = {}
     for file in source_files:
         if file.endswith(".zip"):

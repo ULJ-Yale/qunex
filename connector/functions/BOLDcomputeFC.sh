@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The BOLDcomputeFC.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ### TODO
@@ -27,11 +27,11 @@
 # ## Description 
 #   
 # This script, BOLDcomputeFC.sh, implements functional connectivity
-# using Qu|Nex Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
+# using QuNex Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
 # 
 # ## Prerequisite Installed Software
 #
-# * Qu|Nex Suite
+# * QuNex Suite
 #
 # ## Prerequisite Environment Variables
 #

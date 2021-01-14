@@ -3,10 +3,10 @@
 """
 ``g_bids.py``
 
-Functions for importing and exporting BIDS data to Qu|Nex file structure.
+Functions for importing and exporting BIDS data to QuNex file structure.
 
---importBIDS          Maps BIDS data to Qu|Nex structure.
---BIDSExport          Exports Qu|Nex data to BIDS structured folder.
+--importBIDS          Maps BIDS data to QuNex structure.
+--BIDSExport          Exports QuNex data to BIDS structured folder.
 
 The commands are accessible from the terminal using qunex command.
 """
@@ -132,7 +132,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
     bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
 
     if not os.path.exists(bidsStructure):
-        raise ge.CommandFailed("mapToQUNEXBids", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+        raise ge.CommandFailed("mapToQUNEXBids", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your QuNex installation")
 
     bids_file = open(bidsStructure)
     content = bids_file.read()
@@ -250,7 +250,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     """
     ``importBIDS [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]``
     
-    Maps a BIDS dataset to the Qu|Nex Suite file structure.
+    Maps a BIDS dataset to the QuNex Suite file structure.
 
     INPUTS
     ======
@@ -283,7 +283,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                           format or as explicit 
                           `sub-<subject id>[/ses-<session name>]` names.
 
-    --action              How to map the files to Qu|Nex structure. ['link']
+    --action              How to map the files to QuNex structure. ['link']
                           These are the options:
                         
                           - link (the files will be mapped by creating hard 
@@ -332,7 +332,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     =======
 
     After running the `importBIDS` command the BIDS dataset will be mapped 
-    to the Qu|Nex folder structure and image files will be prepared for further
+    to the QuNex folder structure and image files will be prepared for further
     processing along with required metadata.
 
     Files pertaining to the study and not specific subject / session are
@@ -344,7 +344,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
         <sessionsfolder>/<session>/bids
 
-    Image files mapped to new names for Qu|Nex are stored in::
+    Image files mapped to new names for QuNex are stored in::
 
         <sessionsfolder>/<session>/nii
 
@@ -365,7 +365,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     
     The importBIDS command consists of two steps:
     
-    Step 1 - Mapping BIDS dataset to Qu|Nex Suite folder structure
+    Step 1 - Mapping BIDS dataset to QuNex Suite folder structure
     --------------------------------------------------------------
     
     The `inbox` parameter specifies the location of the BIDS dataset. This path 
@@ -404,20 +404,20 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     `<bids_study>/participants.tsv` and `phenotype/*.tsv` files, will be parsed
     and split so that data belonging to a specific participant will be mapped to 
     that participant's sessions 'behavior' folder (e.g. 
-    `<Qu|Nex study folder>/sessions/s14_01/behavior/masq01.tsv`). In this way 
+    `<QuNex study folder>/sessions/s14_01/behavior/masq01.tsv`). In this way 
     the session folder contains all the behavioral data relevant for that 
     participant.
 
-    Step 2 - Mapping image files to Qu|Nex Suite `nii` folder
+    Step 2 - Mapping image files to QuNex Suite `nii` folder
     ---------------------------------------------------------
     
     For each session separately, images from the `bids` folder are 
     mapped to the `nii` folder and appropriate `session.txt` file is created per
-    standard Qu|Nex specification.
+    standard QuNex specification.
 
     The second step is achieved by running `mapBIDS2nii` on each session folder.
     This step is run automatically, but can be invoked indepdendently if mapping 
-    of bids dataset to Qu|Nex Suite folder structure was already completed. For 
+    of bids dataset to QuNex Suite folder structure was already completed. For 
     detailed information about this step, please review `mapBIDS2nii` inline 
     help.
 
@@ -512,7 +512,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
 
     if not os.path.exists(bidsStructure):
-        raise ge.CommandFailed("importBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+        raise ge.CommandFailed("importBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your QuNex installation")
 
     bids_file = open(bidsStructure)
     content = bids_file.read()
@@ -646,7 +646,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
     # ---> mapping data to sessions' folders
 
-    print "--> mapping files to Qu|Nex bids folders"
+    print "--> mapping files to QuNex bids folders"
     
     for file in sourceFiles:
         if file.endswith('.zip'):
@@ -819,7 +819,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                     print "    WARNING: Could not %s %s. Please check permissions!" % (archive, archiveItem)
                 fl.unlock(archiveTarget)
 
-    # ---> mapping data to Qu|Nex nii and behavioral folder
+    # ---> mapping data to QuNex nii and behavioral folder
 
     # -> check study level data
 
@@ -923,7 +923,7 @@ def processBIDS(bfolder):
     bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
 
     if not os.path.exists(bidsStructure):
-        raise ge.CommandFailed("processBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your Qu|Nex installation")
+        raise ge.CommandFailed("processBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your QuNex installation")
 
     bids_file = open(bidsStructure)
     content = bids_file.read()
@@ -1001,7 +1001,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     ``mapBIDS2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short']``
 
     Maps data organized according to BIDS specification to `nii` folder 
-    structure as expected by Qu|Nex functions.
+    structure as expected by QuNex functions.
 
     INPUTS
     ======
@@ -1074,7 +1074,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     ===
 
     The command is used to map data organized according to BIDS specification,
-    residing in `bids` session subfolder to `nii` folder as expected by Qu|Nex
+    residing in `bids` session subfolder to `nii` folder as expected by QuNex
     functions. The command checks the imaging data and compiles a list in the
     following order:
 

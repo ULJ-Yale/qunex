@@ -22,7 +22,7 @@
 # ## LICENSE
 #
 # * The RunTurnkey.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ### TODO
@@ -31,11 +31,11 @@
 #
 # ## Description
 #
-# RunTurnkey.sh executes Qu|Nex Suite workflows in an automated streamlined workflow
+# RunTurnkey.sh executes QuNex Suite workflows in an automated streamlined workflow
 #
 # ## Prerequisite Installed Software
 #
-# * Qu|Nex Suite
+# * QuNex Suite
 #
 # ## Prerequisite Environment Variables
 #
@@ -120,7 +120,7 @@ usage() {
  echo ""
  echo "qunex runTurnkey"
  echo ""
- echo "This function implements Qu|Nex Suite workflows as a turnkey function."
+ echo "This function implements QuNex Suite workflows as a turnkey function."
  echo "It operates on a local server or cluster or within the XNAT Docker engine."
  echo ""
  echo ""
@@ -148,13 +148,13 @@ usage() {
  echo ""
  echo "                      - IF executing a 'local' run then provide the absolute "
  echo "                        path to the file on the local file system:"
- echo "                        If no file name is given then by default Qu|Nex "
+ echo "                        If no file name is given then by default QuNex "
  echo "                        RunTurnkey will exit with an error."
  echo "                      - IF executing a run via the XNAT WebUI then provide the "
  echo "                        name of the file. This file should be created and "
  echo "                        uploaded manually as the project-level resource on XNAT"
  echo ""
- echo "--mappingfile         File for mapping NIFTI files into the desired Qu|Nex file "
+ echo "--mappingfile         File for mapping NIFTI files into the desired QuNex file "
  echo "                      structure (e.g. hcp, fMRIPrep, etc.)"
  echo ""
  echo "                      Note: This file needs to be created *manually* prior to "
@@ -162,7 +162,7 @@ usage() {
  echo ""
  echo "                      - IF executing a 'local' run then provide the absolute "
  echo "                        path to the file on the local file system:"
- echo "                        If no file name is given then by default Qu|Nex "
+ echo "                        If no file name is given then by default QuNex "
  echo "                        RunTurnkey will exit with an error."
  echo "                      - IF executing a run via the XNAT WebUI then provide the "
  echo "                        name of the file. This file should be created and "
@@ -221,7 +221,7 @@ usage() {
  echo "                        processing:"
  echo ""
  echo "                        standard"
- echo "                           files should be named using Qu|Nex standard naming "
+ echo "                           files should be named using QuNex standard naming "
  echo "                           (e.g. BOLD_1_PA)"
  echo "                        original"
  echo "                           files should be named using their original names "
@@ -307,7 +307,7 @@ usage() {
  echo "                    ooks into: ~/<study_path>/processing/scenes/QC/ for "
  echo "                    additional custom QC scenes."
  echo ""
- echo "                    Note: The provided scene has to conform to Qu|Nex QC "
+ echo "                    Note: The provided scene has to conform to QuNex QC "
  echo "                    template standards.xw"
  echo ""
  echo "                    See $TOOLS/$QUNEXREPO/library/data/scenes/qc/ for example"
@@ -441,11 +441,11 @@ unset AcceptanceTest
 unset CleanupOldFiles
 
 echo ""
-cyaneho "===> Executing Qu|Nex RunTurnkey workflow..."
+cyaneho "===> Executing QuNex RunTurnkey workflow..."
 echo ""
 
 echo ""
-geho "------------------------ Initiating Qu|Nex Turnkey Workflow -------------------------------"
+geho "------------------------ Initiating QuNex Turnkey Workflow -------------------------------"
 echo ""
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
@@ -508,18 +508,18 @@ XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
 XNAT_STUDY_INPUT_PATH=`opts_GetOpt "--xnatstudyinputpath" $@`
 
 # ----------------------------------------------------
-#     INFO ON XNAT VARIABLE MAPPING FROM Qu|Nex --> JSON --> XML specification
+#     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
 #
-# project               --xnatprojectid        #  --> mapping in Qu|Nex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML.
+# project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML.
 #   │
-#   └──subject          --xnatsubjectid        #  --> mapping in Qu|Nex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+#   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-#        │              --xnatsubjectlabel     #  --> mapping in Qu|Nex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+#        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
 #        │
-#        └──experiment  --xnataccsessionid     #  --> mapping in Qu|Nex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-#                       --xnatsessionlabel     #  --> mapping in Qu|Nex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 # ----------------------------------------------------
 
 XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
@@ -798,7 +798,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         #    Eventually deprecate once fixed in XNAT
         CASE=`echo ${XNAT_SESSION_LABEL} | sed 's|_MR1$||' | sed 's|_MR|_|'`
         mageho " --> Note: --dataformat='BIDS' "
-        reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant session variable for Qu|Nex run: ${CASE}"
+        reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant session variable for QuNex run: ${CASE}"
         echo ""
     else
         CASE="${XNAT_SUBJECT_LABEL}"
@@ -818,37 +818,37 @@ fi
 
 if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
     echo ""
-    mageho "WARNING: You are attempting to execute RunTurnkey using a conflicting Qu|Nex file hierarchy:"
+    mageho "WARNING: You are attempting to execute RunTurnkey using a conflicting QuNex file hierarchy:"
     echo ""
     echo "     Found: --> ${StudyFolder}/subjects"
     echo "     Found: --> ${StudyFolder}/${SessionsFolderBase}"
     echo ""
-    echo "     Note: Current version of Qu|Nex supports the following default specification: "
+    echo "     Note: Current version of QuNex supports the following default specification: "
     echo "            --> ${StudyFolder}/sessions"
     echo ""
     echo "     To avoid the possibility of a backwards incompatible or duplicate "
-    echo "     Qu|Nex runs please review the study directory structure and consider"
+    echo "     QuNex runs please review the study directory structure and consider"
     echo "     resolving the conflict such that a consistent folder specification is used. "
     echo ""
-    echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
+    echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
     echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
     echo ""
 fi
 
 if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
     echo ""
-    mageho "WARRNING: You are attempting to execute RunTurnkey using an outdated Qu|Nex file hierarchy:"
+    mageho "WARRNING: You are attempting to execute RunTurnkey using an outdated QuNex file hierarchy:"
     echo ""
     echo "     Found: --> ${StudyFolder}/subjects"
     echo ""
-    echo "     Note: Current version of Qu|Nex supports the following default specification: "
+    echo "     Note: Current version of QuNex supports the following default specification: "
     echo "            --> ${StudyFolder}/sessions"
     echo ""
     echo "     To avoid the possibility of a backwards incompatible or duplicate "
-    echo "     Qu|Nex runs please review the study directory structure and consider"
+    echo "     QuNex runs please review the study directory structure and consider"
     echo "     resolving the conflict such that a consistent folder specification is used. "
     echo ""
-    echo "     Qu|Nex will proceed but please consider renaming your directories per latest specs:"
+    echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
     echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
     echo ""
     SessionsFolder="${STUDY_PATH}/subjects"
@@ -1110,8 +1110,8 @@ fi
 # -- Report options
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   "
-echo "   Qu|Nex Turnkey run type: ${TURNKEY_TYPE}"
-echo "   Qu|Nex Turnkey clean interim files: ${TURNKEY_CLEAN}"
+echo "   QuNex Turnkey run type: ${TURNKEY_TYPE}"
+echo "   QuNex Turnkey clean interim files: ${TURNKEY_CLEAN}"
 
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
     echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
@@ -1126,21 +1126,21 @@ if [ "$TURNKEY_TYPE" == "xnat" ]; then
         echo "   BIDS format input specified!"
         echo "   Combined BIDS-formatted session name: ${CASE}"
     else
-        echo "   Qu|Nex Session variable name: ${CASE}"
+        echo "   QuNex Session variable name: ${CASE}"
     fi
 fi
 if [ "$TURNKEY_TYPE" != "xnat" ]; then
     echo "   Local project name: ${PROJECT_NAME}"
     echo "   Raw data input path: ${RawDataInputPath}"
-    echo "   Qu|Nex Session variable name: ${CASE}"
-    echo "   Qu|Nex Batch file input: ${BATCH_PARAMETERS_FILENAME}"
-    echo "   Qu|Nex Mapping file input: ${SCAN_MAPPING_FILENAME}"
+    echo "   QuNex Session variable name: ${CASE}"
+    echo "   QuNex Batch file input: ${BATCH_PARAMETERS_FILENAME}"
+    echo "   QuNex Mapping file input: ${SCAN_MAPPING_FILENAME}"
 fi
 
-echo "   Qu|Nex Project-specific final Batch file path: ${QuNexProcessingDir}"
-echo "   Qu|Nex Study folder: ${StudyFolder}"
-echo "   Qu|Nex Log folder: ${QuNexMasterLogFolder}"
-echo "   Qu|Nex Session-specific working folder: ${QuNexRawInboxDir}"
+echo "   QuNex Project-specific final Batch file path: ${QuNexProcessingDir}"
+echo "   QuNex Study folder: ${StudyFolder}"
+echo "   QuNex Log folder: ${QuNexMasterLogFolder}"
+echo "   QuNex Session-specific working folder: ${QuNexRawInboxDir}"
 echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for session set to: ${OVERWRITE_SESSION}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
@@ -1186,11 +1186,11 @@ echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 echo ""
-geho "------------------------- Starting Qu|Nex Turnkey Workflow --------------------------------"
+geho "------------------------- Starting QuNex Turnkey Workflow --------------------------------"
 echo ""
 
 
-# --- Report the environment variables for Qu|Nex Turnkey run:
+# --- Report the environment variables for QuNex Turnkey run:
 echo ""
 bash ${TOOLS}/${QUNEXREPO}/library/environment/qunex_envStatus.sh --envstatus
 echo ""
@@ -1351,7 +1351,7 @@ fi
             fi
         fi
         if [ ! -f ${StudyFolder}/.qunexstudy ]; then
-            mageho " --> Note: ${StudyFolder}/.qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now."; echo "";
+            mageho " --> Note: ${StudyFolder}/.qunexstudy file not found. Not a proper QuNex file hierarchy. Regenerating now."; echo "";
             ${QuNexCommand} createStudy "${StudyFolder}"
         fi
 
@@ -1365,7 +1365,7 @@ fi
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ mapRawData"; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 
-        # Perform checks for output Qu|Nex hierarchy
+        # Perform checks for output QuNex hierarchy
         if [ ! -d ${WORKDIR} ]; then
             mkdir -p ${WORKDIR} &> /dev/null
         fi
@@ -1374,11 +1374,11 @@ fi
             ${QuNexCommand} createStudy "${StudyFolder}"
         fi
         if [ ! -f ${StudyFolder}/.qunexstudy ]; then
-            mageho " --> Note: ${StudyFolder} qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now."; echo "";
+            mageho " --> Note: ${StudyFolder} qunexstudy file not found. Not a proper QuNex file hierarchy. Regenerating now."; echo "";
             ${QuNexCommand} createStudy "${StudyFolder}"
         fi
         if [ ! -d ${SessionsFolder} ]; then
-            mageho " --> Note: ${SessionsFolder} folder not found. Not a proper Qu|Nex file hierarchy. Regenerating now."; echo "";
+            mageho " --> Note: ${SessionsFolder} folder not found. Not a proper QuNex file hierarchy. Regenerating now."; echo "";
             ${QuNexCommand} createStudy "${StudyFolder}"
         fi
         if [ ! -d ${QuNexWorkDir} ]; then
@@ -1614,7 +1614,7 @@ fi
                     INTYPE=dataset
                 fi
             fi
-            # -- Perform mapping of BIDS file structure into Qu|Nex
+            # -- Perform mapping of BIDS file structure into QuNex
             echo ""
             geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
 
@@ -1691,7 +1691,7 @@ fi
                     INTYPE=dataset
                 fi
             fi
-            # -- Perform mapping of HCP file structure into Qu|Nex
+            # -- Perform mapping of HCP file structure into QuNex
             echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}
             echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
@@ -2657,7 +2657,7 @@ if [ -z "$TURNKEY_STEPS" ] && [ ! -z "$AcceptanceTest" ] && [ "$AcceptanceTest" 
     echo "";
     geho "  ---------------------------------------------------------------------"
     echo ""
-    geho "   ===> Performing completion check on specific Qu|Nex turnkey units: ${AcceptanceTest}"
+    geho "   ===> Performing completion check on specific QuNex turnkey units: ${AcceptanceTest}"
     echo ""
     geho "  ---------------------------------------------------------------------"
     echo ""
@@ -2678,7 +2678,7 @@ else
         echo "";
         geho "  ---------------------------------------------------------------------"
         echo ""
-        geho "   ===> Executing all Qu|Nex turkey workflow steps: ${QuNexTurnkeyWorkflow}"
+        geho "   ===> Executing all QuNex turkey workflow steps: ${QuNexTurnkeyWorkflow}"
         echo ""
         geho "  ---------------------------------------------------------------------"
         echo ""
@@ -2688,7 +2688,7 @@ else
         echo "";
         geho "  ---------------------------------------------------------------------"
         echo ""
-        geho "   ===> Executing specific Qu|Nex turkey workflow steps: ${TURNKEY_STEPS}"
+        geho "   ===> Executing specific QuNex turkey workflow steps: ${TURNKEY_STEPS}"
         echo ""
         geho "  ---------------------------------------------------------------------"
         echo ""
@@ -2764,13 +2764,13 @@ else
             fi
         fi
 
-        # -- Run acceptance tests for specific Qu|Nex units
+        # -- Run acceptance tests for specific QuNex units
         if [[ AcceptanceTest == "yes" ]]; then
             UnitTest="${TURNKEY_STEP}"
             RunAcceptanceTestFunction
         fi
 
-        # -- Run Qu|Nex cleaning for specific unit
+        # -- Run QuNex cleaning for specific unit
         #    Currently supporting hcp4
         if [[ ${TURNKEY_CLEAN} == "yes" ]]; then
            if [[ "${TURNKEY_STEP}" == "hcp4" ]]; then

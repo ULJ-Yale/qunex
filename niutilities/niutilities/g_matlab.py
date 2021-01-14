@@ -4,7 +4,7 @@
 ``g_nitools.py``
 
 This file holds the functions and settings for providing a wrapper to run
-Qu|Nex/nitools code.
+QuNex/nitools code.
 
 None of the code is run directly from the terminal interface.
 """

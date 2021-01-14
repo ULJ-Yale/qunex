@@ -161,7 +161,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
         # report command
         r += "\n\n------------------------------------------------------------\n"
-        r += "Running FSL F99 command via Qu|Nex:\n\n"
+        r += "Running FSL F99 command via QuNex:\n\n"
         r += comm.replace("                ", "")
         r += "\n------------------------------------------------------------\n"
 
@@ -452,7 +452,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
         # report command
         r += "\n\n------------------------------------------------------------\n"
-        r += "Running FSL F99 command via Qu|Nex:\n\n"
+        r += "Running FSL F99 command via QuNex:\n\n"
         r += comm.replace("                ", "")
         r += "\n------------------------------------------------------------\n"
 

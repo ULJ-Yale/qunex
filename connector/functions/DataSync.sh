@@ -19,7 +19,7 @@
 # ## LICENCE
 #
 # * The DataSync.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -122,7 +122,7 @@ main() {
 
 echo ""
 echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-echo "=-=-=-=  Starting Qu|Nex Data Rsync Script  =-=-=-="
+echo "=-=-=-=  Starting QuNex Data Rsync Script  =-=-=-="
 echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 echo ""
 

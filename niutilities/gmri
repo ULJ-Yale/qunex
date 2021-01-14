@@ -3,7 +3,7 @@
 
 import niutilities as niu
 import niutilities.g_process as gp
-import niutilities.g_nitools as gn
+import niutilities.g_matlab as gm
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
 import niutilities.g_commands as gcom
@@ -12,25 +12,25 @@ import sys
 import copy
 import datetime
 
-# --- Get current Qu|Nex Suite version and prepend to help calls
+# --- Get current QuNex Suite version and prepend to help calls
 
 tools     = os.environ['TOOLS']
 qunexrepo = os.environ['QUNEXREPO']
 with open(os.path.join(tools, qunexrepo, 'VERSION.md'), "r") as f:
     version  = f.read().strip()
-print "Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Suite Version", version
+print "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version", version
 print 
 
 help = '''
   General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses   
 --------------------------------------------------------------------------------
 
- DESCRIPTION: Qu|Nex Suite workflows contain python-based general neuroimaging 
+ DESCRIPTION: QuNex Suite workflows contain python-based general neuroimaging 
  utilities. NIutilities can be invoked via `gmri <command>` call or by invoking 
  the "qunex <command>" call.
  
 
-                        General Qu|Nex Usage Syntax
+                        General QuNex Usage Syntax
 ================================================================================
 
  qunex <command> \
@@ -215,9 +215,9 @@ fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
 fsf    runFullFS                Run full freesurfer segmentation
 
 
-NItools commands supported via NIUtilities
-------------------------------------------
-A number of NItools module commands provided as part of Qu|Nex can be 
+MATLAB commands supported via NIUtilities
+-----------------------------------------
+A number of MATLAB commands provided as part of QuNex can be 
 invoked via the NIUtilities engine. A list of commands currently supported is 
 provided below. For more information run `qunex <command>`. 
 
@@ -227,7 +227,7 @@ vectors in square brackets (e.g. "[1 8 6 12]") and cell arrays in curly braces
 (e.g. "{'DLPFC', 'ACC', 'FEF'}"). In addition, 'saveOutput' parameter can be specified 
 to redirect Matlab output to a file: (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 
-Example call of a Qu|Nex NITools command:
+Example call of a QuNex MATLAB command:
 
  qunex g_FindPeaks \\
   --fin='map_zstat.dscalar.nii' \\
@@ -237,10 +237,10 @@ Example call of a Qu|Nex NITools command:
   --projection=midthickness
 
 
- ==> List of NItools commands supported via NIUtilities:
+ ==> List of MATLAB commands supported via NIUtilities:
 '''
 
-for mcom in gn.functionList:
+for mcom in gm.functionList:
     comlist += "\n " + mcom
 
 def runCommand(command, args):
@@ -262,11 +262,11 @@ def runCommand(command, args):
     elif command in gp.allactions:
         gp.run(command, args)
         return
-    elif command in gn.functions:
+    elif command in gm.functions:
         if 'scheduler' in args:
             niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
         else:
-            gn.run(command, args)
+            gm.run(command, args)
         return
     else:
         print "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command)
@@ -468,7 +468,7 @@ def printHelp(com):
                 print l[0]
                 print l[1]
         # -> matlab wrapped commands
-        for l in gn.functions.keys():
+        for l in gm.functions.keys():
             print l
 
     # --- print list of processing options and flags
@@ -504,8 +504,8 @@ def printHelp(com):
         print "\nqunex", gp.allactions[com].__doc__.strip(), "\n"
 
     # --- print help for matlab functions
-    elif com in gn.functions:
-        gn.help(com)
+    elif com in gm.functions:
+        gm.help(com)
 
     # --- print general command list
     else:
@@ -566,14 +566,14 @@ def main(args=None):
         print "\nPlease run `qunex ?%s` to get help for the failed command.\n" % (comm)
         sys.exit(1)
     except ValueError as e:
-        print "\n--------------------==== Qu|Nex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm)
+        print "\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm)
         print e
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
         raise
     except SystemExit as e:
         sys.exit(e)
     except:
-        print "\n--------------------==== Qu|Nex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
+        print "\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
         print "       Please check documentation for the command (`qunex ?%s`)!" % (comm)
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
         print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"

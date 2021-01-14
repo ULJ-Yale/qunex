@@ -19,14 +19,14 @@
 # ## LICENSE
 #
 # * The DWIFSLdtifit.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIFSLdtifit.sh, implements FSL's DTIFIT functionality within the Qu|Nex Suite
+# This script, DWIFSLdtifit.sh, implements FSL's DTIFIT functionality within the QuNex Suite
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #

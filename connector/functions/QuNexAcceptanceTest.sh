@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The QuNexAcceptanceTest.sh = the "Software"
-# * This Software conforms to the license outlined in the Qu|Nex Suite:
+# * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -27,7 +27,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, QuNexAcceptanceTest.sh, implements Qu|Nex acceptance testing per pipeline unit.
+# This script, QuNexAcceptanceTest.sh, implements QuNex acceptance testing per pipeline unit.
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -54,12 +54,12 @@ usage() {
  echo ""
  echo "QuNexAcceptanceTest"
  echo ""
- echo "This function implements Qu|Nex acceptance testing per pipeline unit."
+ echo "This function implements QuNex acceptance testing per pipeline unit."
  echo ""
  echo "INPUTS"
  echo "======"
  echo ""
- echo "Local system variables if using Qu|Nex hierarchy:"
+ echo "Local system variables if using QuNex hierarchy:"
  echo ""
  echo "--acceptancetest   Specify if you wish to run a final acceptance test after "
  echo "                   each unit of processing."
@@ -293,18 +293,18 @@ BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 
 # -- Start of parsing XNAT arguments
 #
-#     INFO ON XNAT VARIABLE MAPPING FROM Qu|Nex --> JSON --> XML specification
+#     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
 #
-# project               --xnatprojectid        #  --> mapping in Qu|Nex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
+# project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
 #   │ 
-#   └──subject          --xnatsubjectid        #  --> mapping in Qu|Nex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+#   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-#        │              --xnatsubjectlabel     #  --> mapping in Qu|Nex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+#        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
 #        │ 
-#        └──experiment  --xnataccsessionid     #  --> mapping in Qu|Nex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-#                       --xnatsessionlabel     #  --> mapping in Qu|Nex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
 #
     XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
@@ -540,10 +540,10 @@ fi
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     echo ""
-    echo "   Qu|Nex Subjects labels: ${CASES}" 
+    echo "   QuNex Subjects labels: ${CASES}" 
     if [ "$RUN_TYPE" != "xnat" ]; then
-        echo "   Qu|Nex study folder: ${StudyFolder}"
-        echo "   Qu|Nex study sessions: ${SESSION_LABELS}"
+        echo "   QuNex study folder: ${StudyFolder}"
+        echo "   QuNex study sessions: ${SESSION_LABELS}"
     fi
     if [ "$RUN_TYPE" == "xnat" ]; then
         echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
@@ -561,14 +561,14 @@ fi
         echo "   XNAT get QC images or scenes: ${XNATgetQC}"
 
     fi
-    echo "   Qu|Nex Acceptance test steps: ${AcceptanceTestSteps}"
+    echo "   QuNex Acceptance test steps: ${AcceptanceTestSteps}"
     if [[ -z ${BOLDS} ]]; then 
         echo "   BOLD runs: ${BOLDS}"
         if [[ -z ${BOLDImages} ]]; then 
             echo "   BOLD Images: ${BOLDImages}"
         fi
     fi
-    echo "   Qu|Nex Acceptance test output log: ${RunAcceptanceTestOut}"
+    echo "   QuNex Acceptance test output log: ${RunAcceptanceTestOut}"
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
@@ -581,7 +581,7 @@ main() {
 
 echo ""
 ceho "       *******************************************************"
-ceho "       ****** Performing Qu|Nex Unit Acceptance Tests ********"
+ceho "       ****** Performing QuNex Unit Acceptance Tests ********"
 ceho "       *******************************************************"
 echo ""
 
@@ -647,7 +647,7 @@ echo ""
                     CASE="${XNAT_SESSION_LABEL_HOST}"
                     CASE=`echo ${CASE} | sed 's|MR||g'`
                     echo " -- Note: --bidsformat='yes' " 
-                    echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for Qu|Nex run: ${CASE}"
+                    echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for QuNex run: ${CASE}"
                     echo ""
                 else
                     CASE="${XNAT_SUBJECT_LABEL}"
@@ -656,7 +656,7 @@ echo ""
         
             UnitTests=${AcceptanceTestSteps}
             echo ""
-            geho "-- Running Qu|Nex unit tests: ${UnitTests}"
+            geho "-- Running QuNex unit tests: ${UnitTests}"
 
             
             ## -- Setup function to check presence of files on either local file system or on XNAT on 
@@ -864,10 +864,10 @@ echo ""
             echo ""
             geho "-- JSESSION created: ${JSESSION}"; echo ""
             echo "" >> ${RunAcceptanceTestOut}
-            echo "  Qu|Nex Acceptance Test Report for XNAT Run" >> ${RunAcceptanceTestOut}
+            echo "  QuNex Acceptance Test Report for XNAT Run" >> ${RunAcceptanceTestOut}
             echo "  -----------------------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
-            echo "   Qu|Nex Acceptance test steps:    ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
+            echo "   QuNex Acceptance test steps:    ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Hostname:                  ${XNAT_HOST_NAME}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Project ID:                ${XNAT_PROJECT_ID}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Session Label:             ${XNAT_SESSION_LABEL}" >> ${RunAcceptanceTestOut}
@@ -880,11 +880,11 @@ echo ""
             AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
             RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_${AcceptDirTimeStamp}.txt"
             echo "" >> ${RunAcceptanceTestOut}
-            echo "  Qu|Nex Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}
+            echo "  QuNex Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}
             echo "  ------------------------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
-            echo "   Qu|Nex Study folder:              ${StudyFolder}" >> ${RunAcceptanceTestOut}
-            echo "   Qu|Nex Acceptance test steps:     ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
+            echo "   QuNex Study folder:              ${StudyFolder}" >> ${RunAcceptanceTestOut}
+            echo "   QuNex Acceptance test steps:     ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
             echo "  ---------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}

@@ -388,8 +388,8 @@ function [meta] = dtseriesXML(img)
     mpath = fileparts(mfilename('fullpath'));
     xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
     xml = strrep(xml,'{{ParentProvenance}}', img.filename);
-    xml = strrep(xml,'{{ProgramProvenance}}', 'QuNex nitools');
-    xml = strrep(xml,'{{Provenance}}', 'QuNex nitools');
+    xml = strrep(xml,'{{ProgramProvenance}}', 'QuNex');
+    xml = strrep(xml,'{{Provenance}}', 'QuNex');
     xml = strrep(xml,'{{WorkingDirectory}}', pwd);
     xml = strrep(xml,'{{Frames}}', num2str(img.frames));
     xml = strrep(xml,'{{TR}}', num2str(img.TR));
@@ -401,8 +401,8 @@ function [meta] = dscalarXML(img)
     mpath = fileparts(mfilename('fullpath'));
     xml = fileread(fullfile(mpath, 'dscalar-32k.xml'));
     xml = strrep(xml, '{{ParentProvenance}}', img.filename);
-    xml = strrep(xml, '{{ProgramProvenance}}', 'QuNex nitools');
-    xml = strrep(xml, '{{Provenance}}', 'QuNex nitools');
+    xml = strrep(xml, '{{ProgramProvenance}}', 'QuNex');
+    xml = strrep(xml, '{{Provenance}}', 'QuNex');
     xml = strrep(xml, '{{WorkingDirectory}}', pwd);
 
     if ~isfield(img.cifti, 'maps') || isempty(img.cifti.maps)

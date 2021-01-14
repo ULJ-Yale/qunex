@@ -1005,7 +1005,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     for the conversion can be specified explicitly or determined automatically.
     It can be one of 'dcm2niix', 'dcm2nii', 'dicm2nii' or 'auto'. If set to 
     'auto', for dicom files the conversion is done using dcm2niix, and for 
-    PAR/REC files, dicm2nii is used if Qu|Nex is set to use Matlab, otherwise 
+    PAR/REC files, dicm2nii is used if QuNex is set to use Matlab, otherwise 
     also PAR/REC files are converted using dcm2niix. If set explicitly, the 
     command will try to use the tool specified. To speed the process up, the 
     command can run it can run multiple conversion processes in parallel. The 
