@@ -7,6 +7,4 @@
 [submodule "connector"]
 	path = connector
 	url = git@bitbucket.org:oriadev/connector.git
-[submodule "hcp"]
-	path = hcp
-	url = git@bitbucket.org:oriadev/hcp.git
+
