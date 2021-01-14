@@ -16,17 +16,17 @@
 #
 # ## PRODUCT
 #
-#  qunexContainer.sh
+#  qunex_container.sh
 #
 # ## LICENSE
 #
-# * The qunexContainer.sh = the "Software"
+# * The qunex_container.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## Description 
 #   
-# This script, qunexContainer.sh runs QuNex  container 
+# This script, qunex_container.sh runs QuNex  container 
 #  pointing to code that executes the environment and calls the final code 
 #  that should be executed inside the container
 # 
@@ -36,7 +36,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. bash qunexContainer.sh --help
+# See output of usage function: e.g. bash qunex_container.sh --help
 #
 # ### Expected Previous Processing
 # 
@@ -75,7 +75,7 @@ usage() {
  echo ""
  echo "Command to execute the shell script::"
  echo ""
- echo " <path to this script>/qunexContainer.sh \ " 
+ echo " <path to this script>/qunex_container.sh \ " 
  echo "   --container=<Type of container image> \ "
  echo "   --script=<Path of the container folder> \ "
  echo "   --inputfolder=<input_folder> \ "
@@ -125,7 +125,7 @@ done
 
 
 echo ""
-echo "Running qunexContainer.sh"
+echo "Running qunex_container.sh"
 echo "========================="
 echo ""
 echo "ConImage      : ${ConImage}"

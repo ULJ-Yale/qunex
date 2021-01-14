@@ -1190,7 +1190,7 @@ echo ""
 
 # --- Report the environment variables for QuNex Turnkey run:
 echo ""
-bash ${TOOLS}/${QUNEXREPO}/env/qunex_envStatus.sh --envstatus
+bash ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus
 echo ""
 
 # ---- Map the data from input to output when in XNAT workflow

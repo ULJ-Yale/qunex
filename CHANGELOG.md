@@ -19,7 +19,7 @@
 * 0.61.16 HCP Diffusion now uses pipe (|) as the extra eddy args separator.
 * 0.61.15 Beautified and debugged extra-eddy-arg printout in HCP Diffusion pipeline.
 * 0.61.14 Added new parameters introduced by the latest HCP pipelines to HCP Diffusion command.
-* 0.61.13 Added --nv flag to qunexContainer for Singularity CUDA support.
+* 0.61.13 Added --nv flag to qunex_container for Singularity CUDA support.
 * 0.61.12 Added CUDA support for Diffusion pipelines.
 * 0.61.11 Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
 * 0.61.10 Removed a bug in single-run HCP ICAFix
