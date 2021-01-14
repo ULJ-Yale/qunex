@@ -68,7 +68,7 @@ function [data] = g_ExtractROIGLMValues(flist, roif, outf, effects, frames, valu
 %   2017-03-04 Grega Repovš
 %              Updated documentation.
 %
-%   ToDo
+%   TODO
 %   — selection of stats to save
 %   — additional info (roi xyz, peak value ...)
 %

@@ -20,8 +20,8 @@ The QuNex code is is co-developed and co-maintained by the:
 
 ## Versioning
 
-QuNex version: 0.90.0
-qx_library submodule version: 0.90.0
+QuNex: 0.90.0
+qx_library: 0.90.0
 
 ## References
 
