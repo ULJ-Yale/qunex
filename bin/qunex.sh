@@ -17,8 +17,7 @@
 #
 # ## PRODUCT
 #
-# * qunex.sh is a connector wrapper
-#   developed as for front-end bash integration for the QuNex Suite
+# qunex.sh is a front-end bash integration script for the QuNex Suite
 #
 # ## LICENSE
 #

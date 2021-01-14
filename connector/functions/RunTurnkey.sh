@@ -1090,7 +1090,7 @@ QuNexMasterLogFolder="${STUDY_PATH}/processing/logs"
 QuNexSpecsDir="${SessionsFolder}/specs"
 QuNexRawInboxDir="${QuNexWorkDir}/inbox"
 QuNexRawInboxDir_temp="${QuNexWorkDir}/inbox_temp"
-QuNexCommand="${TOOLS}/${QUNEXREPO}/connector/qunex.sh"
+QuNexCommand="${TOOLS}/${QUNEXREPO}/bin/qunex.sh"
 
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     SpecsBatchFileHeader="${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME}"
