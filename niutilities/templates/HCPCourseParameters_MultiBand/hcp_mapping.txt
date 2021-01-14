@@ -1,0 +1,151 @@
+# -------------------------------------------------
+# -- Qu|Nex Environment Preprocessing Parameters --
+# -------------------------------------------------
+
+# -------------------------------------
+# ---> HCP Pipelines general parameters
+# -------------------------------------
+_hcp_Pipeline            : ${HCPPIPEDIR}
+_hcp_folderstructure     : hcpls
+_hcp_bold_boldnamekey    : name
+_hcp_mppversion          : hcp
+
+# -------------------------------------
+# ---> Pre FreeSurfer parameters
+# -------------------------------------
+_hcp_suffix             :
+_hcp_brainsize          : 150
+_hcp_t2                 : t2
+_hcp_t1samplespacing    : 0.0000071
+_hcp_t2samplespacing    : 0.0000021
+_hcp_unwarpdir          : z
+#_hcp_gdcoeffs           : PRISMA_Yale_coeff.grad
+_hcp_avgrdcmethod       : TOPUP
+_hcp_topupconfig        : b02b0.cnf
+_hcp_printcom           :
+_hcp_sephaseneg         : AP
+_hcp_sephasepos         : PA
+_hcp_dwelltime          : 0.000580009
+_hcp_seunwarpdir        : y
+
+# -------------------------------------
+# ---> FreeSurfer parameters
+# -------------------------------------
+_hcp_freesurfer_home    : ${FREESURFER_HOME}
+
+
+# -------------------------------------
+# ---> Post FreeSurfer parameters
+# -------------------------------------
+_hcp_grayordinatesres   : 2
+_hcp_hiresmesh          : 164
+_hcp_lowresmesh         : 32
+
+
+# -------------------------------------
+# ---> Diffusion preprocessing - N/A
+# -------------------------------------
+_hcp_dwi_dwelltime      : 0.689998
+
+
+# -------------------------------------
+# ---> fMRI Volume parameters
+# -------------------------------------
+_hcp_bold_echospacing   : 0.000580009
+_hcp_bold_echodiff      : NONE
+_hcp_bold_correct       : TOPUP
+_hcp_bold_ref           : use
+_hcp_bold_unwarpdir     : -y
+_hcp_bold_res           : 2
+_hcp_bold_gdcoeffs      : NONE
+_hcp_bold_stcorr        : NONE
+_hcp_bold_stcorrdir     : up
+_hcp_bold_stcorrint     : odd
+_hcp_bold_seimg         : independent
+_hcp_bold_movref        : independent
+_hcp_bold_prefix        :
+_parsessions            : 16
+
+
+# -------------------------------------
+# ---> fMRI Surface parameters
+# -------------------------------------
+_hcp_bold_smoothFWHM    : 2
+
+
+# -------------------------------------
+# ---> Further BOLD analyses parameters
+# -------------------------------------
+_image_source       : hcp
+_image_target       : cifti
+_bolds              : rest
+_TR                 : 0.8
+_omit               : 0
+_pignore            : hipass=linear|regress=spline|lopass=linear
+_log                : keep
+_glm_matrix         : both
+_glm_residuals      : save
+_bold_actions       : shrcl
+
+   # # ==========  _bold_actions  ==============
+   #
+   # m ... Motion scrubbing.
+   # s ... Spatial smooting.
+   # h ... High-pass filtering.
+   # r ... Regression (nuisance and/or task) with an optional number 0, 1, or 2
+   #       specifying the type of regression to use (see REGRESSION below).
+   # c ... Saving of resulting beta coefficients (allways to follow 'r').
+   # l ... Low-pass filtering.
+   #
+   # =========================================
+
+
+# -------------------------------------
+# ---> BOLD de-noising parameters
+# -------------------------------------
+_bold_nuisance      : m,V,WM,WB
+_event_file         :
+_nprocess           : 0
+_bold_prefix        :
+_event_string       :
+_event_file         :
+_boldname           : bold
+_shrinknsroi        : true
+
+
+# -------------------------------------
+# ---> CIFTI mapping naming variable
+# -------------------------------------
+_hcp_cifti_tail      : _Atlas
+
+
+# -------------------------------------
+# ---> Smoothing parameters
+# -------------------------------------
+_surface_smooth      : 2
+_volume_smooth       : 2
+_voxel_smooth        : 1
+_smooth_mask         : nonzero
+_dilate_mask         : ${TOOLS}/${QUNEXREPO}/library/data/atlases/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
+
+
+# -------------------------------------
+# ---> Movement scrubbing parameters
+# -------------------------------------
+_mov_dvars:         3.0
+_mov_dvarsme:       1.6
+_mov_fd:            0.5
+_mov_radius:        50.0
+_mov_scrub:         yes
+_mov_fidl:          udvarsme
+_mov_plot:          mov_report
+_mov_post:          udvarsme
+_mov_before:        0
+_mov_after:         0
+_mov_bad:           udvarsme
+_mov_mreport:       movement_report.txt
+_mov_preport:       movement_report_post.txt
+_mov_sreport:       movement_scrubbing_report.txt
+_mov_pdf:           movement_plots
+_mov_pref:
+
