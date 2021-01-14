@@ -99,8 +99,8 @@ weho() {
     echo -e "$WHITE_F$1 \033[0m"
 }
 
-# source $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
-# $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
+# source $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
+# $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 
 QuNexTurnkeyWorkflow="createStudy mapRawData importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy DWIeddyQC runQC_DWIeddyQC RunQC_DWIeddyQC DWIFSLdtifit runQC_DWIFSLdtifit RunQC_DWIFSLdtifit DWIFSLbedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIbedpostx RunQC_DWIbedpostx DWIpreTractography DWIparcellate DWIseedTractographyDense runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation BOLDparcellate computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
 
@@ -308,7 +308,7 @@ usage() {
  echo "                    Note: The provided scene has to conform to QuNex QC "
  echo "                    template standards.xw"
  echo ""
- echo "                    See $TOOLS/$QUNEXREPO/library/data/scenes/qc/ for example"
+ echo "                    See $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/ for example"
  echo "                    templates."
  echo ""
  echo "                    The qc path has to contain relevant files for the provided"
@@ -1190,7 +1190,7 @@ echo ""
 
 # --- Report the environment variables for QuNex Turnkey run:
 echo ""
-bash ${TOOLS}/${QUNEXREPO}/library/environment/qunex_envStatus.sh --envstatus
+bash ${TOOLS}/${QUNEXREPO}/env/qunex_envStatus.sh --envstatus
 echo ""
 
 # ---- Map the data from input to output when in XNAT workflow
@@ -2096,7 +2096,7 @@ fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
+        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
             ${QuNexCommand} DWIparcellate --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
@@ -2109,11 +2109,11 @@ fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$SeedFile" ]; then
             # Thalamus SomatomotorSensory
-            SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii"
+            SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii"
             OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
             ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
             # Thalamus Prefrontal
-            SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii"
+            SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii"
             OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
             ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
         fi
@@ -2377,7 +2377,7 @@ fi
                if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
                if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
                # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-               if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
+               if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
                if [ -z "$OutName" ]; then OutNameParcelation="BOLD-CAB-NP-v1.0"; else OutNameParcelation="${OutName}"; fi
                if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
                if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
@@ -2415,16 +2415,16 @@ fi
 
             for Parcellation in ${RunParcellations}; do
                 if [ ${Parcellation} == "CANP" ]; then
-                    ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"
+                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"
                     OutNameParcelation="BOLD-CAB-NP-v1.0"
                 elif [ ${Parcellation} == "HCP" ]; then
-                    ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/GlasserParcellation/Q1-Q6_RelatedParcellation210.LR.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii"
+                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/GlasserParcellation/Q1-Q6_RelatedParcellation210.LR.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii"
                     OutNameParcelation="HCP-210"
                 elif [ ${Parcellation} == "YEO17" ]; then
-                    ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17networks_networks_MWfix.dlabel.nii"
+                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17networks_networks_MWfix.dlabel.nii"
                     OutNameParcelation="YEO17"
                 elif [ ${Parcellation} == "YEO7" ]; then
-                    ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_thalamus_7networks_networks_MWfix.dlabel.nii"
+                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_thalamus_7networks_networks_MWfix.dlabel.nii"
                     OutNameParcelation="YEO7"
                 else
                     reho " ===> ERROR: ${Parcellation} not recognized as a valid parcellation name! Skipping";
@@ -2469,7 +2469,7 @@ fi
         FunctionName="computeBOLDfc"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ computeBOLDfc processing steps for Seed FC."; echo ""
         if [ -z ${ROIInfo} ]; then
-           ROINames="${TOOLS}/${QUNEXREPO}/library/data/roi/seeds_cifti.names ${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
+           ROINames="${TOOLS}/${QUNEXREPO}/qx_library/data/roi/seeds_cifti.names ${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
         else
            ROINames=${ROIInfo}
         fi

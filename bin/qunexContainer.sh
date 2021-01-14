@@ -194,6 +194,6 @@ if [[ ${Docker} == 'yes' ]] ; then
             -v ${InputFolder}/:/data/input \
             -v ${OutputFolder}:/data/output \
             -v ${SpecFolder}/:/data/spec \
-             ${ConImage} bash -c "/opt/qunex/library/bin/qunex-api-wrapper.sh ${QUNEXstring}"
+             ${ConImage} bash -c "/opt/qunex/qx_library/bin/qunex-api-wrapper.sh ${QUNEXstring}"
    fi
 fi

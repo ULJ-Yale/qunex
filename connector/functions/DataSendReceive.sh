@@ -340,7 +340,7 @@ for RUN_TYPE in ${RUN_TYPES}; do
         unset DirName FileName
         for InputPackage in ${InputPackages}; do
             unset DirName FileName
-            FileLockerCommand="python ${TOOLS}/${QUNEXREPO}/library/bin/filelocker.py -c ${FILELOCKER_CREDENTIALS} -a download -i ${InputPackage} -d ${DataDropFolder}/FileLockerDownload -u ${FileLockerUserID}"
+            FileLockerCommand="python ${TOOLS}/${QUNEXREPO}/qx_library/bin/filelocker.py -c ${FILELOCKER_CREDENTIALS} -a download -i ${InputPackage} -d ${DataDropFolder}/FileLockerDownload -u ${FileLockerUserID}"
             geho " -- Running FileLocker download:"
             geho "    ------------------------------- "
             echo ""

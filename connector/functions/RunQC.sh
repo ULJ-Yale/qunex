@@ -92,7 +92,7 @@ usage() {
  echo "                       HTML file in the above directory. "
  echo ""
  echo "                       Note: If using 'general' modality, then visualization is "
- echo "                       $TOOLS/$QUNEXREPO/library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
+ echo "                       $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
  echo ""
  echo "                       This will work on any input file within the "
  echo "                       session-specific data hierarchy."
@@ -118,7 +118,7 @@ usage() {
  echo "                       E.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' "
  echo "                       would be specified as --hcp_suffix='-run2' "
  echo "--scenetemplatefolder  Specify the absolute path name of the template folder "
- echo "                       [default: $TOOLS/${QUNEXREPO}/library/data/scenes/qc]"
+ echo "                       [default: $TOOLS/${QUNEXREPO}/qx_library/data/scenes/qc]"
  echo ""
  echo "                       Note: relevant scene template data has to be in the same "
  echo "                       folder as the template scenes."
@@ -230,7 +230,7 @@ usage() {
  echo "                    Note: The provided scene has to conform to QuNex QC "
  echo "                    template standards.xw"
  echo ""
- echo "                    See $TOOLS/$QUNEXREPO/library/data/scenes/qc/ for example "
+ echo "                    See $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/ for example "
  echo "                    templates. The qc path has to contain relevant files for "
  echo "                    the provided scene."
  echo "--omitdefaults      Yes or no. Default is [no]. If set to 'yes' then the script "
@@ -527,11 +527,11 @@ if [ -z "$UserSceneFile" ]; then
     if [ ! -z "$UserScenePath" ]; then 
         reho "---> Provided --userscenepath but --userscenefile not specified."
         reho "     Check your inputs and re-run.";
-        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
         reho "---> Reverting to QuNex defaults: ${scenetemplatefolder}"; echo ""
     fi
     if [ -z "$scenetemplatefolder" ]; then
-        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
         echo "---> Template folder path value not explicitly specified."; echo ""
         echo "---> Using QuNex defaults: ${scenetemplatefolder}"; echo ""
     fi
@@ -541,7 +541,7 @@ if [ -z "$UserSceneFile" ]; then
         echo "`ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
     else 
         reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
-        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
         reho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
     fi
 else
@@ -1454,7 +1454,7 @@ main() {
                         if [[ ${BOLDfc} == "pconn" ]]; then
                             TemplateSceneFile="TEMPLATE.PCONN.${Modality}.QC.wb.scene"
                         fi
-                        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+                        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                         WorkingSceneFile="${CASEName}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
                         # -- Rsync over template files for a given BOLD
                         Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
@@ -1527,7 +1527,7 @@ main() {
                                     # Inputs
                                     Modality="BOLD"
                                     TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
-                                    scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+                                    scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
                                     # -- Rsync over template files for a given BOLD
                                     runsnr_BOLD

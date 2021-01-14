@@ -127,7 +127,7 @@ _surface_smooth      : 2
 _volume_smooth       : 2
 _voxel_smooth        : 1
 _smooth_mask         : nonzero
-_dilate_mask         : ${TOOLS}/${QUNEXREPO}/library/data/atlases/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
+_dilate_mask         : ${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
 
 
 # -------------------------------------

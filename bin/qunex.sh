@@ -1377,9 +1377,9 @@ fi
 if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envsetup" ]]; then
     show_version
     echo ""
-    echo "Printing help call for $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh"
+    echo "Printing help call for $TOOLS/$QUNEXREPO/env/qunex_environment.sh"
     echo ""
-    bash ${TOOLS}/$QUNEXREPO/library/environment/qunex_environment.sh --help
+    bash ${TOOLS}/$QUNEXREPO/env/qunex_environment.sh --help
     exit 0
 fi
 
@@ -2305,11 +2305,11 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
         if [ ! -z "$UserScenePath" ]; then 
             echo "---> Provided --userscenepath but --userscenefile not specified."; echo "";
             echo "     Check your inputs and re-run."; echo "";
-            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
             geho "---> Reverting to QuNex defaults: ${scenetemplatefolder}"; echo ""
         fi
         if [ -z "$scenetemplatefolder" ]; then
-            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
             echo "---> Template folder path value not explicitly specified."; echo ""
             geho "---> Using QuNex defaults: ${scenetemplatefolder}"; echo ""
         fi
@@ -2317,7 +2317,7 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
             geho "---> Scene files found in:"; geho "`ls ${scenetemplatefolder}/*${Modality}*.scene`"; echo ""
         else 
             echo "---> Specified folder contains no scenes: ${scenetemplatefolder}"; echo ""
-            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
             geho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
         fi
     else

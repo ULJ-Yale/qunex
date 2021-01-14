@@ -892,7 +892,7 @@ def main(args=None):
 
         for k, v in envars:
             print("export con_%s=\"%s\"" % (k, v), file=f)
-        print("source /opt/qunex/library/environment/qunex_environment.sh", file=f)
+        print("source /opt/qunex/env/qunex_environment.sh", file=f)
 
         if bash_post:
             print(bash_post, file=f)
