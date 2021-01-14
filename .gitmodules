@@ -1,6 +1,3 @@
-[submodule "niutilities"]
-	path = niutilities
-	url = git@bitbucket.org:oriadev/niutilities.git
 [submodule "library"]
 	path = qx_library
 	url = git@bitbucket.org:oriadev/library.git
