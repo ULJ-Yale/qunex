@@ -1,12 +1,12 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 
-import niutilities as niu
-import niutilities.g_process as gp
-import niutilities.g_matlab as gm
-import niutilities.g_core as gc
-import niutilities.g_exceptions as ge
-import niutilities.g_commands as gcom
+import qx_utilities as qxu
+import qx_utilities.g_process as gp
+import qx_utilities.g_matlab as gm
+import qx_utilities.g_core as gc
+import qx_utilities.g_exceptions as ge
+import qx_utilities.g_commands as gcom
 import os.path
 import sys
 import copy
@@ -22,13 +22,11 @@ print "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version", v
 print 
 
 help = '''
-  General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses   
+  QuNex python utilities (python qx_utilities) for Preprocessing and Analyses   
 --------------------------------------------------------------------------------
 
  DESCRIPTION: QuNex Suite workflows contain python-based general neuroimaging 
- utilities. NIutilities can be invoked via `gmri <command>` call or by invoking 
- the "qunex <command>" call.
- 
+ utilities. QuNex python utilities can be invoked via the "qunex <command>" call.
 
                         General QuNex Usage Syntax
 ================================================================================
@@ -52,7 +50,7 @@ help = '''
 # hcpdb hcp_Bedpostx     Run FSL Bedpostx GPU.
 
 comlist = '''
-  General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses   
+  QuNex python utilities (python qx_utilities) for Preprocessing and Analyses   
 --------------------------------------------------------------------------------
 
 
@@ -104,7 +102,7 @@ setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt] [check="
 
 Miscellaneous file commands
 ---------------------------
-createStudy  studyfolder=<path to study base folder> [subfolders=$TOOLS/niutilities/templates/study_folders_default.txt]
+createStudy  studyfolder=<path to study base folder> [subfolders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
 createBatch  [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch.txt]
 createList  [sessionsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 createConc  [sessionsfolder=.] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
@@ -215,10 +213,10 @@ fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
 fsf    runFullFS                Run full freesurfer segmentation
 
 
-MATLAB commands supported via NIUtilities
------------------------------------------
-A number of MATLAB commands provided as part of QuNex can be 
-invoked via the NIUtilities engine. A list of commands currently supported is 
+MATLAB commands supported via python qx_utilities
+-------------------------------------------------
+A number of MATLAB commands provided as part of QuNex can be  invoked via the
+python qx_utilities engine. A list of commands currently supported is 
 provided below. For more information run `qunex <command>`. 
 
 Note that parameters can be specified in any order. Parameters that are not provided 
@@ -237,7 +235,7 @@ Example call of a QuNex MATLAB command:
   --projection=midthickness
 
 
- ==> List of MATLAB commands supported via NIUtilities:
+ ==> List of MATLAB commands supported via python qx_utilities:
 '''
 
 for mcom in gm.functionList:
@@ -248,7 +246,7 @@ def runCommand(command, args):
     folders = gc.deduceFolders(args)
 
     if folders['basefolder']:
-        niu.g_utilities.checkStudy(folders['basefolder'])
+        qxu.g_utilities.checkStudy(folders['basefolder'])
 
     # --- check if command is deprecated
     command = gcom.checkDeprecatedCommands(command)
@@ -264,7 +262,7 @@ def runCommand(command, args):
         return
     elif command in gm.functions:
         if 'scheduler' in args:
-            niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
+            qxu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
         else:
             gm.run(command, args)
         return
@@ -319,7 +317,7 @@ def runCommand(command, args):
                     args['ignore'] = 'scheduler'
                 del args['sperlist']
 
-                niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+                qxu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
             
             else:
                 # -- define number of sessions to run in each runList
@@ -367,7 +365,7 @@ def runCommand(command, args):
                 logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
                 logname = os.path.join(runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
-                niu.g_scheduler.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
+                qxu.g_scheduler.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
 
             else:
                 bargs['eargs'] = eargs
@@ -380,7 +378,7 @@ def runCommand(command, args):
 
         # -- are we using a scheduler
         if 'scheduler' in eargs:
-            niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+            qxu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
         # -- a basic call
         elif sessions is None:
@@ -475,7 +473,7 @@ def printHelp(com):
     elif com in ['o']:
         print "================================================================="
         print ""
-        print "Neuro Imaging utilities (niutilities) for processing and analysis"
+        print " QuNex python utilities for processing and analysis"
         print "\nuse: qunex <command> [option=value] [option=value] ..."
         print "\nList of processing options"
         for line in gp.arglist:

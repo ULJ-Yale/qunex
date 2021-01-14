@@ -24,8 +24,8 @@ import glob
 import re
 
 # qx imports
-import niutilities.g_exceptions as ge
-import niutilities.g_core as gc
+import qx_utilities.g_exceptions as ge
+import qx_utilities.g_core as gc
 
 def map_to_qunex(file, sessionsfolder, sessions, overwrite):
     """

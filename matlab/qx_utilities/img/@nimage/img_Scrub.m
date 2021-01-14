@@ -33,7 +33,7 @@ function [img] = img_Scrub(img, com)
 %   2012-10-29 Grega Repovs
 %              Initial version.
 %
-%   ToDo:
+%   TODO:
 %       Needs shifting added to com and mask!
 %       (Might require changing com syntax)
 %

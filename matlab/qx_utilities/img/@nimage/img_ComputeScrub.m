@@ -104,7 +104,7 @@ function [img, param] = img_ComputeScrub(img, comm)
 %   2018-08-24 Grega Repovs
 %              Now also returning the parameters used.
 %
-%   ToDo
+%   TODO
 %
 %   - Add computation of frame statistics if they are not already present.
 %

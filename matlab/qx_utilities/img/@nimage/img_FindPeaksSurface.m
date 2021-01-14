@@ -103,7 +103,7 @@ function [roi peak] = img_FindPeaksSurface(img, surfaceComponent, projection, mi
 %   2017-07-05 Aleksij Kraljic
 %              Initial version.   
 %
-%   ToDo
+%   TODO
 %   - add statistics calculations for the peak data structure
 %
 

@@ -20,7 +20,7 @@ import glob
 import sys
 import types
 import traceback
-import niutilities.g_exceptions as ge
+import qx_utilities.g_exceptions as ge
 
 
 def readSessionData(filename, verbose=False):
@@ -190,7 +190,7 @@ def readList(filename, verbose=False):
     """
 
     slist   = []
-    session = None
+    session = {}
 
     with open(filename) as f:
         for line in f:
@@ -204,7 +204,7 @@ def readList(filename, verbose=False):
                 if line[0] == "session id":
                     if session is not None:
                         slist.append(session)
-                    session = {'id': line[1]}
+                    session['id'] = line[1]
 
                 else:
                     if line[0] in session:
@@ -594,8 +594,9 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
                 try:
                     os.makedirs(logfolder)
                 except:
-                    r += "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
-                    raise ExternalFailed(r)
+                    r = "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
+                    print r
+                    raise ge.CommandFailed(function="runWithLog", error=r)
 
         # runlog file
         runlogname = "Log-" + logname
@@ -858,7 +859,7 @@ def getLogFile(folders=None, tags=None):
         raise ge.CommandFailed("getLogFile", "Logfolder not found" , "Could not deduce the location of the log folder based on the provided information!")
 
     if isinstance(tags, basestring) or tags is None:
-        tags = [logtags]
+        tags = []
 
     logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname  = tags + [logstamp]

@@ -18,15 +18,15 @@ import errno
 import shutil
 import glob
 import datetime
-import niutilities.g_process as gp
-import niutilities.g_core as gc
-import niutilities.gp_core as gpc
-import niutilities.g_exceptions as ge
-import niutilities
+import qx_utilities.g_process as gp
+import qx_utilities.g_core as gc
+import qx_utilities.gp_core as gpc
+import qx_utilities.g_exceptions as ge
+import qx_utilities
 import getpass
 import re
 import subprocess
-import niutilities.g_filelock as fl
+import qx_utilities.g_filelock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
@@ -80,7 +80,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
     --action       whether to create a new study folder (create) or check an
                    existing study folder (check)
     --folders      Path to the file which defines the study folder structure.
-                   [$TOOLS/niutilities/templates/study_folders_default.txt]
+                   [$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
     """
 
     # template folder
@@ -242,7 +242,7 @@ def createStudyFolders(folders_spec):
     ==========
 
     --folders     Path to the file which defines the study folder structure.
-                  [$TOOLS/niutilities/templates/study_folders_default.txt]
+                  [$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
     """
 
     # variable for storing the structure
@@ -289,7 +289,7 @@ def createStudyFolders(folders_spec):
 
 def createStudy(studyfolder=None, folders=None):
     """
-    ``createStudy studyfolder=<path to study base folder> [folders=$TOOLS/niutilities/templates/study_folders_default.txt]``
+    ``createStudy studyfolder=<path to study base folder> [folders=$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt]``
 
     Creates the base folder and study folders.
 
@@ -298,14 +298,14 @@ def createStudy(studyfolder=None, folders=None):
 
     --studyfolder      The path to the study folder to be generated.
     --folders          Path to the file which defines the subfolder structure.
-                       [$TOOLS/niutilities/templates/study_folders_default.txt]
+                       [$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt]
 
     USE
     ===
 
     Creates the base folder at the provided path location and the study folders. 
-    By default $TOOLS/niutilities/templates/study_folders_default.txt will be used
-    for subfolder specification. The default structure is::
+    By default $TOOLS/python/python/qx_utilities/templates/study_folders_default.txt
+    will be used for subfolder specification. The default structure is::
 
         <studyfolder>
         ├── analysis
@@ -402,7 +402,7 @@ def createStudy(studyfolder=None, folders=None):
 
 def checkStudy(startfolder=".", folders=None):
     """
-    ``checkStudy startfolder="." [folders=$TOOLS/niutilities/templates/study_folders_default.txt]``
+    ``checkStudy startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
 
     The function looks for the path to the study folder in the hierarchy 
     starting from the provided startfolder. If found it checks that all the
@@ -499,9 +499,9 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     copy and modify one of the following templates:
 
     -legacy data template   
-      ``qunex/niutilities/templates/batch_legacy_parameters.txt``
+      ``qunex/python/qx_utilities/templates/batch_legacy_parameters.txt``
     -multiband data template
-      ``qunex/niutilities/templates/batch_multiband_parameters.txt``
+      ``qunex/python/qx_utilities/templates/batch_multiband_parameters.txt``
 
     EXAMPLE USE
     ===========
@@ -1944,10 +1944,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             # -- remove parameters that are not allowed
 
-            if commandName in niutilities.g_commands.commands:
-                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"])
+            if commandName in qx_utilities.g_commands.commands:
+                allowedParameters = list(qx_utilities.g_commands.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
-                    allowedParameters += niutilities.g_commands.extraParameters
+                    allowedParameters += qx_utilities.g_commands.extraParameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
                         del commandParameters[param]
@@ -2602,7 +2602,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
                     if len(line) > 1:
                         sequenceNames.append(line[1])
                     else:
-                        misssingNames.append(line[0])
+                        sequenceNames.append(line[0])
         f.close()
 
         if not sequenceNames:

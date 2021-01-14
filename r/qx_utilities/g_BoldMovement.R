@@ -6,7 +6,7 @@
 #  	OPTIONS
 #   =======
 #	
-#   --folder, -f	the folder to look for .dat data [.]
+#	--folder, -f	the folder to look for .dat data [.]
 #	--mreport, -mr	the file to write movement report to [none]
 #	--preport, -pr	the file to write movement report after scrubbing to [none]
 #	--sreport, -sr	the file to write scrubbing report to [none]

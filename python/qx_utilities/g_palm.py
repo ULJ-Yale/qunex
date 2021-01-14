@@ -24,8 +24,8 @@ import subprocess
 import gzip
 import shutil
 import glob
-import niutilities
-import niutilities.g_exceptions as ge
+import qx_utilities
+import qx_utilities.g_exceptions as ge
 import re
 
 def runPALM(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):
@@ -501,7 +501,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
 
             print " --> running PALM for CIFTI input"
 
-            completed = niutilities.g_core.runExternalParallel(calls, cores=parelements, prepend='     ... ')
+            completed = qx_utilities.g_core.runExternalParallel(calls, cores=parelements, prepend='     ... ')
 
             errors = []
             for complete in completed:
@@ -738,7 +738,7 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
         elif maxv is None:
             ex.append("(m%d >= %.3f)" % (n, minv[n]))
         else:
-            ex.append("((m%d >= %.3f) * (m%d <= %.3f))" % (n, minv[n], maxv[n]))
+            ex.append("((m%d >= %.3f) * (m%d <= %.3f))" % (n, minv[n], n, maxv[n]))
 
     if join == 'OR':
         ex = ["((%s) > 0) * img" % (" + ".join(ex))]

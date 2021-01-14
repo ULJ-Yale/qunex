@@ -22,8 +22,6 @@
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
-# ## TODO
-#
 # ## DESCRIPTION 
 #
 # * This is a DataSync.sh wrapper developed for Sync from a cluster to local storage

@@ -354,7 +354,7 @@ fi
 if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
     # -- Add check in case the sessions folder is distinct from the default name
     # -- Eventually use the template file to replace hard-coded values
-    QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/niutilities/templates/study_folders_default.txt | tr -d '\r'`
+    QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
     QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
     for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
         if [[ ! -d ${QuNexSessionsFolder} ]]; then
@@ -389,7 +389,7 @@ if [[ ! -d ${RunChecksFolder} ]]; then
     mkdir ${RunChecksFolder} &> /dev/null
 fi
 
-# -- Specific call for NIUtilities functions
+# -- Specific call for python qx_utilities functions
 if [[ ${GmriCommandToRun} ]]; then
     echo ""
     cyaneho "--- Full QuNex call for command: ${GmriCommandToRun}"
@@ -400,14 +400,14 @@ if [[ ${GmriCommandToRun} ]]; then
     echo ""
     echo ""
     gmriFunction
-    # -- Debugging for NIUtilities functions that are not logging natively yet
+    # -- Debugging for python qx_utilities functions that are not logging natively yet
     #
     # if [[ ${GmriCommandToRun} != "createStudy" ]]; then
     #     GmriComLogFile=`ls -Art ${MasterComlogFolder}/*${GmriCommandToRun}_*.log | tail -n 1`
-    #     # -- Temporary patch to allow for unified log handling in NIUtilities
+    #     # -- Temporary patch to allow for unified log handling in python qx_utilities
     #     if [[ `echo $GmriComLogFile | grep "tmp"` ]]; then
     #         echo ""
-    #         mageho " NOTE: comlog file for ${GmriCommandToRun} is not generated directly via NIUtilities but rather via RunTurnkey."
+    #         mageho " NOTE: comlog file for ${GmriCommandToRun} is not generated directly via python qx_utilities but rather via RunTurnkey."
     #         # mageho "       $GmriComLogFile"
     #         echo ""
     #         # GmriCompletionCheckPass="${RunChecksFolder}/CompletionCheck_${GmriCommandToRun}_${TimeStamp}.Pass"
@@ -541,7 +541,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh
 # ---------------------------------------------------------------------------------------------------------------
 
 organizeDicom() {
-# -- Note: This command passes parameters into two NIUtilities commands: sortDicom and dicom2niix
+# -- Note: This command passes parameters into two python qx_utilities commands: sortDicom and dicom2niix
 mkdir ${SessionsFolder}/${CASE}/dicom &> /dev/null
 if [[ ${Overwrite} == "yes" ]]; then
     echo ""
@@ -1424,7 +1424,7 @@ if [[ -z "${gmrifunctions##*$1*}" ]]; then
     else
         # -- Otherwise pass the command with all inputs from the command line
         
-        # -- Clear white spaces for input into NIUtilities
+        # -- Clear white spaces for input into python qx_utilities
         unset gmriinput
         whitespace="[[:space:]]"
         for inputarg in "$@"; do
@@ -1438,9 +1438,9 @@ if [[ -z "${gmrifunctions##*$1*}" ]]; then
             gmriinputecho="${gmriinputecho} ${inputarg}"
         done
         
-        # # -- Report NIUtilities for debugging
+        # # -- Report python qx_utilities for debugging
         #  echo ""
-        #  cyaneho "-------- Running NIUtilities command: ----------"
+        #  cyaneho "-------- Running python qx_utilities command: ----------"
         #  echo ""
         #  cyaneho "  qunex ${gmriinputecho}"
         #  echo ""
@@ -2139,7 +2139,7 @@ fi
 #  MATLAB execution and help
 # ------------------------------------------------------------------------------
 
-# -- Execute NIUtilities
+# -- Execute python qx_utilities
 if [[ ${GmriCommandToRun} ]]; then
    connectorExec
 fi

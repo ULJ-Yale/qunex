@@ -38,10 +38,10 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-from niutilities.gp_core import *
-from niutilities.g_img import *
-from niutilities.g_core import checkFiles
-import niutilities.g_exceptions as ge
+from qx_utilities.gp_core import *
+from qx_utilities.g_img import *
+from qx_utilities.g_core import checkFiles
+import qx_utilities.g_exceptions as ge
 import os
 import re
 import os.path

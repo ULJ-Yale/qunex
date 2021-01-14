@@ -15,13 +15,13 @@ Use gmri to run the commands from the terminal.
 """
 
 import os
-import niutilities
+import qx_utilities
 import subprocess
 import os.path
 import glob
 import re
 import datetime
-import niutilities.g_exceptions as ge
+import qx_utilities.g_exceptions as ge
 
 
 template = '''@ economy = 5
@@ -93,7 +93,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     subjs = [(e, os.path.exists(os.path.join(e, 'session.txt')), os.path.exists(os.path.join(e, 'dicom', 'DICOM-Report.txt')), os.path.exists(os.path.join(e, '4dfp', 'params'))) for e in subjs]
 
     do = []
-    print "\n---=== Running NIL preprocessing on folder %s ===---\n" % (folder)
+    print "\n---=== Running NIL preprocessing on folder %s ===---\n" % folder
     print "List of sessions to process\n"
     print "%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params")
     for subj, stxt, sdicom, sparam in subjs:
@@ -167,7 +167,7 @@ def runNIL(folder=".", overwrite=None, sourcefile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, pref = niutilities.g_core.readSessionData(os.path.join(folder, sourcefile))
+    info, _ = qx_utilities.g_core.readSessionData(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 

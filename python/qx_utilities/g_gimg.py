@@ -13,7 +13,7 @@ Created by Grega Repovs on 2013-04-13.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import niutilities.g_img as g
+import qx_utilities.g_img as g
 import numpy as np
 import gzip
 import os.path

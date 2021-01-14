@@ -19,15 +19,15 @@ import os
 import os.path
 import re
 import shutil
-import niutilities.g_exceptions as ge
-import niutilities.g_core as gc
+import qx_utilities.g_exceptions as ge
+import qx_utilities.g_core as gc
 import zipfile
 import tarfile
 import glob
 import datetime
 import gzip
 import sys
-import niutilities.g_filelock as fl
+import qx_utilities.g_filelock as fl
 import ast
 
 

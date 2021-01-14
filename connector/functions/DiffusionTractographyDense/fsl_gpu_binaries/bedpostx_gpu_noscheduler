@@ -24,8 +24,6 @@
 # * expressed or implied, including, but not limited to, the implied warranties
 # * of merchantability and fitness for a particular purpose.
 #
-# ### TODO
-#
 # ## Description 
 #   
 # This script, bedpostx_gpu_scheduler_clean.sh, implements gpu-based bedpostX

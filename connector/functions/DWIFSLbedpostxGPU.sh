@@ -22,8 +22,6 @@
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
-# ## TODO
-#
 # ## DESCRIPTION 
 #   
 # This script, DWIFSLbedpostxGPU.sh, implements FSL's bedpostX functionality within the QuNex Suite with GPU support

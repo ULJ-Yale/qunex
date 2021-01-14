@@ -25,8 +25,6 @@
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
-# ### TODO
-#
 # --> finish remaining functions
 #
 # ## Description
@@ -2723,7 +2721,7 @@ else
         ConnectorBOLDFunctions="BOLDParcellation computeBOLDfcGBC computeBOLDfcSeed"
         NiUtilsFunctions="setupHCP hcp1 hcp2 hcp3 hcp4 hcp5 hcpd computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
 
-        ## deprecated to support parallel processing # -- Check for completion of turnkey function for NIUtilities
+        ## deprecated to support parallel processing # -- Check for completion of turnkey function for python qx_utilities
         ## deprecated to support parallel processing if [ -z "${NiUtilsFunctions##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
         ## deprecated to support parallel processing     geho " -- Looking for incomplete/failed process ."; echo ""
         ## deprecated to support parallel processing     if [ -z "${CheckRunLog}" ]; then

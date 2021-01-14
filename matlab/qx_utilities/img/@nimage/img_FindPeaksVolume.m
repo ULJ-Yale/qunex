@@ -102,7 +102,7 @@ function [roi peak] = img_FindPeaksVolume(img, minsize, maxsize, val, t, options
 %              Added functionality for images with multiple frames.
 %            
 %
-%    ToDo
+%    TODO
 %    ??? Clean up code.
 %    ??? Maxsize optimization.
 %

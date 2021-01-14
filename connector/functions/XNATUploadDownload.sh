@@ -22,8 +22,6 @@
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
-# ## TODO
-#
 # --> Add functionality to take in all data types into the XNAT database
 #
 # ## DESCRIPTION 

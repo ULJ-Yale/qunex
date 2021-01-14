@@ -23,7 +23,7 @@
 * 0.61.12 Added CUDA support for Diffusion pipelines.
 * 0.61.11 Replaced spaces with underscores in g_ExtractGLMVolumes saveoption.
 * 0.61.10 Removed a bug in single-run HCP ICAFix
-* 0.61.9  HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in niutilities, added CUDA.
+* 0.61.9  HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in python qx_utilities, added CUDA.
 * 0.61.8  All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  Added additional parameters to DeDriftAndResample.
 * 0.61.6  runQC now works properly when overwrite is set to no.

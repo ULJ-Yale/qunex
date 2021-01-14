@@ -28,8 +28,6 @@
 # * expressed or implied, including, but not limited to, the implied warranties
 # * of merchantability and fitness for a particular purpose.
 #
-# ### TODO
-#
 # Find out what actual license terms are to be applied. Commercial use allowed? 
 # If so, this would likely violate FSL terms.
 #

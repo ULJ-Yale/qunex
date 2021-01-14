@@ -47,7 +47,7 @@ import g_scheduler
 import os
 import os.path
 from datetime import datetime
-import niutilities.g_exceptions as ge
+import qx_utilities.g_exceptions as ge
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # pipelines imports
@@ -779,12 +779,12 @@ def run(command, args):
         subjectInfo = {}
         for session in sessions:
             if 'subject' not in session:
-                raise ge.CommandFailed(command, "Missing subject information", "%s batch file does not provide subject information for session id %s." % (options['subjects'], subject['id']), "Please check the batch file!", "Aborting processing!")
+                raise ge.CommandFailed(command, "Missing subject information", "%s batch file does not provide subject information for session id %s." % (options['subjects'], session['id']), "Please check the batch file!", "Aborting processing!")
             if session['subject'] not in subjectList:
-                subjectList.append(subject['subject'])
+                subjectList.append(session['subject'])
                 subjectInfo[session['subject']] = {'id': session['subject'], 'sessions': []}
             if session['subject'] == session['id']:
-                raise ge.CommandFailed(command, "Session id matches subject id", "Session id [%s] is the same as subject id [%s]!" % (subject['id'], subject['subject']), "Please check the batch file!", "Aborting processing!")
+                raise ge.CommandFailed(command, "Session id matches subject id", "Session id [%s] is the same as subject id [%s]!" % (session['id'], session['subject']), "Please check the batch file!", "Aborting processing!")
             subjectInfo[session['subject']]['sessions'].append(session)
         sessions = [subjectInfo[e] for e in subjectList]
 
@@ -913,7 +913,7 @@ def run(command, args):
         c = 0
         if parsessions == 1 or options['run'] == 'test':
             if command in plactions:
-                todo = plactions[command]
+                pending_actions = plactions[command]
                 for session in sessions:
                     if len(session['id']) > 1:
                         if options['run'] == 'test':
@@ -923,7 +923,7 @@ def run(command, args):
                         soptions = updateOptions(session, options)
                         consoleLog += "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
                         print "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        r, status = procResponse(todo(session, soptions, overwrite, c + 1))
+                        r, status = procResponse(pending_actions(session, soptions, overwrite, c + 1))
                         writelog(r)
                         consoleLog += r
                         print r
@@ -933,9 +933,9 @@ def run(command, args):
                             break
 
             if command in sactions:
-                todo = sactions[command]
+                pending_actions = sactions[command]
                 soptions = updateOptions(session, options)
-                r, status = procResponse(todo(sessions, soptions, overwrite))
+                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 
         else:
@@ -943,13 +943,13 @@ def run(command, args):
             processPoolExecutor = ProcessPoolExecutor(parsessions)
             futures = []
             if command in plactions:
-                todo = plactions[command]
+                pending_actions = plactions[command]
                 for session in sessions:
                     if len(session['id']) > 1:
                         soptions = updateOptions(session, options)
                         consoleLog += "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
                         print "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        future = processPoolExecutor.submit(todo, session, soptions, overwrite, c + 1)
+                        future = processPoolExecutor.submit(pending_actions, session, soptions, overwrite, c + 1)
                         futures.append(future)
                         c += 1
                         if nprocess and c >= nprocess:
@@ -962,9 +962,9 @@ def run(command, args):
                     print result[0]
 
             if command in sactions:
-                todo = sactions[command]
+                pending_actions = sactions[command]
                 soptions = updateOptions(session, options)
-                r, status = procResponse(todo(sessions, soptions, overwrite))
+                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 
         # print console log

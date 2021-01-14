@@ -35,8 +35,8 @@ import re
 import traceback
 from datetime import datetime
 import time
-import niutilities.g_exceptions as ge
-import niutilities.g_filelock as fl
+import qx_utilities.g_exceptions as ge
+import qx_utilities.g_filelock as fl
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -125,7 +125,8 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
                         # f_conc = os.path.join(d['s_bold_concs'], tconc+".conc")
                         # f_fidl = os.path.join(d['s_bold_events'], tfidl+".fidl")
 
-                        r, status = copyBOLDData(sinfo, options, overwrite, thread, d, f, r)
+                        # TODO copyBOLDData does not exist!?
+                        #r, status = copyBOLDData(sinfo, options, overwrite, thread, d, f, r)
 
                         if status:
                             r += "\n---> Data ready!"
@@ -1147,7 +1148,8 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
             else:
                 report[tf] = ''
 
-        rcomm = 'g_BoldStats.R --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bold_tail=%s -bolds="%s" -v' % (
+        rcomm = '%s --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bold_tail=%s -bolds="%s" -v' % (
+            os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'g_BoldStats.R'), # script location
             d['s_bold_mov'],            # the folder to look for .dat data [.]
             report['mov_mreport'],      # the file to write movement report to [none]
             report['mov_preport'],      # the file to write movement report after scrubbing to [none]

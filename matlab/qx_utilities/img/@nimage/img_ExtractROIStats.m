@@ -36,7 +36,7 @@ function stats = img_ExtractROIStats(obj, roi, rcodes, selection, frames, weight
 %   2015-12-09 Grega Repovs
 %              Adapted from existing img_ExtractROI method.
 %
-%   ToDo
+%   TODO
 %   — computation of weighted mean SE
 %   — extraction of peak value
 %   — extraction of ROI coordinates (min, max, peak, geometric mean)

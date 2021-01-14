@@ -25,7 +25,7 @@ All rights reserved.
 """
 import os
 
-from niutilities.gp_core import *
+from qx_utilities.gp_core import *
 
 def fsl_f99(sinfo, options, overwrite=False, thread=0):
     """
@@ -144,8 +144,6 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # script location
-        # TODO USE FSL LOCATION ONCE FSL IS PATCHED
-        #f99_script = "bash " + os.path.join(fsl_f99_dir, "do_reg_F99.sh")
         niu_template_dir = os.environ["NIUTemplateFolder"]
         f99_script = "bash " + os.path.join(niu_template_dir, "NHP", "do_reg_F99.sh")
 
@@ -291,7 +289,8 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
     --xtract_ptx_options    Pass extra probtrackx2 options as a text file to
                             override defaults (e.g. --steplength=0.2).
                             [] for humans,
-                            [qunex/templates/NHP/ptx_config] for macaques.
+                            [$TOOLS/python/qx_utilities/templates/NHP/ptx_config]
+                            for macaques.
     --xtract_native         Run tractography in native (diffusion) space.
                             This flag is not set by default.
     --xtract_ref            Reference image ("<refimage> <diff2ref> <ref2diff>")

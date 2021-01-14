@@ -18,8 +18,8 @@ Created by Grega Repovs on 2013-04-08.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import niutilities.g_img as g
-import niutilities.g_gimg as gimg
+import qx_utilities.g_img as g
+import qx_utilities.g_gimg as gimg
 import numpy as np
 import gzip
 
