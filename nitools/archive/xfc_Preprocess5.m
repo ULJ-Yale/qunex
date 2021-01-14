@@ -1,0 +1,397 @@
+function [TS] = fc_Preprocess5(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, wbmask, sessionroi, overwrite, tail)
+
+%	Written by Grega Repovš, 2007-10-29
+%
+%	Regression of events - 2007-11-15
+%   Adapted for new fcMRI workflow - 2009-01-19
+%   Changed processing of filenames to alow arbitrary combination of steps - 2009-05-18
+%
+%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%	
+%	Does the preprocesing for the conc bold runs
+%	Saves images in ftarget folder
+%	Saves new conc files in the ctarget folder
+%	Omits "omit" number of start frames from bandpassing and GLM
+%	Does the steps specified in "do":
+%		s - smooth
+%		h - highpass
+%		r - regresses out nuisance
+%		c - save coefficients in _coeff file
+%		p - saves png image files of nusance ROI mask
+%       l - lowpass
+%
+%	In regression it uses the regressors specified in "regress":
+%		m - motion
+%		v - ventricles
+%		wm - white matter
+%		wb - whole brain
+%		d - first derivative
+%		t - task 
+%		e - events
+%
+%	It prepends task matrix to GLM regression 
+%	It reads event data from efile fidl event file 
+%   - these should be placed in the /images/functional/events/ and named boldX_efile
+%
+%   It takes eventstring to describe which events to model and for how many frames
+%   
+%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+if nargin < 14
+    tail = '.4dfp.img';
+    if nargin < 13
+        overwrite = false;
+        if nargin < 12
+            sessionroi = '';
+            if nargin < 11
+                wbmask = '';
+                if nargin < 10
+        	        variant = '';
+        	        if nargin < 9
+                	    eventstring = '';
+                	    if nargin < 8
+                        	TR = 2.5;	
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+fprintf('\nRunning preproces script 5 v0.9.1\n');
+
+% ======================================================
+% 	----> prepare paths
+
+froot = strcat(subjectf, ['/images/functional/bold' int2str(bold)]);
+
+file.boldmask  = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
+file.bold1     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1' tail]);
+file.segmask   = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
+file.wmmask    = ['WM' tail];
+file.ventricleseed = ['V' tail];
+file.eyeseed   = ['E' tail];
+
+file.nfile     = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance' tail]);
+file.nfilepng  = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance.png']);
+
+file.movdata  = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '_mov.dat']);
+file.fidlfile = strcat(subjectf, ['/images/functional/events/bold' int2str(bold) efile]);
+
+file.wbmask = wbmask;
+if strcmp(sessionroi, 'aseg')
+    file.sessionroi = file.segmask;
+elseif strcmp(sessionroi, 'wb')
+    file.sessionroi = file.boldmask;
+else
+    file.sessionroi = sessionroi;
+end
+
+glm.rgss = rgss;
+glm.task    = task;
+glm.efile   = efile;
+glm.eventstring = eventstring;
+
+
+
+% ======================================================
+% 	----> are we doing coefficients?
+
+docoeff = false;
+if strfind(doIt, 'c')
+    docoeff = true;
+    doIt = strrep(doIt, 'c', '');
+end
+
+
+
+% ======================================================
+% 	----> run processing loop
+
+task = ['shrl'];
+exts = {'_s','_hpss',['_res-' rgss],'_lpss'};
+info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
+ext  = '';
+
+img = nimage();
+
+for current = doIt
+
+    % --- set the source and target filename
+    
+    c = ismember(task, current);
+    sfile = [froot ext tail];
+    if isempty(ext)
+        ext = variant;
+    end
+    ext   = [ext exts{c}];
+    tfile = [froot ext tail];
+    
+    % --- print info
+    
+    fprintf('%s %s ', info{c}, sfile);
+    
+    % --- run it
+    
+    if exist(tfile, 'file') & ~overwrite
+        fprintf(' ... already completed!\n');
+    else
+        if img.empty
+            img = img.img_readimage(sfile);
+        end
+        
+        switch current
+            case 's'
+                img = img.img_Smooth3D(2, true);
+            case 'h'
+                hpsigma = ((1/TR)/0.009)/2;
+                img = img.img_Filter(hpsigma, 0, omit, true);
+            case 'l'
+                lpsigma = ((1/TR)/0.08)/2;
+                img = img.img_Filter(0, lpsigma, omit, true);
+            case 'r'
+                [img coeff] = regressNuisance(img, omit, file, glm);
+                if docoeff
+                    coeff.img_saveimage([froot ext '_coeff' tail]);
+                end
+        end
+        
+        img.img_saveimage(tfile);
+        fprintf(' ... saved!\n');
+    end
+
+end
+
+return
+
+
+% ======================================================
+% 	----> do GLM removal of nuisance regressors
+%
+
+
+function [img coeff] = regressNuisance(img, omit, file, glm)
+
+    img.data = img.image2D;
+    
+	% 	----> Create nuisance ROI
+	
+	if strfind(glm.rgss, '1b')
+	    [V, WB, WM] = firstBoldNuisanceROI(file, glm);
+	else
+	    [V, WB, WM] = asegNuisanceROI(file, glm);
+    end
+	
+	%   ----> mask if necessary
+	
+	if ~isempty(file.wbmask)
+	    wbmask = nimage.img_ReadROI(file.wbmask, file.sessionroi);
+	    wbmask = wbmask.img_GrowROI(2);
+        WB.data = WB.image2D;
+        WB.data(wbmask.image2D > 0) = 0;
+    end
+	
+	%   ----> save nuisance masks
+	
+	SaveNuisanceMasks(file, WB, V, WM);
+	
+	%   ----> combine nuisances
+	
+	nuisance = [];
+	
+	if strfind(glm.rgss, 'm')
+		nuisance = [nuisance ReadMovFile(file.movdata, img.frames)];
+	end
+	
+	if strfind(glm.rgss, 'v')
+		nuisance = [nuisance img.img_ExtractROI(V)'];
+	end
+
+	if strfind(glm.rgss, 'wm')
+		nuisance = [nuisance img.img_ExtractROI(WM)'];
+	end
+
+	if strfind(glm.rgss, 'wb')
+		nuisance = [nuisance img.img_ExtractROI(WB)'];
+	end
+	
+    % 	----> if requested, get first derivatives
+
+	if strfind(glm.rgss, 'd')
+		d = [zeros(1,size(nuisance,2));diff(nuisance)];
+		nuisance = [nuisance d];
+	end
+	
+	% 	----> add event data from fidl file
+	
+	if strfind(glm.rgss, 'e')
+	    events = g_CreateUnassumedResponseTaskRegressors(file.fidlfile, file.eventstring, img.frames);
+	    nuisance = [nuisance events];
+	end
+	
+	% 	----> prepare trend parameters
+
+	na = img.frames-omit;
+	pl = zeros(na,1);
+	for n = 1:na
+		pl(n)= (n-1)/(na-1);
+	end
+	pl = pl-0.5;
+    
+	% 	----> put all regressors together
+
+	if strfind(glm.rgss, 't')
+		X = [task(omit+1:nf,:) ones(na,1) pl nuisance(omit+1:img.frames,:)];
+	else
+		X = [ones(na,1) pl nuisance(omit+1:img.frames,:)];
+	end
+
+	% 	----> do GLM
+	
+	Y = img.sliceframes(omit);
+	
+	[coeff res] = Y.img_GLMFit(X);
+	img.data(:,omit+1:img.frames) = res.image2D;
+
+return
+
+
+% ======================================================
+% 	   ----> define nuisance ROI based on 1st bold frame
+%
+
+	
+function [V, WB, WM] = firstBoldNuisanceROI(file, glm);
+
+    % set up masks to be used
+    
+    O  = nimage(file.bold1, 'single', 1);
+    V  = O.zeroframes(1);
+    WB = O.zeroframes(1);
+    WM = O.zeroframes(1);
+
+    %   ----> White matter
+    
+    if strfind(glm.rgss, 'wm')
+    	WM = nimage(file.wmmask); 
+    end
+    
+    %   ----> Ventricle and Whole Brain
+    
+    if (~isempty(strfind(glm.rgss, 'wb')) | ~isempty(strfind(glm.rgss, 'v')))
+    
+        % 	----> compute WB and V masks
+        
+        V = nimage(file.ventricleseed); 
+    	E = nimage(file.eyeseed);
+    	[V.data WB.data] = NROI_CreateROI(O.data, V.data, E.data);
+    	
+    	% 	----> shrink WB
+    	
+    	if strfind(glm.rgss, 'wb')
+    		WB = WB.img_ShrinkROI();					   
+    		WB = WB.img_ShrinkROI();					   
+        end
+        
+        %   ----> shrink V
+
+    	if strfind(glm.rgss, 'v')
+    		V = V.img_ShrinkROI();						   
+    	end
+
+    end
+return
+
+
+
+% ======================================================
+% 	   ----> define nuisance ROI based on FreeSurfer segmentation
+%
+
+
+function [V, WB, WM] = asegNuisanceROI(file, glm);
+        
+    fsimg = nimage(file.segmask);
+    bmimg = nimage(file.boldmask);
+%   WM    = nimage(file.wmmask);
+    V     = fsimg.zeroframes(1);
+    WB    = fsimg.zeroframes(1);
+    WM    = fsimg.zeroframes(1);
+
+    bmimg.data = (bmimg.data > 0) & (fsimg.data > 0);
+
+    WM.data = (fsimg.data == 2 | fsimg.data == 41) & (bmimg.data > 0);
+    WM      = WM.img_ShrinkROI();
+    WM.data = WM.image2D;
+    
+    V.data  = ismember(fsimg.data, [4 5 14 15 24 43 44 72]) & (bmimg.data > 0);
+    WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
+
+    V  		= V.img_ShrinkROI('surface', 6);
+    WB 		= WB.img_ShrinkROI('edge', 10); %'edge', 10
+    WM      = WM.img_ShrinkROI();
+    WM      = WM.img_ShrinkROI();
+    
+
+return
+
+
+% ======================================================
+% 	----> read movement files
+
+function x = ReadMovFile(file, nf)
+
+    x = zeros(nf,6);
+
+    fin = fopen(file, 'r');
+    c = 0;
+    while c < nf
+    	s = fgetl(fin);
+    	if s(1) ~= '#'
+    		line = strread(s);
+    		l = length(line);
+    		c = c+1;
+    		x(c,:) = line(l-5:l);
+    	end
+    end
+    fclose(fin);
+
+return
+
+% ======================================================
+% 	----> save nuisance images 
+%   --- needs to be changed
+
+function [] = SaveNuisanceMasks(file, WB, V, WM);
+    
+    O = nimage(file.bold1);						
+    
+    nimg = WB.zeroframes(5);
+    nimg.data = nimg.image2D();
+    nimg.data(:,1) = O.image2D();
+    nimg.data(:,2) = WB.image2D();
+    nimg.data(:,3) = V.image2D();
+    nimg.data(:,4) = WM.image2D();
+    nimg.data(:,5) = (WB.image2D()>0)*1 + (V.image2D()>0)*2 + (WM.image2D()>0)*3;
+    
+    nimg.img_saveimage(file.nfile);
+    
+    O  = RGBReshape(O ,3);
+    WB = RGBReshape(WB,3);
+    V  = RGBReshape(V ,3);
+    WM = RGBReshape(WM,3);
+
+    img(:,:,1) = O;
+    img(:,:,2) = O;
+    img(:,:,3) = O;
+
+    img = img/max(max(max(img)));
+    img = img * 0.7;
+    img(:,:,3) = img(:,:,3)+WB*0.3;
+    img(:,:,2) = img(:,:,2)+V*0.3;
+    img(:,:,1) = img(:,:,1)+WM*0.3;
+
+    imwrite(img, file.nfilepng, 'png');
+
+return
