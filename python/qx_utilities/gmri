@@ -43,7 +43,7 @@ help = '''
 '''
 
 #
-# Took out these two functions until fully integrated to avoid documentation confusion w/connector
+# Took out these two functions until fully integrated to avoid documentation confusion w/ bash qx_utilities
 # Also these should not be referenced as 'hcp' functions as they are not
 #
 # hcpdf hcp_DTIFit       Run FSL DTI fit.

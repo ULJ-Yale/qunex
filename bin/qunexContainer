@@ -906,7 +906,7 @@ def main(args=None):
                         print(line, file=f)
         elif 'runTurnkey' in scheduleCommand:
             scheduleCommand = scheduleCommand.replace('runTurnkey', '')
-            print("bash /opt/qunex/connector/functions/RunTurnkey.sh" + scheduleCommand, file=f)
+            print("bash /opt/qunex/bash/qx_utilities/RunTurnkey.sh" + scheduleCommand, file=f)
             
         else:        
             print("bash /opt/qunex/bin/qunex.sh " + scheduleCommand, file=f)

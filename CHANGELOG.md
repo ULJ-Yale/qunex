@@ -30,7 +30,7 @@
 * 0.61.5  Removed a bug that prevented proper setup of hcp_fMRIVolume parameters.
 * 0.61.4  Fixed several bugs when when importing BIDS data.
 * 0.61.1  Hotfix of a breaking bug in createSessionInfo. Inclusion of sequence information from JSON files when running importDICOM and dicom 2niix is now optional.
-* 0.61.0  Implementation of bug fixes across connector and pipeline restructure back-compatibility
+* 0.61.0  Implementation of bug fixes across bash code and pipeline restructure back-compatibility.
 * 0.60.0  Renamed all subject related parameters to session. Pipeline architecture restructure.
 * 0.51.2  Removed an MSMAll bug when hcp_icafix_bolds parameter was not provided.
 * 0.51.1  Upgraded MSMAll and DeDriftAndResample in order to make it more user-friendly.
