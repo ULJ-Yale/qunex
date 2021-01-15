@@ -97,5 +97,8 @@ venv/
 *.out
 .qunexstudy
 
+# local settings file
+settings.json
+
 # DS* files
 .DS*

@@ -213,19 +213,6 @@ def checkInlineParameterUse(modality, parameter, options):
     return any([e in options['use_sequence_info'] for e in ['all', parameter, '%s:all' % (modality), '%s:%s' % (modality, parameter)]])
 
 
-def action(action, run):
-    """
-    action - documentation not yet available.
-    """
-    if run == "test":
-        if action.istitle():
-            return "Test " + action.lower()
-        else:
-            return "test " + action
-    else:
-        return action
-
-
 def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
     """
     Function that extract the information on the correct gdc file to be used and tests for its presence;
@@ -3423,7 +3410,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         # -- Test files
 
         if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s%d_%s.nii.gz" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
+            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s%d_%s.nii.gz" % (options['hcp_bold_prefix'], boldtarget, options['hcp_fs_longitudinal']))
         else:
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
 
@@ -5434,8 +5421,8 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             # -- Test files
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], highpass)
-            if regname != "NONE":
-                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], regname, highpass)
+            if options['hcp_icafix_regname'] != "NONE" and options['hcp_icafix_regname'] != "":
+                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (boldtarget, options['hcp_cifti_tail'], options['hcp_icafix_regname'], highpass)
 
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, postfix)
             fullTest = None
@@ -5443,7 +5430,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             # -- Run
             if run and boldok:
                 if options['run'] == "run":
-                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                    r, _, _, failed = runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(printbold)
@@ -5597,8 +5584,8 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             # -- Test files
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], highpass)
-            if regname != "NONE" and regname != "":
-                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], regname, highpass)
+            if options['hcp_icafix_regname'] != "NONE" and options['hcp_icafix_regname'] != "":
+                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], options['hcp_icafix_regname'], highpass)
 
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, postfix)
             fullTest = None
@@ -6118,7 +6105,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             matlabrunmode = 2
         else:
             r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-            raise
+            boldsok = False
 
         comm = '%(script)s \
             --path="%(path)s" \
@@ -6167,7 +6154,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, _, _, failed = runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -6283,7 +6270,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             matlabrunmode = 2
         else:
             r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-            raise
+            boldok = False
 
         # fix names to use
         fixnamestouse = boldtargets
@@ -6667,7 +6654,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             matlabrunmode = 2
         else:
             r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-            raise
+            boldsok = False
 
         # dedrift reg files
         regfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
@@ -6722,7 +6709,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
         # -- Test file (currently check only last bold)
         lastbold = boldtargets.split("@")[-1]
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], concatregname))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], options['hcp_resample_concatregname']))
         fullTest = None
 
         # -- Run
@@ -6851,7 +6838,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             matlabrunmode = 2
         else:
             r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-            raise
+            runok = False
 
         # dedrift reg files
         regfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
@@ -6975,7 +6962,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], concatregname, highpass))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], options['hcp_resample_concatregname'], highpass))
         fullTest = None
 
         # -- Run
@@ -7083,12 +7070,12 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP DTI Fit', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
+                r, _, report, failed = runExternalForFile(tfile, comm, 'Running HCP DTI Fit', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
 
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP DTI Fit', r, overwrite=overwrite)
+                passed, report, r, failed = checkRun(tfile, None, 'HCP DTI Fit', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP DTI Fit can be run"
                     report = "HCP DTI Fit FS can be run"
@@ -7172,11 +7159,11 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP BedpostX', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
+                r, _, report, failed = runExternalForFile(tfile, comm, 'Running HCP BedpostX', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP BedpostX', r, overwrite=overwrite)
+                passed, report, r, failed = checkRun(tfile, None, 'HCP BedpostX', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP BedpostX can be run"
                     report = "HCP BedpostX can be run"

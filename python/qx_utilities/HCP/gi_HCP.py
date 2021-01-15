@@ -360,7 +360,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
 
     # ---> identification of files
     if sessions:
-        sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
+        sessions = [e.strip() for e in re.split(r' +|\| *|, *', sessions)]
 
     print "--> identifying files in %s" % (inbox)
 
@@ -370,7 +370,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
         if os.path.isfile(inbox):
             sourceFiles = [inbox]
         elif os.path.isdir(inbox):
-            for path, dirs, files in os.walk(inbox):
+            for path, _, files in os.walk(inbox):
                 for file in files:
                     filepath = os.path.join(path, file)
                     if sessions:
@@ -549,9 +549,9 @@ def processHCPLS(sessionfolder, filesort):
         raise ge.CommandFailed("processHCPLS", "No hcpls folder present!", "There is no hcpls data in session folder %s" % (sessionfolder), "Please import HCPLS data first!")
 
     session   = os.path.basename(os.path.dirname(sessionfolder))
-    sparts    = session.split('_')
-    subjectid = sparts.pop(0)
-    sessionid = "_".join([e for e in sparts + [""] if e])
+    #sparts    = session.split('_')
+    #subjectid = sparts.pop(0)
+    #sessionid = "_".join([e for e in sparts + [""] if e])
 
     # --- load HCPLS structure
     # template folder

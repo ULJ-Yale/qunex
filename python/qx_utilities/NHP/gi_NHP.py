@@ -222,7 +222,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
 
     # identification of files
     if sessions:
-        sessions = [e.strip() for e in re.split(" +|\| *|, *", sessions)]
+        sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
     print "--> identifying files in %s" % (inbox)
 

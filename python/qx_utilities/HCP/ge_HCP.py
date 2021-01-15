@@ -223,9 +223,9 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     sessionsfolder, mapto, mapexclude = gu.exportPrep("exportHCP", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
-    sessions, gopts = gc.getSessionList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
+    sessions, _ = gc.getSessionList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
     if not sessions:
-        raise ge.CommandFailed(commandName, "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
+        raise ge.CommandFailed("exportHCP", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 
     # -- open logfile
     logfilename, logfile = gc.getLogFile(folders={'sessionsfolder': sessionsfolder}, tags=['exportHCP'])
@@ -245,7 +245,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
         targetfolder = os.path.join(mapto, session['id'])
 
         for datafolder in hcpfolders:
-            for dirpath, dirnames, filenames in os.walk(datafolder):
+            for dirpath, _, filenames in os.walk(datafolder):
                 for filename in filenames:
                         toMap.append((os.path.join(datafolder, dirpath, filename), os.path.join(targetfolder, os.path.relpath(dirpath, hcpfolder), filename)))
 
@@ -345,8 +345,6 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
         tparentfolders = tfolder.split("/")
         sparentfolders = sfolder.split("/")
 
-        currentpath = ""
-
         # go over all folders
         tpath = ""
         for f in tparentfolders:
@@ -377,8 +375,6 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
             do(sfile, tfile)
         except:
             raise
-            failed.append((sfile, tfile))
-            continue
 
         gc.printAndLog("    --> %s: %s --> %s" % (desc, sfile, tfile), file=logfile, silent=not verbose)
 
