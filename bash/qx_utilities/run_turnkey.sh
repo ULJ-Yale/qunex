@@ -17,11 +17,11 @@
 #
 # ## PRODUCT
 #
-#  RunTurnkey.sh
+#  run_turnkey.sh
 #
 # ## LICENSE
 #
-# * The RunTurnkey.sh = the "Software"
+# * The run_turnkey.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -29,7 +29,7 @@
 #
 # ## Description
 #
-# RunTurnkey.sh executes QuNex Suite workflows in an automated streamlined workflow
+# run_turnkey.sh executes QuNex Suite workflows in an automated streamlined workflow
 #
 # ## Prerequisite Installed Software
 #
@@ -37,7 +37,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./RunTurnkey.sh --help
+# See output of usage function: e.g. $./run_turnkey.sh --help
 #
 # ### Expected Previous Processing
 #
@@ -334,7 +334,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/RunTurnkey.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
@@ -354,7 +354,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " RunTurnkey.sh \ "
+ echo " run_turnkey.sh \ "
  echo "  --turnkeytype=<turnkey_run_type> \ "
  echo "  --turnkeysteps=<turnkey_worlflow_steps> \ "
  echo "  --batchfile=<batch_file> \ "
@@ -2596,7 +2596,7 @@ fi
 
         if [[ -z "$TURNKEY_STEPS" ]] && [[ ! -z "$AcceptanceTest" ]] && [[ "$AcceptanceTest" != "yes" ]] && [[ ${TURNKEY_TYPE} == "xnat" ]]; then
             for UnitTest in ${AcceptanceTest}; do
-                RunCommand="QuNexAcceptanceTest.sh \
+                RunCommand="qunex_acceptance_test.sh \
                 --studyfolder='${StudyFolder}' \
                 --sessionsfolder='${SessionsFolder}' \
                 --sessions='${CASE}' \
@@ -2606,7 +2606,7 @@ fi
                 eval ${RunCommand}
             done
         else
-            RunCommand="QuNexAcceptanceTest.sh \
+            RunCommand="qunex_acceptance_test.sh \
             --studyfolder='${StudyFolder}' \
             --sessionsfolder='${SessionsFolder}' \
             --sessions='${CASE}' \
@@ -2618,7 +2618,7 @@ fi
 
        # -- XNAT Call -- not supported currently -->
        #
-       #    RunCommand="QuNexAcceptanceTest.sh \
+       #    RunCommand="qunex_acceptance_test.sh \
        #    --xnatuser='${XNAT_USER_NAME}' \
        #    --xnatpass='${XNAT_PASSWORD}' \
        #    --xnatprojectid='${XNAT_PROJECT_ID}' \

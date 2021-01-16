@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-#  BOLDparcellate.sh
+#  bold_parcellate.sh
 #
 # ## LICENSE
 #
-# * The BOLDparcellate.sh = the "Software"
+# * The bold_parcellate.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, BOLDparcellate.sh, implements parcellation on BOLD data
+# This script, bold_parcellate.sh, implements parcellation on BOLD data
 # using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -33,7 +33,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./BOLDparcellate.sh --help
+# See output of usage function: e.g. $./bold_parcellate.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -88,7 +88,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDparcellate.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_parcellate.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  echo ""
@@ -109,7 +109,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " BOLDparcellate.sh --sessionsfolder='<folder_with_sessions>' \ "
+ echo " bold_parcellate.sh --sessionsfolder='<folder_with_sessions>' \ "
  echo " --session='<session_id>' \ "
  echo " --inputfile='<name_of_input_file' \ "
  echo " --inputpath='<path_for_input_file>' \ "

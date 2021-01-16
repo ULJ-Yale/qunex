@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-#  QuNexAcceptanceTest.sh
+#  qunex_acceptance_test.sh
 #
 # ## LICENSE
 #
-# * The QuNexAcceptanceTest.sh = the "Software"
+# * The qunex_acceptance_test.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, QuNexAcceptanceTest.sh, implements QuNex acceptance testing per pipeline unit.
+# This script, qunex_acceptance_test.sh, implements QuNex acceptance testing per pipeline unit.
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -32,7 +32,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./QuNexAcceptanceTest.sh --help
+# See output of usage function: e.g. $./qunex_acceptance_test.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -157,7 +157,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " QuNexAcceptanceTest.sh --studyfolder='<absolute_path_to_study_folder>' \ "
+ echo " qunex_acceptance_test.sh --studyfolder='<absolute_path_to_study_folder>' \ "
  echo " --subjects='<subject_IDs_on_local_server>' \ "
  echo " --xnatprojectid='<name_of_xnat_project_id>' \ "
  echo " --xnathost='<XNAT_site_URL>' "

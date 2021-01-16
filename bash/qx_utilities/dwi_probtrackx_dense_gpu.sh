@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-#  DWIprobtrackxDenseGPU.sh
+#  dwi_probtrackx_dense_gpu.sh
 #
 # ## LICENSE
 #
-# * The DWIprobtrackxDenseGPU.sh = the "Software"
+# * The dwi_probtrackx_dense_gpu.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIprobtrackxDenseGPU.sh, implements probtrackX GPU version on HCP-processed DWI data
+# This script, dwi_probtrackx_dense_gpu.sh, implements probtrackX GPU version on HCP-processed DWI data
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -33,7 +33,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIprobtrackxDenseGPU.sh --help
+# See output of usage function: e.g. $./dwi_probtrackx_dense_gpu.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -157,7 +157,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIprobtrackxDenseGPU.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."

@@ -18,7 +18,7 @@
 #
 # ## LICENSE
 #
-# * The XNATUploadDownload.sh = the "Software"
+# * The xnat_upload_download.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -142,7 +142,7 @@ usage() {
  echo ""
  echo "Example for XNAT upload::"
  echo ""
- echo " XNATUploadDownload.sh \ "
+ echo " xnat_upload_download.sh \ "
  echo " --runtype='upload' \ "
  echo " --sessionsfolder='<path_to_sessions_folder>' \ "
  echo " --sessions='<session_label>' \ "
@@ -153,7 +153,7 @@ usage() {
  echo ""
  echo "Example for XNAT download::"
  echo ""
- echo " XNATUploadDownload.sh \ "
+ echo " xnat_upload_download.sh \ "
  echo " --runtype='download' \ "
  echo " --studyfolder='<path_to_study_folder>' \ "
  echo " --sessionsfolder='<path_to_sessions_folder>' \ "

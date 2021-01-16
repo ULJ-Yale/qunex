@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-#  BOLDcomputeFC.sh
+#  bold_compute_fc.sh
 #
 # ## LICENSE
 #
-# * The BOLDcomputeFC.sh = the "Software"
+# * The bold_compute_fc.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## Description 
 #   
-# This script, BOLDcomputeFC.sh, implements functional connectivity
+# This script, bold_compute_fc.sh, implements functional connectivity
 # using QuNex Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
 # 
 # ## Prerequisite Installed Software
@@ -33,7 +33,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./BOLDcomputeFC.sh --help
+# See output of usage function: e.g. $./bold_compute_fc.sh --help
 #
 # ### Expected Previous Processing
 # 
@@ -227,7 +227,7 @@ usage() {
  echo ""
  echo "Run directly via:: "
  echo ""
- echo "  ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDcomputeFC.sh \ "
+ echo "  ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \ "
  echo "      --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."

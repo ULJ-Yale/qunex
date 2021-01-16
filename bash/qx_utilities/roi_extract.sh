@@ -19,13 +19,13 @@
 #
 # ## LICENCE
 #
-# * The ROIExtract.sh = the "Software"
+# * The roi_extract.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, ROIExtract.sh, implements ROI extraction
+# This script, roi_extract.sh, implements ROI extraction
 # using a pre-specified ROI file in NIFTI or CIFTI format
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -34,7 +34,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./ROIExtract.sh --help
+# See output of usage function: e.g. $./roi_extract.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 

@@ -50,8 +50,8 @@ if [[ `nvcc --version | grep "release"` == *"8.0"* ]]; then bindir=${FSLGPUBinar
 if [[ `nvcc --version | grep "release"` == *"9.1"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_9.1; fi
 
 # -- Define paths
-scriptsdir=$HCPPIPEDIR/DiffusionTractographyDense/Tractography_gpu_scripts
-TemplateFolder=$HCPPIPEDIR/DiffusionTractographyDense/91282_Greyordinates
+scriptsdir=$HCPPIPEDIR_dMRITractFull/Tractography_gpu_scripts
+TemplateFolder=$HCPPIPEDIR_dMRITractFull/91282_Greyordinates
 
 # -- Check inputs
 if [ "$2" == "" ];then

@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-# DWIparcellate.sh
+# dwi_parcellate.sh
 #
 # ## LICENSE
 #
-# * The DWIparcellate.sh = the "Software"
+# * The dwi_parcellate.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIparcellate.sh, implements parcellation on the DWI dense connectomes 
+# This script, dwi_parcellate.sh, implements parcellation on the DWI dense connectomes 
 # using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -33,7 +33,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIparcellate.sh --help
+# See output of usage function: e.g. $./dwi_parcellate.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -80,7 +80,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIparcellate.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."

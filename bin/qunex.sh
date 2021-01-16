@@ -528,11 +528,11 @@ runTurnkey() {
 # -- Specify command variable
 unset QuNexCallToRun
 unset GmriCommandToRun
-QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --sessions=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --sessionids=\"${CASE}\""
+QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --sessions=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --sessionids=\"${CASE}\""
 bashExec
 }
 show_usage_runTurnkey() {
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/RunTurnkey.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -695,7 +695,7 @@ show_usage_mapHCPFiles() {
 
 dataSync() {
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DataSync.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/data_sync.sh \
 --syncfolders="${SyncFolders}" \
 --sessions="${CASE}" \
 --syncserver="${SyncServer}" \
@@ -745,7 +745,7 @@ DWIlegacy() {
 #    Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
 
 # -- Specify command variable
-QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIlegacy.sh \
+QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --scanner=${Scanner} \
@@ -761,11 +761,11 @@ bashExec
 }
 show_usage_DWIlegacy() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIlegacy.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- DWIeddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the QuNex bash wrapper
+#  -- DWIeddyQC - Executes the DWI EddyQ C (dwi_eddy_qc.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIeddyQC() {
@@ -782,7 +782,7 @@ fi
 # -- OUTPUTS: located in <eddyBase>.qc per EDDY QC specification
 
 # -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIeddyQC.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_eddy_qc.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --eddybase=${EddyBase} \
@@ -799,16 +799,16 @@ bashExec
 }
 show_usage_DWIeddyQC() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIeddyQC.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_eddy_qc.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- DWIparcellate - Executes the Diffusion Parcellation Script (DWIparcellate.sh) via the QuNex bash wrapper
+#  -- DWIparcellate - Executes the Diffusion Parcellation Script (dwi_parcellate.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIparcellate() {
 #DWIOutput="${SessionsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIparcellate.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --matrixversion=${MatrixVersion} \
@@ -822,16 +822,16 @@ bashExec
 show_usage_DWIDenseParcellation() {
 echo ""
 echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIparcellate.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- DWIseedTractographyDense - Executes the Diffusion Seed Tractography Script (DWIseedTractographyDense.sh) via the QuNex bash wrapper
+#  -- DWIseedTractographyDense - Executes the Diffusion Seed Tractography Script (dwi_seed_tractography_dense.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIseedTractographyDense() {
 # -- Command to run
-QuNexCallToRun="DWIseedTractographyDense.sh \
+QuNexCallToRun="dwi_seed_tractography_dense.sh \
 --sessionsfolder="${SessionsFolder}" \
 --sessions="${CASE}" \
 --matrixversion="${MatrixVersion}" \
@@ -844,11 +844,11 @@ bashExec
 }
 show_usage_DWIseedTractographyDense() {
 echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIseedTractographyDense.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (BOLDcomputeFC.sh) via the QuNex bash wrapper
+#  -- computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (bold_compute_fc.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 computeBOLDfc() {
@@ -871,7 +871,7 @@ fi
 if [[ ${Calculation} == "seed" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDcomputeFC.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -896,7 +896,7 @@ fi
 if [[ ${Calculation} == "gbc" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDcomputeFC.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -925,7 +925,7 @@ fi
 if [[ ${Calculation} == "dense" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDcomputeFC.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -944,7 +944,7 @@ fi
 
 show_usage_computeBOLDfc() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDcomputeFC.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -962,7 +962,7 @@ ParcellationFile="$ParcellationFile"
 ExtractData="$ExtractData"
 Overwrite="$Overwrite"
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/ANATparcellate.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/anat_parcellate.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --inputdatatype=${InputDataType} \
@@ -975,11 +975,11 @@ bashExec
 }
 show_usage_ANATparcellate() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/ANATparcellate.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/anat_parcellate.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  -- BOLDparcellate - Executes the BOLD Parcellation Script (BOLDparcellate.sh) via the QuNex bash wrapper
+#  -- BOLDparcellate - Executes the BOLD Parcellation Script (bold_parcellate.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 BOLDParcellation() {
@@ -990,7 +990,7 @@ else
     BOLDOutput="${OutPath}"
 fi
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDparcellate.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_parcellate.sh \
 --sessionsfolder='${SessionsFolder}' \
 --sessions='${CASE}' \
 --inputfile='${InputFile}' \
@@ -1011,7 +1011,7 @@ bashExec
 
 show_usage_BOLDParcellation() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDparcellate.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_parcellate.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1055,7 +1055,7 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extractROI.sh
 DWIFSLdtifit() {
 
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLdtifit.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --overwrite='${Overwrite}' \
@@ -1065,7 +1065,7 @@ bashExec
 }
 show_usage_DWIFSLdtifit() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLdtifit.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1074,7 +1074,7 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLdtifit.sh
 
 DWIFSLbedpostxGPU() {
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLbedpostxGPU.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --fibers='${Fibers}' \
@@ -1092,7 +1092,7 @@ bashExec
 
 show_usage_DWIFSLbedpostxGPU() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLbedpostxGPU.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1155,7 +1155,7 @@ ${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
 
 DWIprobtrackxDenseGPU() {
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIprobtrackxDenseGPU.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \
 --sessionsfolder='${SessionsFolder}' \
 --scriptsfolder='${ScriptsFolder}' \
 --infolder='${InFolder}' \
@@ -1170,7 +1170,7 @@ bashExec
 }
 show_usage_DWIprobtrackxDenseGPU() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIprobtrackxDenseGPU.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1249,7 +1249,7 @@ if [ ! -d ${OutPath} ]; then
 fi
 
 # -- Command to run
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/RunQC.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \
 --sessionsfolder='${SessionsFolder}' \
 --sessions='${CASE}' \
 --outpath='${OutPath}' \
@@ -1284,7 +1284,7 @@ bashExec
 }
 show_usage_runQC() {
 echo ""; echo "qunex ${UsageInput}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/RunQC.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=

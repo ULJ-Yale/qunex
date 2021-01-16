@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-# DWIseedTractographyDense.sh 
+# dwi_seed_tractography_dense.sh 
 #
 # ## LICENSE
 #
-# * The DWIseedTractographyDense.sh = the "Software"
+# * The dwi_seed_tractography_dense.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION
 #
-# This script, DWIseedTractographyDense.sh, is a wrapper for deducting dense 
+# This script, dwi_seed_tractography_dense.sh, is a wrapper for deducting dense 
 # connectome DWI data with seed input. It implements reduction on the DWI dense 
 # connectomes using a given 'seed' structure (e.g. thalamus)
 #
@@ -34,7 +34,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIseedTractographyDense.sh --help
+# See output of usage function: e.g. $./dwi_seed_tractography_dense.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -91,7 +91,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIseedTractographyDense.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."

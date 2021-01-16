@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-# AnalysisList.sh
+# analysis_list.sh
 #
 # ## LICENSE
 #
-# * The AnalysisList.sh = the "Software"
+# * The analysis_list.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #

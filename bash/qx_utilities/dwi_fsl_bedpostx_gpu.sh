@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-# DWIFSLbedpostxGPU.sh
+# dwi_fsl_bedpostx_gpu.sh
 #
 # ## LICENSE
 #
-# * The DWIFSLbedpostxGPU.sh = the "Software"
+# * The dwi_fsl_bedpostx_gpu.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIFSLbedpostxGPU.sh, implements FSL's bedpostX functionality within the QuNex Suite with GPU support
+# This script, dwi_fsl_bedpostx_gpu.sh, implements FSL's bedpostX functionality within the QuNex Suite with GPU support
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -32,7 +32,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIFSLbedpostxGPU.sh --help
+# See output of usage function: e.g. $./dwi_fsl_bedpostx_gpu.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -123,7 +123,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLbedpostxGPU.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."

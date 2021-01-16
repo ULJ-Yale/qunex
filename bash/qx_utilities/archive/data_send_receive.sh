@@ -15,11 +15,11 @@
 #
 # ## PRODUCT
 #
-#  DataSendReceive.sh
+#  data_send_receive.sh
 #
 # ## LICENSE
 #
-# * The DataSendReceive.sh = the "Software"
+# * The data_send_receive.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -27,7 +27,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, DataSendReceive.sh, implements management of uploads and downloads of imaging data
+# This script, data_send_receive.sh, implements management of uploads and downloads of imaging data
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -39,7 +39,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DataSendReceive.sh --help
+# See output of usage function: e.g. $./data_send_receive.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -99,7 +99,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " DataSendReceive.sh \ "
+ echo " data_send_receive.sh \ "
  echo " --runtype='<specify_run_type>' \ "
  echo " --filelockerid='<file_locker_user_id>' \ "
  echo " --datadropfolder='<data_drop_folder>' \ "

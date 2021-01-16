@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-# * DataSync.sh
+# * data_sync.sh
 #
 # ## LICENCE
 #
-# * The DataSync.sh = the "Software"
+# * The data_sync.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #
-# * This is a DataSync.sh wrapper developed for Sync from a cluster to local storage
+# * This is a data_sync.sh wrapper developed for Sync from a cluster to local storage
 #
 # ## PREREQUISITE INSTALLED SOFTWARE
 #

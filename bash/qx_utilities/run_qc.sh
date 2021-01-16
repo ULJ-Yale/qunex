@@ -15,17 +15,17 @@
 #
 # ## PRODUCT
 #
-#  RunQC.sh is a QC processing wrapper
+#  run_qc.sh is a QC processing wrapper
 #
 # ## LICENSE
 #
-# * The RunQC.sh = the "Software"
+# * The run_qc.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #
-# This script, RunQC.sh, implements quality control for various stages of 
+# This script, run_qc.sh, implements quality control for various stages of 
 # HCP preprocessed data
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -34,7 +34,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./RunQC.sh --help
+# See output of usage function: e.g. $./run_qc.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -241,7 +241,7 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/RunQC.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."

@@ -14,11 +14,11 @@
 #
 # ## PRODUCT
 #
-# * SessionsBatch.sh
+# * sessions_batch.sh
 #
 # ## LICENSE
 #
-# * The SessionsBatch.sh = the "Software"
+# * The sessions_batch.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #

@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-#  DWIeddyQC.sh Wrapper for DWI EDDY QC code
+#  dwi_eddy_qc.sh Wrapper for DWI EDDY QC code
 #
 # ## LICENSE
 #
-# * The DWIeddyQC.sh = the "Software"
+# * The dwi_eddy_qc.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIeddyQC.sh, is a wrapper for DWI EDDY QC code. 
+# This script, dwi_eddy_qc.sh, is a wrapper for DWI EDDY QC code. 
 # It implements DWI eddy QC based on code developed by Matteo Bastiani, FMRIB 
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./DWIeddyQC.sh --help
+# See output of usage function: e.g. $./dwi_eddy_qc.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -120,7 +120,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " DWIeddyQC.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \ "
+ echo " dwi_eddy_qc.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \ "
  echo " --session='<session_id>' \ "
  echo " --eddybase='<eddy_base_name>' \ "
  echo " --report='individual'"

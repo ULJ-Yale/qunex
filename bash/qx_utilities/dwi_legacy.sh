@@ -3,7 +3,7 @@
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# # DWIlegacy.sh
+# # dwi_legacy.sh
 #
 # ## Copyright Notice
 #
@@ -45,7 +45,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./DWIlegacy.sh --help
+# See output of usage function: e.g. $./dwi_legacy.sh --help
 
 # Load Function Libraries
 source ${HCPPIPEDIR}/global/scripts/log.shlib     # log_ functions
