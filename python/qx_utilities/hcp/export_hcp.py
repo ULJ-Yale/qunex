@@ -20,8 +20,8 @@ import os.path
 import os
 import time
 import shutil
-import general.core as gc
-import general.exceptions as ge
+import core as gc
+import exceptions as ge
 import re
 
 def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):

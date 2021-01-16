@@ -32,11 +32,13 @@ import shutil
 import re
 import traceback
 import time
-import general.exceptions as ge
-import general.filelock as fl
+import exceptions as ge
+import filelock as fl
+import meltmovfidl
 from datetime import datetime
 from core import *
-from general.img import *
+from img import *
+
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -1198,7 +1200,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
             if os.path.exists(concf) and os.path.exists(fidlf):
                 try:
-                    qx_utilities.general.meltmovfidl.meltmovfidl(concf, ipatt, fidlf, fidlf.replace('.fidl', ipatt))
+                    meltmovfidl.meltmovfidl(concf, ipatt, fidlf, fidlf.replace('.fidl', ipatt))
                 except:
                     r += "\nWARNING: Failed to create a melted fidl file!"
                     print "\nWARNING: Failed to create a melted fidl file! (%s)" % (sinfo['id'])

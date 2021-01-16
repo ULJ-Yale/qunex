@@ -18,10 +18,11 @@ import errno
 import shutil
 import glob
 import datetime
-import general.process as gp
-import general.core as gc
+import process as gp
+import core as gc
 import processing.core as gpc
-import general.exceptions as ge
+import exceptions as ge
+import commands
 import getpass
 import re
 import subprocess
@@ -1943,10 +1944,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             # -- remove parameters that are not allowed
 
-            if commandName in qx_utilities.general.commands.commands:
-                allowedParameters = list(qx_utilities.general.commands.commands.get(commandName)["args"])
+            if commandName in commands.commands:
+                allowedParameters = list(commands.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
-                    allowedParameters += qx_utilities.general.commands.extraParameters
+                    allowedParameters += commands.extraParameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
                         del commandParameters[param]

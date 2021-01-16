@@ -19,9 +19,9 @@ All rights reserved.
 import os
 import shutil
 import collections
-import general.exceptions as ge
+import exceptions as ge
 import os.path
-import general.core
+import core
 
 def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
     """
@@ -216,7 +216,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
 
     print "Running setupHCP\n================"
 
-    inf   = qx_utilities.general.core.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
+    inf   = core.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)

@@ -38,11 +38,11 @@ def meltmovfidl(cfile, ifile, iffile, offile):
     
     # ---> read the original fidl file
     
-    ofidl = qx_utilities.general.img.fidl(iffile)
+    ofidl = img.fidl(iffile)
     
     # ---> create list of bolds with their offset times in conc
     
-    bolds = qx_utilities.general.img.readConc(cfile)
+    bolds = img.readConc(cfile)
     c = 0
     for bold in bolds:
         
@@ -55,12 +55,12 @@ def meltmovfidl(cfile, ifile, iffile, offile):
         if len(ifidl) != 1:
             raise Usage("ERROR: Can not match ignore fidl file to: %s (%s)" % (bold[0], bold[1]))
         
-        ifidl = qx_utilities.general.img.fidl(ifidl[0])
+        ifidl = img.fidl(ifidl[0])
         ifidl.adjustTime(c)
         ofidl.merge(ifidl, addcodes=False)
         
         # ---> read and add information on length
-        info = qx_utilities.general.img.readBasicInfo(bold[0])
+        info = img.readBasicInfo(bold[0])
         c += ofidl.TR * info['frames']    
         
     ofidl.save(offile)

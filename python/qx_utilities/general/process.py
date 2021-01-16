@@ -767,7 +767,7 @@ def run(command, args):
     if 'filter' in args:
         options['filter'] = args['filter']
 
-    sessions, gpref = qx_utilities.general.core.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
+    sessions, gpref = core.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
     # --- check if we are running across subjects rather than sessions
     if command in lactions:
@@ -818,7 +818,7 @@ def run(command, args):
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
    
-    studyfolders = qx_utilities.general.core.deduceFolders(options)
+    studyfolders = core.deduceFolders(options)
     logfolder    = studyfolders['logfolder']
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
@@ -1003,5 +1003,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-        qx_utilities.general.scheduler.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
+        scheduler.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
 

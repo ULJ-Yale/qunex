@@ -20,6 +20,7 @@ import os.path
 import glob
 import re
 import datetime
+import core
 import exceptions as ge
 
 
@@ -166,7 +167,7 @@ def runNIL(folder=".", overwrite=None, sourcefile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, _ = qx_utilities.general.core.readSessionData(os.path.join(folder, sourcefile))
+    info, _ = core.readSessionData(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 

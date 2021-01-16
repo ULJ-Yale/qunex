@@ -26,6 +26,7 @@ import shutil
 import glob
 import exceptions as ge
 import re
+import core
 
 def runPALM(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):
     """
@@ -500,7 +501,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
 
             print " --> running PALM for CIFTI input"
 
-            completed = qx_utilities.general.core.runExternalParallel(calls, cores=parelements, prepend='     ... ')
+            completed = core.runExternalParallel(calls, cores=parelements, prepend='     ... ')
 
             errors = []
             for complete in completed:

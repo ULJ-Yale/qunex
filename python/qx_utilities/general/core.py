@@ -658,7 +658,7 @@ def runInParallel(calls, cores=None, prepend=""):
 
     ::
 
-        runInParallel({'name': 'Sort dicom files', 'function': niu.general.dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
+        runInParallel({'name': 'Sort dicom files', 'function': dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
     """
 
     """
