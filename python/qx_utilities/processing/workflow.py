@@ -992,7 +992,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     NOTES AND DEPENDENCIES
     ======================
 
-    The command runs the g_BoldStats.R R script that computes the statistics
+    The command runs the bold_stats.R R script that computes the statistics
     and plots the data. The function requires that movement correction
     parameters files and bold statistics data files (results of the
     computeBOLDStats command) are present in the expected locations.
@@ -1150,7 +1150,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                 report[tf] = ''
 
         rcomm = '%s --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bold_tail=%s -bolds="%s" -v' % (
-            os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'g_BoldStats.R'), # script location
+            os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'bold_stats.R'), # script location
             d['s_bold_mov'],            # the folder to look for .dat data [.]
             report['mov_mreport'],      # the file to write movement report to [none]
             report['mov_preport'],      # the file to write movement report after scrubbing to [none]
@@ -1173,7 +1173,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
         if options['print_command'] == "yes":
             r += '\n\nRunning\n' + rcomm + '\n'
-        r, endlog, status, failed = runExternalForFile(tfile, rcomm, "\nRunning g_BoldStats", overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag']], r=r)
+        r, endlog, status, failed = runExternalForFile(tfile, rcomm, "\nRunning bold_stats", overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag']], r=r)
         if os.path.exists(tfile):
             preport['procok'] = 'ok'
             os.remove(tfile)

@@ -367,7 +367,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
         if not glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")):
             raise ge.CommandFailed("checkFidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")   
 
-    command = ['Rscript', os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'g_CheckFidl.R')]
+    command = ['Rscript', os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'check_fidl.R')]
     command.append('-fidlfolder=%s' % (fidlfolder))
 
     if fidlfile is not None:
