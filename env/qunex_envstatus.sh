@@ -15,11 +15,11 @@
 #
 # ## PRODUCT
 #
-#  qunex_envStatus.sh
+#  qunex_envstatus.sh
 #
 # ## LICENSE
 #
-# * The qunex_envStatus.sh = the "Software"
+# * The qunex_envstatus.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
