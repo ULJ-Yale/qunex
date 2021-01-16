@@ -2,11 +2,11 @@
 # encoding: utf-8
 
 import qx_utilities as qxu
-import qx_utilities.g_process as gp
-import qx_utilities.g_matlab as gm
-import qx_utilities.g_core as gc
-import qx_utilities.g_exceptions as ge
-import qx_utilities.g_commands as gcom
+import qx_utilities.general.process as gp
+import qx_utilities.general.matlab as gm
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.commands as gcom
 import os.path
 import sys
 import copy
@@ -246,7 +246,7 @@ def runCommand(command, args):
     folders = gc.deduceFolders(args)
 
     if folders['basefolder']:
-        qxu.g_utilities.checkStudy(folders['basefolder'])
+        qxu.general.utilities.checkStudy(folders['basefolder'])
 
     # --- check if command is deprecated
     command = gcom.checkDeprecatedCommands(command)
@@ -262,7 +262,7 @@ def runCommand(command, args):
         return
     elif command in gm.functions:
         if 'scheduler' in args:
-            qxu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
+            qxu.general.scheduler.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
         else:
             gm.run(command, args)
         return
@@ -317,7 +317,7 @@ def runCommand(command, args):
                     args['ignore'] = 'scheduler'
                 del args['sperlist']
 
-                qxu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+                qxu.general.scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
             
             else:
                 # -- define number of sessions to run in each runList
@@ -365,7 +365,7 @@ def runCommand(command, args):
                 logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
                 logname = os.path.join(runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
-                qxu.g_scheduler.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
+                qxu.general.scheduler.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
 
             else:
                 bargs['eargs'] = eargs
@@ -378,7 +378,7 @@ def runCommand(command, args):
 
         # -- are we using a scheduler
         if 'scheduler' in eargs:
-            qxu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+            qxu.general.scheduler.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
         # -- a basic call
         elif sessions is None:

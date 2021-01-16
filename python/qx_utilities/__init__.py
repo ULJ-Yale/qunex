@@ -1,25 +1,10 @@
 import sys
-import g_dicom
-import g_bids
-import g_core
-import g_NIfTI
-import g_img
-import g_fidl
-import g_utilities
-import g_4dfp
-import g_palm
-import g_process
-import g_scheduler
-import gp_core
-import gp_workflow
-import gp_simple
-import gp_FS
-import g_dicomdeid
-import g_commands
-import g_filelock
+import general
+import hcp
+import nhp
+import processing
 
-
-__all__ = ["g_dicom", "g_bids", "g_core", "g_NIfTI", "g_img", "g_utilities", "g_fidl", "g_4dfp", "g_palm", "g_process", "gp_core", "gp_workflow", "gp_simple", "gp_FS", "g_scheduler", "g_dicomdeid", "g_commands", "g_filelock"]
+__all__ = ["general", "hcp", "nhp", "processing"]
 
 class Unbuffered(object):
    def __init__(self, stream):

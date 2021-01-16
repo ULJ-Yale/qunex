@@ -1,10 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_nitools.py``
+``matlab.py``
 
 This file holds the functions and settings for providing a wrapper to run
-QuNex/nitools code.
+QuNex/matlab code.
 
 None of the code is run directly from the terminal interface.
 """

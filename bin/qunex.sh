@@ -420,7 +420,7 @@ if [[ ${GmriCommandToRun} ]]; then
     # fi
     # --------------------------------------------------------------------------
 else
-# -- Specific call for Connector functions
+# -- Specific call for QuNex bash functions
     
     # -- Define specific logs
     #
@@ -585,7 +585,7 @@ ComB="gmri sortDicom folder=. "
 ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} parelements=${ParElements} sessionid=${CASE}"
 ComD="slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*"
 QuNexCallToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 
@@ -650,7 +650,7 @@ if [[ ${Overwrite} == "yes" ]]; then
     HLinks=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
 fi
 QuNexCallToRun="cd ${SessionsFolder}/${CASE}; echo '--> running mapHCPFiles for ${CASE}'; echo ''; gmri setupHCP"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_mapHCPFiles() {
@@ -701,7 +701,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DataSync.sh \
 --syncserver="${SyncServer}" \
 --synclogfolder="${SyncLogFolder}" \
 --syncdestination="${SyncDestination}""
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_dataSync() {
@@ -756,7 +756,7 @@ QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIlegacy.sh \
 --unwarpdir=${UnwarpDir} \
 --diffdatasuffix=${DiffDataSuffix} \
 --overwrite=${Overwrite}"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_DWIlegacy() {
@@ -794,7 +794,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIeddyQC.sh \
 --eddyparams=${EddyParams} \
 --bvecsfile=${BvecsFile} \
 --overwrite=${Overwrite}"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_DWIeddyQC() {
@@ -816,7 +816,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIparcellate.sh \
 --waytotal=${WayTotal} \
 --outname=${OutName} \
 --overwrite=${Overwrite}"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_DWIDenseParcellation() {
@@ -839,7 +839,7 @@ QuNexCallToRun="DWIseedTractographyDense.sh \
 --waytotal="${WayTotal}" \
 --outname="${OutName}" \
 --overwrite="${Overwrite}""
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_DWIseedTractographyDense() {
@@ -889,7 +889,7 @@ if [[ ${Calculation} == "seed" ]]; then
     --targetf=${OutPath} \
     --mask='${MaskFrames}' \
     --covariance=${Covariance}"
-    # -- Connector execute function
+    # -- QuNex bash execute function
     bashExec
 fi
 # -- Check type of connectivity calculation is gbc
@@ -918,7 +918,7 @@ if [[ ${Calculation} == "gbc" ]]; then
     --time=${ComputeTime} \
     --vstep=${VoxelStep} \
     --covariance=${Covariance}"
-    # -- Connector execute function
+    # -- QuNex bash execute function
     bashExec
 fi
 # -- Check type of connectivity calculation is seed
@@ -937,7 +937,7 @@ if [[ ${Calculation} == "dense" ]]; then
     --targetf=${OutPath} \
     --covariance=${Covariance} \
     --mem-limit=${MemLimit} "
-    # -- Connector execute function
+    # -- QuNex bash execute function
     bashExec
 fi
 }
@@ -970,7 +970,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/ANATparcellate.sh \
 --overwrite=${Overwrite} \
 --outname=${OutName} \
 --extractdata=${ExtractData}"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_ANATparcellate() {
@@ -1005,7 +1005,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/BOLDparcellate.sh \
 --extractdata='${ExtractData}' \
 --useweights='${UseWeights}' \
 --weightsfile='${WeightsFile}'"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 
@@ -1039,7 +1039,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extractROI.sh \
 --inputfile='${InputFile}' \
 --outdir='${OutPath}' \
 --outname='${OutName}'"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_ROIExtract() {
@@ -1060,7 +1060,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLdtifit.sh \
 --session='${CASE}' \
 --overwrite='${Overwrite}' \
 --species='${Species}' "
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_DWIFSLdtifit() {
@@ -1086,7 +1086,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIFSLbedpostxGPU.sh \
 --rician='${Rician}' \
 --overwrite='${Overwrite}' \
 --species=${Species}"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 
@@ -1117,7 +1117,7 @@ Com2="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinea
 Com3="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 0"
 # -- Command to run
 QuNexCallToRun="${Com1}; ${Com2}; ${Com3}"
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 
@@ -1141,7 +1141,7 @@ LogFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractography
 RunFolder="${SessionsFolder}/${CASE}/hcp/"
 # -- Command to run
 QuNexCallToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_DWIpreTractography() {
@@ -1165,7 +1165,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIprobtrackxDenseGPU.
 --nsamplesmatrix1='${NsamplesMatrixOne}' \
 --nsamplesmatrix3='${NsamplesMatrixThree}' \
 --overwrite='${Overwrite}' "
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_DWIprobtrackxDenseGPU() {
@@ -1279,7 +1279,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/RunQC.sh \
 --suffix='${Suffix}' \
 --hcp_suffix='${HCPSuffix}' \
 --batchfile='${SessionBatchFile}' "
-# -- Connector execute function
+# -- QuNex bash execute function
 bashExec
 }
 show_usage_runQC() {

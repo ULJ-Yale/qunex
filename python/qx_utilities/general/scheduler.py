@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_scheduler.py``
+``scheduler.py``
 
 This file holds the functions for running jobs through job schedulers on a
 computer cluster. It supports PBS, LSF, and SLURM. The functions are accessible
@@ -19,8 +19,8 @@ Change log
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.g_exceptions as ge
-import qx_utilities.g_core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
 import subprocess
 import os
 import os.path

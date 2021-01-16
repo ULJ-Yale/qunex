@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_fidl.py``
+``fidl.py``
 """
 
 """
@@ -10,8 +10,8 @@ Adapted from previous joinFidl.py script
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.g_img as g
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.img as g
+import qx_utilities.general.exceptions as ge
 import re
 import os
 import os.path

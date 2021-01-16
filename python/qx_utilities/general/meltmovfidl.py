@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_MeltMovFidl``
+``meltmovfidl``
 """
 
 """
@@ -15,10 +15,10 @@ import re
 import os
 import os.path
 import glob
-import g_img
+import qx_utilities.general.img
 
 help_message = """
-``g_MeltMovFidl <conc_file> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
+``meltmovfidl <conc_file> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
 
 Checks movement folder for each bold file specified in 
 <conc_file> for corresponding scrub fidl file matching <ignore_fild_pattern>
@@ -34,15 +34,15 @@ class Usage(Exception):
         self.msg = msg
 
 
-def meltMovFidl(cfile, ifile, iffile, offile):
+def meltmovfidl(cfile, ifile, iffile, offile):
     
     # ---> read the original fidl file
     
-    ofidl = g_img.fidl(iffile)
+    ofidl = qx_utilities.general.img.fidl(iffile)
     
     # ---> create list of bolds with their offset times in conc
     
-    bolds = g_img.readConc(cfile)
+    bolds = qx_utilities.general.img.readConc(cfile)
     c = 0
     for bold in bolds:
         
@@ -55,12 +55,12 @@ def meltMovFidl(cfile, ifile, iffile, offile):
         if len(ifidl) != 1:
             raise Usage("ERROR: Can not match ignore fidl file to: %s (%s)" % (bold[0], bold[1]))
         
-        ifidl = g_img.fidl(ifidl[0])
+        ifidl = qx_utilities.general.img.fidl(ifidl[0])
         ifidl.adjustTime(c)
         ofidl.merge(ifidl, addcodes=False)
         
         # ---> read and add information on length
-        info = g_img.readBasicInfo(bold[0])
+        info = qx_utilities.general.img.readBasicInfo(bold[0])
         c += ofidl.TR * info['frames']    
         
     ofidl.save(offile)
@@ -98,7 +98,7 @@ def main(argv=None):
     offile = args[3]
     
     try:
-        meltMovFidl(cfile, ifile, iffile, offile)
+        meltmovfidl(cfile, ifile, iffile, offile)
     except Usage, err:
         print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
         print >> sys.stderr, "for help use --help"

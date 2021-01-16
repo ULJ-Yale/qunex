@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gp_core.py``
+``core.py``
 
 This file holds code for core support functions used by other code for
 preprocessing and analysis. The functions are for internal use
@@ -25,9 +25,9 @@ import sys
 import traceback
 from datetime import datetime
 import time
-from g_img import *
-from g_MeltMovFidl import *
-import g_core as gc
+from qx_utilities.general.img import *
+from qx_utilities.general.meltmovfidl import *
+import qx_utilities.general.core as gc
 
 
 def is_number(s):

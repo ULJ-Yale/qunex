@@ -645,9 +645,9 @@ export RDIR PATH
 #QUNEXCONNPATH=$QUNEXPATH/bash/qx_utilities
 #PATH=${QUNEXCONNPATH}:${PATH}
 #export QUNEXCONNPATH PATH
-#PATH=$QUNEXPATH/connector/functions:$PATH
+#PATH=$QUNEXPATH/bash/qx_utilities/functions:$PATH
 #export QUNEXFUNCTIONS=${QUNEXCONNPATH}/functions
-#MATLABPATH=$QUNEXPATH/connector:$MATLABPATH
+#MATLABPATH=$QUNEXPATH/bash/qx_utilities:$MATLABPATH
 #export MATLABPATH
 
 HCPATLAS=$QUNEXPATH/qx_library/data/atlases/HCP
@@ -723,9 +723,9 @@ export HCPPIPEDIR_tfMRI=${HCPPIPEDIR}/tfMRI/scripts; PATH=${HCPPIPEDIR_tfMRI}:${
 export HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts; PATH=${HCPPIPEDIR_dMRI}:${PATH}; export PATH
 export HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts; PATH=${HCPPIPEDIR_Global}:${PATH}; export PATH
 export HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts; PATH=${HCPPIPEDIR_tfMRIAnalysis}:${PATH}; export PATH
-export HCPPIPEDIR_dMRITract=${TOOLS}/${QUNEXREPO}/connector/functions/DiffusionTractography/scripts; PATH=${HCPPIPEDIR_dMRITract}:${PATH}; export PATH
-export HCPPIPEDIR_dMRITracFull=${TOOLS}/${QUNEXREPO}/connector/functions/DiffusionTractographyDense; PATH=${HCPPIPEDIR_dMRITracFull}:${PATH}; export PATH
-export HCPPIPEDIR_dMRILegacy=${TOOLS}/${QUNEXREPO}/connector/functions; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
+export HCPPIPEDIR_dMRITract=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/functions/DiffusionTractography/scripts; PATH=${HCPPIPEDIR_dMRITract}:${PATH}; export PATH
+export HCPPIPEDIR_dMRITracFull=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/functions/DiffusionTractographyDense; PATH=${HCPPIPEDIR_dMRITracFull}:${PATH}; export PATH
+export HCPPIPEDIR_dMRILegacy=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/functions; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITracFull}/autoPtx_HCP_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
 export FSLGPUBinary=${HCPPIPEDIR_dMRITracFull}/fsl_gpu_binaries; PATH=${FSLGPUBinary}:${PATH}; export PATH
 export DefaultCUDAVersion="9.1";
@@ -811,7 +811,7 @@ fi
 #    PYTHONPATH=$TOOLS/env/qunex/lib/python2.7/site-packages/gradunwarp:$PYTHONPATH
 #    PYTHONPATH=$TOOLS/env/qunex/lib/python2.7/site-packages/gradunwarp/core:$PYTHONPATH
 #    PYTHONPATH=$QUNEXPATH:$PYTHONPATH
-#    PYTHONPATH=$QUNEXPATH/connector:$PYTHONPATH
+#    PYTHONPATH=$QUNEXPATH/bash/qx_utilities:$PYTHONPATH
 #    PYTHONPATH=$QUNEXPATH/pyton/qx_utilities:$PYTHONPATH
 #    PYTHONPATH=$QUNEXPATH/matlab/qx_utilities:$PYTHONPATH
 #    PYTHONPATH=$PYLIBDIR/bin:$PYTHONPATH
@@ -833,7 +833,7 @@ fi
 # PYTHONPATH=/usr/lib/python2.7/site-packages:$PYTHONPATH
 # PYTHONPATH=/usr/lib64/python2.7/site-packages:$PYTHONPATH
 # PYTHONPATH=$QUNEXPATH:$PYTHONPATH
-# PYTHONPATH=$QUNEXPATH/connector:$PYTHONPATH
+# PYTHONPATH=$QUNEXPATH/bash/qx_utilities:$PYTHONPATH
 # PYTHONPATH=$QUNEXPATH/python/qx_utilities:$PYTHONPATH
 # PYTHONPATH=$QUNEXPA$TH/matlab/qx_utilities:$PYTHONPATH
 # PYTHONPATH=$PYLIBDIR/pydicom:$PYTHONPATH

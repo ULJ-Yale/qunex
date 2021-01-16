@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_gimg.py``
+``qximg.py``
 
 This file holds code for an image reading and manipulation object. The code is
 for internal use and not called directly. It also implements the modniftihdr
@@ -13,7 +13,7 @@ Created by Grega Repovs on 2013-04-13.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.g_img as g
+import qx_utilities.general.img as g
 import numpy as np
 import gzip
 import os.path
@@ -27,11 +27,11 @@ def removeExt(s, ext):
     return s
 
 
-class gimg(object):
+class qximg(object):
     """A general class for loading, saving and manipulating MR images."""
 
     def __init__(self, varone=None, frames=None):
-        super(gimg, self).__init__()
+        super(qximg, self).__init__()
 
         self.data         = False
         self.imageformat  = False
@@ -220,6 +220,6 @@ def modniftihdr(filename, s):
         gmri modniftihdr img.nii.gz "srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126]"
     """
 
-    img = gimg(filename)
+    img = qximg(filename)
     img.hdrnifti.modifyHeader(s)
     img.saveimage()

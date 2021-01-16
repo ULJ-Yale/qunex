@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_4dfp.py``
+``4dfp.py``
 
 This file holds code for running 4dfp NIL preprocessing commands and volume to
 surface mapping. It implements the following commands:
@@ -21,7 +21,7 @@ import os.path
 import glob
 import re
 import datetime
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.exceptions as ge
 
 
 template = '''@ economy = 5
@@ -167,7 +167,7 @@ def runNIL(folder=".", overwrite=None, sourcefile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, _ = qx_utilities.g_core.readSessionData(os.path.join(folder, sourcefile))
+    info, _ = qx_utilities.general.core.readSessionData(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 

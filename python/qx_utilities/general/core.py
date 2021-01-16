@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_core.py``
+``core.py``
 
 This file holds code for core support functions used by other code for
 preprocessing and analysis. The functions are for internal use
@@ -20,7 +20,7 @@ import glob
 import sys
 import types
 import traceback
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.exceptions as ge
 
 
 def readSessionData(filename, verbose=False):
@@ -658,7 +658,7 @@ def runInParallel(calls, cores=None, prepend=""):
 
     ::
 
-        runInParallel({'name': 'Sort dicom files', 'function': niu.g_dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
+        runInParallel({'name': 'Sort dicom files', 'function': niu.general.dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
     """
 
     """

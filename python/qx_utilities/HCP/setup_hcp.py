@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gs_HCP.py``
+``setup_hcp.py``
 
 Functions for preparing information and mapping images to a HCP preprocessing
 compliant folder structure:
@@ -20,9 +20,9 @@ import os
 import shutil
 import qx_utilities
 import collections
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.exceptions as ge
 import os.path
-import qx_utilities.g_core
+import qx_utilities.general.core
 
 def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
     """
@@ -217,7 +217,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
 
     print "Running setupHCP\n================"
 
-    inf   = qx_utilities.g_core.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
+    inf   = qx_utilities.general.core.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_utilities.py``
+``utilities.py``
 
 Miscellaneous utilities for file processing.
 """
@@ -18,15 +18,15 @@ import errno
 import shutil
 import glob
 import datetime
-import qx_utilities.g_process as gp
-import qx_utilities.g_core as gc
-import qx_utilities.gp_core as gpc
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.process as gp
+import qx_utilities.general.core as gc
+import qx_utilities.processing.core as gpc
+import qx_utilities.general.exceptions as ge
 import qx_utilities
 import getpass
 import re
 import subprocess
-import qx_utilities.g_filelock as fl
+import qx_utilities.general.filelock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
@@ -1944,10 +1944,10 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             # -- remove parameters that are not allowed
 
-            if commandName in qx_utilities.g_commands.commands:
-                allowedParameters = list(qx_utilities.g_commands.commands.get(commandName)["args"])
+            if commandName in qx_utilities.general.commands.commands:
+                allowedParameters = list(qx_utilities.general.commands.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
-                    allowedParameters += qx_utilities.g_commands.extraParameters
+                    allowedParameters += qx_utilities.general.commands.extraParameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
                         del commandParameters[param]

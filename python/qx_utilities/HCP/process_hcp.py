@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gp_HCP.py``
+``process_hcp.py``
 
 This file holds code for running HCP preprocessing pipeline. It
 consists of functions:
@@ -38,10 +38,10 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-from qx_utilities.gp_core import *
-from qx_utilities.g_img import *
-from qx_utilities.g_core import checkFiles
-import qx_utilities.g_exceptions as ge
+from qx_utilities.processing.core import *
+from qx_utilities.general.img import *
+from qx_utilities.general.core import checkFiles
+import qx_utilities.general.exceptions as ge
 import os
 import re
 import os.path

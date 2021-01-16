@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gp_simple.py``
+``simple.py``
 
 This file holds code for support functions for image preprocessing and analysis.
 It consists of functions:
@@ -24,8 +24,8 @@ Copyright (c) Grega Repovs. All rights reserved.
 """
 
 
-from gp_core import *
-from g_img import *
+from qx_utilities.processing.core import *
+from qx_utilities.general.img import *
 import os
 import re
 from datetime import datetime

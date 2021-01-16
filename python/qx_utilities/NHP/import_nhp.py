@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gi_NHP.py``
+``import_nhp.py``
 
 Functions for importing non-human primate (NHP) data into QuNex:
 
@@ -24,8 +24,8 @@ import glob
 import re
 
 # qx imports
-import qx_utilities.g_exceptions as ge
-import qx_utilities.g_core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
 
 def map_to_qunex(file, sessionsfolder, sessions, overwrite):
     """

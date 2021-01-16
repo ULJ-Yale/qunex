@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gp_FS.py``
+``fs.py``
 
 This file holds code for running legacy FreeSurfer preprocessing on NIL
 preprocessed images. The specific functions are:
@@ -24,8 +24,8 @@ Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-from gp_core import *
-from g_img import *
+from qx_utilities.processing.core import *
+from qx_utilities.general.img import *
 import os
 import shutil
 import re

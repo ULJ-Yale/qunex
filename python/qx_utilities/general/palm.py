@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_palm.py``
+``palm.py``
 
 This file holds code for running PALM second level analyses, CIFTI map masking
 and concatenation. The specific commands implemented here are:
@@ -25,7 +25,7 @@ import gzip
 import shutil
 import glob
 import qx_utilities
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.exceptions as ge
 import re
 
 def runPALM(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):
@@ -501,7 +501,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
 
             print " --> running PALM for CIFTI input"
 
-            completed = qx_utilities.g_core.runExternalParallel(calls, cores=parelements, prepend='     ... ')
+            completed = qx_utilities.general.core.runExternalParallel(calls, cores=parelements, prepend='     ... ')
 
             errors = []
             for complete in completed:

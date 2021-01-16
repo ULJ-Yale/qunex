@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gp_workflow.py``
+``workflow.py``
 
 This file holds code for running functional connectivity preprocessing and
 GLM computation workflow. It consists of functions:
@@ -27,16 +27,17 @@ Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-from gp_core import *
-from g_img import *
+from qx_utilities.processing.core import *
+from qx_utilities.general.img import *
 import os
 import shutil
 import re
 import traceback
 from datetime import datetime
 import time
-import qx_utilities.g_exceptions as ge
-import qx_utilities.g_filelock as fl
+import qx_utilities
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.filelock as fl
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -1198,7 +1199,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
             if os.path.exists(concf) and os.path.exists(fidlf):
                 try:
-                    meltMovFidl(concf, ipatt, fidlf, fidlf.replace('.fidl', ipatt))
+                    qx_utilities.general.meltmovfidl.meltmovfidl(concf, ipatt, fidlf, fidlf.replace('.fidl', ipatt))
                 except:
                     r += "\nWARNING: Failed to create a melted fidl file!"
                     print "\nWARNING: Failed to create a melted fidl file! (%s)" % (sinfo['id'])

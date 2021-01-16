@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_bids.py``
+``bids.py``
 
 Functions for importing and exporting BIDS data to QuNex file structure.
 
@@ -19,15 +19,15 @@ import os
 import os.path
 import re
 import shutil
-import qx_utilities.g_exceptions as ge
-import qx_utilities.g_core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
 import zipfile
 import tarfile
 import glob
 import datetime
 import gzip
 import sys
-import qx_utilities.g_filelock as fl
+import qx_utilities.general.filelock as fl
 import ast
 
 

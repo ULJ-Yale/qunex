@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_dicomdeid.py``
+``dicomdeid.py``
 """
 
 import re
@@ -21,7 +21,7 @@ import base64
 import struct
 import shutil
 import collections
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.exceptions as ge
 
 try:
     import pydicom

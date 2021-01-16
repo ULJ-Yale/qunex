@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_dicom.py``
+``dicom.py``
 
 Functions for processing dicom images and converting them to NIfTI format:
 
@@ -30,9 +30,9 @@ import glob
 import shutil
 import datetime
 import subprocess
-import qx_utilities.g_NIfTI
-import qx_utilities.g_gimg as gimg
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.nifti
+import qx_utilities.general.qximg as qxi
+import qx_utilities.general.exceptions as ge
 import qx_utilities
 import zipfile
 import tarfile
@@ -704,7 +704,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         files.append([niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices])
         # subprocess.call(call, shell=True, stdout=null, stderr=null)
 
-    done = qx_utilities.g_core.runExternalParallel(calls, cores=parelements, prepend=' ... ')
+    done = qx_utilities.general.core.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
     for niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices in files:
 
@@ -738,7 +738,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
                     if debug:
                         print "         ... recentering: %s" % (img)
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
-                    timg = gimg.gimg(img)
+                    timg = qxi.qximg(img)
                     if recenter == 0.7:
                         timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
                     elif recenter == 0.8:
@@ -795,15 +795,15 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         # --- flip z and t dimension if needed
 
         if dofz2zf:
-            qx_utilities.g_NIfTI.fz2zf(os.path.join(imgf, "%02d.nii.gz" % (niinum)))
+            qx_utilities.general.nifti.fz2zf(os.path.join(imgf, "%02d.nii.gz" % (niinum)))
 
 
         # --- reorder slices if needed
 
         if reorder:
-            # qx_utilities.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
+            # qx_utilities.general.nifti.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
             timgf = os.path.join(imgf, "%02d.nii.gz" % (niinum))
-            timg  = gimg.gimg(timgf)
+            timg  = qxi.qximg(timgf)
             timg.data = timg.data[:, ::-1, ...]
             timg.hdrnifti.modifyHeader("srow_x:[-3.4,0.0,0.0,-108.5];srow_y:[0.0,3.4,0.0,-102.0];srow_z:[0.0,0.0,5.0,-63.0];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:108.5;qoffset_y:-102.0;qoffset_z:-63.0")
             timg.saveimage(timgf)
@@ -811,7 +811,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         # --- check final geometry
 
         if tfname:
-            hdr = qx_utilities.g_img.niftihdr(tfname)
+            hdr = qx_utilities.general.img.niftihdr(tfname)
 
             if hdr.sizez > hdr.sizey:
                 print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
@@ -829,7 +829,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
                             print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
                             if verbose:
                                 print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                            qx_utilities.g_NIfTI.reslice(tfname, nslices)
+                            qx_utilities.general.nifti.reslice(tfname, nslices)
                         else:
                             print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                             if verbose:
@@ -1188,7 +1188,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             gpath = os.path.join(os.path.abspath(dmcf), "*", "*.dcm.gz")
             gpath = gpath.replace(" ", "\\ ")
             calls.append({'name': 'gunzip: ' + dmcf, 'args': 'gunzip %s' % (gpath), 'sout': None, 'shell': True})
-            qx_utilities.g_core.runExternalParallel(calls, cores=parelements, prepend="---> ")
+            qx_utilities.general.core.runExternalParallel(calls, cores=parelements, prepend="---> ")
         else:
             raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
@@ -1347,7 +1347,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 os.remove(cleanFile)
         raise ge.CommandFailed("dicom2niix", "No source DICOM files", "No source DICOM files were found to process!", "Please check your data and paths!")
 
-    qx_utilities.g_core.runExternalParallel(calls, cores=parelements, prepend=' ... ')
+    qx_utilities.general.core.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
     print "\nProcessed sequences:"
     for niinum, folder, info in files:
@@ -1467,7 +1467,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 # --- check final geometry
 
                 if tfname:
-                    hdr = qx_utilities.g_img.niftihdr(tfname)
+                    hdr = qx_utilities.general.img.niftihdr(tfname)
 
                     if hdr.sizez > hdr.sizey and hdr.sizex < 150 :
                         print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
@@ -1485,7 +1485,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                                     print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes)
                                     if verbose:
                                         print "     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes)
-                                    qx_utilities.g_NIfTI.reslice(tfname, info['slices'])
+                                    qx_utilities.general.nifti.reslice(tfname, info['slices'])
                                 else:
                                     print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                                     if verbose:
@@ -1509,7 +1509,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         calls = []
         for folder in folders:
             calls.append({'name': 'gzip: ' + folder, 'args': ['gzip'] + glob.glob(os.path.join(os.path.abspath(folder), "*.dcm")) + glob.glob(os.path.join(os.path.abspath(folder), "*.REC")), 'sout': None})
-        qx_utilities.g_core.runExternalParallel(calls, cores=parelements, prepend="---> ")
+        qx_utilities.general.core.runExternalParallel(calls, cores=parelements, prepend="---> ")
 
     return
 

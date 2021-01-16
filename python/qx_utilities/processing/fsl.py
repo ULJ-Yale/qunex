@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gp_HCP.py``
+``fsl.py``
 
 This file holds code for running FSL commands. It
 consists of functions:
@@ -25,7 +25,7 @@ All rights reserved.
 """
 import os
 
-from qx_utilities.gp_core import *
+from qx_utilities.processing.core import *
 
 def fsl_f99(sinfo, options, overwrite=False, thread=0):
     """

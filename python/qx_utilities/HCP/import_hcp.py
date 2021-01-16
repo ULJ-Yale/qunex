@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``gi_HCP.py``
+``import_hcp.py``
 
 Functions for importing HCP style data into QuNex:
 
@@ -19,8 +19,8 @@ import os
 import os.path
 import re
 import shutil
-import qx_utilities.g_exceptions as ge
-import qx_utilities.g_core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
 import zipfile
 import tarfile
 import glob

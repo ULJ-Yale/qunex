@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_NIfTI.py``
+``nifti.py``
 
 This file holds code for NIfTI file manipulation utilities. The functions
 implemented here are:
@@ -18,8 +18,8 @@ Created by Grega Repovs on 2013-04-08.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.g_img as g
-import qx_utilities.g_gimg as gimg
+import qx_utilities.general.img as g
+import qx_utilities.general.qximg as qxi
 import numpy as np
 import gzip
 
@@ -253,5 +253,5 @@ def nifti24dfp(inf, outf=None):
     # ---> read image
 
 
-    img = gimg.gimg(inf)
+    img = qxi.qximg(inf)
     img.save4DFP(outf)

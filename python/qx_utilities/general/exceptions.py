@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_exceptions.py``
+``exceptions.py``
 
 Definition of exceptions used in gmri.
 """

@@ -1,5 +1,5 @@
 """
-``g_filelock.py``
+``filelock.py``
 """
 
 from __future__ import print_function

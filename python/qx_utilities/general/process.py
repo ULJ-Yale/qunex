@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-``g_process.py``
+``process.py``
 
 This file holds the core preprocessing hub functions and information it
 defines the commands that can be run, it specifies the options and their
@@ -21,7 +21,7 @@ Change log
            Initial version
            Code merge from dofcMRIp gCodeP/preprocess codebase.
 2017-07-10 Grega Repovs
-           Simplified scheduler interface, now uses g_scheduler
+           Simplified scheduler interface, now uses general.scheduler
 2018-11-14 Jure Demsar
            Added parelements parameter for bold parallelization
 2018-12-12 Jure Demsar
@@ -37,21 +37,18 @@ Change log
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-# general imports
-import g_core
-import gp_workflow
-import gp_simple
-import gp_FS
-import gp_FSL
-import g_scheduler
+# imports
+import qx_utilities
+from qx_utilities.general import core, scheduler
+from qx_utilities.processing import fs, fsl, simple, workflow
 import os
 import os.path
 from datetime import datetime
-import qx_utilities.g_exceptions as ge
+import qx_utilities.general.exceptions as ge
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # pipelines imports
-from HCP import gp_HCP
+from qx_utilities.hcp import process_hcp
 
 
 # =======================================================================
@@ -233,7 +230,7 @@ arglist = [
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
-           ['use_sequence_info',  'all',                                         g_core.pcslist,    "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
+           ['use_sequence_info',  'all',                                         core.pcslist, "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
            ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
@@ -549,50 +546,50 @@ options = {}
 #   Empty lists denote there should be a blank line when printing out a command
 #   list.
 
-calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,                              "Map HCP preprocessed data to sessions' image folder."],
+calist = [['mhd',     'mapHCPData',                  process_hcp.mapHCPData,                        "Map HCP preprocessed data to sessions' image folder."],
           [],
-          ['gbd',     'getBOLDData',                 gp_workflow.getBOLDData,                        "Copy functional data from 4dfp (NIL) processing pipeline."],
-          ['bbm',     'createBOLDBrainMasks',        gp_workflow.createBOLDBrainMasks,               "Create brain masks for BOLD runs."],
+          ['gbd',     'getBOLDData',                 workflow.getBOLDData,                          "Copy functional data from 4dfp (NIL) processing pipeline."],
+          ['bbm',     'createBOLDBrainMasks',        workflow.createBOLDBrainMasks,                 "Create brain masks for BOLD runs."],
           [],
-          ['seg',     'runBasicSegmentation',        gp_FS.runBasicStructuralSegmentation,           "Run basic structural image segmentation."],
-          ['gfs',     'getFSData',                   gp_FS.checkForFreeSurferData,                   "Copy existing FreeSurfer data to sessions' image folder."],
-          ['fss',     'runSubcorticalFS',            gp_FS.runFreeSurferSubcorticalSegmentation,     "Run subcortical freesurfer segmentation."],
-          ['fsf',     'runFullFS',                   gp_FS.runFreeSurferFullSegmentation,            "Run full freesurfer segmentation"],
+          ['seg',     'runBasicSegmentation',        fs.runBasicStructuralSegmentation,             "Run basic structural image segmentation."],
+          ['gfs',     'getFSData',                   fs.checkForFreeSurferData,                     "Copy existing FreeSurfer data to sessions' image folder."],
+          ['fss',     'runSubcorticalFS',            fs.runFreeSurferSubcorticalSegmentation,       "Run subcortical freesurfer segmentation."],
+          ['fsf',     'runFullFS',                   fs.runFreeSurferFullSegmentation,              "Run full freesurfer segmentation"],
           [],
-          ['cbs',     'computeBOLDStats',            gp_workflow.computeBOLDStats,                   "Compute BOLD movement and signal statistics."],
-          ['csr',     'createStatsReport',           gp_workflow.createStatsReport,                  "Create BOLD movement statistic reports and plots."],
-          ['ens',     'extractNuisanceSignal',       gp_workflow.extractNuisanceSignal,              "Extract nuisance signal from BOLD images."],
+          ['cbs',     'computeBOLDStats',            workflow.computeBOLDStats,                     "Compute BOLD movement and signal statistics."],
+          ['csr',     'createStatsReport',           workflow.createStatsReport,                    "Create BOLD movement statistic reports and plots."],
+          ['ens',     'extractNuisanceSignal',       workflow.extractNuisanceSignal,                "Extract nuisance signal from BOLD images."],
           [],
-          ['bpp',     'preprocessBold',              gp_workflow.preprocessBold,                     "Preprocess BOLD images (using old Matlab code)."],
-          ['cpp',     'preprocessConc',              gp_workflow.preprocessConc,                     "Preprocess conc bundle of BOLD images (using old Matlab code)."],
+          ['bpp',     'preprocessBold',              workflow.preprocessBold,                       "Preprocess BOLD images (using old Matlab code)."],
+          ['cpp',     'preprocessConc',              workflow.preprocessConc,                       "Preprocess conc bundle of BOLD images (using old Matlab code)."],
           [],
-          ['hcp1',    'hcp_PreFS',                   gp_HCP.hcpPreFS,                                "Run HCP PreFS pipeline."],
-          ['hcp2',    'hcp_FS',                      gp_HCP.hcpFS,                                   "Run HCP FS pipeline."],
-          ['hcp3',    'hcp_PostFS',                  gp_HCP.hcpPostFS,                               "Run HCP PostFS pipeline."],
-          ['hcp4',    'hcp_fMRIVolume',              gp_HCP.hcpfMRIVolume,                           "Run HCP fMRI Volume pipeline."],
-          ['hcp5',    'hcp_fMRISurface',             gp_HCP.hcpfMRISurface,                          "Run HCP fMRI Surface pipeline."],
-          ['hcp6',    'hcp_ICAFix',                  gp_HCP.hcpICAFix,                               "Run HCP ICAFix pipeline."],
-          ['hcp7',    'hcp_PostFix',                 gp_HCP.hcpPostFix,                              "Run HCP PostFix pipeline."],
-          ['hcp8',    'hcp_ReApplyFix',              gp_HCP.hcpReApplyFix,                           "Run HCP ReApplyFix pipeline."],
-          ['hcp9',    'hcp_MSMAll',                  gp_HCP.hcpMSMAll,                               "Run HCP MSMAll pipeline."],
-          ['hcp10',   'hcp_DeDriftAndResample',      gp_HCP.hcpDeDriftAndResample,                   "Run HCP DeDriftAndResample pipeline."],
+          ['hcp1',    'hcp_PreFS',                   process_hcp.hcpPreFS,                          "Run HCP PreFS pipeline."],
+          ['hcp2',    'hcp_FS',                      process_hcp.hcpFS,                             "Run HCP FS pipeline."],
+          ['hcp3',    'hcp_PostFS',                  process_hcp.hcpPostFS,                         "Run HCP PostFS pipeline."],
+          ['hcp4',    'hcp_fMRIVolume',              process_hcp.hcpfMRIVolume,                     "Run HCP fMRI Volume pipeline."],
+          ['hcp5',    'hcp_fMRISurface',             process_hcp.hcpfMRISurface,                    "Run HCP fMRI Surface pipeline."],
+          ['hcp6',    'hcp_ICAFix',                  process_hcp.hcpICAFix,                         "Run HCP ICAFix pipeline."],
+          ['hcp7',    'hcp_PostFix',                 process_hcp.hcpPostFix,                        "Run HCP PostFix pipeline."],
+          ['hcp8',    'hcp_ReApplyFix',              process_hcp.hcpReApplyFix,                     "Run HCP ReApplyFix pipeline."],
+          ['hcp9',    'hcp_MSMAll',                  process_hcp.hcpMSMAll,                         "Run HCP MSMAll pipeline."],
+          ['hcp10',   'hcp_DeDriftAndResample',      process_hcp.hcpDeDriftAndResample,             "Run HCP DeDriftAndResample pipeline."],
           [],
-          ['hcpd',    'hcp_Diffusion',               gp_HCP.hcpDiffusion,                            "Run HCP DWI pipeline."],
-          # ['hcpdf',   'hcp_DTIFit',                  gp_HCP.hcpDTIFit,                               "Run FSL DTI fit."],
-          # ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."],
+          ['hcpd',    'hcp_Diffusion',               process_hcp.hcpDiffusion,                      "Run HCP DWI pipeline."],
+          # ['hcpdf',   'hcp_DTIFit',                  process_hcp.hcpDTIFit,                        "Run FSL DTI fit."],
+          # ['hcpdb',   'hcp_Bedpostx',                process_hcp.hcpBedpostx,                      "Run FSL Bedpostx GPU."],
           [],
-          ['rsc',     'runShellScript',              gp_simple.runShellScript,                       "Runs the specified script."],
+          ['rsc',     'runShellScript',              simple.runShellScript,                         "Runs the specified script."],
           [],
-          ['f99',    'fsl_f99',                      gp_FSL.fsl_f99,                                 "Run FSL F99 command."],
-          ['fslx',   'fsl_xtract',                   gp_FSL.fsl_xtract,                              "Run FSL XTRACT command."],
+          ['f99',    'fsl_f99',                      fsl.fsl_f99,                                   "Run FSL F99 command."],
+          ['fslx',   'fsl_xtract',                   fsl.fsl_xtract,                                "Run FSL XTRACT command."],
           ]
 
-lalist = [['lfs',     'longitudinalFS',              gp_HCP.longitudinalFS,                          "Runs longitudinal FreeSurfer across sessions."]
+lalist = [['lfs',     'longitudinalFS',              process_hcp.longitudinalFS,                    "Runs longitudinal FreeSurfer across sessions."]
           ]
 
-salist = [['cbl',     'createBoldList',              gp_simple.createBoldList,                       'createBoldList'],
-          ['ccl',     'createConcList',              gp_simple.createConcList,                       'createConcList'],
-          ['lsi',     'listSessionInfo',             gp_simple.listSessionInfo,                      'listSessionInfo']
+salist = [['cbl',     'createBoldList',              simple.createBoldList,                         'createBoldList'],
+          ['ccl',     'createConcList',              simple.createConcList,                         'createConcList'],
+          ['lsi',     'listSessionInfo',             simple.listSessionInfo,                        'listSessionInfo']
           ]
 
 
@@ -771,7 +768,7 @@ def run(command, args):
     if 'filter' in args:
         options['filter'] = args['filter']
 
-    sessions, gpref = g_core.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
+    sessions, gpref = qx_utilities.general.core.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
     # --- check if we are running across subjects rather than sessions
     if command in lactions:
@@ -822,7 +819,7 @@ def run(command, args):
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
    
-    studyfolders = g_core.deduceFolders(options)
+    studyfolders = qx_utilities.general.core.deduceFolders(options)
     logfolder    = studyfolders['logfolder']
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
@@ -1007,5 +1004,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-        g_scheduler.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
+        qx_utilities.general.scheduler.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
 
