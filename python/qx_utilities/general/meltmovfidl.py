@@ -15,7 +15,7 @@ import re
 import os
 import os.path
 import glob
-import qx_utilities.general.img
+import img
 
 help_message = """
 ``meltmovfidl <conc_file> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``

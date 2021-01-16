@@ -23,11 +23,10 @@ Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-
-from qx_utilities.processing.core import *
-from qx_utilities.general.img import *
 import os
 import re
+from core import *
+from general.img import *
 from datetime import datetime
 
 

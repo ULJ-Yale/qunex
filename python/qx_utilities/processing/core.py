@@ -23,11 +23,11 @@ import glob
 import exceptions
 import sys
 import traceback
-from datetime import datetime
 import time
-from qx_utilities.general.img import *
-from qx_utilities.general.meltmovfidl import *
-import qx_utilities.general.core as gc
+import general.core as gc
+from datetime import datetime
+from general.img import *
+from general.meltmovfidl import *
 
 
 def is_number(s):

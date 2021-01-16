@@ -19,15 +19,15 @@ import os
 import os.path
 import re
 import shutil
-import qx_utilities.general.exceptions as ge
-import qx_utilities.general.core as gc
+import exceptions as ge
+import core as gc
 import zipfile
 import tarfile
 import glob
 import datetime
 import gzip
 import sys
-import qx_utilities.general.filelock as fl
+import filelock as fl
 import ast
 
 

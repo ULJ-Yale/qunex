@@ -7,11 +7,11 @@ Definition of commands used in gmri along with their parameters.
 """
 
 # qx_utilities imports
-from qx_utilities.general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities
+import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities
 
 # pipeline imports
-from qx_utilities.hcp import import_hcp, setup_hcp, process_hcp, export_hcp
-from qx_utilities.nhp import import_nhp
+from hcp import import_hcp, setup_hcp, process_hcp, export_hcp
+from nhp import import_nhp
 
 # all command mappings
 commands = {'listDicom'            : {'com': dicom.listDicom,               'args': ('folder', )},

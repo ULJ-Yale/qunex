@@ -21,7 +21,7 @@ import base64
 import struct
 import shutil
 import collections
-import qx_utilities.general.exceptions as ge
+import exceptions as ge
 
 try:
     import pydicom

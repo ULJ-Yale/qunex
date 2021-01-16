@@ -20,7 +20,7 @@ import glob
 import sys
 import types
 import traceback
-import qx_utilities.general.exceptions as ge
+import exceptions as ge
 
 
 def readSessionData(filename, verbose=False):

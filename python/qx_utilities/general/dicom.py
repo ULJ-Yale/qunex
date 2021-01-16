@@ -30,10 +30,9 @@ import glob
 import shutil
 import datetime
 import subprocess
-import qx_utilities.general.nifti
-import qx_utilities.general.qximg as qxi
-import qx_utilities.general.exceptions as ge
-import qx_utilities
+import nifti
+import qximg as qxi
+import exceptions as ge
 import zipfile
 import tarfile
 import gzip

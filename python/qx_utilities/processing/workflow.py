@@ -27,17 +27,16 @@ Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-from qx_utilities.processing.core import *
-from qx_utilities.general.img import *
 import os
 import shutil
 import re
 import traceback
-from datetime import datetime
 import time
-import qx_utilities
-import qx_utilities.general.exceptions as ge
-import qx_utilities.general.filelock as fl
+import general.exceptions as ge
+import general.filelock as fl
+from datetime import datetime
+from core import *
+from general.img import *
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial

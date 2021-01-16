@@ -18,11 +18,10 @@ All rights reserved.
 
 import os
 import shutil
-import qx_utilities
 import collections
-import qx_utilities.general.exceptions as ge
+import general.exceptions as ge
 import os.path
-import qx_utilities.general.core
+import general.core
 
 def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
     """

@@ -10,8 +10,8 @@ Adapted from previous joinFidl.py script
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.general.img as g
-import qx_utilities.general.exceptions as ge
+import img as qxi
+import exceptions as ge
 import re
 import os
 import os.path
@@ -38,10 +38,10 @@ def readLines(filename):
 def boldInfo(boldfile):
     if ".4dfp.img" in boldfile:
         ifhfile = boldfile.replace('.img', '.ifh')
-        ifh = g.ifhhdr(ifhfile)
+        ifh = qxi.ifhhdr(ifhfile)
         hdr = ifh.toNIfTI()
     elif ".nii" in boldfile:
-        hdr = g.niftihdr(boldfile)
+        hdr = qxi.niftihdr(boldfile)
     else:
         hdr = None
 

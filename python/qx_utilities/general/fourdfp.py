@@ -15,13 +15,12 @@ Use gmri to run the commands from the terminal.
 """
 
 import os
-import qx_utilities
 import subprocess
 import os.path
 import glob
 import re
 import datetime
-import qx_utilities.general.exceptions as ge
+import exceptions as ge
 
 
 template = '''@ economy = 5

@@ -38,10 +38,7 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-from qx_utilities.processing.core import *
-from qx_utilities.general.img import *
-from qx_utilities.general.core import checkFiles
-import qx_utilities.general.exceptions as ge
+import general.exceptions as ge
 import os
 import re
 import os.path
@@ -49,9 +46,11 @@ import shutil
 import glob
 import sys
 import traceback
-from datetime import datetime
 import time
-
+from processing.core import *
+from general.img import *
+from general.core import checkFiles
+from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 

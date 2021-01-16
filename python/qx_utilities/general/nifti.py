@@ -18,8 +18,8 @@ Created by Grega Repovs on 2013-04-08.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.general.img as g
-import qx_utilities.general.qximg as qxi
+import img as g
+import qximg as qxi
 import numpy as np
 import gzip
 

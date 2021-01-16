@@ -38,17 +38,16 @@ Copyright (c) Grega Repovs. All rights reserved.
 """
 
 # imports
-import qx_utilities
-from qx_utilities.general import core, scheduler
-from qx_utilities.processing import fs, fsl, simple, workflow
+import core, scheduler
 import os
 import os.path
+import exceptions as ge
+from processing import fs, fsl, simple, workflow
 from datetime import datetime
-import qx_utilities.general.exceptions as ge
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # pipelines imports
-from qx_utilities.hcp import process_hcp
+from hcp import process_hcp
 
 
 # =======================================================================

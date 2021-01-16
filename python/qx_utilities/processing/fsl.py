@@ -25,7 +25,7 @@ All rights reserved.
 """
 import os
 
-from qx_utilities.processing.core import *
+from core import *
 
 def fsl_f99(sinfo, options, overwrite=False, thread=0):
     """

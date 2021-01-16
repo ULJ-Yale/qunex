@@ -13,7 +13,7 @@ Created by Grega Repovs on 2013-04-13.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.general.img as g
+import img as qxi
 import numpy as np
 import gzip
 import os.path
@@ -98,7 +98,7 @@ class qximg(object):
 
         # ---> check data format
 
-        sform = g.getImgFormat(filename)
+        sform = qxi.getImgFormat(filename)
         if sform == '.nii.gz':
             sf = gzip.open(filename, 'r')
         else:
@@ -106,7 +106,7 @@ class qximg(object):
 
         # ---> read the header info
 
-        nihdr = g.niftihdr()
+        nihdr = qxi.niftihdr()
         nihdr.unpackHdr(sf)
         dataType = np.dtype(nihdr.e + nihdr.dType)
 
@@ -182,7 +182,7 @@ class qximg(object):
         if filename == None:
             filename = self.filename
 
-        tform = g.getImgFormat(filename)
+        tform = qxi.getImgFormat(filename)
         if tform == '.nii.gz':
             tf = gzip.open(filename, 'w')
         else:

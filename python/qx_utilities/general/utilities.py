@@ -18,15 +18,14 @@ import errno
 import shutil
 import glob
 import datetime
-import qx_utilities.general.process as gp
-import qx_utilities.general.core as gc
-import qx_utilities.processing.core as gpc
-import qx_utilities.general.exceptions as ge
-import qx_utilities
+import general.process as gp
+import general.core as gc
+import processing.core as gpc
+import general.exceptions as ge
 import getpass
 import re
 import subprocess
-import qx_utilities.general.filelock as fl
+import filelock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================

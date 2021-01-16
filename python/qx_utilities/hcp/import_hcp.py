@@ -19,8 +19,8 @@ import os
 import os.path
 import re
 import shutil
-import qx_utilities.general.exceptions as ge
-import qx_utilities.general.core as gc
+import general.exceptions as ge
+import general.core as gc
 import zipfile
 import tarfile
 import glob

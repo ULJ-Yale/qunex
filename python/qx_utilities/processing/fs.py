@@ -24,8 +24,6 @@ Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-from qx_utilities.processing.core import *
-from qx_utilities.general.img import *
 import os
 import shutil
 import re
@@ -34,9 +32,10 @@ import glob
 import exceptions
 import sys
 import traceback
-from datetime import datetime
 import time
-
+from datetime import datetime
+from core import *
+from general.img import *
 
 def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
     """

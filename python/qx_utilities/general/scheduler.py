@@ -19,8 +19,8 @@ Change log
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import qx_utilities.general.exceptions as ge
-import qx_utilities.general.core as gc
+import exceptions as ge
+import core as gc
 import subprocess
 import os
 import os.path

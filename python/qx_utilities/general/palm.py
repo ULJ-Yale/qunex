@@ -24,8 +24,7 @@ import subprocess
 import gzip
 import shutil
 import glob
-import qx_utilities
-import qx_utilities.general.exceptions as ge
+import exceptions as ge
 import re
 
 def runPALM(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):

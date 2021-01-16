@@ -20,8 +20,8 @@ import os.path
 import os
 import time
 import shutil
-import qx_utilities.general.core as gc
-import qx_utilities.general.exceptions as ge
+import general.core as gc
+import general.exceptions as ge
 import re
 
 def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
@@ -215,7 +215,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     """
 
     # load gu
-    import qx_utilities.general.utilities as gu
+    import general.utilities as gu
 
     verbose   = verbose.lower() == 'yes'
 

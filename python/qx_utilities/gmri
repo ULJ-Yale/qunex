@@ -1,13 +1,13 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 
-import qx_utilities.general.scheduler as gs
-import qx_utilities.general.utilities as gu
-import qx_utilities.general.process as gp
-import qx_utilities.general.matlab as gm
-import qx_utilities.general.core as gc
-import qx_utilities.general.exceptions as ge
-import qx_utilities.general.commands as gcom
+from general import scheduler as gs
+from general import utilities as gu
+from general import process as gp
+from general import matlab as gm
+from general import core as gc
+from general import exceptions as ge
+from general import commands as gcom
 import os.path
 import sys
 import copy
