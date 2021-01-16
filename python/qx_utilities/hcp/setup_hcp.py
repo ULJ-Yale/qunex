@@ -19,9 +19,9 @@ All rights reserved.
 import os
 import shutil
 import collections
-import exceptions as ge
+import general.exceptions as ge
 import os.path
-import core
+import general.core
 
 def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
     """
