@@ -33,12 +33,11 @@ import re
 import traceback
 import time
 import exceptions as ge
-import filelock as fl
-import meltmovfidl
+import general.filelock as fl
+import general.meltmovfidl
 from datetime import datetime
 from core import *
-from img import *
-
+from general.img import *
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
