@@ -34,7 +34,7 @@ import traceback
 import time
 import exceptions as ge
 import general.filelock as fl
-import general.meltmovfidl
+import general.meltmovfidl as gm
 from datetime import datetime
 from core import *
 from general.img import *
@@ -1199,7 +1199,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
             if os.path.exists(concf) and os.path.exists(fidlf):
                 try:
-                    meltmovfidl.meltmovfidl(concf, ipatt, fidlf, fidlf.replace('.fidl', ipatt))
+                    gm.meltmovfidl(concf, ipatt, fidlf, fidlf.replace('.fidl', ipatt))
                 except:
                     r += "\nWARNING: Failed to create a melted fidl file!"
                     print "\nWARNING: Failed to create a melted fidl file! (%s)" % (sinfo['id'])

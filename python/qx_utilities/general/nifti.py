@@ -18,7 +18,7 @@ Created by Grega Repovs on 2013-04-08.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import img as g
+import img as gi
 import qximg as qxi
 import numpy as np
 import gzip
@@ -40,7 +40,7 @@ def fz2zf(inf, outf=None):
 
     # ---> check data format
 
-    sform = g.getImgFormat(inf)
+    sform = gi.getImgFormat(inf)
     if sform == '.nii.gz':
         sf = gzip.open(inf, 'r')
     else:
@@ -48,25 +48,25 @@ def fz2zf(inf, outf=None):
 
     # ---> read the header info
 
-    nihdr = g.niftihdr()
+    nihdr = gi.niftihdr()
     nihdr.unpackHdr(sf)
     dataType = np.dtype(nihdr.e + nihdr.dType)
 
     # ---> read and reshuffle the data
 
     sf.seek(int(nihdr.vox_offset))
-    img = np.fromstring(sf.read(), dtype=dataType)
+    image = np.fromstring(sf.read(), dtype=dataType)
     sf.close()
-    img.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
+    image.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
 
-    out = img.swapaxes(0, 1)
+    out = image.swapaxes(0, 1)
 
     # ---> check data format
 
     if outf is None:
         outf = inf
 
-    tform = g.getImgFormat(outf)
+    tform = gi.getImgFormat(outf)
     if tform == '.nii.gz':
         tf = gzip.open(outf, 'w')
     else:
@@ -113,7 +113,7 @@ def reslice(inf, slices, outf=None):
 
     # ---> check data format
 
-    sform = g.getImgFormat(inf)
+    sform = gi.getImgFormat(inf)
     if sform == '.nii.gz':
         sf = gzip.open(inf, 'r')
     else:
@@ -121,16 +121,16 @@ def reslice(inf, slices, outf=None):
 
     # ---> read the header info
 
-    nihdr = g.niftihdr()
+    nihdr = gi.niftihdr()
     nihdr.unpackHdr(sf)
     dataType = np.dtype(nihdr.e + nihdr.dType)
 
     # ---> read and reshuffle the data
 
     sf.seek(int(nihdr.vox_offset))
-    img = np.fromstring(sf.read(), dtype=dataType)
+    image = np.fromstring(sf.read(), dtype=dataType)
     sf.close()
-    img.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
+    image.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
 
     # ---> compute number of frames and take extra slices out
 
@@ -146,9 +146,9 @@ def reslice(inf, slices, outf=None):
     mask = np.ones(nihdr.sizez, dtype=bool)
     mask[indeces] = False
 
-    img = img[mask,...]
+    image = image[mask,...]
 
-    # img = np.delete(img, indeces, 0)
+    # image = np.delete(image, indeces, 0)
 
 
     # ---> recompute the size
@@ -156,18 +156,18 @@ def reslice(inf, slices, outf=None):
     nihdr.sizez  = slices
     nihdr.frames = gframes
     nihdr.ndimensions = 4
-    img.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
+    image.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
 
     # ---> swap Z and F
 
-    out = img.swapaxes(0, 1)
+    out = image.swapaxes(0, 1)
 
     # ---> check data format
 
     if outf is None:
         outf = inf
 
-    tform = g.getImgFormat(outf)
+    tform = gi.getImgFormat(outf)
     if tform == '.nii.gz':
         tf = gzip.open(outf, 'w')
     else:
@@ -195,7 +195,7 @@ def reorder(inf, outf=None):
 
     # ---> check data format
 
-    sform = g.getImgFormat(inf)
+    sform = gi.getImgFormat(inf)
     if sform == '.nii.gz':
         sf = gzip.open(inf, 'r')
     else:
@@ -203,25 +203,25 @@ def reorder(inf, outf=None):
 
     # ---> read the header info
 
-    nihdr = g.niftihdr()
+    nihdr = gi.niftihdr()
     nihdr.unpackHdr(sf)
     dataType = np.dtype(nihdr.e + nihdr.dType)
 
     # ---> read and reshuffle the data
 
     sf.seek(int(nihdr.vox_offset))
-    img = np.fromstring(sf.read(), dtype=dataType)
+    image = np.fromstring(sf.read(), dtype=dataType)
     sf.close()
-    img.shape = (nihdr.frames, nihdr.sizez, nihdr.sizey, nihdr.sizex)
+    image.shape = (nihdr.frames, nihdr.sizez, nihdr.sizey, nihdr.sizex)
 
-    out = img[:,::-1,...]
+    out = image[:,::-1,...]
 
     # ---> check data format
 
     if outf is None:
         outf = inf
 
-    tform = g.getImgFormat(outf)
+    tform = gi.getImgFormat(outf)
     if tform == '.nii.gz':
         tf = gzip.open(outf, 'w')
     else:
@@ -253,5 +253,5 @@ def nifti24dfp(inf, outf=None):
     # ---> read image
 
 
-    img = qxi.qximg(inf)
-    img.save4DFP(outf)
+    image = qxi.qximg(inf)
+    image.save4DFP(outf)

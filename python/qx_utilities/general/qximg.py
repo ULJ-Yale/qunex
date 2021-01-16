@@ -220,6 +220,6 @@ def modniftihdr(filename, s):
         gmri modniftihdr img.nii.gz "srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126]"
     """
 
-    img = qximg(filename)
-    img.hdrnifti.modifyHeader(s)
-    img.saveimage()
+    image = qximg(filename)
+    image.hdrnifti.modifyHeader(s)
+    image.saveimage()
