@@ -38,7 +38,7 @@
 #
 #    TOOLS=/<absolute_path_to_software_folder>
 #    export TOOLS
-#    source $TOOLS/qx_library/environment/qunex_environment.sh
+#    source $TOOLS/env/qunex_environment.sh
 #
 # ## PREREQUISITE PRIOR PROCESSING
 #
