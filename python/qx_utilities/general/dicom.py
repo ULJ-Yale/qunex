@@ -38,6 +38,8 @@ import tarfile
 import gzip
 import csv
 import json
+import core
+import img as gi
 
 try:
     import pydicom.filereader as dfr
@@ -717,27 +719,27 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         imgs = glob.glob(os.path.join(folder, "*.nii*"))
         if debug:
             print "     --> found nifti files: %s" % ("\n                            ".join(imgs))
-        for img in imgs:
-            if not os.path.exists(img):
+        for image in imgs:
+            if not os.path.exists(image):
                 continue
             if debug:
-                print "     --> processing: %s [%s]" % (img, os.path.basename(img))
-            if img[-3:] == 'nii':
+                print "     --> processing: %s [%s]" % (image, os.path.basename(image))
+            if image[-3:] == 'nii':
                 if debug:
-                    print "     --> gzipping: %s" % (img)
-                subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
-                img += '.gz'
-            if os.path.basename(img)[0:2] == 'co':
-                # os.rename(img, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
+                    print "     --> gzipping: %s" % (image)
+                subprocess.call("gzip " + image, shell=True, stdout=null, stderr=null)
+                image += '.gz'
+            if os.path.basename(image)[0:2] == 'co':
+                # os.rename(image, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
                 if debug:
-                    print "         ... removing: %s" % (img)
-                os.remove(img)
-            elif os.path.basename(img)[0:1] == 'o':
+                    print "         ... removing: %s" % (image)
+                os.remove(image)
+            elif os.path.basename(image)[0:1] == 'o':
                 if recenter:
                     if debug:
-                        print "         ... recentering: %s" % (img)
+                        print "         ... recentering: %s" % (image)
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
-                    timg = qxi.qximg(img)
+                    timg = qxi.qximg(image)
                     if recenter == 0.7:
                         timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
                     elif recenter == 0.8:
@@ -746,16 +748,16 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
                         print "         saving to: %s" % (tfname)
                     timg.saveimage(tfname)
                     if debug:
-                        print "         removing: %s" % (img)
-                    os.remove(img)
+                        print "         removing: %s" % (image)
+                    os.remove(image)
                 else:
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
                     if debug:
-                        print "         ... moving '%s' to '%s'" % (img, tfname)
-                    os.rename(img, tfname)
+                        print "         ... moving '%s' to '%s'" % (image, tfname)
+                    os.rename(image, tfname)
 
                 # -- remove original
-                noob = os.path.join(folder, os.path.basename(img)[1:])
+                noob = os.path.join(folder, os.path.basename(image)[1:])
                 noot = os.path.join(imgf, "%02d.nii.gz" % (niinum))
                 if os.path.exists(noob):
                     if debug:
@@ -768,13 +770,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
             else:
                 tfname = os.path.join(imgf, "%02d.nii.gz" % (niinum))
                 if debug:
-                    print "         ... moving '%s' to '%s'" % (img, tfname)
-                os.rename(img, tfname)
+                    print "         ... moving '%s' to '%s'" % (image, tfname)
+                os.rename(image, tfname)
 
             # --- check also for .bval and .bvec files
 
             for dwiextra in ['.bval', '.bvec']:
-                dwisrc = img.replace('.nii.gz', dwiextra)
+                dwisrc = image.replace('.nii.gz', dwiextra)
                 if os.path.exists(dwisrc):
                     os.rename(dwisrc, os.path.join(imgf, "%02d%s" % (niinum, dwiextra)))
 
@@ -810,7 +812,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         # --- check final geometry
 
         if tfname:
-            hdr = img.niftihdr(tfname)
+            hdr = gi.niftihdr(tfname)
 
             if hdr.sizez > hdr.sizey:
                 print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
@@ -1383,20 +1385,20 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             if debug:
                 print "     --> found %s nifti file(s): %s" % (nimg, "\n                            ".join(imgs))
 
-            for img in imgs:
-                if not os.path.exists(img):
+            for image in imgs:
+                if not os.path.exists(image):
                     continue                
                 if debug:
-                    print "     --> processing: %s [%s]" % (img, os.path.basename(img))
-                if img.endswith(".nii"):
+                    print "     --> processing: %s [%s]" % (image, os.path.basename(image))
+                if image.endswith(".nii"):
                     if debug:
-                        print "     --> gzipping: %s" % (img)
-                    subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
-                    img += '.gz'
+                        print "     --> gzipping: %s" % (image)
+                    subprocess.call("gzip " + image, shell=True, stdout=null, stderr=null)
+                    image += '.gz'
 
                 # --> compile the basename of the target file(s) for nii folder
                 imgnum += 1
-                imgname = os.path.basename(img)
+                imgname = os.path.basename(image)
                 tbasename = "%d" % (niinum + imgnum)
 
                 # --> extract any suffices to add to the session.txt
@@ -1407,12 +1409,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 # --> generate the actual target file path and move the image
                 tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
                 if debug:
-                    print "         ... moving '%s' to '%s'" % (img, tfname)
-                os.rename(img, tfname)
+                    print "         ... moving '%s' to '%s'" % (image, tfname)
+                os.rename(image, tfname)
 
                 # --> check for .bval and .bvec files
                 for dwiextra in ['.bval', '.bvec']:
-                    dwisrc = img.replace('.nii.gz', dwiextra)
+                    dwisrc = image.replace('.nii.gz', dwiextra)
                     if os.path.exists(dwisrc):
                         os.rename(dwisrc, os.path.join(imgf, "%s%s" % (tbasename, dwiextra)))
 
@@ -1424,7 +1426,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 # --> check for .json files and extract info if present                
 
                 for jsonextra in ['.json', '.JSON']:
-                    jsonsrc = img.replace('.gz', '')
+                    jsonsrc = image.replace('.gz', '')
                     jsonsrc = jsonsrc.replace('.nii', '')
                     jsonsrc += jsonextra
 
@@ -1466,7 +1468,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 # --- check final geometry
 
                 if tfname:
-                    hdr = img.niftihdr(tfname)
+                    hdr = gi.niftihdr(tfname)
 
                     if hdr.sizez > hdr.sizey and hdr.sizex < 150 :
                         print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
