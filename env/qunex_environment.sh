@@ -547,6 +547,7 @@ PATH=$QUNEXPATH/python/qx_utilities:$PATH
 PATH=$TOOLS/olib:$PATH
 PATH=$TOOLS/bin:$TOOLS/lib/bin:$TOOLS/lib/lib/:$PATH
 PATH=$QUNEXPATH/bin:$PATH
+PATH=$QUNEXPATH/lib:$PATH
 PATH=/usr/local/bin:$PATH
 PATH=$PATH:/bin
 #PATH=$QUNEXPATH/qx_library/bin:$PATH
