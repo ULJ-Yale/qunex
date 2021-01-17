@@ -1,6 +1,6 @@
-function [] = g_ReportError(ME);
+function [] = g_ReportCrash(ME);
 
-%``function [] = g_ReportError(ME)``;
+%``function [] = g_ReportCrash(ME)``;
 %
 %   Function for reporting of errors found in the code.
 %
