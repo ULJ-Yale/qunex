@@ -672,7 +672,7 @@ SceneZip=`opts_GetOpt "--scenezip" $@`
 runQC_Custom=`opts_GetOpt "--customqc" $@`
 HCPSuffix=`opts_GetOpt "--hcp_suffix" $@`
 
-# -- g_PlotsBoldTS input flags
+# -- general_plot_bold_timeseries input flags
 QCPlotElements=`opts_GetOpt "--qcplotelements" $@`
 QCPlotImages=`opts_GetOpt "--qcplotimages" $@`
 QCPlotMasks=`opts_GetOpt "--qcplotmasks" $@`

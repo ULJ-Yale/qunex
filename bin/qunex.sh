@@ -1886,7 +1886,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         RunMethod="1"
     fi
     
-    # -- g_PlotsBoldTS input flags
+    # -- general_plot_bold_timeseries input flags
     QCPlotElements=`opts_GetOpt "${setflag}qcplotelements" $@`
     QCPlotImages=`opts_GetOpt "${setflag}qcplotimages" $@`
     QCPlotMasks=`opts_GetOpt "${setflag}qcplotmasks" $@`

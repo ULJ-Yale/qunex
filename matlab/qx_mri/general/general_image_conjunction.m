@@ -5,7 +5,7 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 %	INPUTS
 %	======
 %
-%	Reads image file, computes conjunction using g_Conjunction and saves results.
+%	Reads image file, computes conjunction using g_conjunction and saves results.
 %
 %	--imgf 		input file, a z-score image file of concatenated individual files
 %	--maskf		optional mask image
@@ -14,7 +14,7 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 %				- nonzero -> takes all non-zero voxels
 %				- all -> takes all voxels
 %
-%	For the rest of arguments see g_Conjunction.m
+%	For the rest of arguments see g_conjunction.m
 %
 %	RESULTS
 %	=======
