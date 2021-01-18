@@ -37,7 +37,7 @@ function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeld
 %   2010-10-09 Grega Repovs
 %              Initial version.
 %   2017-02-11 Grega Repovs
-%              Updated to use the general g_HRF function.
+%              Updated to use the general general_hrf function.
 %
 
 if nargin < 4
@@ -87,7 +87,7 @@ end
 switch model
 
     case {'boynton', 'spm', 'gamma'}
-        hrf = g_HRF(0.1, hrf_type, [], modeldata);
+        hrf = general_hrf(0.1, hrf_type, [], modeldata);
     case 'empirical'
         hrf = resample(modeldata, round(TR*10), 1);
     case 'raw'

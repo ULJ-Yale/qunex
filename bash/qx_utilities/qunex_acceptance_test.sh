@@ -750,7 +750,7 @@ echo ""
             #    UnitTests="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd FSLDtifit FSLBedpostxGPU preprocessBold computeBOLDfcSeed computeBOLDfcGBC" 
             #
             # -- Needs to be added:
-            #    UnitTests="hcpd hcpdLegacy eddyQC FSLDtifit FSLBedpostxGPU pretractographyDense DWIDenseParcellation DWISeedTractography createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC QCPreprocBOLDfc"
+            #    UnitTests="hcpd hcpdLegacy eddyQC FSLDtifit FSLBedpostxGPU pretractographyDense DWIDenseParcellation DWISeedTractography createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc general_plot_bold_timeseries BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC QCPreprocBOLDfc"
             #
             # -- FILES FOR EACH UNIT
             #

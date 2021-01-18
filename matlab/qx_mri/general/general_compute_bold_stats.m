@@ -1,0 +1,250 @@
+function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbose);
+
+%``function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbose)``
+%
+%   Computes BOLD run per frame statistics and scrubbing information.
+%
+%   INPUTS
+%   ======
+%
+%   --img      An nimage object or a path to a BOLD file to process.
+%   --mask     An nimage object or a path to a mask file to use.
+%   --target   A folder to save results into ['']:
+%
+%              - '': where bold image is,
+%              - 'none': do not save results in an external file
+%
+%   --store    Whether to store the data in the image file ['']:
+%
+%              - 'same': in the same file,
+%              - '<ext>': in a new file with extension <ext>,
+%              - '': do not save information in an image file
+%
+%   --scrub    A string describing whether and how to compute scrubbing
+%              information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or
+%              'none' for no scrubbing (see img_ComputeScrub nimage
+%              method for more information.
+%   --verbose  To report the progress or not [false].
+%
+%   USE
+%   ===
+%
+%   The function is used to compute and save per frame statistics to be used for
+%   bad frames scrubbing. It also initiates computation of scrubbing information
+%   if a scrubbing string is present.
+%
+%   The function identifies relevant brain voxels in two manners. First, it
+%   identifies voxels with intensity higher than 300 on the first BOLD frame. If
+%   there are more than 20000 valid voxels, it then select those for which the
+%   intensity is allways above the specified threshold and selects those for
+%   computation of image statistics.
+%
+%   Second, if the first method fails (e.g. in the case when images were
+%   demeaned), it identifies all the voxels for which the variance across the
+%   frames is more than 0.
+%
+%   After the voxels were identified, the image is additionally masked if a
+%   mask was specified, and the statistics are computed using img_StatsTime
+%   nimage method.
+%
+%   If scrub is not set to 'none', scrubbing information is also computed by
+%   calling img_ComputeScrub nimage method.
+%
+%   The results can then be saved either by embedding them into the volume
+%   image (specified in the store parameter) or by saving them in separate
+%   files in the specified target folder using .bstats extension for bold
+%   statistics, .scrub extension for scrubbing information and .use extension
+%   for information, which frame to use.
+%
+%   NOTICE
+%   ======
+%   Saving data by embedding in a volume file is currently disabled.
+%
+%   EXAMPLE USE
+%   ===========
+%   
+%   ::
+%
+%       general_compute_bold_stats('bold1.nii.gz', [], 'movement', '', '', true);
+%
+
+%   ~~~~~~~~~~~~~~~~~~
+%
+%   Changelog
+%   2011-07-09 Grega Repovs
+%              Initial version
+%   2013-10-20 Grega Repovs
+%              Added embedding and scrubbing
+%   2013-12-18 Grega Repovs
+%              Split in two to enable single bold file processing
+%   2017-03-12 Grega Repovs
+%              Updated documentation
+%   2018-06-20 Grega Repovš
+%              Added more detailed reporting of parameters used.
+%   2018-08-24 Grega Repovš
+%              Saving parameters to *.scrub file
+%
+
+if nargin < 6, verbose = false; end
+if nargin < 5, scrub   = [];    end
+if nargin < 4, store   = [];    end
+if nargin < 3, target  = [];    end
+if nargin < 2, mask    = [];    end
+
+brainthreshold = 300;
+minbrainvoxels = 20000;
+
+% ======= Run main
+
+if verbose,
+    if verbose, fprintf('\nRunning general_compute_bold_stats\n--------------------------\n'); end
+    fprintf('\nParameters:\n-----------');
+    fprintf('\n        img: %s', img);
+    fprintf('\n       mask: %s', mask);
+    fprintf('\n     target: %s', target);
+    fprintf('\n      store: %s', store);
+    fprintf('\n      scrub: %s\n', scrub);
+end
+
+% --- check mask
+
+if ~isempty(mask)
+    if ~isa(mask, 'nimage')
+        if verbose, fprintf('\n---> Reading mask [%s]', mask); end
+        mask = nimage(mask);
+    end
+end
+
+% --- check bold
+
+if ~isa(img, 'nimage')
+    if verbose, fprintf('\n---> Reading bold [%s]', img); end
+    img = nimage(img);
+end
+
+% --- find all below threshold voxels
+
+img.data = img.image2D;
+img.data(isnan(img.data)) = 0;
+
+% - check whether the image is demeaned
+
+bmask = img.zeroframes(1);
+bmask.data = img.data(:,1);
+bmask.data = bmask.data > brainthreshold;
+
+if mean(mean(img.data(bmask.data,:),2)) < brainthreshold
+    bmask.data = var(img.data, 0, 2);
+    bmask.data = bmask.data > 0;
+else
+    img.data(img.data < brainthreshold) = 0;
+    bmask.data = min(img.data, [], 2) > 0;
+end
+
+% --- apply also subject roi mask
+
+if mask
+    bmask.data(mask.data == 0) = 0;
+end
+
+% --- compute stats
+
+if verbose, fprintf(' ... computing stats'); end
+stats = img.img_StatsTime([], bmask);
+
+% --------------------------------------------------------------
+%                                       save in an external file
+
+ext = true;
+if target
+    if strcmp(target, 'none')
+        ext = false;
+    end
+end
+
+[w fname] = fileparts(img.filename);
+
+% --- get filename to save to
+
+fname = strrep(fname, '.img', '');
+fname = strrep(fname, '.ifh', '');
+fname = strrep(fname, '.4dfp', '');
+fname = strrep(fname, '.gz', '');
+fname = strrep(fname, '.nii', '');
+
+
+% --------------------------------------------------------------
+%                                                  prepare stats
+
+img.fstats_hdr  = {'frame', 'n', 'm', 'var', 'sd', 'dvars', 'dvarsm', 'dvarsme', 'fd'};
+img.fstats      = zeros(img.frames, 9);
+img.fstats(:,1) = 1:img.frames;
+img.fstats(:,2) = stats.n;
+img.fstats(:,3) = stats.mean;
+img.fstats(:,4) = stats.var;
+img.fstats(:,5) = stats.sd;
+img.fstats(:,6) = stats.dvars;
+img.fstats(:,7) = stats.dvarsm;
+img.fstats(:,8) = stats.dvarsme;
+
+
+% --------------------------------------------------------------
+%                                              compute scrubbing
+
+if ~strcmp(scrub, 'none')
+    if verbose, fprintf(' ... scrubbing'); end
+    [img, parameters] = img.img_ComputeScrub(scrub);
+end
+
+
+% --------------------------------------------------------------
+%                                                 embed and save
+
+% --- embedding turned off temporariliy
+
+% if ~isempty(store)
+%     if strcmp(store, 'same')
+%         img.img_saveimage();
+%     else
+%         tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
+%         img.img_saveimage(tname);
+%     end
+% end
+
+
+% --------------------------------------------------------------
+%                                                  save external
+
+if ext
+
+    % --- save stats
+
+    if verbose, fprintf(' ... saving stats'); end
+
+    % if ismember('fd', img.fstats_hdr)
+    %     stats.fd = img.fstats(:, ismember(img.fstats_hdr, {'fd'}));
+    % else
+    %     stats.fd = zeros(1, img.frames);
+    % end
+
+    g_WriteTable(fullfile(target, [fname '.bstats']), img.fstats, img.fstats_hdr, 'max|mean|sd', '%-10s|%-10d|%-10g|%-9s', ' ');   % '%s|%d|%.3f|%s'
+
+    % --- save scrub
+
+    if ~strcmp(scrub, 'none')
+        if verbose, fprintf(' ... saving scrubbing data'); end
+
+        pre = sprintf('# Parameters used\n# radius:   %d\n# fdt:      %.2f\n# dvarsmt:  %.2f\n# dvarsmet: %.2f\n# after:    %d\n# before:   %d\n# reject:   %s', parameters.radius, parameters.fdt, parameters.dvarsmt, parameters.dvarsmet, parameters.after, parameters.before, parameters.reject);
+        g_WriteTable(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ', pre);
+
+        scr = fopen(fullfile(target, [fname '.use']), 'w');
+        fprintf(scr, '%d\n', img.use);
+        fclose(scr);
+
+    end
+end
+
+if verbose, fprintf(' ... done!\n'); end
+if verbose, fprintf('===> Finished!\n'); end
+
+

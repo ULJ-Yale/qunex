@@ -165,7 +165,7 @@ end
 
 % ----- get fidl event list
 
-elist = g_ReadEventFile(fidlfile);
+elist = general_read_event_file(fidlfile);
 
 % ----- take out frames to ignore based on fidl
 

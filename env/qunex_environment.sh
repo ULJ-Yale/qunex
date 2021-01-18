@@ -850,10 +850,11 @@ fi
 # export PYTHONPATH
 
 # -- Set and export Matlab paths
-MATLABPATH=$QUNEXPATH/matlab/qx_utilities/fcMRI:$MATLABPATH
+MATLABPATH=$QUNEXPATH/matlab/qx_mri/fc:$MATLABPATH
+MATLABPATH=$QUNEXPATH/matlab/qx_mri/general:$MATLABPATH
+MATLABPATH=$QUNEXPATH/matlab/qx_mri/img:$MATLABPATH
+MATLABPATH=$QUNEXPATH/matlab/qx_mri/stats:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_utilities/general:$MATLABPATH
-MATLABPATH=$QUNEXPATH/matlab/qx_utilities/img:$MATLABPATH
-MATLABPATH=$QUNEXPATH/matlab/qx_utilities/stats:$MATLABPATH
 
 # ------------------------------------------------------------------------------
 # -- Path to additional dependencies

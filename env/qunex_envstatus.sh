@@ -437,8 +437,8 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo ""
     echo "  PATH : $PATH"
     echo ""
-    echo "  PYTHONPATH : $PYTHONPATH"
-    echo ""
+    #echo "  PYTHONPATH : $PYTHONPATH"
+    #echo ""
     echo "  MATLABPATH : $MATLABPATH"
     echo ""
     

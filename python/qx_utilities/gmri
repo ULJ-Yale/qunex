@@ -228,7 +228,7 @@ to redirect Matlab output to a file: (e.g. "both:command.log" or "stdout:ok.log|
 
 Example call of a QuNex MATLAB command:
 
- qunex g_FindPeaks \\
+ qunex general_find_peaks \\
   --fin='map_zstat.dscalar.nii' \\
   --fout='map_peaks.dscalar.nii' \\
   --mins="[50 50]" --maxs="[300 350]" \\

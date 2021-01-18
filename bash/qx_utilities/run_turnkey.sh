@@ -102,7 +102,7 @@ weho() {
 # source $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="createStudy mapRawData importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy DWIeddyQC runQC_DWIeddyQC RunQC_DWIeddyQC DWIFSLdtifit runQC_DWIFSLdtifit RunQC_DWIFSLdtifit DWIFSLbedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIbedpostx RunQC_DWIbedpostx DWIpreTractography DWIparcellate DWIseedTractographyDense runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation BOLDparcellate computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+QuNexTurnkeyWorkflow="createStudy mapRawData importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy DWIeddyQC runQC_DWIeddyQC RunQC_DWIeddyQC DWIFSLdtifit runQC_DWIFSLdtifit RunQC_DWIFSLdtifit DWIFSLbedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIbedpostx RunQC_DWIbedpostx DWIpreTractography DWIparcellate DWIseedTractographyDense runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc general_plot_bold_timeseries BOLDParcellation BOLDparcellate computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
 
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 
@@ -313,20 +313,20 @@ usage() {
  echo ""
  echo "                    The qc path has to contain relevant files for the provided"
  echo "                    scene."
- echo "--qcplotimages      Absolute path to images for g_PlotBoldTS. See "
- echo "                    'qunex g_PlotBoldTS' for help. "
+ echo "--qcplotimages      Absolute path to images for general_plot_bold_timeseries. See "
+ echo "                    'qunex general_plot_bold_timeseries' for help. "
  echo ""
- echo "                    Only set if g_PlotBoldTS is requested then this is a "
+ echo "                    Only set if general_plot_bold_timeseries is requested then this is a "
  echo "                    required setting."
  echo "--qcplotmasks       Absolute path to one or multiple masks to use for "
- echo "                    extracting BOLD data. See 'qunex g_PlotBoldTS' for help. "
+ echo "                    extracting BOLD data. See 'qunex general_plot_bold_timeseries' for help. "
  echo ""
- echo "                    Only set if g_PlotBoldTS is requested then this is a "
+ echo "                    Only set if general_plot_bold_timeseries is requested then this is a "
  echo "                    required setting."
- echo "--qcplotelements    Plot element specifications for g_PlotBoldTS. See "
- echo "                    'qunex g_PlotBoldTS' for help. "
+ echo "--qcplotelements    Plot element specifications for general_plot_bold_timeseries. See "
+ echo "                    'qunex general_plot_bold_timeseries' for help. "
  echo ""
- echo "                    Only set if g_PlotBoldTS is requested. If not set then the "
+ echo "                    Only set if general_plot_bold_timeseries is requested. If not set then the "
  echo "                    default is: ${QCPlotElements}"
  echo ""
  echo "EXAMPLE USE"
@@ -1264,7 +1264,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed|runQC_BOLDfc)
+        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|general_plot_bold_timeseries|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed|runQC_BOLDfc)
             # --- rsync relevant dependencies if any BOLD fc step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
@@ -2281,14 +2281,14 @@ fi
         --sessionids="${SESSIONIDS}" \
         ${BOLDS:+--bolds="${BOLDS}"}
     }
-    # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
-    turnkey_g_PlotBoldTS() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ g_PlotBoldTS QC plotting"; echo ""
+    # -- Compute general_plot_bold_timeseries ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
+    turnkey_general_plot_bold_timeseries() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ general_plot_bold_timeseries QC plotting"; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        g_PlotBoldTS_Runlog="${QuNexMasterLogFolder}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_g_PlotBoldTS_${CASE}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
-        g_PlotBoldTS_ComlogError="${QuNexMasterLogFolder}/comlogs/error_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
+        general_plot_bold_timeseries_Runlog="${QuNexMasterLogFolder}/runlogs/Log-general_plot_bold_timeseries_${TimeStamp}.log"
+        general_plot_bold_timeseries_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"; touch ${general_plot_bold_timeseries_ComlogTmp}; chmod 777 ${general_plot_bold_timeseries_ComlogTmp}
+        general_plot_bold_timeseries_ComlogError="${QuNexMasterLogFolder}/comlogs/error_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"
+        general_plot_bold_timeseries_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"
 
         if [ -z ${QCPlotElements} ]; then
               QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
@@ -2308,16 +2308,16 @@ fi
 
         getBoldList
 
-        echo " -- Log folder: ${QuNexMasterLogFolder}/comlogs/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo " -- Parameters for g_PlotBoldTS: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   QC Plot Masks: ${QCPlotMasks}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   QC Plot Elements: ${QCPlotElements}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   QC Plot image folder: ${images_folder}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   QC Plot output folder: ${output_folder}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   QC Plot output name: ${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-        echo "   QC Plot BOLDS runs: ${BOLDRUNS}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+        echo " -- Log folder: ${QuNexMasterLogFolder}/comlogs/" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo " -- Parameters for general_plot_bold_timeseries: " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   QC Plot Masks: ${QCPlotMasks}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   QC Plot Elements: ${QCPlotElements}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   QC Plot image folder: ${images_folder}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   QC Plot output folder: ${output_folder}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   QC Plot output name: ${output_name}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+        echo "   QC Plot BOLDS runs: ${BOLDRUNS}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
 
         unset BOLDRUN
         for BOLDRUN in ${LBOLDRUNS}; do
@@ -2325,43 +2325,43 @@ fi
            if [ -z ${QCPlotImages} ]; then
                QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii"
            fi
-           echo "   QC Plot images: ${QCPlotImages}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo " -- Command: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --sessionids="${CASE}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+           echo "   QC Plot images: ${QCPlotImages}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo " -- Command: " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo "${QuNexCommand} general_plot_bold_timeseries --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --sessionids="${CASE}" --verbose="true"" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
 
-           ${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --sessionids="${CASE}" --verbose="true"
-           echo " -- Copying ${output_folder}/${output_name} to ${SessionsFolder}/QC/BOLD/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+           ${QuNexCommand} general_plot_bold_timeseries --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --sessionids="${CASE}" --verbose="true"
+           echo " -- Copying ${output_folder}/${output_name} to ${SessionsFolder}/QC/BOLD/" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
            cp ${output_folder}/${output_name} ${SessionsFolder}/QC/BOLD/
            if [[ -f ${SessionsFolder}/QC/BOLD/${output_name} ]]; then
-               echo " -- Found ${SessionsFolder}/QC/BOLD/${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-               echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-               g_PlotBoldTS_Check="pass"
+               echo " -- Found ${SessionsFolder}/QC/BOLD/${output_name}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+               echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+               general_plot_bold_timeseries_Check="pass"
            else
-               echo " -- Result ${SessionsFolder}/QC/BOLD/${output_name} missing!" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-               echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-               g_PlotBoldTS_Check="fail"
+               echo " -- Result ${SessionsFolder}/QC/BOLD/${output_name} missing!" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+               echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+               general_plot_bold_timeseries_Check="fail"
            fi
         done
 
-        if [[ ${g_PlotBoldTS_Check} == "pass" ]]; then
-            echo "" >> ${g_PlotBoldTS_ComlogTmp}
-            echo "------------------------- Successful completion of work --------------------------------" >> ${g_PlotBoldTS_ComlogTmp}
-            echo "" >> ${g_PlotBoldTS_ComlogTmp}
-            cp ${g_PlotBoldTS_ComlogTmp} ${g_PlotBoldTS_ComlogDone}
-            g_PlotBoldTS_Comlog=${g_PlotBoldTS_ComlogDone}
+        if [[ ${general_plot_bold_timeseries_Check} == "pass" ]]; then
+            echo "" >> ${general_plot_bold_timeseries_ComlogTmp}
+            echo "------------------------- Successful completion of work --------------------------------" >> ${general_plot_bold_timeseries_ComlogTmp}
+            echo "" >> ${general_plot_bold_timeseries_ComlogTmp}
+            cp ${general_plot_bold_timeseries_ComlogTmp} ${general_plot_bold_timeseries_ComlogDone}
+            general_plot_bold_timeseries_Comlog=${general_plot_bold_timeseries_ComlogDone}
         else
-           echo "" >> ${g_PlotBoldTS_ComlogTmp}
-           echo "Error. Something went wrong." >> ${g_PlotBoldTS_ComlogTmp}
-           echo "" >> ${g_PlotBoldTS_ComlogTmp}
-           cp ${g_PlotBoldTS_ComlogTmp} ${g_PlotBoldTS_ComlogError}
-           g_PlotBoldTS_Comlog=${g_PlotBoldTS_ComlogError}
+           echo "" >> ${general_plot_bold_timeseries_ComlogTmp}
+           echo "Error. Something went wrong." >> ${general_plot_bold_timeseries_ComlogTmp}
+           echo "" >> ${general_plot_bold_timeseries_ComlogTmp}
+           cp ${general_plot_bold_timeseries_ComlogTmp} ${general_plot_bold_timeseries_ComlogError}
+           general_plot_bold_timeseries_Comlog=${general_plot_bold_timeseries_ComlogError}
         fi
-        rm ${g_PlotBoldTS_ComlogTmp}
+        rm ${general_plot_bold_timeseries_ComlogTmp}
     }
     # -- BOLD Parcellation
     turnkey_BOLDParcellation() {

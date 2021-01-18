@@ -122,7 +122,7 @@ if nargout > 1
     if cv
         zscores.data(:) = 1;
     else
-        zscores.data = fc_Fisher(correlations.data);
+        zscores.data = fc_fisher(correlations.data);
         zscores.data = zscores.data/(1/sqrt(obj.frames-3));
     end
 end

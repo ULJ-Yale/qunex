@@ -30,7 +30,7 @@ function [img] = img_EmbedCIFTIVolume(img, vol_img)
 %			   Initial version.
 
 % import CIFTI-2 components from the .mat file
-load('CIFTI_BrainModel.mat');
+load('cifti_brainmodel');
 
 % convert the NIfTI format to 2D
 vol_img.data = vol_img.image2D;

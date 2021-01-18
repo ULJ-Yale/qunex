@@ -228,28 +228,32 @@ show_usage_matlabHelp() {
         geho "Listing of all QuNex supported MATLAB commands"
         geho "----------------------------------------------"
         echo ""
-        MatlabFunctions=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/"`
-        MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/matlab/qx_utilities/ -name "*.m" | grep -v "archive/"`
-        MatlabFunctionsFC=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/" | grep "/fc/"`
-        MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/" | grep "/general/"`
-        MatlabFunctionsNIMG=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/img/\@nimage/*.m`
-        MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/" | grep "stats"`
-        echo "QuNex MATLAB functional connectivity tools"; echo ""
-        for MatlabFunction in $MatlabFunctionsFC; do
-            echo "- $MatlabFunction";
-        done
-        echo ""
-        echo "QuNex MATLAB general image manipulation tools"; echo ""
+        MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep "/general/"`
+        MatlabFunctionsFC=`ls $TOOLS/$QUNEXREPO/matlab/qx_mri/*/*.m | grep "/fc/"`
+        MatlabFunctionsMRIGeneral=`ls $TOOLS/$QUNEXREPO/matlab/qx_mri/*/*.m | grep "/general/"`
+        MatlabFunctionsNIMG=`ls $TOOLS/$QUNEXREPO/matlab/qx_mri/img/\@nimage/*.m`
+        MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/matlab/qx_mri/*/*.m | grep "/stats/"`
+        echo "QuNex MATLAB general tools"; echo ""
         for MatlabFunction in $MatlabFunctionsGeneral; do
             echo "- $MatlabFunction";
         done
         echo ""
-        echo "QuNex MATLAB specific image analyses tools"; echo ""
+        echo "QuNex MATLAB MRI functional connectivity tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsFC; do
+            echo "- $MatlabFunction";
+        done
+        echo ""
+        echo "QuNex MATLAB MRI tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsFC; do
+            echo "- $MatlabFunction";
+        done
+        echo ""
+        echo "QuNex MATLAB MRI analyses tools"; echo ""
         for MatlabFunction in $MatlabFunctionsNIMG; do
             echo "- $MatlabFunction";
         done
         echo ""
-        echo "QuNex MATLAB statistical tools"; echo ""
+        echo "QuNex MATLAB MRI statistical tools"; echo ""
         for MatlabFunction in $MatlabFunctionsStats; do
             echo "- $MatlabFunction";
         done
@@ -333,7 +337,7 @@ fi
 
 # -- Check if Matlab command
 unset QuNexMatlabCall
-MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/matlab/qx_utilities/ -name "*.m" | grep -v "archive/"`
+MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/matlab/ -name "*.m" | grep -v "archive/"`
 if [[ ! -z `echo $MatlabFunctionsCheck | grep "$CommandToRun"` ]]; then
     QuNexMatlabCall="$CommandToRun"
     echo ""
@@ -1465,7 +1469,7 @@ fi
 # ------------------------------------------------------------------------------
 
 isQuNexFunction() {
-MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/matlab/qx_utilities/ -name "*.m" | grep -v "archive/"`
+MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/matlab/ -name "*.m" | grep -v "archive/"`
 if [[ -z "${QuNexCommands##*$1*}" ]]; then
     return 0
 elif [[ ! -z `echo $MatlabFunctionsCheck | grep "$1"` ]]; then

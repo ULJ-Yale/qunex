@@ -228,7 +228,7 @@ data   = obj.data;
 cstep  = vstep;
 nsteps = floor(voxels/vstep);
 lstep  = mod(voxels,vstep);
-rmax   = fc_Fisher(rmax);
+rmax   = fc_fisher(rmax);
 aFz    = false;
 
 if verbose
@@ -262,7 +262,7 @@ for n = 1:nsteps+1
     % From here on, everything needs to be adjusted to work with Fz
 
     if time, fprintf(' Fz'); tic; end
-    if ~cv, r = fc_Fisher(r); end
+    if ~cv, r = fc_fisher(r); end
     if ~isreal(r)
         fprintf(' c>r')
         r = real(r);
@@ -521,12 +521,12 @@ function [out, sortit] = parseCommand(s, nvox)
                 out(n).parameter = [sv:sstep:ev];
 
                 % --- Switching to Fz
-                out(n).parameter = fc_Fisher(out(n).parameter);
+                out(n).parameter = fc_fisher(out(n).parameter);
                 out(n).parameter(end) = out(n).parameter(end) + al;
             end
             out(n).volumes = par;
         else
-            out(n).parameter = fc_Fisher(par);
+            out(n).parameter = fc_fisher(par);
             out(n).volumes = 1;
         end
     end

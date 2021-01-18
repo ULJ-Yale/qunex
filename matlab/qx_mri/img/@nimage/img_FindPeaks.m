@@ -260,7 +260,7 @@ if img.frames > 1
 end
 
 % --- Load CIFTI brain model data
-load('CIFTI_BrainModel.mat');
+load('cifti_brainmodel');
 
 if strcmpi(img.imageformat, 'CIFTI-2')
     % --- Extract volume components

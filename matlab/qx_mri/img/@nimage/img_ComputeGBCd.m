@@ -249,7 +249,7 @@ ncommands = length(commands);
 
 if time, fprintf(' r, Fz'); tic; end
 r = data * ts';
-Fz = fc_Fisher(r);
+Fz = fc_fisher(r);
 if ~isreal(Fz)
     fprintf(' c>r')
     Fz = real(Fz);
@@ -263,7 +263,7 @@ results = zeros(nbands, nroi, ncommands);
 
 % ---- set up for running the commands
 
-rmax   = fc_Fisher(rmax);
+rmax   = fc_fisher(rmax);
 aFz    = false;
 
 if verbose
@@ -395,7 +395,7 @@ function [out] = parseCommand(s, nvox)
         com = b{1};
         par = str2num(b{2});
         out(n).command = com;
-        out(n).parameter = fc_Fisher(par);
+        out(n).parameter = fc_fisher(par);
     end
 end
 

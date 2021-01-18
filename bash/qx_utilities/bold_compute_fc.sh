@@ -25,7 +25,7 @@
 # ## Description 
 #   
 # This script, bold_compute_fc.sh, implements functional connectivity
-# using QuNex Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
+# using QuNex Suite Matlab tools (e.g. fc_compute_seedmaps_multiple)
 # 
 # ## Prerequisite Installed Software
 #
@@ -45,9 +45,9 @@
 usage() {
 
 # -------------------------------------------------------------------------------------------------------------------
-# EXAMPLE inputs from Matlab into fc_ComputeSeedMapsMultiple and fc_ComputeGBC3:
+# EXAMPLE inputs from Matlab into fc_compute_seedmaps_multiple and fc_compute_gbc3:
 # -------------------------------------------------------------------------------------------------------------------
-#  fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+#  fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
 #  INPUT
 #  flist    - A .list file with session information.
 #  roinfo   - An ROI file.
@@ -65,13 +65,13 @@ usage() {
 #                  -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
 #  cv       - Whether covariances should be computed instead of correlations.
 # -------------------------------------------------------------------------------------------------------------------   
-#  fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
+#  fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
 #  INPUT 
 #  flist       - conc-like style list of session image files or conc files:
 #                  session id:<session_id>
 #                  roi:<path to the individual's ROI file>
 #                  file:<path to bold files - one per line>
-#               or a well strucutured string (see g_ReadFileList).
+#               or a well strucutured string (see general_read_file_list).
 #  command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
 #               mFzp, aFzp, ...
 #               <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
@@ -96,8 +96,8 @@ usage() {
  echo "functional connectivity (FC) on the dense or parcellated (e.g. Glasser "
  echo "parcellation)."
  echo ""
- echo "For more detailed documentation run <help fc_ComputeGBC3>, "
- echo "<help nimage.img_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside MATLAB."
+ echo "For more detailed documentation run <help fc_compute_gbc3>, "
+ echo "<help nimage.img_ComputeGBC> or <help fc_compute_seedmaps_multiple> inside MATLAB."
  echo ""
  echo "INPUTS"
  echo "======"
@@ -826,26 +826,26 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
     if [ ${Calculation} == "seed" ]; then
         # -- run FC seed command: 
-        # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_ComputeGBC3,quit()"
-        # Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-        # Example with string input --> ${QUNEXMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|session id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_compute_gbc3,quit()"
+        # Full function input     --> fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+        # Example with string input --> ${QUNEXMCOMMAND} "fc_compute_seedmaps_multiple('listname:$CASE-$OutName|session id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
         if [ -z "$Method" ]; then Method="mean"; fi
         if [ -z "$FCCommand" ]; then FCCommand="all"; fi
-        ${QUNEXMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        ${QUNEXMCOMMAND} "fc_compute_seedmaps_multiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
     fi
     # -- Check if GBC seed run is specified
     if [ ${Calculation} == "gbc" ]; then
         # -- run GBC seed command: 
-        # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_ComputeGBC3,quit()"
-        # Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-        # Example with string input --> ${QUNEXMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|session id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_compute_gbc3,quit()"
+        # Full function input     --> fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
+        # Example with string input --> ${QUNEXMCOMMAND}"fc_compute_gbc3('listname:$CASE-$OutName|session id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
         if [ -z "$TargetROI" ]; then TargetROI=""; fi
         if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
         if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
         if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
         if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
         if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
-        ${QUNEXMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        ${QUNEXMCOMMAND} "fc_compute_gbc3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
     fi
     # -- Remove temp lists
     echo ""

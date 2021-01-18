@@ -41,7 +41,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
     files need to be prepared and match. Specifically, the input image file
     should hold first level results (e.g. GLM beta estimates or functional
     connectivity seed-maps) for all the subjects and conditions. For activation
-    analyses a simple way to generate such a file is to use g_ExtractGLMVolumes
+    analyses a simple way to generate such a file is to use general_extract_glm_volumes
     Matlab function.
 
     Design files

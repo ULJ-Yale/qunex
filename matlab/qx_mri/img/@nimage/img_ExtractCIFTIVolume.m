@@ -39,7 +39,7 @@ if nargin < 2
 end
 
 % import CIFTI-2 components from the .mat file
-load('CIFTI_BrainModel.mat');
+load('cifti_brainmodel');
 
 % create an empty NIfTI file
 vol_img = nimage(zeros(91,109,91,img.frames));

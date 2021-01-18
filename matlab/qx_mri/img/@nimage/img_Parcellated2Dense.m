@@ -60,7 +60,7 @@ ndata(:) = defineMissing;
 
 % --> load cifti brain model
 
-model = load('CIFTI_BrainModel.mat');
+model = load('cifti_brainmodel');
 
 % --> process parcells
 

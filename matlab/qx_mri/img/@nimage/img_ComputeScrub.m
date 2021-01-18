@@ -63,7 +63,7 @@ function [img, param] = img_ComputeScrub(img, comm)
 %   and present. Movement data is read automatically when the image is loaded,
 %   if the data is present in the relevant folder (images/functional/movement).
 %   Frame statistics data is also read if present. It is computed and saved
-%   using g_ComputeBOLDStats function that makes use of img_StatsTime method.
+%   using general_compute_bold_stats function that makes use of img_StatsTime method.
 %
 %   The function is meant to identify frames with artefacts that should be
 %   excluded in functional connectivity analyses. It makes use of three

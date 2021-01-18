@@ -171,7 +171,7 @@ end
 
 % --- Load CIFTI brain model data
 cifti = [];
-load('CIFTI_BrainModel.mat');
+load('cifti_brainmodel');
 fp_param.cifti = cifti;
 
 % -- Check the type of projection passed and weather it is a file
