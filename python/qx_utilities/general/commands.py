@@ -44,6 +44,7 @@ commands = {'listDicom'            : {'com': dicom.listDicom,               'arg
             'gatherBehavior'       : {'com': utilities.gatherBehavior,      'args': ('sessionsfolder', 'sessions', 'filter', 'sourcefiles', 'targetfile', 'overwrite', 'check', 'report')},
             'pullSequenceNames'    : {'com': utilities.pullSequenceNames,   'args': ('sessionsfolder', 'sessions', 'filter', 'sourcefiles', 'targetfile', 'overwrite', 'check', 'report')},
             'batchTag2NameKey'     : {'com': utilities.batchTag2NameKey,    'args': ('filename', 'sessionid', 'bolds', 'output', 'prefix')},
+            'check_deprecated_commands' : {'com': utilities.check_deprecated_commands,   'args': ('command')},
             'exportHCP'            : {'com': export_hcp.exportHCP,          'args': ('sessionsfolder', 'sessions', 'filter', 'sessionids', 'mapaction', 'mapto', 'overwrite', 'mapexclude', 'hcp_suffix', 'verbose')},
             'mapIO'                : {'com': export_hcp.exportHCP,          'args': ('sessionsfolder', 'sessions', 'filter', 'sessionids', 'mapaction', 'mapto', 'overwrite', 'mapexclude', 'hcp_suffix', 'verbose')},
             'joinFidl'             : {'com': fidl.joinFidl,                 'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
@@ -65,29 +66,12 @@ commands = {'listDicom'            : {'com': dicom.listDicom,               'arg
 
 extraParameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']
 
-# a dictonary of deprecated commands ("oldCommand": "newCommand")
-deprecated_commands = {"HCPLSImport": "importHCP",
-                       "BIDSImport": "importBIDS",
-                       "processInbox": "importDICOM",
-                       "mapIO": "exportHCP",
-                       "listSubjectInfo": "listSessionInfo",
-                       "getHCPReady": "createSesssionInfo"}
-
-def checkDeprecatedCommands(command):
-    """
-    checkDeprecatedCommands(options, deprecatedCommands)
-    Checks for deprecated commands, remaps deprecated ones
-    and notifies the user.
-    """
-
-    # store the command
-    newCommand = command
-    # is it depreacted?
-    for deprecatedName, newName in deprecated_commands.items():
-        # if deprecated warn the user and call the new one
-        if command == deprecatedName:
-            newCommand = newName
-            print "\nWARNING: Use of deprecated command!"
-            print "Command %s is now known as %s.\n" % (command, newCommand)
-
-    return newCommand
+# a dictonary of deprecated commands ("new_command": ["oldcommand1", "oldcommand2", ...])
+deprecated_commands = {"importHCP": ["HCPLSImport"],
+                       "importBIDS": ["BIDSImport"],
+                       "importDICOM": ["processInbox"],
+                       "exportHCP": ["mapIO"],
+                       "listSessionInfo": ["listSubjectInfo"],
+                       "createSesssionInfo": ["getHCPReady"],
+                       "create_study": ["createStudy"],
+                       "run_qc": ["runQC","RunQC","QCPreproc"]}

@@ -250,7 +250,7 @@ def runCommand(command, args):
         gu.checkStudy(folders['basefolder'])
 
     # --- check if command is deprecated
-    command = gcom.checkDeprecatedCommands(command)
+    command = gu.check_deprecated_commands(command)
 
     # -- remap deprecated arguments
     args = gp.mapDeprecated(args, command)

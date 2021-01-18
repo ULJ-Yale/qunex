@@ -230,12 +230,12 @@ show_usage_matlabHelp() {
         echo ""
         MatlabFunctions=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/"`
         MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/matlab/qx_utilities/ -name "*.m" | grep -v "archive/"`
-        MatlabFunctionsfcMRI=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
+        MatlabFunctionsFC=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/" | grep "/fc/"`
         MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/" | grep "/general/"`
         MatlabFunctionsNIMG=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/img/\@nimage/*.m`
         MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep -v "archive/" | grep "stats"`
         echo "QuNex MATLAB functional connectivity tools"; echo ""
-        for MatlabFunction in $MatlabFunctionsfcMRI; do
+        for MatlabFunction in $MatlabFunctionsFC; do
             echo "- $MatlabFunction";
         done
         echo ""
@@ -1383,10 +1383,19 @@ if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envset
     exit 0
 fi
 
+
+# ------------------------------------------------------------------------------
+#  map deprecated commands
+# ------------------------------------------------------------------------------
+
+# use the check_deprecated_commands from niutilities to remap 
+COMMANDNAME=`gmri check_deprecated_commands --command="$1" | grep "is now known as" | sed 's/^.*is now known as //g'`
+set -- ${COMMANDNAME} "${@:2}"
+
+
 # ------------------------------------------------------------------------------
 #  gmri loop outside local functions to bypass checking
 # ------------------------------------------------------------------------------
-
 
 # -- Get list of all supported gmri functions
 gmrifunctions=`gmri -available`

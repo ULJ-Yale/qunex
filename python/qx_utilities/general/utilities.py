@@ -3124,3 +3124,24 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
 
     return
 
+
+def check_deprecated_commands(command):
+    """
+    check_deprecated_commands(options, deprecatedCommands)
+    Checks for deprecated commands, remaps deprecated ones
+    and notifies the user.
+    """
+
+    # store the command
+    newCommand = command
+    # import here because of circular dependencies
+    import g_commands as gcom
+    # is it depreacted?
+    for newName, oldNames in gcom.deprecated_commands.items():
+        # if deprecated warn the user and call the new one
+        if command.lower() in [s.lower() for s in oldNames]:
+            newCommand = newName
+            print "\nWARNING: Use of a deprecated command!"
+            print "Command %s is now known as %s" % (command, newCommand)
+
+    return newCommand
