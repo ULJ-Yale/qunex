@@ -92,7 +92,7 @@ data = obj.data;
 if verbose, fprintf('\n... %d source voxels, %d target ROI over %d frames to process ', obj.voxels, ntargets, obj.frames), end
 
 if strfind(options, 'partial')
-    results(:,2:ntargets+1) = s_PartialCorrMat(obj.data', tdata, verbose);
+    results(:,2:ntargets+1) = stats_partial_correlation_matrix(obj.data', tdata, verbose);
 else 
     results(:,2:ntargets+1) = obj.data * tdata;
 end

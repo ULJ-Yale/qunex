@@ -1,6 +1,6 @@
-function [] = s_TTestZero(dfile, output, exclude, verbose)
+function [] = stats_test_zero(dfile, output, exclude, verbose)
 
-%``function [] = s_TTestZero(dfile, output, exclude, verbose)``
+%``function [] = stats_test_zero(dfile, output, exclude, verbose)``
 %
 %   INPUTS
 %   ======

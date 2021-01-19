@@ -1,6 +1,6 @@
-function [p] = s_PartialCorrMat(X, Z, verbose)
+function [p] = stats_partial_correlation_matrix(X, Z, verbose)
 
-%function [p] = s_PartialCorrMat(X, Z)
+%function [p] = stats_partial_correlation_matrix(X, Z)
 %	
 %   Computes partial correlation for each column in X with each column in Z,
 %   partialing out other columns in Z.
@@ -22,7 +22,7 @@ function [p] = s_PartialCorrMat(X, Z, verbose)
 if nargin < 3
     verbose = false;
     if nargin < 2
-        error('\nERROR: Two matrices are needed to run s_PartialCorrMat!\n');
+        error('\nERROR: Two matrices are needed to run stats_partial_correlation_matrix!\n');
     end
 end
 

@@ -1,6 +1,6 @@
-function [obj] = img_compute_ab_cor(obj, smask, tmask, verbose)
+function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 
-%``function [obj] = img_compute_ab_cor(obj, smask, tmask, verbose)``
+%``function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)``
 %
 %	Compute correlation between each source and target voxels and returns a
 %	correlational image.
@@ -38,7 +38,7 @@ function [obj] = img_compute_ab_cor(obj, smask, tmask, verbose)
 %
 %	::
 %
-%   	img = img.img_compute_ab_cor(roiAimage, roiBimage);
+%   	img = img.img_compute_ab_correlation(roiAimage, roiBimage);
 %
 
 %   ~~~~~~~~~~~~~~~~~~

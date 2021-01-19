@@ -49,7 +49,7 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %   Use the function to compute individual and/or group correlations of each
 %   smask voxel with each tmask voxel. tmask voxels are spread across the volume
 %   and smask voxels are spread across the volumes. For more details see
-%   `img_compute_ab_cor` - nimage method.
+%   `img_compute_ab_correlation` - nimage method.
 %
 %   EXAMPLE USE
 %   ===========
@@ -190,7 +190,7 @@ for s = 1:nsessions
     end
     if script, fprintf('\n'), end
 
-    ABCor = img.img_compute_ab_cor(sROI, tROI, method);
+    ABCor = img.img_compute_ab_correlation(sROI, tROI, method);
     ABCor = ABCor.unmaskimg;
 
     if indiv

@@ -1,8 +1,8 @@
-function [] = s_TTestIndependent(filea, fileb, target, output, vartype, exclude, verbose)
+function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbose)
 
-%``function [] = s_TTestIndependent(filea, fileb, target, output, vartype, exclude, verbose)``
+%``function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbose)``
 %
-%	Computes t-test of differences between two independent groups.
+%	Computes t-test of differences between two dependent groups.
 %
 %   INPUTS
 %   ======
@@ -15,44 +15,39 @@ function [] = s_TTestIndependent(filea, fileb, target, output, vartype, exclude,
 %   --output    the type of results to save ['medtpz']
 % 
 %               m
-%                mean values for each voxel of both groups (A and B)
+%                   mean values for each voxel of both groups (A and B)
 %               e
-%                standard errors for each voxel of both groups (A and B)
+%                   standard errors for each voxel of both groups (A and B) as 
+%                   well as their difference
 %               d
-%                the A - B difference of means of the two groups
+%                   the A - B difference of means of the two groups
 %               t
-%                t-value for each voxel
+%                   t-value for each voxel
 %               p
-%                p-value for each voxel
+%                   p-value for each voxel
 %               z
-%                Z-score for each voxel
+%                   Z-score for each voxel
 % 
-%   --vartype   string specifying whether the variances of the two groups are 
-%               equal ('equal') or not ('unequal')
 %   --exclude   values to be excluded from computation []
 %   --verbose   should report each step [false]
-%
+% 
 
 %   ~~~~~~~~~~~~~~~~~~
 %
 %   Changelog
-%   
+%
 %   2011-10-09 Grega Repovs
 %              Rewritten from previous function with the same name.
 %
 
-
-if nargin < 7
+if nargin < 6
     verbose = false;
-    if nargin < 6
+    if nargin < 5
         exclude = [];
-        if nargin < 5
-            vartype = [];
-            if nargin < 4
-                output = [];
-                if nargin < 3
-                    error('ERROR: two input file names and a target output file name need to be provided as input!');
-                end
+        if nargin < 4
+            output = [];
+            if nargin < 3
+                error('ERROR: two file names for the input images and a file name for storing the results need to be provided as input!');
             end
         end
     end
@@ -71,7 +66,7 @@ root = strrep(root, '.conc', '');
 % ======================================================
 % 	----> read file
 
-if verbose, fprintf('--------------------------\nComputing independent t-test\n ... reading data (%s and %s) ', filea, fileb), end
+if verbose, fprintf('--------------------------\nComputing dependent t-test\n ... reading data (%s and %s) ', filea, fileb), end
 A = nimage(filea);
 B = nimage(fileb);
 
@@ -85,7 +80,7 @@ end
 % 	----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
-[p Z M D SE t] = A.img_ttest_independent(B, vartype, verbose);
+[p Z M D SE t] = A.img_ttest_dependent(B, verbose);
 if verbose, fprintf(' --- \n'), end
 
 

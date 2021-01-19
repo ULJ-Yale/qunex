@@ -59,11 +59,11 @@ functions = {
     'fc_mri_segment':                  [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('verbose', 'string')],
     'fc_preprocess':                   [('sessionf', 'string'), ('bold', 'numeric'), ('omit', 'numeric'), ('do', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('TR', 'numeric'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string')],
     'fc_preprocess_conc':              [('sessionf', 'string'), ('bolds', 'numeric'), ('do', 'string'), ('TR', 'numeric'), ('omit', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string'), ('done', 'string')],
-    's_ComputeBehavioralCorrelations': [('imgfile', 'string'), ('datafile', 'string'), ('target', 'string')],
-    's_p2Z':                           [('img', 'string'), ('out', 'string'), ('tail', 'string')],
-    's_TTestDependent':                [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
-    's_TTestIndependent':              [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('vartype', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
-    's_TTestZero':                     [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
+    'stats_compute_behavioral_correlations': [('imgfile', 'string'), ('datafile', 'string'), ('target', 'string')],
+    'stats_p2z':                       [('img', 'string'), ('out', 'string'), ('tail', 'string')],
+    'stats_ttest_dependent':           [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
+    'stats_ttest_independent':         [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('vartype', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
+    'stats_test_zero':                 [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
 }
 
 functionList = functions.keys()

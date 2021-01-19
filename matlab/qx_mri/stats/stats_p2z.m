@@ -1,6 +1,6 @@
-function [img] = s_p2Z(img, out, tail)
+function [img] = stats_p2z(img, out, tail)
 
-%``function [img] = s_p2Z(img, out, tail)``
+%``function [img] = stats_p2z(img, out, tail)``
 %
 %	Converts p to Z values considering one or two tails.
 %
@@ -28,7 +28,7 @@ function [img] = s_p2Z(img, out, tail)
 %
 %	::
 %   
-%		s_p2Z('WM_p.nii.gz', 'WM_Z.nii.gz');
+%		stats_p2z('WM_p.nii.gz', 'WM_Z.nii.gz');
 %
 
 %   ~~~~~~~~~~~~~~~~~~
