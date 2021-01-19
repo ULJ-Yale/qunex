@@ -61,13 +61,13 @@ if min(size(img.data) == size(roi.data)) ~= 1
     error('ERROR: The specified images are not of the same dimensions!');
 end
 
-img = img.img_SliceMatrix(3, slices);
+img = img.img_slice_matrix(3, slices);
 img(:,:,2) = img;
 img(:,:,3) = img(:,:,1);
 img = img/max(max(max(img)));
 img = img * 0.7;
 
-roi = roi.img_SliceMatrix(3, slices);
+roi = roi.img_slice_matrix(3, slices);
 
 img(:,:,1) = img(:,:,1) + ismember(roi, R) * 0.3;
 img(:,:,2) = img(:,:,2) + ismember(roi, G) * 0.3;

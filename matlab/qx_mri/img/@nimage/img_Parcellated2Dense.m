@@ -1,6 +1,6 @@
-function [img] = img_Parcellated2Dense(img, verbose, defineMissing)
+function [img] = img_parcellated2dense(img, verbose, defineMissing)
 
-%``function [img] = img_Parcellated2Dense(img, verbose)``
+%``function [img] = img_parcellated2dense(img, verbose)``
 %
 %	Expands a parcelated image to a dense image
 %
@@ -51,7 +51,7 @@ elseif strcmp(img.filetype, '.pscalar')
     if verbose fprintf('\n===> Expanding .pscalar to .dscalar'); end
     img.filetype = '.dscalar';
 else
-    error('ERROR: The image provided to img_Parcellated2Dense is neither ptseries nor pscalar! Aborting');
+    error('ERROR: The image provided to img_parcellated2dense is neither ptseries nor pscalar! Aborting');
 end
 
 img.voxels = 91282;

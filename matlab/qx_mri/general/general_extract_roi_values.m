@@ -71,7 +71,7 @@ if isempty(strfind(roif, '.names'))
         roi.roi.roinames = [roi.roi.roinames, ['ROI' num2str(roi.roi.roicodes(r))]];
     end
 else
-    roi = nimage.img_ReadROI(roif);
+    roi = nimage.img_read_roi(roif);
 end
 roi.data = roi.image2D;
 

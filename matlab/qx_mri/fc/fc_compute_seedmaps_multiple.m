@@ -158,7 +158,7 @@ for n = 1:nsub
 	    sroifile = '';
     end
 
-	roi = nimage.img_ReadROI(roiinfo, sroifile);
+	roi = nimage.img_read_roi(roiinfo, sroifile);
 
 
 	% ---> reading image files
@@ -217,19 +217,19 @@ for n = 1:nsub
 
 	fprintf('\n     ... extracting timeseries ');
 
-    ts = y.img_ExtractROI(roi, [], method);
+    ts = y.img_extract_roi(roi, [], method);
 
     fprintf(' ... done!');
 
     fprintf('\n     ... computing seed maps ');
 
 	if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
-        [pr, p] = y.img_ComputeCorrelations(ts', false, cv);
+        [pr, p] = y.img_compute_correlations(ts', false, cv);
         if strfind(options, 'z')
             z = p.img_p2z(pr);
         end
     else
-        pr = y.img_ComputeCorrelations(ts', false, cv);
+        pr = y.img_compute_correlations(ts', false, cv);
     end
 
     fprintf(' ... done!');
@@ -295,9 +295,9 @@ for r = 1:nroi
 	fprintf('\n    ... for region %s', group(r).roi);
 
     if cv
-        [p Z M] = group(r).cv.img_TTestZero();
+        [p Z M] = group(r).cv.img_ttest_zero();
     else
-        [p Z M] = group(r).Fz.img_TTestZero();
+        [p Z M] = group(r).Fz.img_ttest_zero();
         pr = M.img_FisherInv();
     end
 

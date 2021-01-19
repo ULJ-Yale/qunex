@@ -213,7 +213,7 @@ nana = length(ana);
 %   ------------------------------------------------------------------------------------------
 %                                                The main loop ... go through all the sessions
 
-groi = nimage.img_ReadROI(roiinfo);
+groi = nimage.img_read_roi(roiinfo);
 
 for n = 1:nsub
 
@@ -243,7 +243,7 @@ for n = 1:nsub
 
     if isfield(session(n), 'roi')
         if isempty(mcodes)
-            roi  = nimage.img_ReadROI(roiinfo, session(n).roi);
+            roi  = nimage.img_read_roi(roiinfo, session(n).roi);
         else
             sroi = nimage(session(n).roi);
             imask = imask & ismember(sroi.data, mcodes);
@@ -258,7 +258,7 @@ for n = 1:nsub
 
     % -- exclude voxels with 0 variance
 
-    istat = y.img_Stats('var');
+    istat = y.img_stats('var');
     imask = imask & istat.data;
 
     % -- apply mask
@@ -305,13 +305,13 @@ for n = 1:nsub
         % ---> remove additional frames to be ignored
 
         if ~ismember(ignore, {'no', 'fidl'})
-            t = t.img_Scrub(ignore);
+            t = t.img_scrub(ignore);
         end
 
         % ---> extracting timeseries
 
         fprintf('%d ', t.frames);
-        data.(ana(a).name).timeseries{n} = t.img_ExtractROI(roi, rcodes, method);
+        data.(ana(a).name).timeseries{n} = t.img_extract_roi(roi, rcodes, method);
         data.(ana(a).name).runframes{n}  = t.runframes;
         data.(ana(a).name).usevec{n}     = t.use;
 
@@ -386,7 +386,7 @@ function [bmask] = img_BOLDBrainMask(fnames)
     for fname = fnames
         fname = fname{1};
         if ~isempty(strfind(fname, '.conc'))
-            [files boldn sfolder] = nimage.img_ReadConcFile(fname);
+            [files boldn sfolder] = nimage.img_read_concfile(fname);
 
             mask = boldn > 0;
             for n = 1:length(boldn)

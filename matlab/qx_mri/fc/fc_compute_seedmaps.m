@@ -241,7 +241,7 @@ end
 
 if verbose; fprintf('     ... creating ROI mask'); end
 
-roi  = nimage.img_ReadROI(roideffile, sroifile);
+roi  = nimage.img_read_roi(roideffile, sroifile);
 nroi = length(roi.roi.roinames);
 
 if verbose; fprintf(' ... read %d ROI\n', nroi); end
@@ -256,7 +256,7 @@ if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 % ---> create extraction sets
 
 if verbose; fprintf('     ... generating extraction sets ...'); end
-exsets = y.img_GetExtractionMatrices(frames, options);
+exsets = y.img_get_extraction_matrices(frames, options);
 if verbose; fprintf(' done.\n'); end
 
 % ---> loop through extraction sets
@@ -270,14 +270,14 @@ for n = 1:nsets
     
     % --> get the extracted timeseries
 
-    ts = y.img_ExtractTimeseries(exsets(n).exmat, options.eventdata);
+    ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
 
     if verbose; fprintf(' ... extracted ts'); end
     
     % --> generate seedmaps
 
-    rs = ts.img_ExtractROI(roi, [], options.roimethod);
-    fc = ts.img_ComputeCorrelations(rs', [], strcmp(options.fcmeasure, 'cv'));
+    rs = ts.img_extract_roi(roi, [], options.roimethod);
+    fc = ts.img_compute_correlations(rs', [], strcmp(options.fcmeasure, 'cv'));
 
     if verbose; fprintf(' ... computed seedmap'); end
 

@@ -186,8 +186,8 @@ main() {
 # -- Get Command Line Options
 get_options $@
 
-# -- Run img_ExtractROI.m --> img_ExtractROI(obj, roi, rcodes, method, weights, criterium)
-${QUNEXMCOMMAND} "imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_ExtractROI(roif)); quit"
+# -- Run img_extract_roi.m --> img_extract_roi(obj, roi, rcodes, method, weights, criterium)
+${QUNEXMCOMMAND} "imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
 
 # -- Completion check
 if [[ -f ${outpath}/${outname}.csv ]]; then

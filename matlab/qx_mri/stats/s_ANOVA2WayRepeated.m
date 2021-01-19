@@ -67,7 +67,7 @@ img.data = img.image2D;
 % 	----> compute ANOVA
 
 if verbose, fprintf('\n ... computing\n --- '), end
-[p F Z M SE] = img.img_ANOVA2WayRepeated(a, b, verbose);
+[p F Z M SE] = img.img_anova_2way_repeated(a, b, verbose);
 if verbose, fprintf(' --- \n'), end
 
 

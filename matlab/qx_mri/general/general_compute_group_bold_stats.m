@@ -27,7 +27,7 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %   ===
 %
 %   The function computes for each session the specified image statistics across
-%   the BOLD image, using the nimage img_Stats method. Results are saved for
+%   the BOLD image, using the nimage img_stats method. Results are saved for
 %   each computed statistics in a separate file with one volume for each session
 %   with order of volumes matching the order in which the sessions are listed in
 %   the flist file. The root of the files in which the results are saved is
@@ -71,7 +71,7 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %   SEE ALSO
 %   ========
 %
-%   nimage.img_Stats
+%   nimage.img_stats
 %   general_create_task_regressors
 %
 
@@ -214,7 +214,7 @@ for n = 1:nsub
     fprintf('\n     ... computing statistics ');
 
     for s = 1:nstats
-        t = y.img_Stats(stats{s});
+        t = y.img_stats(stats{s});
         t.data = t.image2D;
         if first
             r(s) = t.zeroframes(nsub);

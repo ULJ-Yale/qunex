@@ -57,8 +57,8 @@ else
 	b = nimage(bf);
 end
 
-am = a.img_SliceMatrix(v);
-bm = b.img_SliceMatrix(v);
+am = a.img_slice_matrix(v);
+bm = b.img_slice_matrix(v);
 
 am = normalize(am);
 bm = normalize(bm);

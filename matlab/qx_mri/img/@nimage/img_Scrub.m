@@ -1,6 +1,6 @@
-function [img] = img_Scrub(img, com)
+function [img] = img_scrub(img, com)
 
-%``function [img] = img_Scrub(img, com)``
+%``function [img] = img_scrub(img, com)``
 %
 %   Scrubs image according to the command
 %
@@ -40,8 +40,8 @@ function [img] = img_Scrub(img, com)
 %
 
 if nargin < 2
-    fprintf('\n\nERROR in the use of nimage.img_Scrub!')
-    help('nimage.img_Scrub');
+    fprintf('\n\nERROR in the use of nimage.img_scrub!')
+    help('nimage.img_scrub');
     error();
 end
 
@@ -54,10 +54,10 @@ com = regexp(com, ',|;|:|\|', 'split');
 
 if length(com) < 3
     if strcmp(com{1}, 'usevec')
-        if isempty(img.use), error('ERROR: img_Scrub(), missing .use data!'); end
+        if isempty(img.use), error('ERROR: img_scrub(), missing .use data!'); end
         mask = img.use == 0;
     else
-        if isempty(img.scrub), error('ERROR: img_Scrub(), missing .scrub data file!'); end
+        if isempty(img.scrub), error('ERROR: img_scrub(), missing .scrub data file!'); end
         mask = img.scrub(:, ismember(img.scrub_hdr, com));
     end
     if length(com) == 2
@@ -68,7 +68,7 @@ if length(com) < 3
 else
     stype = com{1};
     doIt    = com{2};
-    if isempty(img.fstats), error('ERROR: img_Scrub(), missing .bstats data file!'); end
+    if isempty(img.fstats), error('ERROR: img_scrub(), missing .bstats data file!'); end
 
     if stype(1) == 'i' or stype(1) == 'u'
         ui = stype(1);
@@ -79,7 +79,7 @@ else
     end
 
     if strcmp(dv, 'mov')
-        if isempty(img.mov), error('ERROR: img_Scrub(), missing .mov/.dat data file!'); end
+        if isempty(img.mov), error('ERROR: img_scrub(), missing .mov/.dat data file!'); end
         fdt = str2num(com{3});
         if length(com) > 3, r = str2num(com{4}); end
         mask = evaluateMov(img.mov, r, fdt);
@@ -87,7 +87,7 @@ else
         dvt  = str2num(com{3});
         mask = img.fstats(:, ismember(img.fstats_hdr, dv)) >= dvt;
         if ~isempty(ui)
-            if isempty(img.mov), error('ERROR: img_Scrub(), missing .mov/.dat data file!'); end
+            if isempty(img.mov), error('ERROR: img_scrub(), missing .mov/.dat data file!'); end
             if length(com) > 3, fdt = str2num(com{4}); end
             if length(com) > 4, fdt = str2num(com{5}); end
             mov = evaluateMov(img.mov, r, fdt);

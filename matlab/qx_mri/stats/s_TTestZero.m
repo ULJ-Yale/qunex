@@ -68,7 +68,7 @@ end
 % 	----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
-[p Z M SE t] = img.img_TTestZero(verbose);
+[p Z M SE t] = img.img_ttest_zero(verbose);
 if verbose, fprintf(' --- \n'), end
 
 

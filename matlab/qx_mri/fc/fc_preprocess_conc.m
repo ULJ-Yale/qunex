@@ -81,7 +81,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %						which criteria to use for rejection
 %						(mov, dvars, dvarsme, idvars, udvars ...) [udvarsme]
 %                     
-%					If empty, the defaults from img_ComputeScrub are used.
+%					If empty, the defaults from img_compute_scrub are used.
 %
 %	--ignores       How to deal with the frames marked as not used in filtering 
 %					and regression steps specified in a single string, separated
@@ -311,7 +311,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   Volume smoothing
 %   ----------------
 %
-%   For volume formats the images will be smoothed using the img_Smooth3D
+%   For volume formats the images will be smoothed using the img_smooth_3d
 %   nimage method. For cifti format the smooting will be done by calling the
 %   relevant wb_command command. The smoothing specific parameters can be
 %   set in the options string:
@@ -389,7 +389,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   TEMPORAL FILTERING
 %   ==================
 %
-%   Temporal filtering is accomplished using img_Filter nimage method. The
+%   Temporal filtering is accomplished using img_filter nimage method. The
 %   code is adopted from the FSL C++ code enabling appropriate handling of
 %   bad frames (as described above - see SCRUBBING). The filtering settings
 %   can be set in the options parameter:
@@ -400,7 +400,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   lopass_filter  
 %		The frequency for low-pass filtering in Hz [0.09].
 %
-%   Please note that the values finaly passed to img_Filter method are the
+%   Please note that the values finaly passed to img_filter method are the
 %   respective sigma values computed from the specified frequencies and TR.
 %
 %   Results
@@ -788,7 +788,7 @@ for b = 1:nbolds
         timg.mov        = nuisance(b).mov;
         timg.mov_hdr    = nuisance(b).mov_hdr;
 
-        timg = timg.img_ComputeScrub(scrub);
+        timg = timg.img_compute_scrub(scrub);
 
         nuisance(b).scrub     = timg.scrub;
         nuisance(b).scrub_hdr = timg.scrub_hdr;
@@ -990,7 +990,7 @@ for current = char(doIt)
                             tmpi = readIfEmpty(img(b), file(b).sfile, omit);
                             tmpi.data = tmpi.image2D;
                             if strcmp(options.smooth_mask, 'false')
-                                tmpi = tmpi.img_Smooth3D(options.voxel_smooth, true);
+                                tmpi = tmpi.img_smooth_3d(options.voxel_smooth, true);
                             else
 
                                 % --- set up the smoothing mask
@@ -1021,7 +1021,7 @@ for current = char(doIt)
                                     dmask = options.dilate_mask;
                                 end
 
-                                tmpi = tmpi.img_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
+                                tmpi = tmpi.img_smooth_3d_masked(bmask, options.voxel_smooth, dmask, true);
                             end
                             img(b) = tmpi;
 
@@ -1029,12 +1029,12 @@ for current = char(doIt)
                     case 'h'
                         tmpi = readIfEmpty(img(b), file(b).sfile, omit);
                         hpsigma = ((1/TR)/options.hipass_filter)/2;
-                        tmpi = tmpi.img_Filter(hpsigma, 0, omit, true, ignore.hipass);
+                        tmpi = tmpi.img_filter(hpsigma, 0, omit, true, ignore.hipass);
                         img(b) = tmpi;
                     case 'l'
                         tmpi = readIfEmpty(tmpi, file(b).sfile, omit);
                         lpsigma = ((1/TR)/options.lopass_filter)/2;
-                        tmpi = tmpi.img_Filter(0, lpsigma, omit, true, ignore.lopass);
+                        tmpi = tmpi.img_filter(0, lpsigma, omit, true, ignore.lopass);
                         img(b) = tmpi;
                 end
 
@@ -1051,13 +1051,13 @@ for current = char(doIt)
                     case 'h'
                         hpsigma = ((1/TR)/options.hipass_filter)/2;
                         tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
-                        tnimg = tnimg.img_Filter(hpsigma, 0, omit, false, ignore.hipass);
+                        tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
                         nuisance(b).signal = tnimg.data';
 
                     case 'l'
                         lpsigma = ((1/TR)/options.lopass_filter)/2;
                         tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
-                        tnimg = tnimg.img_Filter(0, lpsigma, omit, false, ignore.lopass);
+                        tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
                         nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';
                         nuisance(b).task   = tnimg.data((nuisance(b).nsignal+1):(nuisance(b).nsignal+nuisance(b).ntask),:)';
                         nuisance(b).events = tnimg.data((nuisance(b).nsignal+nuisance(b).ntask+1):(nuisance(b).nsignal+nuisance(b).ntask+nuisance(b).nevents),:)';
@@ -1114,7 +1114,7 @@ for current = char(doIt)
             fprintf('\n---> conc file already saved! [%s]', file(b).tconc);
         else
             fprintf('\n---> saving conc file ');
-            nimage.img_SaveConcFile(file(b).tconc, {file.tfile});
+            nimage.img_save_concfile(file(b).tconc, {file.tfile});
             fprintf('... done!');
         end
     end
@@ -1588,8 +1588,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     % fprintf('\n -> mask %d', sum(nmask==1));
     % fprintf(xevents);
     X = X(nmask==1, :);
-    [coeff res] = Y.img_GLMFit(X);
-    coeff = [coeff Y.img_Stats({'m', 'sd'})];
+    [coeff res] = Y.img_glm_fit(X);
+    coeff = [coeff Y.img_stats({'m', 'sd'})];
 
     %   ----> put data back into images
     fprintf('.');
@@ -1615,7 +1615,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         img(b) = tmpi;
     end
 
-    coeff = coeff.img_EmbedMeta(xtable, 64, 'GLM');
+    coeff = coeff.img_embed_meta(xtable, 64, 'GLM');
 
 return
 

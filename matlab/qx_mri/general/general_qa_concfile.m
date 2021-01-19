@@ -25,7 +25,7 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 %
 %   USE
 %   ===
-%   The function reads the conc file and then runs img_Stats(doIt) on each of the
+%   The function reads the conc file and then runs img_stats(doIt) on each of the
 %   files. It saves the results for each of the statistics in a separate file
 %   named <target>.<stat>.<relevant extension>. If no target is specified no
 %   files will be saved.
@@ -64,7 +64,7 @@ end
 
 for n = 1:nfiles
     d = nimage(files{n});
-    d = d.img_Stats(doIt);
+    d = d.img_stats(doIt);
     d.data = d.image2D;
     for nr = 1:nstats
         r(nr).data(:,n) = d.data(:,nr);

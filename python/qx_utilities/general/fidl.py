@@ -95,7 +95,7 @@ def readConc(concf, TR):
 
 def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     """
-    ``joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]``
+    ``joinFidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]``
 
     Combines all the fidl files matching root based on the information in conc
     file.
@@ -192,7 +192,7 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
 def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     """
-    ``joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]``
+    ``joinFidlFolder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]``
 
     Uses joinFidl to join all the fidl files that match the name of each conc
     file in the concfolder.
@@ -254,7 +254,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
 
 def splitFidl(concfile, fidlfile, outfolder=None):
     """
-    ``splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
+    ``splitFidl concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
 
     Splits a multi-bold fidl file into run specific bold files based on the
     sequence of bold files in conc file and their lengths.

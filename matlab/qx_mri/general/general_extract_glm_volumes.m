@@ -34,7 +34,7 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %   analyses, such as second-level statistical testing using PALM.
 %
 %   To extract the effects of interest, the function calls the
-%   img_ExtractGLMEstimates nimage method.
+%   img_extract_glm_estimates nimage method.
 %
 %   NOTICE
 %   ======
@@ -130,7 +130,7 @@ if verbose, fprintf('\n---> processing session: %s', sessions(1).id); end
 
 glm = nimage(sessions(1).glm);
 sef = glm.glm.effects;
-glm = glm.img_ExtractGLMEstimates(effects, frames, values);
+glm = glm.img_extract_glm_estimates(effects, frames, values);
 effect = sef(glm.glm.effect);
 frame  = glm.glm.frame;
 event  = glm.glm.event;
@@ -150,7 +150,7 @@ for s = 2:nsub
 
     glm = nimage(sessions(s).glm);
     sef = glm.glm.effects;
-    glm = glm.img_ExtractGLMEstimates(effects, frames, values);
+    glm = glm.img_extract_glm_estimates(effects, frames, values);
     nb  = size(glm.image2D,2);
     effect  = [effect sef(glm.glm.effect)];
     frame   = [frame glm.glm.frame];
@@ -249,7 +249,7 @@ function [img] = setMeta(img, session, effect, frame, event, verbose)
     s = [s sprintf('# effect: %s\n', strjoin(effect))];
     s = [s sprintf('# frame:%s\n', sprintf(' %d', frame))];
     s = [s sprintf('# event: %s\n', strjoin(effect))];
-    img = img.img_EmbedMeta(s, [], 'list', verbose);
+    img = img.img_embed_meta(s, [], 'list', verbose);
 
 
 function [parcelnames] = getParcelNames(img)

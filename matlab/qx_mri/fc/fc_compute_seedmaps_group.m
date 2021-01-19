@@ -335,7 +335,7 @@ for n = 1:nsub
                 fcset(s).group(r).roi = fcmaps(s).roi{r};                
             end
 
-            % -------> Embedd data
+            % -------> Embed data
             
             fcset(s).group(r).fc.data(:,n) = fcmaps(s).fc.data(:,r);
        end
@@ -392,9 +392,9 @@ for setid = 1:nset
 
         if any(ismember(options.savegroup, {'groupp', 'groupz'}))
             if cv
-                [p Z M] = fcset(setid).group(r).fc.img_TTestZero();
+                [p Z M] = fcset(setid).group(r).fc.img_ttest_zero();
             else
-                [p Z M] = fz.img_TTestZero();
+                [p Z M] = fz.img_ttest_zero();
                 gr = M.img_FisherInv();
             end
         end

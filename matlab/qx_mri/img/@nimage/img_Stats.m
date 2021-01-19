@@ -1,6 +1,6 @@
-function [out, doIt] = img_Stats(img, doIt, exclude)
+function [out, doIt] = img_stats(img, doIt, exclude)
 
-%``function [out, doIt] = img_Stats(img, doIt, exclude)``
+%``function [out, doIt] = img_stats(img, doIt, exclude)``
 %
 %   Computes the specified statistics across frames excluding values specified
 %   in exclude.
@@ -48,7 +48,7 @@ function [out, doIt] = img_Stats(img, doIt, exclude)
 %
 %   ::
 %
-%       msdimg = img.img_Stats({'m', 'sd'});
+%       msdimg = img.img_stats({'m', 'sd'});
 %
 
 %   ~~~~~~~~~~~~~~~~~~

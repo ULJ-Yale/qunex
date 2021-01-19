@@ -1,6 +1,6 @@
-function img = img_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
+function img = img_smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
 
-%``function img = img_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)``
+%``function img = img_smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)``
 %
 %   Does geodesic gaussian kernel smoothing of the gmri image.
 %
@@ -82,14 +82,14 @@ function img = img_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %
 %   ::
 %
-%       img_smooth = img.img_Smooth([7 9], false, [], [], 'midthickness');
+%       img_smooth = img.img_smooth([7 9], false, [], [], 'midthickness');
 %
 %   EXAMPLE (NIfTI image)
 %   =====================
 %
 %   ::
 %
-%       img_smooth = img.img_Smooth(3, true, 'gaussian', 8);
+%       img_smooth = img.img_smooth(3, true, 'gaussian', 8);
 %
 
 %   ~~~~~~~~~~~~~~~~~~
@@ -118,11 +118,11 @@ if numel(fwhm) == 1,                   fwhm = [fwhm, fwhm];              end
 
 if img.frames > 1 && timeSeries == true
     if warn
-        warning(['img_Smooth(): image contains multiple frames and ',...
+        warning(['img_smooth(): image contains multiple frames and ',...
             'options->frames was not specified. As a result, only the ',...
             'first frame will be processed.']);
     end
-    % if more than 1 frame, perform img_Smooth() on each frame recursivelly
+    % if more than 1 frame, perform img_smooth() on each frame recursivelly
     fprintf('\nMore than 1 frame detected!\n');
     img_temp = img;
     img_temp.data = zeros(size(img_temp.data));
@@ -132,7 +132,7 @@ if img.frames > 1 && timeSeries == true
         img_temp.data(:,fr) = img.data(:,fr);
         fprintf('-> Smoothing Frame #%d\n',fr);
         img_temp = ...
-            img_temp.img_Smooth(fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, false);
+            img_temp.img_smooth(fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, false);
         img_smooth.data(:,fr) = img_temp.data(:,fr);
     end
     img = img_smooth;
@@ -143,14 +143,14 @@ end
 if  isempty(mask)
     mask_img = img;
     mask_img.data = abs(mask_img.data);
-    img_SaveNIfTI(mask_img,'mask_tmp.dscalar.nii');
+    img_save_nifti(mask_img,'mask_tmp.dscalar.nii');
     mask = 'mask_tmp.dscalar.nii';
 elseif strcmp(lower(mask),'no')
     mask = '';
 else
     mask_img = nimage(mask);
     mask_img.data = abs(mask_img.data);
-    img_SaveNIfTI(mask_img,'mask_tmp.dscalar.nii');
+    img_save_nifti(mask_img,'mask_tmp.dscalar.nii');
     mask = 'mask_tmp.dscalar.nii';
 end
 
@@ -175,7 +175,7 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     
     % create temporary wb_command input file
     inFile = strcat('temp_',date,'_inFile.dscalar.nii');
-    img_SaveNIfTI(img, inFile);
+    img_save_nifti(img, inFile);
     
     % create temporary wb_command output file
     outFile = strcat('temp_',date,'_outFile.dscalar.nii');
@@ -192,8 +192,8 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     % delete both input and output temporary files
     delete '*File.dscalar.nii';
 elseif strcmpi(img.imageformat, 'NIFTI')
-    % smooth the entire volume structure with img_Smooth3D() method
-    img = img.img_Smooth3D(fwhm(1), verbose, ftype, ksize);
+    % smooth the entire volume structure with img_smooth_3d() method
+    img = img.img_smooth_3d(fwhm(1), verbose, ftype, ksize);
 end
 
 end

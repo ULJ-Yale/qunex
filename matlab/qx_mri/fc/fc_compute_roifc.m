@@ -228,7 +228,7 @@ end
 
 if verbose; fprintf('     ... creating ROI mask\n'); end
 
-roi  = nimage.img_ReadROI(roideffile, sroifile);
+roi  = nimage.img_read_roi(roideffile, sroifile);
 nroi = length(roi.roi.roinames);
 
 
@@ -242,7 +242,7 @@ if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 % ---> create extraction sets
 
 if verbose; fprintf('     ... generating extraction sets ...'); end
-exsets = y.img_GetExtractionMatrices(frames, options);
+exsets = y.img_get_extraction_matrices(frames, options);
 if verbose; fprintf(' done.\n'); end
 
 % ---> loop through extraction sets
@@ -256,13 +256,13 @@ for n = 1:nsets
     
     % --> get the extracted timeseries
 
-    ts = y.img_ExtractTimeseries(exsets(n).exmat, options.eventdata);
+    ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
 
     if verbose; fprintf(' ... extracted ts'); end
     
     % --> generate fc matrice
 
-    rs = ts.img_ExtractROI(roi, [], options.roimethod);
+    rs = ts.img_extract_roi(roi, [], options.roimethod);
 
     if strcmp(options.fcmeasure, 'cv')
         fc = rs';
@@ -276,7 +276,7 @@ for n = 1:nsets
     
     if verbose; fprintf(' ... computed fc matrix'); end
 
-    % ------> Embedd results
+    % ------> Embed results
 
     fcmat(n).title = exsets(n).title;
     fcmat(n).roi   = roi.roi.roinames;

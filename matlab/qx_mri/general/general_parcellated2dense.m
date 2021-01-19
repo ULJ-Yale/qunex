@@ -60,7 +60,7 @@ end
 
 if verbose, fprintf('\n===> Loading %s', inimg), end
 img = nimage(inimg);
-img = img.img_Parcellated2Dense(verbose, missingvalues);
+img = img.img_parcellated2dense(verbose, missingvalues);
 
 % --> save
 if isempty(outimg)

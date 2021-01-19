@@ -46,8 +46,8 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %   The function is used to extract per ROI estimates of the effects of interest
 %   for each of the ROI and sessions to enable second level analysis and
 %   visualization of the data. In the background the function first extracts the
-%   relevant volumes using the img_ExtractGLMEstimates. It then defines the ROI
-%   and uses img_ExtractROIStats method to get per ROI statistics.
+%   relevant volumes using the img_extract_glm_estimates. It then defines the ROI
+%   and uses img_extract_roi_stats method to get per ROI statistics.
 %
 %   EXAMPLE USE
 %   ===========
@@ -98,7 +98,7 @@ nsub = length(sessions);
 % --------------------------------------------------------------
 %                                                       read roi
 
-roi = nimage.img_ReadROI(roif);
+roi = nimage.img_read_roi(roif);
 roi.data = roi.image2D;
 nroi = length(roi.roi.roinames);
 
@@ -137,12 +137,12 @@ for s = 1:nsub
 
     % glm = nimage(sessions(s).glm, [], [], verbose);
     glm = nimage(sessions(s).glm);
-    glm = glm.img_ExtractGLMEstimates(effects, frames);
+    glm = glm.img_extract_glm_estimates(effects, frames);
 
     % ---> update ROI
 
     if isfield(sessions(s), 'roi') && ~isempty(sessions(s).roi)
-        sroi = roi.img_MaskROI(sessions(s).roi);
+        sroi = roi.img_mask_roi(sessions(s).roi);
     else
         sroi = roi;
     end
@@ -151,7 +151,7 @@ for s = 1:nsub
         glm.data = bsxfun(@rdivide, glm.data, glm.glm.gmean / 100);
     end
 
-    stats   = glm.img_ExtractROIStats(sroi);
+    stats   = glm.img_extract_roi_stats(sroi);
     data(s).stats = stats;
     data(s).effect = glm.glm.effects(glm.glm.effect);
     data(s).frame = glm.glm.eindex;

@@ -374,14 +374,14 @@ for n = 1:nelements
 				end
 				elements(n).stats(s).data = img(id).fstats(:, ismember(img(id).fstats_hdr, 'fd'));
 			elseif ismember(elements(n).stats(s).plotdata, {'dvars', 'dvarsm', 'dvarsme'})
-				stats = img(id).img_StatsTime('dvars');
+				stats = img(id).img_stats_time('dvars');
 				elements(n).stats(s).data = stats.(elements(n).stats(s).plotdata);
 			elseif ismember(elements(n).stats(s).plotdata, {'V', 'WM', 'GM', 'WB'})
 				tmask = ismember(mask(elements(n).stats(s).maskindex).image2D, roi.(elements(n).stats(s).plotdata));
-				stats = img(id).img_StatsTime('m', tmask);
+				stats = img(id).img_stats_time('m', tmask);
 				elements(n).stats(s).data = stats.mean;
 			elseif ismember(elements(n).stats(s).plotdata, {'GO'})
-				stats = img(id).img_StatsTime('m');
+				stats = img(id).img_stats_time('m');
 				elements(n).stats(s).data = stats.mean;
 			elseif strcmp(elements(n).stats(s).plotdata, 'scrub')
 				if isempty(img(id).use)

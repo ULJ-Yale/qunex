@@ -57,7 +57,7 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %   parameter. If more than one value is specfied, a solution will be computed
 %   for each value.
 %
-%   Correlations are computed using the img_ComputeABCor gmri method. Clustering
+%   Correlations are computed using the img_compute_ab_cor gmri method. Clustering
 %   is computed using kmeans function with dmeasure as distance measure, and
 %   taking the best of nrep replications.
 %
@@ -144,8 +144,8 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-sROI = nimage.img_ReadROI(smask, session(1).roi);
-tROI = nimage.img_ReadROI(tmask, session(1).roi);
+sROI = nimage.img_read_roi(smask, session(1).roi);
+tROI = nimage.img_read_roi(tmask, session(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
     sROIload = false;
@@ -184,10 +184,10 @@ for s = 1:nsessions
     end
 
     if tROIload
-	    tROI = nimage.img_ReadROI(tmask, roif);
+	    tROI = nimage.img_read_roi(tmask, roif);
     end
     if sROIload
-	    sROI = nimage.img_ReadROI(smask, roif);
+	    sROI = nimage.img_read_roi(smask, roif);
     end
 
     % --- load bold data
@@ -207,7 +207,7 @@ for s = 1:nsessions
     end
     if script, fprintf('\n... computing ABCor'), end
 
-    ABCor = img.img_ComputeABCor(sROI, tROI, method);
+    ABCor = img.img_compute_ab_cor(sROI, tROI, method);
 
     if indiv
         data = fc_fisher(ABCor.image2D');

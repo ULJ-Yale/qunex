@@ -117,16 +117,16 @@ WM  = fsimg.zeroframes(1);
 bmimg.data = (bmimg.data > 0) & (fsimg.data > 0);
 
 WM.data = (ismember(fsimg.data, fs_wm)) & (bmimg.data > 0);
-if shrink, WM = WM.img_ShrinkROI(); end
+if shrink, WM = WM.img_shrink_roi(); end
 WM.data = WM.image2D;
 
 V.data  = ismember(fsimg.data, fs_csf) & (bmimg.data > 0);
 WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
 
-%if shrink, V  = V.img_ShrinkROI('surface', 6); end
-if shrink, WB = WB.img_ShrinkROI('edge', 10);  end %'edge', 10
-if shrink, WM = WM.img_ShrinkROI();            end
-%if shrink, WM = WM.img_ShrinkROI();            end
+%if shrink, V  = V.img_shrink_roi('surface', 6); end
+if shrink, WB = WB.img_shrink_roi('edge', 10);  end %'edge', 10
+if shrink, WM = WM.img_shrink_roi();            end
+%if shrink, WM = WM.img_shrink_roi();            end
 
 WB.data = WB.image2D;
 WM.data = WM.image2D;
@@ -172,21 +172,21 @@ end
 nuisance = [];
 hdr      = {};
 
-nuisance = [nuisance img.img_ExtractROI(V)'];
-nuisance = [nuisance img.img_ExtractROI(WM)'];
-nuisance = [nuisance img.img_ExtractROI(WB)'];
+nuisance = [nuisance img.img_extract_roi(V)'];
+nuisance = [nuisance img.img_extract_roi(WM)'];
+nuisance = [nuisance img.img_extract_roi(WB)'];
 hdr      = {'V', 'WM', 'WB'};
 
 if ~isempty(wbmask)
     mWB = WB;
-    wbmask = wbmask.img_GrowROI(2);
+    wbmask = wbmask.img_grow_roi(2);
     mWB.data(wbmask.image2D > 0) = 0;
-    nuisance = [nuisance img.img_ExtractROI(mWB)'];
+    nuisance = [nuisance img.img_extract_roi(mWB)'];
     hdr  = [hdr 'mWB'];
 end
 
 if ~isempty(nroi)
-   nuisance = [nuisance img.img_ExtractROI(nroi)'];
+   nuisance = [nuisance img.img_extract_roi(nroi)'];
    hdr      = [hdr, nroi.roi.roinames];
 end
 
@@ -251,10 +251,10 @@ if ~strcmp(ntarget, 'none')
 
     % --- compose PNG
 
-    O  = O.img_SliceMatrix(3);
-    WB = WB.img_SliceMatrix(3);
-    V  = V.img_SliceMatrix(3);
-    WM = WM.img_SliceMatrix(3);
+    O  = O.img_slice_matrix(3);
+    WB = WB.img_slice_matrix(3);
+    V  = V.img_slice_matrix(3);
+    WM = WM.img_slice_matrix(3);
 
     pic(:,:,1) = O;
     pic(:,:,2) = O;
@@ -269,7 +269,7 @@ if ~strcmp(ntarget, 'none')
     pic(:,:,1) = pic(:,:,1)+WM*0.3;
 
     if ~isempty(nroi)
-        nroi   = nroi.img_SliceMatrix(3);
+        nroi   = nroi.img_slice_matrix(3);
         rcodes = unique(nroi);
         rcodes = rcodes(rcodes > 0);
         cmap   = hsv(length(rcodes));
@@ -319,7 +319,7 @@ function [mimg] = getImage(mimg, fsimg, verbose)
     if ~isa(mimg, 'nimage')
         if strfind(mimg, '.names')
             if verbose, fprintf(verbose, mimg); end
-            mimg = nimage.img_ReadROI(mimg, fsimg);
+            mimg = nimage.img_read_roi(mimg, fsimg);
         else
             if verbose, fprintf(verbose, mimg); end
             mimg = nimage(mimg);

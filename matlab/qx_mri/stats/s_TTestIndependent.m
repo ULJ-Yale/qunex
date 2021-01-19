@@ -85,7 +85,7 @@ end
 % 	----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
-[p Z M D SE t] = A.img_TTestIndependent(B, vartype, verbose);
+[p Z M D SE t] = A.img_ttest_independent(B, vartype, verbose);
 if verbose, fprintf(' --- \n'), end
 
 

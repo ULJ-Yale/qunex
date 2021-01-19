@@ -97,7 +97,7 @@ usage() {
  echo "parcellation)."
  echo ""
  echo "For more detailed documentation run <help fc_compute_gbc3>, "
- echo "<help nimage.img_ComputeGBC> or <help fc_compute_seedmaps_multiple> inside MATLAB."
+ echo "<help nimage.img_compute_gbc> or <help fc_compute_seedmaps_multiple> inside MATLAB."
  echo ""
  echo "INPUTS"
  echo "======"

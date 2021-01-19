@@ -18,10 +18,10 @@ import glob
 import img
 
 help_message = """
-``meltmovfidl <conc_file> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
+``meltmovfidl <concfile> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
 
 Checks movement folder for each bold file specified in 
-<conc_file> for corresponding scrub fidl file matching <ignore_fild_pattern>
+<concfile> for corresponding scrub fidl file matching <ignore_fild_pattern>
 It then melts information on frames to be ignored into the <input_fidl_file> 
 and saves it to <output_fidl_file>.
 

@@ -35,11 +35,11 @@ classdef nimage
 %   standardize        
 %       transforms values to z scores within each voxel's timeseries
 %
-%   correlize          
+%   correlize
 %       standardizes and divides by sqrt(N-1) to prepare for efficient 
 %       correlation computation
 %   
-%   img_ComputeCorrelations
+%   img_compute_correlations
 %       computes correlations with the provided data matrix
 %   
 %   PROPERTIES
@@ -132,7 +132,7 @@ classdef nimage
 %              Added GetXY and specifying save format with file extension.
 %   2017-03-21 Grega Repovs
 %              horzcat now supports concatenation of empty objects.
-%              img_ReadConcFile returns more information
+%              img_read_concfile returns more information
 %   2017-07-02 Grega Repovs
 %              horzcat, zeroframes and sliceframe suport img.cifti.maps
 %   2018-03-17 Grega Repovs
@@ -190,25 +190,25 @@ classdef nimage
     end
 
     methods(Static = true)
-        %ifh = img_ReadIFH(file)
-        [files boldn sfolder] = img_ReadConcFile(file)
-        img   = img_ReadConcImage(file, dtype, frames, verbose)
-        roi   = img_ReadROI(roiinfo, roif2, checks)
-        img_SaveConcFile(file, files)
-        img_SaveNIfTImx(filename, hdr, data, meta, doswap, verbose)
-        [hdr, data, meta, doswap] = img_ReadNIfTImx(filename, verbose)
+        %ifh = img_read_ifh(file)
+        [files boldn sfolder] = img_read_concfile(file)
+        img   = img_read_concimage(file, dtype, frames, verbose)
+        roi   = img_read_roi(roiinfo, roif2, checks)
+        img_save_concfile(file, files)
+        img_save_nifti_mx(filename, hdr, data, meta, doswap, verbose)
+        [hdr, data, meta, doswap] = img_read_nifti_mx(filename, verbose)
     end
 
     methods
-        output = img_Smooth3D(obj, fwhm, verbose, ftype, ksize)
-        output = img_Smooth3DMasked(obj, mask, fwhm, limit, verbose)
-        output = img_Smooth(obj, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
-        output = img_Stats(obj, doIt, exclude)
-        output = img_StatsDiff(obj, obj2, doIt, exclude)
-        [output param] = img_ComputeScrub(obj, doIt)
-        output = img_GetXYZ(obj, ijk)
-        output = img_GetIJK(obj, xyz)
-        output = img_CreateROIFrompeaksIn(obj, peaksIn)
+        output = img_smooth_3d(obj, fwhm, verbose, ftype, ksize)
+        output = img_smooth_3d_masked(obj, mask, fwhm, limit, verbose)
+        output = img_smooth(obj, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
+        output = img_stats(obj, doIt, exclude)
+        output = img_stats_diff(obj, obj2, doIt, exclude)
+        [output param] = img_compute_scrub(obj, doIt)
+        output = img_get_xyz(obj, ijk)
+        output = img_get_ijk(obj, xyz)
+        output = img_create_roi_from_peaks(obj, peaksIn)
     end
 
     methods
@@ -475,18 +475,18 @@ classdef nimage
             % --- load depending on filename extension
 
             if length(filename) > 8 && strcmp(filename(length(filename)-8:end), '.4dfp.img')
-                obj = obj.img_Read4DFP(filename, dtype, frames, verbose);
-                obj = obj.img_ReadStats(verbose);
+                obj = obj.img_read_4dfp(filename, dtype, frames, verbose);
+                obj = obj.img_read_stats(verbose);
                 obj.empty = false;
             elseif length(filename) > 3 && strcmp(filename(length(filename)-3:end), '.nii') || strcmp(filename(length(filename)-6:end), '.nii.gz') || strcmp(filename(length(filename)-3:end), '.hdr')
-                obj = obj.img_ReadNIfTI(filename, dtype, frames, verbose);
-                obj = obj.img_ReadStats(verbose);
+                obj = obj.img_read_nifti(filename, dtype, frames, verbose);
+                obj = obj.img_read_stats(verbose);
                 obj.empty = false;
             elseif length(filename) > 4 && strcmp(filename(length(filename)-4:end), '.conc')
-                obj = nimage.img_ReadConcImage(filename, dtype, frames, verbose);
+                obj = nimage.img_read_concimage(filename, dtype, frames, verbose);
                 obj.empty = false;
             elseif length(filename) > 3 && strcmp(filename(length(filename)-3:end), '.glm')
-                obj = obj.img_ReadGLM(filename, dtype, verbose);
+                obj = obj.img_read_glm(filename, dtype, verbose);
                 obj.empty = false;
             else
                 error('ERROR: Unknown file format! [%s]', filename);
@@ -509,18 +509,18 @@ classdef nimage
             % --- Let's see if we have an explicit extension and take that into account
 
             if ~isempty(strfind(filename, '.4dfp.img'))
-                obj.img_Save4DFP(filename, extra);
+                obj.img_save_4dfp(filename, extra);
             elseif ~isempty(strfind(filename, '.nii.gz'))
-                obj.img_SaveNIfTI(filename, datatype, verbose);
+                obj.img_save_nifti(filename, datatype, verbose);
 
             % --- Otherwise save based on the set imageformat
 
             else
                 switch obj.imageformat
                     case '4dfp'
-                        obj.img_Save4DFP(filename, extra);
+                        obj.img_save_4dfp(filename, extra);
                     case {'NIfTI', 'CIFTI', 'CIFTI-1', 'CIFTI-2'}
-                        obj.img_SaveNIfTI(filename, datatype, verbose);
+                        obj.img_save_nifti(filename, datatype, verbose);
                     otherwise
                         error('ERROR: Unknown file format, could not save image! [%s]', obj.imageformat);
                 end

@@ -274,7 +274,7 @@ for n = 1:nsub
         fcset(s).title = fcmat(s).title;            
         fcset(s).roi   = fcmat(s).roi;                
 
-        % -------> Embedd data
+        % -------> Embed data
 
         fcset(s).subject(c).id = subject(n).id;
 

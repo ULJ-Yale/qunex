@@ -61,7 +61,7 @@ img = nimage(imgfile);
 % ------------------------> Correlations
 
 if strfind(target, 'r')
-    [r, Z] = img.img_ComputeCorrelations(bdata.data, true);
+    [r, Z] = img.img_compute_correlations(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
         r.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_r']);
@@ -71,7 +71,7 @@ if strfind(target, 'r')
 end
 
 if strfind(target, 't1')
-    [B, Z] = img.img_ComputeRTypeI(bdata.data, true);
+    [B, Z] = img.img_compute_r_type1(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
         B.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-I_B']);
@@ -81,7 +81,7 @@ if strfind(target, 't1')
 end
 
 if strfind(target, 't3')
-    [B, Z] = img.img_ComputeRTypeIII(bdata.data, true);
+    [B, Z] = img.img_compute_r_type3(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
         B.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_T-III_B']);

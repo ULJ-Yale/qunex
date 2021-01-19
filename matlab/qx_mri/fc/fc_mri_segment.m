@@ -39,7 +39,7 @@ function [] = fc_mri_segment(flist, smask, tmask, mask, root, options, verbose)
 %   Use the function to segment voxels specified in smask roi file based on the
 %   correlation with ROI specifed in the tmask file. Each voxel is assigned the
 %   code of the target ROI it most correlates with. For more information see
-%   img_fcMRISegment() nimage method.
+%   img_fcmri_segment() nimage method.
 %
 %   If no root is specified, the root of the flist is used.
 %
@@ -128,7 +128,7 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-tROI = nimage.img_ReadROI(tmask, session(1).roi);
+tROI = nimage.img_read_roi(tmask, session(1).roi);
 
 nroi = length(tROI.roi.roinames);
 nsessions = length(session);
@@ -155,8 +155,8 @@ for s = 1:nsessions
 	if script, fprintf('\n... reading file(s) '), end
 
     roif = nimage(session(s).roi);
-	tROI = nimage.img_ReadROI(tmask, roif);
-	sROI = nimage.img_ReadROI(smask, roif);
+	tROI = nimage.img_read_roi(tmask, roif);
+	sROI = nimage.img_read_roi(smask, roif);
 
 	nfiles = length(session(s).files);
 
@@ -172,7 +172,7 @@ for s = 1:nsessions
         end
     end
 
-    seg = img.img_fcMRISegment(sROI, tROI, options, method);
+    seg = img.img_fcmri_segment(sROI, tROI, options, method);
     seg = seg.unmaskimg();
     for r = 1:nroi
         corrs(r).data(:,s) = seg.data(:,r+1);

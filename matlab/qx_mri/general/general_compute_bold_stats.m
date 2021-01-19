@@ -22,7 +22,7 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %
 %   --scrub    A string describing whether and how to compute scrubbing
 %              information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or
-%              'none' for no scrubbing (see img_ComputeScrub nimage
+%              'none' for no scrubbing (see img_compute_scrub nimage
 %              method for more information.
 %   --verbose  To report the progress or not [false].
 %
@@ -44,11 +44,11 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %   frames is more than 0.
 %
 %   After the voxels were identified, the image is additionally masked if a
-%   mask was specified, and the statistics are computed using img_StatsTime
+%   mask was specified, and the statistics are computed using img_stats_time
 %   nimage method.
 %
 %   If scrub is not set to 'none', scrubbing information is also computed by
-%   calling img_ComputeScrub nimage method.
+%   calling img_compute_scrub nimage method.
 %
 %   The results can then be saved either by embedding them into the volume
 %   image (specified in the store parameter) or by saving them in separate
@@ -150,7 +150,7 @@ end
 % --- compute stats
 
 if verbose, fprintf(' ... computing stats'); end
-stats = img.img_StatsTime([], bmask);
+stats = img.img_stats_time([], bmask);
 
 % --------------------------------------------------------------
 %                                       save in an external file
@@ -193,7 +193,7 @@ img.fstats(:,8) = stats.dvarsme;
 
 if ~strcmp(scrub, 'none')
     if verbose, fprintf(' ... scrubbing'); end
-    [img, parameters] = img.img_ComputeScrub(scrub);
+    [img, parameters] = img.img_compute_scrub(scrub);
 end
 
 

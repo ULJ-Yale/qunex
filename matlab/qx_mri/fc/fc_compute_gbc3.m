@@ -36,7 +36,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %   USE
 %   ===
 %
-%   This function is a wrapper for nimage.img_ComputeGBC method. It enables
+%   This function is a wrapper for nimage.img_compute_gbc method. It enables
 %   computing GBC for a list of sessions. flist specifies the session
 %   identities, bold files to compute GBC on and roi to use for specifying the
 %   volume mask, voxels over which to compute GBC. mask specifies what frames of
@@ -47,7 +47,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %   voxels are used for computing GBC.
 %   
 %   What specifically gets computed is defined in the command string. For
-%   specifics see help for the nimage.img_ComputeGBC method.
+%   specifics see help for the nimage.img_compute_gbc method.
 %   
 %   In addition, if rsmoot and rdilate are specified, each sessions bold image
 %   will be 3D smoothed with the specifed FWHM in voxels. As sessions gray
@@ -61,7 +61,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %   sessions. The files will be named with the root of the flist with _gbc_ and
 %   code for the specific gbc computed added.
 %   
-%   For more information see documentation for nimage.img_ComputeGBC method.
+%   For more information see documentation for nimage.img_compute_gbc method.
 %
 %   EXAMPLE USE
 %   ===========
@@ -179,16 +179,16 @@ for s = 1:nsessions
 
         if rsmooth
             limit = isempty(rdilate);
-            img = img.img_Smooth3DMasked(imask, rsmooth, limit, verbose);
+            img = img.img_smooth_3d_masked(imask, rsmooth, limit, verbose);
         end
 
         if rdilate
-            imask = imask.img_GrowROI(rdilate);
+            imask = imask.img_grow_roi(rdilate);
         end
 
         img = img.maskimg(imask);
     end
-    [img commands] = img.img_ComputeGBC(command, [], [], verbose, [], time, cv, vstep);
+    [img commands] = img.img_compute_gbc(command, [], [], verbose, [], time, cv, vstep);
 
     if usemask
         img = img.unmaskimg();

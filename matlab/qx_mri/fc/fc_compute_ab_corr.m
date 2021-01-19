@@ -49,7 +49,7 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %   Use the function to compute individual and/or group correlations of each
 %   smask voxel with each tmask voxel. tmask voxels are spread across the volume
 %   and smask voxels are spread across the volumes. For more details see
-%   `img_ComputeABCorr` - nimage method.
+%   `img_compute_ab_cor` - nimage method.
 %
 %   EXAMPLE USE
 %   ===========
@@ -127,8 +127,8 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-sROI = nimage.img_ReadROI(smask, session(1).roi);
-tROI = nimage.img_ReadROI(tmask, session(1).roi);
+sROI = nimage.img_read_roi(smask, session(1).roi);
+tROI = nimage.img_read_roi(tmask, session(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
     sROIload = false;
@@ -167,10 +167,10 @@ for s = 1:nsessions
     end
 
     if tROIload
-	    tROI = nimage.img_ReadROI(tmask, roif);
+	    tROI = nimage.img_read_roi(tmask, roif);
     end
     if sROIload
-	    sROI = nimage.img_ReadROI(smask, roif);
+	    sROI = nimage.img_read_roi(smask, roif);
     end
 
     % --- load bold data
@@ -190,7 +190,7 @@ for s = 1:nsessions
     end
     if script, fprintf('\n'), end
 
-    ABCor = img.img_ComputeABCor(sROI, tROI, method);
+    ABCor = img.img_compute_ab_cor(sROI, tROI, method);
     ABCor = ABCor.unmaskimg;
 
     if indiv

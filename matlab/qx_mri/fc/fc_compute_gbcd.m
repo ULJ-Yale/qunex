@@ -54,7 +54,7 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %
 %   This is a wrapper function for computing GBC for specified ROI across the
 %   specified number of distance bands. The function goes through a list of
-%   sessions specified by flist file and runs `img_ComputeGBCd` method on bold
+%   sessions specified by flist file and runs `img_compute_gbcd` method on bold
 %   files listed for each session. ROI to compute GBC for are specified in roi
 %   and rcodes parameters, whereas the mask of what voxels to compute GBC over
 %   is specified by target parameter. The values should match rcodes used in
@@ -87,7 +87,7 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %   will be named using the root of the flist with '_GBCd.mat' added to it.
 %
 %   For more specific information on what is computed, see help for nimage
-%   method img_ComputeGBCd.
+%   method img_compute_gbcd.
 %
 %   EXAMPLE USE
 %   ===========
@@ -178,14 +178,14 @@ for s = 1:nsessions
 
     fprintf('1');
 	if ~isempty(mask),   img = img.sliceframes(mask); end
-    if ~isempty(ignore), img = img.img_Scrub(ignore); end
+    if ~isempty(ignore), img = img.img_scrub(ignore); end
 
 	if nfiles > 1
     	for n = 2:nfiles
     	    new = nimage(session(s).files{n});
             fprintf(', %d', n);
     	    if ~isempty(mask),   new = new.sliceframes(mask); end
-            if ~isempty(ignore), new = new.img_Scrub(ignore); end
+            if ~isempty(ignore), new = new.img_scrub(ignore); end
     	    img = [img new];
         end
     end
@@ -195,16 +195,16 @@ for s = 1:nsessions
 
     if rsmooth
         limit = isempty(rdilate);
-        img = img.img_Smooth3DMasked(imask, rsmooth, limit, verbose);
+        img = img.img_smooth_3d_masked(imask, rsmooth, limit, verbose);
     end
 
     if rdilate
-        imask = imask.img_GrowROI(rdilate);
+        imask = imask.img_grow_roi(rdilate);
     end
 
-    roiimg = nimage.img_ReadROI(roi, session(s).roi);
+    roiimg = nimage.img_read_roi(roi, session(s).roi);
 
-    [res, roiinfo, rdata] = img.img_ComputeGBCd(command, roiimg, rcodes, nbands, [], imask);
+    [res, roiinfo, rdata] = img.img_compute_gbcd(command, roiimg, rcodes, nbands, [], imask);
 
     data.gbcd(s).gbc = res;
     data.gbcd(s).roiinfo = roiinfo;
