@@ -1,6 +1,6 @@
-function [ok] = g_CheckFolder(filename, description, create, v)
+function [ok] = general_check_folder(filename, description, create, v)
 
-%``function [ok] = g_CheckFolder(filename, description, create, v)``
+%``function [ok] = general_check_folder(filename, description, create, v)``
 %
 %   Checks for existence of a folder, prints notices and creates folder if
 %   specified.
@@ -29,7 +29,7 @@ function [ok] = g_CheckFolder(filename, description, create, v)
 %
 %   ::
 %
-%   	g_CheckFolder('images/functional/movement', 'movement folder', ...
+%   	general_check_folder('images/functional/movement', 'movement folder', ...
 %		true, true);
 
 %	~~~~~~~~~~~~~~~~~~

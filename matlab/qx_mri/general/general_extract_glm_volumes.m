@@ -91,7 +91,7 @@ if nargin < 1, error('ERROR: No files to extract the volumes from provided!');  
 % --------------------------------------------------------------
 %                                                    check files
 
-g_CheckFile(flist, 'file list', 'errorstop');
+general_check_file(flist, 'file list', 'errorstop');
 if isempty(outf)
     outf = strrep(flist, '.list', '');
 end

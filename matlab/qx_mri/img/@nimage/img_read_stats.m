@@ -44,7 +44,7 @@ function [obj] = img_read_stats(obj, verbose)
 %   2013-10-20 Grega Repovs 
 %              Added verbose option.
 %   2014-07-19 Grega Repovs 
-%              Switched to g_ReadTable.
+%              Switched to general_read_table.
 %   2017-03-11 Grega Repovs 
 %              Updated documentation and simplified arguments.
 %
@@ -152,7 +152,7 @@ if ~emov
     tfile = FindMatchingFile(movfolder, fname, '.dat');
     if tfile
         if verbose, fprintf('---> reading movement data from %s\n', tfile), end
-        [data header] = g_ReadTable(tfile);
+        [data header] = general_read_table(tfile);
         data = CheckData(data, frames, obj.frames, verbose);
         if ~isempty(data)
             obj.mov     = data;
@@ -174,7 +174,7 @@ if ~ebstats
     tfile = FindMatchingFile(movfolder, fname, '.bstats');
     if tfile
         if verbose, fprintf('---> reading stats data from %s\n', tfile), end
-        [data header] = g_ReadTable(tfile);
+        [data header] = general_read_table(tfile);
         data = CheckData(data, frames, obj.frames, verbose);
         if ~isempty(data)
             obj.fstats     = data;
@@ -194,7 +194,7 @@ if ~esel
     tfile = FindMatchingFile(movfolder, fname, '.scrub');
     if tfile
         if verbose, fprintf('---> reading scrub data from %s\n', tfile), end
-        [data header] = g_ReadTable(tfile);
+        [data header] = general_read_table(tfile);
         data = CheckData(data, frames, obj.frames, verbose);
         if ~isempty(data)
             obj.scrub     = data;

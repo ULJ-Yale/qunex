@@ -209,7 +209,7 @@ if ~strcmp(target, 'none')
     % --- save stats
 
     if verbose, fprintf('\n---> saving nuisance signals [%s]', fullfile(target, [fname '.nuisance'])); end
-    g_WriteTable(fullfile(target, [fname '.nuisance']), [[1:size(nuisance,1)]' nuisance], ['frame', hdr], 'mean,sd', '%-16s|%-16d|%-16.10f|%-15s', ' ');
+    general_write_table(fullfile(target, [fname '.nuisance']), [[1:size(nuisance,1)]' nuisance], ['frame', hdr], 'mean,sd', '%-16s|%-16d|%-16.10f|%-15s', ' ');
 
 end
 

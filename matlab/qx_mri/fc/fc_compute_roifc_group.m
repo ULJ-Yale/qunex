@@ -140,9 +140,9 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 % ----- parse options
 
 default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=|fcname=|saveind=|itargetf=gfolder|verbose=false';
-options = g_ParseOptions([], options, default);
+options = general_parse_options([], options, default);
 
-g_PrintStruct(options, 'Options used');
+general_print_struct(options, 'Options used');
 
 if ~ismember(options.fcmeasure, {'r', 'cv'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
@@ -156,9 +156,9 @@ verbose = strcmp(options.verbose, 'true');
 go = true;
 
 if verbose; fprintf('\n\nChecking ...\n'); end
-go = go & g_CheckFile(flist, 'image file list', 'error');
-go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
-g_CheckFolder(targetf, 'results folder');
+go = go & general_check_file(flist, 'image file list', 'error');
+go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
+general_check_folder(targetf, 'results folder');
 
 if ~go
     error('ERROR: Some of the specified files were not found. Please check the paths and start again!\n\n');
@@ -198,7 +198,7 @@ for n = 1:nsub
     % ---> setting up roidef parameter
 
     if isfield(subject(n), 'roi')
-        go = go & g_CheckFile(subject(n).roi, [subject(n).id ' individual ROI file'], 'error');
+        go = go & general_check_file(subject(n).roi, [subject(n).id ' individual ROI file'], 'error');
         roidef = [roiinfo '|' subject(n).roi];
     else
         roidef = [roiinfo];
@@ -208,7 +208,7 @@ for n = 1:nsub
 
     if isfield(subject(n), 'files')
         for bold = subject(n).files
-            go = go & g_CheckFile(bold{1}, 'bold file', 'error');
+            go = go & general_check_file(bold{1}, 'bold file', 'error');
         end
         if strcmp(options.itargetf, 'sfolder')
             bolds = [lname '|' strjoin(subject(n).files, '|')];
@@ -216,7 +216,7 @@ for n = 1:nsub
             bolds = [lname '_' subject(n).id '|' strjoin(subject(n).files, '|')];
         end
     elseif isfield(subject(n), 'conc')
-        go = go & g_CheckFile(subject(n).conc, 'conc file', 'error');
+        go = go & general_check_file(subject(n).conc, 'conc file', 'error');
         if strcmp(options.itargetf, 'sfolder')
             bolds = [lname '|' subject(n).conc];
         else
@@ -231,7 +231,7 @@ for n = 1:nsub
 
     if isa(frames, 'char')
         if isfield(subject(n), 'fidl')
-            go = go & g_CheckFile(subject(n).fidl, [subject(n).id ' fidl file'], 'error');
+            go = go & general_check_file(subject(n).fidl, [subject(n).id ' fidl file'], 'error');
             sframes = [subject(n).fidl '|' frames];
         else
             go = false

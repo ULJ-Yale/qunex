@@ -227,7 +227,7 @@ if ext
     %     stats.fd = zeros(1, img.frames);
     % end
 
-    g_WriteTable(fullfile(target, [fname '.bstats']), img.fstats, img.fstats_hdr, 'max|mean|sd', '%-10s|%-10d|%-10g|%-9s', ' ');   % '%s|%d|%.3f|%s'
+    general_write_table(fullfile(target, [fname '.bstats']), img.fstats, img.fstats_hdr, 'max|mean|sd', '%-10s|%-10d|%-10g|%-9s', ' ');   % '%s|%d|%.3f|%s'
 
     % --- save scrub
 
@@ -235,7 +235,7 @@ if ext
         if verbose, fprintf(' ... saving scrubbing data'); end
 
         pre = sprintf('# Parameters used\n# radius:   %d\n# fdt:      %.2f\n# dvarsmt:  %.2f\n# dvarsmet: %.2f\n# after:    %d\n# before:   %d\n# reject:   %s', parameters.radius, parameters.fdt, parameters.dvarsmt, parameters.dvarsmet, parameters.after, parameters.before, parameters.reject);
-        g_WriteTable(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ', pre);
+        general_write_table(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ', pre);
 
         scr = fopen(fullfile(target, [fname '.use']), 'w');
         fprintf(scr, '%d\n', img.use);

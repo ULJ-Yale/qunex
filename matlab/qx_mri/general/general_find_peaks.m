@@ -198,14 +198,14 @@ verbose = verbose + 1;
 
 frames = [];
 if ~isempty(options)
-    opt = g_ParseOptions([],options);
+    opt = general_parse_options([],options);
     if isfield(opt,'frames')
         frames = opt.frames;
     end
 end
    
 if ~isempty(presmooth)
-    presmooth = g_ParseOptions([],presmooth);
+    presmooth = general_parse_options([],presmooth);
     if ~isfield(presmooth,'fwhm'),       presmooth.fwhm = [];        end
     if ~isfield(presmooth,'ftype'),      presmooth.ftype = [];       end
     if ~isfield(presmooth,'ksize'),      presmooth.ksize =[];        end

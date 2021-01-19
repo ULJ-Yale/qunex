@@ -1,6 +1,6 @@
-function [elements] = g_FilenameSplit(filename, delim)
+function [elements] = general_filename_split(filename, delim)
 
-%``function [elements] = g_FilenameSplit(filename, delim)``
+%``function [elements] = general_filename_split(filename, delim)``
 %
 %   Splits the filename into elements separated by delim.
 %
@@ -21,7 +21,7 @@ function [elements] = g_FilenameSplit(filename, delim)
 %
 %	::
 %
-%   	elements = g_FilenameSplit('bold3_s_hpss.nii.gz');
+%   	elements = general_filename_split('bold3_s_hpss.nii.gz');
 %
 %   will result in `elements = {'bold3', 's', 'hpss'}`.
 %

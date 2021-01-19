@@ -212,7 +212,7 @@ end
 
 % --- assign proper projection type format
 projection_raw = projection_type;
-projection_type = g_ParseOptions([],projection_type);
+projection_type = general_parse_options([],projection_type);
 if isfield(projection_type,'cortex_left') && isfield(projection_type,'cortex_right')
     projection.cortex_left = projection_type.cortex_left;
     projection.cortex_right = projection_type.cortex_right;
@@ -222,7 +222,7 @@ else
 end
 
 % --- parse options argument
-options_parsed = g_ParseOptions([],options);
+options_parsed = general_parse_options([],options);
 if ~isfield(options_parsed,'frames')
     options_parsed.frames = 1;
     if img.frames > 1

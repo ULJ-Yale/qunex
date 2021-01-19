@@ -66,7 +66,7 @@ sfunction [] = general_plot_bold_timeseries(images, elements, masks, filename, s
 %   elements
 %  		elements can be either a structure that specifies, which elements the
 %   	plot should have or a string that can be parsed into a structure using
-%   	g_ParseOptions function. Each element can have the following fields:
+%   	general_parse_options function. Each element can have the following fields:
 % 
 %   		name
 %
@@ -294,7 +294,7 @@ end
 if verbose, fprintf('\n ---> parsing elements'); end
 
 if ischar(elements)
-    elements = g_ParseOptions([], elements, 'type=signal|imageindex=1|maskindex=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|colormap=grayscale|stats>plotdata=fd,imageindex=1,maskindex=1');
+    elements = general_parse_options([], elements, 'type=signal|imageindex=1|maskindex=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|colormap=grayscale|stats>plotdata=fd,imageindex=1,maskindex=1');
 end
 
 nelements = length(elements);

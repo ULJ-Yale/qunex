@@ -1,6 +1,6 @@
-function [options] = g_ParseOptions(options, s, default)
+function [options] = general_parse_options(options, s, default)
 
-%``function [options] = g_ParseOptions(options, s, default)``
+%``function [options] = general_parse_options(options, s, default)``
 %
 %   Function for compact passing of values between functions.
 %
@@ -39,7 +39,7 @@ function [options] = g_ParseOptions(options, s, default)
 %   The string defines key:value pairs that will be embedded in the structure.
 %   Keys will be the field names and values will be assigned to them. So::
 %
-%       a = g_ParseOptions([], 'id:66|name:Tom');
+%       a = general_parse_options([], 'id:66|name:Tom');
 %
 %   will result in a structure::
 %
@@ -54,7 +54,7 @@ function [options] = g_ParseOptions(options, s, default)
 %   The function can generate or edit arrays of structures. To specify key-value
 %   pairs for multiple sets, separate them using semicolon::
 %
-%       a = g_ParseOptions([], 'id:66|name:Tom;id=33|name=Mary');
+%       a = general_parse_options([], 'id:66|name:Tom;id=33|name=Mary');
 %
 %   will result in a structure::
 %
@@ -73,7 +73,7 @@ function [options] = g_ParseOptions(options, s, default)
 %   greater than sign to specify that the filed contains a substructure and use
 %   a comma to separate key-value pairs of the substructure::
 %
-%       a = g_ParseOptions([], 'id:66|name:Tom|demographics>age:37,sex:male');
+%       a = general_parse_options([], 'id:66|name:Tom|demographics>age:37,sex:male');
 %
 %   will result in a structure::
 %
@@ -89,7 +89,7 @@ function [options] = g_ParseOptions(options, s, default)
 %   strucutre will be generated first and then overwritten by the specification
 %   string::
 %
-%       a = g_ParseOptions([], 'id:66|name:Tom;id=33|name=Mary', ...
+%       a = general_parse_options([], 'id:66|name:Tom;id=33|name=Mary', ...
 %                          'status:ok|id=0');
 %
 %   will result in a structure::
@@ -108,7 +108,7 @@ function [options] = g_ParseOptions(options, s, default)
 %   and cell arrays, just be aware that strings for the cell array need to be
 %   specifed using regular double quotes::
 %
-%       a = g_ParseOptions([], ...
+%       a = general_parse_options([], ...
 %           'id:66|name=Tom|vars={"a", "b", "c"}|values=[1, 2, 3]');
 %
 %   will result in a structure::
@@ -135,7 +135,7 @@ function [options] = g_ParseOptions(options, s, default)
 
 
 if nargin < 3, default = ''; end
-if nargin < 2, error('ERROR: Not enough arguments passed to g_ParseOptions!'); end
+if nargin < 2, error('ERROR: Not enough arguments passed to general_parse_options!'); end
 
 if ~isempty(default)
     if ischar(default)

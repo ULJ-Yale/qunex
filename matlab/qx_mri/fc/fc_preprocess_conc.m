@@ -651,9 +651,9 @@ fprintf('\n        options: %s', options);
 fprintf('\n');
 
 default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
-options = g_ParseOptions([], options, default);
+options = general_parse_options([], options, default);
 
-g_PrintStruct(options, 'Options used');
+general_print_struct(options, 'Options used');
 
 TS = [];
 doIt = strrep(doIt, ',', '');
@@ -760,10 +760,10 @@ for b = 1:nbolds
     %   ----> read data
 
     if doscrubbing
-        [nuisance(b).scrub  nuisance(b).scrub_hdr]  = g_ReadTable(file(b).oscrub);
+        [nuisance(b).scrub  nuisance(b).scrub_hdr]  = general_read_table(file(b).oscrub);
     end
 
-    [nuisance(b).mov    nuisance(b).mov_hdr]    = g_ReadTable(file(b).movdata);
+    [nuisance(b).mov    nuisance(b).mov_hdr]    = general_read_table(file(b).movdata);
 
     nuisance(b).nframes = size(nuisance(b).mov,1);
     frames(b) = nuisance(b).nframes;
@@ -779,7 +779,7 @@ for b = 1:nbolds
     %   ----> do scrubbing anew if needed!
 
     if strfind(doIt, 'm')
-        [nuisance(b).fstats nuisance(b).fstats_hdr] = g_ReadTable(file(b).bstats);
+        [nuisance(b).fstats nuisance(b).fstats_hdr] = general_read_table(file(b).bstats);
 
         timg = nimage;
         timg.frames     = size(nuisance(b).mov, 1);
@@ -796,7 +796,7 @@ for b = 1:nbolds
         nuisance(b).scrub_hdr{end+1} = 'use';
         nuisance(b).scrub(:, end+1)  = timg.use';
 
-        g_WriteTable(file(b).tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
+        general_write_table(file(b).tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
     end
 
     %  ----> what are the frames to be used
@@ -813,7 +813,7 @@ for b = 1:nbolds
 
         % ---> signal nuisance
 
-        [nuisance(b).signal nuisance(b).signal_hdr] = g_ReadTable(file(b).nuisance);
+        [nuisance(b).signal nuisance(b).signal_hdr] = general_read_table(file(b).nuisance);
         nuisance(b).nsignal = size(nuisance(b).signal,2);
     else
         nuisance(b).signal = [];
@@ -1568,7 +1568,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     xeffect  = sprintf('%d\t', effect);
     xeindex  = sprintf('%d\t', eindex);
     pre      = sprintf('# fidl: %s\n# model: %s\n# bolds: %d\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# event: %s\n# frame: %s', rmodel.fidl.fidl, rmodel.description, nbolds, xeffects, xeffect, xeindex, rmodel.ignore, xevents, xframes(1:end-1));
-    xtable   = g_WriteTable(xfile, [X(nmask==1, :) zeros(sum(nmask==1), 2)], hdr, 'sd|mean|min|max', [], [], pre);
+    xtable   = general_write_table(xfile, [X(nmask==1, :) zeros(sum(nmask==1), 2)], hdr, 'sd|mean|min|max', [], [], pre);
 
     if ismember(options.glm_matrix, {'image', 'both'})
         mimg = X(nmask==1, :);

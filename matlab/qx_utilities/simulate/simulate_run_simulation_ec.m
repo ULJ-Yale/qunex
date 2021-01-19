@@ -1,6 +1,6 @@
-function [cors, sim] = si_RunSimulation_EC(r, models, timepoints, nruns, k, md)
+function [cors, sim] = simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)
 
-%``function [cors, runs] = si_RunSimulation_EC(r, models, timepoints, nruns, k, md)``
+%``function [cors, runs] = simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)``
 %	
 %   Function that generates multi normal timeseries with specified correlations.
 %
@@ -67,15 +67,15 @@ cors    = zeros(nruns, ncond, nmodels+1);
 for n = 1:nmodels
     mlen = 0;
     for c = 1:ncond
-        [ts models(n).trials(c).modeldata] = si_GenerateTimeseries(models(n).trials(c).TR, models(n).trials(c).eventlist, models(n).trials(c).model, models(n).trials(c).modeldata);
+        [ts models(n).trials(c).modeldata] = simulate_generate_timeseries(models(n).trials(c).TR, models(n).trials(c).eventlist, models(n).trials(c).model, models(n).trials(c).modeldata);
         models(n).trials(c).model = 'raw';
         mlen = max(mlen, size(ts,1));
     end
     nregs = length(models(n).regs);
     X = [];
     for c = 1:nregs
-        R = si_GenerateTimeseries(models(n).regs(c).TR, models(n).regs(c).eventlist, models(n).regs(c).model, models(n).regs(c).modeldata);
-        R = si_TrimPad(R, mlen);
+        R = simulate_generate_timeseries(models(n).regs(c).TR, models(n).regs(c).eventlist, models(n).regs(c).model, models(n).regs(c).modeldata);
+        R = simulate_trim_pad(R, mlen);
         X = [X R];
     end
     models(n).X    = X;
@@ -94,7 +94,7 @@ for s = 1:nruns
     cs = [];
     
     for c = 1:ncond
-        [cs(c).ts er] = si_GenerateCorrelatedTimeseries([1 r(c); r(c) 1], length(models(1).trials(c).eventlist), md);
+        [cs(c).ts er] = simulate_generate_correlated_timeseries([1 r(c); r(c) 1], length(models(1).trials(c).eventlist), md);
         cs(c).ts = 1 + cs(c).ts/k;
         er = corr(cs(c).ts);
         cors(s, c, 1) = er(1,2);
@@ -111,10 +111,10 @@ for s = 1:nruns
         for c = 1:ncond
             
             models(m).trials(c).eventlist(:,3) = cs(c).ts(:,1);
-            ts(c).data(:,1) = si_GenerateTimeseries(models(m).trials(c).TR, models(m).trials(c).eventlist, models(m).trials(c).model, models(m).trials(c).modeldata);
+            ts(c).data(:,1) = simulate_generate_timeseries(models(m).trials(c).TR, models(m).trials(c).eventlist, models(m).trials(c).model, models(m).trials(c).modeldata);
             
             models(m).trials(c).eventlist(:,3) = cs(c).ts(:,2);
-            ts(c).data(:,2) = si_GenerateTimeseries(models(m).trials(c).TR, models(m).trials(c).eventlist, models(m).trials(c).model, models(m).trials(c).modeldata);
+            ts(c).data(:,2) = simulate_generate_timeseries(models(m).trials(c).TR, models(m).trials(c).eventlist, models(m).trials(c).model, models(m).trials(c).modeldata);
             
         end
         
@@ -123,17 +123,17 @@ for s = 1:nruns
         y = zeros(models(m).mlen,2);
         
         for c = 1:ncond
-            y = y + si_TrimPad(ts(c).data,models(m).mlen);
+            y = y + simulate_trim_pad(ts(c).data,models(m).mlen);
         end
         
         % --- regress out task
         
-        [B res] = si_ComputeGLM(y, models(m).X);
+        [B res] = simulate_compute_glm(y, models(m).X);
         
         % --- extract datapoints and compute correlation
         
         for c = 1:ncond
-            ts = si_ExtractEventTimepoints(models(m).trials(c).TR, res, models(m).trials(c).eventlist, timepoints);
+            ts = simulate_extract_event_timepoints(models(m).trials(c).TR, res, models(m).trials(c).eventlist, timepoints);
             er = corr(ts);
             cors(s, c, m+1) = er(1, 2);
             sim.runs(s).models(m).c(c).ts = ts;

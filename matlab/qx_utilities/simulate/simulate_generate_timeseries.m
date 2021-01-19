@@ -1,6 +1,6 @@
-function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeldata)
+function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)
 
-%``function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeldata)``
+%``function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)``
 %
 %   Function for generation of simulated BOLD timeseries.
 %
@@ -57,7 +57,7 @@ model = lower(model);
 if iscell(eventlist)
     ncells = length(eventlist);
     for n = 1:ncells
-        ts{n} = si_GenerateTimeseries(TR, eventlist{n}, model);
+        ts{n} = simulate_generate_timeseries(TR, eventlist{n}, model);
     end
     return
 end

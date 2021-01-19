@@ -1,6 +1,6 @@
-function [] = g_PrintStruct(info, ftitle);
+function [] = general_print_struct(info, ftitle);
 
-%``function [] = g_PrintStruct(info, ftitle)``
+%``function [] = general_print_struct(info, ftitle)``
 %
 %   Function for printing the content of a struct field
 %
@@ -21,7 +21,7 @@ function [] = g_PrintStruct(info, ftitle);
 if nargin < 2 || isempty(ftitle), ftitle = ''; end
 
 if ~isstruct(info)
-    error('\nERROR: The variable passed to g_PrintStruct is not a structure!');
+    error('\nERROR: The variable passed to general_print_struct is not a structure!');
 end
 
 nrecords = length(info);

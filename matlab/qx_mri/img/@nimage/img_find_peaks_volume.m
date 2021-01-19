@@ -126,7 +126,7 @@ elseif verbose == 2
 end
 
 % --- parse options argument
-options_parsed = g_ParseOptions([],options);
+options_parsed = general_parse_options([],options);
 if ~isfield(options_parsed,'frames')
     options_parsed.frames = 1;
 end

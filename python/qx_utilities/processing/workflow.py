@@ -805,7 +805,7 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
         # --- running the stats
 
         scrub = "radius:%d|fdt:%.2f|dvarsmt:%.2f|dvarsmet:%.2f|after:%d|before:%d|reject:%s" % (options['mov_radius'], options['mov_fd'], options['mov_dvars'], options['mov_dvarsme'], options['mov_after'], options['mov_before'], options['mov_bad'])
-        comm = "%s \"try general_compute_bold_stats('%s', '', '%s', 'same', '%s', true); catch ME, g_ReportCrash(ME); exit(1), end; exit\"" % (mcommand, f['bold_vol'], d['s_bold_mov'], scrub)
+        comm = "%s \"try general_compute_bold_stats('%s', '', '%s', 'same', '%s', true); catch ME, geneal_report_crash(ME); exit(1), end; exit\"" % (mcommand, f['bold_vol'], d['s_bold_mov'], scrub)
         if options['print_command'] == "yes":
             r += '\n\nRunning\n' + comm + '\n'
         runit = True
@@ -1532,7 +1532,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
 
         # --- running nuisance extraction
 
-        comm = "%s \"try general_extract_nuisance('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s); catch ME, g_ReportCrash(ME); exit(1), end; exit\"" % (
+        comm = "%s \"try general_extract_nuisance('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s); catch ME, geneal_report_crash(ME); exit(1), end; exit\"" % (
             mcommand,                   # --- matlab command to run
             f['bold_vol'],              # --- bold volume file to process
             segfile,                    # --- aseg or aparc file
@@ -2174,7 +2174,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             options['pignore'],                 # --- how to deal with bad frames ('hipass:keep/linear/spline|regress:keep/ignore|lopass:keep/linear/spline')
             opts)                               # --- additional options
 
-        comm = '%s "try %s; catch ME, g_ReportCrash(ME); exit(1), end; exit"' % (mcommand, mcomm)
+        comm = '%s "try %s; catch ME, geneal_report_crash(ME); exit(1), end; exit"' % (mcommand, mcomm)
 
         # r += '\n ... running: %s' % (comm)
         if options['run'] == "run":
@@ -2877,7 +2877,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     opts,                               # --- additional options
                     done)                               # --- file to save when done
 
-                comm = '%s "try %s; catch ME, g_ReportCrash(ME); exit(1), end; exit;"' % (mcommand, mcomm)
+                comm = '%s "try %s; catch ME, geneal_report_crash(ME); exit(1), end; exit;"' % (mcommand, mcomm)
 
                 r += '\n\n%s nuisance and task removal' % (action("Running", options['run']))
                 if options['print_command'] == "yes":

@@ -86,8 +86,8 @@ if nargin < 1, error('ERROR: No files to extract the values from provided!');  e
 % --------------------------------------------------------------
 %                                                    check files
 
-g_CheckFile(flist, 'file list', 'errorstop');
-g_CheckFile(roif, 'ROI image', 'errorstop');
+general_check_file(flist, 'file list', 'errorstop');
+general_check_file(roif, 'ROI image', 'errorstop');
 
 % --------------------------------------------------------------
 %                                                  read filelist

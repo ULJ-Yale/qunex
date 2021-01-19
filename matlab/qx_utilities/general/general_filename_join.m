@@ -1,6 +1,6 @@
-function [filename] = g_FilenameJoin(elements, delim)
+function [filename] = general_filename_join(elements, delim)
 
-%``function [filename] = g_FilenameJoin(elements, delim)`
+%``function [filename] = general_filename_join(elements, delim)`
 %
 %   Joins all the elements of a file with the specified delimiter.
 %
@@ -21,7 +21,7 @@ function [filename] = g_FilenameJoin(elements, delim)
 %
 %   ::
 %
-%		filename = g_FilenameJoin({'bold1', 's', 'hpss'});
+%		filename = general_filename_join({'bold1', 's', 'hpss'});
 %
 %   will result in 'bold1_s_hpss'
 %

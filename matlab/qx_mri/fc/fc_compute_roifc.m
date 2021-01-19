@@ -156,13 +156,13 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 % ----- parse options
 
 default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname=';
-options = g_ParseOptions([], options, default);
+options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
 
 if printdebug
-    g_PrintStruct(options, 'Options used');
+    general_print_struct(options, 'Options used');
 end
 
 if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
@@ -208,14 +208,14 @@ go = true;
 if verbose; fprintf('\nChecking ...\n'); end
 
 for bold = boldlist
-    go = go & g_CheckFile(bold{1}, bold{1}, 'error');
+    go = go & general_check_file(bold{1}, bold{1}, 'error');
 end
-go = go & g_CheckFile(roideffile, 'ROI definition file', 'error');
+go = go & general_check_file(roideffile, 'ROI definition file', 'error');
 if sroifile
-    go = go & g_CheckFile(sroifile, 'individual ROI file', 'error');
+    go = go & general_check_file(sroifile, 'individual ROI file', 'error');
 end
 if any(ismember({'txt', 'mat'}, options.saveind))
-    g_CheckFolder(targetf, 'results folder', true, verbose);
+    general_check_folder(targetf, 'results folder', true, verbose);
 end
 
 if ~go

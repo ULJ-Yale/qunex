@@ -39,7 +39,7 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %
 %   elements
 %		Either a structure or a well formed string that can be processed using
-%   	the g_ParseOptions function that specifies what should be plotted.
+%   	the general_parse_options function that specifies what should be plotted.
 %   	Please see documentation for general_plot_bold_timeseries for detailed
     	information on how to specify plot elements. The default string is::
 %
@@ -111,7 +111,7 @@ if nargin < 1, error('ERROR: Please specify at least file list!'); end
 %  ---- Check and load list
 
 if verbose, fprintf('\n\nChecking ...\n'); end
-g_CheckFile(flist, 'image file list', 'error');
+general_check_file(flist, 'image file list', 'error');
 
 sessions = general_read_file_list(flist);
 nsub = length(sessions);

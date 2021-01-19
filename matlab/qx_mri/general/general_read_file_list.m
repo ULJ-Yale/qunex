@@ -111,34 +111,34 @@ for s = files(:)'
         continue
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'ROI image', report, prepend);
+        if general_check_file(strtrim(s(2:end)), 'ROI image', report, prepend);
             session(nsessions).roi = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'file:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'image file', report, prepend)
+        if general_check_file(strtrim(s(2:end)), 'image file', report, prepend)
             nf = nf + 1;
             nfiles = nfiles + 1;
             session(nsessions).files{nf} = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'conc:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'conc file', report, prepend);
+        if general_check_file(strtrim(s(2:end)), 'conc file', report, prepend);
             session(nsessions).conc = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'fidl:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'fidl file', report, prepend);
+        if general_check_file(strtrim(s(2:end)), 'fidl file', report, prepend);
             session(nsessions).fidl = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'glm:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'GLM file', report, prepend);
+        if general_check_file(strtrim(s(2:end)), 'GLM file', report, prepend);
             session(nsessions).glm = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'folder:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'folder', report, prepend)
+        if general_check_file(strtrim(s(2:end)), 'folder', report, prepend)
             session(nsessions).folder = strtrim(s(2:end));
         end
     end

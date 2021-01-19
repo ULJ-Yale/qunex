@@ -1,6 +1,6 @@
-function [ok] = g_CheckFile(filename, description, v, prepend)
+function [ok] = general_check_file(filename, description, v, prepend)
 
-%``function [ok] = g_CheckFile(filename, description, v, prepend)``
+%``function [ok] = general_check_file(filename, description, v, prepend)``
 %
 %   Checks for existence of a file and prints error notices specified in v.
 %
@@ -41,7 +41,7 @@ function [ok] = g_CheckFile(filename, description, v, prepend)
 %
 %	::
 %
-%   	g_CheckFile('images/functional/movement/bold1.dat', 'movement file', ...
+%   	general_check_file('images/functional/movement/bold1.dat', 'movement file', ...
 %		'full');
 
 %	~~~~~~~~~~~~~~~~~~

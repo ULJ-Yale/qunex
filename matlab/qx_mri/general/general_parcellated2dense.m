@@ -48,13 +48,13 @@ missingvalues = str2num(missingvalues);
 
 % --> check that input is present
 
-g_CheckFile(inimg, 'input file');
+general_check_file(inimg, 'input file');
 
 if isempty(outimg)
     [filepath, filename, ext] = fileparts(inimg);
 else
     [filepath, filename, ext] = fileparts(outimg);
-    g_CheckFile(filepath, 'output folder');
+    general_check_file(filepath, 'output folder');
 end
 
 

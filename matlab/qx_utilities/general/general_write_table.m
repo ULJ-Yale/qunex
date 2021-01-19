@@ -1,6 +1,6 @@
-function [s] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
+function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)
 
-%``function [s] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)``
+%``function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``
 %
 %   A general function for writing data tables.
 %
@@ -44,7 +44,7 @@ function [s] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 %
 %   ::
 %
-%       g_WriteTable('mov.dat', movdata, 'frame,X,Y,Z', 'mean,sd,min,max');
+%       general_write_table('mov.dat', movdata, 'frame,X,Y,Z', 'mean,sd,min,max');
 %
 
 %   ~~~~~~~~~~~~~~~~~~

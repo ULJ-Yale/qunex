@@ -1,6 +1,6 @@
-function [tp] = si_ExtractEventTimepoints(TR, ts, eventlist, timepoints)
+function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 
-%``function [tp] = si_ExtractEventTimepoints(ts, eventlist, timepoints)``
+%``function [tp] = simulate_extract_event_timepoints(ts, eventlist, timepoints)``
 %	
 %   Function that extract specified timepoints from each event.
 %

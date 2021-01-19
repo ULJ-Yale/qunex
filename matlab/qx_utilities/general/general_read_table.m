@@ -1,6 +1,6 @@
-function [data, hdr, meta] = g_ReadTable(instr)
+function [data, hdr, meta] = general_read_table(instr)
 
-%``function [data, hdr, meta] = g_ReadTable(instr)``
+%``function [data, hdr, meta] = general_read_table(instr)``
 %
 %   A general function for reading whitespace separated data tables.
 %
@@ -34,7 +34,7 @@ function [data, hdr, meta] = g_ReadTable(instr)
 %
 %   ::
 %
-%       [data, hdr, meta] = g_ReadTable('movement.dat');
+%       [data, hdr, meta] = general_read_table('movement.dat');
 %
 
 %   ~~~~~~~~~~~~~~~~~~

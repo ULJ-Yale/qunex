@@ -75,7 +75,7 @@ end
 
 % --- check whether the input is cifti or data vector
 if ~isnumeric(input)
-    input = g_ParseOptions([],input);
+    input = general_parse_options([],input);
     img = nimage(input.img);
     if strcmp(input.surf,'CL')
         s = 1;

@@ -133,7 +133,7 @@ end
 go = true;
 
 fprintf('\n\nChecking ...\n');
-go = go & g_CheckFile(flist, 'image file list','error');
+go = go & general_check_file(flist, 'image file list','error');
 if ~go
     error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
 end

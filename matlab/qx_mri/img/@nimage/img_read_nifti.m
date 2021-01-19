@@ -281,7 +281,7 @@ if mi > 0
     for m = 1:mi
         if img.meta(m).code == 64
             ms = cast(img.meta(m).data, 'char');
-            [mdata, mhdr, mmeta] = g_ReadTable(ms);
+            [mdata, mhdr, mmeta] = general_read_table(ms);
 
             if strcmp(mmeta.meta, 'GLM')
                 keepmeta(m)     = false;

@@ -614,9 +614,9 @@ fprintf('\n');
 
 
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
-options = g_ParseOptions([], options, default);
+options = general_parse_options([], options, default);
 
-g_PrintStruct(options, 'Options used');
+general_print_struct(options, 'Options used');
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
@@ -679,9 +679,9 @@ end
 
 %   ----> read data
 
-[nuisance.fstats nuisance.fstats_hdr] = g_ReadTable(file.bstats);
-[nuisance.scrub  nuisance.scrub_hdr]  = g_ReadTable(file.oscrub);
-[nuisance.mov    nuisance.mov_hdr]    = g_ReadTable(file.movdata);
+[nuisance.fstats nuisance.fstats_hdr] = general_read_table(file.bstats);
+[nuisance.scrub  nuisance.scrub_hdr]  = general_read_table(file.oscrub);
+[nuisance.mov    nuisance.mov_hdr]    = general_read_table(file.movdata);
 
 nuisance.nframes = size(nuisance.mov,1);
 
@@ -710,7 +710,7 @@ if strfind(doIt, 'm')
     nuisance.scrub_hdr{end+1} = 'use';
     nuisance.scrub(:, end+1)  = timg.use';
 
-    g_WriteTable(file.tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
+    general_write_table(file.tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
 end
 
 %  ----> what are the frames to be used
@@ -723,7 +723,7 @@ if strfind(doIt, 'r')
 
     % ---> signal nuisance
 
-    [nuisance.signal nuisance.signal_hdr] = g_ReadTable(file.nuisance);
+    [nuisance.signal nuisance.signal_hdr] = general_read_table(file.nuisance);
     nuisance.nsignal = size(nuisance.signal,2);
 
     % ---> task matrix
@@ -1146,7 +1146,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
     xeffect  = sprintf('%d\t', effect);
     xeindex  = sprintf('%d\t', eindex);
     pre      = sprintf('# fidl: %s\n# model: %s\n# bolds: %d\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# event: %s\n# frame: %s', rmodel.fidl.fidl, rmodel.description, 1, xeffects, xeffect, xeindex, rmodel.ignore, xevents, xframes(1:end-1));
-    xtable   = g_WriteTable(xfile, [X zeros(sum(mask==1), 2)], hdr, 'sd|mean|min|max', [], [], pre);
+    xtable   = general_write_table(xfile, [X zeros(sum(mask==1), 2)], hdr, 'sd|mean|min|max', [], [], pre);
 
     if ismember(options.glm_matrix, {'image', 'both'})
         mimg = X;

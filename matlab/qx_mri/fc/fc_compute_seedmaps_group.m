@@ -180,9 +180,9 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 % ----- parse options
 
 default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|saveindname=no|itargetf=sfolder|verbose=false';
-options = g_ParseOptions([], options, default);
+options = general_parse_options([], options, default);
 
-g_PrintStruct(options, 'Options used');
+general_print_struct(options, 'Options used');
 
 if ~ismember(options.fcmeasure, {'r', 'cv'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
@@ -195,9 +195,9 @@ cv = strcmp(options.fcmeasure, 'cv');
 go = true;
 
 if options.verbose; fprintf('\n\nChecking ...\n'); end
-go = go & g_CheckFile(flist, 'image file list', 'error');
-go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
-g_CheckFolder(targetf, 'results folder');
+go = go & general_check_file(flist, 'image file list', 'error');
+go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
+general_check_folder(targetf, 'results folder');
 
 if ~go
     error('ERROR: Some of the specified files were not found. Please check the paths and start again!\n\n');
@@ -254,7 +254,7 @@ for n = 1:nsub
     % ---> setting up roidef parameter
 
     if isfield(session(n), 'roi')
-        go = go & g_CheckFile(session(n).roi, [session(n).id ' individual ROI file'], 'error');
+        go = go & general_check_file(session(n).roi, [session(n).id ' individual ROI file'], 'error');
         roidef = [roiinfo '|' session(n).roi];
     else
         roidef = [roiinfo];
@@ -263,13 +263,13 @@ for n = 1:nsub
     % ---> setting up bolds parameter
 
     if isfield(session(n), 'conc')
-        go = go & g_CheckFile(session(n).conc, 'conc file', 'error');
+        go = go & general_check_file(session(n).conc, 'conc file', 'error');
         bolds = [lname '|' session(n).conc];
         reference_file = general_read_concfile(session(n).conc);
         reference_file = reference_file{1};
     elseif isfield(session(n), 'file')
         for bold = session(n).files
-            go = go & g_CheckFile(bold{1}, 'bold file', 'error');
+            go = go & general_check_file(bold{1}, 'bold file', 'error');
         end
         bolds = [lname '|' strjoin(session(n).files, '|')];
         reference_file = session(n).files{1};
@@ -279,7 +279,7 @@ for n = 1:nsub
 
     if isa(frames, 'char')
         if isfield(session(n), 'fidl')
-            go = go & g_CheckFile(session(n).fidl, [session(n).id ' fidl file'], 'error');
+            go = go & general_check_file(session(n).fidl, [session(n).id ' fidl file'], 'error');
             sframes = [session(n).fidl '|' frames];
         else
             go = false

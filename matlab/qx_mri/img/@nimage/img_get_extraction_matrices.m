@@ -69,13 +69,13 @@ if nargin < 2 error('ERROR: Events string has to be specified!'); end
 % ----- parse options
 
 default = 'ignore=use,fidl|badevents=use|verbose=false|debug=false';
-options = g_ParseOptions([], options, default);
+options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
 
 if printdebug
-    g_PrintStruct(options, 'Options used');
+    general_print_struct(options, 'Options used');
 end
 
 % ---> creating use mask
@@ -148,7 +148,7 @@ exlist = exlist(2:end);
 exlist = strtrim(regexp(exlist, '\|', 'split'));
 nexlists = length(exlist);
 
-go = g_CheckFile(fidlfile, 'fidlfile', 'error');
+go = general_check_file(fidlfile, 'fidlfile', 'error');
 
 if ~go
     error('ERROR: Fidl file was not found. Please check the path!\n\n');

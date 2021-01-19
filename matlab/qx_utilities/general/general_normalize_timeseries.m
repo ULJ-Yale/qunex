@@ -1,6 +1,6 @@
-function [ts] = g_NormalizeTimeseries(ts)
+function [ts] = general_normalize_timeseries(ts)
 
-%``function [ts] = g_NormalizeTimeseries(ts)``
+%``function [ts] = general_normalize_timeseries(ts)``
 %
 %   This function normalizes timeseries to range 1, mean 0.
 %   It works along columns.

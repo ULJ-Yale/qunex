@@ -113,9 +113,9 @@ end
 go = true;
 
 fprintf('\n\nChecking ...\n');
-% go = go & g_CheckFile(flist, 'image file list','error');
-go = go & g_CheckFile(roiinfo, 'ROI definition file','error');
-g_CheckFolder(targetf, 'results folder');
+% go = go & general_check_file(flist, 'image file list','error');
+go = go & general_check_file(roiinfo, 'ROI definition file','error');
+general_check_folder(targetf, 'results folder');
 
 if ~go
 	error('ERROR: Some files were not found. Please check the paths and start again!\n\n');

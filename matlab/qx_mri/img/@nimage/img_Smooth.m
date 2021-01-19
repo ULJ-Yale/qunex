@@ -162,7 +162,7 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     opt.omp_threads = [];
     
     
-    projection = g_ParseOptions([],projection);
+    projection = general_parse_options([],projection);
     % --- assign proper projection type format
     if isfield(projection,'cortex_left') && isfield(projection,'cortex_right')
         surfaceFile.lsurf = projection.cortex_left;

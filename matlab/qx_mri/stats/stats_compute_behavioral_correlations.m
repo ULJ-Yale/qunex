@@ -44,8 +44,8 @@ end
 
 % ------ check files
 
-g_CheckFile(datafile, 'data table file', 'errorstop');
-g_CheckFile(imgfile, 'image data', 'errorstop');
+general_check_file(datafile, 'data table file', 'errorstop');
+general_check_file(imgfile, 'image data', 'errorstop');
 
 % ------ read behavioral data
 
