@@ -520,6 +520,8 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
     ~~~~~~~~~~~~~~~~~~
     Change log
 
+    2021-01-19 Jure Demšar
+               Comlogs are now never too long
     2018-03-31 Grega Repovš
                Initial version
     """
@@ -532,6 +534,12 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
 
         base_logname, ext_logname = os.path.splitext(logname)
         logname  = base_logname + "_" + datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f") + ext_logname
+
+        # truncate too long lognames
+        max_log_length = 150
+        if len(logname) > max_log_length:
+            logname = (logname[:max_log_length] + '(...).log')
+
         tlogfile = os.path.join(logfolder, 'running_' + logname)
 
         if not os.path.exists(logfolder):
