@@ -53,7 +53,7 @@
 
 usage() {
  echo ""
- echo "DWIeddyQC"
+ echo "dwi_eddy_qc"
  echo ""
  echo "This function is based on FSL's eddy to perform quality control on "
  echo "diffusion MRI (dMRI) datasets. It explicitly assumes the that eddy has been "

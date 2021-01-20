@@ -130,7 +130,7 @@ usage() {
  echo ""
  echo "Run via:: "
  echo ""
- echo " qunex DWIFSLbedpostxGPU --<parameter1> --<parameter2> ... --<parameterN> "
+ echo " qunex dwi_fsl_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -145,7 +145,7 @@ usage() {
  echo ""    
  echo "::"
  echo ""
- echo " qunex DWIFSLbedpostxGPU \ "
+ echo " qunex dwi_fsl_bedpostx_gpu \ "
  echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
  echo " --sessions='<comma_separarated_list_of_cases>' \ "
  echo " --fibers='3' \ "
@@ -246,7 +246,7 @@ StudyFolder=`pwd` &> /dev/null
 
 # -- Report run parameters
 echo ""
-echo " --> Executing ${scriptName} DWIFSLbedpostxGPU:"
+echo " --> Executing ${scriptName} dwi_fsl_bedpostx_gpu:"
 echo "     Study Folder: ${StudyFolder}"
 echo "     Sessions Folder: ${SessionsFolder}"
 echo "     Session: ${CASE}"

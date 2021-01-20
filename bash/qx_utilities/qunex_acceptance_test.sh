@@ -747,10 +747,10 @@ echo ""
             ################## ACCEPTANCE TEST FOR EACH UNIT ###################
             #
             # -- SUPPORTED:
-            #    UnitTests="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd FSLDtifit FSLBedpostxGPU preprocessBold computeBOLDfcSeed computeBOLDfcGBC" 
+            #    UnitTests="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd dwi_fsl_dtifit dwi_fsl_bedpostx_gpu preprocessBold compute_bold_fc_seed compute_bold_fc_gbc" 
             #
             # -- Needs to be added:
-            #    UnitTests="hcpd hcpdLegacy eddyQC FSLDtifit FSLBedpostxGPU pretractographyDense DWIDenseParcellation DWISeedTractography createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc general_plot_bold_timeseries BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC QCPreprocBOLDfc"
+            #    UnitTests="hcpd dwi_legacy eddyQC dwi_fsl_dtifit dwi_fsl_bedpostx_gpu pretractographyDense DWIDenseParcellation DWISeedTractography createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc general_plot_bold_timeseries bold_parcellation compute_bold_fc_seed compute_bold_fc_gbc"
             #
             # -- FILES FOR EACH UNIT
             #
@@ -785,14 +785,14 @@ echo ""
                     echo ""
                     echo "  -- Checking ${UnitTest} for $CASE " >> ${RunAcceptanceTestOut}
                     ## -- Check units that may have multiple bolds
-                    if [[ ${UnitTest} == "hcp4" ]] || [[ ${UnitTest} == "hcp5" ]] || [[ ${UnitTest} == "preprocessBold" ]] || [[ ${UnitTest} == "computeBOLDfcSeed" ]] || [[ ${UnitTest} == "computeBOLDfcGBC" ]] || [[ ${UnitTest} == "BOLDImages" ]]; then
+                    if [[ ${UnitTest} == "hcp4" ]] || [[ ${UnitTest} == "hcp5" ]] || [[ ${UnitTest} == "preprocessBold" ]] || [[ ${UnitTest} == "compute_bold_fc_seed" ]] || [[ ${UnitTest} == "compute_bold_fc_gbc" ]] || [[ ${UnitTest} == "BOLDImages" ]]; then
                         echo ""
                         if [[ ! -z ${BOLDS} ]]; then
                             for BOLD in ${BOLDS}; do
                                 if   [[ ${UnitTest} == "hcp4" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
                                 elif [[ ${UnitTest} == "hcp5" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas.dtseries.nii"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
                                 elif [[ ${UnitTest} == "preprocessBold" ]]; then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${DenoiseData}"; UnitTestQCFolders="movement"; UnitTestDataCheck
-                                elif [[ ${UnitTest} == "computeBOLDfcSeed" ]] || [[ ${UnitTest} == "computeBOLDfcGBC" ]];      then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${FCData}"; UnitTestQCFolders=""; UnitTestDataCheck
+                                elif [[ ${UnitTest} == "compute_bold_fc_seed" ]] || [[ ${UnitTest} == "compute_bold_fc_gbc" ]];      then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${FCData}"; UnitTestQCFolders=""; UnitTestDataCheck
                                 elif [[ ${UnitTest} == "BOLDImages" ]]; then
                                     for BOLDImage in ${BOLDImages}; do
                                         BOLDImage=`echo ${BOLDImage} | sed "s/{N}/${BOLD}/g"`
@@ -808,8 +808,8 @@ echo ""
                     elif [[ ${UnitTest} == "hcp2" ]];    then UnitTestData="hcp/${CASE}/T1w/${CASE}/label/rh.entorhinal_exvivo.label"; UnitTestDataCheck
                     elif [[ ${UnitTest} == "hcp3" ]];    then UnitTestData="hcp/${CASE}/MNINonLinear/ribbon.nii.gz"; UnitTestQCFolders="T1w T2w myelin"; UnitTestDataCheck
                     elif [[ ${UnitTest} == "hcpd" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/data.nii.gz"; UnitTestDataCheck
-                    elif [[ ${UnitTest} == "FSLDtifit" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz"; UnitTestDataCheck
-                    elif [[ ${UnitTest} == "FSLBedpostxGPU" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion.bedpostX/mean_fsumsamples.nii.gz"; UnitTestDataCheck
+                    elif [[ ${UnitTest} == "dwi_fsl_dtifit" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz"; UnitTestDataCheck
+                    elif [[ ${UnitTest} == "dwi_fsl_bedpostx_gpu" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion.bedpostX/mean_fsumsamples.nii.gz"; UnitTestDataCheck
                     fi
                     
                     if [[ ${RUN_TYPE} == "xnat" ]]; then 

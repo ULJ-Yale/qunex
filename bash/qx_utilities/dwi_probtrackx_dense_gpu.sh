@@ -66,7 +66,7 @@ usage() {
  echo "to run it locally from a GPU-equiped machine."
  echo ""
  echo "It explicitly assumes the Human Connectome Project folder structure and "
- echo "completed FSLBedpostxGPU and pretractographyDense functions processing:"
+ echo "completed dwi_fsl_bedpostx_gpu and pretractographyDense functions processing:"
  echo ""     
  geho " - HCP Pipelines"
  geho " - FSL 5.0.9 or greater"
@@ -164,7 +164,7 @@ usage() {
  echo ""
  echo "Run via:: "
  echo ""
- echo " qunex DWIprobtrackxDenseGPU --<parameter1> --<parameter2> ... --<parameterN> "
+ echo " qunex dwi_probtrackx_dense_gpu --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -177,7 +177,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " qunex DWIprobtrackxDenseGPU --sessionsfolder='<path_to_study_sessions_folder>' \ "
+ echo " qunex dwi_probtrackx_dense_gpu --sessionsfolder='<path_to_study_sessions_folder>' \ "
  echo " --sessions='<comma_separarated_list_of_cases>' \ "
  echo " --scheduler='<name_of_scheduler_and_options>' \ "
  echo " --omatrix1='yes' \ "
@@ -187,7 +187,7 @@ usage() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-# ----------------------------------------- DWIprobtrackxDenseGPU CODE -----------------------------------------------
+# ----------------------------------- dwi_probtrackx_dense_gpu CODE ------------------------------------
 # ------------------------------------------------------------------------------------------------------
 
 

@@ -39,7 +39,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    Succesfull completion of FSL's dtifit processing (DWIFSLdtifit command in
+    Succesfull completion of FSL's dtifit processing (dwi_fsl_dtifit command in
     QuNex).
 
     INPUTS
@@ -232,7 +232,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    Succesfull completion of FSL's bedpostx processing (DWIFSLbedpostxGPU
+    Succesfull completion of FSL's bedpostx processing (dwi_fsl_bedpostx_gpu
     command in QuNex). For macaques FSL F99 registration is also required
     (fsl_f99 command in QuNex).
 

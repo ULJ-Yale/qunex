@@ -11,7 +11,7 @@
 * 0.62.4  The order of images in the hcpDiffusion command is now correct.
 * 0.62.3  Robust parsing of the hcp_filename parameter in RunTurnkey.
 * 0.62.2  Consistent naming of all DWI related commands, documentation polish to for consistencty purposes across the whole suite.
-* 0.62.1  Fixed RunQC_BOLD issues with filenames and a large number of bolds.Increase the robustness of QuNex when processing multiple sessions in parallel.
+* 0.62.1  Fixed run_qc_bold issues with filenames and a large number of bolds.Increase the robustness of QuNex when processing multiple sessions in parallel.
 * 0.62.0  Documentation rework.
 * 0.61.19 The mapHCPData command now copies only valid movement correctionparameter data.
 * 0.61.18 QuNex no longer generates unnecessary folders, added CUDA 9.1bedpostx support, improved HCPYA dataset support.
@@ -26,7 +26,7 @@
 * 0.61.9  HCP Diffusion pipeline updated to match the latest version in HCP pipelines, removed race conditions in python qx_utilities, added CUDA.
 * 0.61.8  All DeDriftAndResample parameters are now properly passed to HCP pipelines.
 * 0.61.7  Added additional parameters to DeDriftAndResample.
-* 0.61.6  runQC now works properly when overwrite is set to no.
+* 0.61.6  run_qc now works properly when overwrite is set to no.
 * 0.61.5  Removed a bug that prevented proper setup of hcp_fMRIVolume parameters.
 * 0.61.4  Fixed several bugs when when importing BIDS data.
 * 0.61.1  Hotfix of a breaking bug in createSessionInfo. Inclusion of sequence information from JSON files when running importDICOM and dicom 2niix is now optional.

@@ -96,7 +96,7 @@ usage() {
  echo ""
  echo "Run via:: "
  echo ""
- echo "  qunex BOLDparcellate --<parameter1> --<parameter2> ... --<parameterN> "
+ echo "  qunex bold_parcellate --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""

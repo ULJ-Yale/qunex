@@ -2,7 +2,7 @@
 
 Usage() {
     echo ""
-    echo "autoPtx <StudyFolder> <SessionId> <BpXFolder> [<std2diff> <diff2std>]"
+    echo "auto_ptx <StudyFolder> <SessionId> <BpXFolder> [<std2diff> <diff2std>]"
     echo ""
     exit 1
 }
@@ -57,14 +57,14 @@ while read line ; do
     minutes=`echo $wallt | awk '{print $2}'`
     time=$(( 60 * hours + minutes ))
     if [ $GPU_flag == "0" ]; then
-	jobid=`$FSLDIR/bin/fsl_sub -N "autoPtx" -T $time -l $logDir $execPath/trackSubjectStruct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag`
+	jobid=`$FSLDIR/bin/fsl_sub -N "auto_ptx" -T $time -l $logDir $execPath/trackSubjectStruct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag`
     else
 	echo "$execPath/trackSubjectStruct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag" >> ${OutDir}/commands.txt
     fi	
 done < $structures
 
 if [ $GPU_flag == "1" ]; then
-    #qsub -l nodes=1:ppn=1:gpus=1:K20x,walltime=04:00:00,mem=8gb -N autoPtx_GPU -e $logDir/GPUerrofile -o $logDir/GPUoutfile ${OutDir}/commands.txt
+    #qsub -l nodes=1:ppn=1:gpus=1:K20x,walltime=04:00:00,mem=8gb -N auto_ptx_gpu -e $logDir/GPUerrofile -o $logDir/GPUoutfile ${OutDir}/commands.txt
     chmod +x ${OutDir}/commands.txt
     bash ${OutDir}/commands.txt	
 fi

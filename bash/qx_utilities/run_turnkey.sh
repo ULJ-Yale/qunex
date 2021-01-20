@@ -102,7 +102,7 @@ weho() {
 # source $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="createStudy mapRawData importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy DWIeddyQC runQC_DWIeddyQC RunQC_DWIeddyQC DWIFSLdtifit runQC_DWIFSLdtifit RunQC_DWIFSLdtifit DWIFSLbedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIbedpostx RunQC_DWIbedpostx DWIpreTractography DWIparcellate DWIseedTractographyDense runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc general_plot_bold_timeseries BOLDParcellation BOLDparcellate computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+QuNexTurnkeyWorkflow="createStudy mapRawData importDICOM createSessionInfo setupHCP createBatch exportHCP hcp1 hcp2 hcp3 run_qc_t1w run_qc_t2w run_qc_myelin hcp4 hcp5 run_qc_bold hcpd run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_fsl_dtifit run_qc_dwi_fsl_dtifit dwi_fsl_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc general_plot_bold_timeseries bold_parcellation bold_parcellate compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc QuNexClean"
 
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 
@@ -554,7 +554,7 @@ AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; Ac
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 #
-# -- computeBOLDfc input flags
+# -- compute_bold_fc input flags
 InputFiles=`opts_GetOpt "--inputfiles" $@`
 OutPathFC=`opts_GetOpt "--targetf" $@`
 Calculation=`opts_GetOpt "--calculation" $@`
@@ -573,7 +573,7 @@ VoxelStep=`opts_GetOpt "--vstep" $@`
 ROIInfo=`opts_GetOpt "--roinfo" $@`
 FCCommand=`opts_GetOpt "--options" $@`
 Method=`opts_GetOpt "--method" $@`
-# -- BOLDParcellation input flags
+# -- bold_parcellation input flags
 InputFile=`opts_GetOpt "--inputfile" $@`
 InputPath=`opts_GetOpt "--inputpath" $@`
 InputDataType=`opts_GetOpt "--inputdatatype" $@`
@@ -589,7 +589,7 @@ RunParcellations=`opts_GetOpt "--runparcellations" $@`
 
 # =-=-=-=-=-= DIFFUSION OPTIONS =-=-=-=-=-=
 #
-# -- hcpdLegacy input flags
+# -- dwi_legacy input flags
 EchoSpacing=`opts_GetOpt "--echospacing" $@`
 PEdir=`opts_GetOpt "--PEdir" $@`
 TE=`opts_GetOpt "--TE" $@`
@@ -597,14 +597,14 @@ UnwarpDir=`opts_GetOpt "--unwarpdir" $@`
 DiffDataSuffix=`opts_GetOpt "--diffdatasuffix" $@`
 Scanner=`opts_GetOpt "--scanner" $@`
 UseFieldmap=`opts_GetOpt "--usefieldmap" $@`
-# -- DWIparcellate input flags
+# -- dwi_parcellate input flags
 MatrixVersion=`opts_GetOpt "--matrixversion" $@`
 ParcellationFile=`opts_GetOpt "--parcellationfile" $@`
 OutName=`opts_GetOpt "--outname" $@`
 WayTotal=`opts_GetOpt "--waytotal" $@`
-# -- DWIseedTractographyDense input flags
+# -- dwi_seed_tractography_dense input flags
 SeedFile=`opts_GetOpt "--seedfile" $@`
-# -- DWIeddyQC input flags
+# -- dwi_eddy_qc input flags
 EddyBase=`opts_GetOpt "--eddybase" $@`
 EddyPath=`opts_GetOpt "--eddypath" $@`
 Report=`opts_GetOpt "--report" $@`
@@ -617,7 +617,7 @@ Mask=`opts_GetOpt "--mask" $@`
 GroupBar=`opts_GetOpt "--groupvar" $@`
 OutputDir=`opts_GetOpt "--outputdir" $@`
 Update=`opts_GetOpt "--update" $@`
-# -- DWIFSLbedpostxGPU input flags
+# -- dwi_fsl_bedpostx_gpu input flags
 Fibers=`opts_GetOpt "--fibers" $@`
 Model=`opts_GetOpt "--model" $@`
 Burnin=`opts_GetOpt "--burnin" $@`
@@ -1079,9 +1079,8 @@ if [ -z "$runQC_Custom" ] || [ "$runQC_Custom" == "no" ]; then runQC_Custom=""; 
 # -- Check and set DWILegacy
 if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then
     DWILegacy=""
-    runQC_DWILegacy=""
-    QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//hcpdLegacy/}"`
-    QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//runQC_DWILegacy/}"`
+    QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//dwi_legacy/}"`
+    QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//run_qc_dwi_legacy/}"`
 fi
 
 QuNexWorkDir="${SessionsFolder}/${CASE}"
@@ -1234,7 +1233,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp3|runQC_T1w|runQC_T2w|runQC_Myelin)
+        hcp3|run_qc_t1w|run_qc_t2w|run_qc_myelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
@@ -1246,25 +1245,25 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcpd|runQC_DWI|hcpdLegacy|runQC_DWILegacy|DWIeddyQC|runQC_DWIeddyQC|DWIFSLdtifit|runQC_DWIFSLdtifit|DWIFSLbedpostxGPU|runQC_DWIProcess|runQC_DWIbedpostx)
+        hcpd|run_qc_dwi|dwi_legacy|run_qc_dwi_legacy|dwi_eddy_qc|run_qc_dwi_eddy|dwi_fsl_dtifit|run_qc_dwi_fsl_dtifit|dwi_fsl_bedpostx_gpu|run_qc_dwi_process|run_qc_dwi_bedpostx)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-         DWIpreTractography|DWIseedTractographyDense|DWIparcellate)
+         dwi_pre_tractography|dwi_seed_tractography_dense|dwi_parcellate)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp5|runQC_BOLD|runQC_Custom|mapHCPData)
+        hcp5|run_qc_bold|run_qc_custom|mapHCPData)
             # --- rsync relevant dependencies if and mapHCPData is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|general_plot_bold_timeseries|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed|runQC_BOLDfc)
+        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|general_plot_bold_timeseries|bold_parcellation|compute_bold_fc_gbc|compute_bold_fc_seed|run_qc_bold_fc)
             # --- rsync relevant dependencies if any BOLD fc step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
@@ -1895,8 +1894,8 @@ fi
        # cp ${SessionsFolder}/QC/${Modality}/*${CASE}*zip ${SessionsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null # --> Commented out for logging consistency
     }
 
-    # -- runQC_rawNII (after organizing DICOM files)
-    turnkey_runQC_rawNII() {
+    # -- run_qc_rawnii (after organizing DICOM files)
+    turnkey_run_qc_rawnii() {
         Modality="rawNII"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC step for ${Modality} data."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --modality="${Modality}"
@@ -1932,26 +1931,26 @@ fi
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ HCP Pipelines step - hcp3 (hcp_PostFS)."; echo ""
         ${QuNexCommand} hcp3 --sessionsfolder="${SessionsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --sessionids="${SESSIONIDS}"
     }
-    # -- runQC_T1w (after hcp3)
-    turnkey_runQC_T1w() {
+    # -- run_qc_t1w (after hcp3)
+    turnkey_run_qc_t1w() {
         Modality="T1w"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC step for ${Modality} data."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T1w"
         runQC_Finalize
     }
-    # -- runQC_T2w (after hcp3)
-    turnkey_runQC_T2w() {
+    # -- run_qc_t2w (after hcp3)
+    turnkey_run_qc_t2w() {
         Modality="T2w"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC step for ${Modality} data."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T2w"
         runQC_Finalize
     }
-    # -- runQC_Myelin (after hcp3)
-    turnkey_runQC_Myelin() {
+    # -- run_qc_myelin (after hcp3)
+    turnkey_run_qc_myelin() {
         Modality="myelin"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC step for ${Modality} data."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="Myelin"
         runQC_Finalize
@@ -1968,10 +1967,10 @@ fi
         HCPLogName="hcpfMRISurface"
         ${QuNexCommand} hcp5 --sessionsfolder="${SessionsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}" ${BOLDS:+--bolds=}"$BOLDS"
     }
-    # -- runQC_BOLD (after hcp5)
-    turnkey_runQC_BOLD() {
+    # -- run_qc_bold (after hcp5)
+    turnkey_run_qc_bold() {
         Modality="BOLD"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC step for ${Modality} data. BOLDS: ${BOLDRUNS} "; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data. BOLDS: ${BOLDRUNS} "; echo ""
         if [ -z "${BOLDfc}" ]; then
             # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi   --- default for bold prefix is now ""
             if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
@@ -1985,8 +1984,8 @@ fi
             ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename runQC runQC_BOLD${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-            # rename runQC runQC_BOLD${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+            rename runQC run_qc_bold${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+            # rename runQC run_qc_bold${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
     # -- Diffusion HCP (after hcp1)
@@ -1995,29 +1994,29 @@ fi
         ${QuNexCommand} hcpd --sessionsfolder="${SessionsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}"
     }
     # -- Diffusion Legacy (after hcp1)
-    turnkey_hcpdLegacy() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ HCP Pipelines: hcpdLegacy"; echo ""
-        ${QuNexCommand} hcpdLegacy --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
+    turnkey_dwi_legacy() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ HCP Pipelines: dwi_legacy"; echo ""
+        ${QuNexCommand} dwi_legacy --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
     }
-    # -- runQC_DWILegacy (after hcpd)
-    turnkey_runQC_DWILegacy() {
+    # -- run_qc_dwi_legacy (after hcpd)
+    turnkey_run_qc_dwi_legacy() {
         Modality="DWI"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC step for ${Modality} legacy data."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} legacy data."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWILegacy"
         runQC_Finalize
     }
-    # -- runQC_DWI (after hcpd)
-    turnkey_runQC_DWI() {
+    # -- run_qc_dwi (after hcpd)
+    turnkey_run_qc_dwi() {
         Modality="DWI"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} HCP processing."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} HCP processing."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWI"
         runQC_Finalize
     }
-    # -- DWIeddyQC processing steps
+    # -- dwi_eddy_qc processing steps
     turnkey_eddyQC() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIeddyQC for DWI data."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ dwi_eddy_qc for DWI data."; echo ""
         # -- Defaults if values not set:
         if [ -z "$EddyBase" ]; then EddyBase="eddy_unwarped_images"; fi
         if [ -z "$Report" ]; then Report="individual"; fi
@@ -2034,14 +2033,14 @@ fi
         # --bvecsfile='DWI_dir74_AP_b1000b2500.bvec'
         # --mask='DWI_dir74_AP_b1000b2500_nodif_brain_mask.nii.gz'
         #
-        ${QuNexCommand} DWIeddyQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
+        ${QuNexCommand} dwi_eddy_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
     }
-    # -- runQC_DWIeddyQC (after DWIeddyQC)
-    turnkey_runQC_DWIeddyQC() {
+    # -- run_qc_dwi_eddy (after dwi_eddy_qc)
+    turnkey_run_qc_dwi_eddy() {
         Modality="DWI"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} DWIeddyQC."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} dwi_eddy_qc."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
-        QCLogName="DWIeddyQC"
+        QCLogName="dwi_eddy_qc"
         runQC_Finalize
     }
     #
@@ -2049,49 +2048,49 @@ fi
 
     # --------------- DWI additional analyses start ------------------------
     #
-    # -- DWIFSLdtifit (after hcpd or hcpdLegacy)
-    turnkey_FSLDtifit() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ : DWIFSLdtifit for DWI data."; echo ""
-        ${QuNexCommand} DWIFSLdtifit --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}"
+    # -- dwi_fsl_dtifit (after hcpd or dwi_legacy)
+    turnkey_dwi_fsl_dtifitt() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ : dwi_fsl_dtifit for DWI data."; echo ""
+        ${QuNexCommand} dwi_fsl_dtifit --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}"
     }
-    # -- DWIFSLbedpostxGPU (after DWIFSLdtifit)
-    turnkey_FSLBedpostxGPU() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIFSLbedpostxGPU for DWI data."
+    # -- dwi_fsl_bedpostx_gpu (after dwi_fsl_dtifit)
+    turnkey_dwi_fsl_bedpostx_gpu() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ dwi_fsl_bedpostx_gpu for DWI data."
         if [ -z "$Fibers" ]; then Fibers="3"; fi
         if [ -z "$Model" ]; then Model="3"; fi
         if [ -z "$Burnin" ]; then Burnin="3000"; fi
         if [ -z "$Rician" ]; then Rician="yes"; fi
-        ${QuNexCommand} DWIFSLbedpostxGPU --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
+        ${QuNexCommand} dwi_fsl_bedpostx_gpu --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
     }
-    # -- runQC_DWIFSLdtifit (after DWIFSLdtifit)
-    turnkey_runQC_DWIDTIFIT() {
+    # -- run_qc_dwi_fsl_dtifit (after dwi_fsl_dtifit)
+    turnkey_run_qc_dwi_dtifit() {
         Modality="DWI"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} FSL's dtifit analyses."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} FSL's dtifit analyses."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIDTIFIT"
         runQC_Finalize
     }
-    # -- runQC_DWIbedpostx (after DWIFSLbedpostxGPU)
-    turnkey_runQC_DWIbedpostx() {
+    # -- run_qc_dwi_bedpostx (after dwi_fsl_bedpostx_gpu)
+    turnkey_run_qc_dwi_bedpostx() {
         Modality="DWI"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC steps for ${Modality} FSL's BedpostX analyses."; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} FSL's BedpostX analyses."; echo ""
         ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIBedpostX"
         runQC_Finalize
     }
-    # -- probtrackxGPUDense for DWI data (after DWIFSLbedpostxGPU)
+    # -- probtrackxGPUDense for DWI data (after dwi_fsl_bedpostx_gpu)
     turnkey_probtrackxGPUDense() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ probtrackxGPUDense"; echo ""
         ${QuNexCommand} probtrackxGPUDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
-    # -- DWIpreTractography for DWI data (after DWIFSLbedpostxGPU)
-    turnkey_DWIpreTractography() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIpreTractography"; echo ""
-        ${QuNexCommand} DWIpreTractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+    # -- dwi_pre_tractography for DWI data (after dwi_fsl_bedpostx_gpu)
+    turnkey_dwi_pre_tractography() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ dwi_pre_tractography"; echo ""
+        ${QuNexCommand} dwi_pre_tractography --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
-    # -- DWIparcellatefor DWI data (after DWIpreTractography)
-    turnkey_DWIparcellate() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIparcellate"; echo ""
+    # -- dwi_parcellate for DWI data (after dwi_pre_tractography)
+    turnkey_dwi_parcellate() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ dwi_parcellate"; echo ""
         # Defaults if not specified:
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
@@ -2099,26 +2098,26 @@ fi
         if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
-            ${QuNexCommand} DWIparcellate --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+            ${QuNexCommand} dwi_parcellate --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
         done
     }
-    # -- DWIseedTractographyDense for DWI data (after DWIpreTractography)
-    turnkey_DWIseedTractographyDense() {
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ DWIseedTractographyDense"; echo ""
+    # -- dwi_seed_tractography_dense for DWI data (after dwi_pre_tractography)
+    turnkey_dwi_seed_tractography_dense() {
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ dwi_seed_tractography_dense"; echo ""
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$SeedFile" ]; then
             # Thalamus SomatomotorSensory
             SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii"
             OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
-            ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} dwi_seed_tractography_dense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
             # Thalamus Prefrontal
             SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii"
             OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
-            ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} dwi_seed_tractography_dense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
         fi
         OutNameGBC="DWI_GBC"
-        ${QuNexCommand} DWIseedTractographyDense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
+        ${QuNexCommand} dwi_seed_tractography_dense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
     }
     #
     # --------------- DWI Processing and analyses end --------------------------
@@ -2127,9 +2126,9 @@ fi
     # --------------- Custom QC start ------------------------------------------
     #
     # -- Check if Custom QC was requested
-    turnkey_runQC_Custom() {
+    turnkey_run_qc_custom() {
         unset RunCommand
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC_Custom"; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc_custom"; echo ""
 
         if [ -z "${Modality}" ]; then
             Modalities="T1w T2w myelin BOLD DWI"
@@ -2364,11 +2363,11 @@ fi
         rm ${general_plot_bold_timeseries_ComlogTmp}
     }
     # -- BOLD Parcellation
-    turnkey_BOLDParcellation() {
-        FunctionName="BOLDParcellation"
+    turnkey_bold_parcellation() {
+        FunctionName="bold_parcellation"
 
         getBoldNumberList
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ BOLDParcellation on BOLDS: ${LBOLDRUNS}"; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ bold_parcellation on BOLDS: ${LBOLDRUNS}"; echo ""
 
         if [ -z ${RunParcellations} ]; then
 
@@ -2385,7 +2384,7 @@ fi
                if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                # -- Command
-               RunCommand="${QuNexCommand} BOLDParcellation --sessions='${CASE}' \
+               RunCommand="${QuNexCommand} bold_parcellation --sessions='${CASE}' \
                --sessionsfolder='${SessionsFolder}' \
                --inputfile='${InputFileParcellation}' \
                --singleinputfile='${SingleInputFile}' \
@@ -2443,7 +2442,7 @@ fi
                    if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                    if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                    # -- Command
-                   RunCommand="${QuNexCommand} BOLDParcellation --sessions='${CASE}' \
+                   RunCommand="${QuNexCommand} bold_parcellation --sessions='${CASE}' \
                    --sessionsfolder='${SessionsFolder}' \
                    --inputfile='${InputFileParcellation}' \
                    --singleinputfile='${SingleInputFile}' \
@@ -2465,9 +2464,9 @@ fi
         fi
     }
     # -- Compute Seed FC for relevant ROIs
-    turnkey_computeBOLDfcSeed() {
-        FunctionName="computeBOLDfc"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ computeBOLDfc processing steps for Seed FC."; echo ""
+    turnkey_compute_bold_fc_seed() {
+        FunctionName="compute_bold_fc"
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ compute_bold_fc processing steps for Seed FC."; echo ""
         if [ -z ${ROIInfo} ]; then
            ROINames="${TOOLS}/${QUNEXREPO}/qx_library/data/roi/seeds_cifti.names ${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
         else
@@ -2491,7 +2490,7 @@ fi
                 if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
                 if [ -z "$Verbose" ]; then Verbose="true"; fi
                 if [ -z "$Covariance" ]; then Covariance="true"; fi
-                RunCommand="${QuNexCommand} computeBOLDfc \
+                RunCommand="${QuNexCommand} compute_bold_fc \
                 --sessionsfolder='${SessionsFolder}' \
                 --calculation='seed' \
                 --runtype='individual' \
@@ -2515,9 +2514,9 @@ fi
         done
     }
    # -- Compute GBC
-   turnkey_computeBOLDfcGBC() {
-   FunctionName="computeBOLDfc"
-       echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ computeBOLDfc processing steps for GBC."; echo ""
+   turnkey_compute_bold_fc_gbc() {
+   FunctionName="compute_bold_fc"
+       echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ compute_bold_fc processing steps for GBC."; echo ""
 
        getBoldNumberList
 
@@ -2539,7 +2538,7 @@ fi
             if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
             if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
             if [ -z "$Covariance" ]; then Covariance="true"; fi
-            RunCommand="${QuNexCommand} computeBOLDfc \
+            RunCommand="${QuNexCommand} compute_bold_fc \
             --sessionsfolder='${SessionsFolder}' \
             --calculation='gbc' \
             --runtype='individual' \
@@ -2566,9 +2565,9 @@ fi
             BOLDfcLogCheck
         done
    }
-   # -- runQC_BOLD FC (after GBC/FC/PCONN)
+   # -- run_qc_bold FC (after GBC/FC/PCONN)
    #turnkey_QCrun_BOLDfc
-   turnkey_runQC_BOLDfc() {
+   turnkey_run_qc_bold_fc() {
         Modality="BOLD"
 
         getBoldList
@@ -2577,8 +2576,8 @@ fi
             ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename runQC runQC_BOLDfc${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-            # rename runQC runQC_BOLDfc${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+            rename runQC run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+            # rename runQC run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
 
@@ -2718,7 +2717,7 @@ else
         # done
     #
         # -- Specific sets of functions for logging
-        BashBOLDFunctions="BOLDParcellation computeBOLDfcGBC computeBOLDfcSeed"
+        BashBOLDFunctions="bold_parcellation compute_bold_fc_gbc compute_bold_fc_seed"
         NiUtilsFunctions="setupHCP hcp1 hcp2 hcp3 hcp4 hcp5 hcpd computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
 
         ## deprecated to support parallel processing # -- Check for completion of turnkey function for python qx_utilities

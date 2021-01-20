@@ -1,6 +1,6 @@
-function ts = img_ExtractROI(obj, roi, rcodes, method, weights, criterium)
+function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 
-%``function ts = img_ExtractROI(obj, roi, rcodes, method, weights, criterium)``
+%``function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)``
 %
 %   Extracts roi data for all specified ROI in the ROI image. Uses specified
 %   method of averaging data.

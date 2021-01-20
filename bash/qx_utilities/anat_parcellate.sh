@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-#  ANATparcellate.sh
+#  anat_parcellate.sh
 #
 # ## LICENSE
 #
-# * The ANATparcellate.sh = the "Software"
+# * The anat_parcellate.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, ANATparcellate.sh, implements parcellation structural data 
+# This script, anat_parcellate.sh, implements parcellation structural data 
 # such as dense thickness and myelin maps.
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -33,7 +33,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./ANATparcellate.sh --help
+# See output of usage function: e.g. $./anat_parcellate.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -70,14 +70,14 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/ANATparcellate.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/anat_parcellate.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via::"
  echo ""
- echo " qunex ANATparcellate \ "
+ echo " qunex anat_parcellate \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call:"
@@ -89,7 +89,7 @@ usage() {
  echo ""                   
  echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
  echo ""
- echo " qunex ANATparcellate --sessionsfolder='<folder_with_sessions>' \ "
+ echo " qunex anat_parcellate --sessionsfolder='<folder_with_sessions>' \ "
  echo " --session='<case_id>' \ "
  echo " --inputdatatype='MyelinMap_BC' \ "
  echo " --parcellationfile='<dlabel_file_for_parcellation>' \ "

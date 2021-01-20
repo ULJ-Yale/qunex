@@ -15,7 +15,7 @@
 #
 # ## PRODUCT
 #
-# Wrapper to run MATLAB function to extract ROIs from input file based on template file (extractROIsFromTemplate.m)
+# Wrapper to run MATLAB function to extract ROIs from input file based on template file
 #
 # ## LICENCE
 #
@@ -48,7 +48,7 @@
 
 usage() {
  echo ""
- echo "This function calls img_ROIExtract.m and extracts data from an input file for "
+ echo "This function calls img_roi_extract.m and extracts data from an input file for "
  echo "every ROI in a given template file. The function needs a matching file type for "
  echo "the ROI input and the data input (i.e. both NIFTI or CIFTI). It assumes that "
  echo "the template ROI file indicates each ROI in a single volume via unique scalar "
@@ -75,7 +75,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo " qunex ROIExtract \ "
+ echo " qunex roi_extract \ "
  echo " --roifile='<path_to_roifile>' "
  echo " --inputfile='<path_to_inputfile>' "
  echo " --outdir='<path_to_outdir>' "
@@ -197,7 +197,7 @@ if [[ -f ${outpath}/${outname}.csv ]]; then
 else
     reho "------------------------- ERROR --------------------------------"
     echo ""
-    reho "   ROIExtract generation did not complete correctly."
+    reho "   roi_extract generation did not complete correctly."
     echo ""
     reho "----------------------------------------------------------------"
 fi
