@@ -1,10 +1,11 @@
 # QuNex change log
 
 * 0.90.0  TODO COPY FROM RELEASE CARD AT RELEASE.
-* 0.62.11 qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
-* 0.62.10 runTurnkey patch to include T2 to rsync command for hcp_freesurfer step.
-* 0.62.9  Improved parameter checking in the create_list command.
-* 0.62.8  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.12 qunex.sh patched to include pushd and popd functionality to preserve initial user working directory.
+* 0.62.11 runTurnkey patch to include T2 to rsync command for hcp_freesurfer step.
+* 0.62.10  Improved parameter checking in the create_list command.
+* 0.62.9  Added the use_sequence_info parameter that specifies which information is extracted from JSON sidecars during dcm2niix conversion.
+* 0.62.8  Fixed errors because the deprecated hcp_dwi_PEdir still had a default value set.
 * 0.62.7  Importing HCP data now works properly for dwi and HCPYA, diffusion processing now warns users when using legacy parameter names.
 * 0.62.6  MSMAll now properly executes DeDriftAndResample in case of a multi-run HCP ICAFix.
 * 0.62.5  Bolds parameter is now properly passed to all commands.
