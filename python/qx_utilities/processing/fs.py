@@ -33,9 +33,10 @@ import exceptions
 import sys
 import traceback
 import time
+import general.img as gi
 from datetime import datetime
 from core import *
-from general.img import *
+
 
 def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
     """
@@ -57,16 +58,16 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
         if overwrite or copy:
             r += '\n... copying %s' % (f['t1_source'])
             if options['image_target'] == '4dfp':
-                if getImgFormat(f['t1_source']) == '.4dfp.img':
+                if gi.getImgFormat(f['t1_source']) == '.4dfp.img':
                     shutil.copy2(f['t1_source'], f['t1'])
                     shutil.copy2(f['t1_source'].replace('.img', '.ifh'), f['t1'].replace('.img', '.ifh'))
                 else:
-                    tmpfile = f['t1'].replace('.4dfp.img', getImgFormat(f['t1_source']))
+                    tmpfile = f['t1'].replace('.4dfp.img', gi.getImgFormat(f['t1_source']))
                     shutil.copy2(f['t1_source'], tmpfile)
                     r, endlog, status, failed = runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpfile, f['t1'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tmpfile)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
                     os.remove(tmpfile)
             if options['image_target'] == 'nifti':
-                if getImgFormat(f['t1_source']) == '.4dfp.img':
+                if gi.getImgFormat(f['t1_source']) == '.4dfp.img':
                     tmpimg = f['t1'] + '.4dfp.img'
                     tmpifh = f['t1'] + '.4dfp.ifh'
                     shutil.copy2(f['t1_source'], tmpimg)
@@ -75,7 +76,7 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
                     os.remove(tmpimg)
                     os.remove(tmpifh)
                 else:
-                    if getImgFormat(f['t1_source']) == '.nii.gz':
+                    if gi.getImgFormat(f['t1_source']) == '.nii.gz':
                         tmpfile = f['t1'] + ".gz"
                         shutil.copy2(f['t1_source'], tmpfile)
                         r, endlog, status, failed = runExternalForFile(f['t1'], 'gunzip -f %s' % (tmpfile), '... gunzipping %s' % (os.path.basename(tmpfile)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
@@ -90,10 +91,10 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
         # --- convert to NIfTI
 
         sfile = f['t1']
-        tfileb = f['t1_brain'].replace(getImgFormat(f['t1_brain']), '.nii')
-        tfiles = f['t1_seg'].replace(getImgFormat(f['t1_seg']), '.nii')
+        tfileb = f['t1_brain'].replace(gi.getImgFormat(f['t1_brain']), '.nii')
+        tfiles = f['t1_seg'].replace(gi.getImgFormat(f['t1_seg']), '.nii')
 
-        if getImgFormat(f['t1']) == '.4dfp.img':
+        if gi.getImgFormat(f['t1']) == '.4dfp.img':
             sfile = sfile.replace('.4dfp.img', '.nii')
             r, endlog, status, failed = runExternalForFile(sfile, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), sfile), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
 
@@ -115,7 +116,7 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
 
         # --- convert to 4dfp if needed
 
-        if getImgFormat(f['t1']) == '.4dfp.img':
+        if gi.getImgFormat(f['t1']) == '.4dfp.img':
             r, endlog, status, failed = runExternalForFile(f['t1_brain'], 'g_FlipFormat %s %s' % (tfileb, f['t1_brain'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tfileb)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
             r, endlog, status, failed = runExternalForFile(f['t1_seg'], 'g_FlipFormat %s %s' % (tfiles, f['t1_seg'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tfiles)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
 
@@ -201,15 +202,15 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
                 if s in options:
                     sf = checkPath(options[s], sinfo['id'])
                     if sf:
-                        tf = f[t].replace(getImgFormat(f[t]), getImgFormat(sf))
+                        tf = f[t].replace(gi.getImgFormat(f[t]), gi.getImgFormat(sf))
                         shutil.copy2(sf, tf)
-                        if getImgFormat(sf) == '.4dfp.img':
+                        if gi.getImgFormat(sf) == '.4dfp.img':
                             shutil.copy2(sf.replace('.img', '.ifh'), tf.replace('.img', '.ifh'))
                         r += "\n... copied %s to target folder" % (os.path.basename(sf))
                         if tf != f[t]:
                             if options['image_target'] == '4dfp':
                                 r, endlog, status, failed = runExternalForFile(f[t], 'g_FlipFormat %s %s' % (tf, f[t].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tf)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
-                            elif getImgFormat(tf) == '.nii.gz':
+                            elif gi.getImgFormat(tf) == '.nii.gz':
                                 r, endlog, status, failed = runExternalForFile(f[t], 'gunzip -f %s' % (tf), '... gunzipping %s ' % (os.path.basename(tf)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
                             else:
                                 r, endlog, status, failed = runExternalForFile(f[t], 'g_FlipFormat %s %s' % (tf.replace('.img', '.ifh'), f[t]), '... converting %s to nifti' % (os.path.basename(tf)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
@@ -261,7 +262,7 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
 
             if not os.path.exists(f['t1']):
                 shutil.copy2(f['t1_source'], f['t1'])
-                if getImgFormat(f['t1_source']) == '.4dfp.img':
+                if gi.getImgFormat(f['t1_source']) == '.4dfp.img':
                     shutil.copy2(f['t1_source'].replace('.img', '.ifh'), f['t1'].replace('.img', '.ifh'))
                 r += "\n... copied %s to target folder" % (os.path.basename(f['t1_source']))
 
@@ -269,7 +270,7 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
             # --- convert to NIfTI
 
             onifti = f['t1']
-            if getImgFormat(onifti) == '.4dfp.img':
+            if gi.getImgFormat(onifti) == '.4dfp.img':
                 onifti = f['t1'].replace('.4dfp.img', '.nii')
                 r, endlog, status, failed = runExternalForFile(onifti, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), onifti), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
 
@@ -387,7 +388,7 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
 
             if not os.path.exists(f['t1']):
                 shutil.copy2(f['t1_source'], f['t1'])
-                if getImgFormat(f['t1_source']) == '.4dfp.img':
+                if gi.getImgFormat(f['t1_source']) == '.4dfp.img':
                     shutil.copy2(f['t1_source'].replace('.img', '.ifh'), f['t1'].replace('.img', '.ifh'))
                 r += "\n... copied %s to target folder" % (os.path.basename(f['t1_source']))
 
@@ -395,7 +396,7 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
             # --- convert to NIfTI
 
             onifti = f['t1']
-            if getImgFormat(onifti) == '.4dfp.img':
+            if gi.getImgFormat(onifti) == '.4dfp.img':
                 onifti = f['t1'].replace('.4dfp.img', '.nii')
                 r, endlog, status, failed = runExternalForFile(onifti, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), onifti), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
 

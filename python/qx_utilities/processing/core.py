@@ -20,7 +20,7 @@ import shutil
 import re
 import subprocess
 import glob
-import exceptions
+import general.exceptions as ge
 import sys
 import traceback
 import time
@@ -72,7 +72,7 @@ def print_exc_plus():
                 print "<ERROR WHILE PRINTING VALUE>"
 
 
-class ExternalFailed(exceptions.Exception):
+class ExternalFailed(Exception):
     def __init__(self, value="Got lost :-("):
         self.parameter = value
 
@@ -80,7 +80,7 @@ class ExternalFailed(exceptions.Exception):
         return self.parameter  # repr(self.parameter)
 
 
-class NoSourceFolder(exceptions.Exception):
+class NoSourceFolder(Exception):
     def __init__(self, value="Got lost :-("):
         self.parameter = value
 
@@ -552,52 +552,6 @@ def getSessionFolders(sinfo, options):
                     raise
 
     return d
-
-
-
-def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
-    """
-    linkOrCopy - documentation not yet available.
-    """
-    if status is None:
-        status = True
-    if name is None:
-        name = "file"
-    if prefix is None:
-        prefix = "\n ... "
-    if os.path.exists(source):
-        try:
-            if os.path.exists(target):
-                if os.path.samefile(source, target):
-                    if r is None:
-                        return status and True
-                    else:
-                        return (status and True, "%s%s%s already mapped" % (r, prefix, name))
-                else:
-                    os.remove(target)
-            os.link(source, target)
-            if r is None:
-                return status and True
-            else:
-                return (status and True, "%s%s%s mapped" % (r, prefix, name))
-        except:
-            try:
-                shutil.copy2(source, target)
-                if r is None:
-                    return status and True
-                else:
-                    return (status and True, "%s%s%s copied" % (r, prefix, name))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be copied, check permissions! " % (r, prefix, name))
-        return True
-    else:
-        if r is None:
-            return False
-        else:
-            return (False, "%s%sERROR: %s could not be copied, source file does not exist [%s]! " % (r, prefix, name, source))
 
 
 def missingReport(missing, message, prefix):

@@ -20,6 +20,8 @@ import glob
 import sys
 import types
 import traceback
+import gzip
+import filelock as fl
 import exceptions as ge
 import commands_support as gcs
 
@@ -939,27 +941,52 @@ def pcslist(s):
     return s
 
 
-def linkOrCopy(source, target):
+def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
     """
     linkOrCopy - documentation not yet available.
     """
+    if status is None:
+        status = True
+    if name is None:
+        name = "file"
+    if prefix is None:
+        prefix = "\n ... "
     if os.path.exists(source):
         try:
             if os.path.exists(target):
                 if os.path.samefile(source, target):
-                    return
+                    if r is None:
+                        return status and True
+                    else:
+                        return (status and True, "%s%s%s already mapped" % (r, prefix, name))
                 else:
                     os.remove(target)
-            if os.path.islink(source):
-                linkto = os.readlink(source)
-                os.symlink(linkto, target)
+            os.link(source, target)
+            if r is None:
+                return status and True
             else:
-                os.link(source, target)
+                return (status and True, "%s%s%s mapped" % (r, prefix, name))
         except:
-            shutil.copy2(source, target)
+            try:
+                shutil.copy2(source, target)
+                if r is None:
+                    return status and True
+                else:
+                    return (status and True, "%s%s%s copied" % (r, prefix, name))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be copied, check permissions! " % (r, prefix, name))
+        return True
+    else:
+        if r is None:
+            return False
+        else:
+            return (False, "%s%sERROR: %s could not be copied, source file does not exist [%s]! " % (r, prefix, name, source))
 
 
-def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
+def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False):
     """
     moveLinkOrCopy - documentation not yet available.
     """
@@ -972,66 +999,70 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
     if prefix is None:
         prefix = ""
 
+    def report(rstatus, msg):
+        if lock:
+            fl.unlock(target)
+        if r is None:
+            return rstatus
+        else:
+            return rstatus, r + prefix + msg
+
     if os.path.exists(source):
 
-        if not os.path.exists(os.path.dirname(target)):
-            try:
-                os.makedirs(os.path.dirname(target))
-            except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be %sed, target folder could not be created, check permissions! " % (r, prefix, name, action))
+        targetfolder = os.path.dirname(target)
+        if not os.path.exists(targetfolder):
+            io = fl.makedirs(targetfolder)
+            if io:
+                if io != 'File exists':
+                    return report(False, "ERROR: %s could not be %sed, target folder could not be created, check permissions! " % (name, action))
+
+        if lock:
+            fl.lock(target)
 
         if action == 'link':
-            try:
-                if os.path.exists(target):
-                    if os.path.samefile(source, target):
-                        if r is None:
-                            return status
-                        else:
-                            return (status, "%s%s%s already mapped" % (r, prefix, name))
-                    else:
-                        os.remove(target)
-                os.link(source, target)
-                if r is None:
-                    return status
+            io = fl.link(source, target)
+            if not io:
+                return report(status, "%s mapped" % (name))
+            elif io == 'File exists':
+                if os.path.samefile(source, target):
+                    return report(status, "%s already mapped [%s]" % (name, target))
                 else:
-                    return (status, "%s%s%s mapped" % (r, prefix, name))
-            except:
+                    io = fl.remove(target)
+                    if io and io != 'No such file or directory':
+                        return report(False, "ERROR: %s could not be %sed, existing file could not be removed, check permissions! " % (name, action))
+                    io = fl.link(source, target)
+                    if not io:
+                        return report(status, "%s mapped" % (name))
+                    else: 
+                        action = 'copy'
+            else:
                 action = 'copy'
 
         if action == 'copy':
             try:
                 shutil.copy2(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s copied" % (r, prefix, name))
+                return report(status, "%s copied" % (name))
             except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be copied, check permissions! " % (r, prefix, name))
+                return report(False, "ERROR: %s could not be copied, check permissions! " % (name))
 
         if action == 'move':
             try:
                 shutil.move(source, target)
-                if r is None:
-                    return status
-                else:
-                    return (status, "%s%s%s moved" % (r, prefix, name))
+                return report(status, "%s moved" % (name))
             except:
-                if r is None:
-                    return False
-                else:
-                    return (False, "%s%sERROR: %s could not be moved, check permissions! " % (r, prefix, name))
+                return report(False, "ERROR: %s could not be moved, check permissions! " % (name))
+
+        if action == 'gzip':
+            try:
+                with open(source, 'rb') as f_in, gzip.open(target, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                return report(status, "%s copied and gzipped" % (name))
+            except:
+                return report(False, "ERROR: %s could not be copied and gzipped, check permissions! " % (name))
 
     else:
-        if r is None:
-            return False
-        else:
-            return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
+        return report(False, "WARNING: %s could not be %sed, source file either does not exist or can not be accessed [%s]! " % (name, action, source))
+
 
 def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     """

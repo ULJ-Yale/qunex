@@ -49,7 +49,6 @@ deprecated_commands = {
                         "stats_ttest_dependent": ["s_TTestDependent"],
                         "stats_ttest_independent": ["s_TTestIndependent"],
                         "stats_test_zero": ["s_TTestZero"],
-
                         "run_qc": ["runQC","RunQC","QCPreproc"],
                         "anat_parcellate": ["ANATparcellate"],
                         "bold_compute_fc": ["BOLDcomputeFC"],
@@ -90,7 +89,6 @@ deprecated_commands = {
                         "compute_bold_fc": ["computeBOLDfc"],
                         "compute_bold_fc_gbc": ["computeBOLDfcGBC"],
                         "compute_bold_fc_seed": ["computeBOLDfcSeed"],
-
                         "list_dicom": ["listDicom"],
                         "split_dicom": ["splitDicom"],
                         "sort_dicom": ["sortDicom"],
@@ -157,7 +155,7 @@ deprecated_commands = {
                         "longitudinal_freesurfer": ["longitudinalFS"],
                         "create_bold_list": ["createBoldList"],
                         "create_conc_list": ["createConcList"],
-                        "map_raw_data": ["mapRawData"],
+                        "map_raw_data": ["mapRawData"]
                       }
 
 # the function for checking whether a command is deprecated or not

@@ -38,7 +38,6 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-import general.exceptions as ge
 import os
 import re
 import os.path
@@ -47,9 +46,10 @@ import glob
 import sys
 import traceback
 import time
-from processing.core import *
-from general.img import *
-from general.core import checkFiles
+import general.core as gc
+import processing.core as pc
+import general.img as gi
+import general.exceptions as ge
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -569,14 +569,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = "Error"
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_pre_freesurfer')
+        pc.doOptionsCheck(options, sinfo, 'hcp_pre_freesurfer')
         doHCPOptionsCheck(options, sinfo, 'hcp_pre_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
@@ -866,11 +866,11 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP PreFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                r, endlog, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP PreFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PreFS', r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(tfile, fullTest, 'HCP PreFS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP PreFS can be run"
                     report = "HCP Pre FS can be run"
@@ -884,7 +884,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PreFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PreFS failed"
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = "PreFS failed"
         failed = 1
@@ -893,7 +893,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "PreFS failed"
         failed = 1
 
-    r += "\nHCP PreFS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nHCP PreFS %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1127,14 +1127,14 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     status = True
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_freesurfer')
+        pc.doOptionsCheck(options, sinfo, 'hcp_freesurfer')
         doHCPOptionsCheck(options, sinfo, 'hcp_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
@@ -1334,11 +1334,11 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
                                 status = False
                 if status:
-                    r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP FS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP FS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP FS', r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(tfile, fullTest, 'HCP FS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP FS can be run"
                     report = "HCP FS can be run"
@@ -1352,14 +1352,14 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurfer', e.function, "\n     ".join(e.report))
         report = "FS failed"
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP FS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP FS %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1528,7 +1528,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run           = True
     report        = "Error"
@@ -1548,7 +1548,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
             sessionStatus = True
 
             try:
-                doOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
+                pc.doOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
                 doHCPOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
                 hcp = getHCPPaths(session, options)
                 sessionspaths.append(hcp['FS_folder'])
@@ -1677,7 +1677,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> WARNING: Could not remove preexisting folder: %s! Please check your data!" % (rmfolder)
                         status = False
 
-                    r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP FS Longitudinal', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP FS Longitudinal', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
@@ -1694,14 +1694,14 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurferLongitudinal', e.function, "\n     ".join(e.report))
         report = "FSLong failed"
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nLongitudinal FreeSurfer %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nLongitudinal FreeSurfer %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -1855,13 +1855,13 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PostFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP PostFreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_post_freesurfer')
+        pc.doOptionsCheck(options, sinfo, 'hcp_post_freesurfer')
         doHCPOptionsCheck(options, sinfo, 'hcp_post_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
@@ -1958,11 +1958,11 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP PostFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                r, endlog, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP PostFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, fullTest, 'HCP PostFS', r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(tfile, fullTest, 'HCP PostFS', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP PostFS can be run"
                     report = "HCP PostFS can be run"
@@ -1976,14 +1976,14 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PostFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PostFS failed"
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP PostFS %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP PostFS %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -2230,13 +2230,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_diffusion')
+        pc.doOptionsCheck(options, sinfo, 'hcp_diffusion')
         doHCPOptionsCheck(options, sinfo, 'hcp_diffusion')
         hcp = getHCPPaths(sinfo, options)
 
@@ -2381,11 +2381,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed  = runExternalForFile(tfile, comm, 'Running HCP Diffusion Preprocessing', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=full_test, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, 'Running HCP Diffusion Preprocessing', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=full_test, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, full_test, 'HCP Diffusion', r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(tfile, full_test, 'HCP Diffusion', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
@@ -2396,14 +2396,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             report = "HCP Diffusion can not be run"
             failed = 1
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -2769,14 +2769,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Volume registration [%s] ... " % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP fMRI Volume registration [%s] ... " % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_fmri_volume')
+        pc.doOptionsCheck(options, sinfo, 'hcp_fmri_volume')
         doHCPOptionsCheck(options, sinfo, 'hcp_fmri_volume')
         hcp = getHCPPaths(sinfo, options)
 
@@ -2889,11 +2889,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             # look for phase positive
                             if "_" + options['hcp_bold_sephasepos'] in os.path.basename(i):
                                 spinPos = i
-                                r, spinok = checkForFile2(r, spinPos, "\n     ... phase positive %s spin echo fieldmap image present" % (options['hcp_bold_sephasepos']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephasepos']), status=spinok)
+                                r, spinok = pc.checkForFile2(r, spinPos, "\n     ... phase positive %s spin echo fieldmap image present" % (options['hcp_bold_sephasepos']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephasepos']), status=spinok)
                             # look for phase negative
                             elif "_" + options['hcp_bold_sephaseneg'] in os.path.basename(i):
                                 spinNeg = i
-                                r, spinok = checkForFile2(r, spinNeg, "\n     ... phase negative %s spin echo fieldmap image present" % (options['hcp_bold_sephaseneg']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephaseneg']), status=spinok)
+                                r, spinok = pc.checkForFile2(r, spinNeg, "\n     ... phase negative %s spin echo fieldmap image present" % (options['hcp_bold_sephaseneg']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephaseneg']), status=spinok)
 
                         if not all([spinPos, spinNeg]):
                             r += "\n---> ERROR: Either one of both pairs of SpinEcho images are missing in the %s folder! Please check your data or settings!" % (os.path.basename(sepath))
@@ -2928,7 +2928,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
-        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
@@ -2953,7 +2953,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 boldsource = 'BOLD_%d' % (bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-            r += "\n\n---> %s BOLD %s" % (action("Preprocessing settings (unwarpdir, refimage, moveref, seimage) for", options['run']), printbold)
+            r += "\n\n---> %s BOLD %s" % (pc.action("Preprocessing settings (unwarpdir, refimage, moveref, seimage) for", options['run']), printbold)
             boldok = True
 
             # ===> Check for and prepare distortion correction parameters
@@ -3057,13 +3057,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
                 for i, v in hcp['fieldmap'].iteritems():
-                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
-                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
+                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
-                if not is_number(options['hcp_bold_echospacing']):
+                if not pc.is_number(options['hcp_bold_echospacing']):
                     fieldok = False
                     r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (options['hcp_bold_echospacing'])
-                if not is_number(options['hcp_bold_echodiff']):
+                if not pc.is_number(options['hcp_bold_echodiff']):
                     fieldok = False
                     r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (options['hcp_bold_echodiff'])
                 boldok = boldok and fieldok
@@ -3077,7 +3077,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
                 for i, v in hcp['fieldmap'].iteritems():
-                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
+                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
                 fmmag = None
                 fmphase = None
@@ -3089,13 +3089,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
                 for i, v in hcp['fieldmap'].iteritems():
-                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
-                    r, fieldok = checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
+                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
-                if not is_number(options['hcp_bold_echospacing']):
+                if not pc.is_number(options['hcp_bold_echospacing']):
                     fieldok = False
                     r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (options['hcp_bold_echospacing'])
-                if not is_number(options['hcp_bold_echodiff']):
+                if not pc.is_number(options['hcp_bold_echodiff']):
                     fieldok = False
                     r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (options['hcp_bold_echodiff'])
                 boldok = boldok and fieldok
@@ -3131,13 +3131,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 boldroot = boldsource + orient
 
             boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
-            r, boldok = checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
+            r, boldok = pc.checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
 
             # --- check for ref image
 
             if options['hcp_bold_sbref'].lower() == 'use':
                 refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
-                r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
+                r, boldok = pc.checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
             else:
                 r += "\n     ... reference image not used"
 
@@ -3191,7 +3191,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         r += "\n"
 
         parelements = max(1, min(options['parelements'], len(boldsData)))
-        r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
+        r += "\n%s %d BOLD images in parallel" % (pc.action("Running", options['run']), parelements)
 
         if (parelements == 1): # serial execution
             # loop over bolds
@@ -3249,14 +3249,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
 
-    r += "\n\nHCP fMRIVolume %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP fMRIVolume %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -3454,7 +3454,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                         r += "\n     ... removing preexisting xfms file [%s]" % (xfms_file)
                         os.remove(xfms_file)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP fMRIVolume', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP fMRIVolume', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -3463,7 +3463,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP fMRIVolume can be run"
                     report['ready'].append(printbold)
@@ -3483,7 +3483,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -3659,7 +3659,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Surface registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP fMRI Surface registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -3668,7 +3668,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         # --- Base settings
 
-        doOptionsCheck(options, sinfo, 'hcp_fmri_surface')
+        pc.doOptionsCheck(options, sinfo, 'hcp_fmri_surface')
         doHCPOptionsCheck(options, sinfo, 'hcp_fmri_surface')
         hcp = getHCPPaths(sinfo, options)
 
@@ -3699,7 +3699,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
-        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
@@ -3707,7 +3707,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         parelements = max(1, min(options['parelements'], len(bolds)))
-        r += "\n%s %d BOLD images in parallel" % (action("Running", options['run']), parelements)
+        r += "\n%s %d BOLD images in parallel" % (pc.action("Running", options['run']), parelements)
 
         if parelements == 1: # serial execution
             for b in bolds:
@@ -3751,14 +3751,14 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Surface failed')
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP fMRI Surface failed')
 
-    r += "\n\nHCP fMRISurface %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP fMRISurface %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -3782,12 +3782,12 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        r += "\n\n---> %s BOLD image %s" % (pc.action("Processing", options['run']), printbold)
         boldok = True
 
         # --- check for bold image
         boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r, boldok = checkForFile2(r, boldimg, '\n     ... fMRIVolume preprocessed bold image present', '\n     ... ERROR: fMRIVolume preprocessed bold image missing!', status=boldok)
+        r, boldok = pc.checkForFile2(r, boldimg, '\n     ... fMRIVolume preprocessed bold image present', '\n     ... ERROR: fMRIVolume preprocessed bold image missing!', status=boldok)
 
         # --- Set up the command
 
@@ -3831,7 +3831,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP fMRISurface', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP fMRISurface', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -3840,7 +3840,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP fMRISurface can be run"
                     report['ready'].append(printbold)
@@ -3860,7 +3860,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -4265,19 +4265,19 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP ICAFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP ICAFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_icafix')
+        pc.doOptionsCheck(options, sinfo, 'hcp_icafix')
         doHCPOptionsCheck(options, sinfo, 'hcp_icafix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
@@ -4292,7 +4292,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
             parelements = max(1, min(options['parelements'], len(icafixGroups)))
-        r += "\n\n%s %d ICAFix images in parallel" % (action("Processing", options['run']), parelements)
+        r += "\n\n%s %d ICAFix images in parallel" % (pc.action("Processing", options['run']), parelements)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
@@ -4398,14 +4398,14 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ICAFix failed')
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ICAFix failed')
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP ICAFix failed')
 
-    r += "\n\nHCP ICAFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP ICAFix %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -4428,12 +4428,12 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
     try:
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        r += "\n---> %s BOLD image %s" % (pc.action("Processing", options['run']), printbold)
         boldok = True
 
         # --- check for bold image
         boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+        r, boldok = pc.checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
         # bold in input format
         inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
@@ -4473,7 +4473,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running single-run HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running single-run HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -4489,7 +4489,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'single-run HCP ICAFix ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> single-run HCP ICAFix can be run"
                     report['ready'].append(printbold)
@@ -4509,7 +4509,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -4531,7 +4531,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
     try:
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
+        r += "\n---> %s group %s" % (pc.action("Processing", options['run']), groupname)
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -4553,7 +4553,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
-            r, boldok = checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s.nii.gz] missing!' % boldimg, status=boldok)
+            r, boldok = pc.checkForFile2(r, "%s.nii.gz" % boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s.nii.gz] missing!' % boldimg, status=boldok)
 
             if not boldok:
                 groupok = False
@@ -4606,7 +4606,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi-run HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running multi-run HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(groupname)
@@ -4622,7 +4622,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'multi-run HCP ICAFix ' + groupname, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> multi-run HCP ICAFix can be run"
                     report['ready'].append(groupname)
@@ -4642,7 +4642,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -4799,19 +4799,19 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PostFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP PostFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_post_fix')
+        pc.doOptionsCheck(options, sinfo, 'hcp_post_fix')
         doHCPOptionsCheck(options, sinfo, 'hcp_post_fix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
@@ -4828,7 +4828,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
             parelements = max(1, min(options['parelements'], len(icafixGroups)))
-        r += "\n\n%s %d PostFixes in parallel" % (action("Processing", options['run']), parelements)
+        r += "\n\n%s %d PostFixes in parallel" % (pc.action("Processing", options['run']), parelements)
 
         # --- Execute
         # single fix
@@ -4886,14 +4886,14 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP PostFix failed')
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP PostFix failed')
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP PostFix failed')
 
-    r += "\n\nHCP PostFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP PostFix %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -4922,7 +4922,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, printica)
-        r += "\n---> %s bold ICA %s" % (action("Processing", options['run']), printica)
+        r += "\n---> %s bold ICA %s" % (pc.action("Processing", options['run']), printica)
 
     else:
         # highpass
@@ -4933,13 +4933,13 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, printica)
-        r += "\n---> %s group ICA %s" % (action("Processing", options['run']), printica)
+        r += "\n---> %s group ICA %s" % (pc.action("Processing", options['run']), printica)
 
     try:
         boldok = True
 
         # --- check for ICA image
-        r, boldok = checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
+        r, boldok = pc.checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         # hcp_postfix_reusehighpass
         if options['hcp_postfix_reusehighpass'] == "True":
@@ -5006,7 +5006,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_post_fix", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_post_fix", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -5015,7 +5015,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP PostFix can be run"
                     report['ready'].append(printbold)
@@ -5038,7 +5038,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # log beautify
         r += "\n\n"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -5202,19 +5202,19 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP ReApplyFix registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP ReApplyFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_reapply_fix')
+        pc.doOptionsCheck(options, sinfo, 'hcp_reapply_fix')
         doHCPOptionsCheck(options, sinfo, 'hcp_reapply_fix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
@@ -5231,7 +5231,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options['parelements'], len(icafixBolds)))
         else:
             parelements = max(1, min(options['parelements'], len(icafixGroups)))
-        r += "\n\n%s %d ReApplyFixes in parallel" % (action("Processing", options['run']), parelements)
+        r += "\n\n%s %d ReApplyFixes in parallel" % (pc.action("Processing", options['run']), parelements)
 
         # --- Execute
         # single fix
@@ -5320,14 +5320,14 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ReApplyFix failed')
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ReApplyFix failed')
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP ReApplyFix failed')
 
-    r += "\n\nHCP ReApplyFix %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP ReApplyFix %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -5417,7 +5417,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             # -- Run
             if run and boldok:
                 if options['run'] == "run":
-                    r, _, _, failed = runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                    r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(printbold)
@@ -5426,7 +5426,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r, overwrite=overwrite)
+                    passed, _, r, failed = pc.checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r, overwrite=overwrite)
                     if passed is None:
                         r += "\n---> single-run HCP ReApplyFix can be run"
                         report['ready'].append(printbold)
@@ -5454,7 +5454,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             report['failed'].append(printbold)
             boldok = False
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -5476,7 +5476,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
     try:
         r += "\n------------------------------------------------------------"
-        r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
+        r += "\n---> %s group %s" % (pc.action("Processing", options['run']), groupname)
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -5498,7 +5498,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            r, boldok = pc.checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
                 groupok = False
@@ -5580,7 +5580,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options['run'] == "run":
-                    r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(groupname)
@@ -5589,7 +5589,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r, overwrite=overwrite)
+                    passed, _, r, failed = pc.checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r, overwrite=overwrite)
                     if passed is None:
                         r += "\n---> multi-run HCP ReApplyFix can be run"
                         report['ready'].append(groupname)
@@ -5615,7 +5615,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -5632,7 +5632,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        r += "\n---> %s ICA %s" % (action("Processing", options['run']), printbold)
+        r += "\n---> %s ICA %s" % (pc.action("Processing", options['run']), printbold)
         boldok = True
 
         # load parameters or use default values
@@ -5643,7 +5643,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
         # --- check for bold image
         icaimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
-        r, boldok = checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
+        r, boldok = pc.checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
@@ -5673,7 +5673,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP HandReclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP HandReclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -5682,7 +5682,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP HandReclassification can be run"
                     report['ready'].append(printbold)
@@ -5705,7 +5705,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         # log beautify
         r += "\n"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r = str(errormessage)
         report['failed'].append(printbold)
@@ -5932,19 +5932,19 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP MSMAll registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP MSMAll registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_msmall')
+        pc.doOptionsCheck(options, sinfo, 'hcp_msmall')
         doHCPOptionsCheck(options, sinfo, 'hcp_msmall')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
@@ -6003,14 +6003,14 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP MSMAll failed')
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP MSMAll failed')
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP MSMAll failed')
 
-    r += "\n\nHCP MSMAll %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP MSMAll %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -6034,7 +6034,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
         outfmriname = options['hcp_msmall_outfmriname']
 
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
+        r += "\n---> %s MSMAll %s" % (pc.action("Processing", options['run']), outfmriname)
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -6063,7 +6063,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # input file check
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            r, boldok = pc.checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
                 boldsok = False
@@ -6140,7 +6140,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, _, _, failed = runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -6149,7 +6149,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(printbold)
@@ -6169,7 +6169,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bolds %s\n" % (msmallBolds)
         r += str(errormessage)
         report['failed'].append(msmallBolds)
@@ -6194,7 +6194,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
         outfmriname = options['hcp_msmall_outfmriname']
 
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s MSMAll %s" % (action("Processing", options['run']), outfmriname)
+        r += "\n---> %s MSMAll %s" % (pc.action("Processing", options['run']), outfmriname)
 
         # --- check for bold images and prepare targets parameter
         boldtargets = ""
@@ -6224,7 +6224,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # input file check
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, fmriprocstring))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            r, boldok = pc.checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
                 break
@@ -6240,7 +6240,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             # check if group file exists
             groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
             groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
-            r, boldok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
+            r, boldok = pc.checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
 
         if options['hcp_msmall_templates'] is None:
           msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
@@ -6312,7 +6312,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(groupname)
@@ -6321,7 +6321,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(groupname)
@@ -6341,7 +6341,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -6505,19 +6505,19 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DeDriftAndResample registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP DeDriftAndResample registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_dedrift_and_resample')
+        pc.doOptionsCheck(options, sinfo, 'hcp_dedrift_and_resample')
         doHCPOptionsCheck(options, sinfo, 'hcp_dedrift_and_resample')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
@@ -6564,14 +6564,14 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
         failed = 1
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
 
-    r += "\n\nHCP DeDriftAndResample %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP DeDriftAndResample %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, report)
@@ -6592,7 +6592,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         bolds = group["bolds"]
 
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
+        r += "\n---> %s DeDriftAndResample" % (pc.action("Processing", options['run']))
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -6618,7 +6618,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
             # input file check
             boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+            r, boldok = pc.checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
 
             if not boldok:
                 boldsok = False
@@ -6700,7 +6700,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         # -- Run
         if run and boldsok:
             if options['run'] == "run":
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(regname)
@@ -6709,7 +6709,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(regname)
@@ -6729,7 +6729,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(regname)
@@ -6747,7 +6747,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
     try:
         r += "\n\n------------------------------------------------------------"
-        r += "\n---> %s DeDriftAndResample" % (action("Processing", options['run']))
+        r += "\n---> %s DeDriftAndResample" % (pc.action("Processing", options['run']))
 
         # --- check for bold images and prepare targets parameter
         groupList = []
@@ -6783,7 +6783,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
                 # input file check
                 boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_hp%s_clean.nii.gz" % (boldtarget, highpass))
-                r, boldok = checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg)
+                r, boldok = pc.checkForFile2(r, boldimg, '\n     ... bold image %s present' % boldtarget, '\n     ... ERROR: bold image [%s] missing!' % boldimg)
 
                 if not boldok:
                     runok = False
@@ -6799,7 +6799,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             # check if group file exists
             groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
             groupimg = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, groupica)
-            r, groupok = checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg)
+            r, groupok = pc.checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg)
 
             if not groupok:
                 runok = False
@@ -6956,7 +6956,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(grouptargets)
@@ -6965,7 +6965,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
             # -- just checking
             else:
-                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(grouptargets)
@@ -6985,7 +6985,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(grouptargets)
@@ -7003,13 +7003,13 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DTI Fix ..." % (action("Running", options['run']))
+    r += "\n%s HCP DTI Fix ..." % (pc.action("Running", options['run']))
 
     run    = True
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_dtifit')
+        pc.doOptionsCheck(options, sinfo, 'hcp_dtifit')
         doHCPOptionsCheck(options, sinfo, 'hcp_dtifit')
         hcp = getHCPPaths(sinfo, options)
 
@@ -7055,12 +7055,12 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, _, report, failed = runExternalForFile(tfile, comm, 'Running HCP DTI Fit', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
+                r, _, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP DTI Fit', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
 
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, None, 'HCP DTI Fit', r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(tfile, None, 'HCP DTI Fit', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP DTI Fit can be run"
                     report = "HCP DTI Fit FS can be run"
@@ -7071,14 +7071,14 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
             report = "HCP DTI Fit can not be run"
             failed = 1
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sinfo['id'], report, failed))
@@ -7091,13 +7091,13 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP Bedpostx GPU ..." % (action("Running", options['run']))
+    r += "\n%s HCP Bedpostx GPU ..." % (pc.action("Running", options['run']))
 
     run    = True
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_bedpostx')
+        pc.doOptionsCheck(options, sinfo, 'hcp_bedpostx')
         doHCPOptionsCheck(options, sinfo, 'hcp_bedpostx')
         hcp = getHCPPaths(sinfo, options)
 
@@ -7144,11 +7144,11 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, _, report, failed = runExternalForFile(tfile, comm, 'Running HCP BedpostX', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
+                r, _, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP BedpostX', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = checkRun(tfile, None, 'HCP BedpostX', r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(tfile, None, 'HCP BedpostX', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP BedpostX can be run"
                     report = "HCP BedpostX can be run"
@@ -7159,14 +7159,14 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
             report = "HCP BedpostX can not be run"
             failed = 1
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         failed = 1
 
-    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
     return (r, (sinfo['id'], report, failed))
@@ -7330,8 +7330,8 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     # --- file/dir structure
 
 
-    f = getFileNames(sinfo, options)
-    d = getSessionFolders(sinfo, options)
+    f = pc.getFileNames(sinfo, options)
+    d = pc.getSessionFolders(sinfo, options)
 
     #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
     #    MNINonLinear/Results/<boldname>/<boldname>_Atlas.dtseries.nii -- cifti
@@ -7355,14 +7355,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         r += "\n ... T1 ready"
         report['T1'] = 'present'
     else:
-        status, r = linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'T1w.nii.gz'), f['t1'], r, status, "T1")
+        status, r = gc.linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'T1w.nii.gz'), f['t1'], r, status, "T1")
         report['T1'] = 'copied'
 
     if os.path.exists(f['fs_aparc_t1']) and not overwrite:
         r += "\n ... highres aseg+aparc ready"
         report['hires aseg+aparc'] = 'present'
     else:
-        status, r = linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'aparc+aseg.nii.gz'), f['fs_aparc_t1'], r, status, "highres aseg+aparc")
+        status, r = gc.linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'aparc+aseg.nii.gz'), f['fs_aparc_t1'], r, status, "highres aseg+aparc")
         report['hires aseg+aparc'] = 'copied'
 
     if os.path.exists(f['fs_aparc_bold']) and not overwrite:
@@ -7377,7 +7377,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 options['logtag'] += "_"
             logtags = options['logtag'] + "%s-flirt_%s" % (options['command_ran'], sinfo['id'])
 
-            _, endlog, _, failedcom = runExternalForFile(f['fs_aparc_bold'], 'flirt -interp nearestneighbour -ref %s -in %s -out %s -applyisoxfm 2' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite=overwrite, remove=options['log'] == 'remove', logfolder=options['comlogs'], logtags=logtags, shell=True)
+            _, endlog, _, failedcom = pc.runExternalForFile(f['fs_aparc_bold'], 'flirt -interp nearestneighbour -ref %s -in %s -out %s -applyisoxfm 2' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite=overwrite, remove=options['log'] == 'remove', logfolder=options['comlogs'], logtags=logtags, shell=True)
             if failedcom:
                 report['lores aseg+aparc'] = 'failed'
                 failed += 1
@@ -7410,7 +7410,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     -> updated .spec file [%s]" % (sid)
                     ncp += 1
                     continue
-                if linkOrCopy(sfile, tfile):
+                if gc.linkOrCopy(sfile, tfile):
                     ncp += 1
                 else:
                     r += "\n     -> ERROR: could not map or copy %s" % (sfile)
@@ -7435,14 +7435,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     report['boldfail'] = 0
     report['boldskipped'] = 0
 
-    bolds, skipped, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+    bolds, skipped, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
 
     for boldnum, boldname, boldtask, boldinfo in bolds:
 
         r += "\n ... " + boldname
 
         # --- filenames
-        f.update(getBOLDFileNames(sinfo, boldname, options))
+        f.update(pc.getBOLDFileNames(sinfo, boldname, options))
 
         status = True
         hcp_bold_name = ""
@@ -7470,13 +7470,13 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... volume image ready"
                 else:
                     # r += "\n     ... linking volume image \n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + '.nii.gz'), f['bold'])
-                    status, r = linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_nifti_tail'] + '.nii.gz'), f['bold_qx_vol'], r, status, "volume image", "\n     ... ")
+                    status, r = gc.linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_nifti_tail'] + '.nii.gz'), f['bold_qx_vol'], r, status, "volume image", "\n     ... ")
 
                 if os.path.exists(f['bold_dts']) and not overwrite:
                     r += "\n     ... grayordinate image ready"
                 else:
                     # r += "\n     ... linking cifti image\n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
-                    status, r = linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_qx_dts'], r, status, "grayordinate image", "\n     ... ")
+                    status, r = gc.linkOrCopy(os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_qx_dts'], r, status, "grayordinate image", "\n     ... ")
 
                 if os.path.exists(f['bold_mov']) and not overwrite:
                     r += "\n     ... movement data ready"
@@ -7506,7 +7506,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 report['boldfail'] += 1
                 failed += 1
 
-        except (ExternalFailed, NoSourceFolder), errormessage:
+        except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
             r = str(errormessage)
             report['boldfail'] += 1
             failed += 1

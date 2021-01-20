@@ -31,84 +31,6 @@ import filelock as fl
 import ast
 
 
-def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False):
-    """
-    moveLinkOrCopy - documentation not yet available.
-    """
-    if action is None:
-        action = 'link'
-    if status is None:
-        status = True
-    if name is None:
-        name = source
-    if prefix is None:
-        prefix = ""
-
-    def report(rstatus, msg):
-        if lock:
-            fl.unlock(target)
-        if r is None:
-            return rstatus
-        else:
-            return rstatus, r + prefix + msg
-
-    if os.path.exists(source):
-
-        targetfolder = os.path.dirname(target)
-        if not os.path.exists(targetfolder):
-            io = fl.makedirs(targetfolder)
-            if io:
-                if io != 'File exists':
-                    return report(False, "ERROR: %s could not be %sed, target folder could not be created, check permissions! " % (name, action))
-
-        if lock:
-            fl.lock(target)
-
-        if action == 'link':
-            io = fl.link(source, target)
-            if not io:
-                return report(status, "%s mapped" % (name))
-            elif io == 'File exists':
-                if os.path.samefile(source, target):
-                    return report(status, "%s already mapped [%s]" % (name, target))
-                else:
-                    io = fl.remove(target)
-                    if io and io != 'No such file or directory':
-                        return report(False, "ERROR: %s could not be %sed, existing file could not be removed, check permissions! " % (name, action))
-                    io = fl.link(source, target)
-                    if not io:
-                        return report(status, "%s mapped" % (name))
-                    else: 
-                        action = 'copy'
-            else:
-                action = 'copy'
-
-        if action == 'copy':
-            try:
-                shutil.copy2(source, target)
-                return report(status, "%s copied" % (name))
-            except:
-                return report(False, "ERROR: %s could not be copied, check permissions! " % (name))
-
-        if action == 'move':
-            try:
-                shutil.move(source, target)
-                return report(status, "%s moved" % (name))
-            except:
-                return report(False, "ERROR: %s could not be moved, check permissions! " % (name))
-
-        if action == 'gzip':
-            try:
-                with open(source, 'rb') as f_in, gzip.open(target, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-                return report(status, "%s copied and gzipped" % (name))
-            except:
-                return report(False, "ERROR: %s could not be copied and gzipped, check permissions! " % (name))
-
-    else:
-        return report(False, "WARNING: %s could not be %sed, source file either does not exist or can not be accessed [%s]! " % (name, action, source))
-
-
 def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
     '''
     Identifies and returns the intended location of the file based on its name.
@@ -711,9 +633,9 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             if tfile:
                 if tfile.endswith('.nii'):
                     tfile += ".gz"
-                    status, msg = moveLinkOrCopy(file, tfile, 'gzip', r="", prefix='    .. ', lock=lock)
+                    status, msg = gc.moveLinkOrCopy(file, tfile, 'gzip', r="", prefix='    .. ', lock=lock)
                 else:
-                    feedback = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ', lock=lock)
+                    feedback = gc.moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ', lock=lock)
                     status, msg = feedback
 
                 allOk = allOk and status
@@ -1242,7 +1164,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
 
         tfile = os.path.join(nfolder, "%02d.nii.gz" % (imgn))
         
-        status = moveLinkOrCopy(bidsData['images']['info'][image]['filepath'], tfile, action='link')
+        status = gc.moveLinkOrCopy(bidsData['images']['info'][image]['filepath'], tfile, action='link')
         if status:
             print "--> linked %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename'])            
             if fileinfo == 'short':
@@ -1261,14 +1183,14 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         if bidsData['images']['info'][image]['label'] == 'dwi':
             sbvec = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bvec')
             tbvec = tfile.replace('.nii.gz', '.bvec')
-            if moveLinkOrCopy(sbvec, tbvec, action='link'):
+            if gc.moveLinkOrCopy(sbvec, tbvec, action='link'):
                 print >> bout, "%s => %s" % (sbvec, tbvec)
             else:
                 status = False
 
             sbval = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bval')
             tbval = tfile.replace('.nii.gz', '.bval')
-            if moveLinkOrCopy(sbval, tbval, action='link', status=status):
+            if gc.moveLinkOrCopy(sbval, tbval, action='link', status=status):
                 print >> bout, "%s => %s" % (sbval, tbval)
             else:
                 status = False

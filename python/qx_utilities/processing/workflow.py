@@ -32,12 +32,13 @@ import shutil
 import re
 import traceback
 import time
-import exceptions as ge
+import general.exceptions as ge
 import general.filelock as fl
 import general.meltmovfidl as gm
+import general.img as gi
+import general.core as gc
 from datetime import datetime
 from core import *
-from general.img import *
 
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -73,32 +74,32 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
         if overwrite or copy:
             r += '\n... copying %s' % (f['t1_source'])
             if options['image_target'] == '4dfp':
-                if getImgFormat(f['t1_source']) == '.4dfp.img':
-                    linkOrCopy(f['t1_source'], f['t1'])
-                    linkOrCopy(f['t1_source'].replace('.img', '.ifh'), f['t1'].replace('.img', '.ifh'))
+                if gi.getImgFormat(f['t1_source']) == '.4dfp.img':
+                    gc.linkOrCopy(f['t1_source'], f['t1'])
+                    gc.linkOrCopy(f['t1_source'].replace('.img', '.ifh'), f['t1'].replace('.img', '.ifh'))
                 else:
-                    tmpfile = f['t1'].replace('.4dfp.img', getImgFormat(f['t1_source']))
-                    linkOrCopy(f['t1_source'], tmpfile)
+                    tmpfile = f['t1'].replace('.4dfp.img', gi.getImgFormat(f['t1_source']))
+                    gc.linkOrCopy(f['t1_source'], tmpfile)
                     r, endlog, status, failed = runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpfile, f['t1'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tmpfile)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag']], r=r)
                     os.remove(tmpfile)
             if options['image_target'] == 'nifti':
-                if getImgFormat(f['t1_source']) == '.4dfp.img':
+                if gi.getImgFormat(f['t1_source']) == '.4dfp.img':
                     tmpimg = f['t1'] + '.4dfp.img'
                     tmpifh = f['t1'] + '.4dfp.ifh'
-                    linkOrCopy(f['t1_source'], tmpimg)
-                    linkOrCopy(f['t1_source'].replace('.img', '.ifh'), tmpifh)
+                    gc.linkOrCopy(f['t1_source'], tmpimg)
+                    gc.linkOrCopy(f['t1_source'].replace('.img', '.ifh'), tmpifh)
                     r, endlog, status, failed = runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpifh, f['t1'].replace('.img', '.ifh')), '... converting %s to NIfTI' % (os.path.basename(tmpimg)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag']], r=r)
                     os.remove(tmpimg)
                     os.remove(tmpifh)
                 else:
-                    if getImgFormat(f['t1_source']) == '.nii.gz':
+                    if gi.getImgFormat(f['t1_source']) == '.nii.gz':
                         tmpfile = f['t1'] + ".gz"
-                        linkOrCopy(f['t1_source'], tmpfile)
+                        gc.linkOrCopy(f['t1_source'], tmpfile)
                         r, endlog, status, failed = runExternalForFile(f['t1'], 'gunzip -f %s' % (tmpfile), '... gunzipping %s' % (os.path.basename(tmpfile)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=[options['bold_variant'], options['logtag']], r=r)
                         if os.path.exists(tmpfile):
                             os.remove(tmpfile)
                     else:
-                        linkOrCopy(f['t1_source'], f['t1'])
+                        gc.linkOrCopy(f['t1_source'], f['t1'])
 
         else:
             r += '\n... %s present' % (f['t1'])
@@ -339,7 +340,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
         # --- extract first bold frame
         if not os.path.exists(f['bold1']) or overwrite:
-            slice_image(f['bold_vol'], f['bold1'], 1)
+            gi.slice_image(f['bold_vol'], f['bold1'], 1)
             if os.path.exists(f['bold1']):
                 r += '\n    ... sliced first frame from %s' % (os.path.basename(f['bold_vol']))
             else:
@@ -354,9 +355,9 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
         # --- convert to NIfTI
         bsource  = f['bold1']
-        bbtarget = f['bold1_brain'].replace(getImgFormat(f['bold1_brain']), '.nii.gz')
-        bmtarget = f['bold1_brain_mask'].replace(getImgFormat(f['bold1_brain_mask']), '.nii.gz')
-        if getImgFormat(f['bold1']) == '.4dfp.img':
+        bbtarget = f['bold1_brain'].replace(gi.getImgFormat(f['bold1_brain']), '.nii.gz')
+        bmtarget = f['bold1_brain_mask'].replace(gi.getImgFormat(f['bold1_brain_mask']), '.nii.gz')
+        if gi.getImgFormat(f['bold1']) == '.4dfp.img':
             bsource = f['bold1'].replace('.4dfp.img', '.nii.gz')
 
             # run g_FlipFormat
@@ -1189,7 +1190,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 froot = "%s%s_%s%s_%s.pdf" % (options['boldname'], options['nifti_tail'], options['mov_pref'], options['mov_plot'], sf)
                 if os.path.exists(os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot))):
                     os.remove(os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
-                linkOrCopy(os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
+                gc.linkOrCopy(os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
                 r += '\n... copying %s to %s' % (os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
 
         if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme'] and options['event_file'] != "" and options['bolds'] != "":
@@ -2169,7 +2170,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             options['event_string'],            # --- event string specifying what and how of the task to regress
             options['bold_prefix'],             # --- prefix to the bold files
             boldow,                             # --- whether to overwrite the existing files
-            getImgFormat(f['bold_final']),      # --- what file extension to expect and use (e.g. '.nii', .'.4dfp.img')
+            gi.getImgFormat(f['bold_final']),      # --- what file extension to expect and use (e.g. '.nii', .'.4dfp.img')
             scrub,                              # --- scrub parameters
             options['pignore'],                 # --- how to deal with bad frames ('hipass:keep/linear/spline|regress:keep/ignore|lopass:keep/linear/spline')
             opts)                               # --- additional options
@@ -2757,7 +2758,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
                 # --- loop through bold files
 
-                conc    = readConc(f_conc, boldname=options['boldname'])
+                conc    = gi.readConc(f_conc, boldname=options['boldname'])
                 nconc   = []
                 bolds   = []
                 rstatus = True
@@ -2846,7 +2847,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     failed += 1
                     continue
 
-                writeConc(f_conc, nconc)
+                gi.writeConc(f_conc, nconc)
 
                 # --- run matlab preprocessing script
 
@@ -2871,7 +2872,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     options['event_string'],            # --- event string specifying what and how of task to regress
                     options['bold_prefix'],             # --- optional prefix to the resulting bolds
                     boldow,                             # --- whether to overwrite existing files
-                    getImgFormat(f['bold_final']),      # --- the format of the images (.nii vs. .4dfp.img)
+                    gi.getImgFormat(f['bold_final']),      # --- the format of the images (.nii vs. .4dfp.img)
                     scrub,                              # --- scrub parameters string
                     options['pignore'],                 # --- how to deal with bad frames ('hipass:keep/linear/spline|regress:keep/ignore|lopass:keep/linear/spline')
                     opts,                               # --- additional options
