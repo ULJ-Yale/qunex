@@ -4,10 +4,10 @@
 #  This file is used to specify mappings between image sequence names (e.g.
 #  T1w 0.7mm N1) to the image descriptors used for sorting data in a folder
 #  organization expected by the HCP minimal preprocessing pipelines. For more 
-#  background information, please see help for setupHCP commands,
+#  background information, please see help for setup_hcp commands,
 #  and documentation on Running HCP minimal preprocessing pipeline. 
 #  
-#  This file is used by createSessionInfo command. The command processes session 
+#  This file is used by create_session_info command. The command processes session 
 #  information files (typically session.txt) and generates a target file 
 #  (default is session_hcp).txt). The general format for mapping specification is: 
 #
@@ -27,7 +27,7 @@
 #  <original_sequence_name>  => bold:<user_speficied_label>
 # 
 #  Here the 'bold' part denotes that it is a bold file and the <user_speficied_label>
-#  allows for flexibility in naming. createSessionInfo will automatically number bold images in 
+#  allows for flexibility in naming. create_session_info will automatically number bold images in 
 #  a sequential order, starting with 1.
 #
 #

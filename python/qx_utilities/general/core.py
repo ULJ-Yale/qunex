@@ -21,6 +21,7 @@ import sys
 import types
 import traceback
 import exceptions as ge
+import commands_support as gcs
 
 
 def readSessionData(filename, verbose=False):
@@ -626,7 +627,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         lf.close()
 
         # remove logs for exceptions
-        if "batchTag2NameKey" in name:
+        if name in gcs.logskip_commands:
             if os.path.exists(comlogname):
                 os.remove(comlogname)
             if os.path.exists(runlogname):
@@ -666,7 +667,7 @@ def runInParallel(calls, cores=None, prepend=""):
 
     ::
 
-        runInParallel({'name': 'Sort dicom files', 'function': dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
+        runInParallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'sout': 'sort_dicom.log'}, cores=1, prepend=' ... ')
     """
 
     """

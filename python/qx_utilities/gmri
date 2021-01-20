@@ -8,6 +8,7 @@ from general import matlab as gm
 from general import core as gc
 from general import exceptions as ge
 from general import commands as gcom
+from general import commands_support as gcs
 import os.path
 import sys
 import copy
@@ -47,8 +48,8 @@ help = '''
 # Took out these two functions until fully integrated to avoid documentation confusion w/ bash qx_utilities
 # Also these should not be referenced as 'hcp' functions as they are not
 #
-# hcpdf hcp_DTIFit       Run FSL DTI fit.
-# hcpdb hcp_Bedpostx     Run FSL Bedpostx GPU.
+# hcp_dtifit    Run FSL DTI fit.
+# hcp_bedpostx  Run FSL Bedpostx GPU.
 
 comlist = r'''
   QuNex python utilities (python qx_utilities) for Preprocessing and Analyses   
@@ -57,79 +58,79 @@ comlist = r'''
 
 DICOM commands
 --------------
-listDicom    [folder=.]
-splitDicom   [folder=.]
-sortDicom    [folder=.]
-dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
-dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool=auto]
-importDICOM  [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
-getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
+list_dicom      [folder=.]
+split_dicom     [folder=.]
+sort_dicom      [folder=.]
+dicom2nii       [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
+dicom2niix      [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool=auto]
+import_dicom    [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
+get_dicom_info  dicomfile=<dicom_file> [scanner=siemens]
 
 
 Import commands
 ---------------
-importBIDS   [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
-mapBIDS2nii  [sourcefolder='.'] [overwrite='no']
-importHCP    [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
-mapHCPLS2nii [sourcefolder='.'] [overwrite='no']
+import_bids     [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+map_bids2nii    [sourcefolder='.'] [overwrite='no']
+import_hcp      [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
+map_hcpls2nii   [sourcefolder='.'] [overwrite='no']
 
 
 WUSTL NIL pipeline commands
 ---------------------------
-runNIL       [folder=.] [overwrite=no] [sourcefile=session.txt]
-runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
+run_nil         [folder=.] [overwrite=no] [sourcefile=session.txt]
+run_nil_folder  [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
 
 
 General image file commands
 ---------------------------
-sliceImage    sourcefile=<source image> targetfile=<target image> [frames=1]
+slice_image     sourcefile=<source image> targetfile=<target image> [frames=1]
 
 
 NIfTI file conversion commands
 ------------------------------
-fz2zf         inf=<input_image> [outf=<output_image>]
-reorder       inf=<input_image> [outf=<output_image>]
-reslice       inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
-printniftihdr <image_filename>
-modniftihdr   <image_filename> <modification string>
-nifti24dfp    inf=<input_filename> [outf=<output_filename>]
+fz2zf           inf=<input_image> [outf=<output_image>]
+reorder         inf=<input_image> [outf=<output_image>]
+reslice         inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
+printniftihdr   <image_filename>
+modniftihdr     <image_filename> <modification string>
+nifti24dfp      inf=<input_filename> [outf=<output_filename>]
 
 
 HCP setup commands
 ------------------
-createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_*.txt] [mapping=specs/*_mapping.txt] [filter=None] [overwrite=no]
-setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt] [check="yes"] [existing="add"] [hcp_filename="standard"] [folderstructure="hcpls"] [hcp_suffix=""]
+create_session_info sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_*.txt] [mapping=specs/*_mapping.txt] [filter=None] [overwrite=no]
+setup_hcp           [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt] [check="yes"] [existing="add"] [hcp_filename="standard"] [folderstructure="hcpls"] [hcp_suffix=""]
 
 
 Miscellaneous file commands
 ---------------------------
-createStudy  studyfolder=<path to study base folder> [subfolders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
-createBatch  [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch.txt]
-createList  [sessionsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-createConc  [sessionsfolder=.] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
+create_study    studyfolder=<path to study base folder> [subfolders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
+create_batch    [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch.txt]
+create_list     [sessionsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+create_conc     [sessionsfolder=.] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+run_list        listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
 FIDL file commands
 -------------------
-joinFidl       concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidlname to append>]
-joinFidlFolder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>] [fidlname=<optional fidl name to append>]
-splitFidl      concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
-checkFidl      [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
+join_fidl           concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidlname to append>]
+join_fidl_folder    concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>] [fidlname=<optional fidl name to append>]
+split_fidl          concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
+check_fidl          [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
 
 
 Workbench surface mapping commands
 ----------------------------------
-map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
-map2HCP volume=<volume file> [method=trilinear]
-maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
-joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
+map2pals    volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
+map2hcp     volume=<volume file> [method=trilinear]
+mask_map    image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
+join_maps   images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
 
 
 PALM commands
 --------------
-createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
-runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of proceeses to run in parallel>]  [overwite=no]
+create_ws_palm_design   factors=<factor string> nsubjects=<number of subjects> root=<design root name>
+run_palm                image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of proceeses to run in parallel>]  [overwite=no]
 
 
 Scheduling command
@@ -171,47 +172,47 @@ processing options.
 
 HCP preprocessing commands
 --------------------------
-hcp1  hcp_PreFS                 Run HCP Pre FreeSurfer pipeline.
-hcp2  hcp_FS                    Run HCP FreeSurfer pipeline.
-hcp3  hcp_PostFS                Run HCP Post FreeSurfer pipeline.
-hcp4  hcp_fMRIVolume            Run HCP fMRI Volume pipeline.
-hcp5  hcp_fMRISurface           Run HCP fMRI Surface pipeline.
-hcp6  hcp_ICAFix                Run HCP ICAFix pipeline.
-hcp7  hcp_PostFix               Run HCP PostFix pipeline.
-hcp8  hcp_ReApplyFix            Run HCP ReApplyFix pipeline.
-hcp9  hcp_MSMAll                Run HCP MSMAll pipeline.
-hcp10 hcp_DeDriftAndResample    Run HCP MSMAll pipeline.
-hcpd  hcp_Diffusion             Run HCP DWI pipeline.
+hcp_pre_freesurfer          Run HCP PreFreeSurfer pipeline.
+hcp_freesurfer              Run HCP FreeSurfer pipeline.
+hcp_post_freesurfer         Run HCP Post FreeSurfer pipeline.
+hcp_fmri_volume             Run HCP fMRI Volume pipeline.
+hcp_fmri_surface            Run HCP fMRI Surface pipeline.
+hcp_icafix                  Run HCP ICAFix pipeline.
+hcp_post_fix                Run HCP PostFix pipeline.
+hcp_reapply_fix             Run HCP ReApplyFix pipeline.
+hcp_msmall                  Run HCP MSMAll pipeline.
+hcp_dedrift_and_resample    Run HCP MSMAll pipeline.
+hcp_diffusion               Run HCP DWI pipeline.
 
 
 FSL commands
 --------------------------
-f99     fsl_f99                 Run FSL F99 command.
-fslx    fsl_xtract              Run FSL XTRACT command.
+fsl_f99                 Run FSL F99 command.
+fsl_xtract              Run FSL XTRACT command.
 
 
 Functional connectivity preprocessing commands
 ----------------------------------------------
-mhd  mapHCPData              Map HCP preprocessed data to sessions' image folder.
-bbm  createBOLDBrainMasks    Create brain masks for BOLD runs.
-cbs  computeBOLDStats        Compute BOLD movement and signal statistics.
-csr  createStatsReport       Create BOLD movement statistic reports and plots.
-ens  extractNuisanceSignal   Extract nuisance signal from BOLD images.
-bpp  preprocessBold          Preprocess single BOLD images.
-cpp  preprocessConc          Preprocess conc bundles of BOLD images.
+map_hcp_data            Map HCP preprocessed data to sessions' image folder.
+create_bold_brain_masks Create brain masks for BOLD runs.
+compute_bold_stats      Compute BOLD movement and signal statistics.
+create_stats_report     Create BOLD movement statistic reports and plots.
+extract_nuisance_signal Extract nuisance signal from BOLD images.
+preprocess_bold         Preprocess single BOLD images.
+preprocess_conc         Preprocess conc bundles of BOLD images.
 
 
 General purpose commands
 ------------------------
-rsc  runShellScript   Runs the specified script.
+run_shell_script    Runs the specified script.
 
 
 Legacy commands
 ---------------
-seg    runBasicSegmentation     Run basic structural image segmentation using BET and FAST.
-gfs    getFSData                Copy existing FreeSurfer data to sessions' images folder.
-fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
-fsf    runFullFS                Run full freesurfer segmentation
+run_basic_segmentation  Run basic structural image segmentation using BET and FAST.
+get_fs_data             Copy existing FreeSurfer data to sessions' images folder.
+run_subcortical_fs      Run subcortical freesurfer segmentation.
+run_full_fs             Run full freesurfer segmentation
 
 
 MATLAB commands supported via python qx_utilities
@@ -250,10 +251,10 @@ def runCommand(command, args):
         gu.checkStudy(folders['basefolder'])
 
     # --- check if command is deprecated
-    command = gu.check_deprecated_commands(command)
+    command = gcs.check_deprecated_commands(command)
 
     # -- remap deprecated arguments
-    args = gp.mapDeprecated(args, command)
+    args = gcs.check_deprecated_parameters(args, command)
 
     # --- sort commands by type
     if command in gcom.commands:
@@ -281,11 +282,11 @@ def runCommand(command, args):
         else:
             eargs[k] = v
 
-    # -- check extra arguments, except for runList
-    if eargs and command != "runList":
+    # -- check extra arguments, except for run_list
+    if eargs and command != "run_list":
         bad = []
         for k, v in eargs.items():
-            if k not in gcom.extraParameters:
+            if k not in gcs.extra_parameters:
                 bad.append(k)
                 print "ERROR: Extra argument %s is not valid! Please check your command!" % (k)
         if bad:
@@ -294,7 +295,7 @@ def runCommand(command, args):
     # -- process extra arguments
     sessions = None
     if 'sessions' in eargs:
-        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
+        if command != "run_list" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
             raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple sessions!" % (command))
         if folders['sessionsfolder'] is None:
             folders['sessionsfolder'] = "."
@@ -304,12 +305,12 @@ def runCommand(command, args):
 
     calls = []
 
-    # -- runList specifics
-    if command == "runList":
+    # -- run_list specifics
+    if command == "run_list":
         if sessions and 'sperlist' in eargs:
 
             if 'scheduler' in eargs:
-                # -- define number of sessions to run in each runList
+                # -- define number of sessions to run in each run_list
                 parsessions = int(eargs['sperlist'])
                 args['parsessions'] = eargs['sperlist']
                 if 'ignore' in args:
@@ -321,11 +322,11 @@ def runCommand(command, args):
                 gs.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
             
             else:
-                # -- define number of sessions to run in each runList
+                # -- define number of sessions to run in each run_list
                 sperlist = args['sperlist']
                 del args['sperlist']
 
-                # -- define number of runLists to run in parallel
+                # -- define number of run_list to run in parallel
                 parsessions = eargs.get('runinpar', 1)
                 args['parsessions'] = parsessions
                 if 'runinpar' in args:
@@ -336,15 +337,15 @@ def runCommand(command, args):
                     c += 1
                     largs = args.copy()
 
-                    # -- set up a list of sessions to run in each runList
+                    # -- set up a list of sessions to run in each run_list
 
                     slist = [sessions.pop(0)['id'] for e in range(sperlist) if sessions]
                     largs['sessionids'] = "|".join(slist)
 
-                    calls.append({'name': 'runList_%d' % (c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
+                    calls.append({'name': 'run_list_%d' % (c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
 
         else:
-            # -- if using a scheduler schedule the whole runList commmand
+            # -- if using a scheduler schedule the whole run_list commmand
             if 'scheduler' in eargs:
                 if 'ignore' in args:
                     args['ignore'] += 'scheduler'
@@ -388,9 +389,9 @@ def runCommand(command, args):
                 folders['logfolder'] = "."
 
             # createstudy exception
-            if command == "createStudy" and "studyfolder" in args:
+            if command == "create_study" and "studyfolder" in args:
                 folders['logfolder'] = args["studyfolder"] + "/processing/logs"
-            elif command == "createStudy":
+            elif command == "create_study":
                 folders['logfolder'] = "./processing/logs"
 
             # if case is provided
@@ -454,17 +455,20 @@ def printHelp(com):
         # -> complex processing commands
         for l in gp.calist:
             if len(l):
-                print l[0]
+                # deprecated command abbreviations 
+                # print l[0]
                 print l[1]
         # -> longitudinal processing commands
         for l in gp.lalist:
             if len(l):
-                print l[0]
+                # deprecated command abbreviations 
+                # print l[0]
                 print l[1]
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
-                print l[0]
+                # deprecated command abbreviations 
+                # print l[0]
                 print l[1]
         # -> matlab wrapped commands
         for l in gm.functions.keys():

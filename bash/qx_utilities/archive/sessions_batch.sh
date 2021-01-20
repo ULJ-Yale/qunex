@@ -49,7 +49,7 @@ usage() {
  echo "This function generates a batch file for processing for a given session."
  echo "It is designed to be invoked directly via QuNex call::"
  echo ""
- echo " qunex createLists"
+ echo " qunex create_list"
  echo ""
  echo "INPUTS"
  echo "======"

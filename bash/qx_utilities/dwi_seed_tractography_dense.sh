@@ -38,7 +38,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP probtrackxgpudense function
+# * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP dwi_probtrackx_dense_gpu function
 # * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
 #
 #~ND~END~

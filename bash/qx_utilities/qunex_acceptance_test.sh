@@ -45,7 +45,7 @@
 # -- General help usage function
 # ------------------------------------------------------------------------------
 
-SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5 BOLDImages"
+SupportedAcceptanceTestSteps="hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface bold_images"
 
 usage() {
  echo ""
@@ -689,7 +689,7 @@ echo ""
                 fi
                 
                 ## -- Get QC data from XNAT
-                if [[ ! -z ${XNATgetQC} ]] && [[ ${UnitTest} == "hcp1" ||  ${UnitTest} == "hcp2" ]]; then
+                if [[ ! -z ${XNATgetQC} ]] && [[ ${UnitTest} == "hcp_pre_freesurfer" ||  ${UnitTest} == "hcp_freesurfer" ]]; then
                     unset UnitTestQCFolders
                     echo ""
                     reho "     Note: Requested XNAT QC for ${UnitTest} but this is step does not generate QC images."
@@ -708,7 +708,7 @@ echo ""
                     if [[ ${XNATgetQC} == "all" ]]; then
                         FileTypes="png zip"
                     fi
-                    if [[ ${UnitTest} == "hcp4" ]] || [[ ${UnitTest} == "hcp5" ]]; then
+                    if [[ ${UnitTest} == "hcp_fmri_volume" ]] || [[ ${UnitTest} == "hcp_fmri_surface" ]]; then
                         FileTypes="${FileTypes} TSNR"
                     fi
                     if [[ ${XNATgetQC} == "snr" ]] || [[ ${XNATgetQC} == "tsnr" ]] || [[ ${XNATgetQC} == "SNR" ]] || [[ ${XNATgetQC} == "TSNR" ]]; then
@@ -747,20 +747,20 @@ echo ""
             ################## ACCEPTANCE TEST FOR EACH UNIT ###################
             #
             # -- SUPPORTED:
-            #    UnitTests="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd dwi_fsl_dtifit dwi_fsl_bedpostx_gpu preprocessBold compute_bold_fc_seed compute_bold_fc_gbc" 
+            #    UnitTests="hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd dwi_fsl_dtifit dwi_fsl_bedpostx_gpu preprocess_bold compute_bold_fc_seed compute_bold_fc_gbc" 
             #
             # -- Needs to be added:
-            #    UnitTests="hcpd dwi_legacy eddyQC dwi_fsl_dtifit dwi_fsl_bedpostx_gpu pretractographyDense DWIDenseParcellation DWISeedTractography createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc general_plot_bold_timeseries bold_parcellation compute_bold_fc_seed compute_bold_fc_gbc"
+            #    UnitTests="hcpd dwi_legacy eddy_qc dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation compute_bold_fc_seed compute_bold_fc_gbc"
             #
             # -- FILES FOR EACH UNIT
             #
-            #    hcp1:                       subjects/<session id>/hcp/<session id>/T1w/T1w_acpc_dc_restore_brain.nii.gz
-            #    hcp2: FS Version 6.0:       subjects/<session id>/hcp/<session id>/T1w/<session id>/label/BA_exvivo.thresh.ctab
-            #    hcp2: FS Version 5.3-HCP:   subjects/<session id>/hcp/<session id>/T1w/<session id>/label/rh.entorhinal_exvivo.label
-            #    hcp3:                       subjects/<session id>/hcp/<session id>/T1w/ribbon.nii.gz
-            #    hcp4:                       subjects/<session id>/hcp/<session id>/MNINonLinear/Results/<bold code>/<bold code>.nii.gz
-            #    hcp5:                       subjects/<session id>/hcp/<session id>/MNINonLinear/Results/<bold code>/<bold code>_Atlas.dtseries.nii
-            #    hcpDiffusion:               subjects/<session id>/hcp/<session id>/T1w/Diffusion/data.nii.gz
+            #    hcp_pre_freesurfer:                    subjects/<session id>/hcp/<session id>/T1w/T1w_acpc_dc_restore_brain.nii.gz
+            #    hcp_freesurfer: FS Version 6.0:        subjects/<session id>/hcp/<session id>/T1w/<session id>/label/BA_exvivo.thresh.ctab
+            #    hcp_freesurfer: FS Version 5.3-HCP:    subjects/<session id>/hcp/<session id>/T1w/<session id>/label/rh.entorhinal_exvivo.label
+            #    hcp_post_freesurfer:                   subjects/<session id>/hcp/<session id>/T1w/ribbon.nii.gz
+            #    hcp_fmri_volume:                       subjects/<session id>/hcp/<session id>/MNINonLinear/Results/<bold code>/<bold code>.nii.gz
+            #    hcp_fmri_surface:                      subjects/<session id>/hcp/<session id>/MNINonLinear/Results/<bold code>/<bold code>_Atlas.dtseries.nii
+            #    hcp_diffusion:                         subjects/<session id>/hcp/<session id>/T1w/Diffusion/data.nii.gz
             #    hcpDTIFix:                  subjects/<session id>/hcp/<session id>/T1w/Diffusion/dti_FA.nii.gz
             #    hcpBedpostx:                subjects/<session id>/hcp/<session id>/T1w/hcpBedpostx/mean_fsumsamples.nii.gz
             #
@@ -785,15 +785,15 @@ echo ""
                     echo ""
                     echo "  -- Checking ${UnitTest} for $CASE " >> ${RunAcceptanceTestOut}
                     ## -- Check units that may have multiple bolds
-                    if [[ ${UnitTest} == "hcp4" ]] || [[ ${UnitTest} == "hcp5" ]] || [[ ${UnitTest} == "preprocessBold" ]] || [[ ${UnitTest} == "compute_bold_fc_seed" ]] || [[ ${UnitTest} == "compute_bold_fc_gbc" ]] || [[ ${UnitTest} == "BOLDImages" ]]; then
+                    if [[ ${UnitTest} == "hcp_fmri_volume" ]] || [[ ${UnitTest} == "hcp_fmri_surface" ]] || [[ ${UnitTest} == "preprocess_bold" ]] || [[ ${UnitTest} == "compute_bold_fc_seed" ]] || [[ ${UnitTest} == "compute_bold_fc_gbc" ]] || [[ ${UnitTest} == "bold_images" ]]; then
                         echo ""
                         if [[ ! -z ${BOLDS} ]]; then
                             for BOLD in ${BOLDS}; do
-                                if   [[ ${UnitTest} == "hcp4" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
-                                elif [[ ${UnitTest} == "hcp5" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas.dtseries.nii"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
-                                elif [[ ${UnitTest} == "preprocessBold" ]]; then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${DenoiseData}"; UnitTestQCFolders="movement"; UnitTestDataCheck
+                                if   [[ ${UnitTest} == "hcp_fmri_volume" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
+                                elif [[ ${UnitTest} == "hcp_fmri_surface" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas.dtseries.nii"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
+                                elif [[ ${UnitTest} == "preprocess_bold" ]]; then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${DenoiseData}"; UnitTestQCFolders="movement"; UnitTestDataCheck
                                 elif [[ ${UnitTest} == "compute_bold_fc_seed" ]] || [[ ${UnitTest} == "compute_bold_fc_gbc" ]];      then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${FCData}"; UnitTestQCFolders=""; UnitTestDataCheck
-                                elif [[ ${UnitTest} == "BOLDImages" ]]; then
+                                elif [[ ${UnitTest} == "bold_images" ]]; then
                                     for BOLDImage in ${BOLDImages}; do
                                         BOLDImage=`echo ${BOLDImage} | sed "s/{N}/${BOLD}/g"`
                                         UnitTestData="images/functional/${BOLDImage}"; UnitTestQCFolders=""; UnitTestDataCheck
@@ -804,9 +804,9 @@ echo ""
                              echo "  -- Requested ${UnitTest} for ${CASE} but no BOLDS specified." >> ${RunAcceptanceTestOut}
                              echo "" >> ${RunAcceptanceTestOut}
                         fi
-                    elif [[ ${UnitTest} == "hcp1" ]];    then UnitTestData="hcp/${CASE}/T1w/T1w_acpc_dc_restore_brain.nii.gz"; UnitTestDataCheck
-                    elif [[ ${UnitTest} == "hcp2" ]];    then UnitTestData="hcp/${CASE}/T1w/${CASE}/label/rh.entorhinal_exvivo.label"; UnitTestDataCheck
-                    elif [[ ${UnitTest} == "hcp3" ]];    then UnitTestData="hcp/${CASE}/MNINonLinear/ribbon.nii.gz"; UnitTestQCFolders="T1w T2w myelin"; UnitTestDataCheck
+                    elif [[ ${UnitTest} == "hcp_pre_freesurfer" ]];    then UnitTestData="hcp/${CASE}/T1w/T1w_acpc_dc_restore_brain.nii.gz"; UnitTestDataCheck
+                    elif [[ ${UnitTest} == "hcp_freesurfer" ]];    then UnitTestData="hcp/${CASE}/T1w/${CASE}/label/rh.entorhinal_exvivo.label"; UnitTestDataCheck
+                    elif [[ ${UnitTest} == "hcp_post_freesurfer" ]];    then UnitTestData="hcp/${CASE}/MNINonLinear/ribbon.nii.gz"; UnitTestQCFolders="T1w T2w myelin"; UnitTestDataCheck
                     elif [[ ${UnitTest} == "hcpd" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/data.nii.gz"; UnitTestDataCheck
                     elif [[ ${UnitTest} == "dwi_fsl_dtifit" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz"; UnitTestDataCheck
                     elif [[ ${UnitTest} == "dwi_fsl_bedpostx_gpu" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion.bedpostX/mean_fsumsamples.nii.gz"; UnitTestDataCheck

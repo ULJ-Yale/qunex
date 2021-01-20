@@ -5,7 +5,7 @@
 
 Functions for importing and exporting BIDS data to QuNex file structure.
 
---importBIDS          Maps BIDS data to QuNex structure.
+--import_bids          Maps BIDS data to QuNex structure.
 --BIDSExport          Exports QuNex data to BIDS structured folder.
 
 The commands are accessible from the terminal using qunex command.
@@ -129,7 +129,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
     # --- load BIDS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
+    bidsStructure = os.path.join(niuTemplateFolder, "import_bids.txt")
 
     if not os.path.exists(bidsStructure):
         raise ge.CommandFailed("mapToQUNEXBids", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your QuNex installation")
@@ -179,7 +179,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
         if session == 'bids':
             io = fl.makedirs(bidsfolder)
             if io and io != 'File exists':
-                raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS info folder [%s]!" % (bidsfolder), "Please check paths and permissions!")
+                raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS info folder [%s]!" % (bidsfolder), "Please check paths and permissions!")
 
             io = fl.open_status(os.path.join(bidsfolder, 'bids_info_status'), "Processing started on %s.\n" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")))
 
@@ -197,7 +197,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
 
             # --> an error
             elif io != 'File exists':
-                raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS info status file [%s]!" % (os.path.join(bidsfolder, 'bids_info_status')), "Please check paths and permissions!")
+                raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS info status file [%s]!" % (os.path.join(bidsfolder, 'bids_info_status')), "Please check paths and permissions!")
 
         # --> session folder exists
         elif os.path.exists(folder):
@@ -239,16 +239,16 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
     io = fl.makedirs(os.path.dirname(tfile))
 
     if io and io != 'File exists':
-        raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create folder for file [%s]!" % (tfile), "Please check paths and permissions!")
+        raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create folder for file [%s]!" % (tfile), "Please check paths and permissions!")
 
     # --> return file and locking info
     return tfile, session == 'bids'
 
 
 
-def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
+def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
     """
-    ``importBIDS [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]``
+    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]``
     
     Maps a BIDS dataset to the QuNex Suite file structure.
 
@@ -331,7 +331,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     OUTPUTS
     =======
 
-    After running the `importBIDS` command the BIDS dataset will be mapped 
+    After running the `import_bids` command the BIDS dataset will be mapped 
     to the QuNex folder structure and image files will be prepared for further
     processing along with required metadata.
 
@@ -363,7 +363,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     USE
     ===
     
-    The importBIDS command consists of two steps:
+    The import_bids command consists of two steps:
     
     Step 1 - Mapping BIDS dataset to QuNex Suite folder structure
     --------------------------------------------------------------
@@ -415,23 +415,23 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     mapped to the `nii` folder and appropriate `session.txt` file is created per
     standard QuNex specification.
 
-    The second step is achieved by running `mapBIDS2nii` on each session folder.
+    The second step is achieved by running `map_bids2nii` on each session folder.
     This step is run automatically, but can be invoked indepdendently if mapping 
     of bids dataset to QuNex Suite folder structure was already completed. For 
-    detailed information about this step, please review `mapBIDS2nii` inline 
+    detailed information about this step, please review `map_bids2nii` inline 
     help.
 
     Notes
     -----
 
-    Please see `mapBIDS2nii` inline documentation!
+    Please see `map_bids2nii` inline documentation!
 
     EXAMPLE USE
     ===========
     
     ::
 
-        qunex importBIDS sessionsfolder=myStudy overwrite=yes bidsname=swga
+        qunex import_bids sessionsfolder=myStudy overwrite=yes bidsname=swga
     """
 
     """
@@ -460,19 +460,19 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                Added fileinfo parameter
     """
 
-    print "Running importBIDS\n=================="
+    print "Running import_bids\n=================="
 
     if action not in ['link', 'copy', 'move']:
-        raise ge.CommandError("importBIDS", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
+        raise ge.CommandError("import_bids", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
 
     if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("importBIDS", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+        raise ge.CommandError("import_bids", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     if archive not in ['leave', 'move', 'copy', 'delete']:
-        raise ge.CommandError("importBIDS", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+        raise ge.CommandError("import_bids", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
 
     if fileinfo not in ['short', 'full', None]:
-        raise ge.CommandError("importBIDS", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
+        raise ge.CommandError("import_bids", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
     if sessionsfolder is None:
         sessionsfolder = os.path.abspath(".")
@@ -496,7 +496,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         if not io:
             print "--> created inbox BIDS folder"
         elif io != 'File exists':
-            raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS inbox [%s]!" % (BIDSInbox), "Please check paths and permissions!")
+            raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS inbox [%s]!" % (BIDSInbox), "Please check paths and permissions!")
 
     BIDSArchive = os.path.join(sessionsfolder, 'archive', 'BIDS')
     if not os.path.exists(BIDSArchive):
@@ -504,15 +504,15 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         if not io:
             print "--> created BIDS archive folder"
         elif io != 'File exists':
-            raise ge.CommandFailed("importBIDS", "I/O error: %s" % (io), "Could not create BIDS archive [%s]!" % (BIDSArchive), "Please check paths and permissions!")
+            raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS archive [%s]!" % (BIDSArchive), "Please check paths and permissions!")
 
     # --- load BIDS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
+    bidsStructure = os.path.join(niuTemplateFolder, "import_bids.txt")
 
     if not os.path.exists(bidsStructure):
-        raise ge.CommandFailed("importBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your QuNex installation")
+        raise ge.CommandFailed("import_bids", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your QuNex installation")
 
     bids_file = open(bidsStructure)
     content = bids_file.read()
@@ -614,12 +614,12 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                         for file in files:
                             sourceFiles.append(os.path.join(path, file))
         else:
-            raise ge.CommandFailed("importBIDS", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
+            raise ge.CommandFailed("import_bids", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
-        raise ge.CommandFailed("importBIDS", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("import_bids", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
     if not sourceFiles:
-        raise ge.CommandFailed("importBIDS", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")        
+        raise ge.CommandFailed("import_bids", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")        
 
 
     # ---> definition of paths
@@ -851,7 +851,7 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
                 # -- do image mapping
                 try:
-                    mapBIDS2nii(os.path.join(sessionsfolder, session), overwrite=overwrite, fileinfo=fileinfo)
+                    map_bids2nii(os.path.join(sessionsfolder, session), overwrite=overwrite, fileinfo=fileinfo)
                     nmapping = True
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
@@ -897,10 +897,10 @@ def importBIDS(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         print line
 
     if not allOk:
-        raise ge.CommandFailed("importBIDS", "Some actions failed", "Please check report!")
+        raise ge.CommandFailed("import_bids", "Some actions failed", "Please check report!")
 
     if not report:
-        raise ge.CommandNull("importBIDS", "No sessions were mapped in this call. Please check report!")
+        raise ge.CommandNull("import_bids", "No sessions were mapped in this call. Please check report!")
 
 
 def processBIDS(bfolder):
@@ -920,7 +920,7 @@ def processBIDS(bfolder):
     # --- load BIDS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    bidsStructure = os.path.join(niuTemplateFolder, "importBIDS.txt")
+    bidsStructure = os.path.join(niuTemplateFolder, "import_bids.txt")
 
     if not os.path.exists(bidsStructure):
         raise ge.CommandFailed("processBIDS", "No BIDS structure file present!", "There is no BIDS structure file %s" % (bidsStructure), "Please check your QuNex installation")
@@ -996,9 +996,9 @@ def processBIDS(bfolder):
         
 
 
-def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
+def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     """
-    ``mapBIDS2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short']``
+    ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short']``
 
     Maps data organized according to BIDS specification to `nii` folder 
     structure as expected by QuNex functions.
@@ -1149,7 +1149,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     
     ::
 
-        qunex mapBIDS2nii folder=. overwrite=yes
+        qunex map_bids2nii folder=. overwrite=yes
     """
 
     """
@@ -1171,7 +1171,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         fileinfo = 'short'
 
     if fileinfo not in ['short', 'full']:
-        raise ge.CommandError("mapBIDS2nii", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
+        raise ge.CommandError("map_bids2nii", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
 
     sfolder = os.path.abspath(sourcefolder)
@@ -1187,24 +1187,24 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         info += ", session " + sessionid
 
     print
-    splash = "Running mapBIDS2nii for %s" % (info)
+    splash = "Running map_bids2nii for %s" % (info)
     print splash
     print "".join(['=' for e in range(len(splash))])
 
     if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("mapBIDS2nii", "Invalid option for overwrite specified", "%s is not a valid option for the overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+        raise ge.CommandError("map_bids2nii", "Invalid option for overwrite specified", "%s is not a valid option for the overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     # --- process bids folder
 
     bidsData = processBIDS(bfolder)
 
     if session not in bidsData:
-        raise ge.CommandFailed("mapBIDS2nii", "Unrecognized session!", "This folder [%s] does not have a valid matching BIDS session!" % (sfolder), "Please check your data!")
+        raise ge.CommandFailed("map_bids2nii", "Unrecognized session!", "This folder [%s] does not have a valid matching BIDS session!" % (sfolder), "Please check your data!")
 
     bidsData = bidsData[session]
 
     if not bidsData['images']['list']:
-        raise ge.CommandFailed("mapBIDS2nii", "No image files in bids folder!", "There are no image files in the bids folder [%s]" % (bfolder), "Please check your data!")
+        raise ge.CommandFailed("map_bids2nii", "No image files in bids folder!", "There are no image files in the bids folder [%s]" % (bfolder), "Please check your data!")
 
     # --- check for presence of nifti files
 
@@ -1212,7 +1212,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         nfiles = glob.glob(os.path.join(nfolder, '*.nii*'))
         if nfiles > 0:
             if overwrite == 'no':
-                raise ge.CommandFailed("mapBIDS2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'overwrite' to yes!")
+                raise ge.CommandFailed("map_bids2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'overwrite' to yes!")
             else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
@@ -1221,7 +1221,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSessionFile("mapBIDS2nii", sfolder, session, subject, overwrite)
+    sout = gc.createSessionFile("map_bids2nii", sfolder, session, subject, overwrite)
 
     # --- open bids2nii log file
     if overwrite == 'yes':
@@ -1282,7 +1282,7 @@ def mapBIDS2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     bout.close()
 
     if not allOk:
-        raise ge.CommandFailed("mapBIDS2nii", "Not all actions completed successfully!", "Some files for session %s were not mapped successfully!" % (session), "Please check logs and data!")
+        raise ge.CommandFailed("map_bids2nii", "Not all actions completed successfully!", "Some files for session %s were not mapped successfully!" % (session), "Please check logs and data!")
 
 
 

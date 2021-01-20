@@ -6,7 +6,7 @@
 Functions for preparing information and mapping images to a HCP preprocessing
 compliant folder structure:
 
---setupHCP      Maps the data to an hcp folder.
+--setup_hcp      Maps the data to an hcp folder.
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -23,9 +23,9 @@ import general.exceptions as ge
 import os.path
 import general.core as gc
 
-def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
+def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
     """
-    ``setupHCP [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=standard] [folderstructure=hcpls] [hcp_suffix=""]``
+    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=standard] [folderstructure=hcpls] [hcp_suffix=""]``
 
     The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
@@ -181,7 +181,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
     
     ::
 
-        qunex setupHCP sourcefolder=OP316 sourcefile=session.txt
+        qunex setup_hcp sourcefolder=OP316 sourcefile=session.txt
     """
 
     """
@@ -214,7 +214,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
                Added hcp_suffix parameter
     """
 
-    print "Running setupHCP\n================"
+    print "Running setup_hcp\n================"
 
     inf   = gc.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
@@ -226,7 +226,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
     filename = hcp_filename == 'original'
 
     if folderstructure not in ['initial', 'hcpls']:
-        raise ge.CommandFailed("setupHCP", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
+        raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
 
     if folderstructure == 'initial':
         fctail = '_fncb'
@@ -243,14 +243,14 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
 
     if inf.get('hcpready', 'no') != 'true':
         if check == 'yes':
-            raise ge.CommandFailed("setupHCP", "Session not ready", "Session %s is not marked ready for HCP" % (sid), "Please check or run with check=no!")
+            raise ge.CommandFailed("setup_hcp", "Session not ready", "Session %s is not marked ready for HCP" % (sid), "Please check or run with check=no!")
         else:
             print "WARNING: Session %s is not marked ready for HCP. Processing anyway." % (sid)
 
     # -> does raw data exist
 
     if rawf is None or not os.path.exists(rawf):
-        raise ge.CommandFailed("setupHCP", "Data folder does not exist", "raw_data folder for %s does not exist!" % (sid), "Please check specified path [%s]" % (rawf))
+        raise ge.CommandFailed("setup_hcp", "Data folder does not exist", "raw_data folder for %s does not exist!" % (sid), "Please check specified path [%s]" % (rawf))
 
     print "===> Setting up HCP folder structure for %s\n" % (sid)
 
@@ -264,7 +264,7 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
         elif existing == 'add':
             print " ---> Base folder %s already exist! Adding any new files specified! " % (basef)
         else:
-            raise ge.CommandFailed("setupHCP", "Base folder exists", "Base folder %s already exist!" % (basef), "Please check or specify `exisiting` as `add` or `clear` for desired action!")
+            raise ge.CommandFailed("setup_hcp", "Base folder exists", "Base folder %s already exist!" % (basef), "Please check or specify `exisiting` as `add` or `clear` for desired action!")
     else:
         print " ---> Creating base folder %s " % (basef)
         os.makedirs(basef)
@@ -477,6 +477,6 @@ def setupHCP(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt",
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
     
     if not mapped:
-        raise ge.CommandFailed("setupHCP", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")     
+        raise ge.CommandFailed("setup_hcp", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")     
 
     return

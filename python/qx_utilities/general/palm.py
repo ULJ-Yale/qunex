@@ -6,9 +6,9 @@
 This file holds code for running PALM second level analyses, CIFTI map masking
 and concatenation. The specific commands implemented here are:
 
---runPALM   For running PALM resampling
---maskMap   For masking results
---joinMaps  For joining individual cifti maps into named concatenated maps
+--run_palm  For running PALM resampling
+--mask_map  For masking results
+--join_maps For joining individual cifti maps into named concatenated maps
 
 The functions are to be run using the gmri terminal command.
 """
@@ -28,9 +28,9 @@ import exceptions as ge
 import re
 import core
 
-def runPALM(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):
+def run_palm(image, design=None, args=None, root=None, options=None, parelements=None, overwrite='no', cleanup='yes'):
     """
-    ``runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]``
+    ``run_palm image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]``
 
     Runs second level analysis using PALM permutation resampling.
 
@@ -163,7 +163,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
     Sometimes it is desired to specify TFCE parameters that differ from the
     default values. As the function allows combined surface/volume processing
     of cifti files, it is useful to be able to set them separately for 2D and
-    3D analysis. runPALM therefore provides two additional optional parameters
+    3D analysis. run_palm therefore provides two additional optional parameters
     that are separately expanded to TFCE 2D and 3D settings:
 
     --T2DHEC    Sets H, E and C parameters for 2D part of analysis.
@@ -233,7 +233,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
 
     ::
     
-        qunex runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
+        qunex run_palm design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
              root=sustained_aov
     """
 
@@ -271,7 +271,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
     print " --> checking environment"
 
     if not "QUNEXPATH" in os.environ:
-        raise ge.CommandError("runPALM", "QUNEXPATH environment variable not set.", "Can not find HCP Template files!")
+        raise ge.CommandError("run_palm", "QUNEXPATH environment variable not set.", "Can not find HCP Template files!")
     atlas = os.path.join(os.environ['QUNEXPATH'], 'library', 'data', 'atlases')
 
     # --- check for number of input files
@@ -303,7 +303,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
                 print "     ... removing %s" % file
                 os.remove(file)
         else:
-            raise ge.CommandFailed("runPALM", "Preexisting image files", "There are preexisting image files with the specified root.", "Please inspect and remove them to prevent conflicts or specify 'overwrite=yes'!")
+            raise ge.CommandFailed("run_palm", "Preexisting image files", "There are preexisting image files with the specified root.", "Please inspect and remove them to prevent conflicts or specify 'overwrite=yes'!")
 
     # --- parse argument options
 
@@ -327,7 +327,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
 
     for image in images:
         if not os.path.exists(image):
-            raise ge.CommandFailed("runPALM", "Missing file", "The image file is missing: %s" % (image), "Please check your paths!")
+            raise ge.CommandFailed("run_palm", "Missing file", "The image file is missing: %s" % (image), "Please check your paths!")
 
     rfolder = os.path.dirname(root)
     if (rfolder != '') and (not os.path.exists(rfolder)):
@@ -407,7 +407,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
                 iformat = 'nifti'
 
             else:
-                raise ge.CommandFailed("runPALM", "Unsuported file format", "Unknown format of the input file [%s]!" % (image), "Please check your data!")
+                raise ge.CommandFailed("run_palm", "Unsuported file format", "Unknown format of the input file [%s]!" % (image), "Please check your data!")
 
         # --- compile PALM command
 
@@ -461,14 +461,14 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
             inargs  = ['-m', os.path.join(atlas, 'MNITemplates', 'MNI152_T1_2mm_brain_mask_dil.nii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
             if subprocess.call(command):
-                raise ge.CommandFailed("runPALM", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")
+                raise ge.CommandFailed("run_palm", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")
 
         elif iformat == 'ptseries':
             print " --> running PALM for ptseries CIFTI input"
             infiles = setInFiles(root, 'cifti.ptseries.nii', nimages)
             command = ['palm'] + infiles + dargs + sargs + ['-o', root]
             if subprocess.call(command):
-                raise ge.CommandFailed("runPALM", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")
+                raise ge.CommandFailed("run_palm", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")
 
         else:
             print " --> setting up PALM for dtseries/dscalar CIFTI input"
@@ -513,7 +513,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
                 for error in errors:
                     report.append("- %s [%s]" % (error['name'], error['log']))
                 report.append("Aborting further processing, please check files and logs!")
-                raise ge.CommandFailed("runPALM", *report)
+                raise ge.CommandFailed("run_palm", *report)
 
         # --- process output
 
@@ -588,7 +588,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, parelements=
                                            '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
                                            '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
                             if subprocess.call(command):
-                                raise ge.CommandFailed("runPALM", "Create cifti failed", "wb_command creating cifti file failed", "The command ran: %s" % (" ".join(command)))
+                                raise ge.CommandFailed("run_palm", "Create cifti failed", "wb_command creating cifti file failed", "The command ran: %s" % (" ".join(command)))
 
                             if os.path.exists(targetfile):
                                 print "... done!"
@@ -621,9 +621,9 @@ def setInFiles(root, tail, nimages):
     return out
 
 
-def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'):
+def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'):
     """
-    ``maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]``
+    ``mask_map image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]``
 
     Enables easy masking of CIFTI images.
 
@@ -664,7 +664,7 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
     USE
     ===
 
-    maskMap is a wb_command wrapper that enables easy masking of CIFTI images
+    mask_map is a wb_command wrapper that enables easy masking of CIFTI images
     (e.g. ztstat image from PALM), using the provided list of mask files (e.g.
     p-values imaages from PALM) and thresholds. More than one mask can be used
     in which case they can be combined using a logical OR or AND operator.
@@ -674,7 +674,7 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
     
     ::
 
-        qunex maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
+        qunex mask_map image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
             masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
             maxv=0.017
     """
@@ -690,42 +690,42 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
                Updated documentation
     """
 
-    print "Running maskMap\n==============="
+    print "Running mask_map\n==============="
 
     # --- process the arguments
 
     if image is None:
-        raise ge.CommandError("maskMap", "No image file specified", "Please provide path to input image for masking!")
+        raise ge.CommandError("mask_map", "No image file specified", "Please provide path to input image for masking!")
     elif not os.path.exists(image):
-        raise ge.CommandFailed("maskMap", "Image file not found", "Input image file for masking was not found!", "Please check path [%s]" % (image))
+        raise ge.CommandFailed("mask_map", "Image file not found", "Input image file for masking was not found!", "Please check path [%s]" % (image))
 
     if masks is None:
-        raise ge.CommandError("maskMap", "No mask file specified", "Please provide path to file(s) used as mask(s)!")
+        raise ge.CommandError("mask_map", "No mask file specified", "Please provide path to file(s) used as mask(s)!")
     masks = [e.strip() for e in masks.split(',')]
     for mask in masks:
         if not os.path.exists(mask):
-            raise ge.CommandFailed("maskMap", "Mask file not found", "Mask file for masking was not found!", "Please check path [%s]" % (mask))
+            raise ge.CommandFailed("mask_map", "Mask file not found", "Mask file for masking was not found!", "Please check path [%s]" % (mask))
     nmasks = len(masks)
 
     if output is None:
         output = 'Masked_' + image
 
     if minv is None and maxv is None:
-        raise ge.CommandError("maskMap", "Missing parameters", "At least `minv` or `maxv` need to be specified!")
+        raise ge.CommandError("mask_map", "Missing parameters", "At least `minv` or `maxv` need to be specified!")
 
     if minv is not None:
         minv = [float(e) for e in minv.split(',')]
         if len(minv) == 1:
             minv = [minv[0] for e in range(nmasks)]
         elif len(minv) != nmasks:
-            raise ge.CommandError("maskMap", "Missmatch in input", "Number of provided minimum values does not match number of masks!", "Please check your parameters!")
+            raise ge.CommandError("mask_map", "Missmatch in input", "Number of provided minimum values does not match number of masks!", "Please check your parameters!")
 
     if maxv is not None:
         maxv = [float(e) for e in maxv.split(',')]
         if len(maxv) == 1:
             maxv = [maxv[0] for e in range(nmasks)]
         elif len(maxv) != nmasks:
-            raise ge.CommandError("maskMap", "Missmatch in input", "Number of provided maximum values does not match number of masks!", "Please check your parameters!")
+            raise ge.CommandError("mask_map", "Missmatch in input", "Number of provided maximum values does not match number of masks!", "Please check your parameters!")
 
 
     # --- build the expression
@@ -752,12 +752,12 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
     command = ['wb_command', '-cifti-math'] + ex + [output] + files
 
     if subprocess.call(command):
-        raise ge.CommandFailed("maskMap", "Running wb_command failed", "Call: %s" % (" ".join(command)))
+        raise ge.CommandFailed("mask_map", "Running wb_command failed", "Call: %s" % (" ".join(command)))
 
 
-def joinMaps(images=None, output=None, names=None, originals=None):
+def join_maps(images=None, output=None, names=None, originals=None):
     """
-    ``joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]``
+    ``join_maps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]``
 
     Concatenates the listed cifti images and names the individual volumes.
 
@@ -773,7 +773,7 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     USE
     ===
 
-    joinMaps is a wb_command wrapper that concatenates the listed cifti images
+    join_maps is a wb_command wrapper that concatenates the listed cifti images
     and names the individual volumes, if names are provided.
 
     EXAMPLE USE
@@ -781,7 +781,7 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     
     ::
 
-        qunex joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
+        qunex join_maps images="sustained_AvsB_p.017.dscalar.nii, \\
                               sustained_BvsC_p.017.dscalar.nii, \\
                               sustained_AvsC_p.017.dscalar.nii, \\
                               sustained_aov_p.017.dscalar.nii" \\
@@ -801,25 +801,25 @@ def joinMaps(images=None, output=None, names=None, originals=None):
                Updated documentation
     """
 
-    print "Running joinMaps\n================"
+    print "Running join_maps\n================"
 
     # --- process the arguments
 
     if images is None:
-        raise ge.CommandError("joinMaps", "No image files specified", "Please provide path to input images for joining!")
+        raise ge.CommandError("join_maps", "No image files specified", "Please provide path to input images for joining!")
     images = [e.strip() for e in images.split(',')]
     for image in images:
         if not os.path.exists(image):
-            raise ge.CommandFailed("joinMaps", "Image file not found", "The specified image file was not found!", "Please check path [%s]" % (image))
+            raise ge.CommandFailed("join_maps", "Image file not found", "The specified image file was not found!", "Please check path [%s]" % (image))
     nimages = len(images)
 
     if output is None:
-        raise ge.CommandError("joinMaps", "No output file specified", "Please provide path to desired output image file!")
+        raise ge.CommandError("join_maps", "No output file specified", "Please provide path to desired output image file!")
 
     if names is not None:
         names = [e.strip() for e in names.split(',')]
         if len(names) != nimages:
-            raise ge.CommandError("joinMaps", "Mismatch in input", "List of map names (%d names) does not match the number of maps (%d)! " % (len(names), nimages))
+            raise ge.CommandError("join_maps", "Mismatch in input", "List of map names (%d names) does not match the number of maps (%d)! " % (len(names), nimages))
 
     # --- build the expression and merge files
 
@@ -830,7 +830,7 @@ def joinMaps(images=None, output=None, names=None, originals=None):
 
     print " --> Merging maps"
     if subprocess.call(command):
-        raise ge.CommandFailed("joinMaps", "Merging maps failed", "Running wb_command failed", "Call: %s" % (" ".join(command)))
+        raise ge.CommandFailed("join_maps", "Merging maps failed", "Running wb_command failed", "Call: %s" % (" ".join(command)))
 
     # --- build the expression and name maps
 
@@ -843,7 +843,7 @@ def joinMaps(images=None, output=None, names=None, originals=None):
 
         print " --> Naming maps"
         if subprocess.call(command):
-            raise ge.CommandFailed("joinMaps", "Naming maps failed", "Running wb_command failed", "Call: %s" % (" ".join(command)))
+            raise ge.CommandFailed("join_maps", "Naming maps failed", "Running wb_command failed", "Call: %s" % (" ".join(command)))
 
     # --- remove originals
 
@@ -856,7 +856,7 @@ def joinMaps(images=None, output=None, names=None, originals=None):
 
 #
 def fNuissance(n):
-    '''Support function for createWSPALMDesign function.'''
+    '''Support function for create_ws_palm_design function.'''
     ndummy = n - 1
     block  = []
     for e in range(n):
@@ -869,9 +869,9 @@ def fNuissance(n):
     return block
 
 
-def createWSPALMDesign(factors=None, nsubjects=None, root=None):
+def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     """
-    ``createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>``
+    ``create_ws_palm_design factors=<factor string> nsubjects=<number of subjects> root=<design root name>``
 
     Prepares the design file.
 
@@ -885,7 +885,7 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     USE
     ===
 
-    createWSPALMDesign prepares the design file, t-contrasts, f-contrasts and
+    create_ws_palm_design prepares the design file, t-contrasts, f-contrasts and
     exchangebility block files for a single group within-subject PALM designs.
     It supports full factorial designs with up to three factors.
 
@@ -919,7 +919,7 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     
     ::
 
-        qunex createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
+        qunex create_ws_palm_design factors="2,3" nsubjects=33 root=WM.type_by_load
     """
 
     """
@@ -932,11 +932,11 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     """
 
     if factors is None:
-        raise ge.CommandError("createWSPALMDesign", "Missing parameter", "No factors specified!", "Please, check your command!")
+        raise ge.CommandError("create_ws_palm_design", "Missing parameter", "No factors specified!", "Please, check your command!")
     factors = [int(e) for e in factors.split(',')]
 
     if nsubjects is None:
-        raise ge.CommandError("createWSPALMDesign", "Missing parameter", "Number of subjects not specified!", "Please, check your command!")
+        raise ge.CommandError("create_ws_palm_design", "Missing parameter", "Number of subjects not specified!", "Please, check your command!")
     nsubjects = int(nsubjects)
 
     if root is None:

@@ -299,7 +299,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %
 %	brainmask    
 %		Mask will be the actual bet extracted brain mask based on the first BOLD 
-%		frame (generated using the createBOLDBrainMasks command).
+%		frame (generated using the create_bold_brain_masks command).
 %
 %	<filename>   
 %		All the non-zero voxels in a specified volume file will be used as a mask.
@@ -508,7 +508,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %		<root>_res-<regressors>_coeff.<ext>
 %
 %	If you want more specific GLM results and information, please use
-%	preprocessConc command.
+%	preprocess_conc command.
 %
 %	EXAMPLE USE
 %	===========
@@ -558,7 +558,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %	           Added more detailed reporting of parameters used.
 %	2018-06-21 Grega Repovs (v0.9.13)
 %	           Updated the function to store GLM information ain the same manner 
-%			   as preprocessConc.
+%			   as preprocess_conc.
 %	2018-06-26 Grega Repovs (v0.9.14)
 %	           Updated naming of residual files to include GLM name
 %	2018-06-26 Grega Repovs (v0.9.15)

@@ -11,7 +11,7 @@ _hcp_folderstructure    : hcpls
 _hcp_filename           : standard
 _hcp_processing_mode    : LegacyStyleData
 
-# ---> Pre FS (qunex hcp1)
+# ---> Pre FreeSurfer
 
 _hcp_suffix             :
 _hcp_brainsize          : 150
@@ -29,11 +29,11 @@ _hcp_seechospacing      : NONE
 _hcp_seunwarpdir        : NONE
 _hcp_biascorrect_t1w    : YES
 
-# --->  FS
+# ---> FreeSurfer
 
 _hcp_freesurfer_home    : ${FREESURFER_HOME}
 
-# ---> Post FS (qunex hcp2)
+# ---> Post FreeSurfer
 
 _hcp_regname            : MSMSulc
 _hcp_grayordinatesres   : 2
@@ -45,7 +45,7 @@ _hcp_lowresmesh         : 32
 _hcp_dwi_echospacing    : NONE
 
   
-# ---> fMRI Volume (qunex hcp3)
+# ---> fMRI Volume
 
 _hcp_bold_echospacing   : NONE
 _hcp_bold_dcmethod      : NONE
@@ -60,7 +60,7 @@ _hcp_bold_gdcoeffs      : NONE
 _hcp_bold_doslicetime   : TRUE
 _hcp_bold_slicetimerparams : --odd
  
-# ---> fMRI Surface (qunex hcp5)
+# ---> fMRI Surface
  
 _hcp_bold_smoothFWHM    : 2
 
@@ -70,22 +70,22 @@ _hcp_bold_smoothFWHM    : 2
 # == Settings for further preprocessing & analyses ==
 # ===================================================
 #
-# mapHCPData
-# createBOLDBrainMasks
-# computeBOLDStats
-# createStatsReport
-# extractNuisanceSignal
-# preprocessBold
-# preprocessConc
+# map_hcp_data
+# create_bold_brain_masks
+# compute_bold_stats
+# create_stats_report
+# extract_nuisance_signal
+# preprocess_bold
+# preprocess_conc
 #
 # ===================================================
 
-# ---> CIFTI mapping naming variable (qunex mapHCPData & qunex createBOLDBrainMasks)
+# ---> CIFTI mapping naming variable (qunex map_hcp_data & qunex create_bold_brain_masks)
 
 _hcp_cifti_tail     : _Atlas
 
 
-# ---> Movement scrubbing settings (qunex computeBOLDStats & qunex createStatsReport)
+# ---> Movement scrubbing settings (qunex compute_bold_stats & qunex create_stats_report)
 
 _mov_dvars          : 3.0
 _mov_dvarsme        : 1.6
@@ -105,7 +105,7 @@ _mov_pdf            : movement_plots
 _mov_pref           : 
 
 
-# ---> Nuisance signal (qunex extractNuisanceSignal)
+# ---> Nuisance signal (qunex extract_nuisance_signal)
 
 _shrinknsroi        : true
 
@@ -119,7 +119,7 @@ _smooth_mask        : nonzero
 _dilate_mask        : ${TemplateFolder}/atlases/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
 
 
-# ---> BOLD processing (qunex preprocessBold & preprocessConc)
+# ---> BOLD processing (qunex preprocess_bold & preprocess_conc)
 
 _image_source       : hcp
 _image_target       : cifti

@@ -6,7 +6,7 @@
 
 """
 Created by Grega Repovs on 2013-10-07.
-Adapted from previous joinFidl.py script
+Adapted from previous join fidl python script
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
@@ -93,9 +93,9 @@ def readConc(concf, TR):
     return bolds
 
 
-def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
+def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     """
-    ``joinFidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]``
+    ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]``
 
     Combines all the fidl files matching root based on the information in conc
     file.
@@ -112,7 +112,7 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     
     ::
 
-        qunex joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
+        qunex join_fidl concfile=OP33-WM.conc fidlroot=OP33-WM
     """
 
     # ---> find all fidl files, sort them, read them, get TR info
@@ -127,9 +127,9 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
         TR = fidldata[0]['TR']
     except:
         if len(fidldata) == 0:
-            raise ge.CommandFailed("joinFidl", "No fidl files", "No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
+            raise ge.CommandFailed("join_fidl", "No fidl files", "No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
         else:
-            raise ge.CommandFailed("joinFidl", "Error processing files", "Error in processing concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
+            raise ge.CommandFailed("join_fidl", "Error processing files", "Error in processing concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
 
     # ---> read the conc file, check if the number matches
 
@@ -138,7 +138,7 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     if len(fidldata) != len(bolddata):
         print "\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata]))
-        raise ge.CommandFailed("joinFidl", "File number mismatch", "Number of fidl [%d] and bold [%d] files do not match!" % (len(fidldata), len(bolddata)), "Please check report!")
+        raise ge.CommandFailed("join_fidl", "File number mismatch", "Number of fidl [%d] and bold [%d] files do not match!" % (len(fidldata), len(bolddata)), "Please check report!")
 
     # ---> start the matching loop
 
@@ -190,11 +190,11 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     return 
 
 
-def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
+def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     """
-    ``joinFidlFolder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]``
+    ``join_fidl_folder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]``
 
-    Uses joinFidl to join all the fidl files that match the name of each conc
+    Uses join_fidl to join all the fidl files that match the name of each conc
     file in the concfolder.
 
     INPUTS
@@ -211,7 +211,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
 
     ::
 
-        qunex joinFidlFolder concfolder=concs fidlfolder=fidls
+        qunex join_fidl_folder concfolder=concs fidlfolder=fidls
     """
 
     """
@@ -234,13 +234,13 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     concfiles = glob.glob(concfolder + '/*.conc')
 
     if not concfiles:
-        raise ge.CommandFailed("joinFidlFolder", "No conc files founr", "No conc files found to process!", "Please check your data!")
+        raise ge.CommandFailed("join_fidl_folder", "No conc files founr", "No conc files found to process!", "Please check your data!")
 
     failed = []
     for concfile in concfiles:
         root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ""))
         try:
-            joinFidl(concfile, root, outfolder, fidlname)
+            join_fidl(concfile, root, outfolder, fidlname)
         except ge.CommandFailed as e:
             failed.append([concfolder, e.error])
 
@@ -249,12 +249,12 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
         for concfile, error in failed:
             print "       - %s [%s]" % (concfile, error)
 
-        raise ge.CommandFailed("joinFidlFolder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
+        raise ge.CommandFailed("join_fidl_folder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
 
 
-def splitFidl(concfile, fidlfile, outfolder=None):
+def split_fidl(concfile, fidlfile, outfolder=None):
     """
-    ``splitFidl concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
+    ``split_fidl concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
 
     Splits a multi-bold fidl file into run specific bold files based on the
     sequence of bold files in conc file and their lengths.
@@ -271,7 +271,7 @@ def splitFidl(concfile, fidlfile, outfolder=None):
 
     ::
 
-        qunex splitFidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl outfolder=/data/mystudy/analysis/splitfidls
+        qunex split_fidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl outfolder=/data/mystudy/analysis/splitfidls
     """
 
     # ---> read the fidl and conc info
@@ -281,9 +281,9 @@ def splitFidl(concfile, fidlfile, outfolder=None):
         TR = fidldata['TR']
     except:
         if len(fidldata) == 0:
-            raise ge.CommandFailed("splitFidl", "No fidl file", "No fidl files correspond to %s!" % (concfile))
+            raise ge.CommandFailed("split_fidl", "No fidl file", "No fidl files correspond to %s!" % (concfile))
         else:
-            raise ge.CommandFailed("splitFidl", "Processing error", "Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile))
+            raise ge.CommandFailed("split_fidl", "Processing error", "Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile))
 
     bolddata = readConc(concfile, TR)
 
@@ -323,9 +323,9 @@ def splitFidl(concfile, fidlfile, outfolder=None):
     return
 
 
-def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
+def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     """
-    ``checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false] [verbose=true]``
+    ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false] [verbose=true]``
 
     Prints figures showing fidl events and their duration.
     
@@ -346,7 +346,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     
     ::
 
-        qunex checkFidl fidlfolder=jfidls
+        qunex check_fidl fidlfolder=jfidls
     """
 
     """
@@ -362,10 +362,10 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
 
     if fidlfile:
         if not os.path.exists(fidlfile):
-            raise ge.CommandFailed("checkFidl", "Fidl file does not exist", "The specified fidl file does not exist [%s]" % (fidlfile), "Please check your data!")
+            raise ge.CommandFailed("check_fidl", "Fidl file does not exist", "The specified fidl file does not exist [%s]" % (fidlfile), "Please check your data!")
     else:
         if not glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")):
-            raise ge.CommandFailed("checkFidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")   
+            raise ge.CommandFailed("check_fidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")   
 
     command = ['Rscript', os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'check_fidl.R')]
     command.append('-fidlfolder=%s' % (fidlfolder))
@@ -378,7 +378,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
         command.append("-allcodes")
 
     if subprocess.call(command):
-        raise ge.CommandFailed("checkFidl", "Running checkFidl.R failed", "Call: %s" % (" ".join(command)))
+        raise ge.CommandFailed("check_fidl", "Running check_fidl.R failed", "Call: %s" % (" ".join(command)))
 
     return
 

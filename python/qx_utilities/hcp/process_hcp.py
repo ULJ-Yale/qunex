@@ -6,20 +6,20 @@
 This file holds code for running HCP preprocessing pipeline. It
 consists of functions:
 
---hcpPreFS               Runs HCP PreFS preprocessing.
---hcpFS                  Runs HCP FS preprocessing.
---hcpPostFS              Runs HCP PostFS preprocessing.
---hcpDiffusion           Runs HCP Diffusion weighted image preprocessing.
---hcpfMRIVolume          Runs HCP BOLD Volume preprocessing.
---hcpfMRISurface         Runs HCP BOLD Surface preprocessing.
---hcpICAFix              Runs HCP ICAFix.
---hcpPostFix             Runs HCP PostFix.
---hcpReApplyFix          Runs HCP ReApplyFix.
---hcpMSMAll              Runs HCP MSMAll.
---hcpDeDriftAndResample  Runs HCP DeDriftAndResample.
---hcpDTIFit              Runs DTI Fit.
---hcpBedpostx            Runs Bedpost X.
---mapHCPData             Maps results of HCP preprocessing into `images` folder.
+--hcp_pre_preesurfer        Runs HCP PreFS preprocessing.
+--hcp_freesurfer            Runs HCP FS preprocessing.
+--hcp_post_freesurfer       Runs HCP PostFS preprocessing.
+--hcp_diffusion             Runs HCP Diffusion weighted image preprocessing.
+--hcp_fmri_volume           Runs HCP BOLD Volume preprocessing.
+--hcp_fmri_surface          Runs HCP BOLD Surface preprocessing.
+--hcp_icafix                Runs HCP ICAFix.
+--hcp_post_fix              Runs HCP PostFix.
+--hcp_reapply_fix           Runs HCP ReApplyFix.
+--hcp_msmall                Runs HCP MSMAll.
+--hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
+--hcp_dtifit                Runs DTI Fit.
+--hcp_bedpostx              Runs Bedpost X.
+--map_hcp_data              Maps results of HCP preprocessing into `images` folder.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -278,10 +278,9 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
 
 
 
-def hcpPreFS(sinfo, options, overwrite=False, thread=0):
+def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_PreFS [... processing options]``
-    ``hcp1 [... processing options]``
+    ``hcp_pre_freesurfer [... processing options]``
 
     Runs the pre-FS step of the HCP Pipeline.
 
@@ -503,23 +502,23 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the pre-FS step of the HCP Pipeline. It looks for T1w and T2w images in
+    Runs the PreFreeSurfer step of the HCP Pipeline. It looks for T1w and T2w images in
     sessions's T1w and T2w folder, averages them (if multiple present) and
     linearly and nonlinearly aligns them to the MNI atlas. It uses the adjusted
     version of the HCP that enables the preprocessing to run with of without T2w
-    image(s). A short name 'hcp1' can be used for this command.
+    image(s).
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex hcp_PreFS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
             overwrite=no parsessions=10 hcp_brainsize=170
 
     ::
 
-        qunex hcp1 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
             overwrite=no parsessions=10 hcp_t2=NONE
     """
 
@@ -577,8 +576,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_PreFS')
-        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doOptionsCheck(options, sinfo, 'hcp_pre_freesurfer')
+        doHCPOptionsCheck(options, sinfo, 'hcp_pre_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -900,17 +899,16 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo['id'], report, failed))
 
 
-def hcpFS(sinfo, options, overwrite=False, thread=0):
+def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_FS [... processing options]``
-    ``hcp2 [... processing options]``
+    ``hcp_freesurfer [... processing options]``
 
     Runs the FS step of the HCP Pipeline.
 
     REQUIREMENTS
     ============
 
-    The code expects the previous step (hcp_PreFS) to have run successfully and
+    The code expects the previous step (hcp_pre_freesurfer) to have run successfully and
     checks for presence of a few key files and folders. Due to the number of
     inputs that it requires, it does not make a full check for all of them!
 
@@ -1027,7 +1025,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --hcp_freesurfer_home       Path for FreeSurfer home folder can be manually
                                 specified to override default environment
                                 variable to ensure backwards compatiblity and
-                                hcp2 customization.
+                                hcp_freesurfer customization.
 
     OUTPUTS
     =======
@@ -1038,36 +1036,36 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the FS step of the HCP Pipeline. It takes the T1w and T2w images
-    processed in the previous (hcp_PreFS) step, segments T1w image by brain
+    Runs the FreeSurfer step of the HCP Pipeline. It takes the T1w and T2w images
+    processed in the previous (hcp_pre_freesurfer) step, segments T1w image by brain
     matter and CSF, reconstructs the cortical surface of the brain and assigns
     structure labels for both subcortical and cortical structures. It completes
     the listed in multiple steps of increased precision and (if present) uses
     T2w image to refine the surface reconstruction. It uses the adjusted
     version of the HCP code that enables the preprocessing to run also if no T2w
-    image is present. A short name 'hcp2' can be used for this command.
+    image is present. 
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex hcp_FS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp_FS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_fs_longitudinal=TemplateA
 
     ::
 
-        qunex hcp2 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_t2=NONE
 
     ::
 
-        qunex hcp2 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_t2=NONE \\
               hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
     """
@@ -1136,8 +1134,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_FS')
-        doHCPOptionsCheck(options, sinfo, 'hcp_FS')
+        doOptionsCheck(options, sinfo, 'hcp_freesurfer')
+        doHCPOptionsCheck(options, sinfo, 'hcp_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -1242,7 +1240,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         #         lresults = os.path.join(hcp['FS_long_template'], 'label', 'rh.entorhinal_exvivo.label')
         #         if not os.path.exists(lresults):
         #             r += "\n     ... ERROR: Longitudinal template not present! [%s]" % (lresults)
-        #             r += "\n                Please chesk the results of longitudinalFS command!"
+        #             r += "\n                Please chesk the results of longitudinal_freesurfer command!"
         #             r += "\n                Please check your data and settings!" % (lresults)
         #             run = False
         #         else:
@@ -1368,10 +1366,9 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
 
 
-def longitudinalFS(sinfo, options, overwrite=False, thread=0):
+def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``longitudinalFS [... processing options]``
-    ``lfs [... processing options]``
+    ``longitudinal_freesurfer [... processing options]``
 
     Runs longitudinal FreeSurfer processing in cases when multiple sessions with
     structural data exist for a single subject.
@@ -1379,7 +1376,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    The code expects the FreeSurfer Pipeline (hcp_PreFS) to have run
+    The code expects the FreeSurfer Pipeline (hcp_pre_freesurfer) to have run
     successfully on all subject's session. In the batch file, there need to be
     clear separation between session id (`id` parameter) and subject id
     (`subject` parameter). So that the command can identify which sessions
@@ -1452,11 +1449,11 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     --hcp_freesurfer_home        Path for FreeSurfer home folder can be manually
                                  specified to override default environment
                                  variable to ensure backwards compatibility and
-                                 hcp2 customization.
+                                 hcp_freesurfer customization.
     --hcp_freesurfer_module      Whether to load FreeSurfer as a module on the
                                  cluster. You can specify using YES or empty
                                  otherwise. [] To ensure backwards compatibility
-                                 and hcp2 customization.
+                                 and hcp_freesurfer customization.
     --hcp_fs_longitudinal        The name of the FS longitudinal template to
                                  be used for the template resulting from this
                                  command call.
@@ -1489,17 +1486,17 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex longitudinalFS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10
 
     ::
 
-        qunex lfs sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_t2=NONE
 
     ::
 
-        qunex lfs sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_t2=NONE \\
               hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
               hcp_freesurfer_module=YES
@@ -1551,8 +1548,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             sessionStatus = True
 
             try:
-                doOptionsCheck(options, sinfo, 'longitudinalFS')
-                doHCPOptionsCheck(options, sinfo, 'longitudinalFS')
+                doOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
+                doHCPOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
                 hcp = getHCPPaths(session, options)
                 sessionspaths.append(hcp['FS_folder'])
                 resultspaths.append(hcp['FS_long_results'])
@@ -1711,17 +1708,16 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
 
 
-def hcpPostFS(sinfo, options, overwrite=False, thread=0):
+def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_PostFS [... processing options]``
-    ``hcp3 [... processing options]``
+    ``hcp_post_freesurfer [... processing options]``
 
     Runs the PostFS step of the HCP Pipeline.
 
     REQUIREMENTS
     ============
 
-    The code expects the previous step (hcp_FS) to have run successfully and
+    The code expects the previous step (hcp_freesurfer) to have run successfully and
     checks for presence of the last file that should have been generated. Due
     to the number of files that it requires, it does not make a full check for
     all of them!
@@ -1807,23 +1803,22 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the PostFS step of the HCP Pipeline. It creates Workbench compatible
+    Runs the PostFreeSurfer step of the HCP Pipeline. It creates Workbench compatible
     files based on the Freesurfer segmentation and surface registration. It uses
     the adjusted version of the HCP code that enables the preprocessing to run
-    also if no T2w image is present. A short name 'hcp3' can be used for this
-    command.
+    also if no T2w image is present.
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex hcp_PostFS sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp3 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_t2=NONE
     """
 
@@ -1866,8 +1861,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_PostFS')
-        doHCPOptionsCheck(options, sinfo, 'hcp_PostFS')
+        doOptionsCheck(options, sinfo, 'hcp_post_freesurfer')
+        doHCPOptionsCheck(options, sinfo, 'hcp_post_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -1994,9 +1989,9 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo['id'], report, failed))
 
 
-def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
+def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_Diffusion [... processing options]``
+    ``hcp_diffusion [... processing options]``
     ``hcpd [... processing options]``
 
     Runs the Diffusion step of HCP Pipeline.
@@ -2004,7 +1999,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    The code expects the first HCP preprocessing step (hcp_PreFS) to have been
+    The code expects the first HCP preprocessing step (hcp_pre_freesurfer) to have been
     run and finished successfully. It expects the DWI data to have been acquired
     in phase encoding reversed pairs, which should be present in the Diffusion
     folder in the sessions's root hcp folder.
@@ -2190,7 +2185,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     Example run from the base study folder with test flag::
 
-        qunex hcp_Diffusion \
+        qunex hcp_diffusion \
           --sessions="processing/batch.hcp.txt" \\
           --sessionsfolder="sessions" \\
           --parsessions="10" \\
@@ -2199,7 +2194,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     Run using absolute paths with scheduler::
 
-        qunex hcpd \
+        qunex hcp_diffusion \
           --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\
           --sessionsfolder="<path_to_study_folder>/sessions" \\
           --parsessions="4" \\
@@ -2241,8 +2236,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_Diffusion')
-        doHCPOptionsCheck(options, sinfo, 'hcp_Diffusion')
+        doOptionsCheck(options, sinfo, 'hcp_diffusion')
+        doHCPOptionsCheck(options, sinfo, 'hcp_diffusion')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -2415,18 +2410,17 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
 
 
-def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
+def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_fMRIVolume [... processing options]``
-    ``hcp4 [... processing options]``
+    ``hcp_fmri_volume [... processing options]``
 
     Runs the fMRI Volume step of HCP Pipeline.
 
     REQUIREMENTS
     ============
 
-    The code expects the first two HCP preprocessing steps (hcp_PreFS and
-    hcp_FS) to have been run and finished successfully. It also tests for the
+    The code expects the first two HCP preprocessing steps (hcp_pre_freesurfer and
+    hcp_freesurfer) to have been run and finished successfully. It also tests for the
     presence of fieldmap or spin-echo images if they were specified. It does
     not make a thorough check for PreFS and FS steps due to the large number
     of files. If `hcp_fs_longitudinal` is specified, it also checks for
@@ -2709,20 +2703,19 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     Runs the fMRI Volume step of HCP Pipeline. It preprocesses BOLD images and
     linearly and nonlinearly registers them to the MNI atlas. It makes use of
     the PreFS and FS steps of the pipeline. It enables the use of a number of
-    parameters to customize the specific preprocessing steps. A short name
-    'hcp4' can be used for this command.
+    parameters to customize the specific preprocessing steps..
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex hcp_fMRIVolume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp4 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
               hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     """
@@ -2783,8 +2776,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_fMRIVolume')
-        doHCPOptionsCheck(options, sinfo, 'hcp_fMRIVolume')
+        doOptionsCheck(options, sinfo, 'hcp_fmri_volume')
+        doHCPOptionsCheck(options, sinfo, 'hcp_fmri_volume')
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
@@ -3501,18 +3494,17 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     return {'r': r, 'report': report}
 
 
-def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
+def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_fMRISurface [... processing options]``
-    ``hcp5 [... processing options]``
+    ``hcp_fmri_surface [... processing options]``
 
     Runs the fMRI Surface step of HCP Pipeline.
 
     REQUIREMENTS
     ============
 
-    The code expects all the previous HCP preprocessing steps (hcp_PreFS,
-    hcp_FS, hcp_PostFS, hcp_fMRIVolume) to have been run and finished
+    The code expects all the previous HCP preprocessing steps (hcp_pre_freesurfer,
+    hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume) to have been run and finished
     successfully. The command will test for presence of key files but do note
     that it won't run a thorough check for all the required files.
 
@@ -3619,19 +3611,18 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     Runs the fMRI Surface step of HCP Pipeline. It uses the FreeSurfer
     segmentation and surface reconstruction to map BOLD timeseries to
     grayordinate representation and generates .dtseries.nii files.
-    A short name 'hcp5' can be used for this command.
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex hcp_fMRISurface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp5 sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10
     """
 
@@ -3677,8 +3668,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         # --- Base settings
 
-        doOptionsCheck(options, sinfo, 'hcp_fMRISurface')
-        doHCPOptionsCheck(options, sinfo, 'hcp_fMRISurface')
+        doOptionsCheck(options, sinfo, 'hcp_fmri_surface')
+        doHCPOptionsCheck(options, sinfo, 'hcp_fmri_surface')
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
@@ -4112,10 +4103,9 @@ def parseICAFixBolds(options, bolds, r, msmall=False):
     return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
 
-def hcpICAFix(sinfo, options, overwrite=False, thread=0):
+def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_ICAFix [... processing options]``
-    ``hcp6 [... processing options]``
+    ``hcp_icafix [... processing options]``
 
     Runs the ICAFix step of HCP Pipeline.
 
@@ -4249,14 +4239,14 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_ICAFix \
+        qunex hcp_icafix \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions
 
 
     ::
 
-        qunex hcp_ICAFix \
+        qunex hcp_icafix \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
@@ -4282,8 +4272,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_ICAFix')
-        doHCPOptionsCheck(options, sinfo, 'hcp_ICAFix')
+        doOptionsCheck(options, sinfo, 'hcp_icafix')
+        doHCPOptionsCheck(options, sinfo, 'hcp_icafix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -4319,7 +4309,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
 
         if not parsOK:
-            raise ge.CommandFailed("hcp_ICAFix", "... invalid input parameters!")
+            raise ge.CommandFailed("hcp_icafix", "... invalid input parameters!")
 
         # --- Execute
         # single fix
@@ -4663,10 +4653,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
     return {'r': r, 'report': report}
 
 
-def hcpPostFix(sinfo, options, overwrite=False, thread=0):
+def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_PostFix [... processing options]``
-    ``hcp7 [... processing options]``
+    ``hcp_post_fix [... processing options]``
 
     Runs the PostFix step of HCP Pipeline.
 
@@ -4783,14 +4772,14 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_PostFix \
+        qunex hcp_post_fix \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_PostFix \
+        qunex hcp_post_fix \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
@@ -4817,8 +4806,8 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_PostFix')
-        doHCPOptionsCheck(options, sinfo, 'hcp_PostFix')
+        doOptionsCheck(options, sinfo, 'hcp_post_fix')
+        doHCPOptionsCheck(options, sinfo, 'hcp_post_fix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -4832,7 +4821,7 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_PostFix", "... invalid input parameters!")
+            raise ge.CommandFailed("hcp_post_fix", "... invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -5017,7 +5006,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_PostFix", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_post_fix", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -5060,10 +5049,9 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
     return {'r': r, 'report': report}
 
 
-def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
+def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_ReApplyFix [... processing options]``
-    ``hcp8 [... processing options]``
+    ``hcp_reapply_fix [... processing options]``
 
     Runs the ReApplyFix step of HCP Pipeline.
 
@@ -5187,14 +5175,14 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_ReApplyFix \
+        qunex hcp_reapply_fix \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_ReApplyFix \
+        qunex hcp_reapply_fix \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
@@ -5221,8 +5209,8 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_ReApplyFix')
-        doHCPOptionsCheck(options, sinfo, 'hcp_ReApplyFix')
+        doOptionsCheck(options, sinfo, 'hcp_reapply_fix')
+        doHCPOptionsCheck(options, sinfo, 'hcp_reapply_fix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -5236,7 +5224,7 @@ def hcpReApplyFix(sinfo, options, overwrite=False, thread=0):
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_ReApplyFix", "... invalid input parameters!")
+            raise ge.CommandFailed("hcp_reapply_fix", "... invalid input parameters!")
 
         # --- Multi threading
         if singleFix:
@@ -5752,10 +5740,9 @@ def parseMSMAllBolds(options, bolds, r):
     return (singleRun, icafixGroup, parsOK, r)
 
 
-def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
+def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_MSMAll [... processing options]``
-    ``hcp9 [... processing options]``
+    ``hcp_msmall [... processing options]``
 
     Runs the MSMAll step of the HCP Pipeline.
 
@@ -5886,15 +5873,15 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     The DeDriftAndResample step applies the MSMAll registration to a specified
     set of maps and fMRI runs.
 
-    MSMAll is intended for use with fMRI runs cleaned with hcp_ICAFix. Except
+    MSMAll is intended for use with fMRI runs cleaned with hcp_icafix. Except
     for specialized/expert-user situations, the hcp_icafix_bolds parameter
-    should be identical to what was used in hcp_ICAFix. If hcp_icafix_bolds
+    should be identical to what was used in hcp_icafix. If hcp_icafix_bolds
     is not provided MSMAll/DeDriftAndResample will assume multi-run ICAFix was
     executed with all bolds bundled together in a single concatenation called
     fMRI_CONCAT_ALL. (This is the default behavior if hcp_icafix_bolds
-    parameter is not provided in the case of hcp_ICAFix).
+    parameter is not provided in the case of hcp_icafix).
 
-    A key parameter in hcp_MSMAll is `hcp_msmall_bolds`, which controls the fMRI
+    A key parameter in hcp_msmall is `hcp_msmall_bolds`, which controls the fMRI
     runs that enter into the computation of the MSMAll registration. Since
     MSMAll registration was designed to be computed from resting-state scans,
     this should be a list of the resting-state fMRI scans that you want to
@@ -5904,7 +5891,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     scans in the DeDriftAndResample step. The fMRI scans to which the MSMAll
     registration is applied are controlled by the `hcp_icafix_bolds` parameter,
     since typically one wants to apply the MSMAll registration to the same full
-    set of fMRI scans that were cleaned using hcp_ICAFix.
+    set of fMRI scans that were cleaned using hcp_icafix.
 
     EXAMPLE USE
     ===========
@@ -5912,7 +5899,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP MSMAll after application of single-run ICAFix
-        qunex hcp_MSMAll \
+        qunex hcp_msmall \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
@@ -5922,7 +5909,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP MSMAll after application of multi-run ICAFix
-        qunex hcp_MSMAll \
+        qunex hcp_msmall \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
@@ -5952,8 +5939,8 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_MSMAll')
-        doHCPOptionsCheck(options, sinfo, 'hcp_MSMAll')
+        doOptionsCheck(options, sinfo, 'hcp_msmall')
+        doHCPOptionsCheck(options, sinfo, 'hcp_msmall')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -5967,7 +5954,7 @@ def hcpMSMAll(sinfo, options, overwrite=False, thread=0):
         # --- Parse msmall_bolds
         singleRun, msmallGroup, parsOK, r = parseMSMAllBolds(options, bolds, r)
         if not parsOK:
-            raise ge.CommandFailed("hcp_MSMAll", "... invalid input parameters!")
+            raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")
 
         # --- Execute
         # single-run
@@ -6365,10 +6352,9 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
     return {'r': r, 'report': report}
 
 
-def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
+def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_DeDriftAndResample [... processing options]``
-    ``hcp10 [... processing options]``
+    ``hcp_dedrift_and_resample [... processing options]``
 
     Runs the DeDriftAndResample step of the HCP Pipeline.
 
@@ -6425,7 +6411,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
                                     with the same format as for ICAFix.
                                     Typically, this should be identical to the
                                     list used in the ICAFix run [same default
-                                    as for hcp_ICAFix and hcp_MSMAll].
+                                    as for hcp_icafix and hcp_msmall].
     --hcp_resample_concatregname    Output name of the dedrifted registration.
                                     [MSMAll]
     --hcp_resample_regname          Registration sphere name.
@@ -6488,7 +6474,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP DeDriftAndResample after application of single-run ICAFix
-        qunex hcp_DeDriftAndResample \
+        qunex hcp_dedrift_and_resample \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
@@ -6497,7 +6483,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP DeDriftAndResample after application of multi-run ICAFix
-        qunex hcp_DeDriftAndResample \
+        qunex hcp_dedrift_and_resample \
             --sessions=processing/batch.txt \
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
@@ -6526,8 +6512,8 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, sinfo, 'hcp_DeDriftAndResample')
-        doHCPOptionsCheck(options, sinfo, 'hcp_DeDriftAndResample')
+        doOptionsCheck(options, sinfo, 'hcp_dedrift_and_resample')
+        doHCPOptionsCheck(options, sinfo, 'hcp_dedrift_and_resample')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -6542,7 +6528,7 @@ def hcpDeDriftAndResample(sinfo, options, overwrite=False, thread=0):
         singleRun, icafixBolds, dedriftGroups, parsOK, r = parseICAFixBolds(options, bolds, r, True)
 
         if not parsOK:
-            raise ge.CommandFailed("hcp_DeDriftAndResample", "... invalid input parameters!")
+            raise ge.CommandFailed("hcp_dedrift_and_resample", "... invalid input parameters!")
 
         # --- Execute
         # single-run
@@ -6714,7 +6700,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
         # -- Run
         if run and boldsok:
             if options['run'] == "run":
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(regname)
@@ -6970,7 +6956,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_DeDriftAndResample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(grouptargets)
@@ -7010,9 +6996,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
     return {'r': r, 'report': report}
 
 
-def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
+def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     """
-    hcpDTIFit - documentation not yet available.
+    hcp_dtifit - documentation not yet available.
     """
 
     r = "\n------------------------------------------------------------"
@@ -7023,8 +7009,8 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_PreFS')
-        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doOptionsCheck(options, sinfo, 'hcp_dtifit')
+        doHCPOptionsCheck(options, sinfo, 'hcp_dtifit')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -7098,9 +7084,9 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo['id'], report, failed))
 
 
-def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
+def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
     """
-    hcpBedpostx - documentation not yet available.
+    hcp_bedpostx - documentation not yet available.
     """
 
     r = "\n------------------------------------------------------------"
@@ -7111,8 +7097,8 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, sinfo, 'hcp_PreFS')
-        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doOptionsCheck(options, sinfo, 'hcp_bedpostx')
+        doHCPOptionsCheck(options, sinfo, 'hcp_bedpostx')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -7186,9 +7172,9 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo['id'], report, failed))
 
 
-def mapHCPData(sinfo, options, overwrite=False, thread=0):
+def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     """
-    ``mapHCPData [... processing options]``
+    ``map_hcp_data [... processing options]``
 
     Maps the results of the HCP preprocessing.
 
@@ -7276,7 +7262,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    mapHCPData maps the results of the HCP preprocessing (in MNINonLinear) to
+    map_hcp_data maps the results of the HCP preprocessing (in MNINonLinear) to
     the `<sessionsfolder>/<session id>/images<img_suffix>` folder structure.
     Specifically, it copies the files and folders:
 
@@ -7299,7 +7285,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex mapHCPData sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex map_hcp_data sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no hcp_cifti_tail=_Atlas bolds=all
     """
 

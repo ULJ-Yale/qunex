@@ -327,11 +327,11 @@ Platform="Platform Information: `uname -a`"
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 if [[ ${CommandToRun} == "run_turnkey" ]]; then
    unset GmriCommandToRun
-   if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
+   if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'create_study'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
        if [[ ! -d ${WORKDIR} ]]; then 
           mkdir -p ${WORKDIR} &> /dev/null
        fi
-       gmri createStudy ${StudyFolder}
+       gmri create_study ${StudyFolder}
    fi
 fi
 
@@ -351,7 +351,7 @@ if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${Q
     mageho "WARNING: QuNex study folder specification .qunexstudy in ${StudyFolder} not found."
     mageho "         Check that ${StudyFolder} is a valid QuNex folder."
     mageho "         Consider re-generating QuNex hierarchy..."; echo ""
-    # gmri createStudy ${StudyFolder}
+    # gmri create_study ${StudyFolder}
 fi
 
 if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
@@ -405,7 +405,7 @@ if [[ ${GmriCommandToRun} ]]; then
     gmri_function
     # -- Debugging for python qx_utilities functions that are not logging natively yet
     #
-    # if [[ ${GmriCommandToRun} != "createStudy" ]]; then
+    # if [[ ${GmriCommandToRun} != "create_study" ]]; then
     #     GmriComLogFile=`ls -Art ${MasterComlogFolder}/*${GmriCommandToRun}_*.log | tail -n 1`
     #     # -- Temporary patch to allow for unified log handling in python qx_utilities
     #     if [[ `echo $GmriComLogFile | grep "tmp"` ]]; then
@@ -430,7 +430,7 @@ else
     #
     # -- Runlog
     #    Specification: Log-<command name>-<date>_<hour>.<minute>.<microsecond>.log
-    #    Example:       Log-mapHCPData-2017-11-11_15.58.1510433930.log
+    #    Example:       Log-map_hcp_data-2017-11-11_15.58.1510433930.log
     #
     Runlog="${MasterRunLogFolder}/Log-${CommandToRun}_${TimeStamp}.log"
     
@@ -539,12 +539,12 @@ show_usage_run_turnkey() {
 ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh
 }
 
-# ---------------------------------------------------------------------------------------------------------------
-#  -- organize_dicom - Sort original DICOMs into folders and generates NIFTI files using sortDicom and dicom2niix
-# ---------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
+#  -- organize_dicom - Sort original DICOMs into folders and generates NIFTI files using sort_dicom and dicom2niix
+# ----------------------------------------------------------------------------------------------------------------
 
 organize_dicom() {
-# -- Note: This command passes parameters into two python qx_utilities commands: sortDicom and dicom2niix
+# -- Note: This command passes parameters into two python qx_utilities commands: sort_dicom and dicom2niix
 mkdir ${SessionsFolder}/${CASE}/dicom &> /dev/null
 if [[ ${Overwrite} == "yes" ]]; then
     echo ""
@@ -578,14 +578,14 @@ if [ -d ${SessionsFolder}/${CASE}/dicom ]; then
      if [[ ${InboxCheck} != "" ]]; then
          echo "===> ${SessionsFolder}/${CASE}/dicom/ found and data exists."; echo ""
          if [[ ${InboxCheck} == "" ]]; then
-             reho "ERROR: ${SessionsFolder}/${CASE}/inbox/ found but empty. Will re-run sortDicom from ${SessionsFolder}/${CASE}/dicom"; echo ""
+             reho "ERROR: ${SessionsFolder}/${CASE}/inbox/ found but empty. Will re-run sort_dicom from ${SessionsFolder}/${CASE}/dicom"; echo ""
          fi
     fi
 fi
 # -- Specify command variable
 unset CommandToRun
 ComA="cd ${SessionsFolder}/${CASE}"
-ComB="gmri sortDicom folder=. "
+ComB="gmri sort_dicom folder=. "
 ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} parelements=${ParElements} sessionid=${CASE}"
 ComD="slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*"
 QuNexCallToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
@@ -653,7 +653,7 @@ map_hcp_files() {
 if [[ ${Overwrite} == "yes" ]]; then
     HLinks=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
 fi
-QuNexCallToRun="cd ${SessionsFolder}/${CASE}; echo '--> running map_hcp_files for ${CASE}'; echo ''; gmri setupHCP"
+QuNexCallToRun="cd ${SessionsFolder}/${CASE}; echo '--> running map_hcp_files for ${CASE}'; echo ''; gmri setup_hcp"
 # -- QuNex bash execute function
 bashExec
 }
@@ -823,7 +823,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \
 # -- QuNex bash execute function
 bashExec
 }
-show_usage_DWIDenseParcellation() {
+show_usage_dwi_parcellate() {
 echo ""
 echo "qunex ${UsageInput}"
 ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh
@@ -1136,12 +1136,13 @@ echo ""
 }
 
 # -------------------------------------------------------------------------------------------------------------------
-#  -- dwi_pre_tractography - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
+#  -- dwi_pre_tractography
+#  - Executes the HCP Pretractography (dwi_pre_tractography) [ Stam's implementation for all grayordinates ]
 # ------------------------------------------------------------------------------------------------------------------
 
 dwi_pre_tractography() {
 # -- Parse general parameters
-LogFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractographydense"
+LogFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_dwi_pre_tractography"
 RunFolder="${SessionsFolder}/${CASE}/hcp/"
 # -- Command to run
 QuNexCallToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
@@ -1900,7 +1901,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Path options for FreeSurfer or QuNex
     FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
     QuNexVersion=`opts_GetOpt "${setflag}version" $@`
-    # -- createLists input flags
+    # -- create_list input flags
     ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@`
     Append=`opts_GetOpt "${setflag}append" $@`
     ListName=`opts_GetOpt "${setflag}listname" $@`
@@ -1987,7 +1988,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Sample=`opts_GetOpt "${setflag}sample" $@`
     Model=`opts_GetOpt "${setflag}model" $@`
     Rician=`opts_GetOpt "${setflag}rician" $@`
-    # -- DWIprobtrackxGPUDense input flags
+    # -- dwi_probtrackx_dense_gpu input flags
     MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
     MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
     NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`

@@ -186,7 +186,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
     Change log
 
     2019-01-19  Jure Demšar
-                Initial version adopted from importHCP.
+                Initial version adopted from import_hcp.
     """
 
     print "Running import_nhp"

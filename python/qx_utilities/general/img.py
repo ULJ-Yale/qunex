@@ -734,9 +734,9 @@ class niftihdr:
 
 
 
-def sliceImage(sourcefile, targetfile, frames=1):
+def slice_image(sourcefile, targetfile, frames=1):
     """
-    ``sliceImage sourcefile=<source image> targetfile=<target image> [frames=1]``
+    ``slice_image sourcefile=<source image> targetfile=<target image> [frames=1]``
 
     Takes the source volume image file, removes all but the first N frames, and
     saves the resulting image to target volume image file.
@@ -753,7 +753,7 @@ def sliceImage(sourcefile, targetfile, frames=1):
 
     ::
 
-        qunex sliceImage sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
+        qunex slice_image sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
     """
 
     """

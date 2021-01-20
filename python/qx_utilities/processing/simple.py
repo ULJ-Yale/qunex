@@ -6,9 +6,9 @@
 This file holds code for support functions for image preprocessing and analysis.
 It consists of functions:
 
---createBoldList   Creates a list with paths to each session's BOLD files.
---createConcList   Creates a list with paths to each session's conc files.
---listSessionInfo  Lists session data stored in batch.txt file.
+--create_bold_list  Creates a list with paths to each session's BOLD files.
+--create_conc_list  Creates a list with paths to each session's conc files.
+--list_session_info Lists session data stored in batch.txt file.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -30,9 +30,9 @@ from general.img import *
 from datetime import datetime
 
 
-def createBoldList(sinfo, options, overwrite=False, thread=0):
+def create_bold_list(sinfo, options, overwrite=False, thread=0):
     """
-    createBoldList - documentation not yet available.
+    create_bold_list - documentation not yet available.
     """
     bfile = open(os.path.join(options['sessionsfolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
     bsearch = re.compile('bold([0-9]+)')
@@ -56,9 +56,9 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
     bfile.close()
 
 
-def createConcList(sinfo, options, overwrite=False, thread=0):
+def create_conc_list(sinfo, options, overwrite=False, thread=0):
     """
-    createConcList - documentation not yet available.
+    create_conc_list - documentation not yet available.
     """
 
     bfile = open(os.path.join(options['sessionsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
@@ -94,9 +94,9 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
 
 
 
-def listSessionInfo(sinfo, options, overwrite=False, thread=0):
+def list_session_info(sinfo, options, overwrite=False, thread=0):
     """
-    listSessionInfo - documentation not yet available.
+    list_session_info - documentation not yet available.
     """
     bfile = open(os.path.join(options['sessionsfolder'], 'SessionInfo.txt'), 'w')
 
@@ -107,9 +107,9 @@ def listSessionInfo(sinfo, options, overwrite=False, thread=0):
 
 
 
-def runShellScript(sinfo, options, overwrite=False, thread=0):
+def run_shell_script(sinfo, options, overwrite=False, thread=0):
     """
-    ``runShellScript [... processing options]``
+    ``run_shell_script [... processing options]``
 
     Runs the specified script on every selected session from batch.txt file.
 
@@ -126,7 +126,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    runShellScript runs the specified script on every selected session from
+    run_shell_script runs the specified script on every selected session from
     batch.txt file. It places the specified session specific information
     before running the script. The information to be added is to be referenced
     in the script using double curly braces: {{<key>}}. Specifically, the
@@ -170,7 +170,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     
     ::
 
-        qunex runShellScript sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
+        qunex run_shell_script sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
               overwrite=no script=fcMRI/processdata.sh
     """
 
@@ -219,8 +219,8 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
 
         # --- execute script
 
-        description = "runShellScript: %s" % (options['script'])
-        task = "runShellScript-%s" % (options['script'])
+        description = "run_shell_script: %s" % (options['script'])
+        task = "run_shell_script-%s" % (options['script'])
 
         r += runScriptThroughShell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
 
@@ -241,6 +241,6 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
         raise
         return (r, (sinfo['id'], message, 1))
 
-    r += "\n\nrunShellScript %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n\nrun_shell_script %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     print r
     return (r, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))

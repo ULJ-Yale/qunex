@@ -6,13 +6,13 @@
 This file holds code for running functional connectivity preprocessing and
 GLM computation workflow. It consists of functions:
 
---getBOLDData            Maps NIL preprocessed data to images folder.
---createBOLDBrainMasks   Extracts the first frame of each BOLD file.
---computeBOLDStats       Computes per volume image statistics for scrubbing.
---createStatsReport      Creates a report of movement and image statistics.
---extractNuisanceSignal  Extracts the nuisance signal for regressions.
---preprocessBold         Processes a single BOLD file.
---preprocessConc         Processes concatenated BOLD files.
+--get_bold_data             Maps NIL preprocessed data to images folder.
+--create_bold_brain_masks   Extracts the first frame of each BOLD file.
+--compute_bold_stats        Computes per volume image statistics for scrubbing.
+--create_stats_report       Creates a report of movement and image statistics.
+--extract_nuisance_signal   Extracts the nuisance signal for regressions.
+--preprocess_bold           Processes a single BOLD file.
+--preprocess_conc           Processes concatenated BOLD files.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -51,9 +51,9 @@ else:
 
 
 
-def getBOLDData(sinfo, options, overwrite=False, thread=0):
+def get_bold_data(sinfo, options, overwrite=False, thread=0):
     """
-    getBOLDData - documentation not yet available.
+    get_bold_data - documentation not yet available.
     """
     bsearch = re.compile('bold([0-9]+)')
 
@@ -62,7 +62,7 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
     r += "\nCopying imaging data ..."
 
     r += '\nStructural data ...'
-    doOptionsCheck(options, sinfo, 'getBOLDData')
+    doOptionsCheck(options, sinfo, 'get_bold_data')
     f = getFileNames(sinfo, options)
 
     copy = True
@@ -146,9 +146,9 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
     return r
 
 
-def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
+def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     """
-    ``createBOLDBrainMasks [... processing options]``
+    ``create_bold_brain_masks [... processing options]``
 
     Extracts the brain and creates a brain mask for each BOLD image.
 
@@ -200,7 +200,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    createBOLDBrainMasks takes the first image of each bold file, and runs FSL
+    create_bold_brain_masks takes the first image of each bold file, and runs FSL
     bet to extract the brain and create a brain mask. The resulting files are
     saved into images/segmentation/boldmasks in the source image format:
 
@@ -213,7 +213,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex createBOLDBrainMasks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex create_bold_brain_masks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no nifti_tail=_hp2000_clean bolds=all parelements=8
     """
 
@@ -256,7 +256,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bolds parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
     r += "\n\n........................................................"
 
-    doOptionsCheck(options, sinfo, 'createBOLDBrainMasks')
+    doOptionsCheck(options, sinfo, 'create_bold_brain_masks')
     d = getSessionFolders(sinfo, options)
 
     if overwrite:
@@ -339,7 +339,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
         # --- extract first bold frame
         if not os.path.exists(f['bold1']) or overwrite:
-            sliceImage(f['bold_vol'], f['bold1'], 1)
+            slice_image(f['bold_vol'], f['bold1'], 1)
             if os.path.exists(f['bold1']):
                 r += '\n    ... sliced first frame from %s' % (os.path.basename(f['bold_vol']))
             else:
@@ -472,7 +472,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
     # print to log file
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-    logname = "%s_createBOLDBrainMasks_%s_%s_%s_%s.log" % (log_prefix, sinfo['id'], boldname, boldnum, logstamp)
+    logname = "%s_create_bold_brain_masks_%s_%s_%s_%s.log" % (log_prefix, sinfo['id'], boldname, boldnum, logstamp)
 
     # setup log folder
     logfolder = options['comlogs']
@@ -497,9 +497,9 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
     return {'r': r, 'report': report}
 
 
-def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
+def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     """
-    ``computeBOLDStats [... processing options]``
+    ``compute_bold_stats [... processing options]``
 
     Processes specified BOLD files and saves images/function/movement files.
 
@@ -590,7 +590,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    computeBOLDStats processes each of the specified BOLD files and saves three
+    compute_bold_stats processes each of the specified BOLD files and saves three
     files in the images/functional/movement folder:
 
     bold[N].bstats
@@ -662,12 +662,12 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     Using the defaults::
 
-        qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no bolds=all
 
     Specifying additional parameters for identification of bad frames::
 
-        qunex computeBOLDStats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
              mov_before=1 mov_after= 2
     """
@@ -711,7 +711,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     r += "\n\n    for computing scrubbing information."
     r += "\n\n........................................................"
 
-    doOptionsCheck(options, sinfo, 'computeBOLDStats')
+    doOptionsCheck(options, sinfo, 'compute_bold_stats')
     d = getSessionFolders(sinfo, options)
 
     if overwrite:
@@ -830,9 +830,9 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
     return {'r': r, 'report': report}
 
 
-def createStatsReport(sinfo, options, overwrite=False, thread=0):
+def create_stats_report(sinfo, options, overwrite=False, thread=0):
     """
-    ``createStatsReport(sinfo, options, overwrite=False, thread=0)``
+    ``create_stats_report(sinfo, options, overwrite=False, thread=0)``
 
     Processes movement correction parameters and computed BOLD statistics to
     create per session plots and fidl snippets and group reports.
@@ -949,7 +949,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    createStatsReport processes movement correction parameters and computed
+    create_stats_report processes movement correction parameters and computed
     BOLD statistics to create per session plots and fidl snippets and group
     reports.
 
@@ -995,7 +995,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     The command runs the bold_stats.R R script that computes the statistics
     and plots the data. The function requires that movement correction
     parameters files and bold statistics data files (results of the
-    computeBOLDStats command) are present in the expected locations.
+    compute_bold_stats command) are present in the expected locations.
 
     Session statistics are appended to the group level report files as they
     are being computed. To avoid messy group level files, it is recommended
@@ -1011,19 +1011,19 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
+        qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
               --sessionsfolder=sessions --overwrite=no --bolds=all \\
               --parsessions=1
 
     ::
 
-        qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
+        qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
               --sessionsfolder=sessions --overwrite=no --bolds=all
               --parsessions=10
 
     ::
 
-        qunex createStatsReport --sessions=fcMRI/sessions_hcp.txt \\
+        qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
               --sessionsfolder=sessions --overwrite=no --bolds=all
               --nifti_tail=_hp2000_clean --parsessions=1 --mov_plot=""
     """
@@ -1061,7 +1061,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s" % (options)
         r += "\n\n........................................................"
 
-        doOptionsCheck(options, sinfo, 'createStatsReport')
+        doOptionsCheck(options, sinfo, 'create_stats_report')
         d = getSessionFolders(sinfo, options)
 
         if overwrite:
@@ -1226,9 +1226,9 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo['id'], rstatus, preport['boldmissing'] + (preport['procok'] == 'failed')))
 
 
-def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
+def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     """
-    ``extractNuisanceSignal [... processing options]``
+    ``extract_nuisance_signal [... processing options]``
 
     Extracts nuisance signal from volume BOLD files.
 
@@ -1334,7 +1334,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    extractNuisanceSignal is used to extract nuisance signal from volume BOLD
+    extract_nuisance_signal is used to extract nuisance signal from volume BOLD
     files to be used in the latter steps of preprocessing, specifically for
     regression of nuisance signals. By default it extract nuisance signals from
     ventricles, white matter and whole brain. Whole brain is defined as those
@@ -1388,7 +1388,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex extractNuisanceSignal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex extract_nuisance_signal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no bolds=all parsessions=10
     """
 
@@ -1430,7 +1430,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     r += "\n\n    when extracting nuisance signal."
     r += "\n\n........................................................"
 
-    doOptionsCheck(options, sinfo, 'extractNuisanceSignal')
+    doOptionsCheck(options, sinfo, 'extract_nuisance_signal')
     d = getSessionFolders(sinfo, options)
 
     if overwrite:
@@ -1570,9 +1570,9 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
     return {'r': r, 'report': report}
 
 
-def preprocessBold(sinfo, options, overwrite=False, thread=0):
+def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     """
-    ``preprocessBold [... processing options]``
+    ``preprocess_bold [... processing options]``
 
     Prepares BOLD files for further functional connectivity analysis.
 
@@ -1652,8 +1652,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     With --bolds set to "blink|EC|rest", bold1, 3, and 5 would be
     processed. If it were set to "all", all would be processed. As each bold
     gets processed independently and only one fidl file can be specified, you
-    are advised to use preprocessConc when regressing task structure, and only
-    use preprocessBold for resting state data. If you would still use like to
+    are advised to use preprocess_conc when regressing task structure, and only
+    use preprocess_bold for resting state data. If you would still use like to
     regress out events specified in a fidl file. They would neet to be named as
     [<session id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
@@ -1681,7 +1681,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    preprocessBold is a complex command initially used to prepare BOLD files
+    preprocess_bold is a complex command initially used to prepare BOLD files
     for further functional connectivity analysis. The function enables the
     following actions:
 
@@ -1973,14 +1973,14 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     - GLM coefficient image (``<root>_res-<regressors>_coeff.<ext>``)
 
     If you want more specific GLM results and information, please use
-    preprocessConc command.
+    preprocess_conc command.
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex preprocessBold
+        qunex preprocess_bold
              sessions=fcMRI/sessions_hcp.txt \\
              sessionsfolder=sessions \\
              overwrite=no \\
@@ -2021,7 +2021,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                Changed hcp_nifti_tail to nifti_tail
     """
 
-    doOptionsCheck(options, sinfo, 'preprocessBold')
+    doOptionsCheck(options, sinfo, 'preprocess_bold')
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -2200,9 +2200,9 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
     return {'r': r, 'report': report}
 
 
-def preprocessConc(sinfo, options, overwrite=False, thread=0):
+def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     """
-    ``preprocessConc [... processing options]``
+    ``preprocess_conc [... processing options]``
 
     Performs spatial smoothing, temporal filtering, removal of nuisance signals
     and complex modeling of events.
@@ -2210,7 +2210,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    preprocessConc is a complex general purpose command implementing
+    preprocess_conc is a complex general purpose command implementing
     spatial and temporal filtering, and multiple regression (GLM) to
     enable both preprocessing and denoising of BOLD files for further
     analysis, as well as complex activation modeling that creates
@@ -2632,7 +2632,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     Activation analysis::
 
-        qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
              bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
              event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
@@ -2641,7 +2641,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     Functional connectivity preprocessing::
 
-        qunex preprocessConc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
              bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
              event_string="block:boynton|target:9" \\
@@ -2663,7 +2663,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     2017-08-11 Grega Repovš
                Added ability to work with ptseries images.
     2018-12-12 Jure Demsar
-               preprocessConc function uses the conc_use parameter for
+               preprocess_conc function uses the conc_use parameter for
                absolute or relative path interpretation from conc files.
     2019-01-12 Grega Repovš
                Changed how bold_tail is identified
@@ -2678,7 +2678,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                Changed hcp_nifti_tail and hcp_cifti_tail to nifti_tail and cifti_tail
     """
 
-    doOptionsCheck(options, sinfo, 'preprocessConc')
+    doOptionsCheck(options, sinfo, 'preprocess_conc')
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -2900,11 +2900,11 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                         failed += 1
 
             except ge.CommandFailed, e:
-                r += "\n" + ge.reportCommandFailed('preprocessConc', e)
+                r += "\n" + ge.reportCommandFailed('preprocess_conc', e)
                 report += " => processing failed"
                 failed += 1
             except ge.CommandError, e:
-                r += "\n" + ge.reportCommandError('preprocessConc', e)
+                r += "\n" + ge.reportCommandError('preprocess_conc', e)
                 report += " => processing failed"
                 failed += 1
             except (ExternalFailed, NoSourceFolder), errormessage:

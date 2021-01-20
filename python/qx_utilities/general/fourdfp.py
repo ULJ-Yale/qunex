@@ -6,10 +6,10 @@
 This file holds code for running 4dfp NIL preprocessing commands and volume to
 surface mapping. It implements the following commands:
 
---runNIL            Runs NIL preprocessing of a session.
---runNILFolder      Runs NIL preprocessing of sessins in a folder.
---map2PALS          Maps volume image to PALS Atlas caret image.
---map2HCP           Maps volume image to CIFTI dense scalar image.
+--run_nil           Runs NIL preprocessing of a session.
+--run_nil_folder    Runs NIL preprocessing of sessins in a folder.
+--map2pals          Maps volume image to PALS Atlas caret image.
+--map2hcp           Maps volume image to CIFTI dense scalar image.
 
 Use gmri to run the commands from the terminal.
 """
@@ -50,11 +50,11 @@ set seq = ""
 
 recode = {True: 'ok', False: 'missing'}
 
-def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
+def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     """
-    ``runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
+    ``run_nil_folder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
 
-    Goes through the folder and runs runNIL on all the subfolders that match the
+    Goes through the folder and runs run_nil on all the subfolders that match the
     pattern. Setting overwrite to overwrite.
 
     INPUTS
@@ -72,7 +72,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
 
     ::
 
-        qunex runNILFolder folder=. pattern=OP* overwrite=no sourcefile=session.txt
+        qunex run_nil_folder folder=. pattern=OP* overwrite=no sourcefile=session.txt
     """
 
     if pattern is None:
@@ -119,16 +119,16 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sourcefile=None):
 
     for s in do:
         try:
-            runNIL(s, overwrite, sourcefile)
+            run_nil(s, overwrite, sourcefile)
         except:
             print "---> Failed running NIL preprocessing on", s
 
     print "\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder)
 
 
-def runNIL(folder=".", overwrite=None, sourcefile=None):
+def run_nil(folder=".", overwrite=None, sourcefile=None):
     """
-    ``runNIL [folder=.] [overwrite=no] [sourcefile=session.txt]``
+    ``run_nil [folder=.] [overwrite=no] [sourcefile=session.txt]``
 
     Runs NIL preprocessing script on the session data in specified folder.
 
@@ -282,9 +282,9 @@ def runNIL(folder=".", overwrite=None, sourcefile=None):
         print "...  preproc_NIL_nifti finished successfully"
 
 
-def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm'):
+def map2pals(volume, metric, atlas='711-2C', method='interpolated', mapping='afm'):
     """
-    ``map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]``
+    ``map2pals volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]``
 
     Maps volume files to metric surface files using PALS12 surface atlas.
 
@@ -330,9 +330,9 @@ def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
 
 
 
-def map2HCP(volume, method='trilinear'):
+def map2hcp(volume, method='trilinear'):
     '''
-    ``map2HCP volume=<volume file> [method=trilinear]``
+    ``map2hcp volume=<volume file> [method=trilinear]``
 
     Maps volume files to dense scalar files using HCP templates.
 
@@ -352,13 +352,13 @@ def map2HCP(volume, method='trilinear'):
     '''
 
     if not "HCPATLAS" in os.environ:
-        raise ge.CommandError("map2HCP", "HCPATLAS environment variable not set.", "Can not find HCP Template files!", "Please check your environment settings!")
+        raise ge.CommandError("map2hcp", "HCPATLAS environment variable not set.", "Can not find HCP Template files!", "Please check your environment settings!")
 
     apath = os.environ["HCPATLAS"]
     tpath = os.path.join(apath, '91282_Greyordinates')
 
     if method not in ['trilinear', 'enclosing', 'cubic', 'ribbon-constrained']:
-        raise ge.CommandError("map2HCP", "Unrecognised mapping method [%s]!" % (method))
+        raise ge.CommandError("map2hcp", "Unrecognised mapping method [%s]!" % (method))
     method = "-" + method
 
     volumes = volume.split()

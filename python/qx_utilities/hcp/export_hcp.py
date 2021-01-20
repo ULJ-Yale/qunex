@@ -5,7 +5,7 @@
 
 Functions for exporting HCP style data out of the QuNex suite:
 
---exportHCP         Maps HCP style data to QuNex structure.
+--export_hcp         Maps HCP style data to QuNex structure.
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -24,10 +24,10 @@ import general.core as gc
 import general.exceptions as ge
 import re
 
-def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
+def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
 
     """
-    ``exportHCP [sessionsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]`` 
+    ``export_hcp [sessionsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]`` 
 
     Maps HCP style data out of QuNex Suite file strucutre.
 
@@ -136,7 +136,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     given the above assumptions the following example commands can be run::
     
-        qunex exportHCP \\
+        qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
             --sessions=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
@@ -155,7 +155,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ::
 
-        qunex exportHCP \\
+        qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
             --sessions=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
@@ -171,7 +171,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ::
 
-        qunex exportHCP \\
+        qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
             --sessions=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
@@ -186,7 +186,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     
     ::
 
-        qunex exportHCP \\
+        qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
             --sessions=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
@@ -220,18 +220,18 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     verbose   = verbose.lower() == 'yes'
 
     # -- export prep
-    sessionsfolder, mapto, mapexclude = gu.exportPrep("exportHCP", sessionsfolder, mapto, mapaction, mapexclude)
+    sessionsfolder, mapto, mapexclude = gu.exportPrep("export_hcp", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
     sessions, _ = gc.getSessionList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
     if not sessions:
-        raise ge.CommandFailed("exportHCP", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
+        raise ge.CommandFailed("export_hcp", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 
     # -- open logfile
-    logfilename, logfile = gc.getLogFile(folders={'sessionsfolder': sessionsfolder}, tags=['exportHCP'])
+    logfilename, logfile = gc.getLogFile(folders={'sessionsfolder': sessionsfolder}, tags=['export_hcp'])
 
     # -- start
-    gc.printAndLog(gc.underscore("Running exportHCP"), file=logfile)
+    gc.printAndLog(gc.underscore("Running export_hcp"), file=logfile)
     
     # -- prepare mapping
     gc.printAndLog("--> Preparing mapping", file=logfile)
@@ -252,7 +252,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     if not toMap:
         gc.printAndLog("ERROR: Found nothing to map!", file=logfile, silent=True)
         endlog = gc.closeLogFile(logfile, logfilename, status="error")
-        raise ge.CommandFailed("exportHCP", "Nothing to map" , "No files were found to map!", "Please check your data!")
+        raise ge.CommandFailed("export_hcp", "Nothing to map" , "No files were found to map!", "Please check your data!")
 
     # -- check mapping
     missing   = []
@@ -279,7 +279,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
             gc.printAndLog("           --> " + sfile, file=logfile)
         gc.printAndLog("\nMapping Aborted!", file=logfile)
         endlog = gc.closeLogFile(logfile, logfilename, status="error")
-        raise ge.CommandFailed("exportHCP", "Source files missing" , "Mapping could not be run as some source files were missing!", "Please check your data and log [%s!" % (endlog))
+        raise ge.CommandFailed("export_hcp", "Source files missing" , "Mapping could not be run as some source files were missing!", "Please check your data and log [%s!" % (endlog))
     
     if existing:
         s = 'Some files already exist'
@@ -301,7 +301,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
         if overwrite.lower() == 'no':
             gc.printAndLog("==> Mapping Aborted!", file=logfile)
             endlog = gc.closeLogFile(logfile, logfilename, status="error")
-            raise ge.CommandFailed("exportHCP", "Target files exist" , "Mapping could not be run as some target file already exist!", "Please check your data and log [%s]!" % (endlog))
+            raise ge.CommandFailed("export_hcp", "Target files exist" , "Mapping could not be run as some target file already exist!", "Please check your data and log [%s]!" % (endlog))
 
     if toexclude:
         gc.printAndLog("==> WARNING: Some files will be excluded from mapping", file=logfile)
@@ -312,7 +312,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
     if not process:
         gc.printAndLog("==> Nothing left to map!", file=logfile, silent=True)
         endlog = gc.closeLogFile(logfile, logfilename, status="done")
-        raise ge.CommandNull("exportHCP", "Nothing left to map" , "After skipping and exclusion, no files were left to map!", "Please check your data!")
+        raise ge.CommandNull("export_hcp", "Nothing left to map" , "After skipping and exclusion, no files were left to map!", "Please check your data!")
 
     # -- execute mapping
     # -> clean destination
@@ -394,7 +394,7 @@ def exportHCP(sessionsfolder=".", sessions=None, filter=None, sessionids=None, m
             gc.printAndLog("--> %s --> %s" % (sfile, tfile), file=logfile)
 
         endlog = gc.closeLogFile(logfile, logfilename, status="error")
-        raise ge.CommandFailed("exportHCP", "Some files not mapped" , "Some files could not be mapped!", "Please see log and check your data [%s]!" % (endlog))
+        raise ge.CommandFailed("export_hcp", "Some files not mapped" , "Some files could not be mapped!", "Please see log and check your data [%s]!" % (endlog))
 
     gc.printAndLog("--> Mapping completed", file=logfile)
     endlog = gc.closeLogFile(logfile, logfilename, status="done")

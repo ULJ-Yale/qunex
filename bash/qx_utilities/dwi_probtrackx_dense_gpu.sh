@@ -66,7 +66,7 @@ usage() {
  echo "to run it locally from a GPU-equiped machine."
  echo ""
  echo "It explicitly assumes the Human Connectome Project folder structure and "
- echo "completed dwi_fsl_bedpostx_gpu and pretractographyDense functions processing:"
+ echo "completed dwi_fsl_bedpostx_gpu and dwi_pre_tractography functions processing:"
  echo ""     
  geho " - HCP Pipelines"
  geho " - FSL 5.0.9 or greater"

@@ -23,6 +23,7 @@ import core as gc
 import processing.core as gpc
 import exceptions as ge
 import commands
+import commands_support
 import getpass
 import re
 import subprocess
@@ -66,11 +67,11 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 
-def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
+def manage_study(studyfolder=None, action="create", folders=None, verbose=False):
     """
-    manageStudy studyfolder=None action="create"
+    manage_study studyfolder=None action="create"
 
-    A helper function called by createStudy and checkStudy that does the
+    A helper function called by create_study and checkStudy that does the
     actual checking of the study folder and generating missing content.
     
     PARAMETERS
@@ -96,13 +97,13 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
             folders = os.path.join(niuTemplateFolder, folders)
             if not os.path.exists(folders):
                 # fail
-                raise ge.CommandFailed("manageStudy", "Folder structure file [%s] not found!" % folders, "Please check the value of the folders parameter.")
+                raise ge.CommandFailed("manage_study", "Folder structure file [%s] not found!" % folders, "Please check the value of the folders parameter.")
 
     # action
     create = action == "create"
 
     # create folders structure from file
-    folders = createStudyFolders(folders)
+    folders = create_study_folders(folders)
 
     if create:
         if verbose:
@@ -122,7 +123,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
                         print " ... folder exists:", tfolder
                 else:
                     errstr = os.strerror(e.errno)
-                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Folder could not be created due to '%s' error!" % (errstr), "Folder to create: %s" % (tfolder), "Please check paths and permissions!")
+                    raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), "Folder could not be created due to '%s' error!" % (errstr), "Folder to create: %s" % (tfolder), "Please check paths and permissions!")
 
         else:
             if os.path.exists(tfolder):
@@ -156,7 +157,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
                     print " ... batch_example.txt file already exists" 
             else:
                 errstr = os.strerror(e.errno)
-                raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+                raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
 
         # --> mapping example
         # get all files that match the pattern
@@ -182,7 +183,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
                         print " ... %s file already exists" % dstFile
                 else:
                     errstr = os.strerror(e.errno)
-                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+                    raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
 
         # --> markFile
         markFile = os.path.join(studyfolder, '.qunexstudy')
@@ -202,7 +203,7 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
                         print " ... .qunexstudy file already exists" 
                 else:
                     errstr = os.strerror(e.errno)
-                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
+                    raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
 
             try:                
                 shutil.copystat(os.path.join(studyfolder, '.mnapstudy'), markFile)
@@ -228,14 +229,14 @@ def manageStudy(studyfolder=None, action="create", folders=None, verbose=False):
                     print " ... .qunexstudy file already exists" 
             else:
                 errstr = os.strerror(e.errno)
-                raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
+                raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
 
 
-def createStudyFolders(folders_spec):
+def create_study_folders(folders_spec):
     """
-    createStudyFolders folders=None
+    create_study_folders folders=None
 
-    A helper function called by manageStudy for creating study folder structure
+    A helper function called by manage_study for creating study folder structure
     from a .txt file with structure specification.
     
     PARAMETERS
@@ -287,9 +288,9 @@ def createStudyFolders(folders_spec):
     return folder_structure
 
 
-def createStudy(studyfolder=None, folders=None):
+def create_study(studyfolder=None, folders=None):
     """
-    ``createStudy studyfolder=<path to study base folder> [folders=$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt]``
+    ``create_study studyfolder=<path to study base folder> [folders=$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt]``
 
     Creates the base folder and study folders.
 
@@ -360,7 +361,7 @@ def createStudy(studyfolder=None, folders=None):
 
     ::
 
-        qunex createStudy studyfolder=/Volumes/data/studies/WM.v4
+        qunex create_study studyfolder=/Volumes/data/studies/WM.v4
     """
 
     """
@@ -381,7 +382,7 @@ def createStudy(studyfolder=None, folders=None):
     2018-09-17 Grega Repovs
                Added BIDS folders
     2018-11-14 Grega Repovs
-               Moved the processing to manageStudy function
+               Moved the processing to manage_study function
     2018-11-14 Grega Repovs
                Added HCPLS folders
     2019-05-28 Grega Repovs
@@ -392,12 +393,12 @@ def createStudy(studyfolder=None, folders=None):
                Added the folders parameter.
     """
 
-    print "Running createStudy\n==================="
+    print "Running create_study\n==================="
 
     if studyfolder is None:
-        raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
+        raise ge.CommandError("create_study", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
-    manageStudy(studyfolder=studyfolder, action="create", folders=folders, verbose=True)
+    manage_study(studyfolder=studyfolder, action="create", folders=folders, verbose=True)
 
 
 def checkStudy(startfolder=".", folders=None):
@@ -424,14 +425,14 @@ def checkStudy(startfolder=".", folders=None):
         testfolder = os.path.dirname(testfolder)
 
     if studyfolder:
-        manageStudy(studyfolder=studyfolder, action="check", folders=folders)
+        manage_study(studyfolder=studyfolder, action="check", folders=folders)
 
     return studyfolder  
 
 
-def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
+def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
     """
-    ``createBatch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch.txt]``
+    ``create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/batch.txt]``
     
     Creates a joint batch file from source files in all session folders.
 
@@ -508,7 +509,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     
     ::
 
-        qunex createBatch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
+        qunex create_batch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
     """
 
     """
@@ -519,12 +520,12 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
     2017-12-26 Grega Repovš
                Initial version
     2017-12-26 Grega Repovš
-               Renamed to createBatch and batch.txt.
+               Renamed to create_batch and batch.txt.
     2018-01-01 Grega Repovš
                Added append option and changed parameter names.
                Added the option to specify sessions to add explicitly.
     2018-07-16 Grega Repovš
-               Renamed to createBatch from compileBatch
+               Renamed to create_batch from compileBatch
     2018-07-20 Grega Repovš
                Fixed adding paramfile and updated documentation
     2019-04-25 Grega Repovš
@@ -541,7 +542,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
                Expanded documentation with parameter specification   
     """
 
-    print "Running createBatch\n==================="
+    print "Running create_batch\n==================="
 
     if sessions and sessions.lower() == 'none':
         sessions = None
@@ -573,7 +574,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
+                raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
         elif overwrite == 'yes':
             print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
             print "         Overwriting exisiting file."
@@ -581,7 +582,7 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
             print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
             print "         Appending to exisiting file."
         elif overwrite == 'no':
-            raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
+            raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
     else:
         overwrite = 'yes'
 
@@ -686,16 +687,16 @@ def createBatch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=
         raise
 
     if not files:
-        raise ge.CommandFailed("createBatch", "No session found", "No sessions found to add to the batch file!", "Please check your data!")
+        raise ge.CommandFailed("create_batch", "No session found", "No sessions found to add to the batch file!", "Please check your data!")
 
     if missing:
-        raise ge.CommandFailed("createBatch", "Not all sessions specified added to the batch file!", "%s was missing for %d session(s)!" % (sfile, missing), "Please check your data!")
+        raise ge.CommandFailed("create_batch", "Not all sessions specified added to the batch file!", "%s was missing for %d session(s)!" % (sfile, missing), "Please check your data!")
 
 
 
-def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
+def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
     """
-    ``createList [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
+    ``create_list [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Creates a .list formated file that can be used as input to a number of
     processing and analysis functions. The function is fairly flexible, its
@@ -899,7 +900,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     
     ::
 
-        qunex createList bolds="1,2,3"
+        qunex create_list bolds="1,2,3"
 
     The command will create a list file in `../processing/list/sessions.list` that
     will list for all the sessions found in the current folder BOLD files 1, 2, 3
@@ -909,7 +910,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
     ::
 
-        qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+        qunex create_list sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                 bolds="rest" listfile="lists/rest.list" bold_tail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
 
     The command will create a `lists/rest.list` list file in which for all the
@@ -920,7 +921,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
     ::
 
-        qunex createList sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+        qunex create_list sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                 filter="EC:use" listfile="lists/EC.list" \\
                 conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
                 fidl="EC.fidl" glm="bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
@@ -961,7 +962,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                Added the option to specify img_suffix and bold_variant
     """
 
-    print "Running createList\n=================="
+    print "Running create_list\n=================="
 
     def checkFile(fileName):
         if check == 'no':
@@ -978,7 +979,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
             return True
         else:
             if not os.path.exists(fileName):
-                raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
+                raise ge.CommandFailed("create_list", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
 
         return True
 
@@ -1023,13 +1024,13 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                raise ge.CommandFailed("createList", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
+                raise ge.CommandFailed("create_list", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
         elif overwrite == 'yes':
             print "         Overwriting the exisiting file."
         elif overwrite == 'append':
             print "         Appending to the exisiting file."
         elif overwrite == 'no':
-            raise ge.CommandFailed("createList", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
+            raise ge.CommandFailed("create_list", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
     else:
         overwrite = 'yes'
 
@@ -1049,7 +1050,7 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
     sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
-        raise ge.CommandFailed("createList", "No session found", "No sessions found to add to the list file!", "Please check your data!")
+        raise ge.CommandFailed("create_list", "No session found", "No sessions found to add to the list file!", "Please check your data!")
 
     # --- generate list entries
 
@@ -1124,9 +1125,9 @@ def createList(sessionsfolder=".", sessions=None, filter=None, listfile=None, bo
 
 
 
-def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
+def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
     """
-    ``createConc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
+    ``create_conc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Creates a set of .conc formated files that can be used as input
     to a number of processing and analysis functions. The function is fairly
@@ -1262,7 +1263,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     
     ::
 
-        qunex createConc bolds="1,2,3"
+        qunex create_conc bolds="1,2,3"
 
     The command will create set of conc files in `/inbox/concs`,
     each of them named <session id>.conc, one for each of the sessions found in
@@ -1273,7 +1274,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     
     ::
 
-        qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+        qunex create_conc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                 bolds="WM" concname="_WM" bold_tail="_Atlas.dtseries.nii"
 
     The command will create for each session listed in the `batch.txt` a
@@ -1284,7 +1285,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
 
     ::
 
-        qunex createConc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+        qunex create_conc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                 filter="EC:use" concfolder="analysis/EC/concs" \\
                 concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
                 bold_tail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
@@ -1333,7 +1334,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
                 return False
         return True
 
-    print "Running createConc\n=================="
+    print "Running create_conc\n=================="
 
     # --- check sessions
 
@@ -1354,7 +1355,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
     else:
-        raise ge.CommandError("createConc", "No bolds specified to be included in the conc files")
+        raise ge.CommandError("create_conc", "No bolds specified to be included in the conc files")
 
     bsearch  = re.compile('bold([0-9]+)')
 
@@ -1382,7 +1383,7 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
     sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
-        raise ge.CommandFailed("createConc", "No session found", "No sessions found to add to the list file!", "Please check your data!")
+        raise ge.CommandFailed("create_conc", "No session found", "No sessions found to add to the list file!", "Please check your data!")
 
     # --- generate list entries
 
@@ -1453,12 +1454,12 @@ def createConc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, 
             cfile.close()
 
     if error:
-        raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some sessions were not generated", "Please check report for details!")
+        raise ge.CommandFailed("create_conc", "Incomplete execution", ".conc files for some sessions were not generated", "Please check report for details!")
 
 
-def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=None):
+def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=None):
     """
-    ``runList listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]``
+    ``run_list listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]``
 
     Executes the commands defined in each list.
 
@@ -1479,11 +1480,11 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                        output of each command that was run ('yes') or only a
                        summary success report of each command ran. ['no']
 
-    Multiple runList invocations
+    Multiple run_list invocations
     ----------------------------
     
     These parameters allow spreading processing of multiple sessions across 
-    multiple runList invocations:
+    multiple run_list invocations:
 
     --sessions              Either a string with pipe `|` or comma separated 
                             list of sessions (sessions ids) to be processed
@@ -1496,36 +1497,36 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                             call. If not specified, all sessions will be 
                             processed.
     --sperlist              An optional parameter specifying, how many sessions
-                            to run per individual runList invocation. If not 
+                            to run per individual run_list invocation. If not 
                             specified, all sessions will be run through the 
-                            same runList invocation. 
-    --runinpar              If multiple runList invocations are to be run, how 
+                            same run_list invocation. 
+    --runinpar              If multiple run_list invocations are to be run, how 
                             many should be run in parallel. The default is 1.
     --scheduler             An optional scheduler settings description string. 
-                            If provided, each runList invocation will be 
+                            If provided, each run_list invocation will be 
                             scheduled to run on a separate cluster node. For 
                             details about the settings string specification see 
                             the inline help for the `schedule` command.
 
     If these parameters are provided, the processing of the sessions will
     be split so that `sperlist` sessions will be processed by each separate
-    runList invocation. If `scheduler` is specified, each runList invocation
+    run_list invocation. If `scheduler` is specified, each run_list invocation
     will be scheduled as a separate job on a cluster. 
 
-    When processing is spread across multiple runList invocations, the 
+    When processing is spread across multiple run_list invocations, the 
     `sperlist` parameter will be passed forward as `parsessions` parameter on
     each separate invocation (see the next section). Similarly `sessionids` will
-    be passed on, adjusted for the sessions to be run with the specific runList
+    be passed on, adjusted for the sessions to be run with the specific run_list
     invocation (see the next section).
 
-    Please take note that if `runList` command is ran using a scheduler, any
+    Please take note that if `run_list` command is ran using a scheduler, any
     scheduler specification within the `listfile` will be ignored to avoid the
-    attempts to spawn new cluster jobs when `runList` instance is already 
+    attempts to spawn new cluster jobs when `run_list` instance is already 
     running on a cluster node.
 
-    Importantly, if `scheduler` is specified in the `runlist` file, do bear 
+    Importantly, if `scheduler` is specified in the `run_list` file, do bear 
     in mind, that all the commands in the list will be scheduled at the same 
-    time, and not in a succession, as `runList` can not track execution of jobs
+    time, and not in a succession, as `run_list` can not track execution of jobs
     on individual cluster nodes.
 
 
@@ -1533,7 +1534,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     -------------------------------
 
     Sometimes the parameters specified in the `listfile` need to be adjusted
-    in a runList invocation. If the following parameters are listed, they will
+    in a run_list invocation. If the following parameters are listed, they will
     take precedence over parameters specified within the `listfile`: 
 
     --parsessions    An optional parameter specifying how many sessions to run
@@ -1546,9 +1547,9 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                      within the `listfile`, then the lower value will
                      take precedence.
     --sessionids     An optional parameter specifying which sessions are to be 
-                     processed within this runList invocation. If `sessionids`
+                     processed within this run_list invocation. If `sessionids`
                      is specified within the listfile, then the value passed to 
-                     runList will take precedence.
+                     run_list will take precedence.
 
     Sometimes one would wish to ignore a parameter specified in a list when
     running a list. The parameters to ignore can be specified using:
@@ -1570,9 +1571,9 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     `<study>/processing/logs/runlogs` stamped with date and time that the 
     log was started. If a study folder is not yet created, please provide a 
     valid folder to save the logs to. If the log can not be created the 
-    `runList` command will exit with a failure.
+    `run_list` command will exit with a failure.
 
-    `runList` is checking for a successful completion of commands that it runs.
+    `run_list` is checking for a successful completion of commands that it runs.
     If any of the commands fail to complete successfully, the execution of the
     commands will stop and the failure will be reported both in stdout as well
     as the log.
@@ -1591,7 +1592,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     Each list starts with a line that consists of three dashes "---" only. The
     next line should define the name of the list by specifying:
-    `list: <listname>`. The list name is the one referenced in the runList 
+    `list: <listname>`. The list name is the one referenced in the run_list 
     command. After the definition of the list, the default parameters for the
     list can be specified as a <parameter>:<value> pairs. These values will be 
     taken as the default for the list. They have priority over the general 
@@ -1629,19 +1630,19 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
         ---
         list: dataImport
 
-            command: importBIDS
+            command: import_bids
                 inbox   : /data/datalake/EMBARC/inbox/BIDS
                 archive : leave
 
         ---
         list: prepareHCP
 
-            command: createSessionInfo
+            command: create_session_info
 
-            command: createBatch
+            command: create_batch
                 tfile: /data/testStudy/processing/batch_baseline.txt
 
-            command: setupHCP
+            command: setup_hcp
 
         ---
         list: doHCP
@@ -1649,17 +1650,17 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             sessions: /data/testStudy/processing/batch_baseline.txt
             parsessions: 4
 
-            command: hcp1
+            command: hcp_pre_freesurfer
 
-            command: hcp2
+            command: hcp_freesurfer
 
-            command: hcp3
+            command: hcp_post_freesurfer
 
-            command: hcp4
+            command: hcp_fmri_volume
                 parsessions : 1
                 parelements : 4
 
-            command: hcp5
+            command: hcp_fmri_surface
                 parsessions : 1
                 parelements : 4
 
@@ -1669,17 +1670,17 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             sessions    : /data/testStudy/processing/batch_baseline.txt
             bolds       : all
 
-            command: mapHCPData
+            command: map_hcp_data
                 
-            command: createBOLDBrainMasks
+            command: create_bold_brain_masks
 
-            command: computeBOLDStats
+            command: compute_bold_stats
                 log: remove
 
-            command : createStatsReport
+            command : create_stats_report
                 parsessions: 1
 
-            command: extractNuisanceSignal
+            command: extract_nuisance_signal
 
         ---
         list: runFCPreprocessing
@@ -1688,7 +1689,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             sessions    : /data/testStudy/processing/batch_baseline.txt
             scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,ntasks=6,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
-            command: preprocessBold
+            command: preprocess_bold
                 bold_actions     : shrc
                 glm_residuals    : save
                 bold_nuisance    : m,V,WM,WB,1d
@@ -1703,20 +1704,20 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             sessions    : {sessions_var}
             parsessions : 4
 
-            command: hcp1
+            command: hcp_pre_freesurfer
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex runList \
+        qunex run_list \
           --listfile="/data/settings/runlist.txt" \
           --runlists="dataImport,prepareHCP"
     
     ::
 
-        qunex runList \
+        qunex run_list \
           --listfile="/data/settings/runlist.txt" \
           --runlists="doHCP" \
           --sessions="/data/testStudy/processing/batch_baseline.txt" \
@@ -1725,7 +1726,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     ::
 
-        qunex runList \
+        qunex run_list \
           --listfile="/data/settings/runlist.txt" \
           --runlists="prepareFCPreprocessing" \
           --sessions="/data/testStudy/processing/batch_baseline.txt" \
@@ -1734,13 +1735,13 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     ::
 
-        qunex runList
+        qunex run_list
           --listfile="/data/settings/runlist.txt" \
           --runlists="runFCPreprocessing" 
 
     ::
 
-        qunex runList
+        qunex run_list
           --listfile="/data/settings/runlist.txt" \
           --runlists="doPreFS" \
           --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt" 
@@ -1749,24 +1750,24 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     `prepareHCP` locally.
 
     The second call will execute all the steps of the HCP preprocessing pipeline, 
-    in sequence. Execution will be spread across the nodes with each `runList` 
+    in sequence. Execution will be spread across the nodes with each `run_list` 
     instance processing four sessions at a time. Based on the settings in the 
     `runlist.txt` file, the first three HCP steps will be executed with four
     sessions running in parallel, whereas the last two fMRI steps the sessions 
     will be executed serially with four BOLDS from each session being processed in
     parallel. 
 
-    The third call will again schedule multiple `runList` invocations, each 
+    The third call will again schedule multiple `run_list` invocations, each 
     processing four sessions at a time (the lower number of `sperlist`
     and `parsessions`). In this call, the initial steps will be performed
     on all BOLD images.
 
-    The fourth call will start a single `runList` instance locally, however,
-    this will submit both listed `preprocessBold` commands as jobs to be run with
+    The fourth call will start a single `run_list` instance locally, however,
+    this will submit both listed `preprocess_bold` commands as jobs to be run with
     six sessions per node in parallel. These two commands will be run only on BOLD
     images tagged as `rest`. 
 
-    The last, fifth call will execute hcp1 (hcp_PreFS), the value of the `sessions`
+    The last, fifth call will execute hcp_pre_freesurfer, the value of the `sessions`
     parameter here is set to a placeholder variable `sessions_var`, the value is 
     then injected from the command call by using the `mapvalues` parameter.
     Alternatively the value could be injected by setting the environmental variable
@@ -1786,7 +1787,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                Expanded parameter handling and parameter injection
     2019-04-13 Grega Repovš
                Updated documentation
-               Edited multiple runList invocation
+               Edited multiple run_list invocation
                Added option to ignore parameters
     2019-04-25 Grega Repovš
                Changed subjects to sessions
@@ -1803,13 +1804,13 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     flags = ['test']
 
     if listfile is None:
-        raise ge.CommandError("runList", "listfile not specified", "No runlist file specified", "Please provide path to the runlist file!")
+        raise ge.CommandError("run_list", "listfile not specified", "No runlist file specified", "Please provide path to the runlist file!")
 
     if runlists is None:
-        raise ge.CommandError("runList", "runlists not specified", "No runlists specified", "Please provide list of list names to run!")
+        raise ge.CommandError("run_list", "runlists not specified", "No runlists specified", "Please provide list of list names to run!")
 
     if not os.path.exists(listfile):
-        raise ge.CommandFailed("runList", "runlist file does not exist", "Runlist file not found [%s]" % (listfile), "Please check your paths!")
+        raise ge.CommandFailed("run_list", "runlist file does not exist", "Runlist file not found [%s]" % (listfile), "Please check your paths!")
 
     # prep log
     if logfolder is None:
@@ -1820,7 +1821,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     if not os.path.isdir(runlogfolder):
         os.makedirs(runlogfolder)
 
-    print "===> Saving the runList runlog to: %s" % runlogfolder
+    print "===> Saving the run_list runlog to: %s" % runlogfolder
 
     logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname = os.path.join(runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
@@ -1872,7 +1873,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                         elif value in os.environ:
                             value = os.environ[value]
                         else:
-                            raise ge.CommandFailed("runList", "Cannot parse line", "Injection value [%s] in line [%s] not provided" % (value, line), "Please provide injection values as input parameters (--mapvalues) or as environmental variables!")
+                            raise ge.CommandFailed("run_list", "Cannot parse line", "Injection value [%s] in line [%s] not provided" % (value, line), "Please provide injection values as input parameters (--mapvalues) or as environmental variables!")
 
                     # set
                     parameters[parameter] = value
@@ -1890,7 +1891,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                         removedParameters.append(keyToRemove)
 
             except:
-                raise ge.CommandFailed("runList", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % listfile)
+                raise ge.CommandFailed("run_list", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % listfile)
 
     # -- are there parameters to ignore
 
@@ -1907,7 +1908,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     try:
         log = open(logname, "w", buffering=0)
     except:
-        raise ge.CommandFailed("runList", "Cannot open log", "Unable to open log [%s]" % (logname), "Please check the paths!")
+        raise ge.CommandFailed("run_list", "Cannot open log", "Unable to open log [%s]" % (logname), "Please check the paths!")
 
     print >> log, "\n\n============================== RUNLIST LOG ==============================\n"
     print "===> Running commands from the following lists:", ", ".join(runLists)
@@ -1915,7 +1916,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     for runListName in runLists:
         if runListName not in runList['lists']:
-            raise ge.CommandFailed("runList", "List not found", "List with name %s not found" % (runListName), "Please check the runlist file [%s]" % listfile)
+            raise ge.CommandFailed("run_list", "List not found", "List with name %s not found" % (runListName), "Please check the runlist file [%s]" % listfile)
 
         summary += "\n\n===> list: %s" % (runListName)
 
@@ -1947,7 +1948,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             if commandName in commands.commands:
                 allowedParameters = list(commands.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
-                    allowedParameters += commands.extraParameters
+                    allowedParameters += commands_support.extra_parameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
                         del commandParameters[param]
@@ -2009,9 +2010,9 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     summary += "\n\n----------==== END SUMMARY ====----------"
     
     print >> log, summary
-    print >> log, "\n===> Successful completion of task: runLists %s" % (", ".join(runLists))
+    print >> log, "\n===> Successful completion of task: run_lists %s" % (", ".join(runLists))
 
-    print "===> Successful completion of runLists %s" % (", ".join(runLists))
+    print "===> Successful completion of run_lists %s" % (", ".join(runLists))
     print summary
 
     log.close()
@@ -2025,9 +2026,9 @@ def stripQuotes(string):
     return string
 
 
-def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number', prefix="BOLD_"):
+def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number', prefix="BOLD_"):
     """
-    batchTag2NameKey \\
+    batch_tag2namekey \\
       --filename=<path to batch file> \\
       --sessionid=<session id> \\
       --bolds=<bold specification string> \\
@@ -2091,9 +2092,9 @@ def batchTag2NameKey(filename=None, sessionid=None, bolds=None, output='number',
     print "BOLDS:%s" % (",".join(boldlist))
 
 
-def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="behavior.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
+def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="behavior.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
-    ``gatherBehavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``
+    ``gather_behavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``
 
     Gathers specified individual behavioral data from each session's behavior
     folder and compiles it into a specified group behavioral file.
@@ -2191,7 +2192,7 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
 
     ::
 
-        qunex gatherBehavior sessions="AP*"
+        qunex gather_behavior sessions="AP*"
 
     The command will compile behavioral data present in `behavior.txt` files 
     present in all `<session id>/behavior` folder that match the "AP*" glob
@@ -2206,7 +2207,7 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     
     ::
 
-        qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
+        qunex gather_behavior sessionsfolder="/data/myStudy/sessions" \\
                 sessions="AP*|OP*" sourcefiles="*test*|*results*" \\
                 check="warn" overwrite="yes" report="no"
     
@@ -2221,7 +2222,7 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
 
     ::
 
-        qunex gatherBehavior sessionsfolder="/data/myStudy/sessions" \\
+        qunex gather_behavior sessionsfolder="/data/myStudy/sessions" \\
                 sessions="/data/myStudy/processing/batch.txt" \\           
                 filter="group:controls|behavioral:yes" \\
                 sourcefiles="*test*|*results*" \\
@@ -2287,14 +2288,14 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
 
     # --- Start it up
 
-    print "Running gatherBehavior\n======================"
+    print "Running gather_behavior\n======================"
 
     # --- check subjects folder
 
     sessionsfolder = os.path.abspath(sessionsfolder)
 
     if not os.path.exists(sessionsfolder):
-        raise ge.CommandFailed("gatherBehavior", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed("gather_behavior", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
     # --- check target file
 
@@ -2308,9 +2309,9 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
             try:
                 os.remove(targetfile)
             except:
-                raise ge.CommandFailed("gatherBehavior", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (targetfile), "Please check your paths and authorizations!")        
+                raise ge.CommandFailed("gather_behavior", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (targetfile), "Please check your paths and authorizations!")        
         else:
-            raise ge.CommandFailed("gatherBehavior", "Target file exists", "The specified target file already exists [%s]" % (targetfile), "Please check your paths or set overwrite to 'yes'!")        
+            raise ge.CommandFailed("gather_behavior", "Target file exists", "The specified target file already exists [%s]" % (targetfile), "Please check your paths or set overwrite to 'yes'!")        
 
     # --- check sessions
 
@@ -2337,7 +2338,7 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
-        raise ge.CommandFailed("gatherBehavior", "No session found" , "No sessions found to process behavioral data from!", "Please check your data!")
+        raise ge.CommandFailed("gather_behavior", "No session found" , "No sessions found to process behavioral data from!", "Please check your data!")
 
     # --- generate list entries
 
@@ -2374,11 +2375,11 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
     try:
         fout = open(targetfile, 'w')
     except:
-        raise ge.CommandFailed("gatherBehavior", "Could not create target file", "Target file could not be created at the specified location [%s]" % (targetfile), "Please check your paths and authorizations!")        
+        raise ge.CommandFailed("gather_behavior", "Could not create target file", "Target file could not be created at the specified location [%s]" % (targetfile), "Please check your paths and authorizations!")        
 
     header = ['session id'] + keys
     if report:
-        print >> fout, "# Data compiled using gatherBehavior on %s" % (datetime.datetime.today())
+        print >> fout, "# Data compiled using gather_behavior on %s" % (datetime.datetime.today())
     print >> fout, "\t".join(header)
 
     for sessionid in processReport['ok']:
@@ -2418,19 +2419,19 @@ def gatherBehavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="
 
     if processReport['error'] or processReport['missing']:
         if check.lower() == 'yes':
-            raise ge.CommandFailed("gatherBehavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+            raise ge.CommandFailed("gather_behavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
         elif check.lower() == 'warn':
-            raise ge.CommandNull("gatherBehavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+            raise ge.CommandNull("gather_behavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
 
     if not processReport['ok']:
-        raise ge.CommandNull("gatherBehavior", "No files processed", "No valid data was found!")                
+        raise ge.CommandNull("gather_behavior", "No files processed", "No valid data was found!")                
 
 
 
 
-def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefiles="session.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
+def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefiles="session.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
-    ``pullSequenceNames [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
+    ``pull_sequence_names [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
 
     Gathers a list of all the sequence names across the sessions and saves it
     into a specified file.
@@ -2524,7 +2525,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     
     ::
 
-        qunex pullSequenceNames sessions="AP*"
+        qunex pull_sequence_names sessions="AP*"
 
     The command will compile sequence names present in `session.txt` files 
     present in all `<session id>` folders that match the "AP*" glob
@@ -2537,7 +2538,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     If any of the identified sessions do not include data or if errors are 
     encountered when processing the data, the command will exit with an error.
 
-        qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
+        qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
                 sessions="AP*|OP*" sourcefiles="session.txt|subject.txt" \\
                 check="warn" overwrite="yes" report="no"
 
@@ -2551,7 +2552,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     
     ::
 
-        qunex pullSequenceNames sessionsfolder="/data/myStudy/sessions" \\
+        qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
                 sessions="/data/myStudy/processing/batch.txt" \\           
                 filter="group:controls|behavioral:yes" \\
                 sourcefiles="*.txt" \\
@@ -2615,14 +2616,14 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
 
     # --- Start it up
 
-    print "Running pullSequenceNames\n========================="
+    print "Running pull_sequence_names\n========================="
 
     # --- check sessions folder
 
     sessionsfolder = os.path.abspath(sessionsfolder)
 
     if not os.path.exists(sessionsfolder):
-        raise ge.CommandFailed("pullSequenceNames", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed("pull_sequence_names", "Sessions folder does not exist", "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
 
     # --- check target file
 
@@ -2636,9 +2637,9 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
             try:
                 os.remove(targetfile)
             except:
-                raise ge.CommandFailed("pullSequenceNames", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (targetfile), "Please check your paths and authorizations!")        
+                raise ge.CommandFailed("pull_sequence_names", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (targetfile), "Please check your paths and authorizations!")        
         else:
-            raise ge.CommandFailed("pullSequenceNames", "Target file exists", "The specified target file already exists [%s]" % (targetfile), "Please check your paths or set overwrite to 'yes'!")        
+            raise ge.CommandFailed("pull_sequence_names", "Target file exists", "The specified target file already exists [%s]" % (targetfile), "Please check your paths or set overwrite to 'yes'!")        
 
     # --- check sessions
 
@@ -2665,7 +2666,7 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
-        raise ge.CommandFailed("pullSequenceNames", "No session found" , "No sessions found to process neuroimaging data from!", "Please check your data!")
+        raise ge.CommandFailed("pull_sequence_names", "No session found" , "No sessions found to process neuroimaging data from!", "Please check your data!")
 
     # --- generate list entries
 
@@ -2699,10 +2700,10 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
     try:
         fout = open(targetfile, 'w')
     except:
-        raise ge.CommandFailed("pullSequenceNames", "Could not create target file", "Target file could not be created at the specified location [%s]" % (targetfile), "Please check your paths and authorizations!")        
+        raise ge.CommandFailed("pull_sequence_names", "Could not create target file", "Target file could not be created at the specified location [%s]" % (targetfile), "Please check your paths and authorizations!")        
 
     if report:
-        print >> fout, "# Data compiled using pullSequenceNames on %s" % (datetime.datetime.today())
+        print >> fout, "# Data compiled using pull_sequence_names on %s" % (datetime.datetime.today())
 
     data = sorted(set(data))
     for sname in data:
@@ -2735,12 +2736,12 @@ def pullSequenceNames(sessionsfolder=".", sessions=None, filter=None, sourcefile
 
     if processReport['error'] or processReport['missing']:
         if check.lower() == 'yes':
-            raise ge.CommandFailed("pullSequenceNames", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+            raise ge.CommandFailed("pull_sequence_names", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
         elif check.lower() == 'warn':
-            raise ge.CommandNull("pullSequenceNames", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+            raise ge.CommandNull("pull_sequence_names", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
 
     if not processReport['ok']:
-        raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
+        raise ge.CommandNull("pull_sequence_names", "No files processed", "No valid data was found!")                
 
 # prepare variables for data export
 def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
@@ -2770,9 +2771,9 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
     return sessionsfolder, mapto, mapexclude
 
 # prepares session.txt files for specific pipeline mapping
-def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", sourcefile="session.txt", targetfile=None, mapping=None, filter=None, overwrite="no"):
+def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sourcefile="session.txt", targetfile=None, mapping=None, filter=None, overwrite="no"):
     """
-    ``createSessionInfo sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]``
+    ``create_session_info sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]``
 
     Creates session.txt files that hold the information necessary for correct
     mapping to a folder structure supporting specific pipeline processing.
@@ -2835,7 +2836,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
 
     as this allows for flexible labeling of distinct BOLD runs based on their
     content. Here the 'bold' part denotes that it is a bold file and the
-    <user_speficied_label> allows for flexibility in naming. createSessionInfo
+    <user_speficied_label> allows for flexibility in naming. create_session_info
     will automatically number bold images in a sequential order, starting with 1.
 
     Any empty lines, lines starting with #, and lines without the "map to" =>
@@ -2887,11 +2888,11 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
     
     ::
 
-        qunex createSessionInfo sessions="OP*|AP*" sessionsfolder=session mapping=session/hcp_mapping.txt
+        qunex create_session_info sessions="OP*|AP*" sessionsfolder=session mapping=session/hcp_mapping.txt
     
     ::
 
-        qunex createSessionInfo sessions="processing/batch_new.txt" sessionsfolder=session mapping=session/hcp_mapping.txt
+        qunex create_session_info sessions="processing/batch_new.txt" sessionsfolder=session mapping=session/hcp_mapping.txt
     """
 
     """
@@ -2913,8 +2914,6 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                Added more detailed report with explicit failure in case of missing source files.
     2019-04-25 Grega Repovš
                Changed subjects to sessions
-    2020-06-03 Jure Demšar
-               Renamed getHCPReady to createSessionInfo
     2020-07-02 Aleksij Kraljič
                Expanded field map correction functionality, so multiple SE/FM scan pairs are allowed.
     '''
@@ -2922,7 +2921,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                
     """
 
-    print "Running createSessionInfo\n==================="
+    print "Running create_session_info\n==================="
 
     # get all pipelines
     pipelines = pipelines.split(",")
@@ -2941,7 +2940,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
         # -- get mapping ready
 
         if not os.path.exists(mapping):
-            raise ge.CommandFailed("createSessionInfo", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
+            raise ge.CommandFailed("create_session_info", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
 
         print " ... Reading pipeline mapping from %s" % (mapping)
 
@@ -2952,7 +2951,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
         mappingName   = dict([e for e in mapping if not e[0].isdigit()])
 
         if not mapping:
-            raise ge.CommandFailed("createSessionInfo", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
+            raise ge.CommandFailed("create_session_info", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
 
         # -- get list of session folders
 
@@ -2968,7 +2967,7 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
         # -- check if we have any
 
         if not sfolders:
-            raise ge.CommandFailed("createSessionInfo", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
+            raise ge.CommandFailed("create_session_info", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
 
         # -- loop through sessions folders
 
@@ -3120,28 +3119,6 @@ def createSessionInfo(sessions=None, pipelines="hcp", sessionsfolder=".", source
                 print "     -> %s " % (os.path.basename(session))
 
     if report['missing source']:
-        raise ge.CommandFailed("createSessionInfo", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sourcefile), "Please check the data and parameters!")
+        raise ge.CommandFailed("create_session_info", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sourcefile), "Please check the data and parameters!")
 
     return
-
-
-def check_deprecated_commands(command):
-    """
-    check_deprecated_commands(options, deprecatedCommands)
-    Checks for deprecated commands, remaps deprecated ones
-    and notifies the user.
-    """
-
-    # store the command
-    newCommand = command
-    # import here because of circular dependencies
-    import g_commands as gcom
-    # is it depreacted?
-    for newName, oldNames in gcom.deprecated_commands.items():
-        # if deprecated warn the user and call the new one
-        if command.lower() in [s.lower() for s in oldNames]:
-            newCommand = newName
-            print "\nWARNING: Use of a deprecated command!"
-            print "Command %s is now known as %s" % (command, newCommand)
-
-    return newCommand

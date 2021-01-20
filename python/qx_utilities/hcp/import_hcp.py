@@ -5,7 +5,7 @@
 
 Functions for importing HCP style data into QuNex:
 
---importHCP      Maps HCP style data to QuNex structure.
+--import_hcp      Maps HCP style data to QuNex structure.
 
 The commands are accessible from the terminal using the gmri utility.
 """
@@ -112,9 +112,9 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
 
 
 
-def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
+def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
     """
-    ``importHCP [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]``
+    ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]``
     
     Maps HCPLS data to the QuNex Suite file structure. 
 
@@ -225,7 +225,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     OUTPUTS
     =======
 
-    After running the `importHCP` command the HCPLS dataset will be mapped 
+    After running the `import_hcp` command the HCPLS dataset will be mapped 
     to the QuNex folder structure and image files will be prepared for further
     processing along with required metadata.
 
@@ -248,7 +248,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     USE
     ===
     
-    The importHCP command consists of two steps:
+    The import_hcp command consists of two steps:
     
     1. Mapping HCPLS dataset to QuNex Suite folder structure
     
@@ -280,20 +280,20 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
         mapped to the `nii` folder and appropriate `session.txt` file is created per
         standard QuNex specification.
 
-        The second step is achieved by running `mapHCPLS2nii` on each session folder.
+        The second step is achieved by running `map_hcpls2nii` on each session folder.
         This step is run automatically, but can be invoked independently if mapping 
         of HCPLS dataset to QuNex Suite folder structure was already completed. For 
-        detailed information about this step, please review `mapHCPLS2nii` inline 
+        detailed information about this step, please review `map_hcpls2nii` inline 
         help.
 
-    Please see `mapHCPLS2nii` inline documentation!
+    Please see `map_hcpls2nii` inline documentation!
 
     EXAMPLE CALL
     ============
     
     ::
 
-        qunex importHCP sessionsfolder=myStudy/sessions inbox=HCPLS overwrite=yes hcplsname=hcpls
+        qunex import_hcp sessionsfolder=myStudy/sessions inbox=HCPLS overwrite=yes hcplsname=hcpls
     """
 
     """
@@ -302,9 +302,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     Change log
 
     2019-01-19 Grega Repovš
-               Initial version adopted from importBIDS
-    2019-01-19 Grega Repovš
-               Initial version adopted from importBIDS
+               Initial version adopted from import_bids
     2019-05-22 Grega Repovš
                Added nameformat as input
     2019-08-06 Grega Repovš
@@ -314,22 +312,22 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                Addded file sorting parameter
     """
 
-    print "Running importHCP\n=================="
+    print "Running import_hcp\n=================="
 
     if action not in ['link', 'copy', 'move']:
-        raise ge.CommandError("importHCP", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
+        raise ge.CommandError("import_hcp", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
 
     if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("importHCP", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+        raise ge.CommandError("import_hcp", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     if archive not in ['leave', 'move', 'copy', 'delete']:
-        raise ge.CommandError("importHCP", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+        raise ge.CommandError("import_hcp", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
 
     if not filesort:
         filesort = "name_type_se"
 
     if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("importHCP", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
+        raise ge.CommandError("import_hcp", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
     if sessionsfolder is None:
         sessionsfolder = os.path.abspath(".")
@@ -394,12 +392,12 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
                     else:
                         sourceFiles.append(filepath)
         else:
-            raise ge.CommandFailed("importHCP", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
+            raise ge.CommandFailed("import_hcp", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
-        raise ge.CommandFailed("importHCP", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("import_hcp", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
     if not sourceFiles:
-        raise ge.CommandFailed("importHCP", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("import_hcp", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
     # ---> mapping data to sessions' folders
     print "--> mapping files to QuNex hcpls folders"
@@ -501,7 +499,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
     # ---> check status
     if not allOk:
         print "\nFinal report\n============"
-        raise ge.CommandFailed("importHCP", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
+        raise ge.CommandFailed("import_hcp", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
 
     # ---> mapping data to QuNex nii folder
     report = []
@@ -518,7 +516,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
 
                 try:
                     print
-                    nimg, nmapped = mapHCPLS2nii(os.path.join(sessionsfolder, session), overwrite, filesort=filesort)
+                    nimg, nmapped = map_hcpls2nii(os.path.join(sessionsfolder, session), overwrite, filesort=filesort)
                     if nimg == 0:
                         report.append('%s had no images found to be mapped' % (info))
                         allOk = False
@@ -537,7 +535,7 @@ def importHCP(sessionsfolder=None, inbox=None, sessions=None, action='link', ove
         print line
 
     if not allOk:
-        raise ge.CommandFailed("importHCP", "Some actions failed", "Please check report!")
+        raise ge.CommandFailed("import_hcp", "Some actions failed", "Please check report!")
 
 
 
@@ -556,7 +554,7 @@ def processHCPLS(sessionfolder, filesort):
     # --- load HCPLS structure
     # template folder
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
-    hcplsStructure = os.path.join(niuTemplateFolder, "importHCP.txt")
+    hcplsStructure = os.path.join(niuTemplateFolder, "import_hcp.txt")
 
     if not os.path.exists(hcplsStructure):
         raise ge.CommandFailed("processHCPLS", "No HCPLS structure file present!", "There is no HCPLS structure file %s" % (hcplsStructure), "Please check your QuNex installation")
@@ -691,9 +689,9 @@ def processHCPLS(sessionfolder, filesort):
         
 
 
-def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
+def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     """
-    ``mapHCPLS2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``
+    ``map_hcpls2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``
 
     Maps data organized according to HCPLS specification to `nii` folder
     structure as expected by QuNex functions.
@@ -852,11 +850,11 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     
     ::
 
-        qunex mapHCPLS2nii folder=. overwrite=yes
+        qunex map_hcpls2nii folder=. overwrite=yes
 
     ::
 
-        qunex mapHCPLS2nii \\
+        qunex map_hcpls2nii \\
           --sessionsfolder="/data/my_study/sessions" \\
           --sessions="AP*" \\
           --overwrite=yes
@@ -868,7 +866,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     Change log
 
     2019-01-19 Grega Repovš
-               Initial version based on mapBIDS2nii
+               Initial version based on map_bids2nii
     2019-04-25 Grega Repovš
                Changed subjects to sessions
     2019-05-22 Grega Repovš
@@ -887,7 +885,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         filesort = "name_type_se"
 
     if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("importHCP", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
+        raise ge.CommandError("import_hcp", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (filesort), "Please only use keys: name, type, se!")
 
     sfolder = os.path.abspath(sourcefolder)
     hfolder = os.path.join(sourcefolder, 'hcpls')
@@ -919,7 +917,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
     print 'info:', info
 
-    splash = "Running mapHCPLS2nii for %s" % (info)
+    splash = "Running map_hcpls2nii for %s" % (info)
     print splash
     print "".join(['=' for e in range(len(splash))])
 
@@ -929,14 +927,14 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     print >> rout, "".join(['=' for e in range(len(splash))])
 
     if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("mapHCPLS2nii", "Invalid option for overwrite specified", "%s is not a valid option for the overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+        raise ge.CommandError("map_hcpls2nii", "Invalid option for overwrite specified", "%s is not a valid option for the overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     # --- process hcpls folder
 
     hcplsData = processHCPLS(hfolder, filesort)
        
     if not hcplsData:
-        raise ge.CommandFailed("mapHCPLS2nii", "No image files in hcpls folder!", "There are no image files in the hcpls folder [%s]" % (hfolder), "Please check your data!")
+        raise ge.CommandFailed("map_hcpls2nii", "No image files in hcpls folder!", "There are no image files in the hcpls folder [%s]" % (hfolder), "Please check your data!")
 
     # --- check for presence of nifti files
 
@@ -944,7 +942,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         nfiles = glob.glob(os.path.join(nfolder, '*.nii*'))
         if nfiles > 0:
             if overwrite == 'no':
-                raise ge.CommandFailed("mapHCPLS2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'overwrite' to yes!")
+                raise ge.CommandFailed("map_hcpls2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'overwrite' to yes!")
             else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
@@ -953,7 +951,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSessionFile("mapHCPLS2nii", sfolder, session, subjectid, overwrite)
+    sout = gc.createSessionFile("map_hcpls2nii", sfolder, session, subjectid, overwrite)
 
     # --- create session_hcp.txt file
     sfile = os.path.join(sfolder, 'session_hcp.txt')
@@ -962,7 +960,7 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
             os.remove(sfile)
             print "--> removed existing session_hcp.txt file"
         else:
-            raise ge.CommandFailed("mapHCPLS2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+            raise ge.CommandFailed("map_hcpls2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout_hcp = open(sfile, 'w')
     print >> sout_hcp, 'id:', session
@@ -1207,6 +1205,6 @@ def mapHCPLS2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     bout.close()
 
     if not allOk:
-        raise ge.CommandFailed("mapHCPLS2nii", "Not all actions completed successfully!", "Some files for session %s were not mapped successfully!" % (session), "Please check logs and data!")
+        raise ge.CommandFailed("map_hcpls2nii", "Not all actions completed successfully!", "Some files for session %s were not mapped successfully!" % (session), "Please check logs and data!")
 
     return imgn, nmapped

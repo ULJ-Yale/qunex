@@ -42,6 +42,7 @@ import core, scheduler
 import os
 import os.path
 import exceptions as ge
+import commands_support as gcs
 from processing import fs, fsl, simple, workflow
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -297,7 +298,7 @@ arglist = [
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
            ['hcp_nifti_tail',          '',                                        str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
 
-           ['# --- hcp_PreFS options'],
+           ['# --- hcp_pre_freesurfer options'],
            ['hcp_brainsize',          '150',                                      int,    "Human brain size in mm."],
            ['hcp_t1samplespacing',    '',                                         str,    "0.0000074 ... DICOM field (0019,1018) in s or '' if not used."],
            ['hcp_t2samplespacing',    '',                                         str,    "0.0000021 ... DICOM field (0019,1018) in s or '' if not used."],
@@ -315,7 +316,7 @@ arglist = [
            ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) ['']."],
            ['hcp_bold_smoothFWHM',    '2',                                        str,    "Whether slices were acquired in an interleaved fashion (odd or even) or not (empty)."],
 
-           ['# --- hcp_FS options'],
+           ['# --- hcp_freesurfer options'],
            ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
            ['hcp_fs_existing_session','FALSE',                                    torf,   "Indicates that the command is to be run on top of an already existing analysis/session. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE or FALSE [FALSE]. HCP Pipelines specific!"],
            ['hcp_fs_extra_reconall',  '',                                         str,    "A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
@@ -327,11 +328,11 @@ arglist = [
            ['hcp_fs_flair',           'FALSE',                                    torf,   "If set to TRUE indicates that recon-all is to be run with the -FLAIR/-FLAIRpial options(rather than the -T2/-T2pial options). The FLAIR input image itself should still be provided via the '--t2' argument."],
            ['hcp_fs_no_conf2hires',   'FALSE',                                    torf,   "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]."],
 
-           ['# --- hcp_PostFS options'],
+           ['# --- hcp_post_freesurfer options'],
            ['hcp_mcsigma',            '',                                         str,    "Correction sigma used for metric smooting (sqrt(200): 14.14213562373095048801) ['']."],
            ['hcp_inflatescale',       '1',                                        str,    "Inflate extra scale parameter [1]."],
 
-           ['# --- hcp_fMRIVolume options'],
+           ['# --- hcp_fmri_volume options'],
            ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE, LEGACY or SEBASED (for TOPUP DC only). HCP Pipelines only!"],
            ['hcp_bold_usejacobian',   '',                                         str,    "Whether to apply the jacobian of the distortion correction to fMRI data. HCP Pipelines only!"],
            ['hcp_bold_echospacing',   '',                                         str,    "Echo Spacing or Dwelltime of fMRI image in seconds."],
@@ -355,7 +356,7 @@ arglist = [
            ['hcp_bold_stcorrdir',     '',                                         str,    "The direction of slice acquisition NOTE: deprecated!"],
            ['hcp_bold_stcorrint',     '',                                         str,    "Whether slices were acquired in an interleaved fashion (odd) or not (empty) NOTE: deprecated!"],
 
-           ['# --- hcp_Diffusion options'],
+           ['# --- hcp_diffusion options'],
            ['hcp_dwi_echospacing',    '',                                         str,    "Echo spacing in msec."],
            ['hcp_dwi_phasepos',       'PA',                                       str,    "The direction of unwarping for positive phase."],
            ['hcp_dwi_gdcoeffs',       'NONE',                                     str,    "DWI specific gradient distortion coefficients file or NONE."],
@@ -368,27 +369,27 @@ arglist = [
            ['hcp_dwi_nogpu',          'FALSE',                                    torf, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
            ['hcp_dwi_selectbestb0',   'FALSE',                                    torf, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
 
-           ['# --- general hcp_ICAFix, hcp_PostFix, hcp_ReApplyFix, hcp_MSMAll, hcp_DeDriftAndResample options'],
+           ['# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options'],
            ['hcp_icafix_bolds',       '',                                         isNone, "A string specifying a list of bolds for ICAFix. Also used later in PostFix, ReApplyFix, MSMAll and DeDriftAndResample. Defaults to ''."],
            ['hcp_icafix_highpass',    '',                                         isNone, "Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix."],
            ['hcp_matlab_mode',        'compiled',                                 str, "Specifies the Matlab version, can be interpreted, compiled or octave."],
            ['hcp_icafix_domotionreg', '',                                         isNone, "Whether to regress motion parameters as part of the cleaning. The default value for single-run HCP ICAFix is [TRUE], while the default for multi-run HCP ICAFix is [FALSE]."],
            ['hcp_icafix_deleteintermediates', 'FALSE',                            torf,   "If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]."],
 
-           ['# --- hcp_ICAFix options'],
+           ['# --- hcp_icafix options'],
            ['hcp_icafix_traindata',   '',                                         str,    "Which file to use for training data. [] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix."],
            ['hcp_icafix_threshold',   '10',                                       int,    "ICAFix threshold that controls the sensitivity/specificity tradeoff."],
            ['hcp_icafix_postfix',     'TRUE',                                     torf,   "Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully."],
 
-           ['# --- hcp_PostFix options'],
+           ['# --- hcp_post_fix options'],
            ['hcp_postfix_dualscene',  '',                                         isNone, "Path to an alternative template scene, if empty HCP default dual scene will be used."],
            ['hcp_postfix_singlescene', '',                                        isNone, "Path to an alternative template scene, if empty HCP default single scene will be used."],
            ['hcp_postfix_reusehighpass', 'TRUE',                                  torf,   "Whether to reuse highpass."],
 
-           ['# --- hcp_ReApplyFix options'],
+           ['# --- hcp_reapply_fix options'],
            ['hcp_icafix_regname',     'NONE',                                     str,    "Specifies surface registration name. If NONE MSMSulc will be used."],
 
-           ['# --- hcp_MSMAll options options'],
+           ['# --- hcp_msmall options options'],
            ['hcp_msmall_bolds',       '',                                         isNone, "A comma separated list that defines the bolds that will be used in the computation of the MSMAll registration."],
            ['hcp_msmall_outfmriname', 'rfMRI_REST',                               str,    "The name which will be given to the concatenation of scans specified by the hcp_msmall_bolds parameter."],
            ['hcp_msmall_templates',   '',                                         isNone, "Path to directory containing MSMAll template files."],
@@ -396,7 +397,7 @@ arglist = [
            ['hcp_msmall_procstring',  '',                                         isNone, "Identification for FIX cleaned dtseries to use."],
            ['hcp_msmall_resample',    'TRUE',                                     torf,   "Whether to automatically run HCP DeDriftAndResample if HCP MSMAll finishes successfully."],
 
-           ['# --- hcp_DeDriftAndResample options'],
+           ['# --- hcp_dedrift_and_resample options'],
            ['hcp_resample_concatregname', 'MSMAll',                               str,    "Output name of the dedrifted registration."],
            ['hcp_resample_regname',   '',                                         isNone, "Registration sphere name."],
            ['hcp_resample_reg_files', '',                                         isNone, "Comma separated paths to the spheres output from the MSMRemoveGroupDrift pipeline."],
@@ -424,88 +425,6 @@ arglist = [
 ]
 
 
-#   --------------------------------------------------------- PARAMETER MAPPING
-#   For historical reasons and to maintain backward compatibility, some of the
-#   parameters need to be mapped to a parameter with another name.
-
-# The "tomap" dictionary specifies what is mapped to what
-# If the mapping is 1:1 use 'old_value': 'new_value'
-# If the mapping is 1:n (an old value was split to several new ones) then 
-# for each mapping define the new_value and the functions that use it
-tomap = {'bppt':                    'bolds',
-         'bppa':                    'bold_actions',
-         'bppn':                    'bold_nuisance',
-         'eventstring':             'event_string',
-         'eventfile':               'event_file',
-         'basefolder':              'sessionsfolder',
-         'subjects':                'sessions',
-         'bold_preprocess':         'bolds',
-         'hcp_prefs_brainmask':     'hcp_prefs_custombrain',
-         'hcp_mppversion':          'hcp_processing_mode',
-         'hcp_dwelltime':           'hcp_seechospacing',
-         'hcp_bold_ref':            'hcp_bold_sbref',
-         'hcp_bold_preregister':    'hcp_bold_preregistertool',
-         'hcp_bold_stcorr':         'hcp_bold_doslicetime',
-         'hcp_bold_correct':        'hcp_bold_dcmethod',
-         'hcp_bold_usemask':        'hcp_bold_mask',
-         'hcp_bold_boldnamekey':    'hcp_filename',
-         'hcp_dwi_dwelltime':       'hcp_dwi_echospacing',
-         'cores':                   'parsessions',
-         'threads':                 'parelements',
-         'sfolder':                 'sourcefolder',
-         'tfolder':                 'targetfolder',
-         'tfile':                   'targetfile',
-         'sfile':                   {
-                                        'sourcefiles': ['createBatch', 'pullSequenceNames', 'gatherBehavior'],
-                                        'sourcefile': ['createSessionInfo', 'setupHCP', 'sliceImage', 'runNIL', 'runNILFolder'],
-                                        'default': 'sourcefile'
-                                    },
-         'sfilter':                 'filter',
-         'hcp_fs_existing_subject': 'hcp_fs_existing_session',
-         'subjectsfolder':          'sessionsfolder',
-         'subjid':                  {
-                                        'sessionid': ['dicom2niix', 'batchTag2NameKey'],
-                                        'sessionids': ['exportHCP', 'mapIO'],
-                                        'default': 'sessionid'
-                                    },
-         'sbjroi':                  'sessionroi',
-         'subjectf':                'sessionf'
-         }
-
-# The "mapValues" dictionary specifies remapping of values
-mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
-             'hcp_filename': {'name': 'original', 'number': 'standard'}}
-
-# The "to_impute" list specifies, which (target) options have to be checked whether 
-# they were not specified and therefore have value None, and in those cases use values from
-# other (source) options. The specification is provided as a list of tuples pairs where the first
-# string in the pair identifies the target option (the option to check) and the second string
-# identifies the source option (the option from which to take the value to impute). Please note
-# that the imputation will follow the order in which tuples are listed.
-
-to_impute = [('qx_cifti_tail', 'hcp_cifti_tail'), ('qx_nifti_tail', 'hcp_nifti_tail'), ('cifti_tail', 'qx_cifti_tail'), ('nifti_tail', 'qx_nifti_tail')]
-
-# The "deprecated" dictionary specifies parameters that are no longer in use
-deprecatedParameters = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
-                        'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams',
-                        'hcp_bold_sequencetype': None,
-                        'hcp_biascorrect_t1w': None}
-
-# The "towarn" dictionary warns users to check the provided values
-# the array for each parameter name has two entries
-# 1 - the value to look for in parameter value
-# 2 - the warning message that gets printer if the value is found
-towarn = {
-          'sessionsfolder': ['subject',
-                             'The sessionfolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
-          'sourcefolder': ['subject',
-                           'The sourcefolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
-          'sourcefile': ['subject',
-                         'The sourcefile parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
-          'sourcefiles': ['subject',
-                         'The sourcefiles parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.']
-        }
-
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
 #   listed as a list of flags, each flag is specified with the following
@@ -521,6 +440,7 @@ flaglist = [
     ['hcp_dwi_nogpu',           'hcp_dwi_nogpu',        'TRUE', 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
     ['hcp_dwi_selectbestb0',    'hcp_dwi_selectbestb0', 'TRUE', "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
 ]
+
 
 #   ------------------------------------------------------------------ OPTIONS
 #   The options dictionary
@@ -545,51 +465,50 @@ options = {}
 #   Empty lists denote there should be a blank line when printing out a command
 #   list.
 
-calist = [['mhd',     'mapHCPData',                  process_hcp.mapHCPData,                        "Map HCP preprocessed data to sessions' image folder."],
+calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,                       "Map HCP preprocessed data to sessions' image folder."],
           [],
-          ['gbd',     'getBOLDData',                 workflow.getBOLDData,                          "Copy functional data from 4dfp (NIL) processing pipeline."],
-          ['bbm',     'createBOLDBrainMasks',        workflow.createBOLDBrainMasks,                 "Create brain masks for BOLD runs."],
+          ['gbd',     'get_bold_data',              workflow.get_bold_data,                         "Copy functional data from 4dfp (NIL) processing pipeline."],
+          ['bbm',     'create_bold_brain_masks',    workflow.create_bold_brain_masks,               "Create brain masks for BOLD runs."],
           [],
-          ['seg',     'runBasicSegmentation',        fs.runBasicStructuralSegmentation,             "Run basic structural image segmentation."],
-          ['gfs',     'getFSData',                   fs.checkForFreeSurferData,                     "Copy existing FreeSurfer data to sessions' image folder."],
-          ['fss',     'runSubcorticalFS',            fs.runFreeSurferSubcorticalSegmentation,       "Run subcortical freesurfer segmentation."],
-          ['fsf',     'runFullFS',                   fs.runFreeSurferFullSegmentation,              "Run full freesurfer segmentation"],
+          ['seg',     'run_basic_segmentation',     fs.runBasicStructuralSegmentation,              "Run basic structural image segmentation."],
+          ['gfs',     'get_fs_data',                fs.checkForFreeSurferData,                      "Copy existing FreeSurfer data to sessions' image folder."],
+          ['fss',     'run_subcortical_fs',         fs.runFreeSurferSubcorticalSegmentation,        "Run subcortical freesurfer segmentation."],
+          ['fsf',     'run_full_fs',                fs.runFreeSurferFullSegmentation,               "Run full freesurfer segmentation"],
           [],
-          ['cbs',     'computeBOLDStats',            workflow.computeBOLDStats,                     "Compute BOLD movement and signal statistics."],
-          ['csr',     'createStatsReport',           workflow.createStatsReport,                    "Create BOLD movement statistic reports and plots."],
-          ['ens',     'extractNuisanceSignal',       workflow.extractNuisanceSignal,                "Extract nuisance signal from BOLD images."],
+          ['cbs',     'compute_bold_stats',         workflow.compute_bold_stats,                    "Compute BOLD movement and signal statistics."],
+          ['csr',     'create_stats_report',        workflow.create_stats_report,                   "Create BOLD movement statistic reports and plots."],
+          ['ens',     'extract_nuisance_signal',    workflow.extract_nuisance_signal,               "Extract nuisance signal from BOLD images."],
           [],
-          ['bpp',     'preprocessBold',              workflow.preprocessBold,                       "Preprocess BOLD images (using old Matlab code)."],
-          ['cpp',     'preprocessConc',              workflow.preprocessConc,                       "Preprocess conc bundle of BOLD images (using old Matlab code)."],
+          ['bpp',     'preprocess_bold',            workflow.preprocess_bold,                       "Preprocess BOLD images (using old Matlab code)."],
+          ['cpp',     'preprocess_conc',            workflow.preprocess_conc,                       "Preprocess conc bundle of BOLD images (using old Matlab code)."],
           [],
-          ['hcp1',    'hcp_PreFS',                   process_hcp.hcpPreFS,                          "Run HCP PreFS pipeline."],
-          ['hcp2',    'hcp_FS',                      process_hcp.hcpFS,                             "Run HCP FS pipeline."],
-          ['hcp3',    'hcp_PostFS',                  process_hcp.hcpPostFS,                         "Run HCP PostFS pipeline."],
-          ['hcp4',    'hcp_fMRIVolume',              process_hcp.hcpfMRIVolume,                     "Run HCP fMRI Volume pipeline."],
-          ['hcp5',    'hcp_fMRISurface',             process_hcp.hcpfMRISurface,                    "Run HCP fMRI Surface pipeline."],
-          ['hcp6',    'hcp_ICAFix',                  process_hcp.hcpICAFix,                         "Run HCP ICAFix pipeline."],
-          ['hcp7',    'hcp_PostFix',                 process_hcp.hcpPostFix,                        "Run HCP PostFix pipeline."],
-          ['hcp8',    'hcp_ReApplyFix',              process_hcp.hcpReApplyFix,                     "Run HCP ReApplyFix pipeline."],
-          ['hcp9',    'hcp_MSMAll',                  process_hcp.hcpMSMAll,                         "Run HCP MSMAll pipeline."],
-          ['hcp10',   'hcp_DeDriftAndResample',      process_hcp.hcpDeDriftAndResample,             "Run HCP DeDriftAndResample pipeline."],
+          ['hcp1',    'hcp_pre_freesurfer',         process_hcp.hcp_pre_freesurfer,                 "Run HCP PreFS pipeline."],
+          ['hcp2',    'hcp_freesurfer',             process_hcp.hcp_freesurfer,                     "Run HCP FS pipeline."],
+          ['hcp3',    'hcp_PostFS',                 process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
+          ['hcp4',    'hcp_fmri_volume',            process_hcp.hcp_fmri_volume,                    "Run HCP fMRI Volume pipeline."],
+          ['hcp5',    'hcp_fmri_surface',           process_hcp.hcp_fmri_surface,                   "Run HCP fMRI Surface pipeline."],
+          ['hcp6',    'hcp_icafix',                 process_hcp.hcp_icafix,                         "Run HCP ICAFix pipeline."],
+          ['hcp7',    'hcp_post_fix',               process_hcp.hcp_post_fix,                       "Run HCP PostFix pipeline."],
+          ['hcp8',    'hcp_reapply_fix',            process_hcp.hcp_reapply_fix,                    "Run HCP ReApplyFix pipeline."],
+          ['hcp9',    'hcp_msmall',                 process_hcp.hcp_msmall,                         "Run HCP MSMAll pipeline."],
+          ['hcp10',   'hcp_dedrift_and_resample',   process_hcp.hcp_dedrift_and_resample,           "Run HCP DeDriftAndResample pipeline."],
           [],
-          ['hcpd',    'hcp_Diffusion',               process_hcp.hcpDiffusion,                      "Run HCP DWI pipeline."],
-          # ['hcpdf',   'hcp_DTIFit',                  process_hcp.hcpDTIFit,                        "Run FSL DTI fit."],
-          # ['hcpdb',   'hcp_Bedpostx',                process_hcp.hcpBedpostx,                      "Run FSL Bedpostx GPU."],
+          ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
+          # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
+          # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
           [],
-          ['rsc',     'runShellScript',              simple.runShellScript,                         "Runs the specified script."],
+          ['rsc',     'run_shell_script',           simple.run_shell_script,                        "Runs the specified script."],
           [],
-          ['f99',    'fsl_f99',                      fsl.fsl_f99,                                   "Run FSL F99 command."],
-          ['fslx',   'fsl_xtract',                   fsl.fsl_xtract,                                "Run FSL XTRACT command."],
-          ]
+          ['f99',    'fsl_f99',                     fsl.fsl_f99,                                    "Run FSL F99 command."],
+          ['fslx',   'fsl_xtract',                  fsl.fsl_xtract,                                 "Run FSL XTRACT command."],
+]
 
-lalist = [['lfs',     'longitudinalFS',              process_hcp.longitudinalFS,                    "Runs longitudinal FreeSurfer across sessions."]
-          ]
+lalist = [['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]]
 
-salist = [['cbl',     'createBoldList',              simple.createBoldList,                         'createBoldList'],
-          ['ccl',     'createConcList',              simple.createConcList,                         'createConcList'],
-          ['lsi',     'listSessionInfo',             simple.listSessionInfo,                        'listSessionInfo']
-          ]
+salist = [['cbl',     'create_bold_list',           simple.create_bold_list,                        "Create BOLD list"],
+          ['ccl',     'create_conc_list',           simple.create_conc_list,                        "Create conc list"],
+          ['lsi',     'list_session_info',          simple.list_session_info,                      "List session info"]
+]
 
 
 #   -------------------------------------------------------- COMMAND DICTIONARY
@@ -599,13 +518,15 @@ salist = [['cbl',     'createBoldList',              simple.createBoldList,     
 pactions = {}
 for line in calist:
     if len(line) == 4:
-        pactions[line[0]] = line[2]
+        # deprecated command abbreviations 
+        # pactions[line[0]] = line[2]
         pactions[line[1]] = line[2]
 
 lactions = {}
 for line in lalist:
     if len(line) == 4:
-        lactions[line[0]] = line[2]
+        # deprecated command abbreviations 
+        # lactions[line[0]] = line[2]
         lactions[line[1]] = line[2]
 
 plactions = pactions.copy()
@@ -614,7 +535,8 @@ plactions.update(lactions)
 sactions = {}
 for line in salist:
     if len(line) == 4:
-        sactions[line[0]] = line[2]
+        # deprecated command abbreviations 
+        # sactions[line[0]] = line[2]
         sactions[line[1]] = line[2]
 
 allactions = plactions.copy()
@@ -624,115 +546,6 @@ flist = {}
 for line in flaglist:
     if len(line) == 4:
         flist[line[0]] = [line[1], line[2]]
-
-# ==============================================================================
-#                                                  MAPPING DEPRECATED PARAMETERS
-#
-
-def mapDeprecated(options, command):
-    '''
-    ``mapDeprecated(options, command)``
-    
-    Checks for deprecated parameters, remaps deprecated ones
-    and notifies the user.
-    '''
-
-    remapped   = []
-    deprecated = []
-    newvalues  = []
-
-    # -> check remapped parameters
-    # variable for storing new options
-    newOptions = {}
-    # iterate over all options
-    for k, v in options.iteritems():
-        if k in tomap:
-            # if v is a dictionary then
-            # the parameter was remaped to multiple values
-            mapto = tomap[k]
-            if type(mapto) is dict:
-                for k2, v2 in mapto.iteritems():
-                    if command in v2:
-                        mapto = k2
-                        break
-                    elif k2 == 'default':
-                        mapto = v2
-                        break
-
-            # remap
-            newOptions[mapto] = v
-            remapped.append(k)
-        else:
-            newOptions[k] = v
-
-    if remapped:
-        print("\nWARNING: Use of parameters with changed name(s)!\n       The following parameters have new names and will be deprecated:")
-        for k in remapped:
-            print("         ... %s is now %s!" % (k, tomap[k]))
-
-        print("         Please correct the listed parameter names in command line or batch file!")
-
-    # -> check deprecated parameters
-    for k, v in newOptions.iteritems():
-        if k in deprecatedParameters:
-            if v:
-                deprecated.append((k, v, deprecatedParameters[k]))
-
-    if deprecated:
-        print "\nWARNING: Use of deprecated parameter(s)!"
-        for k, v, n in deprecated:
-            if n:
-                print "         ... %s (current value: %s) is replaced by the parameter %s!" % (k, str(v), n)
-            else:
-                print "         ... %s (current value: %s) is being deprecated!" % (k, str(v))
-        print "         Please stop using the listed parameters in command line or batch file, and, when indicated, consider using the replacement parameter!"  
-
-    # -> check new parameter values
-    for k, v in newOptions.iteritems():
-        if k in mapValues:
-            if v in mapValues[k]:
-                newOptions[k] = mapValues[k][v]
-                newvalues.append([k, v, mapValues[k][v]])
-
-    if newvalues:
-        print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have changed:"
-        for k, v, n in newvalues:
-            print "         ... %s (%s) is now %s!" % (str(v), k, n)            
-        print "         Please correct the listed parameter values in command line or batch file!"
-
-    # -> warn if some parameter values might be deprecated
-    for k, v in newOptions.iteritems():
-        if k in towarn:
-            # search string
-            s = towarn[k][0]
-            if s in v:
-                # warning message
-                msg = towarn[k][1]
-                print "\nWARNING: %s\n" % msg
-
-    return newOptions
-
-
-
-# ==============================================================================
-#                                                IMPUTING UNSPECIFIED PARAMETERS
-#
-
-def imputeParameters(options, command):
-    '''
-    ``imputeParameters(options, command)``
-    
-    Checks if specific parameters are not specified and assigns them the value
-    of another relevant parameter.
-    '''
-
-    for target_option, source_option in to_impute:
-        if options[target_option] is None:
-            options[target_option] = options[source_option]
-            print "WARNING: Parameter %s was not specified. Its value was imputed from parameter %s and set to '%s'!" % (target_option, source_option, str(options[source_option])) 
-    
-    return options
-
 
 
 # ==============================================================================
@@ -830,8 +643,7 @@ def run(command, args):
     options['specfolder'] = specfolder
 
     # -- impute unspecified parameters
-    
-    options = imputeParameters(options, command)
+    options = gcs.impute_parameters(options, command)
 
     # --------------------------------------------------------------------------
     #                                                       start writing runlog

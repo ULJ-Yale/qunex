@@ -344,7 +344,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %
 %   brainmask    
 %		Mask will be the actual bet extracted brain mask based on the first BOLD 
-%		frame (generated using in the createBOLDBrainMasks command).
+%		frame (generated using in the create_bold_brain_masks command).
 %
 %   <filename>   
 %		All the non-zero voxels in a specified volume file will be used as a mask.

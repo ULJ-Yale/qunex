@@ -12,5 +12,6 @@ import palm
 import process
 import scheduler
 import utilities
+import commands_support
 
-__all__ = ["fourdfp", "bids", "commands", "core", "dicom", "dicomdeid", "fidl", "filelock", "img", "nifti", "palm", "process", "scheduler", "utilities"]
+__all__ = ["fourdfp", "bids", "commands", "core", "dicom", "dicomdeid", "fidl", "filelock", "img", "nifti", "palm", "process", "scheduler", "utilities", "commands_support"]

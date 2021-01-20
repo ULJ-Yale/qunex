@@ -634,7 +634,7 @@ def main(args=None):
 
     Example settings strings::
 
-        "SLURM,jobname=hcp2,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+        "SLURM,jobname=hcp_freesurfer,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
         "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=pi_anticevic"
 
 
@@ -655,7 +655,7 @@ def main(args=None):
 
     In the case that --sessions parameter needs to be passed to a command, but
     not used to split up processing into multiple container calls (e.g. in 
-    importDICOM or importBIDS commands), specify the sessions to pass to the
+    import_dicom or import_bids commands), specify the sessions to pass to the
     call using the --csessions parameter. The value of that parameter will be
     passed on as --sessions parameter to the command.
 
@@ -695,7 +695,7 @@ def main(args=None):
 
     ::
 
-        qunex_container hcp2 \\
+        qunex_container hcp_freesurfer \\
         --sessionsfolder=/data/study/sessions \\
         --sessions=/data/study/processing/batch.txt \\
         --parsessions=4 \\

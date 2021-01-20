@@ -5,14 +5,14 @@
 
 Functions for processing dicom images and converting them to NIfTI format:
 
---readPARInfo         Reads image info from Philips PAR/REC files.
---readDICOMInfo       Reads image info from DICOM files.
---dicom2niiz          Converts DICOM to NIfTI images.
---sortDicom           Sorts the DICOM files into subfolders according to images.
---listDicom           List the information on DICOM files.
---splitDicom          Split files from different sessions.
---importDICOM         Processes incoming data.
---getDICOMInfo        Prints HCP relevant information from a DICOM file.
+--readPARInfo           Reads image info from Philips PAR/REC files.
+--readDICOMInfo         Reads image info from DICOM files.
+--dicom2niiz            Converts DICOM to NIfTI images.
+--sort_dicom            Sorts the DICOM files into subfolders according to images.
+--list_dicom            List the information on DICOM files.
+--split_dicom           Split files from different sessions.
+--import_dicom          Processes incoming data.
+--get_dicom_info        Prints HCP relevant information from a DICOM file.
 
 The commands are accessible from the terminal using gmri utility.
 """
@@ -562,7 +562,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     # check if dicom folder existis
 
     if not os.path.exists(dmcf):
-        raise ge.CommandFailed("dicom2nii", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sortDicom command!")
+        raise ge.CommandFailed("dicom2nii", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sort_dicom command!")
 
     # check for existing .gz files
 
@@ -1151,7 +1151,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     # check if dicom folder existis
 
     if not os.path.exists(dmcf):
-        raise ge.CommandFailed("dicom2niix", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sortDicom command!")
+        raise ge.CommandFailed("dicom2niix", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sort_dicom command!")
 
     # check for existing .gz files
 
@@ -1515,9 +1515,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     return
 
 
-def sortDicom(folder=".", **kwargs):
+def sort_dicom(folder=".", **kwargs):
     """
-    ``sortDicom [folder=.]``
+    ``sort_dicom [folder=.]``
 
     Sorts DICOM files.
 
@@ -1567,11 +1567,11 @@ def sortDicom(folder=".", **kwargs):
     
     ::
         
-        qunex sortDicom folder=OP667
+        qunex sort_dicom folder=OP667
 
     Multiple sessions example::
 
-        qunex sortDicom \\
+        qunex sort_dicom \\
           --sessionsfolders="/data/my_study/sessions" \\
           --sessions="OP*"
     """
@@ -1593,7 +1593,7 @@ def sortDicom(folder=".", **kwargs):
                support PAR/REC files.
     2018-07-20 Grega Repovš
                Added more robust checking for and reporting of presence of image 
-               files in sortDicom
+               files in sort_dicom
     2019-04-25 Grega Repovš
                Changed subjects to sessions
     2019-06-22 Grega Repovš
@@ -1602,7 +1602,7 @@ def sortDicom(folder=".", **kwargs):
 
     # --- should we copy or move
 
-    print "Running sortDicom\n================="
+    print "Running sort_dicom\n================="
 
     should_copy = kwargs.get('copy', False)
     if should_copy:
@@ -1621,7 +1621,7 @@ def sortDicom(folder=".", **kwargs):
     if files is None:
         inbox = os.path.join(folder, 'inbox')
         if not os.path.exists(inbox):
-            raise ge.CommandFailed("sortDicom", "Inbox folder not found", "Please check your paths! [%s]" % (os.path.abspath(inbox)), "Aborting")
+            raise ge.CommandFailed("sort_dicom", "Inbox folder not found", "Please check your paths! [%s]" % (os.path.abspath(inbox)), "Aborting")
         files = glob.glob(os.path.join(inbox, "*"))
         if len(files):
             files = []
@@ -1630,7 +1630,7 @@ def sortDicom(folder=".", **kwargs):
                     files.append(os.path.join(droot, dfile))
             print "---> Processing %d files from %s" % (len(files), inbox)
         else:
-            raise ge.CommandFailed("sortDicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
+            raise ge.CommandFailed("sort_dicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
 
     info = None
     for dcm in files:
@@ -1724,9 +1724,9 @@ def sortDicom(folder=".", **kwargs):
     print "---> Done"
     return 
 
-def listDicom(folder=None):
+def list_dicom(folder=None):
     """
-    ``listDicom [folder=inbox]``
+    ``list_dicom [folder=inbox]``
 
     Inspects a folder for dicom files and prints a detailed reports of the
     results.
@@ -1756,7 +1756,7 @@ def listDicom(folder=None):
     
     ::
 
-        qunex listDicom folder=OP269/dicom
+        qunex list_dicom folder=OP269/dicom
     """
 
     """
@@ -1782,7 +1782,7 @@ def listDicom(folder=None):
     files = [e for e in files if os.path.isfile(e)]
 
     if not files:
-        raise ge.CommandFailed("listDicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
+        raise ge.CommandFailed("list_dicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
 
     for dcm in files:
         try:
@@ -1798,9 +1798,9 @@ def listDicom(folder=None):
     return
 
 
-def splitDicom(folder=None):
+def split_dicom(folder=None):
     """
-    ``splitDicom [folder=inbox]``
+    ``split_dicom [folder=inbox]``
 
     Sorts out DICOM images from different sessions.
 
@@ -1825,7 +1825,7 @@ def splitDicom(folder=None):
     
     ::
 
-        qunex splitDicom folder=dicommess
+        qunex split_dicom folder=dicommess
     """
 
     """
@@ -1853,7 +1853,7 @@ def splitDicom(folder=None):
     files = [e for e in files if os.path.isfile(e)]
 
     if not files:
-        raise ge.CommandFailed("splitDicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
+        raise ge.CommandFailed("split_dicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
 
     sessions = []
 
@@ -1875,9 +1875,9 @@ def splitDicom(folder=None):
     return
 
 
-def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
+def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
     """
-    ``importDICOM [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]``
 
     Automatically processes packets with individual sessions's DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -2150,7 +2150,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     ------------------
 
     After the files have been copied or extracted to the inbox folder, a
-    `sortDicom` command is run on that folder and all the DICOM or PAR/REC files
+    `sort_dicom` command is run on that folder and all the DICOM or PAR/REC files
     are sorted and moved to the dicom folder. After that is done, a conversion
     command is run to convert the DICOM images or PAR/REC files to the NIfTI
     format and move them to the nii folder. The specific tool to do the 
@@ -2159,7 +2159,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     PAR/REC files are preserved and gzipped to save space. To speed up the 
     conversion, the parelements parameter is passed to the `dicom2niix` command. 
     `session.txt` and `DICOM-Report.txt` files are created as well. Please, 
-    check the help for `sortDicom` and `dicom2niix` commands for the specifics.
+    check the help for `sort_dicom` and `dicom2niix` commands for the specifics.
 
     EXAMPLE USE
     ===========
@@ -2172,20 +2172,20 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     subject id is equal to the packet name. All packets found are to be
     processed, after the user gives a go-ahead to an interactive prompt::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="<path_to_studyfolder>/sessions"
     
     If the processing should continue automatically if packages to process were 
     found, then the command should be::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="<path_to_studyfolder>/sessions" \
             --check="any"
     
     If only package names starting with 'AP' or 'HQ' are to be processed then 
     the `sessions` parameter has to be added::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="<path_to_studyfolder>/sessions" \
             --sessions="AP.*,HQ.*" \
             --check="any"
@@ -2194,7 +2194,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     optional, then to extract the packet name and map it directly to subject id,
     the following `pattern` parameter needs to be added::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="<path_to_studyfolder>/sessions" \
             --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
             --sessions="AP.*,HQ.*" \
@@ -2204,7 +2204,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     e.g. 'Yale-AP4876_Baseline.zip', then a `nameformat` parameter needs to be 
     added::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="<path_to_studyfolder>/sessions" \
             --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
             --sessions="AP.*,HQ.*" \
@@ -2218,7 +2218,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     the AP* or HQ* are mapped to a corresponding subject id and session names, 
     then the command is changed to::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="<path_to_studyfolder>/sessions" \
             --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
             --sessions="AP.*,HQ.*" \
@@ -2236,7 +2236,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     
     Then these are a set of possible commands::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="/studies/myStudy/sessions" \
             --masterinbox="none" \
             --sessions="S*" 
@@ -2244,7 +2244,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     In the above case all the folders will be processed, the packages will be
     extracted and (by default) moved to `/studies/myStudy/sessions/archive/MR`::
     
-        qunex importDICOM \
+        qunex import_dicom \
             --sessionsfolder="/studies/myStudy/sessions" \
             --masterinbox="none" \
             --sessions="*baseline" \
@@ -2294,12 +2294,12 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                Added ovewrite parameter
     """
 
-    print "Running importDICOM\n===================="
+    print "Running import_dicom\n===================="
 
     # check settings
 
     if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
-        raise ge.CommandError('importDICOM', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
+        raise ge.CommandError('import_dicom', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
     verbose = verbose.lower() == 'yes'
 
@@ -2314,7 +2314,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     if masterinbox.lower() == 'none':
         masterinbox = None
         if sessions is None or sessions == "":
-            raise ge.CommandError('importDICOM', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
+            raise ge.CommandError('import_dicom', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
 
     if pattern is None:
         pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
@@ -2335,18 +2335,18 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
         log = dict([[f.strip() for f in e.split(':')] for e in logfile.split('|')])
 
         if not all([e in log for e in ['path', 'subject_id', 'packet_name']]):
-            raise ge.CommandFailed("importDICOM", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
+            raise ge.CommandFailed("import_dicom", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
 
         try:
             for key in [e for e in log.keys() if e in ['packet_name', 'subject_id', 'session_name']]:
                 log[key] = int(log[key]) - 1
         except:
-            raise ge.CommandFailed("importDICOM", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
+            raise ge.CommandFailed("import_dicom", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
 
         sessionname = 'session_name' in log
 
         if not os.path.exists(log['path']):
-            raise ge.CommandFailed("importDICOM", "Logfile does not exist", "The specified logfile does not exist:", log['path'], "Please check your paths!")
+            raise ge.CommandFailed("import_dicom", "Logfile does not exist", "The specified logfile does not exist:", log['path'], "Please check your paths!")
 
         print "---> Reading acquisition log [%s]." % (log['path'])
         sessionsInfo = {}
@@ -2386,11 +2386,11 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
         try:
             getop = re.compile(pattern)
         except:
-            raise ge.CommandFailed("importDICOM", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
+            raise ge.CommandFailed("import_dicom", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
         try:
             getid = re.compile(nameformat)
         except:
-            raise ge.CommandFailed("importDICOM", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
+            raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
 
         for file in files:
             m = getop.search(os.path.basename(file))
@@ -2445,7 +2445,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     else:
 
         if not sessions:
-            raise ge.CommandFailed("importDICOM", "Input data not specified", "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
+            raise ge.CommandFailed("import_dicom", "Input data not specified", "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
 
         reportSet = [('ok', '---> Found the following folders to process:'),
                      ('invalid', "---> For these folders the folder name could not parsed and they won't be processed:"),
@@ -2528,14 +2528,14 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
     else:        
         if check.lower() == 'any':
             if masterinbox:
-                raise ge.CommandFailed("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
+                raise ge.CommandFailed("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
             else:
-                raise ge.CommandFailed("importDICOM", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder)), "Please check your data!")                
+                raise ge.CommandFailed("import_dicom", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder)), "Please check your data!")                
         else:
             if masterinbox:
-                raise ge.CommandNull("importDICOM", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
+                raise ge.CommandNull("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
             else:
-                raise ge.CommandNull("importDICOM", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder))) 
+                raise ge.CommandNull("import_dicom", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder))) 
                 
 
     # ---- Ok, now loop through the packets
@@ -2608,7 +2608,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
                         z = zipfile.ZipFile(p, 'r')
                     except:
                         e = sys.exc_info()[0]
-                        raise ge.CommandFailed("importDICOM", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (p, e), "Please check your data!")                
+                        raise ge.CommandFailed("import_dicom", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (p, e), "Please check your data!")                
 
                     ilist = z.infolist()
                     for sf in ilist:
@@ -2706,7 +2706,7 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
             # ===> run sort dicom
 
             print
-            sortDicom(folder=sfolder)
+            sort_dicom(folder=sfolder)
 
             # ===> run dicom to nii
 
@@ -2776,14 +2776,14 @@ def importDICOM(sessionsfolder=None, sessions=None, masterinbox=None, check="yes
             print "... %s [%s]" % (session['sessionid'], file)
             for note in notes:
                 print "    %s" % (note)
-        raise ge.CommandFailed("importDICOM", "Some packages failed to process", "Please check report!")
+        raise ge.CommandFailed("import_dicom", "Some packages failed to process", "Please check report!")
 
     return
 
 
-def getDICOMInfo(dicomfile=None, scanner='siemens'):
+def get_dicom_info(dicomfile=None, scanner='siemens'):
     """
-    ``getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]``
+    ``get_dicom_info dicomfile=<dicom_file> [scanner=siemens]``
 
     Inspects the specified DICOM file.
 
@@ -2821,7 +2821,7 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
 
     ::
 
-        qunex getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
+        qunex get_dicom_info dicomfile=ap308e727bxehd2.372.2342.42566.dcm
     """
 
     """
@@ -2836,18 +2836,18 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
     2018-01-01 Grega Repovš
                Changed dfile to dicomfile
     2018-05-05 Grega Repovš
-               Added support for Philips in getDICOMInfo
+               Added support for Philips in get_dicom_info
                NOTE: computation of dwelltime needs to be verified!
     """
 
     if dicomfile is None:
-        raise ge.CommandError("getDICOMInfo", "No path to the dicom file was provided")
+        raise ge.CommandError("get_dicom_info", "No path to the dicom file was provided")
 
     if not os.path.exists(dicomfile):
-        raise ge.CommandFailed("getDICOMInfo", "DICOM file does not exist", "Please check path! [%s]" % (dicomfile))
+        raise ge.CommandFailed("get_dicom_info", "DICOM file does not exist", "Please check path! [%s]" % (dicomfile))
 
     if scanner not in ['siemens', 'philips']:
-        raise ge.CommandError("getDICOMInfo", "Scanner not supported", "The specified scanner is not yet supported! [%s]" % (scanner))
+        raise ge.CommandError("get_dicom_info", "Scanner not supported", "The specified scanner is not yet supported! [%s]" % (scanner))
 
     d = readDICOMBase(dicomfile)
     ok = True

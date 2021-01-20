@@ -401,9 +401,9 @@ def write_field_dict(output_file, limit):
             writer.writerow(row)
 
 
-def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
+def get_dicom_fields(folder=".", targetfile="dicomFields.csv", limit="20"):
     """
-    ``getDICOMFields [folder=.] [targetfile=dicomFields.csv] [limit=20]``
+    ``get_dicom_fields [folder=.] [targetfile=dicomFields.csv] [limit=20]``
 
     Returns an overview of DICOM fields across all the DICOM files.
 
@@ -443,17 +443,17 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
     
     ::
 
-        qunex getDICOMFields
+        qunex get_dicom_fields
     
     
     ::
 
-        qunex getDICOMFields \
+        qunex get_dicom_fields \
              --folder=/data/studies/WM/sessions/inbox/MR
     
     ::
 
-        qunex getDICOMFields \
+        qunex get_dicom_fields \
              --folder=/data/studies/WM/sessions/inbox/MR/original \
              --targetfile=/data/studies/WM/sessions/specs/dicomFields.csv \
              --limit=10
@@ -465,7 +465,7 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
     Change log
 
     2018-10-24 Antonija Kolobarić
-               Initial version adopted from importBIDS
+               Initial version adopted from import_bids
     2018-10-24 Grega Repovš
                Updated documentation
                Changed parameter names to match the convention and use elsewhere
@@ -476,13 +476,13 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
     """
 
     if not os.path.exists(folder):
-        raise ge.CommandFailed("getDICOMFields", "Folder not found", "The specified folder with DICOM files to analyse was not found:", "%s" % (folder), "Please check your paths!")
+        raise ge.CommandFailed("get_dicom_fields", "Folder not found", "The specified folder with DICOM files to analyse was not found:", "%s" % (folder), "Please check your paths!")
 
     try:
         f = open(targetfile, "w")
         f.close()
     except:
-        raise ge.CommandFailed("getDICOMFields", "Could not create target file", "The specifed target file could not be created:", "%s" % (targetfile), "Please check your paths and permissions!")
+        raise ge.CommandFailed("get_dicom_fields", "Could not create target file", "The specifed target file could not be created:", "%s" % (targetfile), "Please check your paths and permissions!")
 
 
     field_dict = {}
@@ -500,9 +500,9 @@ def getDICOMFields(folder=".", targetfile="dicomFields.csv", limit="20"):
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
-def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
+def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
     """
-    ``changeDICOMFiles [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``
+    ``change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``
 
     Changes all the dicom files in the specified folder according to the
     directions provided in the `paramfile`.
@@ -555,7 +555,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     If multiple actions are specified, they are carried out in the above order
     (archive, hash, replace, delete). When hashing, to prevent the possibility
     of reconstructing the original value by hashing candidate values, a salt 
-    is used. By default a random salt is generated each time changeDICOMFiles 
+    is used. By default a random salt is generated each time change_dicom_files 
     is run, however, a specific salt can be provided as the optional parameter
     to the `hash` command. A random salt can also be explicitly specified by 
     setting the optimal parameter to 'random'.
@@ -620,18 +620,18 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     
     ::
 
-        qunex changeDICOMFiles \
+        qunex change_dicom_files \
             --folder=. 
 
     ::
 
-        qunex changeDICOMFiles \
+        qunex change_dicom_files \
             --folder=/data/studies/WM/sessions/inbox/MR \
             --paramfile=/data/studies/WM/sessions/specs/deid.txt
     
     ::
 
-        qunex changeDICOMFiles \
+        qunex change_dicom_files \
              --folder=/data/studies/WM/sessions/inbox/MR/original \
              --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \
              --outputfolder=/data/studies/WM/sessions/MR/deid \
@@ -665,19 +665,19 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
         renamefiles = False
 
     if not os.path.exists(folder):
-        raise ge.CommandFailed("changeDICOMFiles", "Folder not found", "The specified folder with DICOM files to change was not found:", "%s" % (folder), "Please check your paths!")
+        raise ge.CommandFailed("change_dicom_files", "Folder not found", "The specified folder with DICOM files to change was not found:", "%s" % (folder), "Please check your paths!")
 
     if not paramfile:
-        raise ge.CommandError("changeDICOMFiles", "No parameter file specified", "No parameter file information was provided.", "Please provide a parameter file that describes the changes to be made!")
+        raise ge.CommandError("change_dicom_files", "No parameter file specified", "No parameter file information was provided.", "Please provide a parameter file that describes the changes to be made!")
 
     if not os.path.exists(paramfile):
-        raise ge.CommandFailed("changeDICOMFiles", "Parameter file not found", "The specified parameter file was not found:", "%s" % (folder), "Please check your paths!")
+        raise ge.CommandFailed("change_dicom_files", "Parameter file not found", "The specified parameter file was not found:", "%s" % (folder), "Please check your paths!")
 
     try:
         f = open(archivefile, "a")
         f.close()
     except:
-        raise ge.CommandFailed("changeDICOMFiles", "Could not create archive file", "The specifed archive file could not be created:", "%s" % (archivefile), "Please check your paths and permissions!")
+        raise ge.CommandFailed("change_dicom_files", "Could not create archive file", "The specifed archive file could not be created:", "%s" % (archivefile), "Please check your paths and permissions!")
 
     if outputfolder is not None:
         try:
