@@ -1,6 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 
+import os.path
+import sys
+import copy
+import datetime
 from general import scheduler as gs
 from general import utilities as gu
 from general import process as gp
@@ -9,13 +13,9 @@ from general import core as gc
 from general import exceptions as ge
 from general import commands as gcom
 from general import commands_support as gcs
-import os.path
-import sys
-import copy
-import datetime
+
 
 # --- Get current QuNex Suite version and prepend to help calls
-
 tools     = os.environ['TOOLS']
 qunexrepo = os.environ['QUNEXREPO']
 with open(os.path.join(tools, qunexrepo, 'VERSION.md'), "r") as f:
@@ -401,8 +401,13 @@ def runCommand(command, args):
 
             logfile = os.path.join(folders['logfolder'], 'comlogs', "%s%s.log" % (command, sufix))
 
-            # run
-            _, result, _, _ = gc.runWithLog(gcom.commands[command]['com'], args=args, logfile=logfile)
+            # run without log for exceptions
+            # remove logs for exceptions
+            if command in gcs.logskip_commands:
+                gcom.commands[command]['com'](**args)
+            # run with log
+            else:
+                _, result, _, _ = gc.runWithLog(gcom.commands[command]['com'], args=args, logfile=logfile)
 
         # -- sessions loop
         else:
@@ -449,30 +454,36 @@ def printHelp(com):
 
     # --- print list of gmri local commands
     elif com == 'available':
+        available_commands = []
         # -> gmri commands
         for c, _ in gcom.commands.iteritems():
-            print c
+            available_commands.append(c)
         # -> complex processing commands
         for l in gp.calist:
             if len(l):
                 # deprecated command abbreviations 
                 # print l[0]
-                print l[1]
+                available_commands.append(l[1])
         # -> longitudinal processing commands
         for l in gp.lalist:
             if len(l):
                 # deprecated command abbreviations 
                 # print l[0]
-                print l[1]
+                available_commands.append(l[1])
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
                 # deprecated command abbreviations 
                 # print l[0]
-                print l[1]
+                available_commands.append(l[1])
         # -> matlab wrapped commands
         for l in gm.functions.keys():
-            print l
+            available_commands.append(l)
+
+        # print
+        available_commands.sort()
+        for c in available_commands:
+            print("  " + c)
 
     # --- print list of processing options and flags
     elif com in ['o']:

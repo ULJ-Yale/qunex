@@ -627,14 +627,6 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
             lf.write("\n===> Successful completion of task\n")
 
         lf.close()
-
-        # remove logs for exceptions
-        if name in gcs.logskip_commands:
-            if os.path.exists(comlogname):
-                os.remove(comlogname)
-            if os.path.exists(runlogname):
-                os.remove(runlogname)
-
     else:
         comlogname = None
 

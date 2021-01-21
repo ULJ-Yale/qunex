@@ -306,6 +306,8 @@ def check_deprecated_parameters(options, command):
                 remapped.append(k)
             else:
                 deprecated.append(k)
+        else:
+            new_options[k] = v
 
     if remapped:
         print("\nWARNING: Use of parameters with changed name(s)!")

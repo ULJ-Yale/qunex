@@ -215,18 +215,15 @@ show_processingoptions_gmri() {
 }
 show_allcommands_gmri() {
         echo ""
-        echo ""
-        geho "Listing of all QuNex supported NIUtilitties commands"
-        geho "-----------------------------------------------------"
-        echo ""
+        echo "Listing of all QuNex supported NIUtilitties commands"
+        echo "===================================================="
         gmri -available | sed 1,1d
-        echo ""
 }
 show_usage_matlab_help() {
         echo ""
         echo ""
-        geho "Listing of all QuNex supported MATLAB commands"
-        geho "----------------------------------------------"
+        echo "Listing of all QuNex supported MATLAB commands"
+        echo "=============================================="
         echo ""
         MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/matlab/qx_utilities/*/*.m | grep "/general/"`
         MatlabFunctionsFC=`ls $TOOLS/$QUNEXREPO/matlab/qx_mri/*/*.m | grep "/fc/"`
@@ -235,27 +232,32 @@ show_usage_matlab_help() {
         MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/matlab/qx_mri/*/*.m | grep "/stats/"`
         echo "QuNex MATLAB general tools"; echo ""
         for MatlabFunction in $MatlabFunctionsGeneral; do
-            echo "- $MatlabFunction";
+            MatlabFunction=`basename $MatlabFunction`
+            echo "  $MatlabFunction";
         done
         echo ""
         echo "QuNex MATLAB MRI functional connectivity tools"; echo ""
         for MatlabFunction in $MatlabFunctionsFC; do
-            echo "- $MatlabFunction";
+            MatlabFunction=`basename $MatlabFunction`
+            echo "  $MatlabFunction";
         done
         echo ""
         echo "QuNex MATLAB MRI tools"; echo ""
         for MatlabFunction in $MatlabFunctionsFC; do
-            echo "- $MatlabFunction";
+            MatlabFunction=`basename $MatlabFunction`
+            echo "  $MatlabFunction";
         done
         echo ""
         echo "QuNex MATLAB MRI analyses tools"; echo ""
         for MatlabFunction in $MatlabFunctionsNIMG; do
-            echo "- $MatlabFunction";
+            MatlabFunction=`basename $MatlabFunction`
+            echo "  $MatlabFunction";
         done
         echo ""
         echo "QuNex MATLAB MRI statistical tools"; echo ""
         for MatlabFunction in $MatlabFunctionsStats; do
-            echo "- $MatlabFunction";
+            MatlabFunction=`basename $MatlabFunction`
+            echo "  $MatlabFunction";
         done
         echo ""
 }
@@ -263,25 +265,26 @@ show_usage_matlab_help() {
 show_allcommands_bash() {
  
 cat << EOF
- 
+
+=============================================
  Listing of all QuNex supported bash commands
 =============================================
  
   QuNex bash commands are located in:
- 
     $TOOLS/$QUNEXREPO/bash/qx_utilities
  
   QuNex Suite workflows are integrated via QuNex bash functions.
-  The QuNex bash functions also contain 'stand alone' processing or analyses tools.
-  These can be called either directly or via the qunex wrapper
+  The QuNex bash functions also contain 'stand alone' processing
+  or analyses tools. These can be called either directly or via
+  the qunex wrapper
  
  QuNex Turnkey function
 =======================
  
   run_turnkey                turnkey execution of QuNex workflow compatible with XNAT Docker engine
- 
-  QC functions
-  ============
+
+ QC functions
+=============
  
   run_qc                     run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi
  
@@ -397,7 +400,7 @@ if [[ ${GmriCommandToRun} ]]; then
     echo ""
     cyaneho "--- Full QuNex call for command: ${GmriCommandToRun}"
     echo ""
-    cyaneho "gmri ${gmriinput}" 
+    cyaneho "gmri ${gmriinput}"
     echo ""
     cyaneho "---------------------------------------------------------"
     echo ""
@@ -1394,9 +1397,10 @@ fi
 # ------------------------------------------------------------------------------
 
 # use the check_deprecated_commands from niutilities to remap 
-COMMANDNAME=`gmri check_deprecated_commands --command="$1" | grep "is now known as" | sed 's/^.*is now known as //g'`
-set -- ${COMMANDNAME} "${@:2}"
-
+if [[ $1 != --* ]]; then
+    COMMANDNAME=`gmri check_deprecated_commands --command="$1" | grep "is now known as" | sed 's/^.*is now known as //g'`
+    set -- ${COMMANDNAME} "${@:2}"
+fi
 
 # ------------------------------------------------------------------------------
 #  gmri loop outside local functions to bypass checking
@@ -1447,18 +1451,13 @@ if [[ -z "${gmrifunctions##*$1*}" ]]; then
             if [[ ${inputarg} =~ '=' ]] && [[ -z `echo ${inputarg} | grep '-'` ]]; then
                 inputarg="--${inputarg}"
             fi
-            gmriinput="${gmriinput} ${inputarg}"
-            gmriinputecho="${gmriinputecho} ${inputarg}"
+
+            if [[ -z $gmriinput ]]; then
+                gmriinput="${inputarg}"
+            else
+                gmriinput="${gmriinput} ${inputarg}"
+            fi
         done
-        
-        # # -- Report python qx_utilities for debugging
-        #  echo ""
-        #  cyaneho "-------- Running python qx_utilities command: ----------"
-        #  echo ""
-        #  cyaneho "  qunex ${gmriinputecho}"
-        #  echo ""
-        #  cyaneho "-------------------------------------------------"
-        #  echo ""
     fi
 else
     unset GmriCommandToRun
@@ -1572,11 +1571,9 @@ if [[ -z ${2} ]]; then
 fi
 
 
-
 echo ""
 geho " ........................ Running QuNex v${QuNexVer} ........................"
 echo ""
-
 
 
 # ------------------------------------------------------------------------------
@@ -1631,6 +1628,7 @@ if [[ ${CommandToRun} == "run_turnkey" ]]; then
     #geho "Turnkey Arguments: ${runTurnkeyArguments}"
     #echo ""
 fi
+
 
 # -- Next check if any additional flags are set
 if [[ ${setflag} =~ .*-.* ]]; then
@@ -1689,7 +1687,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         StudyFolderPath="$StudyFolder"
         STUDY_PATH="${StudyFolder}"
     fi
-    
+
     # -- If study folder is missing but sessions folder is defined assume standard QuNex folder structure
     if [[ -z ${StudyFolder} ]]; then
         if [[ ! -z ${SessionsFolder} ]] && [[ -d ${SessionsFolder} ]]; then
@@ -1716,7 +1714,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
             else
                 echo ""
                 echo ""
-                reho "ERROR: Study folder is not defined and the sessions folder is not defined or incorrectly specified. "
+                reho "ERROR: Study folder or sessions folder is not defined or missing."
                 reho "       Check your inputs and re-run QuNex."
                 echo ""
                 exit 1
@@ -1773,8 +1771,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     if [[ -z ${StudyFolderPath} ]]; then
          StudyFolderPath=${StudyFolder}
     fi
-    
-    
+
     # -- If logfolder flag set then set it and set master log
     if [[ -z ${LogFolder} ]]; then
         LogFolder="${StudyFolder}/processing/logs"
@@ -1805,7 +1802,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_USER_NAME=`opts_GetOpt "${setflag}xnatuser" $@`
     XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
     XNAT_STUDY_INPUT_PATH=`opts_GetOpt "${setflag}xnatstudyinputpath" $@`
-
 
     # -- General sessions and sessionids flags
     CASES=`opts_GetOpt "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
@@ -1886,7 +1882,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     else
         RunMethod="1"
     fi
-    
+
     # -- general_plot_bold_timeseries input flags
     QCPlotElements=`opts_GetOpt "${setflag}qcplotelements" $@`
     QCPlotImages=`opts_GetOpt "${setflag}qcplotimages" $@`
@@ -2018,7 +2014,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ICAFIXFunction=`opts_GetOpt "${setflag}icafixfunction" $@`
     HPFilter=`opts_GetOpt "${setflag}hpfilter" $@`
     MovCorr=`opts_GetOpt "${setflag}movcorr" $@`
-    
+
     # -- Code block for BOLDs
     BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     if [[ -z ${BOLDS} ]]; then
@@ -2045,7 +2041,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     TimeStamp=`opts_GetOpt "${setflag}timestamp" $@`
     Suffix=`opts_GetOpt "${setflag}suffix" $@`
     SceneZip=`opts_GetOpt "${setflag}scenezip" $@`
-    
+
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
         SessionBatchFile="$CASES"
@@ -2133,6 +2129,7 @@ if [[ -z ${GmriCommandToRun} ]]; then
     fi
 fi
 
+
 if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
     QuNexSessionsFolder="${StudyFolder}/sessions"
     SessionsFolderName="sessions"
@@ -2146,7 +2143,6 @@ fi
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-= Execute specific functions =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
-
 
 # ------------------------------------------------------------------------------
 #  MATLAB execution and help
