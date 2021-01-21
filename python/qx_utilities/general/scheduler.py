@@ -19,15 +19,14 @@ Change log
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import exceptions as ge
-import core as gc
 import subprocess
 import os
 import os.path
 import datetime
 import time
 import re
-
+import exceptions as ge
+import core as gc
 
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None):
