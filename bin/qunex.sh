@@ -329,13 +329,40 @@ Platform="Platform Information: `uname -a`"
 # -- Set the time stamp for given job
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 if [[ ${CommandToRun} == "run_turnkey" ]]; then
-   unset GmriCommandToRun
-   if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'create_study'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
-       if [[ ! -d ${WORKDIR} ]]; then 
-          mkdir -p ${WORKDIR} &> /dev/null
-       fi
-       gmri create_study ${StudyFolder}
-   fi
+    # remap turnkey steps by using the deprecated commands mapping
+    SPLIT_TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
+    echo "SPLIT_TURNKEY_STEPS: ${SPLIT_TURNKEY_STEPS}"
+    unset NEW_TURNKEY_STEPS
+    for STEP in ${SPLIT_TURNKEY_STEPS}; do
+        # check if deprecated
+        NEW_STEP=`gmri check_deprecated_commands --command="$STEP" | grep "is now known as" | sed 's/^.*is now known as //g'`
+
+        # is it deprecated or not?
+        if [[ -n $NEW_STEP ]]; then
+            NEW_STEP=${NEW_STEP}
+            echo "WARNING: run_turnkey step ${STEP} name is deprecated, renaming to ${NEW_STEP}."
+        else
+            NEW_STEP=${STEP}
+        fi
+
+        # append
+        if [[ -z $NEW_TURNKEY_STEPS ]]; then
+            NEW_TURNKEY_STEPS="${NEW_STEP}"
+        else
+            NEW_TURNKEY_STEPS="${NEW_TURNKEY_STEPS},${NEW_STEP}"
+        fi
+    done
+
+    # set TURNKEY_STEPS to new list
+    TURNKEY_STEPS=${NEW_TURNKEY_STEPS}
+
+    unset GmriCommandToRun
+    if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'create_study'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
+        if [[ ! -d ${WORKDIR} ]]; then 
+            mkdir -p ${WORKDIR} &> /dev/null
+        fi
+        gmri create_study ${StudyFolder}
+    fi
 fi
 
 # -- Check if Matlab command
@@ -1399,8 +1426,11 @@ fi
 # use the check_deprecated_commands from niutilities to remap 
 if [[ $1 != --* ]]; then
     COMMANDNAME=`gmri check_deprecated_commands --command="$1" | grep "is now known as" | sed 's/^.*is now known as //g'`
-    set -- ${COMMANDNAME} "${@:2}"
+    if [[ -n $COMMANDNAME ]]; then
+        set -- ${COMMANDNAME} "${@:2}"
+    fi
 fi
+
 
 # ------------------------------------------------------------------------------
 #  gmri loop outside local functions to bypass checking
@@ -1570,7 +1600,6 @@ if [[ -z ${2} ]]; then
     exit 0
 fi
 
-
 echo ""
 geho " ........................ Running QuNex v${QuNexVer} ........................"
 echo ""
@@ -1629,7 +1658,6 @@ if [[ ${CommandToRun} == "run_turnkey" ]]; then
     #echo ""
 fi
 
-
 # -- Next check if any additional flags are set
 if [[ ${setflag} =~ .*-.* ]]; then
     
@@ -1650,6 +1678,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
             CommandToRun="$FunctionInput"
         fi
     fi
+
     # -- StudyFolder & SessionsFolder input flags
     StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`                      # study folder to work on
     if [[ -z ${StudyFolder} ]]; then

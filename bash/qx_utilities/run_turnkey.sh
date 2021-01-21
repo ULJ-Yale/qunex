@@ -534,7 +534,7 @@ XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" "$@"`
 fi
 
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
-TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/RunQC/runQC/g'`
+TURNKEY_STEPS=`echo "${TURNKEY_STEPS}"
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 TURNKEY_CLEAN=`opts_GetOpt "--turnkeycleanstep" $@`
 
@@ -631,7 +631,7 @@ NsamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
 
 # =-=-=-=-=-= QC OPTIONS =-=-=-=-=-=
 #
-# -- runQC input flags
+# -- run_qc input flags
 OutPath=`opts_GetOpt "--outpath" $@`
 SceneTemplateFolder=`opts_GetOpt "--scenetemplatefolder" $@`
 UserSceneFile=`opts_GetOpt "--userscenefile" $@`
@@ -882,10 +882,6 @@ echo ""
 TurnkeyTestStepChecks="${TURNKEY_STEPS}"
 unset TurnkeyTestSteps
 for TurnkeyTestStep in ${TurnkeyTestStepChecks}; do
-    # run through deprecated commands mapping
-    COMMANDNAME=`gmri check_deprecated_commands --command="$TurnkeyTestStep" | grep "is now known as" | sed 's/^.*is now known as //g'`
-    TurnkeyTestStep=COMMANDNAME
-
    if [ ! -z "${QuNexTurnkeyWorkflow##*${TurnkeyTestStep}*}" ]; then
        reho "     ${TurnkeyTestStep} is not supported. Will remove from requested list."
    else
@@ -1882,12 +1878,12 @@ fi
     #
     # --------------- Intial study and file organization end -------------------
 
-    # --> FINISH adding rawNII checks here and integrate w/runQC function
-    runQC_Finalize() {
-        runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-        # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`       # --> Commented for massively parallel processing
-        rename runQC runQC_${QCLogName} ${QuNexMasterLogFolder}/comlogs/${runQCComLog} 2> /dev/null
-        # rename runQC runQC_${QCLogName} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented out for massively parallel processing
+    # --> FINISH adding rawNII checks here and integrate w/ run_qc function
+    run_qc_finalize() {
+        runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+        # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`       # --> Commented for massively parallel processing
+        rename run_qc run_qc_${QCLogName} ${QuNexMasterLogFolder}/comlogs/${runQCComLog} 2> /dev/null
+        # rename run_qc run_qc_${QCLogName} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented out for massively parallel processing
 
        # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
        # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
@@ -1901,10 +1897,10 @@ fi
     # -- run_qc_rawnii (after organizing DICOM files)
     turnkey_run_qc_rawnii() {
         Modality="rawNII"
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ runQC step for ${Modality} data."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --modality="${Modality}"
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --modality="${Modality}"
         QCLogName="rawNII"
-        runQC_Finalize
+        run_qc_finalize
     }
 
     # --------------- HCP Processing and relevant QC start ---------------------
@@ -1939,25 +1935,25 @@ fi
     turnkey_run_qc_t1w() {
         Modality="T1w"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T1w"
-        runQC_Finalize
+        run_qc_finalize
     }
     # -- run_qc_t2w (after hcp_post_freesurfer)
     turnkey_run_qc_t2w() {
         Modality="T2w"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T2w"
-        runQC_Finalize
+        run_qc_finalize
     }
     # -- run_qc_myelin (after hcp_post_freesurfer)
     turnkey_run_qc_myelin() {
         Modality="myelin"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="Myelin"
-        runQC_Finalize
+        run_qc_finalize
     }
     # -- fMRIVolume
     turnkey_hcp_fmri_volume() {
@@ -1985,11 +1981,11 @@ fi
 
         # -- Loop through BOLD runs
         for BOLDRUN in ${LBOLDRUNS}; do
-            ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
-            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename runQC run_qc_bold${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-            # rename runQC run_qc_bold${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+            ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
+            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
+            rename run_qc run_qc_bold${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+            # rename run_qc run_qc_bold${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
     # -- Diffusion HCP (after hcp_pre_freesurfer)
@@ -2006,17 +2002,17 @@ fi
     turnkey_run_qc_dwi_legacy() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} legacy data."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWILegacy"
-        runQC_Finalize
+        run_qc_finalize
     }
     # -- run_qc_dwi (after hcpd)
     turnkey_run_qc_dwi() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} HCP processing."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWI"
-        runQC_Finalize
+        run_qc_finalize
     }
     # -- dwi_eddy_qc processing steps
     turnkey_eddy_qc() {
@@ -2043,9 +2039,9 @@ fi
     turnkey_run_qc_dwi_eddy() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} dwi_eddy_qc."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="dwi_eddy_qc"
-        runQC_Finalize
+        run_qc_finalize
     }
     #
     # --------------- HCP Processing and relevant QC end -----------------------
@@ -2070,17 +2066,17 @@ fi
     turnkey_run_qc_dwi_dtifit() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} FSL's dtifit analyses."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIDTIFIT"
-        runQC_Finalize
+        run_qc_finalize
     }
     # -- run_qc_dwi_bedpostx (after dwi_fsl_bedpostx_gpu)
     turnkey_run_qc_dwi_bedpostx() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} FSL's BedpostX analyses."; echo ""
-        ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIBedpostX"
-        runQC_Finalize
+        run_qc_finalize
     }
     # -- dwi_probtrackx_dense_gpu for DWI data (after dwi_fsl_bedpostx_gpu)
     turnkey_dwi_probtrackx_dense_gpu() {
@@ -2152,21 +2148,21 @@ fi
                 echo "====> Looping through these BOLDRUNS: ${LBOLDRUNS}"
                 for BOLDRUN in ${LBOLDRUNS}; do
                     echo "----> Now working on BOLDRUN: ${BOLDRUN}"
-                    ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
-                    runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-                    # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-                    rename runQC runQC_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-                    # rename runQC runQC_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+                    ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
+                    runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+                    # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
+                    rename run_qc run_qc_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+                    # rename run_qc run_qc_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
                 done
             elif [[ ${Modality} == "DWI" ]]; then
-                ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
+                ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
                 QCLogName="Custom${Modality}"
-                runQC_Finalize
+                run_qc_finalize
             else
-                ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
+                ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
                 QCLogName="Custom${Modality}"
                 if [[ ${Modality} == "myelin" ]]; then QCLogName="CustomMyelin"; fi
-                runQC_Finalize
+                run_qc_finalize
             fi
         done
     }
@@ -2577,11 +2573,11 @@ fi
         getBoldList
 
         for BOLDRUN in ${LBOLDRUNS}; do
-            ${QuNexCommand} runQC --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
-            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename runQC run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-            # rename runQC run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+            ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
+            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
+            rename run_qc run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+            # rename run_qc run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
 
