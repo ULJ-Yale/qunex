@@ -534,7 +534,6 @@ XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" "$@"`
 fi
 
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
-TURNKEY_STEPS=`echo "${TURNKEY_STEPS}"
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 TURNKEY_CLEAN=`opts_GetOpt "--turnkeycleanstep" $@`
 
