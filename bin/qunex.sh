@@ -322,42 +322,13 @@ EOF
 
 bashExec() {
 
-
 Platform="Platform Information: `uname -a`"
-
 
 # -- Set the time stamp for given job
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 if [[ ${CommandToRun} == "run_turnkey" ]]; then
-    # remap turnkey steps by using the deprecated commands mapping
-    SPLIT_TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
-    echo "SPLIT_TURNKEY_STEPS: ${SPLIT_TURNKEY_STEPS}"
-    unset NEW_TURNKEY_STEPS
-    for STEP in ${SPLIT_TURNKEY_STEPS}; do
-        # check if deprecated
-        NEW_STEP=`gmri check_deprecated_commands --command="$STEP" | grep "is now known as" | sed 's/^.*is now known as //g'`
-
-        # is it deprecated or not?
-        if [[ -n $NEW_STEP ]]; then
-            NEW_STEP=${NEW_STEP}
-            echo "WARNING: run_turnkey step ${STEP} name is deprecated, renaming to ${NEW_STEP}."
-        else
-            NEW_STEP=${STEP}
-        fi
-
-        # append
-        if [[ -z $NEW_TURNKEY_STEPS ]]; then
-            NEW_TURNKEY_STEPS="${NEW_STEP}"
-        else
-            NEW_TURNKEY_STEPS="${NEW_TURNKEY_STEPS},${NEW_STEP}"
-        fi
-    done
-
-    # set TURNKEY_STEPS to new list
-    TURNKEY_STEPS=${NEW_TURNKEY_STEPS}
-
     unset GmriCommandToRun
-    if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'create_study'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
+    if [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
         if [[ ! -d ${WORKDIR} ]]; then 
             mkdir -p ${WORKDIR} &> /dev/null
         fi

@@ -534,6 +534,35 @@ XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" "$@"`
 fi
 
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
+
+# remap turnkey steps by using the deprecated commands mapping
+unset NEW_TURNKEY_STEPS
+for STEP in ${TURNKEY_STEPS}; do
+    # check if deprecated
+    NEW_STEP=`gmri check_deprecated_commands --command="$STEP" | grep "is now known as" | sed 's/^.*is now known as //g'`
+
+    # is it deprecated or not?
+    if [[ -n $NEW_STEP ]]; then
+        NEW_STEP=${NEW_STEP}
+        mageho " --> Warning: run_turnkey step ${STEP} name is deprecated, renaming to ${NEW_STEP}."
+    else
+        NEW_STEP=${STEP}
+    fi
+
+    # append
+    if [[ -z $NEW_TURNKEY_STEPS ]]; then
+        NEW_TURNKEY_STEPS="${NEW_STEP}"
+    else
+        NEW_TURNKEY_STEPS="${NEW_TURNKEY_STEPS} ${NEW_STEP}"
+    fi
+
+    # empty line for beutification
+    echo ""
+done
+
+# set TURNKEY_STEPS to new list
+TURNKEY_STEPS=${NEW_TURNKEY_STEPS}
+
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 TURNKEY_CLEAN=`opts_GetOpt "--turnkeycleanstep" $@`
 
@@ -1397,10 +1426,10 @@ fi
         fi
 
         # -- Define specific logs
-        mapRawData_Runlog="${QuNexMasterLogFolder}/runlogs/Log-rmap_raw_data_${TimeStamp}.log"; touch ${mapRawData_Runlog}; chmod 777 ${mapRawData_Runlog}
-        mapRawData_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_rmap_raw_data_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
-        mapRawData_ComlogError="${QuNexMasterLogFolder}/comlogs/error_rmap_raw_data_${CASE}_${TimeStamp}.log"
-        mapRawData_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_rmap_raw_data_${CASE}_${TimeStamp}.log"
+        mapRawData_Runlog="${QuNexMasterLogFolder}/runlogs/Log-map_raw_data_${TimeStamp}.log"; touch ${mapRawData_Runlog}; chmod 777 ${mapRawData_Runlog}
+        mapRawData_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_map_raw_data_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
+        mapRawData_ComlogError="${QuNexMasterLogFolder}/comlogs/error_map_raw_data_${CASE}_${TimeStamp}.log"
+        mapRawData_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_map_raw_data_${CASE}_${TimeStamp}.log"
 
         # -- Map data from XNAT
         if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -1411,7 +1440,7 @@ fi
             rm -rf ${QuNexProcessingDir}/scenes/QC/* &> /dev/null
             geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
             echo "" >> ${mapRawData_ComlogTmp}
-            geho "  Logging turnkey_rmap_raw_data output at time ${TimeStamp}:" >> ${mapRawData_ComlogTmp}
+            geho "  Logging turnkey_map_raw_data output at time ${TimeStamp}:" >> ${mapRawData_ComlogTmp}
             echo "----------------------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
             echo "" >> ${mapRawData_ComlogTmp}
 
