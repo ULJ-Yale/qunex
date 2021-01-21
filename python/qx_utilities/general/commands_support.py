@@ -6,9 +6,6 @@
 Helper code for perarations of commands and their parameters
 """
 
-# imports
-import commands as gcom
-
 # ==============================================================================
 #                                                            COMMAND DEPRECATION
 #

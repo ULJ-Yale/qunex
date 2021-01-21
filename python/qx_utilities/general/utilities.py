@@ -18,15 +18,13 @@ import errno
 import shutil
 import glob
 import datetime
+import getpass
+import re
+import subprocess
 import process as gp
 import core as gc
 import processing.core as gpc
 import exceptions as ge
-import commands
-import commands_support
-import getpass
-import re
-import subprocess
 import filelock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
