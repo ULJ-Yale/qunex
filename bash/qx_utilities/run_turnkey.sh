@@ -1927,7 +1927,7 @@ fi
         Modality="rawNII"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --modality="${Modality}"
-        QCLogName="rawNII"
+        QCLogName="rawnii"
         run_qc_finalize
     }
 
@@ -1964,7 +1964,7 @@ fi
         Modality="T1w"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="T1w"
+        QCLogName="t1w"
         run_qc_finalize
     }
     # -- run_qc_t2w (after hcp_post_freesurfer)
@@ -1972,7 +1972,7 @@ fi
         Modality="T2w"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="T2w"
+        QCLogName="t2w"
         run_qc_finalize
     }
     # -- run_qc_myelin (after hcp_post_freesurfer)
@@ -1980,7 +1980,7 @@ fi
         Modality="myelin"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="Myelin"
+        QCLogName="myelin"
         run_qc_finalize
     }
     # -- fMRIVolume
@@ -2031,7 +2031,7 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc step for ${Modality} legacy data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="DWILegacy"
+        QCLogName="dwi_legacy"
         run_qc_finalize
     }
     # -- run_qc_dwi (after hcpd)
@@ -2039,7 +2039,7 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} HCP processing."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="DWI"
+        QCLogName="dwi"
         run_qc_finalize
     }
     # -- dwi_eddy_qc processing steps
@@ -2068,7 +2068,7 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} dwi_eddy_qc."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
-        QCLogName="dwi_eddy_qc"
+        QCLogName="dwi_eddy"
         run_qc_finalize
     }
     #
@@ -2095,7 +2095,7 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} FSL's dtifit analyses."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
-        QCLogName="DWIDTIFIT"
+        QCLogName="dwi_dtifit"
         run_qc_finalize
     }
     # -- run_qc_dwi_bedpostx (after dwi_fsl_bedpostx_gpu)
@@ -2103,7 +2103,7 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} FSL's BedpostX analyses."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
-        QCLogName="DWIBedpostX"
+        QCLogName="dwi_bedpostx"
         run_qc_finalize
     }
     # -- dwi_probtrackx_dense_gpu for DWI data (after dwi_fsl_bedpostx_gpu)
@@ -2184,12 +2184,11 @@ fi
                 done
             elif [[ ${Modality} == "DWI" ]]; then
                 ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
-                QCLogName="Custom${Modality}"
+                QCLogName="qc_custom"
                 run_qc_finalize
             else
                 ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
-                QCLogName="Custom${Modality}"
-                if [[ ${Modality} == "myelin" ]]; then QCLogName="CustomMyelin"; fi
+                QCLogName="qc_custom"
                 run_qc_finalize
             fi
         done
