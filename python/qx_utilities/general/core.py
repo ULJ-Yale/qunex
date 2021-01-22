@@ -543,7 +543,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         if len(logname) > max_log_length:
             logname = (logname[:max_log_length] + '(...).log')
 
-        tlogfile = os.path.join(logfolder, 'running_' + logname)
+        tlogfile = os.path.join(logfolder, 'tmp_' + logname)
 
         if not os.path.exists(logfolder):
             os.makedirs(logfolder)
@@ -595,7 +595,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
             log_prefix = "error_"
         comlogname = os.path.join(logfolder, log_prefix + logname)
 
-        os.rename(os.path.join(logfolder, 'running_' + logname), comlogname)
+        os.rename(os.path.join(logfolder, 'tmp_' + logname), comlogname)
 
         # create runlog
         if "comlog" in logfolder:

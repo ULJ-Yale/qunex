@@ -17,25 +17,24 @@ import os.path
 import glob
 import img
 
-help_message = """
-``meltmovfidl <concfile> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
-
-Checks movement folder for each bold file specified in 
-<concfile> for corresponding scrub fidl file matching <ignore_fild_pattern>
-It then melts information on frames to be ignored into the <input_fidl_file> 
-and saves it to <output_fidl_file>.
-
-Take into account that it expects bold runs and ignore .fidl files to both
-match b.*[1-9] pattern.
-"""
-
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
 
 
 def meltmovfidl(cfile, ifile, iffile, offile):
-    
+    """
+    ``meltmovfidl <concfile> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
+
+    Checks movement folder for each bold file specified in 
+    <concfile> for corresponding scrub fidl file matching <ignore_fild_pattern>
+    It then melts information on frames to be ignored into the <input_fidl_file> 
+    and saves it to <output_fidl_file>.
+
+    Take into account that it expects bold runs and ignore .fidl files to both
+    match b.*[1-9] pattern.
+    """
+
     # ---> read the original fidl file
     
     ofidl = img.fidl(iffile)
@@ -78,15 +77,10 @@ def main(argv=None):
             raise Usage(msg)
     
         # option processing
-        for option, value in opts:
+        for option, _ in opts:
             if option == "-v":
                 options['verbose'] = True
-            if option in ("-h", "--help"):
-                raise Usage(help_message)
-        
-        if len(args) != 4:
-            raise Usage(help_message)
-            
+
     except Usage, err:
         print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
         print >> sys.stderr, "for help use --help"
