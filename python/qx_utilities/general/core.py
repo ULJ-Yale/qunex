@@ -615,8 +615,15 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         # print to runlog file and close
         logfile = os.path.join(logfolder, runlogname)
         lf = open(logfile, 'a')
-        # print command and arguments
-        lf.write("%s\n" % name)
+        # split name to command name and session
+        split = name.split(": ")
+
+        # print session if exists
+        if len(split) > 1:
+            print("session: %s\n") % split[1]
+
+        # print command name
+        lf.write("qunex %s\n" % split[0])
         for k, v in args.items():
             lf.write("  --%s=\"%s\"\n" % (k, v))
 
