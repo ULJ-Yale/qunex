@@ -17,7 +17,7 @@ The QuNex code is is co-developed and co-maintained by the:
 * [QuNex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 * [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
 
-## Versioning
+## Version
 
 QuNex: 0.90.0
 qx_library: 0.90.0
