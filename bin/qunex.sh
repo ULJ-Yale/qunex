@@ -189,7 +189,7 @@ qunexPassed() {
 
 gmri_function() {
         echo ""
-        gmri ${gmriinput}
+        eval gmri ${gmriinput}
         echo ""
 }
 show_usage_gmri() {
@@ -469,7 +469,7 @@ else
     cyaneho "--------------------------------------------------------------"
     echo ""
     echo ""
-    
+
     # -- Run commands
     echo "${QuNexCallToRun}" >> ${Runlog}
     echo "#!/bin/bash" >> ${ComRun}
@@ -481,8 +481,7 @@ else
     echo ""; if [ ! -f "${ComRun}" ]; then reho "ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
     ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
     echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho "ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
-    
-    
+
     # -- Define command to execute
     ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
     # -- Acceptance tests
@@ -492,7 +491,6 @@ else
     ComRunCheck="if [[ -e ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
     # -- Combine final string of commands
     ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
-    
     
     # -- Run the commands locally
     if [[ ${Cluster} == 1 ]]; then
@@ -1441,13 +1439,13 @@ if [[ -z "${gmrifunctions##*$1*}" ]]; then
         exit 0
     else
         # -- Otherwise pass the command with all inputs from the command line
-        
-        # -- Clear white spaces for input into python qx_utilities
+
+        # -- Insert double quotes if an argument has whitespaces in its value
         unset gmriinput
         whitespace="[[:space:]]"
         for inputarg in "$@"; do
             if [[ $inputarg =~ ${whitespace} ]]; then
-                inputarg=`echo "${inputarg}" | sed "s/${whitespace}/,/g"`
+                inputarg=`echo "${inputarg}\"" | sed "s/=/=\"/g"`
             fi
             if [[ ${inputarg} =~ '=' ]] && [[ -z `echo ${inputarg} | grep '-'` ]]; then
                 inputarg="--${inputarg}"
@@ -1866,7 +1864,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
     PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
     Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
-    Bash=`opts_GetOpt "${setflag}bash" "$@"`            # Specify bash commands to run on the compute node
+    Bash=`opts_GetOpt "${setflag}bash" "$@"`          # Specify bash commands to run on the compute node
     LogFolder=`opts_GetOpt "${setflag}logfolder" $@`  # Log location
     LogSave=`opts_GetOpt "${setflag}log" $@`          # Log save
     # -- If log flag set then set it

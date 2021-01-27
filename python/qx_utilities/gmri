@@ -245,6 +245,10 @@ for mcom in gm.functionList:
 
 def runCommand(command, args):
 
+    print("!!!!! command: ", command)
+    print("!!!!! args: ", args)
+    exit(0)
+
     folders = gc.deduceFolders(args)
 
     if folders['basefolder']:
