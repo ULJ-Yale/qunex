@@ -226,14 +226,14 @@ if [[ ${Overwrite} == "no" ]]; then
   checkCompletion
   if [[ ${RunCompleted} == "yes" ]]; then
      echo ""
-     geho "--- DTI FIT found and successfully completed for $CASE"
+     geho "--- dtifit found and successfully completed for $CASE"
      echo ""
      geho "------------------------- Successful completion of work --------------------------------"
      echo ""
      exit 0
   else
      echo ""
-     reho " -- Prior DTI FIT not found for $CASE. Setting up new run..."
+     reho " -- Prior dtifit not found for $CASE. Setting up new run..."
      echo ""
   fi
 fi
@@ -246,19 +246,19 @@ reho "--- Checking outputs..."
 echo ""
 checkCompletion
 if [[ ${RunCompleted} == "yes" ]]; then
-    geho "DTI FIT completed: ${DiffusionFolder}"
+    geho "dtifit completed: ${DiffusionFolder}"
     echo ""
-    reho "--- DTI FIT successfully completed"
+    reho "--- dtifit successfully completed"
     echo ""
     geho "------------------------- Successful completion of work --------------------------------"
     echo ""
     exit 0
 else
     echo ""
-    reho " -- DTI FIT run not found or incomplete for $CASE. Something went wrong." 
+    reho " -- dtifit run not found or incomplete for $CASE. Something went wrong." 
     reho "    Check output: ${DiffusionFolder}"
     echo ""
-    reho "ERROR: DTI FIT run did not complete successfully"
+    reho "ERROR: dtifit run did not complete successfully"
     echo ""
     exit 1
 fi
