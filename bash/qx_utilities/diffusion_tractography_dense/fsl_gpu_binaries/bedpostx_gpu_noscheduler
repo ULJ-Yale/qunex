@@ -45,6 +45,14 @@
 ## -- set the default binary location
 bindir=${FSLGPUBinary}/${BedpostXGPUDir}/bedpostx_gpu
 
+#-- set binary location depending on CUDA
+if [[ `nvcc --version | grep "release"` == *"7.5"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_7.5/bedpostx_gpu; fi
+if [[ `nvcc --version | grep "release"` == *"8.0"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_8.0/bedpostx_gpu; fi
+
+## -- need to soft link the library path to ${FSLDIR}/lib
+ln -fs ${bindir}/lib/* ${FSLDIR}/lib/
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${bindir}/lib
+
 Usage() {
     echo ""
     echo "This is a simplified version of the bedpostX gpu call to run interactively."
