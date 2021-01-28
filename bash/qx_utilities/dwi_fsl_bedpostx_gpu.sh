@@ -380,18 +380,20 @@ checkCompletion
 if [[ ${RunCompleted} == "yes" ]]; then
     echo ""
     geho "--> bedpostx completed: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+    reho "--> bedpostx successfully completed"
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
+    exit 0
 else
-   echo ""
-   reho "--> bedpostx run not found or incomplete for $CASE. Something went wrong." 
-   reho "    Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
-   exit 1
+    echo ""
+    reho "--> bedpostx run not found or incomplete for $CASE. Something went wrong." 
+    reho "    Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+    echo ""
+    reho "ERROR: bedpostx run did not complete successfully"
+    echo ""
+    exit 1
 fi
-
-reho "--> bedpostx successfully completed"
-echo ""
-geho "------------------------- Successful completion of work --------------------------------"
-echo ""
-
 }
 
 # ---------------------------------------------------------

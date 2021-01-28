@@ -248,19 +248,20 @@ checkCompletion
 if [[ ${RunCompleted} == "yes" ]]; then
     geho "DTI FIT completed: ${DiffusionFolder}"
     echo ""
+    reho "--- DTI FIT successfully completed"
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
+    exit 0
 else
-   echo ""
-   reho " -- DTI FIT run not found or incomplete for $CASE. Something went wrong." 
-   reho "    Check output: ${DiffusionFolder}"
-   echo ""
-   exit 1
+    echo ""
+    reho " -- DTI FIT run not found or incomplete for $CASE. Something went wrong." 
+    reho "    Check output: ${DiffusionFolder}"
+    echo ""
+    reho "ERROR: DTI FIT run did not complete successfully"
+    echo ""
+    exit 1
 fi
-
-reho "--- DTI FIT successfully completed"
-echo ""
-geho "------------------------- Successful completion of work --------------------------------"
-echo ""
-
 }
 
 # ---------------------------------------------------------
