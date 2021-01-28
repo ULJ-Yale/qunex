@@ -15,10 +15,6 @@ bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_9.1/bedpostx_gpu
 if [[ `nvcc --version | grep "release"` == *"7.5"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_7.5/bedpostx_gpu; fi
 if [[ `nvcc --version | grep "release"` == *"8.0"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_8.0/bedpostx_gpu; fi
 
-## -- need to soft link the library path to ${FSLDIR}/lib
-ln -fs ${bindir}/lib/* ${FSLDIR}/lib/
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${bindir}/lib
-
 Usage() {
     echo ""
     echo "Usage: bedpostx <subject_directory> [options]"
