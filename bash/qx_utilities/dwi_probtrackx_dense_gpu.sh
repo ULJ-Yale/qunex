@@ -252,7 +252,7 @@ if [ -z ${CASES} ]; then
 fi
 
 # -- Check if Matrix 1 or 3 flag set
-if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
+if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "ERROR: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
 if [ "$MatrixOne" == "yes" ]; then
     if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
 fi

@@ -444,9 +444,9 @@ else
     
     ComlogTmp="${MasterComlogFolder}/tmp_${CommandToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
     ComRun="${MasterComlogFolder}/Run_${CommandToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
-    ComlogError="${MasterComlogFolder}/error_${CommandToRun}_${CASE}_${TimeStamp}.log"
     ComlogDone="${MasterComlogFolder}/done_${CommandToRun}_${CASE}_${TimeStamp}.log"
     CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
+    ComlogError="${MasterComlogFolder}/error_${CommandToRun}_${CASE}_${TimeStamp}.log"
     CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Fail"
     
     # echo "--------- DEBUG INFO ------------"
@@ -488,7 +488,7 @@ else
     ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
     ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
     # -- Command to perform acceptance test
-    ComRunCheck="if [[ -e ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
+    ComRunCheck="if [[ ! -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
     # -- Combine final string of commands
     ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
     
