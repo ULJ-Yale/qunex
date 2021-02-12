@@ -40,7 +40,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are DWI data from previous processing
-# * These data are stored in: "$StudyFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/ 
+# * These data are stored in: "$SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/ 
 #
 #~ND~END~
 
@@ -56,12 +56,12 @@ TemplateFolder=$HCPPIPEDIR_dMRITractFull/91282_Greyordinates
 # -- Check inputs
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Session> <Number_of_Samples>"
+    echo "usage: $0 <SessionsFolder> <Session> <Number_of_Samples>"
     echo ""
     exit 1
 fi
 
-StudyFolder=$1          # "$1" #Path to Generic Study folder
+SessionsFolder=$1          # "$1" #Path to Generic Study folder
 Session=$2              # "$2" #SessionID
 Nsamples=$3				# "$3" #Number of Samples to compute
 
@@ -69,15 +69,15 @@ if [ "$3" == "" ];then Nsamples=3000; fi
 OutFileName="Conn3.dconn.nii"
 
 # -- Generate folder structure
-ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
-RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
+ResultsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/Results/Tractography
+RegFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/xfms
+ROIsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir -p ${ResultsFolder}
 fi
 
 # -- Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
+BedpostxFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 # -- Clean prior results
@@ -178,7 +178,7 @@ echo "-- Queueing Post-Matrix 3 Calls"
 echo ""
 
 # -- Clean prior results, specify commands and make executable
-PostProcMatrixCommand="${scriptsdir}/PostProcMatrix3.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}"
+PostProcMatrixCommand="${scriptsdir}/PostProcMatrix3.sh ${SessionsFolder} ${Session} ${TemplateFolder} ${OutFileName}"
 rm -f $ResultsFolder/postcommands_Mat3.sh &> /dev/null
 echo "${PostProcMatrixCommand}" >> $ResultsFolder/postcommands_Mat3.sh
 chmod 770 $ResultsFolder/postcommands_Mat3.sh

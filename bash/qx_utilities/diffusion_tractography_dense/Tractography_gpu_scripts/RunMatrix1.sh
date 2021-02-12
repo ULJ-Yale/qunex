@@ -17,12 +17,12 @@ cuda_queue=$FSLGECUDAQ
 
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Session> <Number_of_Samples> <Scheduler>"
+    echo "usage: $0 <SessionsFolder> <Session> <Number_of_Samples> <Scheduler>"
     echo ""
     exit 1
 fi
 
-StudyFolder=$1          # "$1" #Path to Generic Study folder
+SessionsFolder=$1          # "$1" #Path to Generic Study folder
 Session=$2              # "$2" #SessionID
 Nsamples=$3				# "$3" #Number of Samples to compute
 Scheduler=$4			# "$4" #Scheduler to use for the fsl_sub command
@@ -30,15 +30,15 @@ Scheduler=$4			# "$4" #Scheduler to use for the fsl_sub command
 if [ "$3" == "" ];then Nsamples=10000; fi
 OutFileName="Conn1.dconn.nii"
 
-ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
-RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
+ResultsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/Results/Tractography
+RegFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/xfms
+ROIsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir -p ${ResultsFolder}
 fi
 
 #Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
+BedpostxFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 rm -rf $ResultsFolder/stop
@@ -158,9 +158,9 @@ if [ $Scheduler == "LSF" ]; then
 fi
 
 # -- Deprecated fsl_sub call
-# $FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat1_logs -N Mat1_conn ${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}
+# $FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat1_logs -N Mat1_conn ${scriptsdir}/PostProcMatrix1.sh ${SessionsFolder} ${Session} ${TemplateFolder} ${OutFileName}
 
-PostProcMatrixCommand="${scriptsdir}/PostProcMatrix1.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}"
+PostProcMatrixCommand="${scriptsdir}/PostProcMatrix1.sh ${SessionsFolder} ${Session} ${TemplateFolder} ${OutFileName}"
 
 rm -f $ResultsFolder/postcommands_Mat1.sh &> /dev/null
 echo "${PostProcMatrixCommand}" >> $ResultsFolder/postcommands_Mat1.sh

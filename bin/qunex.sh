@@ -418,7 +418,7 @@ if [[ ${GmriCommandToRun} ]]; then
     #         # GmriCompletionCheckFail="${RunChecksFolder}/CompletionCheck_${GmriCommandToRun}_${TimeStamp}.Fail"
     #         # GmriComComplete="cat ${GmriComLogFile} | grep 'Successful completion' > ${GmriCompletionCheckPass}"
     #         # GmriComError="cat ${GmriComLogFile} | grep 'ERROR' > ${GmriCompletionCheckFail}"
-    #         # GmriComRunCheck="if [[ -e ${GmriCompletionCheckPass} && ! -s ${GmriCompletionCheckFail} ]]; then echo ''; geho ' ===> Successful completion of ${GmriCommandToRun}'; qunexPassed; echo ''; else echo ''; reho ' ===> ERROR during ${CommandToRun}'; echo ''; qunexFailed; echo ''; fi"
+    #         # GmriComRunCheck="if [[ -e ${GmriCompletionCheckPass} && ! -s ${GmriCompletionCheckFail} ]]; then echo ''; geho ' ===> Successful completion of ${GmriCommandToRun}'; qunexPassed; echo ''; else echo ''; echo ' ===> ERROR during ${CommandToRun}'; echo ''; qunexFailed;o ''; fi"
     #         # GmriComRunAll="${GmriComComplete}; ${GmriComError}; ${GmriComRunCheck}"
     #         # eval "${GmriComRunAll}"
     #     fi
@@ -487,13 +487,14 @@ else
     # -- Acceptance tests
     ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
     ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
-    # -- Command to perform acceptance test
-    ComRunCheck="if [[ ! -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
-    # -- Combine final string of commands
-    ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
-    
+
     # -- Run the commands locally
     if [[ ${Cluster} == 1 ]]; then
+        # -- Command to perform acceptance test
+        ComRunCheck="if [[ ! -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunexPassed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunexFailed; fi"
+        # -- Combine final string of commands
+        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
+
         geho "--------------------------------------------------------------"
         echo ""
         geho "   Running ${CommandToRun} locally on `hostname`"
@@ -506,6 +507,11 @@ else
     fi
     # -- Run the commands via scheduler
     if [[ ${Cluster} == 2 ]]; then
+        # -- Command to perform acceptance test
+        ComRunCheck="if [[ ! -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
+        # -- Combine final string of commands
+        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
+
         cd ${MasterRunLogFolder}
         gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
         geho "--------------------------------------------------------------"
@@ -1141,16 +1147,16 @@ echo ""
 
 dwi_pre_tractography() {
 # -- Parse general parameters
-LogFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_dwi_pre_tractography"
+LogFolder="${StudyFolder}/processing/logs"
 RunFolder="${SessionsFolder}/${CASE}/hcp/"
 # -- Command to run
-QuNexCallToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
+QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
 # -- QuNex bash execute function
 bashExec
 }
 show_usage_dwi_pre_tractography() {
 echo ""; echo "qunex ${UsageInput}"
-${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
+${HCPPIPEDIR_dMRITractFull}/PreTractography/PreTractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1161,9 +1167,8 @@ dwi_probtrackx_dense_gpu() {
 # -- Command to run
 QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \
 --sessionsfolder='${SessionsFolder}' \
+--sessions='${CASES}' \
 --scriptsfolder='${ScriptsFolder}' \
---infolder='${InFolder}' \
---outfolder='${OutFolder}' \
 --omatrix1='${MatrixOne}' \
 --omatrix3='${MatrixThree}' \
 --nsamplesmatrix1='${NsamplesMatrixOne}' \
@@ -1988,8 +1993,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
     NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`
     ScriptsFolder=`opts_GetOpt "${setflag}scriptsfolder" $@`
-    InFolder=`opts_GetOpt "${setflag}infolder" $@`
-    OutFolder=`opts_GetOpt "${setflag}outfolder" $@`
     # -- aws_hcp_sync input flags
     Awsuri=`opts_GetOpt "${setflag}awsuri" $@`
     # -- run_qc input flags
@@ -3139,11 +3142,17 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     if [[ ${Cluster} == "2" ]]; then
         if [[ -z ${Scheduler} ]]; then reho "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
+
     # -- Optional parameters
-    if [ -z ${ScriptsFolder} ]; then ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/Tractography_gpu_scripts"; fi
-    if [ -z ${OutFolder} ]; then OutFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"; fi
-    if [ -z ${InFolder} ]; then InFolder="${SessionsFolder}/${CASE}/hcp"; fi
+    if [ -z ${ScriptsFolder} ]; then ScriptsFolder="${HCPPIPEDIR_dMRITractFull}/Tractography_gpu_scripts"; fi
     minimumfilesize="100000000"
+
+    # -- In and out folders for reporting
+    if [[ -z ${OutFolder} ]]; then
+        OutFolderReport="${SessionsFolder}/<session>/hcp/<session>/MNINonLinear/Results/Tractography";
+    else
+        OutFolderReport=${OutFolder}
+    fi
 
     # -- Report parameters
     echo ""
@@ -3155,16 +3164,15 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler: ${Scheduler}"
     echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"
-    echo "   Input HCP folder: ${InFolder}"
-    echo "   Output folder for probtrackX results: ${OutFolder}"
     echo "   Compute Matrix1: ${MatrixOne}"
     echo "   Compute Matrix3: ${MatrixThree}"
     echo "   Number of samples for Matrix1: ${NsamplesMatrixOne}"
     echo "   Number of samples for Matrix3: ${NsamplesMatrixThree}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
-    # -- Loop through all the cases
-    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
+
+    # -- execute
+    ${CommandToRun}
 fi
 
 # ------------------------------------------------------------------------------

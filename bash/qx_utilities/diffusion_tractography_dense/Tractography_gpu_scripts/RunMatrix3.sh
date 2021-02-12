@@ -14,12 +14,12 @@ cuda_queue=$FSLGECUDAQ
 
 if [ "$2" == "" ];then
     echo ""
-    echo "usage: $0 <StudyFolder> <Session> <Number_of_Samples> <Scheduler>"
+    echo "usage: $0 <SessionsFolder> <Session> <Number_of_Samples> <Scheduler>"
     echo ""
     exit 1
 fi
 
-StudyFolder=$1          # "$1" #Path to Generic Study folder
+SessionsFolder=$1          # "$1" #Path to Generic Study folder
 Session=$2              # "$2" #SessionID
 Nsamples=$3				# "$3" #Number of Samples to compute
 Scheduler=$4			# "$4" #Scheduler to use for the fsl_sub command
@@ -27,15 +27,15 @@ Scheduler=$4			# "$4" #Scheduler to use for the fsl_sub command
 if [ "$3" == "" ];then Nsamples=3000; fi
 OutFileName="Conn3.dconn.nii"
 
-ResultsFolder="$StudyFolder"/"$Session"/MNINonLinear/Results/Tractography
-RegFolder="$StudyFolder"/"$Session"/MNINonLinear/xfms
-ROIsFolder="$StudyFolder"/"$Session"/MNINonLinear/ROIs
+ResultsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/Results/Tractography
+RegFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/xfms
+ROIsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/ROIs
 if [ ! -e ${ResultsFolder} ] ; then
   mkdir -p ${ResultsFolder}
 fi
 
 #Use BedpostX samples
-BedpostxFolder="$StudyFolder"/"$Session"/T1w/Diffusion.bedpostX
+BedpostxFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/T1w/Diffusion.bedpostX
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 rm -rf $ResultsFolder/stop
@@ -143,7 +143,7 @@ ptx_id=`gmri schedule command="${ResultsFolder}/commands_Mat3.txt" settings="${S
 # - Create CIFTI file=Mat3+Mat3_transp (1.5 hours, 36 GB)
 
 	## -- DEPRECATED SCHEDULER CALLS:
-	#$FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat3_logs -N Mat3_conn ${scriptsdir}/PostProcMatrix3.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}
+	#$FSLDIR/bin/fsl_sub."$fslsub" -T 180 -R 48000 -n 10 -Q $cuda_queue -j $ptx_id -l ${ResultsFolder}/Mat3_logs -N Mat3_conn ${scriptsdir}/PostProcMatrix3.sh ${SessionsFolder} ${Session} ${TemplateFolder} ${OutFileName}
 
 # - Specify scheduler options
 if [ $Scheduler == "SLURM" ]; then
@@ -158,7 +158,7 @@ if [ $Scheduler == "LSF" ]; then
 	SchedulerOptions="w=done(${Session}_ptx_run),walltime=12:00:00,cores=5,mem=40000"
 fi
 
-CreateCIFTIFileCommand="${scriptsdir}/PostProcMatrix3.sh ${StudyFolder} ${Session} ${TemplateFolder} ${OutFileName}"
+CreateCIFTIFileCommand="${scriptsdir}/PostProcMatrix3.sh ${SessionsFolder} ${Session} ${TemplateFolder} ${OutFileName}"
 gmri schedule command="${CreateCIFTIFileCommand}" settings="${Scheduler},${SchedulerOptions}" output="stdout:${ResultsFolder}/Mat1_logs|stderr:${ResultsFolder}/Mat1_logs_error" workdir="${ResultsFolder}"`
 
 

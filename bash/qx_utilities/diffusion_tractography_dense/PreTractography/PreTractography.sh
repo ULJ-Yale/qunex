@@ -102,7 +102,7 @@ if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--
     usage
 fi
 
-scriptsdir="${HCPPIPEDIR_dMRITracFull}"/PreTractography
+scriptsdir="${HCPPIPEDIR_dMRITractFull}"/PreTractography
 
 StudyFolder=$1
 Session=$2
