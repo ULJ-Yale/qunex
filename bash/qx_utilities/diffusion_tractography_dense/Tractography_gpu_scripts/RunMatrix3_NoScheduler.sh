@@ -184,7 +184,7 @@ echo "${PostProcMatrixCommand}" >> $ResultsFolder/postcommands_Mat3.sh
 chmod 770 $ResultsFolder/postcommands_Mat3.sh
 
 # -- Execute PostProcMatrixCommand call
-PostProcMatrixCommand=`$PostProcMatrixCommand` ########## <<< PostProcMatrixCommand
+bash ${ResultsFolder}/PostProcMatrix3.sh ########## <<< PostProcMatrix3.sh
 
 echo ""
 echo "-- Matrix 3 Probtrackx Completed successfully."

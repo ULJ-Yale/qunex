@@ -371,8 +371,14 @@ main() {
         done
     done
 
+    # grep output log for errors
+    LOGERROR=`cat ${OutputLogDWIprobtrackxDenseGPU} | grep 'ERROR'`
+    if [[ -n "$LOGERROR"  ]]; then
+        COMPLETIONCHECK=0
+    fi
+
     # final completion check
-    if [[ "$COMPLETIONCHECK" == 1 ]]  && [[ "$MatrixThree" == "yes" ]]; then
+    if [[ "$COMPLETIONCHECK" == 1 ]]; then
         echo ""
         geho "------------------------- Successful completion of work --------------------------------"
         echo ""
