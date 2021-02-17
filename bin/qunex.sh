@@ -1147,10 +1147,11 @@ echo ""
 
 dwi_pre_tractography() {
 # -- Parse general parameters
-LogFolder="${StudyFolder}/processing/logs"
+TimeLog=`date '+%Y-%m-%d-%H-%M-%S'`
+LogFile="${StudyFolder}/processing/logs/comlogs/dwi_pre_tractography_${CASE}_${TimeLog}.log"
 RunFolder="${SessionsFolder}/${CASE}/hcp/"
 # -- Command to run
-QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh ${RunFolder} ${CASE} 0 "
+QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh ${RunFolder} ${CASE} 0 ${LogFile}"
 # -- QuNex bash execute function
 bashExec
 }
