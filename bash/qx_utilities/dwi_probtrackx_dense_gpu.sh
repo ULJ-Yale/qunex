@@ -61,7 +61,7 @@ geho() {
 usage() {
     echo ""
     echo "This function runs the probtrackxgpu dense whole-brain connectome generation by "
-    echo "calling ${ScriptsFolder}/RunMatrix1.sh or ${ScriptsFolder}/RunMatrix3.sh."
+    echo "calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh."
     echo "Note that this function needs to send work to a GPU-enabled queue or you need "
     echo "to run it locally from a GPU-equiped machine."
     echo ""
@@ -118,8 +118,8 @@ usage() {
     echo ""
     echo "The function calls either of these based on the --omatrix1 and --omatrix3 flags:: "
     echo ""
-    echo " $HCPPIPEDIR_dMRITractFull/Tractography_gpu_scripts/RunMatrix1.sh"
-    echo " $HCPPIPEDIR_dMRITractFull/Tractography_gpu_scripts/RunMatrix3.sh"
+    echo " $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix1.sh"
+    echo " $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix3.sh"
     echo ""
     echo "Both functions are cluster-aware and send the jobs to the GPU-enabled queue. "
     echo "They do not work interactively."
@@ -254,7 +254,7 @@ get_options() {
     fi
 
     # -- Optional parameters
-    if [[ -z ${ScriptsFolder} ]]; then ScriptsFolder="${HCPPIPEDIR_dMRITractFull}/Tractography_gpu_scripts"; fi
+    if [[ -z ${ScriptsFolder} ]]; then ScriptsFolder="${HCPPIPEDIR_dMRITractFull}/tractography_gpu_scripts"; fi
 
     # minimumfilesize
     minimumfilesize="100000000"
@@ -344,7 +344,7 @@ main() {
                 geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..." 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
                 echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
                 # -- Command to run
-                DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${SessionsFolder} ${CASE} ${Nsamples}"
+                DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${Nsamples}"
                 # -- Echo the command
                 echo "Running the following probtrackX GPU command: "     2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
                 echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}

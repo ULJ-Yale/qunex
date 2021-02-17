@@ -1,13 +1,13 @@
 #!/bin/bash
 
 bindir=$FSLDIR/bin #where GPU probtrackx binary is
-scriptsdir=$HCPPIPEDIR_dMRITractFull/Tractography_gpu_scripts
+scriptsdir=$HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts
 Caret7_command=$WORKBENCHDIR/wb_command
 
-if [ "$4" == "" ];then
+if [ "$3" == "" ];then
     echo ""
     echo "usage: $0 <SessionsFolder> <Session> <GrayOrdinates_Templatedir> <OutFileName>"
-    echo "Convert the merged.dot file to .dconn.nii"
+    echo "Final Merge of the three .dconn /wbsparse blocks"
     exit 1
 fi
 
@@ -18,19 +18,15 @@ OutFileName=$4
 
 ResultsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/Results/Tractography
 
-${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix1.dot ${ResultsFolder}/Mat1.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN
-${Caret7_command} -cifti-transpose ${ResultsFolder}/Mat1.dconn.nii ${ResultsFolder}/Mat1_transp.dconn.nii
-${Caret7_command} -cifti-average ${ResultsFolder}/${OutFileName} -cifti ${ResultsFolder}/Mat1.dconn.nii -cifti ${ResultsFolder}/Mat1_transp.dconn.nii
+${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3.dot ${ResultsFolder}/${OutFileName} -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
 
 if [ -s  $ResultsFolder/${OutFileName} ]; then
-   rm -f ${ResultsFolder}/Mat1.dconn.nii
-   rm -f ${ResultsFolder}/Mat1_transp.dconn.nii
-   rm -f ${ResultsFolder}/fdt_matrix1.dot
-fi  
+   rm -f ${ResultsFolder}/fdt_matrix3.dot
+fi 
 
 ##Create RowSum of dconn to check gyral bias
 OutFileTemp=`echo ${OutFileName//".dconn.nii"/""}`
-${Caret7_command} -cifti-reduce ${ResultsFolder}/${OutFileName} SUM ${ResultsFolder}/${OutFileTemp}_sum.dscalar.nii
+${Caret7_command} -cifti-reduce ${ResultsFolder}/${OutFileName} SUM  ${ResultsFolder}/${OutFileTemp}_sum.dscalar.nii
 mv $ResultsFolder/waytotal $ResultsFolder/${OutFileTemp}_waytotal
 
 waytotal=`more $ResultsFolder/${OutFileTemp}_waytotal`
