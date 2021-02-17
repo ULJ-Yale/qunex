@@ -31,6 +31,6 @@ waytotal=`more $ResultsFolder/${OutFileTemp}_waytotal`
 ${Caret7_command} -cifti-math "a/${waytotal}" $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii -var a $ResultsFolder/${OutFileTemp}.dconn.nii
 ${Caret7_command} -cifti-math "log(1+a)" $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii -var a $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii
 
-gzip $ResultsFolder/${OutFileName} --fast
-gzip $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
-gzip $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii --fast
+gzip --force $ResultsFolder/${OutFileName} --fast
+gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
+gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii --fast
