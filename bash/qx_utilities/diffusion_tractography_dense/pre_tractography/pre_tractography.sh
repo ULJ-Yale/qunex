@@ -13,17 +13,17 @@
 #
 # ## PRODUCT
 #
-# Wrapper to run Pretractography function
+# Wrapper to run pre_tractography function
 #
 # ## LICENCE
 #
-# * The PreTractography.sh = the "Software"
+# * The pre_tractography.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, PreTractography.sh, implements ROI extraction
+# This script, pre_tractography.sh, implements ROI extraction
 # using a pre-specified ROI file in NIFTI or CIFTI format
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -32,7 +32,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./PreTractography.sh --help
+# See output of usage function: e.g. $./pre_tractography.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -46,7 +46,7 @@
 
 usage() {
  echo ""
- echo "PreTractography"
+ echo "pre_tractography"
  echo ""
  echo "This function runs the Pretractography Dense trajectory space generation."
  echo ""
@@ -89,7 +89,7 @@ usage() {
  echo "T1w and MNINonLinear folders are expected within <StudyFolder>/<Session>."
  echo ""
  echo "MSMflag=0 uses the default surfaces, MSMflag=1 uses the MSM surfaces defined in"
- echo "MakeTrajectorySpace_MNI.sh" 
+ echo "make_trajectory_space_mni.sh" 
  echo ""
  exit 0
 }
@@ -102,7 +102,7 @@ if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--
     usage
 fi
 
-scriptsdir="${HCPPIPEDIR_dMRITractFull}"/PreTractography
+scriptsdir="${HCPPIPEDIR_dMRITractFull}"/pre_tractography
 
 StudyFolder=$1
 Session=$2
@@ -120,7 +120,7 @@ LowResMesh=32
 StandardResolution="2"
 
 # -- Needed for making the fibre connectivity file in Diffusion space
-${scriptsdir}/MakeTrajectorySpace.sh \
+${scriptsdir}/make_trajectory_space.sh \
     --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
     --leftcerebrallabels="$LeftCerebralTrajectoryLabels" \
@@ -128,14 +128,14 @@ ${scriptsdir}/MakeTrajectorySpace.sh \
     --diffresol="${DiffusionResolution}" \
     --freesurferlabels="${FreeSurferLabels}"
 
-${scriptsdir}/MakeWorkbenchUODFs.sh \
+${scriptsdir}/make_workbench_uodfs.sh \
 --path="${StudyFolder}" \
 --session="${Session}" \
 --lowresmesh="${LowResMesh}" \
 --diffresol="${DiffusionResolution}"
 
 # -- Create lots of files in MNI space used in tractography
-${scriptsdir}/MakeTrajectorySpace_MNI.sh \
+${scriptsdir}/make_trajectory_space_mni.sh \
     --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
     --leftcerebrallabels="$LeftCerebralTrajectoryLabels" \

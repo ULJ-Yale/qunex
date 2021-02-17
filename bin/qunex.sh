@@ -1150,13 +1150,13 @@ dwi_pre_tractography() {
 LogFolder="${StudyFolder}/processing/logs"
 RunFolder="${SessionsFolder}/${CASE}/hcp/"
 # -- Command to run
-QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
+QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh ${RunFolder} ${CASE} 0 "
 # -- QuNex bash execute function
 bashExec
 }
 show_usage_dwi_pre_tractography() {
 echo ""; echo "qunex ${UsageInput}"
-${HCPPIPEDIR_dMRITractFull}/PreTractography/PreTractography.sh
+${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3144,7 +3144,7 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     fi
 
     # -- Optional parameters
-    if [ -z ${ScriptsFolder} ]; then ScriptsFolder="${HCPPIPEDIR_dMRITractFull}/Tractography_gpu_scripts"; fi
+    if [ -z ${ScriptsFolder} ]; then ScriptsFolder="${HCPPIPEDIR_dMRITractFull}/tractography_gpu_scripts"; fi
     minimumfilesize="100000000"
 
     # -- In and out folders for reporting
