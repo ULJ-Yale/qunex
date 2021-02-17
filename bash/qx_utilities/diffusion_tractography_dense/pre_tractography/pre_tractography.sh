@@ -84,7 +84,7 @@ usage() {
  echo ""
  echo "Direct usage::"
  echo ""
- echo " $0 <StudyFolder> <Session> <MSMflag> <LogFile>"
+ echo " $0 <StudyFolder> <Session> <MSMflag>"
  echo ""
  echo "T1w and MNINonLinear folders are expected within <StudyFolder>/<Session>."
  echo ""
@@ -121,7 +121,7 @@ LowResMesh=32
 StandardResolution="2"
 
 # -- Needed for making the fibre connectivity file in Diffusion space
-echo "--> Running make_trajectory_space.sh" >> ${LogFile}
+echo "--> Running make_trajectory_space.sh"
 ${scriptsdir}/make_trajectory_space.sh \
     --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
@@ -130,7 +130,7 @@ ${scriptsdir}/make_trajectory_space.sh \
     --diffresol="${DiffusionResolution}" \
     --freesurferlabels="${FreeSurferLabels}"
 
-echo "--> Running make_workbench_uodfs.sh" >> ${LogFile}
+echo "--> Running make_workbench_uodfs.sh"
 ${scriptsdir}/make_workbench_uodfs.sh \
 --path="${StudyFolder}" \
 --session="${Session}" \
@@ -138,7 +138,7 @@ ${scriptsdir}/make_workbench_uodfs.sh \
 --diffresol="${DiffusionResolution}"
 
 # -- Create lots of files in MNI space used in tractography
-echo "--> Running make_trajectory_space_mni.sh" >> ${LogFile}
+echo "--> Running make_trajectory_space_mni.sh"
 ${scriptsdir}/make_trajectory_space_mni.sh \
     --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
@@ -148,5 +148,3 @@ ${scriptsdir}/make_trajectory_space_mni.sh \
     --freesurferlabels="${FreeSurferLabels}" \
     --lowresmesh="${LowResMesh}" \
     --msmflag="${MSMflag}"
-
-echo "------------------------- Successful completion of work --------------------------------" >> ${LogFile}
