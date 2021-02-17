@@ -2504,9 +2504,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     Naming options
     --------------
 
-    --hcp_bold_prefix       To be specified if multiple variants of BOLD
-                            preprocessing are run. The prefix is prepended
-                            to the bold name. [BOLD]
+    --hcp_bold_prefix       The prefix to use when generating BOLD names 
+                            (see 'hcp_filename') for BOLD working folders 
+                            and results. [BOLD]
     --hcp_filename          Specifies whether BOLD names are to be created
                             using sequential numbers ('standard') using the
                             formula `<hcp_bold_prefix>_[N]` (e.g. BOLD_3)
@@ -3567,9 +3567,9 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     Naming options
     --------------
 
-    --hcp_bold_prefix            To be specified if multiple variants of BOLD
-                                 preprocessing are run. The prefix is prepended
-                                 to the bold name. []
+    --hcp_bold_prefix       The prefix to use when generating BOLD names 
+                            (see 'hcp_filename') for BOLD working folders 
+                            and results. [BOLD]
 
     Grayordinate image mapping details
     ----------------------------------
