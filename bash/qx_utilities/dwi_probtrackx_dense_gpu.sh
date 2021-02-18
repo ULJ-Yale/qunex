@@ -300,10 +300,6 @@ main() {
     COMPLETIONCHECK=1
 
     for CASE in $CASES; do
-        # logging stuff
-        TimeLog=`date '+%Y-%m-%d-%H-%M-%S'`
-        OutputLogDWIprobtrackxDenseGPU="${StudyFolder}/processing/logs/comlogs/dwi_probtracx_dense_gpu_${CASE}_bold${BOLD}_${TimeLog}.log"
-
         # output folder
         OutFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography";
 
@@ -311,75 +307,68 @@ main() {
         mkdir ${OutFolder}  &> /dev/null
 
         # -- Echo probtrackX log for each case
-        echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-        geho "   --- probtrackX GPU for session $CASE..."         2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-        echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+        echo ""
+        geho "   --- probtrackX GPU for session $CASE..."
+        echo ""
         
         for MNum in $MNumber; do
             if [[ "$MNum" == "1" ]]; then NSamples="${NsamplesMatrixOne}"; fi
             if [[ "$MNum" == "3" ]]; then NSamples="${NsamplesMatrixThree}"; fi
             # -- Check of overwrite flag was set
             if [[ "$Overwrite" == "yes" ]]; then
-                echo ""                                                                          2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..." 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo ""                                                                          2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                echo ""
+                reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
+                echo ""
                 rm -f ${OutFolder}/Conn${MNum}.dconn.nii.gz &> /dev/null
             fi
             # -- Check for Matrix completion
-            echo "" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-            geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..." 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-            echo "" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+            echo ""
+            geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
+            echo ""
             # -- Check if the file even exists
             if [[ -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
                 # -- Set file sizes to check for completion
                 actualfilesize=`wc -c < "$OutFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
                 # -- Then check if Matrix run is complete based on size
                 if [[ $(echo ${actualfilesize} | bc) -ge $(echo ${minimumfilesize} | bc) ]]; then > /dev/null 2>&1
-                    echo ""                                                               2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                    cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                    cyaneho "To re-run set overwrite flag to 'yes'"                       2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                    echo ""                                                               2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                    echo "--------------------------------------------------------------" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                    echo ""                                                               2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                    echo ""
+                    cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}"
+                    cyaneho "To re-run set overwrite flag to 'yes'"
+                    echo ""
+                    echo "--------------------------------------------------------------"
+                    echo ""
                 fi
             else
                 # -- If run is incomplete perform run for Matrix
-                echo "" 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..." 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                echo ""
+                geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
+                echo ""
                 # -- Command to run
                 DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${Nsamples}"
                 # -- Echo the command
-                echo "Running the following probtrackX GPU command: "     2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo "---------------------------"                        2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo "   ${DWIprobtrackxDenseGPUCommand}"                 2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo ""                                                   2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
-                echo "---------------------------"                        2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                echo "Running the following probtrackX GPU command: "
+                echo ""
+                echo "---------------------------"
+                echo ""
+                echo "   ${DWIprobtrackxDenseGPUCommand}"
+                echo ""
+                echo "---------------------------"
                 # -- Eval the command
-                eval "${DWIprobtrackxDenseGPUCommand}"                    2>&1 | tee -a ${OutputLogDWIprobtrackxDenseGPU}
+                eval "${DWIprobtrackxDenseGPUCommand}"
             fi
 
             # completion check
             if [[ ! -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
-                # set to fail
-                COMPLETIONCHECK=0
-
                 # print error for this case
-                reho "ERROR: dwi_probtracx_dense_gpu for $CASE failed, see ${OutputLogDWIprobtrackxDenseGPU} for details!"
+                reho "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
+                # set as failed
+                COMPLETIONCHECK=0
             else
                 # pring sucess for this case
-                geho "dwi_probtracx_dense_gpu for $CASE completed successfully, see ${OutputLogDWIprobtrackxDenseGPU} for details!"
+                geho "dwi_probtracx_dense_gpu for $CASE completed successfully!"
             fi
         done
     done
-
-    # grep output log for errors
-    LOGERROR=`cat ${OutputLogDWIprobtrackxDenseGPU} | grep 'ERROR'`
-    if [[ -n "$LOGERROR"  ]]; then
-        COMPLETIONCHECK=0
-    fi
 
     # final completion check
     if [[ "$COMPLETIONCHECK" == 1 ]]; then
