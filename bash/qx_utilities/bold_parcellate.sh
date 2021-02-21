@@ -66,7 +66,7 @@ usage() {
  echo "                     or dtseries)"
  echo "--parcellationfile   Specify the absolute path of the file you want to use for "
  echo "                     parcellation "
- echo "                     (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+ echo "                     (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
  echo "--singleinputfile    Parcellate only a single file in any location. Individual "
  echo "                     flags are not needed (--session, --sessionsfolder, --inputfile)."
  echo "--overwrite          Delete prior run (yes / no)"
@@ -161,7 +161,7 @@ fi
     # SingleInputFile # Input only a single file to parcellate
     # OutPath # e.g. /images/functional/
     # OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
-    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
     # ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
     # UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
     # WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)

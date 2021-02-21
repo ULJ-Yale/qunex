@@ -65,7 +65,7 @@ usage() {
  echo "--matrixversion     Matrix solution version to run parcellation on; e.g. 1 or 3"
  echo "--parcellationfile  Specify the absolute path of the file you want to use for "
  echo "                    parcellation "
- echo "                    (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+ echo "                    (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
  echo "--outname=          Specify the suffix output name of the pconn file"
  echo "--overwrite         Delete prior run for a given session (yes/no)"
  echo "--waytotal          Use the waytotal normalized version of the DWI dense "

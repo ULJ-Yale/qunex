@@ -153,7 +153,7 @@ fi
     # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome/sessions
     # Session      # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
-    # SeedFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
+    # SeedFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
     # OutName  # e.g. THALAMUS
 
 ########################################## OUTPUTS #########################################
