@@ -1122,8 +1122,8 @@ if [[ -z ${AutoPtxFolder} ]]; then
 fi
 # -- Set commands
 Com1="${AutoPtxFolder}/autoptx ${SessionsFolder} ${CASE} ${BedPostXFolder}"
-Com2="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 1"
-Com3="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 0"
+Com2="${AutoPtxFolder}/prepare_for_display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 1"
+Com3="${AutoPtxFolder}/prepare_for_display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 0"
 # -- Command to run
 QuNexCallToRun="${Com1}; ${Com2}; ${Com3}"
 # -- QuNex bash execute function

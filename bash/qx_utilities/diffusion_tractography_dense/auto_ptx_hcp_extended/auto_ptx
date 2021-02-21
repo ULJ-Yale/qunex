@@ -42,7 +42,7 @@ execPath=`dirname $0`
 
 cd ${InputDir}
 
-structures=$execPath/autoPtxDir/structureList
+structures=$execPath/auto_ptx_dir/structure_list
 
 listJobs=""
 
@@ -57,9 +57,9 @@ while read line ; do
     minutes=`echo $wallt | awk '{print $2}'`
     time=$(( 60 * hours + minutes ))
     if [ $GPU_flag == "0" ]; then
-	jobid=`$FSLDIR/bin/fsl_sub -N "auto_ptx" -T $time -l $logDir $execPath/trackSubjectStruct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag`
+	jobid=`$FSLDIR/bin/fsl_sub -N "auto_ptx" -T $time -l $logDir $execPath/track_subject_struct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag`
     else
-	echo "$execPath/trackSubjectStruct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag" >> ${OutDir}/commands.txt
+	echo "$execPath/track_subject_struct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag" >> ${OutDir}/commands.txt
     fi	
 done < $structures
 

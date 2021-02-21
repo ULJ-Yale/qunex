@@ -10,7 +10,7 @@ ptx_bin_GPU=/gpfs/project/fas/n3/software/fsl-5.0.9/fsl/bin/probtrackx2_gpu #GPU
 Usage() {
     cat << EOF
 
-Usage: trackSubjectStruct <BpXFolder> <structure> <seedMultiplier> <MNI_to_Diff_warp> <Diff_to_MNI_warp> <OutDir> [<GPU_flag>]
+Usage: track_subject_struct <BpXFolder> <structure> <seedMultiplier> <MNI_to_Diff_warp> <Diff_to_MNI_warp> <OutDir> [<GPU_flag>]
 
     Specification of seedMultiplier is optional.
 
@@ -48,7 +48,7 @@ echo "running automated tractography of subject ${sub}, structure ${struct}, usi
 
 
 # sources
-masks=$execPath/autoPtxDir/protocols/$struct
+masks=$execPath/auto_ptx_dir/protocols/$struct
 # output
 tracts=${OutDir}/$struct
 mkdir -p $tracts

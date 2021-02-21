@@ -5,7 +5,7 @@
 Usage() {
 cat << EOF
 
-Usage: Prepare_for_Display <AutoPtx_ResultsDir> <threshold> <binarise_flag>
+Usage: prepare_for_display <AutoPtx_ResultsDir> <threshold> <binarise_flag>
 
     If binarise_flag is 1, then generates binary masks for each structure, and prepares a
     call to display the tracts in FSLView.
@@ -27,7 +27,7 @@ bin_flag=$3
 MNI_brain="\$FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz"
 
 execPath=`dirname $0`
-structures=$execPath/autoPtxDir/structureList
+structures=$execPath/auto_ptx_dir/structure_list
 dest=$ResultsDir
 
 if [ "${bin_flag}" -eq "1" ]; then 
@@ -78,7 +78,7 @@ while read line; do
 	    tracts_thr=${struct}_bin
 	    $FSLDIR/bin/fslmaths $tracts -thr $thresh -bin -mul $comIt -range $tracts_thr
             setIntentCode $tracts_thr 3
-            viewstr=$viewstr\ $tracts_thr\ -b\ 0.1,${comIt}.01\ -l\ $execPath/autoPtxDir/luts/c${comIt}.lut
+            viewstr=$viewstr\ $tracts_thr\ -b\ 0.1,${comIt}.01\ -l\ $execPath/auto_ptx_dir/luts/c${comIt}.lut
 	else
             comIt=$(( $comIt - 1 ))
 	    tracts_thr=${struct}_thr

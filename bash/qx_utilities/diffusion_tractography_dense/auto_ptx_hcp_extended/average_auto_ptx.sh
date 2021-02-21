@@ -3,7 +3,7 @@
 Usage() {
 cat << EOF
 
-Usage: average_autoptx <StudyFolder> <SessionId_list> <OutputFolder>
+Usage: average_auto_ptx <StudyFolder> <SessionId_list> <OutputFolder>
 
     For each SessionId in the provided list, the autoptx results are summed and averaged and saved in the outputFolder
     AutoPtx results for each session are assumed saved in $StudyFolder/SessionId/MNINonLinear/Results/autoPtx

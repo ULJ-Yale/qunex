@@ -1,0 +1,2 @@
+/gpfs/project/fas/n3/software/CodeHCPe/DiffusionTractographyStam/auto_ptx_hcp_extended/auto_ptx_dir/protocols/slf3_r/target1.nii.gz
+/gpfs/project/fas/n3/software/CodeHCPe/DiffusionTractographyStam/auto_ptx_hcp_extended/auto_ptx_dir/protocols/slf3_r/target2.nii.gz
