@@ -145,7 +145,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
         # script location
         niu_template_dir = os.environ["NIUTemplateFolder"]
-        f99_script = "bash " + os.path.join(niu_template_dir, "NHP", "do_reg_F99.sh")
+        f99_script = "bash " + os.path.join(niu_template_dir, "nhp", "do_reg_F99.sh")
 
         # set up the command
         comm = "%(script)s \
@@ -289,7 +289,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
     --xtract_ptx_options    Pass extra probtrackx2 options as a text file to
                             override defaults (e.g. --steplength=0.2).
                             [] for humans,
-                            [$TOOLS/python/qx_utilities/templates/NHP/ptx_config]
+                            [$TOOLS/python/qx_utilities/templates/nhp/ptx_config]
                             for macaques.
     --xtract_native         Run tractography in native (diffusion) space.
                             This flag is not set by default.
@@ -364,7 +364,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
         # set dirs
         if species == "MACAQUE":
-            ptx_options = os.path.join(os.environ["NIUTemplateFolder"], "NHP", "ptx_options")
+            ptx_options = os.path.join(os.environ["NIUTemplateFolder"], "nhp", "ptx_options")
             nhp_dir = os.path.join(options["sessionsfolder"], session, "NHP")
             f99reg_dir = os.path.join(nhp_dir, "F99reg")
             bedpostx_dir = os.path.join(nhp_dir, "dMRI.bedpostX")
