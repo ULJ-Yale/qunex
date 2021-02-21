@@ -7,27 +7,26 @@
 # -------------------------------------
 _hcp_Pipeline            : ${HCPPIPEDIR}
 _hcp_folderstructure     : hcpls
-_hcp_filename            : original
-_hcp_processing_mode     : LegacyStyleData # For HCP compliant data set to ==> HCPStyleData
+_hcp_bold_boldnamekey    : name
+_hcp_mppversion          : hcp
 
 # -------------------------------------
 # ---> Pre FreeSurfer parameters
 # -------------------------------------
 _hcp_suffix             :
-_hcp_brainsize          : 150     #
-_hcp_t2                 : t2      # For HCP compliant data set to ==> t2
-_hcp_t1samplespacing    : NONE    # For HCP compliant data set to ==> 0.0000021
-_hcp_t2samplespacing    : NONE    # For HCP compliant data set to ==> z
-_hcp_unwarpdir          : NONE    #
-_hcp_gdcoeffs           : NONE    # For HCP compliant data set to ==> PRISMA_Yale_coeff.grad
-_hcp_avgrdcmethod       : NONE    # For HCP compliant data set to ==> TOPUP
-_hcp_topupconfig        : NONE    # For HCP compliant data set to ==> b02b0.cnf
+_hcp_brainsize          : 150
+_hcp_t2                 : t2
+_hcp_t1samplespacing    : 0.0000071
+_hcp_t2samplespacing    : 0.0000021
+_hcp_unwarpdir          : z
+#_hcp_gdcoeffs           : PRISMA_Yale_coeff.grad
+_hcp_avgrdcmethod       : TOPUP
+_hcp_topupconfig        : b02b0.cnf
 _hcp_printcom           :
-_hcp_sephaseneg         : NONE    # For HCP compliant data set to ==> AP
-_hcp_sephasepos         : NONE    # For HCP compliant data set to ==> PA
-_hcp_seechospacing      : NONE    # For HCP compliant data set to ==> 0.000580009
-_hcp_seunwarpdir        : NONE    # For HCP compliant data set to ==> y
-
+_hcp_sephaseneg         : AP
+_hcp_sephasepos         : PA
+_hcp_dwelltime          : 0.000580009
+_hcp_seunwarpdir        : y
 
 # -------------------------------------
 # ---> FreeSurfer parameters
@@ -38,7 +37,6 @@ _hcp_freesurfer_home    : ${FREESURFER_HOME}
 # -------------------------------------
 # ---> Post FreeSurfer parameters
 # -------------------------------------
-_hcp_regname            : MSMSulc
 _hcp_grayordinatesres   : 2
 _hcp_hiresmesh          : 164
 _hcp_lowresmesh         : 32
@@ -47,27 +45,27 @@ _hcp_lowresmesh         : 32
 # -------------------------------------
 # ---> Diffusion preprocessing - N/A
 # -------------------------------------
-# _hcp_dwi_echospacing    : 0.689998      # Set if HCP DWI data present
+_hcp_dwi_dwelltime      : 0.689998
 
 
 # -------------------------------------
 # ---> fMRI Volume parameters
 # -------------------------------------
-_hcp_bold_echospacing   : NONE            # For HCP compliant data set to ==> 0.000580009
+_hcp_bold_echospacing   : 0.000580009
 _hcp_bold_echodiff      : NONE
-_hcp_bold_dcmethod      : NONE            # For HCP compliant data set to ==> TOPUP
-_hcp_bold_topupconfig   : b02b0.cnf
-_hcp_bold_sephaseneg    :                 # Set if TOPUP in use
-_hcp_bold_sephasepos    :                 # Set if TOPUP in use
-_hcp_bold_sbref         : NONE            # For HCP compliant data set to ==> use
-_hcp_bold_unwarpdir     : NONE            # For HCP compliant data set to ==> -y
+_hcp_bold_correct       : TOPUP
+_hcp_bold_ref           : use
+_hcp_bold_unwarpdir     : -y
 _hcp_bold_res           : 2
 _hcp_bold_gdcoeffs      : NONE
-_hcp_bold_doslicetime   : TRUE
-_hcp_bold_slicetimerparams : --odd             # Check and adjust appropriately
+_hcp_bold_stcorr        : NONE
+_hcp_bold_stcorrdir     : up
+_hcp_bold_stcorrint     : odd
 _hcp_bold_seimg         : independent
 _hcp_bold_movref        : independent
 _hcp_bold_prefix        :
+_parsessions            : 16
+
 
 # -------------------------------------
 # ---> fMRI Surface parameters
@@ -80,10 +78,10 @@ _hcp_bold_smoothFWHM    : 2
 # -------------------------------------
 _image_source       : hcp
 _image_target       : cifti
-_bolds              : all
+_bolds              : rest
 _TR                 : 0.8
 _omit               : 0
-_pignore            : hipass=linear|regress=keep|lopass=linear
+_pignore            : hipass=linear|regress=spline|lopass=linear
 _log                : keep
 _glm_matrix         : both
 _glm_residuals      : save
@@ -100,6 +98,7 @@ _bold_actions       : shrcl
    # l ... Low-pass filtering.
    #
    # =========================================
+
 
 # -------------------------------------
 # ---> BOLD de-noising parameters
@@ -127,7 +126,7 @@ _surface_smooth      : 2
 _volume_smooth       : 2
 _voxel_smooth        : 1
 _smooth_mask         : nonzero
-_dilate_mask         : ${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
+_dilate_mask         : ${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/mni_templates/MNI152_T1_2mm_brain_mask.nii.gz
 
 
 # -------------------------------------

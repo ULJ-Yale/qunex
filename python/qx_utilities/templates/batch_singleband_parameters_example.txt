@@ -116,7 +116,7 @@ _surface_smooth     : 2
 _volume_smooth      : 2
 _voxel_smooth       : 1
 _smooth_mask        : nonzero
-_dilate_mask        : ${TemplateFolder}/atlases/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
+_dilate_mask        : ${TemplateFolder}/atlases/mni_templates/MNI152_T1_2mm_brain_mask.nii.gz
 
 
 # ---> BOLD processing (qunex preprocess_bold & preprocess_conc)

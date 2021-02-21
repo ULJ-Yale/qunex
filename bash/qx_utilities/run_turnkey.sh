@@ -2136,11 +2136,11 @@ fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$SeedFile" ]; then
             # Thalamus SomatomotorSensory
-            SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii"
+            SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/thalamus_atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii"
             OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
             ${QuNexCommand} dwi_seed_tractography_dense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
             # Thalamus Prefrontal
-            SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii"
+            SeedFile="${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/thalamus_atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii"
             OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
             ${QuNexCommand} dwi_seed_tractography_dense --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
         fi
@@ -2495,7 +2495,7 @@ fi
         FunctionName="compute_bold_fc"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ compute_bold_fc processing steps for Seed FC."; echo ""
         if [ -z ${ROIInfo} ]; then
-           ROINames="${TOOLS}/${QUNEXREPO}/qx_library/data/roi/seeds_cifti.names ${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
+           ROINames="${TOOLS}/${QUNEXREPO}/qx_library/data/roi/seeds_cifti.names ${TOOLS}/${QUNEXREPO}/qx_library/data/atlases/thalamus_atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
         else
            ROINames=${ROIInfo}
         fi

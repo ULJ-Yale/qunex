@@ -458,7 +458,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
         if iformat == 'nifti':
             print " --> running PALM for NIfTI input"
             infiles = setInFiles(root, 'volume.nii', nimages)
-            inargs  = ['-m', os.path.join(atlas, 'MNITemplates', 'MNI152_T1_2mm_brain_mask_dil.nii')]
+            inargs  = ['-m', os.path.join(atlas, 'mni_templates', 'MNI152_T1_2mm_brain_mask_dil.nii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
             if subprocess.call(command):
                 raise ge.CommandFailed("run_palm", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")

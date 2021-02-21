@@ -643,7 +643,7 @@ export RDIR PATH
 # -- Setup overall QuNex paths
 # ------------------------------------------------------------------------------
 
-HCPATLAS=$QUNEXPATH/qx_library/data/atlases/HCP
+HCPATLAS=$QUNEXPATH/qx_library/data/atlases/hcp
 PATH=${HCPATLAS}:${PATH}
 export HCPATLAS PATH
 MATLABPATH=$HCPATLAS:$MATLABPATH
