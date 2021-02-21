@@ -124,7 +124,7 @@ cat << EOF
  General QuNex Usage Syntax
 =============================
  
- qunex <command-name> \
+ qunex <command_name> \
    --parameterA=<required-parameter-args> \
    [--parameterB=<optional-parameter-args>]
 
