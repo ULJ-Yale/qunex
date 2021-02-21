@@ -45,7 +45,7 @@ class CommandFailed(Exception):
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
     '''
-    qunexCommand scheduler 
+    qunex_command scheduler 
 
     USE
     ===
