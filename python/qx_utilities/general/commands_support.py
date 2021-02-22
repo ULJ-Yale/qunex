@@ -170,8 +170,9 @@ def check_deprecated_commands(command):
         # if deprecated warn the user and call the new one
         if command.lower() in [s.lower() for s in old_names]:
             new_command = new_name
-            print "\nWARNING: Use of a deprecated command!"
-            print "Command %s is now known as %s" % (command, new_command)
+            print "\n\nWARNING: Use of a deprecated command! Command %s is now known as %s" % (command, new_command)
+            print ""
+            break
 
     return new_command
 

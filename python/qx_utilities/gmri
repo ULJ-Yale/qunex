@@ -14,15 +14,6 @@ from general import exceptions as ge
 from general import commands as gcom
 from general import commands_support as gcs
 
-
-# --- Get current QuNex Suite version and prepend to help calls
-tools     = os.environ['TOOLS']
-qunexrepo = os.environ['QUNEXREPO']
-with open(os.path.join(tools, qunexrepo, 'VERSION.md'), "r") as f:
-    version  = f.read().strip()
-print "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version", version
-print 
-
 help = '''
   QuNex python utilities (python qx_utilities) for Preprocessing and Analyses   
 --------------------------------------------------------------------------------
@@ -52,89 +43,12 @@ help = '''
 # hcp_bedpostx  Run FSL Bedpostx GPU.
 
 comlist = r'''
-  QuNex python utilities (python qx_utilities) for Preprocessing and Analyses   
---------------------------------------------------------------------------------
+ QuNex python utilities (python qx_utilities) for Preprocessing and Analyses 
+=============================================================================
 
+ Scheduling command
+===================
 
-DICOM commands
---------------
-list_dicom      [folder=.]
-split_dicom     [folder=.]
-sort_dicom      [folder=.]
-dicom2nii       [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]
-dicom2niix      [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool=auto]
-import_dicom    [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [parelements=1] [logfile=""] [archive=move] [verbose=yes]
-get_dicom_info  dicomfile=<dicom_file> [scanner=siemens]
-
-
-Import commands
----------------
-import_bids     [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
-map_bids2nii    [sourcefolder='.'] [overwrite='no']
-import_hcp      [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
-map_hcpls2nii   [sourcefolder='.'] [overwrite='no']
-
-
-WUSTL NIL pipeline commands
----------------------------
-run_nil         [folder=.] [overwrite=no] [sourcefile=session.txt]
-run_nil_folder  [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
-
-
-General image file commands
----------------------------
-slice_image     sourcefile=<source image> targetfile=<target image> [frames=1]
-
-
-NIfTI file conversion commands
-------------------------------
-fz2zf           inf=<input_image> [outf=<output_image>]
-reorder         inf=<input_image> [outf=<output_image>]
-reslice         inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
-printniftihdr   <image_filename>
-modniftihdr     <image_filename> <modification string>
-nifti24dfp      inf=<input_filename> [outf=<output_filename>]
-
-
-HCP setup commands
-------------------
-create_session_info sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_*.txt] [mapping=specs/*_mapping.txt] [filter=None] [overwrite=no]
-setup_hcp           [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_*.txt] [check="yes"] [existing="add"] [hcp_filename="standard"] [folderstructure="hcpls"] [hcp_suffix=""]
-
-
-Miscellaneous file commands
----------------------------
-create_study    studyfolder=<path to study base folder> [subfolders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
-create_batch    [sessionsfolder=.] [sourcefiles=session_*.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=ask] [paramfile=<sessionsfolder>/specs/batch.txt]
-create_list     [sessionsfolder=.] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-create_conc     [sessionsfolder=.] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-run_list        listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
-
-
-FIDL file commands
--------------------
-join_fidl           concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidlname to append>]
-join_fidl_folder    concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>] [fidlname=<optional fidl name to append>]
-split_fidl          concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
-check_fidl          [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
-
-
-Workbench surface mapping commands
-----------------------------------
-map2pals    volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
-map2hcp     volume=<volume file> [method=trilinear]
-mask_map    image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
-join_maps   images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
-
-
-PALM commands
---------------
-create_ws_palm_design   factors=<factor string> nsubjects=<number of subjects> root=<design root name>
-run_palm                image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [parelements=<number of proceeses to run in parallel>]  [overwite=no]
-
-
-Scheduling command
-------------------
 schedule [command=<command string>] [script=<path to script>] \
          settings=<settings string> \
          [replace=<"key:value|key:value" string>] \
@@ -142,9 +56,8 @@ schedule [command=<command string>] [script=<path to script>] \
          [environment=<path to environment setup script>] \
          [output=<string specifying how to process output>]
 
-
-Processing commands
--------------------
+ Processing commands
+=====================
 In contrast to commands listed above, processing commands can be submitted to
 run on a computer cluster using either a PBS or LSF scheduling. The commands
 operate on a list of sessions specified in a `batch.txt` file that provides
@@ -169,54 +82,44 @@ Please note that each of the commands can be run by specifying its short
 (listed first) or full (listed second) name followed by specfication of
 processing options. 
 
+ WUSTL NIL pipeline commands
+=============================
+  run_nil         [folder=.] [overwrite=no] [sourcefile=session.txt]
+  run_nil_folder  [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
 
-HCP preprocessing commands
---------------------------
-hcp_pre_freesurfer          Run HCP PreFreeSurfer pipeline.
-hcp_freesurfer              Run HCP FreeSurfer pipeline.
-hcp_post_freesurfer         Run HCP Post FreeSurfer pipeline.
-hcp_fmri_volume             Run HCP fMRI Volume pipeline.
-hcp_fmri_surface            Run HCP fMRI Surface pipeline.
-hcp_icafix                  Run HCP ICAFix pipeline.
-hcp_post_fix                Run HCP PostFix pipeline.
-hcp_reapply_fix             Run HCP ReApplyFix pipeline.
-hcp_msmall                  Run HCP MSMAll pipeline.
-hcp_dedrift_and_resample    Run HCP MSMAll pipeline.
-hcp_diffusion               Run HCP DWI pipeline.
+ General image file commands
+=============================
+ slice_image     sourcefile=<source image> targetfile=<target image> [frames=1]
 
+ NIfTI file conversion commands
+================================
+  fz2zf           inf=<input_image> [outf=<output_image>]
+  reorder         inf=<input_image> [outf=<output_image>]
+  reslice         inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
+  printniftihdr   <image_filename>
+  modniftihdr     <image_filename> <modification string>
+  nifti24dfp      inf=<input_filename> [outf=<output_filename>]
 
-FSL commands
---------------------------
-fsl_f99                 Run FSL F99 command.
-fsl_xtract              Run FSL XTRACT command.
+ Workbench surface mapping commands
+===================================
+  map2pals    volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
+  map2hcp     volume=<volume file> [method=trilinear]
+  mask_map    image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
+  join_maps   images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
 
+ General purpose commands
+==========================
+  run_shell_script    Runs the specified script.
 
-Functional connectivity preprocessing commands
-----------------------------------------------
-map_hcp_data            Map HCP preprocessed data to sessions' image folder.
-create_bold_brain_masks Create brain masks for BOLD runs.
-compute_bold_stats      Compute BOLD movement and signal statistics.
-create_stats_report     Create BOLD movement statistic reports and plots.
-extract_nuisance_signal Extract nuisance signal from BOLD images.
-preprocess_bold         Preprocess single BOLD images.
-preprocess_conc         Preprocess conc bundles of BOLD images.
+ Legacy commands
+=================
+  run_basic_segmentation  Run basic structural image segmentation using BET and FAST.
+  get_fs_data             Copy existing FreeSurfer data to sessions' images folder.
+  run_subcortical_fs      Run subcortical freesurfer segmentation.
+  run_full_fs             Run full freesurfer segmentation
 
-
-General purpose commands
-------------------------
-run_shell_script    Runs the specified script.
-
-
-Legacy commands
----------------
-run_basic_segmentation  Run basic structural image segmentation using BET and FAST.
-get_fs_data             Copy existing FreeSurfer data to sessions' images folder.
-run_subcortical_fs      Run subcortical freesurfer segmentation.
-run_full_fs             Run full freesurfer segmentation
-
-
-MATLAB commands supported via python qx_utilities
--------------------------------------------------
+ MATLAB commands supported via python qx_utilities
+===================================================
 A number of MATLAB commands provided as part of QuNex can be  invoked via the
 python qx_utilities engine. A list of commands currently supported is 
 provided below. For more information run `qunex <command>`. 
@@ -242,6 +145,104 @@ Example call of a QuNex MATLAB command:
 
 for mcom in gm.functionList:
     comlist += "\n " + mcom
+
+core_qunex_commands = r'''
+=========================================
+ Listing of all QuNex supported commands
+=========================================
+
+  anat_parcellate                           Parcellate T1w and T2w derived measures (e.g. myelin or thickness)
+  bold_compute_fc                           Computes seed or GBC BOLD functional connectivity
+  bold_parcellate                           Parcellate BOLD data and generate pconn files
+  check_fidl                                TODO DESCRIPTION
+  compute_bold_stats                        Compute BOLD movement and signal statistics.
+  create_batch                              TODO DESCRIPTION
+  create_bold_brain_masks                   Create brain masks for BOLD runs.
+  create_conc                               TODO DESCRIPTION
+  create_list                               TODO DESCRIPTION
+  create_session_info                       TODO DESCRIPTION
+  create_stats_report                       Create BOLD movement statistic reports and plots.
+  create_study                              TODO DESCRIPTION
+  create_ws_palm_design                     TODO DESCRIPTION
+  data_sync                                 Sync/backup data across hpc cluster(s)
+  dicom2nii                                 TODO DESCRIPTION
+  dicom2niix                                TODO DESCRIPTION
+  dwi_legacy                                Diffusion image processing for data with or without standard fieldmaps
+  dwi_eddy_qc                               Run quality control on diffusion datasets following eddy outputs
+  dwi_fsl_dtifit                            Run FSL's dtifit tool (cluster usable)
+  dwi_fsl_bedpostx_gpu                      Run FSL GPU-enabled bedpostx
+  dwi_pre_tractography                      Generates space for dense whole-brain connectomes
+  dwi_probtrackx_dense_gpu                  Run FSL's GPU-enabled probtrackx for dense whole-brain connectomes
+  dwi_seed_tractography_dense               Reduce dense tractography data using a seed structure
+  dwi_parcellate                            Parcellate dense tractography data
+  extract_nuisance_signal                   Extract nuisance signal from BOLD images.
+  extract_roi                               Extract data from pre-specified ROIs in CIFTI or NIFTI
+  fc_compute_ab_corr                        TODO DESCRIPTION
+  fc_compute_ab_corr_kca                    TODO DESCRIPTION
+  fc_compute_gbc3                           TODO DESCRIPTION
+  fc_compute_gbcd                           TODO DESCRIPTION
+  fc_compute_roifc                          TODO DESCRIPTION
+  fc_compute_roifc_group                    TODO DESCRIPTION
+  fc_compute_seedmaps_group                 TODO DESCRIPTION
+  fc_compute_seedmaps_group                 TODO DESCRIPTION
+  fc_compute_seedmaps_multiple              TODO DESCRIPTION
+  fc_extract_roi_timeseries_masked          TODO DESCRIPTION
+  fc_extract_trial_timeseries_masked        TODO DESCRIPTION
+  fc_mri_segment                            TODO DESCRIPTION
+  fc_preprocess                             TODO DESCRIPTION
+  fc_preprocess_conc                        TODO DESCRIPTION
+  fsl_f99                                   Run FSL F99 command.
+  fsl_xtract                                Run FSL XTRACT command.
+  general_compute_bold_list_stats           TODO DESCRIPTION
+  general_compute_bold_stats                TODO DESCRIPTION
+  general_compute_group_bold_stats          TODO DESCRIPTION
+  general_extract_glm_volumes               TODO DESCRIPTION
+  general_extract_roi_glm_values            TODO DESCRIPTION
+  general_extract_roi_values                TODO DESCRIPTION
+  general_find_peaks                        TODO DESCRIPTION
+  general_image_conjunction                 TODO DESCRIPTION
+  general_image_overlap                     TODO DESCRIPTION
+  general_parcellated2dense                 TODO DESCRIPTION
+  general_plot_bold_timeseries              TODO DESCRIPTION
+  general_plot_bold_timeseries_list         TODO DESCRIPTION
+  general_qa_concfile                       TODO DESCRIPTION
+  hcp_dedrift_and_resample                  Run HCP MSMAll pipeline.
+  hcp_diffusion                             Run HCP DWI pipeline.
+  hcp_fmri_surface                          Run HCP fMRI Surface pipeline.
+  hcp_fmri_volume                           Run HCP fMRI Volume pipeline.
+  hcp_freesurfer                            Run HCP FreeSurfer pipeline.
+  hcp_icafix                                Run HCP ICAFix pipeline.
+  hcp_msmall                                Run HCP MSMAll pipeline.
+  hcp_post_fix                              Run HCP PostFix pipeline.
+  hcp_post_freesurfer                       Run HCP Post FreeSurfer pipeline.
+  hcp_pre_freesurfer                        Run HCP PreFreeSurfer pipeline.
+  hcp_reapply_fix                           Run HCP ReApplyFix pipeline.
+  import_bids                               TODO DESCRIPTION
+  import_dicom                              TODO DESCRIPTION
+  import_hcp                                TODO DESCRIPTION
+  join_fidl                                 TODO DESCRIPTION
+  join_fidl_folder                          TODO DESCRIPTION
+  list_dicom                                TODO DESCRIPTION
+  map_bids2nii                              TODO DESCRIPTION
+  map_hcp_data                              Map HCP preprocessed data to sessions' image folder.
+  map_hcp_files                             TODO DESCRIPTION
+  map_hcpls2nii                             TODO DESCRIPTION
+  organize_dicom                            TODO DESCRIPTION
+  preprocess_bold                           Preprocess single BOLD images.
+  preprocess_conc                           Preprocess conc bundles of BOLD images.
+  run_palm                                  TODO DESCRIPTION
+  run_qc                                    Run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi
+  run_turnkey                               Turnkey execution of QuNex workflow compatible with XNAT Docker engine
+  setup_hcp                                 TODO DESCRIPTION
+  sort_dicom                                TODO DESCRIPTION
+  split_dicom                               TODO DESCRIPTION
+  split_fidl                                TODO DESCRIPTION
+  stats_compute_behavioral_correlations     TODO DESCRIPTION
+  stats_p2z                                 TODO DESCRIPTION
+  stats_ttest_dependent                     TODO DESCRIPTION
+  stats_ttest_independent                   TODO DESCRIPTION
+  stats_test_zero                           TODO DESCRIPTION
+'''
 
 def runCommand(command, args):
 
@@ -448,12 +449,8 @@ def runCommand(command, args):
 
 def printHelp(com):
 
-    # --- print list of gmri local commands
-    if com == 'l':
-        print comlist
-
-    # --- print list of gmri local commands
-    elif com == 'available':
+    # --- print list of available commands, required for qunex.sh checks
+    if com == 'available':
         available_commands = []
         # -> gmri commands
         for c, _ in gcom.commands.iteritems():
@@ -462,68 +459,56 @@ def printHelp(com):
         for l in gp.calist:
             if len(l):
                 # deprecated command abbreviations 
-                # print l[0]
                 available_commands.append(l[1])
         # -> longitudinal processing commands
         for l in gp.lalist:
             if len(l):
                 # deprecated command abbreviations 
-                # print l[0]
                 available_commands.append(l[1])
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
                 # deprecated command abbreviations 
-                # print l[0]
                 available_commands.append(l[1])
         # -> matlab wrapped commands
         for l in gm.functions.keys():
             available_commands.append(l)
 
-        # print
+        # print the commands
         available_commands.sort()
-        for c in available_commands:
-            print("  " + c)
+        print " ".join(available_commands)
 
     # --- print list of processing options and flags
-    elif com in ['o']:
-        print "================================================================="
-        print ""
-        print " QuNex python utilities for processing and analysis"
-        print "\nuse: qunex <command> [option=value] [option=value] ..."
-        print "\nList of processing options"
-        for line in gp.arglist:
-            if len(line) == 4:
-                print "  --%-24s %s [%s]" % (line[0], line[3], line[1])
-            elif len(line) > 0:
-                print "\n\n" + line[0] + '\n'
-            else:
-                print
-        print "\nList of processing flags"
-        for line in gp.flaglist:
-            if len(line) == 4:
-                print "  --%-24s %s" % (line[0], line[3])
-            elif len(line) > 0:
-                print "\n\n" + line[0] + '\n'
-            else:
-                print
-        print
+    # elif com in ['o']:
+    #     print "================================================================="
+    #     print ""
+    #     print " QuNex python utilities for processing and analysis"
+    #     print "\nuse: qunex <command> [option=value] [option=value] ..."
+    #     print "\nList of processing options"
+    #     for line in gp.arglist:
+    #         if len(line) == 4:
+    #             print "  --%-24s %s [%s]" % (line[0], line[3], line[1])
+    #         elif len(line) > 0:
+    #             print "\n\n" + line[0] + '\n'
+    #         else:
+    #             print
+    #     print "\nList of processing flags"
+    #     for line in gp.flaglist:
+    #         if len(line) == 4:
+    #             print "  --%-24s %s" % (line[0], line[3])
+    #         elif len(line) > 0:
+    #             print "\n\n" + line[0] + '\n'
+    #         else:
+    #             print
+    #     print
 
-    # --- print help for gmri local commands
-    elif com in gcom.commands:
-        print "\nqunex", gcom.commands[com]['com'].__doc__.strip(), "\n"
+    # --- print core commands
+    elif com == "core":
+        print core_qunex_commands
 
-    # --- print help for processing actions
-    elif com in gp.allactions:
-        print "\nqunex", gp.allactions[com].__doc__.strip(), "\n"
-
-    # --- print help for matlab functions
-    elif com in gm.functions:
-        gm.help(com)
-
-    # --- print general command list
+    # --- print error
     else:
-        print comlist
+        print "\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n" % com
 
 
 def main(args=None):
@@ -544,7 +529,9 @@ def main(args=None):
         comm = comm.strip('-')
         comm = comm.strip('?')
         try:
-            printHelp(comm[0:])
+            command = comm[0:]
+            command = gcs.check_deprecated_commands(command)
+            printHelp(command)
         except:
             print "ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:])
             print help
