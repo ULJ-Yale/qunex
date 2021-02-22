@@ -1469,7 +1469,6 @@ main() {
                         # -- Run script
                         ${RunQCLogFolder}/${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${TimeStamp}.log
                         FinalLog="${RunQCLogFolder}/QC_${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${TimeStamp}.log"
-                        rm ${OutPath}/${TemplateSceneFile} &> /dev/null
                         # only run completion check if file are missing for the previous run
                         if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
                             completionCheck
@@ -1544,7 +1543,6 @@ main() {
                                     chmod 770 ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
                                     # -- Run script
                                     ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log
-                                    rm ${OutPath}/${TemplateSceneFile} &> /dev/null
                                     FinalLog="${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log"
                                     # only run completion check if file are missing for the previous run
                                     if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
@@ -1922,7 +1920,6 @@ main() {
                     
                     # -- Clean templates and files for next session
                     Com7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
-                    Com8="rm ${OutPath}/${TemplateSceneFile} &> /dev/null"
                     Com9="rm -f ${OutPath}/data_split*"
                     
                     # -------------------------------------------
@@ -2013,19 +2010,19 @@ main() {
                     if [ "$SceneZip" == "yes" ]; then
                         if [ "$DtiFitQC" == "no" ]; then
                             if [ "$BedpostXQC" == "no" ]; then
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10"
                             else
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com12"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10; $Com12"
                             fi
                         else
                             if [ "$BedpostXQC" == "yes" ]; then
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10; $Com11; $Com12"
                             else
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10; $Com11"
                             fi
                         fi
                     else
-                        ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $ComRunBoldPngNameGSMap; $Com6; $Com7; $Com8; $Com9"
+                        ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $ComRunBoldPngNameGSMap; $Com6; $Com7; $Com9"
                     fi
                     # -- Clean up prior conflicting scripts, generate script and set permissions
                     rm -f "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
@@ -2066,9 +2063,8 @@ main() {
                         RunQCCustom6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539"
                         # -- Clean templates and files for next session
                         RunQCCustom7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
-                        RunQCCustom8="rm ${OutPath}/${TemplateSceneFile} &> /dev/null"
                         RunQCCustom9="rm -f ${OutPath}/data_split*"
-                        CustomRunQUEUE="$RunQCCustom1; $RunQCCustom2; $RunQCCustom3; $RunQCCustom4; $RunQCCustom5; $ComRunBoldPngNameGSMap; $RunQCCustom6; $RunQCCustom7; $RunQCCustom8; $RunQCCustom9"
+                        CustomRunQUEUE="$RunQCCustom1; $RunQCCustom2; $RunQCCustom3; $RunQCCustom4; $RunQCCustom5; $ComRunBoldPngNameGSMap; $RunQCCustom6; $RunQCCustom7; $RunQCCustom9"
                         if [ "$SceneZip" == "yes" ]; then
                             echo ""
                             geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
@@ -2085,7 +2081,7 @@ main() {
                             RunQCCustom14="rm ${HCPFolder}/${WorkingSceneFile}"
                             RunQCCustom15="mkdir -p ${HCPFolder}/qc &> /dev/null"
                             RunQCCustom16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
-                            CustomRunQUEUE="$RunQCCustom1; $RunQCCustom2; $RunQCCustom3; $RunQCCustom4; $RunQCCustom5; $ComRunBoldPngNameGSMap; $RunQCCustom6; $RunQCCustom7; $RunQCCustom8; $RunQCCustom9; $RunQCCustom10; $RunQCCustom11; $RunQCCustom12; $RunQCCustom13; $RunQCCustom14; $RunQCCustom15; $RunQCCustom16"
+                            CustomRunQUEUE="$RunQCCustom1; $RunQCCustom2; $RunQCCustom3; $RunQCCustom4; $RunQCCustom5; $ComRunBoldPngNameGSMap; $RunQCCustom6; $RunQCCustom7; $RunQCCustom9; $RunQCCustom10; $RunQCCustom11; $RunQCCustom12; $RunQCCustom13; $RunQCCustom14; $RunQCCustom15; $RunQCCustom16"
                         fi
                         # -- Clean up prior conflicting scripts, generate script and set permissions
                         rm -f "$RunQCLogFolder"/${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
@@ -2118,9 +2114,8 @@ main() {
                     RunQCUser6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539"
                     # -- Clean templates and files for next session
                     RunQCUser7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
-                    RunQCUser8="rm ${OutPath}/${TemplateSceneFile} &> /dev/null"
                     RunQCUser9="rm -f ${OutPath}/data_split*"
-                    UserRunQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser8; $RunQCUser9"
+                    UserRunQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser9"
                     if [ "$SceneZip" == "yes" ]; then
                         geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
                         geho "    ${HCPFolder}"
@@ -2136,7 +2131,7 @@ main() {
                         RunQCUser14="rm ${HCPFolder}/${WorkingSceneFile}"
                         RunQCUser15="mkdir -p ${HCPFolder}/qc &> /dev/null"
                         RunQCUser16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
-                        UserRunQUEUE="$RunQCCustom1; $RunQCCustom2; $RunQCCustom3; $RunQCCustom4; $RunQCCustom5; $ComRunBoldPngNameGSMap; $RunQCCustom6; $RunQCCustom7; $RunQCCustom8; $RunQCCustom9; $RunQCCustom10; $RunQCCustom11; $RunQCCustom12; $RunQCCustom13; $RunQCCustom14; $RunQCCustom15; $RunQCCustom16"
+                        UserRunQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser9; $RunQCUser10; $RunQCUser11; $RunQCUser12; $RunQCUser13; $RunQCUser14; $RunQCUser15; $RunQCUser16"
                     fi
                     # -- Clean up prior conflicting scripts, generate script and set permissions
                     rm -f "$RunQCLogFolder"/${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
