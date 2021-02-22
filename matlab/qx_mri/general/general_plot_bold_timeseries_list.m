@@ -2,7 +2,7 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 
 %``function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)``
 %
-%   Creates and saves a plot of BOLD timeseries.
+%   Creates and saves a plot of BOLD timeseries for a list of sessions.
 %
 %	INPUTS
 %	======
@@ -17,7 +17,7 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %   USE
 %	===
 %
-%   This function runs general_plot_bold_timeseries function on a list of sessionss making it
+%   This function runs general_plot_bold_timeseries function on a list of sessions making it
 %   simpler to generate BOLD timeseries plots for a set sessionss. For more
 %   information on generation of plots, please see documentation for
 %   general_plot_bold_timeseries.

@@ -290,7 +290,7 @@ def create_study(studyfolder=None, folders=None):
     """
     ``create_study studyfolder=<path to study base folder> [folders=$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt]``
 
-    Creates the base folder and study folders.
+    Creates the base study folder structure.
 
     INPUTS
     ======

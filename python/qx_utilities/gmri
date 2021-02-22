@@ -36,212 +36,108 @@ help = '''
 '''
 
 #
-# Took out these two functions until fully integrated to avoid documentation confusion w/ bash qx_utilities
-# Also these should not be referenced as 'hcp' functions as they are not
+# Took out these two commands until fully integrated to avoid documentation confusion w/ bash qx_utilities
+# Also these should not be referenced as 'hcp' commands as they are not
 #
 # hcp_dtifit    Run FSL DTI fit.
 # hcp_bedpostx  Run FSL Bedpostx GPU.
-
-comlist = r'''
- QuNex python utilities (python qx_utilities) for Preprocessing and Analyses 
-=============================================================================
-
- Scheduling command
-===================
-
-schedule [command=<command string>] [script=<path to script>] \
-         settings=<settings string> \
-         [replace=<"key:value|key:value" string>] \
-         [workdir=<path to working directory>] \
-         [environment=<path to environment setup script>] \
-         [output=<string specifying how to process output>]
-
- Processing commands
-=====================
-In contrast to commands listed above, processing commands can be submitted to
-run on a computer cluster using either a PBS or LSF scheduling. The commands
-operate on a list of sessions specified in a `batch.txt` file that provides
-information about each session and his or her images and other information.
-Options for the processing command can be specified either in the `batch.txt`
-file or on the command line, the latter having priority if a parameter is
-specified at both levels. No options need to be set for any of the commands
-listed below. The key parameters with their default values are:
-
-    --sessions=batch.txt    the path to the batch.txt file
-    --sessionsfolder=.      the path to the study sessions folder
-    --overwrite=no          whether to overwrite existing results
-    --parsessions=1         how many sessions to run in parallel
-    --nprocess=0            how many sessions to process (0=all)
-    --log=remove            whether to remove logs of commands that have
-                            ran and finished successfully
-    --run=run               whether to run (run) the listed command or
-                            test (test) if all the data is ready for the
-                            specific command to run successfully
-
-Please note that each of the commands can be run by specifying its short 
-(listed first) or full (listed second) name followed by specfication of
-processing options. 
-
- WUSTL NIL pipeline commands
-=============================
-  run_nil         [folder=.] [overwrite=no] [sourcefile=session.txt]
-  run_nil_folder  [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]
-
- General image file commands
-=============================
- slice_image     sourcefile=<source image> targetfile=<target image> [frames=1]
-
- NIfTI file conversion commands
-================================
-  fz2zf           inf=<input_image> [outf=<output_image>]
-  reorder         inf=<input_image> [outf=<output_image>]
-  reslice         inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
-  printniftihdr   <image_filename>
-  modniftihdr     <image_filename> <modification string>
-  nifti24dfp      inf=<input_filename> [outf=<output_filename>]
-
- Workbench surface mapping commands
-===================================
-  map2pals    volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
-  map2hcp     volume=<volume file> [method=trilinear]
-  mask_map    image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
-  join_maps   images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
-
- General purpose commands
-==========================
-  run_shell_script    Runs the specified script.
-
- Legacy commands
-=================
-  run_basic_segmentation  Run basic structural image segmentation using BET and FAST.
-  get_fs_data             Copy existing FreeSurfer data to sessions' images folder.
-  run_subcortical_fs      Run subcortical freesurfer segmentation.
-  run_full_fs             Run full freesurfer segmentation
-
- MATLAB commands supported via python qx_utilities
-===================================================
-A number of MATLAB commands provided as part of QuNex can be  invoked via the
-python qx_utilities engine. A list of commands currently supported is 
-provided below. For more information run `qunex <command>`. 
-
-Note that parameters can be specified in any order. Parameters that are not provided 
-will be passed as empty and will be processed with default values. Take care to embed 
-vectors in square brackets (e.g. "[1 8 6 12]") and cell arrays in curly braces 
-(e.g. "{'DLPFC', 'ACC', 'FEF'}"). In addition, 'saveOutput' parameter can be specified 
-to redirect Matlab output to a file: (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
-
-Example call of a QuNex MATLAB command:
-
- qunex general_find_peaks \\
-  --fin='map_zstat.dscalar.nii' \\
-  --fout='map_peaks.dscalar.nii' \\
-  --mins="[50 50]" --maxs="[300 350]" \\
-  --val=n t=3.5 \\
-  --projection=midthickness
-
-
- ==> List of MATLAB commands supported via python qx_utilities:
-'''
-
-for mcom in gm.functionList:
-    comlist += "\n " + mcom
 
 core_qunex_commands = r'''
 =========================================
  Listing of all QuNex supported commands
 =========================================
 
-  anat_parcellate                           Parcellate T1w and T2w derived measures (e.g. myelin or thickness)
-  bold_compute_fc                           Computes seed or GBC BOLD functional connectivity
-  bold_parcellate                           Parcellate BOLD data and generate pconn files
-  check_fidl                                TODO DESCRIPTION
+  anat_parcellate                           Parcellate T1w and T2w derived measures (e.g. myelin or thickness).
+  bold_compute_fc                           Computes seed or GBC BOLD functional connectivity.
+  bold_parcellate                           Parcellate BOLD data and generate pconn files.
+  check_fidl                                Prints figures showing fidl events and their duration.
   compute_bold_stats                        Compute BOLD movement and signal statistics.
-  create_batch                              TODO DESCRIPTION
+  create_batch                              Creates a joint batch file from source files in all session folders.
   create_bold_brain_masks                   Create brain masks for BOLD runs.
-  create_conc                               TODO DESCRIPTION
-  create_list                               TODO DESCRIPTION
-  create_session_info                       TODO DESCRIPTION
+  create_conc                               Creates a set of .conc formated files.
+  create_list                               Creates a .list formated file.
+  create_session_info                       Creates session.txt files.
   create_stats_report                       Create BOLD movement statistic reports and plots.
-  create_study                              TODO DESCRIPTION
-  create_ws_palm_design                     TODO DESCRIPTION
-  data_sync                                 Sync/backup data across hpc cluster(s)
-  dicom2nii                                 TODO DESCRIPTION
-  dicom2niix                                TODO DESCRIPTION
-  dwi_legacy                                Diffusion image processing for data with or without standard fieldmaps
-  dwi_eddy_qc                               Run quality control on diffusion datasets following eddy outputs
-  dwi_fsl_dtifit                            Run FSL's dtifit tool (cluster usable)
-  dwi_fsl_bedpostx_gpu                      Run FSL GPU-enabled bedpostx
-  dwi_pre_tractography                      Generates space for dense whole-brain connectomes
-  dwi_probtrackx_dense_gpu                  Run FSL's GPU-enabled probtrackx for dense whole-brain connectomes
-  dwi_seed_tractography_dense               Reduce dense tractography data using a seed structure
-  dwi_parcellate                            Parcellate dense tractography data
-  extract_nuisance_signal                   Extract nuisance signal from BOLD images.
-  extract_roi                               Extract data from pre-specified ROIs in CIFTI or NIFTI
-  fc_compute_ab_corr                        TODO DESCRIPTION
-  fc_compute_ab_corr_kca                    TODO DESCRIPTION
-  fc_compute_gbc3                           TODO DESCRIPTION
-  fc_compute_gbcd                           TODO DESCRIPTION
-  fc_compute_roifc                          TODO DESCRIPTION
-  fc_compute_roifc_group                    TODO DESCRIPTION
-  fc_compute_seedmaps_group                 TODO DESCRIPTION
-  fc_compute_seedmaps_group                 TODO DESCRIPTION
-  fc_compute_seedmaps_multiple              TODO DESCRIPTION
-  fc_extract_roi_timeseries_masked          TODO DESCRIPTION
-  fc_extract_trial_timeseries_masked        TODO DESCRIPTION
-  fc_mri_segment                            TODO DESCRIPTION
-  fc_preprocess                             TODO DESCRIPTION
-  fc_preprocess_conc                        TODO DESCRIPTION
-  fsl_f99                                   Run FSL F99 command.
-  fsl_xtract                                Run FSL XTRACT command.
-  general_compute_bold_list_stats           TODO DESCRIPTION
-  general_compute_bold_stats                TODO DESCRIPTION
-  general_compute_group_bold_stats          TODO DESCRIPTION
-  general_extract_glm_volumes               TODO DESCRIPTION
-  general_extract_roi_glm_values            TODO DESCRIPTION
-  general_extract_roi_values                TODO DESCRIPTION
-  general_find_peaks                        TODO DESCRIPTION
-  general_image_conjunction                 TODO DESCRIPTION
-  general_image_overlap                     TODO DESCRIPTION
-  general_parcellated2dense                 TODO DESCRIPTION
-  general_plot_bold_timeseries              TODO DESCRIPTION
-  general_plot_bold_timeseries_list         TODO DESCRIPTION
-  general_qa_concfile                       TODO DESCRIPTION
-  hcp_dedrift_and_resample                  Run HCP MSMAll pipeline.
-  hcp_diffusion                             Run HCP DWI pipeline.
-  hcp_fmri_surface                          Run HCP fMRI Surface pipeline.
-  hcp_fmri_volume                           Run HCP fMRI Volume pipeline.
-  hcp_freesurfer                            Run HCP FreeSurfer pipeline.
-  hcp_icafix                                Run HCP ICAFix pipeline.
-  hcp_msmall                                Run HCP MSMAll pipeline.
-  hcp_post_fix                              Run HCP PostFix pipeline.
-  hcp_post_freesurfer                       Run HCP Post FreeSurfer pipeline.
-  hcp_pre_freesurfer                        Run HCP PreFreeSurfer pipeline.
-  hcp_reapply_fix                           Run HCP ReApplyFix pipeline.
-  import_bids                               TODO DESCRIPTION
-  import_dicom                              TODO DESCRIPTION
-  import_hcp                                TODO DESCRIPTION
-  join_fidl                                 TODO DESCRIPTION
-  join_fidl_folder                          TODO DESCRIPTION
-  list_dicom                                TODO DESCRIPTION
-  map_bids2nii                              TODO DESCRIPTION
-  map_hcp_data                              Map HCP preprocessed data to sessions' image folder.
-  map_hcp_files                             TODO DESCRIPTION
-  map_hcpls2nii                             TODO DESCRIPTION
-  organize_dicom                            TODO DESCRIPTION
-  preprocess_bold                           Preprocess single BOLD images.
-  preprocess_conc                           Preprocess conc bundles of BOLD images.
-  run_palm                                  TODO DESCRIPTION
-  run_qc                                    Run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi
-  run_turnkey                               Turnkey execution of QuNex workflow compatible with XNAT Docker engine
-  setup_hcp                                 TODO DESCRIPTION
-  sort_dicom                                TODO DESCRIPTION
-  split_dicom                               TODO DESCRIPTION
-  split_fidl                                TODO DESCRIPTION
-  stats_compute_behavioral_correlations     TODO DESCRIPTION
-  stats_p2z                                 TODO DESCRIPTION
-  stats_ttest_dependent                     TODO DESCRIPTION
-  stats_ttest_independent                   TODO DESCRIPTION
-  stats_test_zero                           TODO DESCRIPTION
+  create_study                              Creates the base study folder structure.
+  create_ws_palm_design                     Prepares the design file.
+  data_sync                                 Syncs or backs up data across hpc cluster(s).
+  dicom2nii                                 Converts MR images from DICOM to NIfTI format.
+  dicom2niix                                Converts MR images from DICOM and PAR/REC files to NIfTI format.
+  dwi_legacy                                Diffusion image processing for data with or without standard fieldmaps.
+  dwi_eddy_qc                               Runs quality control on diffusion datasets following eddy outputs.
+  dwi_fsl_dtifit                            Runs FSL's dtifit tool (cluster usable).
+  dwi_fsl_bedpostx_gpu                      Runs FSL GPU-enabled bedpostx.
+  dwi_pre_tractography                      Generates space for dense whole-brain connectomes.
+  dwi_probtrackx_dense_gpu                  Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.
+  dwi_seed_tractography_dense               Reduces dense tractography data using a seed structure.
+  dwi_parcellate                            Parcellates dense tractography data.
+  extract_nuisance_signal                   Extracts nuisance signal from BOLD images.
+  extract_roi                               Extracts data from pre-specified ROIs in CIFTI or NIFTI.
+  fc_compute_ab_corr                        Computes the correlation of each source mask voxel with each target mask voxel.
+  fc_compute_ab_corr_kca                    Segments the voxels in smask based on their connectivity pattern with tmask voxels.
+  fc_compute_gbc3                           Computes GBC maps for individuals as well as group maps.
+  fc_compute_gbcd                           Computes GBC averages for each specified ROI for n bands defined as distance from ROI.
+  fc_compute_roifc                          Computes ROI functional connectivity matrices for individual subject / session.
+  fc_compute_roifc_group                    Computes ROI functional connectivity matrices for a group of sujects/sessions.
+  fc_compute_seedmaps                       Computes seed based functional connectivity maps for individual subject / session.
+  fc_compute_seedmaps_group                 Computes seed based correlations maps for individuals as well as group maps.
+  fc_compute_seedmaps_multiple              Computes seed based correlations maps for individuals as well as group maps.
+  fc_extract_roi_timeseries_masked          Extracts and saves region timeseries defined by provided roiinfo file
+  fc_extract_trial_timeseries_masked        Extracts trial timeseries for each of the specified ROI.
+  fc_mri_segment                            Segments the voxels in smask based on their connectivity with tmask ROI.
+  fc_preprocess                             Runs single BOLD file based functional connectivity preprocessing.
+  fc_preprocess_conc                        Runs fcMRI preprocessing and GLM analysis a set of BOLD files.
+  fsl_f99                                   Runs FSL F99 command.
+  fsl_xtract                                Runs FSL XTRACT command.
+  general_compute_bold_list_stats           Computes BOLD run per frame statistics and scrubbing information for a list of sessions.
+  general_compute_bold_stats                Computes BOLD run per frame statistics and scrubbing information.
+  general_compute_group_bold_stats          Extracts image statistics over the whole group.
+  general_extract_glm_volumes               Extracts and saves the GLM estimates of the effects of interests.
+  general_extract_roi_glm_values            Extracts per ROI estimates of specified effects from a volume or cifti GLM files.
+  general_extract_roi_values                Extracts desired statistics from provided files for each ROI.
+  general_find_peaks                        Performs smoothing and defines ROIs from peaks.
+  general_image_conjunction                 Reads image file, computes conjunction using g_conjunction and saves results.
+  general_image_overlap                     Prints the overlap of two images, one in red, another in green.
+  general_parcellated2dense                 Expands the parcelated file to a dense file.
+  general_plot_bold_timeseries              Creates and saves a plot of BOLD timeseries.
+  general_plot_bold_timeseries_list         Creates and saves a plot of BOLD timeseries for a list of sessions.
+  general_qa_concfile                       Computes and saves the specified statistics on images specified in the conc file.
+  hcp_dedrift_and_resample                  Runs HCP MSMAll pipeline.
+  hcp_diffusion                             Runs HCP DWI pipeline.
+  hcp_fmri_surface                          Runs HCP fMRI Surface pipeline.
+  hcp_fmri_volume                           Runs HCP fMRI Volume pipeline.
+  hcp_freesurfer                            Runs HCP FreeSurfer pipeline.
+  hcp_icafix                                Runs HCP ICAFix pipeline.
+  hcp_msmall                                Runs HCP MSMAll pipeline.
+  hcp_post_fix                              Runs HCP PostFix pipeline.
+  hcp_post_freesurfer                       Runs HCP Post FreeSurfer pipeline.
+  hcp_pre_freesurfer                        Runs HCP PreFreeSurfer pipeline.
+  hcp_reapply_fix                           Runs HCP ReApplyFix pipeline.
+  import_bids                               Maps a BIDS dataset to the QuNex Suite file structure.
+  import_dicom                              Processes sessions's DICOM or PAR/REC files and generates NIfTI files.
+  import_hcp                                Maps HCPLS data to the QuNex Suite file structure. 
+  join_fidl                                 Combines all the fidl files matching root based on the information in conc file.
+  join_fidl_folder                          Joins all the fidl files that match the name of each conc file in the concfolder.
+  list_dicom                                Inspects a folder for dicom files and prints a detailed reports of the results.
+  map_bids2nii                              Maps BIDS data to the QuNex folder structure.
+  map_hcp_data                              Maps HCP preprocessed data to sessions' image folder.
+  map_hcp_files                             Maps HCP data to the QuNex folder structure.
+  map_hcpls2nii                             Maps HCPLS data to the QuNex folder structure.
+  organize_dicom                            Organizes a set of raw DICOMs to NIFTI format for additional processing.
+  preprocess_bold                           Preprocesses single BOLD images.
+  preprocess_conc                           Preprocesses conc bundles of BOLD images.
+  run_palm                                  Runs second level analysis using PALM permutation resampling.
+  run_qc                                    Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.
+  run_turnkey                               Exectues turnkey QuNex workflow compatible with XNAT Docker engine.
+  setup_hcp                                 Maps images from the sessions's nii folder to HCP minimal preprocessing structure.
+  sort_dicom                                Sorts DICOM files.
+  split_dicom                               Sorts out DICOM images from different sessions.
+  split_fidl                                Splits a multi-bold fidl file into run specific bold files.
+  stats_compute_behavioral_correlations     Computes correlations between given images and provided data.
+  stats_p2z                                 Converts p to Z values considering one or two tails.
+  stats_ttest_dependent                     Computes t-test of differences between two dependent groups.
+  stats_ttest_independent                   Computes t-test of differences between two independent groups.
+  stats_test_zero                           Computes t-test against zero and saves specified results.
 '''
 
 def runCommand(command, args):

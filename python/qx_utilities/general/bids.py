@@ -923,7 +923,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short']``
 
     Maps data organized according to BIDS specification to `nii` folder 
-    structure as expected by QuNex functions.
+    structure as expected by QuNex commands.
 
     INPUTS
     ======

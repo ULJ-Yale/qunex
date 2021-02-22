@@ -2,7 +2,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 
 %function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 %
-%   A function for running single BOLD file based functional connectivity 
+%   A command for running single BOLD file based functional connectivity 
 %   preprocessing.
 %
 %   INPUTS
