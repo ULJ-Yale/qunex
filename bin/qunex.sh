@@ -32,7 +32,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="matlab_help gmri_function data_sync organize_dicom map_hcp_files dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc bold_compute_fc anat_parcellate bold_parcellation bold_parcellate extract_roi aws_hcp_sync run_qc run_turnkey show_version environment"
+qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc bold_compute_fc anat_parcellate bold_parcellation bold_parcellate extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -80,37 +80,39 @@ weho() {
 # ------------------------------------------------------------------------------
 
 show_splash() {
- geho ""
- geho " Logged in as User: `whoami`                                                 "
- geho " Node info: `hostname`                                                       "
- geho " OS: $OSInfo $OperatingSystem                                                "
- geho ""
- geho ""
- geho "        ██████\                  ║      ██\   ██\                    "
- geho "       ██  __██\                 ║      ███\  ██ |                   "
- geho "       ██ /  ██ |██\   ██\       ║      ████\ ██ | ██████\ ██\   ██\ "
- geho "       ██ |  ██ |██ |  ██ |      ║      ██ ██\██ |██  __██\\\\\██\ ██  |"
- geho "       ██ |  ██ |██ |  ██ |      ║      ██ \████ |████████ |\████  / "
- geho "       ██ ██\██ |██ |  ██ |      ║      ██ |\███ |██   ____|██  ██\  "
- geho "       \██████ / \██████  |      ║      ██ | \██ |\███████\██  /\██\ "
- geho "        \___███\  \______/       ║      \__|  \__| \_______\__/  \__|"
- geho "            \___|                ║                                   "
- geho ""
- geho "                       DEVELOPED & MAINTAINED BY: "
- geho ""
- geho "                    Anticevic Lab, Yale University                           "
- geho "               Mind & Brain Lab, University of Ljubljana                     "
- geho "                     Murray Lab, Yale University                             "
- geho ""
- geho "                      COPYRIGHT & LICENSE NOTICE:                            "
- geho ""
- geho "Use of this software is subject to the terms and conditions defined by the   "
- geho "Yale University Copyright Policies: "
- geho "http://ocr.yale.edu/faculty/policies/yale-university-copyright-policy "
- geho "and the terms and conditions defined in the file 'LICENSE.md' which is "
- geho "a part of the QuNex Suite source code package: "
- geho "https://bitbucket.org/hidradev/qunextools/src/master/LICENSE.md"
- geho ""
+  QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+  geho ""
+  geho "Logged in as User: `whoami`                                                  "
+  geho "Node info: `hostname`                                                        "
+  geho "OS: $OSInfo $OperatingSystem                                                 "
+  geho "Version: ${QuNexVer}                                                         "
+  geho ""
+  geho ""
+  geho "        ██████\                  ║      ██\   ██\                    "
+  geho "       ██  __██\                 ║      ███\  ██ |                   "
+  geho "       ██ /  ██ |██\   ██\       ║      ████\ ██ | ██████\ ██\   ██\ "
+  geho "       ██ |  ██ |██ |  ██ |      ║      ██ ██\██ |██  __██\\\\\██\ ██  |"
+  geho "       ██ |  ██ |██ |  ██ |      ║      ██ \████ |████████ |\████  / "
+  geho "       ██ ██\██ |██ |  ██ |      ║      ██ |\███ |██   ____|██  ██\  "
+  geho "       \██████ / \██████  |      ║      ██ | \██ |\███████\██  /\██\ "
+  geho "        \___███\  \______/       ║      \__|  \__| \_______\__/  \__|"
+  geho "            \___|                ║                                   "
+  geho ""
+  geho "                       DEVELOPED & MAINTAINED BY: "
+  geho ""
+  geho "                    Anticevic Lab, Yale University                           "
+  geho "               Mind & Brain Lab, University of Ljubljana                     "
+  geho "                     Murray Lab, Yale University                             "
+  geho ""
+  geho "                      COPYRIGHT & LICENSE NOTICE:                            "
+  geho ""
+  geho "Use of this software is subject to the terms and conditions defined by the   "
+  geho "Yale University Copyright Policies: "
+  geho "http://ocr.yale.edu/faculty/policies/yale-university-copyright-policy "
+  geho "and the terms and conditions defined in the file 'LICENSE.md' which is "
+  geho "a part of the QuNex Suite source code package: "
+  geho "https://bitbucket.org/hidradev/qunextools/src/master/LICENSE.md"
+  geho ""
 }
 
 # ------------------------------------------------------------------------------
@@ -124,9 +126,9 @@ cat << EOF
  General QuNex usage syntax
 ============================
  
- qunex <command_name> \
-   --parameterA=<required-parameter-args> \
-   [--parameterB=<optional-parameter-args>]
+  qunex <command_name>
+    --parameterA=<required-parameter-args>
+    [--parameterB=<optional-parameter-args>]
 
   =>  --   Dashes or “flags” denote input parameters.
   =>  []   Square brackets denote optional parameters. 
@@ -144,14 +146,14 @@ cat << EOF
  Display listing of all QuNex commands 
 ======================================
 
-  qunex --a
+  qunex -a
 
 
 EOF
  
 }
 
-qunexFailed() {
+qunex_failed() {
     reho ''
     reho ' ▄▄▄▄▄▄▄         ||  ▄▄   ▄▄                                                 '
     reho ' ▓▓    ▓         ||  ▓▓▓▄ ▓▓                ▓▓▓▓▓ ▄▓▓▓▓  ▓ ▄▓    ▄▓▓▓ ▓▓▓▄   '
@@ -162,7 +164,7 @@ qunexFailed() {
     reho ''
 }
  
-qunexPassed() {
+qunex_passed() {
     geho ''
     geho '    ______         ║   _   _               ____                        _  '
     geho '   / ___  \_   _   ║  | \ | | _____  __   |  _ \ __ _ ___ ___  ___  __| | '
@@ -181,31 +183,30 @@ qunexPassed() {
 # -- Help calls for QuNex Functions
 # ------------------------------------------------------------------------------------------------------
 
-gmri_function() {
+qxutil_command_exec() {
     eval gmri ${gmriinput}
 }
 
-show_usage_gmri() {
+show_usage_qxutil() {
     echo ""
     gmri ?${usage_input}
 }
 
-show_allcommands() {
-    gmri -core
+show_all_qunex_commands() {
+    gmri --allcommands
 }
 
 # ---------------------------------------------------------------------------------------------------------------
 # -- Master Execution and Logging -- https://bitbucket.org/oriadev/qunex/wiki/Overview/Logging.md
 # ---------------------------------------------------------------------------------------------------------------
 
-bashExec() {
-
+bash_call_execute() {
+# -- Set platform info
 Platform="Platform Information: `uname -a`"
-
 # -- Set the time stamp for given job
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 if [[ ${CommandToRun} == "run_turnkey" ]]; then
-    unset gmri_command_to_run
+    unset qxutil_command_to_run
     if [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
         if [[ ! -d ${WORKDIR} ]]; then 
             mkdir -p ${WORKDIR} &> /dev/null
@@ -213,7 +214,6 @@ if [[ ${CommandToRun} == "run_turnkey" ]]; then
         gmri create_study ${StudyFolder}
     fi
 fi
-
 # -- Check if Matlab command
 unset QuNexMatlabCall
 matlab_functions_check=`find $TOOLS/$QUNEXREPO/matlab/ -name "*.m" | grep -v "archive/"`
@@ -232,7 +232,7 @@ if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${Q
     mageho "         Consider re-generating QuNex hierarchy..."; echo ""
     # gmri create_study ${StudyFolder}
 fi
-
+# -- Added checks for study folder generation
 if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
     # -- Add check in case the sessions folder is distinct from the default name
     # -- Eventually use the template file to replace hard-coded values
@@ -245,7 +245,6 @@ if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${Sessi
         fi
     done
 fi
-
 # -- If logfolder flag set then set it and set master log
 if [[ -z ${LogFolder} ]]; then
     MasterLogFolder="${StudyFolder}/processing/logs"
@@ -270,18 +269,17 @@ RunChecksFolder="${StudyFolder}/processing/runchecks"
 if [[ ! -d ${RunChecksFolder} ]]; then
     mkdir ${RunChecksFolder} &> /dev/null
 fi
-
 # -- Specific call for python qx_utilities functions
-if [[ ${gmri_command_to_run} ]]; then
+if [[ ${qxutil_command_to_run} ]]; then
     echo ""
-    cyaneho "--- Full QuNex call for command: ${gmri_command_to_run}"
+    cyaneho "--- Full QuNex call for command: ${qxutil_command_to_run}"
     echo ""
     cyaneho "gmri ${gmriinput}"
     echo ""
     cyaneho "---------------------------------------------------------"
     echo ""
     echo ""
-    gmri_function
+    qxutil_command_exec
 else
     # -- Specific call for QuNex bash commands
     # -- Define specific logs
@@ -289,25 +287,20 @@ else
     # -- Runlog
     # --   Specification: Log-<command name>-<date>_<hour>.<minute>.<microsecond>.log
     # --   Example:       Log-map_hcp_data-2017-11-11_15.58.1510433930.log
-    #
     Runlog="${MasterRunLogFolder}/Log-${CommandToRun}_${TimeStamp}.log"
     # -- Comlog
     # --   Specification:  tmp_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
     # --   Specification:  error_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
     # --   Specification:  done_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
     # --   Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
-    #
-
     ComlogTmp="${MasterComlogFolder}/tmp_${CommandToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
     ComRun="${MasterComlogFolder}/Run_${CommandToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
     ComlogDone="${MasterComlogFolder}/done_${CommandToRun}_${CASE}_${TimeStamp}.log"
     CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
     ComlogError="${MasterComlogFolder}/error_${CommandToRun}_${CASE}_${TimeStamp}.log"
     CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Fail"
-    
     # -- Batchlog
     # --   <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
-    
     echo ""
     cyaneho "--- Full QuNex call for command: ${CommandToRun}"
     echo ""
@@ -316,32 +309,31 @@ else
     cyaneho "--------------------------------------------------------------"
     echo ""
     echo ""
-
-    # -- Run commands
+    # -- Declare commands
     echo "${QuNexCallToRun}" >> ${Runlog}
     echo "#!/bin/bash" >> ${ComRun}
     echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
     echo "${QuNexCallToRun}" >> ${ComRun}
     chmod 777 ${ComRun}
-     
     # -- Check that $ComRun is set properly
     echo ""; if [ ! -f "${ComRun}" ]; then reho "ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
     ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
     echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho "ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
-
     # -- Define command to execute
     ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
     # -- Acceptance tests
     ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
     ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
-
+    # -- Garbage collection
+    ComGarbageCollect="if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
+    ComGarbageRemove="if [[ -s qunex_garbage1 ]]; then rm 1; rm qunex_garbage1; fi; if [[ -s qunex_garbage2 ]]; then rm 2; rm qunex_garbage2; fi"
+    ComRunGarbage="${ComGarbageCollect}; ${ComGarbageRemove}"
     # -- Run the commands locally
     if [[ ${Cluster} == 1 ]]; then
         # -- Command to perform acceptance test
-        ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunexPassed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunexFailed; fi"
+        ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_passed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
         # -- Combine final string of commands
-        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
-
+        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck} ${ComRunGarbage}"
         geho "--------------------------------------------------------------"
         echo ""
         geho "   Running ${CommandToRun} locally on `hostname`"
@@ -357,8 +349,7 @@ else
         # -- Command to perform acceptance test
         ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
         # -- Combine final string of commands
-        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
-
+        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck} ${ComRunGarbage}"
         cd ${MasterRunLogFolder}
         gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
         geho "--------------------------------------------------------------"
@@ -371,7 +362,6 @@ else
         geho "--------------------------------------------------------------"
         echo ""
     fi
-
 fi
 
 }
@@ -383,213 +373,12 @@ fi
 run_turnkey() {
 # -- Specify command variable
 unset QuNexCallToRun
-unset gmri_command_to_run
+unset qxutil_command_to_run
 QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --sessions=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --sessionids=\"${CASE}\""
-bashExec
+bash_call_execute
 }
 show_usage_run_turnkey() {
 ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh
-}
-
-# ----------------------------------------------------------------------------------------------------------------
-# -- organize_dicom - Sort original DICOMs into folders and generates NIFTI files using sort_dicom and dicom2niix
-# ----------------------------------------------------------------------------------------------------------------
-
-organize_dicom() {
-# -- Note: This command passes parameters into two python qx_utilities commands: sort_dicom and dicom2niix
-mkdir ${SessionsFolder}/${CASE}/dicom &> /dev/null
-if [[ ${Overwrite} == "yes" ]]; then
-    echo ""
-    reho "===> Removing prior DICOM run log. Will initiate new run."
-    rm -f ${SessionsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
-fi
-echo ""
-echo "===> Checking for presence of ${SessionsFolder}/${CASE}/dicom/DICOM-Report.txt"
-echo ""
-# -- Check if DICOM-Report.txt is there
-if (test -f ${SessionsFolder}/${CASE}/dicom/DICOM-Report.txt); then
-    echo ""
-    geho "===> Found ${SessionsFolder}/${CASE}/dicom/DICOM-Report.txt"
-    geho "     NOTE: To re-run set --overwrite='yes'"
-    echo ""
-    geho " ... $CASE ---> organize_dicom done"
-    echo ""
-    return 0
-fi
-# -- Check if inbox missing or is empty
-if [ ! -d ${SessionsFolder}/${CASE}/dicom ]; then
-    echo "WARNING: ${SessionsFolder}/${CASE}/dicom folder not found. Checking for ${SessionsFolder}/${CASE}/inbox/"; echo ""
-    if [ ! -d ${SessionsFolder}/${CASE}/inbox ]; then
-        reho "ERROR: ${SessionsFolder}/${CASE}/inbox not found. Make sure your DICOMs are present inside ${SessionsFolder}/${CASE}/inbox/"; echo ""
-        exit 1
-    fi
-fi
-if [ -d ${SessionsFolder}/${CASE}/dicom ]; then
-     DicomCheck=`ls ${SessionsFolder}/${CASE}/dicom/`
-     InboxCheck=`ls ${SessionsFolder}/${CASE}/inbox/`
-     if [[ ${InboxCheck} != "" ]]; then
-         echo "===> ${SessionsFolder}/${CASE}/dicom/ found and data exists."; echo ""
-         if [[ ${InboxCheck} == "" ]]; then
-             reho "ERROR: ${SessionsFolder}/${CASE}/inbox/ found but empty. Will re-run sort_dicom from ${SessionsFolder}/${CASE}/dicom"; echo ""
-         fi
-    fi
-fi
-# -- Specify command variable
-unset CommandToRun
-ComA="cd ${SessionsFolder}/${CASE}"
-ComB="gmri sort_dicom folder=. "
-ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} parelements=${ParElements} sessionid=${CASE}"
-ComD="slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*"
-QuNexCallToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
-# -- QuNex bash execute function
-bashExec
-}
-
-show_usage_organize_dicom() {
- echo ""
- echo "qunex organize_dicom"
- echo ""
- echo "This command expects a set of raw DICOMs in <sessionsfolder>/<case>/inbox "
- echo "DICOMs are organized, gzipped and converted to NIFTI format for additional "
- echo "processing."
- echo ""
- echo "session.txt files will be generated with id and sessions matching the <case>."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder  Path to study folder that contains sessions. If missing then "
- echo "                  optional paramater --folder needs to be provided."
- echo "--sessions        Comma-separated list of sessions to run. If missing then "
- echo "                  --folder needs to be provided for a single-session run."
- echo "--folder          The base sessions folder with the dicom subfolder that holds "
- echo "                  session numbered folders with dicom files. [.]"
- echo "--overwrite       Explicitly force a re-run of organize_dicom"
- echo "--clean           Whether to remove preexisting NIfTI files (yes), leave them "
- echo "                  and abort (no) or ask interactively (ask). [ask]"
- echo "--unzip           If the dicom files are gziped whether to unzip them (yes), "
- echo "                  leave them be and abort (no) or ask interactively (ask). [ask]"
- echo "--gzip            After the dicom files were processed whether to gzip them "
- echo "                  (yes), leave them ungzipped (no) or ask interactively (ask). "
- echo "                  [ask]"
- echo "--verbose         Whether to be report on the progress (True) or not (False). "
- echo "                  [True]"
- echo "--parelements     Degree of parallelism (number of parallel processes) to run "
- echo "                  dcm2nii conversion with."
- echo "                  The number is one by defaults, if specified as 'all', all "
- echo "                  available resource are utilized."
- echo ""
- echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                  followed by relevant optionsm e.g. for SLURM the string would "
- echo "                  look like this:: "
- echo ""
- echo "                  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "::"
- echo ""
- echo " qunex organize_dicom --sessionsfolder='<folder_with_sessions>' \ "
- echo " --sessions='<comma_separarated_list_of_cases>' "
- echo " --scheduler='<name_of_scheduler_and_options>'"
- echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-# -- map_hcp_files - Setup the HCP File Structure
-# ------------------------------------------------------------------------------------------------------
-
-map_hcp_files() {
-# -- Specify command variable
-if [[ ${Overwrite} == "yes" ]]; then
-    HLinks=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
-fi
-QuNexCallToRun="cd ${SessionsFolder}/${CASE}; echo '--> running map_hcp_files for ${CASE}'; echo ''; gmri setup_hcp"
-# -- QuNex bash execute function
-bashExec
-}
-show_usage_map_hcp_files() {
- echo ""
- echo "qunex map_hcp_files"
- echo ""
- echo "This command maps the Human Connectome Project folder structure for "
- echo "preprocessing. It should be executed after proper organize_dicom and session.txt "
- echo "file has been vetted and the session_hcp.txt file was generated."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder    Path to study folder that contains sessions"
- echo "--sessions          Comma separated list of sessions to run"
- echo "--scheduler         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                    followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""
- echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "Example with flagged parameters for a local run::"
- echo ""
- echo " qunex map_hcp_files --sessionsfolder='<folder_with_sessions>' \ "
- echo "     --sessions='<comma_separarated_list_of_cases>' \ "
- echo ""
- echo "Example with flagged parameters for submission to the scheduler::"
- echo ""
- echo " qunex map_hcp_files --sessionsfolder='<folder_with_sessions>' \ "
- echo "     --sessions='<comma_separarated_list_of_cases>' \ "
- echo "     --scheduler='<name_of_cluster_scheduler_and_options>' \ "
- echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-# -- data_sync - Sync files to Yale HPC and back to the Yale server after HCP preprocessing
-# ------------------------------------------------------------------------------------------------------
-
-data_sync() {
-# -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/data_sync.sh \
---syncfolders="${SyncFolders}" \
---sessions="${CASE}" \
---syncserver="${SyncServer}" \
---synclogfolder="${SyncLogFolder}" \
---syncdestination="${SyncDestination}""
-# -- QuNex bash execute function
-bashExec
-}
-show_usage_data_sync() {
- echo ""
- echo "qunex data_sync"
- echo ""
- echo "This command runs rsync across the entire folder structure based on user "
- echo "specifications."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--syncfolders         Set path for folders that contains studies for syncing"
- echo "--syncserver          Set sync server <UserName@some.server.address> or 'local' "
- echo "                      to sync locally"
- echo "--syncdestination     Set sync destination path"
- echo "--synclogfolder       Set log folder"
- echo "--sessions            Set input sessions for backup. "
- echo "                      If set, then --backupfolders path has to contain input "
- echo "                      sessions."
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "::"
- echo ""
- echo " qunex --command=data_sync \ "
- echo "   --syncfolders=<path_to_folders> \ "
- echo "   --syncserver=<sync_server> \ "
- echo "   --syncdestination=<destination_path> \ "
- echo "   --synclogfolder=<path_to_log_folder>  \ "
- echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -610,7 +399,7 @@ QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh \
 --diffdatasuffix=${DiffDataSuffix} \
 --overwrite=${Overwrite}"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_dwi_legacy() {
 echo ""; echo "qunex ${usage_input}"
@@ -645,7 +434,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_eddy_qc.sh \
 --bvecsfile=${BvecsFile} \
 --overwrite=${Overwrite}"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_dwi_eddy_qc() {
 echo ""; echo "qunex ${usage_input}"
@@ -667,7 +456,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \
 --outname=${OutName} \
 --overwrite=${Overwrite}"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_dwi_parcellate() {
 echo ""
@@ -690,7 +479,7 @@ QuNexCallToRun="dwi_seed_tractography_dense.sh \
 --outname="${OutName}" \
 --overwrite="${Overwrite}""
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_dwi_seed_tractography_dense() {
 echo "qunex ${usage_input}"
@@ -702,7 +491,6 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 compute_bold_fc() {
-
 # -- Check type of run
 OutPath="$OutPathFC"
 if [[ ${RunType} == "individual" ]]; then
@@ -716,7 +504,6 @@ if [[ ${RunType} == "individual" ]]; then
         OutPath="${SessionsFolder}/${CASE}/${InputPath}"
     fi
 fi
-
 # -- Check type of connectivity calculation is seed
 if [[ ${Calculation} == "seed" ]]; then
     echo ""
@@ -740,7 +527,7 @@ if [[ ${Calculation} == "seed" ]]; then
     --mask='${MaskFrames}' \
     --covariance=${Covariance}"
     # -- QuNex bash execute function
-    bashExec
+    bash_call_execute
 fi
 # -- Check type of connectivity calculation is gbc
 if [[ ${Calculation} == "gbc" ]]; then
@@ -769,7 +556,7 @@ if [[ ${Calculation} == "gbc" ]]; then
     --vstep=${VoxelStep} \
     --covariance=${Covariance}"
     # -- QuNex bash execute function
-    bashExec
+    bash_call_execute
 fi
 # -- Check type of connectivity calculation is seed
 if [[ ${Calculation} == "dense" ]]; then
@@ -788,7 +575,7 @@ if [[ ${Calculation} == "dense" ]]; then
     --covariance=${Covariance} \
     --mem-limit=${MemLimit} "
     # -- QuNex bash execute function
-    bashExec
+    bash_call_execute
 fi
 }
 show_usage_compute_bold_fc() {
@@ -820,7 +607,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/anat_parcellate.sh \
 --outname=${OutName} \
 --extractdata=${ExtractData}"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_anat_parcellate() {
 echo ""; echo "qunex ${usage_input}"
@@ -855,7 +642,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_parcellate.sh \
 --useweights='${UseWeights}' \
 --weightsfile='${WeightsFile}'"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 
 show_usage_bold_parcellation() {
@@ -889,7 +676,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh \
 --outdir='${OutPath}' \
 --outname='${OutName}'"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_roi_extract() {
 echo ""
@@ -909,7 +696,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh \
 --overwrite='${Overwrite}' \
 --species='${Species}' "
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_dwi_fsl_dtifit() {
 echo ""; echo "qunex ${usage_input}"
@@ -935,9 +722,8 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.s
 --overwrite='${Overwrite}' \
 --species=${Species}"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
-
 show_usage_dwi_fsl_bedpostx_gpu() {
 echo ""; echo "qunex ${usage_input}"
 ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh
@@ -966,7 +752,7 @@ Com3="${AutoPtxFolder}/prepare_for_display.sh ${StudyFolder}/${CASE}/MNINonLinea
 # -- Specify command variable
 QuNexCallToRun="${Com1}; ${Com2}; ${Com3}"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_auto_ptx() {
 echo ""
@@ -988,7 +774,7 @@ RunFolder="${SessionsFolder}/${CASE}/hcp/"
 # -- Specify command variable
 QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh ${RunFolder} ${CASE} 0"
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_dwi_pre_tractography() {
 echo ""; echo "qunex ${usage_input}"
@@ -1011,7 +797,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_g
 --nsamplesmatrix3='${NsamplesMatrixThree}' \
 --overwrite='${Overwrite}' "
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_dwi_probtrackx_dense_gpu() {
 echo ""; echo "qunex ${usage_input}"
@@ -1063,7 +849,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \
 --hcp_suffix='${HCPSuffix}' \
 --batchfile='${SessionBatchFile}' "
 # -- QuNex bash execute function
-bashExec
+bash_call_execute
 }
 show_usage_run_qc() {
 echo ""; echo "qunex ${usage_input}"
@@ -1095,7 +881,7 @@ fi
 # -- Parses the input command line for a specified command line option
 # -- The first parameter is the command line option to look for.
 # -- The remaining parameters are the full list of flagged command line arguments
-opts_GetOpt() {
+get_parameters() {
 sopt="$1"
 shift 1
 for fn in "$@" ; do
@@ -1107,7 +893,7 @@ done
 }
 
 # -- Checks command line arguments for "--help" indicating that help has been requested
-opts_CheckForHelpRequest() {
+check_help_request() {
 for fn in "$@" ; do
     if [[ ${fn} = "--help" ]]; then
         return 0
@@ -1122,7 +908,7 @@ QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 show_version() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
-    echo "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version: v${QuNexVer}"
+    echo "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version: ${QuNexVer}"
 }
 
 # ------------------------------------------------------------------------------
@@ -1135,18 +921,26 @@ if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] ||
     echo ""
     exit 0
 fi
-if [ $(opts_CheckForHelpRequest $@) ]; then
-    show_version
+
+# -- Check if version was requested
+if [ "$1" == "-splash" ] || [ "$1" == "splash" ] || [ "$1" == "--splash" ] || [ "$1" == "--s" ] || [ "$1" == "-s" ]; then
+    show_splash
+    echo ""
+    exit 0
+fi
+
+if [ $(check_help_request $@) ]; then
+    show_splash
     show_usage
     exit 0
 fi
 if [[ -z ${1} ]]; then
-    show_version
+    show_splash
     show_usage
     exit 0
 fi
 if [[ ${1} == "help" ]]; then
-    show_version
+    show_splash
     show_usage
     exit 0
 fi
@@ -1169,7 +963,6 @@ fi
 if [[ $1 != --* ]]; then
     # grep the command
     deprecation=`gmri check_deprecated_commands --command="$1"`
-
     # print and set new command if something was deprecated
     if [[ -n $deprecation ]]; then
         echo ""
@@ -1189,42 +982,40 @@ fi
 # -- Get list of all supported gmri commands
 gmri_commands=`gmri -available`
 # -- Check if command-line input matches any of the gmri commands
-unset gmri_command_to_run
+unset qxutil_command_to_run
 is_gmri_command=0
 for gmri_command in $gmri_commands; do
     if [[ $gmri_command == $1 ]]; then
         is_gmri_command=1
     fi
 done
-
 if [[ $is_gmri_command == 1 ]]; then
     # -- If yes then set the gmri function variable
-    gmri_command_to_run="$1"
+    qxutil_command_to_run="$1"
     # -- Check for input with question mark
-    if [[ "$gmri_command_to_run" =~ .*"?".* ]] && [[ -z ${2} ]]; then
+    if [[ "$qxutil_command_to_run" =~ .*"?".* ]] && [[ -z ${2} ]]; then
         # -- Set usage_input variable to pass and remove question mark
-        usage_input=`echo ${gmri_command_to_run} | cut -c 2-`
+        usage_input=`echo ${qxutil_command_to_run} | cut -c 2-`
         # -- If no other input is provided print help
-        show_usage_gmri
+        show_usage_qxutil
         exit 0
     fi
     # -- Check for input with flag mark
-    if [[ "$gmri_command_to_run" =~ .*"-".* ]] && [[ -z ${2} ]]; then
+    if [[ "$qxutil_command_to_run" =~ .*"-".* ]] && [[ -z ${2} ]]; then
         # -- Set usage_input variable to pass and remove question mark
-        usage_input=`echo ${gmri_command_to_run} | cut -c 2-`
+        usage_input=`echo ${qxutil_command_to_run} | cut -c 2-`
         # -- If no other input is provided print help
-        show_usage_gmri
+        show_usage_qxutil
         exit 0
     fi
     # -- Check for input is command name with no other arguments
-    if [[ "$gmri_command_to_run" != *"-"* ]] && [[ -z ${2} ]]; then
-        usage_input="$gmri_command_to_run"
+    if [[ "$qxutil_command_to_run" != *"-"* ]] && [[ -z ${2} ]]; then
+        usage_input="$qxutil_command_to_run"
         # -- If no other input is provided print help
-        show_usage_gmri
+        show_usage_qxutil
         exit 0
+    # -- Otherwise pass the command with all inputs from the command line
     else
-        # -- Otherwise pass the command with all inputs from the command line
-
         # -- Insert double quotes if an argument has whitespaces in its value
         unset gmriinput
         whitespace="[[:space:]]"
@@ -1244,7 +1035,7 @@ if [[ $is_gmri_command == 1 ]]; then
         done
     fi
 else
-    unset gmri_command_to_run
+    unset qxutil_command_to_run
 fi
 
 
@@ -1254,7 +1045,6 @@ fi
 
 # -- Check if command is supported
 is_qunex_command() {
-
 # check if qunex bash command
 is_qunex_command=0
 for qunex_command in $qunex_commands; do
@@ -1262,7 +1052,6 @@ for qunex_command in $qunex_commands; do
         is_qunex_command=1
     fi
 done
-
 if [[ $is_qunex_command == 1 ]]; then
     show_usage_"$1"
     exit 0
@@ -1279,7 +1068,7 @@ if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]] || [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]
     Usage="$1"
     if [[ ${Usage} == "--a" ]] || [[ ${Usage} == "--all" ]] || [[ ${Usage} == "--allcommands" ]]; then
         show_splash
-        show_allcommands
+        show_all_qunex_commands
         exit 0
     fi
 fi
@@ -1289,7 +1078,7 @@ if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     if [[ ${Usage} == "-a" ]] || [[ ${Usage} == "-all" ]] || [[ ${Usage} == "-allcommands" ]]; then
         show_splash
-        show_allcommands
+        show_all_qunex_commands
         exit 0
     fi  
 fi
@@ -1370,14 +1159,13 @@ if [[ ${CommandToRun} == "run_turnkey" ]]; then
     runTurnkeyArguments="$@"
     runTurnkeyArguments=`printf '%s\n' "${runTurnkeyArguments//run_turnkey/}"`
 fi
-
 # -- Next check if any additional flags are set
 if [[ ${setflag} =~ .*-.* ]]; then
     echo ""
     # -- First get function / command input (to harmonize input with gmri)
     if [[ -z ${CommandToRun} ]]; then
-        FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
-        CommandInput=`opts_GetOpt "${setflag}command" "$@"`   # command to execute
+        FunctionInput=`get_parameters "${setflag}function" "$@"` # function to execute
+        CommandInput=`get_parameters "${setflag}command" "$@"`   # command to execute
         # -- If input name uses 'command' instead of function set that to $CommandToRun
         if [[ -z ${FunctionInput} ]]; then
             CommandToRun="$CommandInput"
@@ -1386,27 +1174,27 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
     # -- StudyFolder & SessionsFolder input flags
-    StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`                      # study folder to work on
+    StudyFolder=`get_parameters "${setflag}studyfolder" $@`                      # study folder to work on
     if [[ -z ${StudyFolder} ]]; then
-        StudyFolder=`opts_GetOpt "${setflag}path" $@`                         # local folder to work on
+        StudyFolder=`get_parameters "${setflag}path" $@`                         # local folder to work on
     fi
     StudyFolderPath="${StudyFolder}"
     STUDY_PATH="${StudyFolder}"    
 
-    SessionsFolder=`opts_GetOpt "${setflag}sessionsfolder" $@`                # sessions folder path to work on
+    SessionsFolder=`get_parameters "${setflag}sessionsfolder" $@`                # sessions folder path to work on
     if [[ -z ${SessionsFolder} ]]; then
-       SessionsFolder=`opts_GetOpt "${setflag}sessionfolder"  $@`                # sessions folder path to work on
+       SessionsFolder=`get_parameters "${setflag}sessionfolder"  $@`                # sessions folder path to work on
     fi    
     # -- backwards compatibility -- sessionsfolder used to be supported by --subjectsfolder or --subjectfolder
     if [[ -z ${SessionsFolder} ]]; then
-        SubjectFolder=`opts_GetOpt "${setflag}subjectsfolder" $@`
+        SubjectFolder=`get_parameters "${setflag}subjectsfolder" $@`
         SessionsFolder="${SubjectFolder}"
         if [[ ! -z ${SubjectFolder} ]]; then
             mageho "WARNING: The --subjectsfolder parameter is now renamed to --sessionsfolder"
         fi
     fi
     if [[ -z ${SessionsFolder} ]]; then
-        SubjectFolder=`opts_GetOpt "${setflag}subjectfolder" $@`
+        SubjectFolder=`get_parameters "${setflag}subjectfolder" $@`
         SessionsFolder="${SubjectFolder}"
         if [[ ! -z ${SubjectFolder} ]]; then
             mageho "WARNING: The --subjectfolder parameter is now renamed to --sessionsfolder"
@@ -1422,7 +1210,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
         StudyFolderPath="$StudyFolder"
         STUDY_PATH="${StudyFolder}"
     fi
-
     # -- If study folder is missing but sessions folder is defined assume standard QuNex folder structure
     if [[ -z ${StudyFolder} ]]; then
         if [[ ! -z ${SessionsFolder} ]] && [[ -d ${SessionsFolder} ]]; then
@@ -1456,7 +1243,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
             fi
         fi
     fi
-    
     # -- Check if SessionsFolderName and SessionsFolder match
     if [[ ! -z ${SessionsFolder} ]] && [[ ! -z ${SessionsFolderName} ]]; then
         SessionsFolderBase=`basename ${SessionsFolder}`
@@ -1469,7 +1255,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
             echo ""
         fi
     fi
-
     # -- If sessions folder is missing but study folder is defined assume standard QuNex folder structure
     if [[ -z ${SessionsFolder} ]]; then
        if [[ -z ${SessionsFolderName} ]]; then
@@ -1484,7 +1269,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
            fi
        fi
     fi
-
     # -- If session folder name is missing but absolute path sessions folder is defined assume standard QuNex folder structure or check basename
     if [[ -z ${SessionsFolderName} ]]; then
         if [[ -z ${SessionsFolder} ]]; then
@@ -1498,69 +1282,64 @@ if [[ ${setflag} =~ .*-.* ]]; then
             SessionsFolderName=`basename ${SessionsFolder}`
         fi
     fi
-    
+    # -- Set study path
     if [[ -z ${STUDY_PATH} ]]; then
          STUDY_PATH=${StudyFolder}
     fi
     if [[ -z ${StudyFolderPath} ]]; then
          StudyFolderPath=${StudyFolder}
     fi
-
     # -- If logfolder flag set then set it and set master log
     if [[ -z ${LogFolder} ]]; then
         LogFolder="${StudyFolder}/processing/logs"
     fi
-            
     # -- Set additional RunTurnkey flags
-    TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkeytype" $@`
-    TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
-    WORKDIR=`opts_GetOpt "${setflag}workingdir" $@`
-    PROJECT_NAME=`opts_GetOpt "${setflag}projectname" $@`
-    CleanupSession=`opts_GetOpt "${setflag}cleanupsession" $@`
-    CleanupProject=`opts_GetOpt "${setflag}cleanupproject" $@`
-    RawDataInputPath=`opts_GetOpt "${setflag}rawdatainput" $@`
-    OVERWRITE_SESSION=`opts_GetOpt "${setflag}overwritesession" $@`
-    OVERWRITE_STEP=`opts_GetOpt "${setflag}overwritestep" $@`
-    OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
-    OVERWRITE_PROJECT_FORCE=`opts_GetOpt "${setflag}overwriteprojectforce" $@`
-    OVERWRITE_PROJECT_XNAT=`opts_GetOpt "${setflag}overwriteprojectxnat" $@`
-    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
-    LOCAL_BATCH_FILE=`opts_GetOpt "${setflag}local_batchfile" $@`
-    SessionBatchFile=`opts_GetOpt "${setflag}batchfile" $@`
-    SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
-    XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
-    XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
-    XNAT_PROJECT_ID=`opts_GetOpt "${setflag}xnatprojectid" $@`
-    XNAT_SUBJECT_ID=`opts_GetOpt "${setflag}xnatsubjectid" $@`
-    XNAT_HOST_NAME=`opts_GetOpt "${setflag}xnathost" $@`
-    XNAT_USER_NAME=`opts_GetOpt "${setflag}xnatuser" $@`
-    XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
-    XNAT_STUDY_INPUT_PATH=`opts_GetOpt "${setflag}xnatstudyinputpath" $@`
-
+    TURNKEY_TYPE=`get_parameters "${setflag}turnkeytype" $@`
+    TURNKEY_STEPS=`get_parameters "${setflag}turnkeysteps" $@`
+    WORKDIR=`get_parameters "${setflag}workingdir" $@`
+    PROJECT_NAME=`get_parameters "${setflag}projectname" $@`
+    CleanupSession=`get_parameters "${setflag}cleanupsession" $@`
+    CleanupProject=`get_parameters "${setflag}cleanupproject" $@`
+    RawDataInputPath=`get_parameters "${setflag}rawdatainput" $@`
+    OVERWRITE_SESSION=`get_parameters "${setflag}overwritesession" $@`
+    OVERWRITE_STEP=`get_parameters "${setflag}overwritestep" $@`
+    OVERWRITE_PROJECT=`get_parameters "${setflag}overwriteproject" $@`
+    OVERWRITE_PROJECT_FORCE=`get_parameters "${setflag}overwriteprojectforce" $@`
+    OVERWRITE_PROJECT_XNAT=`get_parameters "${setflag}overwriteprojectxnat" $@`
+    BATCH_PARAMETERS_FILENAME=`get_parameters "${setflag}batchfile" $@`
+    LOCAL_BATCH_FILE=`get_parameters "${setflag}local_batchfile" $@`
+    SessionBatchFile=`get_parameters "${setflag}batchfile" $@`
+    SCAN_MAPPING_FILENAME=`get_parameters "${setflag}mappingfile" $@`
+    XNAT_ACCSESSION_ID=`get_parameters "${setflag}xnataccsessionid" $@`
+    XNAT_SESSION_LABELS=`get_parameters "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
+    XNAT_PROJECT_ID=`get_parameters "${setflag}xnatprojectid" $@`
+    XNAT_SUBJECT_ID=`get_parameters "${setflag}xnatsubjectid" $@`
+    XNAT_HOST_NAME=`get_parameters "${setflag}xnathost" $@`
+    XNAT_USER_NAME=`get_parameters "${setflag}xnatuser" $@`
+    XNAT_PASSWORD=`get_parameters "${setflag}xnatpass" $@`
+    XNAT_STUDY_INPUT_PATH=`get_parameters "${setflag}xnatstudyinputpath" $@`
     # -- General sessions and sessionids flags
-    CASES=`opts_GetOpt "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
-    SESSIONIDS=`opts_GetOpt "${setflag}sessionids" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    CASES=`get_parameters "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    SESSIONIDS=`get_parameters "${setflag}sessionids" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     if [[ -z ${CASES} ]]; then
         if [[ ! -z ${SESSIONIDS} ]]; then
             CASES="$SESSIONIDS"
             SESSIONS="$SESSIONIDS"
         fi
     fi
-     
     # -- Backwards comapatibility, session* used to be subject* 
     if [[ -z ${CASES} ]]; then
-        CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+        CASES=`get_parameters "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
         SESSIONS="$CASES"
         SESSIONIDS="$CASES"
         if [[ ! -z ${CASES} ]]; then
             mageho "WARNING: The --subjects parameter is now renamed to --sessions"
         fi
     fi
-    
     # -- Backwards compatibility, sessionids* used to be subjid* 
     if [[ -z ${CASES} ]]; then
         if [[ -z ${SESSIONIDS} ]]; then
-            SESSIONIDS=`opts_GetOpt "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+            SESSIONIDS=`get_parameters "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
             SESSIONS="$SESSIONIDS"
             CASES="$SESSIONS"
             if [[ ! -z ${SESSIONIDS} ]]; then
@@ -1568,44 +1347,40 @@ if [[ ${setflag} =~ .*-.* ]]; then
             fi
         fi
     fi
-
     # -- Backwards compatibility for session labels
     if [[ -z ${CASES} ]]; then
         if [[ -z ${SESSION_LABELS} ]]; then
-            SESSION_LABELS=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+            SESSION_LABELS=`get_parameters "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
             SESSIONS="$SESSION_LABELS"
             CASES="$SESSION_LABELS"
             SESSIONIDS="$SESSION_LABELS"
         fi
     fi
-
     # -- Backwards compatibility for session labels
     if [[ -z ${CASES} ]]; then
         if [[ -z ${SESSION_LABELS} ]]; then
-            SESSION_LABELS=`opts_GetOpt "--sessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+            SESSION_LABELS=`get_parameters "--sessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
             SESSIONS="$SESSION_LABELS"
             CASES="$SESSION_LABELS"
             SESSIONIDS="$SESSION_LABELS"
         fi
     fi
-    
     # -- Backwards compatibility for session labels
     if [[ -z ${CASES} ]]; then
         if [[ -z ${SESSION_LABELS} ]]; then
-            SESSION_LABELS=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+            SESSION_LABELS=`get_parameters "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
             SESSIONS="$SESSION_LABELS"
             CASES="$SESSION_LABELS"   
             SESSIONIDS="$SESSION_LABELS"
         fi
     fi
-
     # -- General operational flags
-    Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
-    PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
-    Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
-    Bash=`opts_GetOpt "${setflag}bash" "$@"`          # Specify bash commands to run on the compute node
-    LogFolder=`opts_GetOpt "${setflag}logfolder" $@`  # Log location
-    LogSave=`opts_GetOpt "${setflag}log" $@`          # Log save
+    Overwrite=`get_parameters "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
+    PRINTCOM=`get_parameters "${setflag}printcom" $@`    # Option for printing the entire command
+    Scheduler=`get_parameters "${setflag}scheduler" $@`  # Specify the type of scheduler to use
+    Bash=`get_parameters "${setflag}bash" "$@"`          # Specify bash commands to run on the compute node
+    LogFolder=`get_parameters "${setflag}logfolder" $@`  # Log location
+    LogSave=`get_parameters "${setflag}log" $@`          # Log save
     # -- If log flag set then set it
     if [[ -z ${LogSave} ]] || [[ ${LogSave} == "yes" ]]; then
         LogSave="keep"
@@ -1620,164 +1395,146 @@ if [[ ${setflag} =~ .*-.* ]]; then
     else
         RunMethod="1"
     fi
-
     # -- Input flags for general_plot_bold_timeseries
-    QCPlotElements=`opts_GetOpt "${setflag}qcplotelements" $@`
-    QCPlotImages=`opts_GetOpt "${setflag}qcplotimages" $@`
-    QCPlotMasks=`opts_GetOpt "${setflag}qcplotmasks" $@`
-    # -- Input flags for organize_dicom
-    Folder=`opts_GetOpt "${setflag}folder" $@`
-    Clean=`opts_GetOpt "${setflag}clean" $@`
-    Unzip=`opts_GetOpt "${setflag}unzip" $@`
-    Gzip=`opts_GetOpt "${setflag}gzip" $@`
-    VerboseRun=`opts_GetOpt "${setflag}verbose" $@`
-    ParElements=`opts_GetOpt "${setflag}parelements" $@`
+    QCPlotElements=`get_parameters "${setflag}qcplotelements" $@`
+    QCPlotImages=`get_parameters "${setflag}qcplotimages" $@`
+    QCPlotMasks=`get_parameters "${setflag}qcplotmasks" $@`
     # -- Path options for FreeSurfer or QuNex
-    FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
-    QuNexVersion=`opts_GetOpt "${setflag}version" $@`
+    FreeSurferHome=`get_parameters "${setflag}hcp_freesurfer_home" $@`
+    QuNexVersion=`get_parameters "${setflag}version" $@`
     # -- Input flags for create_list
-    ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@`
-    Append=`opts_GetOpt "${setflag}append" $@`
-    ListName=`opts_GetOpt "${setflag}listname" $@`
-    HeaderBatch=`opts_GetOpt "${setflag}headerbatch" $@`
-    ListFunction=`opts_GetOpt "${setflag}listfunction" $@`
-    ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
-    FileType=`opts_GetOpt "${setflag}filetype" $@`
-    BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
-    SessionHCPFile=`opts_GetOpt "${setflag}sessionhcpfile" $@`
-    ListPath=`opts_GetOpt "${setflag}listpath" $@`
-    # -- Input flags fo data_sync
-    NetID=`opts_GetOpt "${setflag}netid" $@`
-    HCPSessionsFolder=`opts_GetOpt "${setflag}clusterpath" $@`
-    Direction=`opts_GetOpt "${setflag}dir" $@`
-    ClusterName=`opts_GetOpt "${setflag}cluster" $@`
+    ListGenerate=`get_parameters "${setflag}listtocreate" $@`
+    Append=`get_parameters "${setflag}append" $@`
+    ListName=`get_parameters "${setflag}listname" $@`
+    HeaderBatch=`get_parameters "${setflag}headerbatch" $@`
+    ListFunction=`get_parameters "${setflag}listfunction" $@`
+    ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
+    FileType=`get_parameters "${setflag}filetype" $@`
+    BoldSuffix=`get_parameters "${setflag}boldsuffix" $@`
+    SessionHCPFile=`get_parameters "${setflag}sessionhcpfile" $@`
+    ListPath=`get_parameters "${setflag}listpath" $@`
     # -- Input flags for extract_roi
-    ROIFile=`opts_GetOpt "${setflag}roifile" $@`
-    ROIFileSessionSpecific=`opts_GetOpt "${setflag}sessionroifile" $@`
+    ROIFile=`get_parameters "${setflag}roifile" $@`
+    ROIFileSessionSpecific=`get_parameters "${setflag}sessionroifile" $@`
     # -- Input flags for  compute_bold_fc
-    InputFiles=`opts_GetOpt "${setflag}inputfiles" $@`
-    OutPathFC=`opts_GetOpt "${setflag}targetf" $@`
-    Calculation=`opts_GetOpt "${setflag}calculation" $@`
-    RunType=`opts_GetOpt "${setflag}runtype" $@`
-    FileList=`opts_GetOpt "${setflag}flist" $@`
-    IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`
-    MaskFrames=`opts_GetOpt "${setflag}mask" "$@"`
-    Covariance=`opts_GetOpt "${setflag}covariance" $@`
-    TargetROI=`opts_GetOpt "${setflag}target" $@`
-    RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`
-    RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`
-    GBCCommand=`opts_GetOpt "${setflag}command" $@`
-    Verbose=`opts_GetOpt "${setflag}verbose" $@`
-    ComputeTime=`opts_GetOpt "${setflag}-time" $@`
-    VoxelStep=`opts_GetOpt "${setflag}vstep" $@`
-    ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`
-    FCCommand=`opts_GetOpt "${setflag}options" $@`
-    Method=`opts_GetOpt "${setflag}method" $@`
-    MemLimit=`opts_GetOpt "${setflag}mem-limit" $@`
+    InputFiles=`get_parameters "${setflag}inputfiles" $@`
+    OutPathFC=`get_parameters "${setflag}targetf" $@`
+    Calculation=`get_parameters "${setflag}calculation" $@`
+    RunType=`get_parameters "${setflag}runtype" $@`
+    FileList=`get_parameters "${setflag}flist" $@`
+    IgnoreFrames=`get_parameters "${setflag}ignore" $@`
+    MaskFrames=`get_parameters "${setflag}mask" "$@"`
+    Covariance=`get_parameters "${setflag}covariance" $@`
+    TargetROI=`get_parameters "${setflag}target" $@`
+    RadiusSmooth=`get_parameters "${setflag}rsmooth" $@`
+    RadiusDilate=`get_parameters "${setflag}rdilate" $@`
+    GBCCommand=`get_parameters "${setflag}command" $@`
+    Verbose=`get_parameters "${setflag}verbose" $@`
+    ComputeTime=`get_parameters "${setflag}-time" $@`
+    VoxelStep=`get_parameters "${setflag}vstep" $@`
+    ROIInfo=`get_parameters "${setflag}roinfo" $@`
+    FCCommand=`get_parameters "${setflag}options" $@`
+    Method=`get_parameters "${setflag}method" $@`
+    MemLimit=`get_parameters "${setflag}mem-limit" $@`
     # -- Input flags for bold_parcellation
-    InputFile=`opts_GetOpt "${setflag}inputfile" $@`
-    InputPath=`opts_GetOpt "${setflag}inputpath" $@`
-    InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@`
-    SingleInputFile=`opts_GetOpt "${setflag}singleinputfile" $@`
-    OutPath=`opts_GetOpt "${setflag}outpath" $@`
-    OutName=`opts_GetOpt "${setflag}outname" $@`
-    ExtractData=`opts_GetOpt "${setflag}extractdata" $@`
-    ComputePConn=`opts_GetOpt "${setflag}computepconn" $@`
-    UseWeights=`opts_GetOpt "${setflag}useweights" $@`
-    WeightsFile=`opts_GetOpt "${setflag}weightsfile" $@`
-    ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
+    InputFile=`get_parameters "${setflag}inputfile" $@`
+    InputPath=`get_parameters "${setflag}inputpath" $@`
+    InputDataType=`get_parameters "${setflag}inputdatatype" $@`
+    SingleInputFile=`get_parameters "${setflag}singleinputfile" $@`
+    OutPath=`get_parameters "${setflag}outpath" $@`
+    OutName=`get_parameters "${setflag}outname" $@`
+    ExtractData=`get_parameters "${setflag}extractdata" $@`
+    ComputePConn=`get_parameters "${setflag}computepconn" $@`
+    UseWeights=`get_parameters "${setflag}useweights" $@`
+    WeightsFile=`get_parameters "${setflag}weightsfile" $@`
+    ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
     # -- Input flags for dwi_legacy
-    EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
-    PEdir=`opts_GetOpt "${setflag}PEdir" $@`
-    TE=`opts_GetOpt "${setflag}TE" $@`
-    UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@`
-    DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@`
-    Scanner=`opts_GetOpt "${setflag}scanner" $@`
-    UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`
+    EchoSpacing=`get_parameters "${setflag}echospacing" $@`
+    PEdir=`get_parameters "${setflag}PEdir" $@`
+    TE=`get_parameters "${setflag}TE" $@`
+    UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
+    DiffDataSuffix=`get_parameters "${setflag}diffdatasuffix" $@`
+    Scanner=`get_parameters "${setflag}scanner" $@`
+    UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
     # -- Input flags for dwi_parcellate
-    MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@`
-    ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
-    OutName=`opts_GetOpt "${setflag}outname" $@`
-    WayTotal=`opts_GetOpt "${setflag}waytotal" $@`
+    MatrixVersion=`get_parameters "${setflag}matrixversion" $@`
+    ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
+    OutName=`get_parameters "${setflag}outname" $@`
+    WayTotal=`get_parameters "${setflag}waytotal" $@`
     # -- Input flags for  dwi_seed_tractography_dense
-    SeedFile=`opts_GetOpt "${setflag}seedfile" $@`
+    SeedFile=`get_parameters "${setflag}seedfile" $@`
     # -- Input flags for  dwi_eddy_qc
-    EddyBase=`opts_GetOpt "${setflag}eddybase" $@`
-    EddyPath=`opts_GetOpt "${setflag}eddypath" $@`
-    Report=`opts_GetOpt "${setflag}report" $@`
-    BvalsFile=`opts_GetOpt "${setflag}bvalsfile" $@`
-    BvecsFile=`opts_GetOpt "${setflag}bvecsfile" $@`
-    EddyIdx=`opts_GetOpt "${setflag}eddyidx" $@`
-    EddyParams=`opts_GetOpt "${setflag}eddyparams" $@`
-    List=`opts_GetOpt "${setflag}list" $@`
-    Mask=`opts_GetOpt "${setflag}mask" $@`
-    GroupBar=`opts_GetOpt "${setflag}groupvar" $@`
-    OutputDir=`opts_GetOpt "${setflag}outputdir" $@`
-    Update=`opts_GetOpt "${setflag}update" $@`
+    EddyBase=`get_parameters "${setflag}eddybase" $@`
+    EddyPath=`get_parameters "${setflag}eddypath" $@`
+    Report=`get_parameters "${setflag}report" $@`
+    BvalsFile=`get_parameters "${setflag}bvalsfile" $@`
+    BvecsFile=`get_parameters "${setflag}bvecsfile" $@`
+    EddyIdx=`get_parameters "${setflag}eddyidx" $@`
+    EddyParams=`get_parameters "${setflag}eddyparams" $@`
+    List=`get_parameters "${setflag}list" $@`
+    Mask=`get_parameters "${setflag}mask" $@`
+    GroupBar=`get_parameters "${setflag}groupvar" $@`
+    OutputDir=`get_parameters "${setflag}outputdir" $@`
+    Update=`get_parameters "${setflag}update" $@`
     # -- Input flags for dwi_fsl_bedpostx_gpu
-    Fibers=`opts_GetOpt "${setflag}fibers" $@`
-    Weight=`opts_GetOpt "${setflag}weight" $@`
-    Burnin=`opts_GetOpt "${setflag}burnin" $@`
-    Jumps=`opts_GetOpt "${setflag}jumps" $@`
-    Sample=`opts_GetOpt "${setflag}sample" $@`
-    Model=`opts_GetOpt "${setflag}model" $@`
-    Rician=`opts_GetOpt "${setflag}rician" $@`
+    Fibers=`get_parameters "${setflag}fibers" $@`
+    Weight=`get_parameters "${setflag}weight" $@`
+    Burnin=`get_parameters "${setflag}burnin" $@`
+    Jumps=`get_parameters "${setflag}jumps" $@`
+    Sample=`get_parameters "${setflag}sample" $@`
+    Model=`get_parameters "${setflag}model" $@`
+    Rician=`get_parameters "${setflag}rician" $@`
     # -- Input flags for dwi_probtrackx_dense_gpu
-    MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
-    MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
-    NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
-    NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`
-    ScriptsFolder=`opts_GetOpt "${setflag}scriptsfolder" $@`
+    MatrixOne=`get_parameters "${setflag}omatrix1" $@`
+    MatrixThree=`get_parameters "${setflag}omatrix3" $@`
+    NsamplesMatrixOne=`get_parameters "${setflag}nsamplesmatrix1" $@`
+    NsamplesMatrixThree=`get_parameters "${setflag}nsamplesmatrix3" $@`
+    ScriptsFolder=`get_parameters "${setflag}scriptsfolder" $@`
     # -- Input flags for run_qc 
-    OutPath=`opts_GetOpt "${setflag}outpath" $@`
-    scenetemplatefolder=`opts_GetOpt "${setflag}scenetemplatefolder" $@`
-    UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
-    UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
-    Modality=`opts_GetOpt "${setflag}modality" $@`
-    runQC_Custom=`opts_GetOpt "${setflag}customqc" $@`
-    OmitDefaults=`opts_GetOpt "${setflag}omitdefaults" $@`
-    HCPSuffix=`opts_GetOpt "${setflag}hcp_suffix" $@`
-    DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
-    DWIData=`opts_GetOpt "${setflag}dwidata" $@`
-    DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@`
-    BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
-    EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
-    DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
-    GeneralSceneDataFile=`opts_GetOpt "${setflag}datafile" $@`
-    GeneralSceneDataPath=`opts_GetOpt "${setflag}datapath" $@`
-    ICAFIXFunction=`opts_GetOpt "${setflag}icafixfunction" $@`
-    HPFilter=`opts_GetOpt "${setflag}hpfilter" $@`
-    MovCorr=`opts_GetOpt "${setflag}movcorr" $@`
-
+    OutPath=`get_parameters "${setflag}outpath" $@`
+    scenetemplatefolder=`get_parameters "${setflag}scenetemplatefolder" $@`
+    UserSceneFile=`get_parameters "${setflag}userscenefile" $@`
+    UserScenePath=`get_parameters "${setflag}userscenepath" $@`
+    Modality=`get_parameters "${setflag}modality" $@`
+    runQC_Custom=`get_parameters "${setflag}customqc" $@`
+    OmitDefaults=`get_parameters "${setflag}omitdefaults" $@`
+    HCPSuffix=`get_parameters "${setflag}hcp_suffix" $@`
+    DWIPath=`get_parameters "${setflag}dwipath" $@`
+    DWIData=`get_parameters "${setflag}dwidata" $@`
+    DtiFitQC=`get_parameters "${setflag}dtifitqc" $@`
+    BedpostXQC=`get_parameters "${setflag}bedpostxqc" $@`
+    EddyQCStats=`get_parameters "${setflag}eddyqcstats" $@`
+    DWILegacy=`get_parameters "${setflag}dwilegacy" $@`
+    GeneralSceneDataFile=`get_parameters "${setflag}datafile" $@`
+    GeneralSceneDataPath=`get_parameters "${setflag}datapath" $@`
+    ICAFIXFunction=`get_parameters "${setflag}icafixfunction" $@`
+    HPFilter=`get_parameters "${setflag}hpfilter" $@`
+    MovCorr=`get_parameters "${setflag}movcorr" $@`
     # -- Code block for BOLDs
-    BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
+    BOLDS=`get_parameters "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     
     if [[ -z ${BOLDS} ]]; then
-        BOLDS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
+        BOLDS=`get_parameters "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     fi
     if [[ -z ${BOLDS} ]]; then
-        BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
+        BOLDS=`get_parameters "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     fi
-    
     BOLDRUNS="${BOLDS}"
     BOLDDATA="${BOLDS}"
-    BOLDfc=`opts_GetOpt "${setflag}boldfc" $@`
-    BOLDfcInput=`opts_GetOpt "${setflag}boldfcinput" $@`
-    BOLDfcPath=`opts_GetOpt "${setflag}boldfcpath" $@`
-    
-    if [[ -z ${BOLDLIST} ]]; then BOLDLIST=`opts_GetOpt "${setflag}bolddata" "$@"`; fi
-    if [[ -z ${BOLDLIST} ]]; then BOLDLIST=`opts_GetOpt "${setflag}bolds" "$@"`; fi
-    if [[ -z ${BOLDLIST} ]]; then BOLDLIST=`opts_GetOpt "${setflag}boldruns" "$@"`; fi
-    
+    BOLDfc=`get_parameters "${setflag}boldfc" $@`
+    BOLDfcInput=`get_parameters "${setflag}boldfcinput" $@`
+    BOLDfcPath=`get_parameters "${setflag}boldfcpath" $@`
+    if [[ -z ${BOLDLIST} ]]; then BOLDLIST=`get_parameters "${setflag}bolddata" "$@"`; fi
+    if [[ -z ${BOLDLIST} ]]; then BOLDLIST=`get_parameters "${setflag}bolds" "$@"`; fi
+    if [[ -z ${BOLDLIST} ]]; then BOLDLIST=`get_parameters "${setflag}boldruns" "$@"`; fi
     BOLDLIST=`echo "${BOLDLIST}" | sed 's/ /,/g;s/|/ /g'`
-    BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
-    BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
-    SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
-    SNROnly=`opts_GetOpt "${setflag}snronly" $@`
-    TimeStamp=`opts_GetOpt "${setflag}timestamp" $@`
-    Suffix=`opts_GetOpt "${setflag}suffix" $@`
-    SceneZip=`opts_GetOpt "${setflag}scenezip" $@`
-
+    BOLDSuffix=`get_parameters "${setflag}boldsuffix" $@`
+    BOLDPrefix=`get_parameters "${setflag}boldprefix" $@`
+    SkipFrames=`get_parameters "${setflag}skipframes" $@`
+    SNROnly=`get_parameters "${setflag}snronly" $@`
+    TimeStamp=`get_parameters "${setflag}timestamp" $@`
+    Suffix=`get_parameters "${setflag}suffix" $@`
+    SceneZip=`get_parameters "${setflag}scenezip" $@`
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
         SessionBatchFile="$CASES"
@@ -1786,16 +1543,15 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo ""
         CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
     fi
-
     # -- Get species flag for NHP pipelines
-    Species=`opts_GetOpt "${setflag}species" $@`
+    Species=`get_parameters "${setflag}species" $@`
 fi
 
 # ------------------------------------------------------------------------------
 # -- Backwards compatibility settings for subjects vs. sessions folder 
 # ------------------------------------------------------------------------------
 
-if [[ -z ${gmri_command_to_run} ]]; then
+if [[ -z ${qxutil_command_to_run} ]]; then
     if [[ ${SessionsFolderName} != "subjects" ]]; then
     if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
         mageho "WARNING: You are attempting to execute a QuNex command using a conflicting QuNex file hierarchy:"
@@ -1850,7 +1606,7 @@ if [[ -z ${gmri_command_to_run} ]]; then
         fi
     fi
     fi
-
+    # -- Check for outdated folder hierarchy
     if [[ ${SessionsFolderName} == "subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
         mageho "WARNING: You are attempting to execute QuNex command using an outdated QuNex file hierarchy:"
         echo ""
@@ -1865,7 +1621,7 @@ if [[ -z ${gmri_command_to_run} ]]; then
     fi
 fi
 
-
+# -- Set sessions variable
 if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
     QuNexSessionsFolder="${StudyFolder}/sessions"
     SessionsFolderName="sessions"
@@ -1875,23 +1631,17 @@ if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] 
     SessionsFolderName="sessions"
 fi
 
-
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-= Execute specific commands =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 
 # ------------------------------------------------------------------------------
-# -- Execution of qx_utilities and qx_mri matlab commands
+# -- Execution of qx_utilities
 # ------------------------------------------------------------------------------
 
 # -- Execute qx_utilities and qx_mri matlab commands
-if [[ ${gmri_command_to_run} ]]; then
-   bashExec
-fi
-
-# -- Print help for qx_utilities and qx_mri matlab commands
-if [[ ${CommandToRun} == "matlab_help" ]]; then
-    ${CommandToRun}
+if [[ ${qxutil_command_to_run} ]]; then
+   bash_call_execute
 fi
 
 # ------------------------------------------------------------------------------
@@ -1942,75 +1692,6 @@ if [[ ${CommandToRun} == "run_turnkey" ]]; then
    echo "${runTurnkeyArguments} " | sed -e $'s/ /\\\n/g'
     # -- Loop through all the cases
     for CASE in ${CASES}; do ${CommandToRun}; done
-fi
-
-# ------------------------------------------------------------------------------
-# -- organize_dicom
-# ------------------------------------------------------------------------------
-
-if [[ ${CommandToRun} == "organize_dicom" ]]; then
-    CommandToRun="organize_dicom"
-    # -- Check all the user-defined parameters:
-    if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [[ -z ${StudyFolder} ]]; then
-        if [[ -z ${Folder} ]]; then
-            reho "ERROR: Study folder missing and optional parameter --folder not specified."
-            exit 1
-        fi
-    fi
-    if [[ -z ${SessionsFolder} ]]; then
-        if [[ -z ${Folder} ]]; then
-            reho "ERROR: Sesssions folder missing and options parameter --folder not specified"
-            exit 1
-        fi
-    fi
-    if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
-    if [[ -z ${Overwrite} ]]; then Overwrite="no"; fi
-    Cluster="$RunMethod"
-    if [[ ${Cluster} == "2" ]]; then
-            if [[ -z ${Scheduler} ]]; then reho "ERROR: Scheduler specification and options missing."; exit 1; fi
-    fi
-    # -- Optional parameters
-    if [[ -z ${Folder} ]]; then
-        Folder="$SessionsFolder"
-    else
-        if [[ -z ${StudyFolder} ]] && [[ -z ${SessionsFolder} ]]; then
-            SessionsFolder="$Folder"
-            StudyFolder="../$SessionsFolder"
-        fi
-    fi
-    if [[ -z ${Clean} ]]; then Clean="yes"; echo ""; echo "--clean not specified explicitly. Setting --clean=$Clean."; echo ""; fi
-    if [[ -z ${Unzip} ]]; then Unzip="yes"; echo ""; echo "--unzip not specified explicitly. Setting --unzip=$Unzip."; echo ""; fi
-    if [[ -z ${Unzip} ]]; then Gzip="yes"; echo ""; echo "--gzip not specified explicitly. Setting --gzip=$Gzip."; echo ""; fi
-    if [[ -z ${VerboseRun} ]]; then VerboseRun="True"; echo ""; echo "--verbose not specified explicitly. Proceeding --verbose=$Verbose"; echo ""; fi
-    if [[ -z ${ParElements} ]]; then ParElements="4"; echo ""; echo "--parelements not specified explicitly. Proceeding --parelements=$ParElements"; echo ""; fi
-    # -- Report parameters
-    echo ""
-    echo "Running $CommandToRun with the following parameters:"
-    echo "--------------------------------------------------------------"
-    if [[ -z ${Folder} ]]; then
-        echo "   Optional --folder parameter not set. Using standard inputs."
-        echo "   Study Folder: ${StudyFolder}"
-        echo "   Sessions Folder: ${SessionsFolder}"
-    else
-        echo "Optional --folder parameter set explicitly. "
-        echo "   Setting sessions folder and study accordingly."
-        echo "   Study Folder: ${StudyFolder}"
-        echo "   Sessions Folder: ${SessionsFolder}"
-    fi
-    echo "   Sessions: ${CASES}"
-    echo "   Overwrite prior run: ${Overwrite}"
-    echo ""
-    # -- Report optional parameters
-    echo "   Clean NIFTI files: ${Clean}"
-    echo "   Unzip DICOM files: ${Unzip}"
-    echo "   Gzip DICOM files: ${Gzip}"
-    echo "   Report verbose run: ${VerboseRun}"
-    echo "   Elements to run in parallel: ${ParElements}"
-    echo "   Study log folder: ${LogFolder}"
-    echo ""
-    # -- Loop through all the cases
-    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -2265,64 +1946,6 @@ if [ "$CommandToRun" == "dwi_eddy_qc" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- map_hcp_files
-# ------------------------------------------------------------------------------
-
-if [ "$CommandToRun" == "map_hcp_files" ]; then
-    # -- Check all the user-defined parameters:
-    if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
-    Cluster="$RunMethod"
-    if [[ ${Cluster} == "2" ]]; then
-            if [[ -z ${Scheduler} ]]; then reho "ERROR: Scheduler specification and options missing."; exit 1; fi
-    fi
-    # -- Report parameters
-    echo ""
-    echo "Running $CommandToRun with the following parameters:"
-    echo "--------------------------------------------------------------"
-    echo "Study Folder: ${StudyFolder}"
-    echo "Sessions Folder: ${SessionsFolder}"
-    echo "Sessions: ${CASES}"
-    echo "Study Log Folder: ${LogFolder}"
-    echo ""
-    for CASE in ${CASES}; do
-        echo "--> Ensuring that and correct session_hcp.txt files is generated..."; echo ""
-        if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
-            echo "--> ${SessionsFolder}/${CASE}/session_hcp.txt found"
-            echo ""
-            ${CommandToRun} ${CASE}
-        else
-            echo "--> ${SessionsFolder}/${CASE}/session_hcp.txt is missing - please setup the session.txt files and re-run function."
-        fi
-    done
-fi
-
-# ------------------------------------------------------------------------------
-# -- data_sync
-# ------------------------------------------------------------------------------
-
-if [ "$CommandToRun" == "data_sync" ]; then
-    # -- Check all the user-defined parameters:
-    if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
-    if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
-    if [[ -z ${CASES} ]]; then reho "ERROR: Specific sessions not provided"; exit 1; fi
-    # -- Report parameters
-    echo ""
-    echo "Running $CommandToRun with the following parameters:"
-    echo "--------------------------------------------------------------"
-    echo "   Study Folder: ${StudyFolder}"
-    echo "   Sessions Folder: ${SessionsFolder}"
-    echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
-    echo ""
-    # -- Loop through all the cases
-    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
-fi
-
-# ------------------------------------------------------------------------------
 # -- anat_parcellate
 # ------------------------------------------------------------------------------
 
@@ -2403,7 +2026,7 @@ if [ "$CommandToRun" == "dwi_fsl_bedpostx_gpu" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- Diffusion legacy processing (dwi_legacy)
+# -- dwi_legacy
 # ------------------------------------------------------------------------------
 
 if [ "$CommandToRun" == "dwi_legacy" ]; then
