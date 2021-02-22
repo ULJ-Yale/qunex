@@ -402,6 +402,18 @@ def printHelp(com):
     elif com == "core":
         print core_qunex_commands
 
+    # --- print help for gmri local commands
+    elif com in gcom.commands:
+        print "\nqunex", gcom.commands[com]['com'].__doc__.strip(), "\n"
+
+    # --- print help for processing actions
+    elif com in gp.allactions:
+        print "\nqunex", gp.allactions[com].__doc__.strip(), "\n"
+
+    # --- print help for matlab functions
+    elif com in gn.functions:
+        gn.help(com)
+
     # --- print error
     else:
         print "\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n" % com
