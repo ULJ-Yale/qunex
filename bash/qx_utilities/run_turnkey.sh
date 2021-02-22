@@ -1721,7 +1721,7 @@ fi
             geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}
             echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             if [[ ${DATAFormat} == "HCPYA" ]]; then
-                HCPLSNameFormat="--nameformat=(?P<subject_id>[^/]+?)/unprocessed/(?P<session_name>.*?)/(?P<data>.*) --hcplsname=hcpya"
+                HCPLSNameFormat='--nameformat="(?P<subject_id>[^/]+?)/unprocessed/(?P<session_name>.*?)/(?P<data>.*)" --hcplsname=hcpya'
             else
                 HCPLSNameFormat="--hcplsname=hcpls"
             fi

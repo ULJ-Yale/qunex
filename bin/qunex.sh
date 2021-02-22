@@ -349,7 +349,7 @@ else
         # -- Command to perform acceptance test
         ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
         # -- Combine final string of commands
-        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck} ${ComRunGarbage}"
+        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
         cd ${MasterRunLogFolder}
         gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
         geho "--------------------------------------------------------------"
