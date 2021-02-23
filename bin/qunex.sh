@@ -333,7 +333,7 @@ else
         # -- Command to perform acceptance test
         ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_passed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
         # -- Combine final string of commands
-        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck} ${ComRunGarbage}"
+        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
         geho "--------------------------------------------------------------"
         echo ""
         geho "   Running ${CommandToRun} locally on `hostname`"
