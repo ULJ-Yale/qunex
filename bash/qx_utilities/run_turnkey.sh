@@ -2852,4 +2852,4 @@ fi
 # -- Execute overall function and read arguments
 # ------------------------------------------------------------------------------
 
-main ${@}
+main $@
