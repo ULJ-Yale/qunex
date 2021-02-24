@@ -715,9 +715,6 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
     --listfile          The path to the generated list file. If no path is 
                         provided, the list is created as:
                         `<studyfolder>/processing/lists/sessions.list`
-    --img_suffix        Specifies an optional suffix for 'images' folder when 
-                        files are to be taken from a folder that enables a
-                        parallel workflow [].
     --bold_variant      Specifies an optional suffix for 'functional` folder
                         when functional files are to be taken from a folder
                         that enables a parallel workflow with functional 
