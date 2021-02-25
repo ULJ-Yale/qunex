@@ -41,6 +41,18 @@
 #~ND~END~
 
 # ------------------------------------------------------------------------------
+# -- Setup color outputs
+# ------------------------------------------------------------------------------
+
+reho() {
+    echo -e "\033[31m $1 \033[0m"
+}
+
+geho() {
+    echo -e "\033[32m $1 \033[0m"
+}
+
+# ------------------------------------------------------------------------------
 # -- General help usage function
 # ------------------------------------------------------------------------------
 
@@ -117,6 +129,7 @@ FreeSurferLabels=${scriptsdir}/config/FreeSurferAllLut.txt
 T1wDiffusionFolder="${StudyFolder}/${Session}/T1w/Diffusion"
 DiffusionResolution=`${FSLDIR}/bin/fslval ${T1wDiffusionFolder}/data pixdim1`
 DiffusionResolution=`printf "%0.2f" ${DiffusionResolution}`
+ResultsFolder="${StudyFolder}/${Session}/MNINonLinear/Results/Tractography"
 LowResMesh=32
 StandardResolution="2"
 
@@ -148,3 +161,16 @@ ${scriptsdir}/make_trajectory_space_mni.sh \
     --freesurferlabels="${FreeSurferLabels}" \
     --lowresmesh="${LowResMesh}" \
     --msmflag="${MSMflag}"
+
+# -- Check completion
+if [[ -s "${ResultsFolder}/pial.R.asc" ]]; then
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
+    exit 0
+else
+    echo ""
+    reho "ERROR: dwi_probtracx_dense_gpu run did not complete successfully"
+    echo ""
+    exit 1
+fi
