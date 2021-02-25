@@ -1,0 +1,141 @@
+#!/bin/bash
+#   Automated probabilistic tractography plugin for FSL; tractography script.
+#   as in De Groot et al., NeuroImage 2013.
+
+
+ptx_bin_CPU=$FSLDIR/bin/probtrackx2 #CPU_version
+ptx_bin_GPU=/gpfs/project/fas/n3/software/fsl-5.0.9/fsl/bin/probtrackx2_gpu #GPU_version
+#ptx_bin_GPU=/gpfs/project2/fas/n3/software/CodeHCPe/DiffusionTractographyStam/probtrackx2_gpu #GPU_version
+
+Usage() {
+    cat << EOF
+
+Usage: track_subject_struct <BpXFolder> <structure> <seedMultiplier> <MNI_to_Diff_warp> <Diff_to_MNI_warp> <OutDir> [<GPU_flag>]
+
+    Specification of seedMultiplier is optional.
+
+EOF
+    exit 1
+}
+
+
+
+[ "$2" = "" ] && Usage
+[ "$8" != "" ] && Usage
+
+bpdata=$1
+struct=$2
+MNI_to_FA_warp=$4
+FA_to_MNI_warp=$5
+nSeed=300
+execPath=`dirname $0`
+OutDir=$6
+GPU_flag=0
+
+# apply seed multiplier if set
+if [ "$3" != "" ]; then
+  nSeed=$(echo "scale=0; $nSeed * ${3} / 1"|bc)
+fi
+
+if [ "$7" != "" ]; then
+    GPU_flag=$7
+fi
+if [ $GPU_flag == "1" ]; then
+    ptx_bin=${ptx_bin_GPU}
+fi
+
+echo "running automated tractography of subject ${sub}, structure ${struct}, using $nSeed seeds per voxel."
+
+
+# sources
+masks=$execPath/auto_ptx_dir/protocols/$struct
+# output
+tracts=${OutDir}/$struct
+mkdir -p $tracts
+
+# cleanup possible previous run
+rm -f $tracts/tracts/waytotal
+imrm $tracts/tracts/tractsNorm
+rm -rf $tracts/tracts
+
+# is there a stop criterion defined in the protocol for this struct?
+if [ -e $masks/stop.nii.gz ]; then
+  useStop=1
+else
+  useStop=0
+fi
+# does the protocol defines a second run with inverted seed / target masks
+if [ -e $masks/invert ]; then
+  symtrack=1
+  rm -f $tracts/tractsInv/waytotal
+else
+  symtrack=0
+fi
+
+if [ -e $masks/randfib1 ]; then
+    rndf=1
+else
+    rndf=0
+fi
+
+
+# count how many waypoints exist
+waypointNum=`ls $masks/target*.nii.gz | wc -l`
+if [ $waypointNum -gt "1" ]; then
+    wlist=`ls $masks/target*.nii.gz`
+    rm -f $masks/target.txt
+    for w in ${wlist}; do
+	echo "$w" >> $masks/target.txt
+    done
+fi
+
+jobMATH4="1"
+
+#Copy the seed, target and exclude files
+imcp $masks/seed $tracts/seed 
+if [ $waypointNum -gt "1" ]; then
+    cp $masks/target.txt $tracts/target.txt
+    suf=".txt"
+else
+    imcp $masks/target $tracts/target 
+    suf=".nii.gz"
+fi
+imcp $masks/exclude $tracts/exclude
+if [ "$useStop" -eq "1" ]; then
+  imcp $masks/stop $tracts/stop
+fi
+
+seeddim=`fslval $tracts/seed pixdim1`
+
+
+# process structure
+if [ "$useStop" -eq "1" ]; then
+    ${ptx_bin} -s $bpdata/merged -m $bpdata/nodif_brain_mask -x $tracts/seed -o density --waypoints=$tracts/target${suf} --stop=$tracts/stop --nsamples=${nSeed} --opd --dir=$tracts/tracts --avoid=$tracts/exclude -l --forcedir --xfm=$MNI_to_FA_warp --invxfm=$FA_to_MNI_warp --sampvox=$seeddim --randfib=$rndf --rseed=`echo $RANDOM`
+
+  if [ "$symtrack" -eq "1" ]; then
+    ${ptx_bin} -s $bpdata/merged -m $bpdata/nodif_brain_mask -x $tracts/target${suf} -o density --waypoints=$tracts/seed --stop=$tracts/stop --nsamples=${nSeed} --opd --dir=$tracts/tractsInv --avoid=$tracts/exclude -l --forcedir --xfm=$MNI_to_FA_warp --invxfm=$FA_to_MNI_warp --sampvox=$seeddim --randfib=$rndf --rseed=`echo $RANDOM`
+  fi
+else
+  ${ptx_bin} -s $bpdata/merged -m $bpdata/nodif_brain_mask -x $tracts/seed -o density --waypoints=$tracts/target${suf} --nsamples=${nSeed} --opd --dir=$tracts/tracts --avoid=$tracts/exclude -l --forcedir  --xfm=$MNI_to_FA_warp --invxfm=$FA_to_MNI_warp --sampvox=$seeddim --randfib=$rndf --rseed=`echo $RANDOM`
+  if [ "$symtrack" -eq "1" ]; then
+    ${ptx_bin} -s $bpdata/merged -m $bpdata/nodif_brain_mask -x $tracts/target${suf} -o density --waypoints=$tracts/seed --nsamples=${nSeed} --opd --dir=$tracts/tractsInv --avoid=$tracts/exclude -l --forcedir  --xfm=$MNI_to_FA_warp --invxfm=$FA_to_MNI_warp --sampvox=$seeddim --randfib=$rndf --rseed=`echo $RANDOM`
+  fi
+fi
+
+
+# merge runs for forward and inverted tractography runs
+if [ "$symtrack" = "1" ]; then
+  $FSLDIR/bin/immv $tracts/tracts/density $tracts/tractsInv/fwDensity
+  $FSLDIR/bin/fslmaths $tracts/tractsInv/fwDensity -add $tracts/tractsInv/density $tracts/tracts/density
+  way1=`cat $tracts/tracts/waytotal | sed 's/e/\\*10^/' | tr -d '+' `
+  rm -f $tracts/tracts/waytotal
+  way2=`cat $tracts/tractsInv/waytotal | sed 's/e/\\*10^/' | tr -d '+' `
+  way=$(echo "scale=5; $way1 + $way2 "|bc)
+  echo $way > $tracts/tracts/waytotal 
+fi
+
+# perform normalisation for waytotal
+waytotal=`cat $tracts/tracts/waytotal`
+$FSLDIR/bin/fslmaths $tracts/tracts/density -div $waytotal -range $tracts/tracts/tractsNorm -odt float
+
+

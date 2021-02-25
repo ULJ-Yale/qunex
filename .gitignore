@@ -3,19 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
-
 # Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -82,7 +77,6 @@ celerybeat-schedule
 # virtualenv
 .venv
 venv/
-ENV/
 
 # Spyder project settings
 .spyderproject
@@ -98,3 +92,9 @@ ENV/
 2
 *.out
 .qunexstudy
+
+# local settings file
+settings.json
+
+# DS* files
+.DS*
