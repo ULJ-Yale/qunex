@@ -1877,7 +1877,7 @@ def split_dicom(folder=None):
 
 def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
     """
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]``
 
     Automatically processes packets with individual sessions's DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -1917,7 +1917,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
     --pattern             The regex pattern to use to find the packages and 
                           to extract the session id.
-                          ["(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"]
+                          ["(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"]
 
     --nameformat          The regex pattern to use to extract subject id and 
                           (optionally) the session name from the session or
@@ -2023,7 +2023,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
     `--pattern` has to be prepared so that it returns a named group 'packet_name'. 
     The default pattern is::
 
-        "(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
+        "(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
 
     which will identify the initial part of the packet file- or foldername, (w/o 
     any extension that identifies a compressed package) as the packet name. 
@@ -2317,7 +2317,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             raise ge.CommandError('import_dicom', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
 
     if pattern is None:
-        pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
+        pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
 
     if nameformat is None:
         nameformat = r"(?P<subject_id>.*)"
@@ -2467,7 +2467,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             sid = pname.split('_')
 
             archives = []
-            for tarchive in ['*.zip', '*.tar', '*.tar.*']:
+            for tarchive in ['*.zip', '*.tar', '*.tar.*', '*.tgz']:
                 archives += glob.glob(os.path.join(sfolder, 'inbox', tarchive))
             session['archives'] = list(archives)
 
@@ -2649,7 +2649,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                     z.close()
                     print "     -> done!"
 
-                elif re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
+                elif re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p):
 
                     ptype = "tar"
 
@@ -2722,7 +2722,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                 print "".join(['=' for e in range(len(s))])
 
             for p in files:
-                if masterinbox or re.search("\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
+                if masterinbox or re.search("\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p):
                     archivetarget = os.path.join(afolder, os.path.basename(p))
 
                     # --- move package to archive

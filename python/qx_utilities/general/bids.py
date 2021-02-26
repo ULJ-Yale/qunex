@@ -553,7 +553,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
         else:
             if folderType == 'file':
                 bidsname = os.path.basename(inbox)
-                bidsname = re.sub('.zip$|.gz$', '', bidsname)
+                bidsname = re.sub('.zip$|.gz$|.tgz$', '', bidsname)
                 bidsname = re.sub('.tar$', '', bidsname)
             elif folderType in ['inbox', 'bids_study']:
                 bidsname = os.path.basename(inbox)
@@ -599,7 +599,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 raise
 
-        elif '.tar' in file:
+        elif '.tar' in file or '.tgz' in file:
             print "   --> processing tar package [%s]" % (file)
 
             try:

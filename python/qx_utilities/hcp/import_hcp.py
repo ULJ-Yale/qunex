@@ -337,7 +337,7 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         hcplsname = ""
     else:
         hcplsname = os.path.basename(inbox)
-        hcplsname = re.sub('.zip$|.gz$', '', hcplsname)
+        hcplsname = re.sub('.zip$|.gz$|.tgz$', '', hcplsname)
         hcplsname = re.sub('.tar$', '', hcplsname)
 
     if not nameformat:
@@ -372,7 +372,7 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                 for file in files:
                     filepath = os.path.join(path, file)
                     if sessions:
-                        if any([file.endswith(e) for e in ['.zip', '.tar', '.tar.gz', '.tar.bz', '.tarz', '.tar.bzip2']]):
+                        if any([file.endswith(e) for e in ['.zip', '.tar', '.tar.gz', '.tar.bz', '.tarz', '.tar.bzip2', '.tgz']]):
                             for session in sessions:
                                 if re.search(session, file):
                                     sourceFiles.append(filepath)
@@ -425,7 +425,7 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                 allOk = False
                 raise
 
-        elif '.tar' in file:
+        elif '.tar' in file or '.tgz' in file:
             print "   --> processing tar package [%s]" % (file)
 
             try:

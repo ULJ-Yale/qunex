@@ -267,7 +267,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                         mode2 = 'w' + mode[1:]
 
                         if output_folder:
-                            tarext = re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", full_filename).group(0)
+                            tarext = re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", full_filename).group(0)
                             relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
 

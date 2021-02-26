@@ -283,7 +283,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
                 all_ok = False
                 raise
 
-        elif ".tar" in file:
+        elif ".tar" in file or '.tgz' in file:
             print "   --> processing tar package [%s]" % (file)
 
             try:
