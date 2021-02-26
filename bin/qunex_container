@@ -398,9 +398,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         return result
 
 
-def getSesssionIDsFromBatchFile(filename):
+def getSessionIDsFromBatchFile(filename):
     '''
-    getSesssionIDsFromBatchFile(filename)
+    getSessionIDsFromBatchFile(filename)
 
     An internal function for reading batch.txt files. It reads the file and
     returns a list of sessions with the information on images and the additional
@@ -447,9 +447,9 @@ def getSesssionIDsFromBatchFile(filename):
     return sessionids
 
 
-def getSesssionIDsFromList(filename):
+def getSessionIDsFromList(filename):
     '''
-    getSesssionIDsFromList(filename)
+    getSessionIDsFromList(filename)
 
     An internal function for reading list files. It reads the file and
     returns a list of session ids.
@@ -482,9 +482,9 @@ def getSesssionIDsFromList(filename):
     return sessionids
 
 
-def getSesssionIDs(listString, sessionsfolder=None):
+def getSessionIDs(listString, sessionsfolder=None):
     '''
-    getSesssionIDs(listString)
+    getSessionIDs(listString)
 
     An internal function for getting a list of subject ids.
 
@@ -506,22 +506,16 @@ def getSesssionIDs(listString, sessionsfolder=None):
     listString = listString.strip()
 
     if re.match(".*\.list$", listString):
-        sessionids = getSesssionIDsFromList(listString)
+        sessionids = getSessionIDsFromList(listString)
 
     elif os.path.isfile(listString):
-        sessionids = getSesssionIDsFromBatchFile(listString)
+        sessionids = getSessionIDsFromBatchFile(listString)
 
     elif re.match(".*\.txt$", listString) or '/' in listString:
         raise ValueError("ERROR: The specified subject file is not found! [%s]!" % listString)
 
     else:
         sessionids = [e.strip() for e in re.split(' +|,|\|', listString)]
-
-        if sessionsfolder is not None:
-            nlist = []
-            for s in sessionids:
-                nlist += glob.glob(os.path.join(sessionsfolder, s))
-            sessionids = [os.path.basename(e) for e in nlist]
 
     return sessionids
 
@@ -840,9 +834,9 @@ def main(args=None):
                 
         # split sessions via sessionids or split existing sessionids
         if sessionids is None:
-            sessionids = getSesssionIDs(sessions, sessionsfolder=sessionsfolder)
+            sessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
         else:
-            getsessionids = getSesssionIDs(sessions, sessionsfolder=sessionsfolder)
+            getsessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
             sessionidsSplit = re.split(' +|,|\|', sessionids)
             print("sessionidsSplit:", sessionidsSplit, "\nsessionids",  sessionids, "\ngetsessionids", getsessionids)
             sessionids = [e for e in getsessionids if e in sessionidsSplit]
