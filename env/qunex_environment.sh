@@ -510,7 +510,7 @@ if [ "$USEOCTAVE" == "TRUE" ]; then
          cyaneho " ---> Setting up Octave "; echo ""
          QUNEXMCOMMAND='octave -q --no-init-file --eval'
          if [ ! -e ~/.octaverc ]; then
-             cp ${QUNEXPATH}/qx_library/.octaverc ~/.octaverc
+             cp ${QUNEXPATH}/qx_library/etc/.octaverc ~/.octaverc
          fi
          export LD_LIBRARY_PATH=/usr/lib64/hdf5/:${LD_LIBRARY_PATH} > /dev/null 2>&1
          if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
@@ -664,26 +664,25 @@ export NIUTemplateFolder PATH
 unset QuNexSubModules
 QuNexSubModules=`cd $QUNEXPATH; git submodule status | awk '{ print $2 }' | sed 's/hcpextendedpull//' | sed '/^\s*$/d'`
 
-#alias qunex='bash ${TOOLS}/${QUNEXREPO}/bin/qunex.sh'
 alias qunex_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
+alias qx_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
 alias qunex_environment_set='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
+alias qx_environment_set='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
 
 alias qunex_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
+alias qx_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 alias qunex_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
+alias qx_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 
-alias qunex_envcheck='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
 alias qunex_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qunex_envreport='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qunex_environment_check='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
+alias qx_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
 alias qunex_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qunex_environment_report='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
+alias qx_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh'
 
 alias qunex_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qunex_envclear='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qunex_envpurge='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
+alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
 alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qunex_environment_clear='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qunex_environment_purge='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
+alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
 
 # ------------------------------------------------------------------------------
 # -- Setup HCP Pipeline paths

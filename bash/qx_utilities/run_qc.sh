@@ -92,7 +92,7 @@ usage() {
  echo "                       HTML file in the above directory. "
  echo ""
  echo "                       Note: If using 'general' modality, then visualization is "
- echo "                       $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
+ echo "                       $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/template_general_qc.wb.scene"
  echo ""
  echo "                       This will work on any input file within the "
  echo "                       session-specific data hierarchy."
@@ -432,14 +432,11 @@ HCPSuffix=`opts_GetOpt "--hcp_suffix" $@`
 Modality=`opts_GetOpt "--modality" $@`
 if [ "${Modality,,}" == "t1w" ];      then Modality="T1w";     fi
 if [ "${Modality,,}" == "t2w" ];      then Modality="T2w";     fi
-if [ "${Modality,,}" == "myelin" ];   then Modality="myelin";  fi
-if [ "${Modality,,}" == "bold" ];     then Modality="BOLD";    fi
 if [ "${Modality,,}" == "bold" ];     then Modality="BOLD";    fi
 if [ "${Modality,,}" == "dwi" ];      then Modality="DWI";     fi
-if [ "${Modality,,}" == "general" ];  then Modality="general"; fi
 if [ "${Modality,,}" == "rawnii" ];   then Modality="rawNII";  fi
 if [ "${Modality,,}" == "rawnifti" ]; then Modality="rawNII";  fi
-
+modality_lower=${Modality,,}
 
 # -- Parameters if requesting 'general' scene type
 GeneralSceneDataFile=`opts_GetOpt "--datafile" $@`
@@ -1290,7 +1287,7 @@ main() {
         else
             # -- Proceed with other QC steps
             
-            TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
+            TemplateSceneFile="template_${modality_lower}_qc.wb.scene"
             WorkingSceneFile="${CASEName}.${Modality}.QC.wb.scene"
             
             if [ ! -z "$UserSceneFile" ]; then
@@ -1449,10 +1446,10 @@ main() {
                         echo " --- Working on BOLD FC QC scene..."; echo ""
                         # Inputs
                         if [[ ${BOLDfc} == "pscalar" ]]; then
-                            TemplateSceneFile="TEMPLATE.PSCALAR.${Modality}.QC.wb.scene"
+                            TemplateSceneFile="template_pscalar_${modality_lower}_qc.wb.scene"
                         fi
                         if [[ ${BOLDfc} == "pconn" ]]; then
-                            TemplateSceneFile="TEMPLATE.PCONN.${Modality}.QC.wb.scene"
+                            TemplateSceneFile="template_pconn.${modality_lower}_qc.wb.scene"
                         fi
                         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                         WorkingSceneFile="${CASEName}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
@@ -1525,7 +1522,7 @@ main() {
                                 if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ] && [ "$RunQCCustom" != "yes" ]; then
                                     # Inputs
                                     Modality="BOLD"
-                                    TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
+                                    TemplateSceneFile="template_${modality_lower}_qc.wb.scene"
                                     scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
                                     # -- Rsync over template files for a given BOLD
