@@ -1,4 +1,4 @@
-# Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
+# Quantitative Neuroimaging Environment & ToolboX (QuNex)
 
 ## License
 
