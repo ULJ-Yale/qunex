@@ -1016,16 +1016,16 @@ if [[ $is_gmri_command == 1 ]]; then
         exit 0
     # -- Otherwise pass the command with all inputs from the command line
     else
-        # -- Handle quotes in 
+        # -- Handle input parameters
         unset gmriinput
 
         for inputarg in "$@"; do
             # add single or double quotes around parameters
             if [[ $inputarg =~ "-" ]]; then
                 if [[ $inputarg =~ "\"" ]]; then
-                    inputarg=`echo "${inputarg}\'" | sed "s/=/=\'/g"`
+                    inputarg=`echo "${inputarg}'" | sed "0,/=/s//=\'/"`
                 else
-                    inputarg=`echo "${inputarg}\"" | sed "s/=/=\"/g"`
+                    inputarg=`echo "${inputarg}\"" | sed "0,/=/s//=\"/"`
                 fi
             fi
 

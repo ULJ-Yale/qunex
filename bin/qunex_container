@@ -731,22 +731,23 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
-    scheduler      = None
-    conimage       = None
-    command        = ""
-    bash_pre       = None
-    bash_post      = None
-    bind           = None
-    nv             = None
-    script         = None
-    parsessions    = 1
-    sessions       = None
-    sessionsfolder = None
-    sessionids     = None
-    envars         = None
-    dockeropt      = None
-    output         = None
-    csessions      = None
+    scheduler           = None
+    conimage            = None
+    command             = ""
+    bash_pre            = None
+    bash_post           = None
+    bind                = None
+    nv                  = None
+    script              = None
+    parsessions         = 1
+    sessions            = None
+    sessionsfolder      = None
+    sessionids          = None
+    sessionids_provided = False
+    envars              = None
+    dockeropt           = None
+    output              = None
+    csessions           = None
 
     for arg in args:
         if "scheduler=" in arg:
@@ -782,6 +783,7 @@ def main(args=None):
             k, sessions = arg.split("=", 1)
             command += '%s="%s" ' % (k, sessions)        
         elif "sessionids=" in arg:
+            sessionids_provided = True
             k, sessionids = arg.split("=", 1)
         elif "=" in arg:
             k, v = arg.split('=', 1)
@@ -875,7 +877,7 @@ def main(args=None):
         scheduleCommand = command
 
         # add sessionids to command?
-        if i < len(sessionidsArray):
+        if i < len(sessionidsArray) and sessionids_provided:
             sessionids = sessionidsArray[i]
             scheduleCommand += 'sessionids="%s" ' % (sessionids)
 
