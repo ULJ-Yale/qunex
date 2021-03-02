@@ -1016,15 +1016,26 @@ if [[ $is_gmri_command == 1 ]]; then
         exit 0
     # -- Otherwise pass the command with all inputs from the command line
     else
-        # -- Insert double quotes if an argument has whitespaces in its value
+        # -- Handle quotes in 
         unset gmriinput
-        whitespace="[[:space:]]"
+
         for inputarg in "$@"; do
-            if [[ $inputarg =~ ${whitespace} ]]; then
-                inputarg=`echo "${inputarg}\"" | sed "s/=/=\"/g"`
+            echo ""
+            echo ""
+            echo "${inputarg}"
+
+            # add single or double quotes around parameters
+            if [[ $inputarg =~ "-" ]]; then
+                if [[ $inputarg =~ "\"" ]]; then
+                    inputarg=`echo "${inputarg}\'" | sed "s/=/=\'/g"`
+                else
+                    inputarg=`echo "${inputarg}\"" | sed "s/=/=\"/g"`
+                fi
             fi
+
+            # flags
             if [[ ${inputarg} =~ '=' ]] && [[ -z `echo ${inputarg} | grep '-'` ]]; then
-                inputarg="--${inputarg}"
+               inputarg="--${inputarg}"
             fi
 
             if [[ -z $gmriinput ]]; then
