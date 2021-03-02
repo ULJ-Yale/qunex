@@ -1020,10 +1020,6 @@ if [[ $is_gmri_command == 1 ]]; then
         unset gmriinput
 
         for inputarg in "$@"; do
-            echo ""
-            echo ""
-            echo "${inputarg}"
-
             # add single or double quotes around parameters
             if [[ $inputarg =~ "-" ]]; then
                 if [[ $inputarg =~ "\"" ]]; then
