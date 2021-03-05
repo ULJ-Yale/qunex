@@ -51,10 +51,8 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # hcp_dtifit    Run FSL DTI fit.
 # hcp_bedpostx  Run FSL Bedpostx GPU.
 
-all_qunex_commands = r'''anat_parcellate                           Parcellate T1w and T2w derived measures (e.g. myelin or thickness).
-bold_compute_fc                           Computes seed or GBC BOLD functional connectivity.
-bold_parcellate                           Parcellate BOLD data and generate pconn files.
-check_fidl                                Prints figures showing fidl events and their duration.
+all_qunex_commands = r'''check_fidl                                Prints figures showing fidl events and their duration.
+compute_fc_bold                           Computes seed or GBC BOLD functional connectivity.
 compute_bold_stats                        Compute BOLD movement and signal statistics.
 create_batch                              Creates a joint batch file from source files in all session folders.
 create_bold_brain_masks                   Create brain masks for BOLD runs.
@@ -87,9 +85,9 @@ fc_compute_seedmaps_group                 Computes seed based correlations maps 
 fc_compute_seedmaps_multiple              Computes seed based correlations maps for individuals as well as group maps.
 fc_extract_roi_timeseries_masked          Extracts and saves region timeseries defined by provided roiinfo file
 fc_extract_trial_timeseries_masked        Extracts trial timeseries for each of the specified ROI.
-fc_mri_segment                            Segments the voxels in smask based on their connectivity with tmask ROI.
 fc_preprocess                             Runs single BOLD file based functional connectivity preprocessing.
 fc_preprocess_conc                        Runs fcMRI preprocessing and GLM analysis a set of BOLD files.
+fc_segment_mri                            Segments the voxels in smask based on their connectivity with tmask ROI.
 fsl_f99                                   Runs FSL F99 command.
 fsl_xtract                                Runs FSL XTRACT command.
 general_compute_bold_list_stats           Computes BOLD run per frame statistics and scrubbing information for a list of sessions.
@@ -125,6 +123,8 @@ list_dicom                                Inspects a folder for dicom files and 
 map_bids2nii                              Maps BIDS data to the QuNex folder structure.
 map_hcp_data                              Maps HCP preprocessed data to sessions' image folder.
 map_hcpls2nii                             Maps HCPLS data to the QuNex folder structure.
+parcellate_anat                           Parcellate T1w and T2w derived measures (e.g. myelin or thickness).
+parcellate_bold                           Parcellate BOLD data and generate pconn files.
 preprocess_bold                           Preprocesses single BOLD images.
 preprocess_conc                           Preprocesses conc bundles of BOLD images.
 run_palm                                  Runs second level analysis using PALM permutation resampling.
@@ -138,7 +138,7 @@ stats_compute_behavioral_correlations     Computes correlations between given im
 stats_p2z                                 Converts p to Z values considering one or two tails.
 stats_ttest_dependent                     Computes t-test of differences between two dependent groups.
 stats_ttest_independent                   Computes t-test of differences between two independent groups.
-stats_test_zero                           Computes t-test against zero and saves specified results.
+stats_ttest_zero                          Computes t-test against zero and saves specified results.
 '''
 
 def runCommand(command, args):
