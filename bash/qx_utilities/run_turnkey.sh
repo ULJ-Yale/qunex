@@ -1360,7 +1360,6 @@ fi
             echo ""
             ${QuNexCommand} create_study "${StudyFolder}"
             mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
-            create_study_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_create_study_${CASE}_${TimeStamp}.log"
         else
             geho " -- Study folder ${StudyFolder} already exists!"
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -1371,7 +1370,6 @@ fi
                     echo ""
                     ${QuNexCommand} create_study "${StudyFolder}"
                     mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
-                    create_study_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_create_study_${CASE}_${TimeStamp}.log"
                 fi
             fi
         fi
@@ -2840,10 +2838,10 @@ if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     reho "       Check ${QuNexMasterLogFolder}/runlogs"
     echo ""
     exit 1
-#else
-   # echo ""
-   # geho "------------------------- Successful completion of work --------------------------------"
-   # echo ""
+else
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
 fi
 
 }
