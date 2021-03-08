@@ -102,7 +102,7 @@ weho() {
 # source $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcpd run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_fsl_dtifit run_qc_dwi_fsl_dtifit dwi_fsl_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation bold_parcellate compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
+QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcpd run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_fsl_dtifit run_qc_dwi_fsl_dtifit dwi_fsl_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
 
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 
@@ -1360,7 +1360,6 @@ fi
             echo ""
             ${QuNexCommand} create_study "${StudyFolder}"
             mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
-            create_study_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_create_study_${CASE}_${TimeStamp}.log"
         else
             geho " -- Study folder ${StudyFolder} already exists!"
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -1371,7 +1370,6 @@ fi
                     echo ""
                     ${QuNexCommand} create_study "${StudyFolder}"
                     mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
-                    create_study_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_create_study_${CASE}_${TimeStamp}.log"
                 fi
             fi
         fi
@@ -2840,10 +2838,10 @@ if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     reho "       Check ${QuNexMasterLogFolder}/runlogs"
     echo ""
     exit 1
-#else
-   # echo ""
-   # geho "------------------------- Successful completion of work --------------------------------"
-   # echo ""
+else
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
 fi
 
 }

@@ -14,17 +14,17 @@
 #
 # ## PRODUCT
 #
-#  bold_compute_fc.sh
+#  compute_fc_bold.sh
 #
 # ## LICENSE
 #
-# * The bold_compute_fc.sh = the "Software"
+# * The compute_fc_bold.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## Description 
 #   
-# This script, bold_compute_fc.sh, implements functional connectivity
+# This script, compute_fc_bold.sh, implements functional connectivity
 # using QuNex Suite Matlab tools (e.g. fc_compute_seedmaps_multiple)
 # 
 # ## Prerequisite Installed Software
@@ -33,7 +33,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./bold_compute_fc.sh --help
+# See output of usage function: e.g. $./compute_fc_bold.sh --help
 #
 # ### Expected Previous Processing
 # 
@@ -227,14 +227,14 @@ usage() {
  echo ""
  echo "Run directly via:: "
  echo ""
- echo "  ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \ "
+ echo "  ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \ "
  echo "      --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via:: "
  echo ""
- echo "  qunex bold_compute_fc --<parameter1> --<parameter2> ... --<parameterN> "
+ echo "  qunex compute_fc_bold --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -248,7 +248,7 @@ usage() {
  echo ""
  echo "::"
  echo ""
- echo "  qunex bold_compute_fc \ "
+ echo "  qunex compute_fc_bold \ "
  echo "  --sessionsfolder='<folder_with_sessions>' \ "
  echo "  --calculation='seed' \ "
  echo "  --runtype='individual' \ "
@@ -264,7 +264,7 @@ usage() {
  echo "  --mask='5' \ "
  echo "  --covariance='false' "
  echo ""
- echo "  qunex bold_compute_fc \ "
+ echo "  qunex compute_fc_bold \ "
  echo "  --sessionsfolder='<folder_with_sessions>' \ "
  echo "  --runtype='list' \ "
  echo "  --flist='sessions.list' \ "
@@ -278,7 +278,7 @@ usage() {
  echo "  --mask='5' "
  echo "  --covariance='false' "
  echo ""
- echo "  qunex bold_compute_fc \ "
+ echo "  qunex compute_fc_bold \ "
  echo "  --sessionsfolder='<folder_with_sessions>' \ "
  echo "  --calculation='gbc' \ "
  echo "  --runtype='individual' \ "
@@ -299,7 +299,7 @@ usage() {
  echo "  --vstep='10000'"
  echo "  --covariance='false' "
  echo ""
- echo "  qunex bold_compute_fc \ "
+ echo "  qunex compute_fc_bold \ "
  echo "  --sessionsfolder='<folder_with_sessions>' \ "
  echo "  --calculation='gbc' \ "
  echo "  --runtype='list' \ "

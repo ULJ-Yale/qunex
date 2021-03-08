@@ -32,7 +32,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc bold_compute_fc anat_parcellate bold_parcellation bold_parcellate extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc compute_fc_bold parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -325,8 +325,8 @@ else
     ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
     ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
     # -- Garbage collection
-    ComGarbageCollect="if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
-    ComGarbageRemove="if [[ -s qunex_garbage1 ]]; then rm 1; rm qunex_garbage1; fi; if [[ -s qunex_garbage2 ]]; then rm 2; rm qunex_garbage2; fi"
+    ComGarbageCollect="if [[ -f 0 && ! -s 0 ]]; then echo 'delete' >> qunex_garbage0; fi; if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
+    ComGarbageRemove="if [[ -s qunex_garbage0 ]]; then rm 0; rm qunex_garbage0; fi; if [[ -s qunex_garbage1 ]]; then rm 1; rm qunex_garbage1; fi; if [[ -s qunex_garbage2 ]]; then rm 2; rm qunex_garbage2; fi"
     ComRunGarbage="${ComGarbageCollect}; ${ComGarbageRemove}"
     # -- Run the commands locally
     if [[ ${Cluster} == 1 ]]; then
@@ -487,7 +487,7 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (bold_compute_fc.sh) via the QuNex bash wrapper
+# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (compute_fc_bold.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 compute_bold_fc() {
@@ -508,7 +508,7 @@ fi
 if [[ ${Calculation} == "seed" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -533,7 +533,7 @@ fi
 if [[ ${Calculation} == "gbc" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -562,7 +562,7 @@ fi
 if [[ ${Calculation} == "dense" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -580,14 +580,14 @@ fi
 }
 show_usage_compute_bold_fc() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_compute_fc.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- anat_parcellate - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the QuNex bash wrapper
+# -- parcellate_anat - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-anat_parcellate() {
+parcellate_anat() {
 # -- Parse general parameters
 QUEUE="$QUEUE"
 SessionsFolder="$SessionsFolder"
@@ -598,7 +598,7 @@ ParcellationFile="$ParcellationFile"
 ExtractData="$ExtractData"
 Overwrite="$Overwrite"
 # -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/anat_parcellate.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_anat.sh \
 --sessionsfolder=${SessionsFolder} \
 --session=${CASE} \
 --inputdatatype=${InputDataType} \
@@ -609,13 +609,13 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/anat_parcellate.sh \
 # -- QuNex bash execute function
 bash_call_execute
 }
-show_usage_anat_parcellate() {
+show_usage_parcellate_anat() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/anat_parcellate.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_anat.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- bold_parcellate - Executes the BOLD Parcellation Script (bold_parcellate.sh) via the QuNex bash wrapper
+# -- parcellate_bold - Executes the BOLD Parcellation Script (parcellate_bold.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 bold_parcellation() {
@@ -626,7 +626,7 @@ else
     BOLDOutput="${OutPath}"
 fi
 # -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_parcellate.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \
 --sessionsfolder='${SessionsFolder}' \
 --sessions='${CASE}' \
 --inputfile='${InputFile}' \
@@ -647,7 +647,7 @@ bash_call_execute
 
 show_usage_bold_parcellation() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/bold_parcellate.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1016,15 +1016,22 @@ if [[ $is_gmri_command == 1 ]]; then
         exit 0
     # -- Otherwise pass the command with all inputs from the command line
     else
-        # -- Insert double quotes if an argument has whitespaces in its value
+        # -- Handle input parameters
         unset gmriinput
-        whitespace="[[:space:]]"
+
         for inputarg in "$@"; do
-            if [[ $inputarg =~ ${whitespace} ]]; then
-                inputarg=`echo "${inputarg}\"" | sed "s/=/=\"/g"`
+            # add single or double quotes around parameters
+            if [[ $inputarg =~ "-" ]]; then
+                if [[ $inputarg =~ "\"" ]]; then
+                    inputarg=`echo "${inputarg}'" | sed "0,/=/s//=\'/"`
+                else
+                    inputarg=`echo "${inputarg}\"" | sed "0,/=/s//=\"/"`
+                fi
             fi
+
+            # flags
             if [[ ${inputarg} =~ '=' ]] && [[ -z `echo ${inputarg} | grep '-'` ]]; then
-                inputarg="--${inputarg}"
+               inputarg="--${inputarg}"
             fi
 
             if [[ -z $gmriinput ]]; then
@@ -1946,10 +1953,10 @@ if [ "$CommandToRun" == "dwi_eddy_qc" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- anat_parcellate
+# -- parcellate_anat
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "anat_parcellate" ]; then
+if [ "$CommandToRun" == "parcellate_anat" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2069,10 +2076,10 @@ if [ "$CommandToRun" == "dwi_legacy" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- anat_parcellate
+# -- parcellate_anat
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "anat_parcellate" ]; then
+if [ "$CommandToRun" == "parcellate_anat" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2107,10 +2114,10 @@ if [ "$CommandToRun" == "anat_parcellate" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- bold_compute_fc
+# -- compute_fc_bold
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "bold_compute_fc" ]; then
+if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "compute_fc_bold" ]; then
     CommandToRun="compute_bold_fc"
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
@@ -2219,10 +2226,10 @@ if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "bold_comput
 fi
 
 # ------------------------------------------------------------------------------
-# -- bold_parcellate
+# -- parcellate_bold
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "bold_parcellation" ] || [ "$CommandToRun" == "bold_parcellate" ]; then
+if [ "$CommandToRun" == "bold_parcellation" ] || [ "$CommandToRun" == "parcellate_bold" ]; then
     CommandToRun="bold_parcellation"
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi

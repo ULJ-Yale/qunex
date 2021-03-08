@@ -1,6 +1,6 @@
-function [] = fc_mri_segment(flist, smask, tmask, mask, root, options, verbose)
+function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 
-%``function [] = fc_mri_segment(flist, smask, tmask, mask, root, options, verbose)``
+%``function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)``
 %
 %	Segments the voxels in smask based on their connectivity with tmask ROI.
 %   Uses WTA to select the region the voxel is most correlated with.
@@ -48,7 +48,7 @@ function [] = fc_mri_segment(flist, smask, tmask, mask, root, options, verbose)
 %
 %   ::
 %
-%       fc_mri_segment('con.list', 'thalamus.names', 'yeo7.names', 0, ...
+%       fc_segment_mri('con.list', 'thalamus.names', 'yeo7.names', 0, ...
 %       'Th-yeo-seg', 'partial', 'script');
 %
 
@@ -69,7 +69,7 @@ if nargin < 7 || isempty(verbose),  verbose = 'none'; end
 if nargin < 6 || isempty(options),  options = 'raw';  end
 if nargin < 5, root = '';                             end
 if nargin < 4, mask = [];                             end
-if nargin < 3, error('ERROR: At least file list, source and target masks must be specified to run fc_mri_segment!'); end
+if nargin < 3, error('ERROR: At least file list, source and target masks must be specified to run fc_segment_mri!'); end
 
 if isempty(root)
     [ps, root, ext, v] = fileparts(root);

@@ -575,14 +575,14 @@ def main(args=None):
     --dockeropt     A string that lists the additional options to be used when
                     running the Docker container. If the parameter is ommited, 
                     the content of `QUNEXDOCKEROPT` environment variable will
-                    be used. If neither is specified, the container will be 
-                    run in a detached mode with the current folder mounted as 
-                    `/data` by specifying the following options::
+                    be used. If neither is specified, the container will mount
+                    the current as `data` by specifying the following options::
 
-                        '-d -v "$(pwd)":/data'                     
+                        '-v "$(pwd)":/data'
                     
                     The parameters are to be specified in a string exactly as 
-                    they would be on a command line, e.g::
+                    they would be on a command line, e.g. to run in detached
+                    mode and mount a specific folder use::
 
                         "-d -v /host/directory:/container/directory"
 
@@ -731,22 +731,23 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
-    scheduler      = None
-    conimage       = None
-    command        = ""
-    bash_pre       = None
-    bash_post      = None
-    bind           = None
-    nv             = None
-    script         = None
-    parsessions    = 1
-    sessions       = None
-    sessionsfolder = None
-    sessionids     = None
-    envars         = None
-    dockeropt      = None
-    output         = None
-    csessions      = None
+    scheduler           = None
+    conimage            = None
+    command             = ""
+    bash_pre            = None
+    bash_post           = None
+    bind                = None
+    nv                  = None
+    script              = None
+    parsessions         = 1
+    sessions            = None
+    sessionsfolder      = None
+    sessionids          = None
+    sessionids_provided = False
+    envars              = None
+    dockeropt           = None
+    output              = None
+    csessions           = None
 
     for arg in args:
         if "scheduler=" in arg:
@@ -782,6 +783,7 @@ def main(args=None):
             k, sessions = arg.split("=", 1)
             command += '%s="%s" ' % (k, sessions)        
         elif "sessionids=" in arg:
+            sessionids_provided = True
             k, sessionids = arg.split("=", 1)
         elif "=" in arg:
             k, v = arg.split('=', 1)
@@ -820,10 +822,10 @@ def main(args=None):
         if "QUNEXDOCKEROPT" in os.environ:
             dockeropt = os.environ['QUNEXDOCKEROPT']
         else:
-            dockeropt = "-d -v \"$(pwd)\":/data"
+            dockeropt = "-v \"$(pwd)\":/data"
 
     homedir = os.path.expanduser("~")
-    dockeropt += " -v \"%s\":/root" % (homedir)
+    dockeropt += " -v %s:%s" % (homedir, homedir)
 
     # run in parallel if:
     # - parsessions is not None
@@ -875,7 +877,7 @@ def main(args=None):
         scheduleCommand = command
 
         # add sessionids to command?
-        if i < len(sessionidsArray):
+        if i < len(sessionidsArray) and sessionids_provided:
             sessionids = sessionidsArray[i]
             scheduleCommand += 'sessionids="%s" ' % (sessionids)
 
@@ -928,7 +930,7 @@ def main(args=None):
             print("rm " + os.path.join(homedir, scriptName), file=f)
             f.close()
 
-            containerCommand = "docker container run %s %s bash ~/%s" % (dockeropt, conimage, scriptName)
+            containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
 
         if scheduler:
             schedule(command=containerCommand, settings=scheduler, output=output)
