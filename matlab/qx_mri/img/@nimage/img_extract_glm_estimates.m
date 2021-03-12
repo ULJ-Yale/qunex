@@ -44,18 +44,6 @@ function [obj] = img_extract_glm_estimates(obj, effects, frames, values)
 %		glme = glm.img_extract_glm_estimates('encoding, delay, response', 1);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2015-12-09 Grega Repovs
-%			   Initial version
-%   2017-03-03 Grega Repovs
-%			   Updated documentation.
-%   2017-07-01 Grega Repovs
-%			   Added psc option.
-%
-
 if nargin < 4 || isempty(values); values = 'raw';  end
 if nargin < 3; frames  = [];  end
 if nargin < 2; effects = [];  end

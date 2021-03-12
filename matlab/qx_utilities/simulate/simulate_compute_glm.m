@@ -26,14 +26,6 @@ function [B, res rvar, Xdof] = simulate_compute_glm(y, X)
 %		model degrees of freedom
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%	
-%	2010-10-09 Grega Repovs
-%			   Initial version.
-%	
-
 if nargin < 2
     error('ERROR: Not enough parameters to run task removal!');
 end

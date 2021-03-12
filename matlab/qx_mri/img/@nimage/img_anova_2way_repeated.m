@@ -42,16 +42,6 @@ function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)
 %   Aron Schurger (2005-02-04).
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-10-07 Grega Repovs
-%              Initial version
-%   2018-06-25 Grega Repovs
-%              Replaced icdf with norminv to support Octave
-%
-
 if nargin < 4
     verbose = false;
     if nargin < 3;

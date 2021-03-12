@@ -20,14 +20,6 @@ function [obj] = img_fcmri_segment(obj, smask, tmask, options, verbose)
 %   Returned image is masked!
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-08-07 Grega Repovs
-%              Initial version.
-%
-
 if nargin < 5
     verbose = false;
     if nargin < 4;

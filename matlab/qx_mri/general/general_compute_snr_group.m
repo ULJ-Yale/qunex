@@ -18,16 +18,6 @@ function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 %	--verbose	to report on progress or not [not]
 %	
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%	2010-11-21 Grega Repovs
-%			   Initial version.
-%
-% 	Copyright (c) 2010 Grega Repovs. All rights reserved.
-%
-
 if nargin < 4
 	verbose = false;
 	if nargin < 3

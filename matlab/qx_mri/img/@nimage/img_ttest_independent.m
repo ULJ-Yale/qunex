@@ -35,18 +35,6 @@ function [p Z M D SE t] = img_ttest_independent(A, B, vartype, verbose)
 %       an image with standard errors of both groups
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-10-09 Grega Repovs
-%              Initial version.
-%   2018-06-19 Grega Repovs
-%              Changed ttest call to use named parameters.
-%   2018-06-25 Grega Repovs
-%              Replaced icdf with norminv to support Octave
-%
-
 if nargin < 4
     verbose = false;
     if nargin < 3

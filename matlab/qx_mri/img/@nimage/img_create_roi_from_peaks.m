@@ -43,13 +43,6 @@ function [img] = img_create_roi_from_peaks(img, peaksIn)
 %       img = img.img_create_roi_from_peaks(peaksIn);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-08-08 Aleksij Kraljic
-%              Initial version.
-
 % --- check weather the input is: a) matrix (nx5) b) string c) file
 if ~isnumeric(peaksIn)
     if exist(peaksIn,'file') == 2

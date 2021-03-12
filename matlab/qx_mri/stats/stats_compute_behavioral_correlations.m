@@ -23,15 +23,7 @@ function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)
 %               't3' 
 %                   compute multiple regression (GLM) and report Type III SS 
 %                   based results
-%         
-
-%   ~~~~~~~~~~~~~~~~~~
 %
-%   Changelog
-%	
-% 	2010-03-18 Grega Repovs
-%              Initial version.
-%	
 
 % ------ check the parameters
 

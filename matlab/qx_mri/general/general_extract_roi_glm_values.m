@@ -58,21 +58,6 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %       delay', [], 'psc', 'long');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2015-12-09 Grega Repovš
-%              Initial version
-%   2016-09-25 Grega Repovš
-%              Added option of wide and mat target format.
-%   2017-03-04 Grega Repovš
-%              Updated documentation.
-%
-%   TODO
-%   — selection of stats to save
-%   — additional info (roi xyz, peak value ...)
-%
-
 if nargin < 8, verbose = false; end
 if nargin < 7 || isempty(tformat), tformat = 'wide,long,mat'; end
 if nargin < 6 || isempty(values), values = 'raw'; end

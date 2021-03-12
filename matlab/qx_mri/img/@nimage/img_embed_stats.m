@@ -25,14 +25,6 @@ function [img] = img_embed_stats(img)
 %   in each direction, rotation across each axis).
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2013-10-19 Grega Repovs
-%              Initial version.
-%
-
-
 mdata = 0;
 fdata = 0;
 sdata = 0;

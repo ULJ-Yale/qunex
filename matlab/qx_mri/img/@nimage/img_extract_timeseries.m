@@ -28,12 +28,6 @@ function [simg] = img_extract_timeseries(obj, exmat, method, eind)
 %                        frame was extracted. If eind was provided, that information will be
 %                        used instead of the row index. 
 %
-%   ---
-%   Written by Grega Repovš 2020-02-01.
-%
-%   Changelog
-%   2020-04-24 Grega Repovš
-%              - Row / event indeces are now stored in the event field
 
 if nargin < 4 eind = []; end
 if nargin < 3 || isempty(method), method = 'all'; end

@@ -18,13 +18,6 @@ function [s] = strjoin(list, delim)
 %		joined string
 %
 
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2016-02-05 Grega Repovs
-%			   Extracted to a separate function.
-
 if nargin < 2 || isempty(delim), delim = ' '; end
 
 s = list{1};

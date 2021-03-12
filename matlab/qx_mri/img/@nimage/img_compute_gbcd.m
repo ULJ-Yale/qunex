@@ -83,23 +83,6 @@ function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes,
 %   computed on (.d field).
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-08 Grega Repovs
-%              Original version
-%   2010-10-13 Grega Repovs
-%              Version with multiple voxels at a time
-%   2014-01-22 Grega Repovs
-%              A version that computes strength and proportion ranges not yet 
-%              fully optimized
-%   2014-02-04 Grega Repovs
-%              Forked and adopted version to support computation of GBC based on 
-%               distance
-%
-
-
 if nargin < 13, criterium = []; end
 if nargin < 12, weights = [];   end
 if nargin < 11, method = [];    end

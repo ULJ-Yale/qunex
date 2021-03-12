@@ -200,20 +200,6 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     MotionMatrices' or 'MotionCorrection' would be excluded from the mapping.
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-05-29 Grega Repovš
-               Initial version
-    2019-05-30 Grega Repovš
-               Modified documentation
-               Excluding 'unprocessed' is now an explicit option
-    2019-09-22 Grega Repovš
-               Folder timestamps are now kept when moving files.
-    """
-
     # load gu
     import general.utilities as gu
 

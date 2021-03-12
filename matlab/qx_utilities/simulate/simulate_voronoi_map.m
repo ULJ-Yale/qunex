@@ -17,14 +17,6 @@ function [m] = simulate_voronoi_map(w,h,p)
 %	m
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-05-29 Grega Repovs
-%			   Initial version.
-%
-
 if nargin < 3
     error('ERROR: VoronoiMap needs three arguments (w, h, p) to create a map!');
 end

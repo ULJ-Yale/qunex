@@ -43,18 +43,6 @@ function [out] = img_shrink_roi(img, method, crit)
 %       shrunkimg = img.img_shrink_roi('edge', 17);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-05-10 Grega Repovs
-%              Initial version.
-%   2013-07-24 Grega Repovs
-%              Adjusted for multivolume ROI files
-%   2017-03-11 Grega Repovs
-%              Updated documentation
-%
-
 if nargin < 2,  method = 'surface';  end
 
 img.data = img.image4D;

@@ -18,14 +18,6 @@ function [img] = img_read_glm(img, fname, dtype, verbose)
 %   img
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2013-11-16 Grega Repovs
-%              Initial version.
-%
-
 if nargin < 4
     verbose = [];
    	if nargin < 3

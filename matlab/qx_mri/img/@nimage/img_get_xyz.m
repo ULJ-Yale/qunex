@@ -51,16 +51,6 @@ function [xyz] = img_get_xyz(img, ijk)
 %       wcentroids = roi.img_get_xyz(zimg);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2016-01-16 Grega Repovs
-%              Initial version.
-%   2017-03-04 Grega Repovs
-%              Updated documentation.
-%
-
 if nargin < 2, ijk = []; end
 
 img.data = img.image4D;

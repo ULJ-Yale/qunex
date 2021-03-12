@@ -356,32 +356,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
         qunex import_bids sessionsfolder=myStudy overwrite=yes bidsname=swga
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2018-09-17 Grega Repovš
-               Initial version
-    2018-09-19 Grega Repovš, Alan Anticevic
-               Updated documentation, changed handling of previous data
-    2019-04-13 Grega Repovš, Alan Anticevic
-               Added the option to specify subjects
-    2019-04-25 Grega Repovs
-               Changed subjects to sessions
-    2019-05-12 Grega Repovš
-               Reports an error if no file is found
-    2019-07-18 Grega Repovs
-               Added parsing of behavioral data
-    2019-07-23 Grega Repovs
-               Changed behavioral data parsing to allow mulitple measurments
-               per participant
-    2019-08-29 Grega Repovs
-               Updated documentation
-    2019-09-12 Grega Repovs
-               Added fileinfo parameter
-    """
-
     print "Running import_bids\n=================="
 
     if action not in ['link', 'copy', 'move']:
@@ -1046,7 +1020,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     ---------------------------------
 
     File order
-    ~~~~~~~~~~
+    ----------
 
     The files are ordered according to best guess sorted primarily by modality. 
     This can be problematic for further HCP processing when different fieldmap
@@ -1072,21 +1046,6 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     ::
 
         qunex map_bids2nii folder=. overwrite=yes
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2018-09-17 Grega Repovš
-               Initial version
-    2018-09-19 Grega Repovš
-               Simplified dealing with preexisting data
-    2019-04-25
-               Changed subjects to sessions
-    2019-09-12 Grega Repovs
-               Added fileinfo parameter
     """
 
     if fileinfo is None:

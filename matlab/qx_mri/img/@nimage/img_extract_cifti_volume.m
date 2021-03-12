@@ -26,13 +26,6 @@ function [vol_img] = img_extract_cifti_volume(img, data_format)
 %       vol_img = img.img_extract_cifti_volume();
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2017-06-23 Aleksij Kraljic
-%			   Initial version.
-
 % set Image2D as the default data format (if data_format is not passed)
 if nargin < 2
     data_format = '2D';

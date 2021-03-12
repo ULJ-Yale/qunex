@@ -37,17 +37,6 @@ function [img] = img_read_concimage(file, dtype, frames, verbose)
 %   	concimage = nimage('OP234-WM.conc');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%	2011-02-11 Grega Repovs
-%			   Initial version.
-%   2013-10-20 Grega Repovs
-%              Added verbose option.
-%   2017-03-11 Grega Repovs
-%              Change to static method.
-%
-
 if nargin < 4, verbose = false; end
 if nargin < 3, frames = []; end
 if nargin < 2 || isempty(dtype), dtype = 'single'; end

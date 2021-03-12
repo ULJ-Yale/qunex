@@ -114,32 +114,6 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %       'con-ccnet-inc', 'm', 'pca', 'event');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-% 	2009-06-25 Grega Repovs
-%   2008-01-23 Grega Repovs
-%              Adjusted for a different file list format and an additional ROI mask.
-%   2011-02-11 Grega Repovs
-%              Rewritten to use nimage objects and ability for event defined masks.
-%   2012-07-30 Grega Repovs
-%              Added option to omit frames specified to be ignored in the fidl file.
-%   2013-12-11 Grega Repovs
-%              Added ignore as specified in use vector and rcodes to specify ROI.
-%   2017-03-19 Grega Repovs
-%              Updated documentation.
-%   2017-03-21 Grega Repovs
-%              Optimized per session masking of ROI.
-%   2017-04-18 Grega Repovs
-%              Adjusted to use updated general_read_file_list.
-%   2017-04-25 Grega Repovs
-%              Updated to allow multiple extractions using the same event string
-%              as fc_compute_seedmaps.
-%   2019-04-25 Grega Repovs
-%              Updated to allow extraction of all voxels within a ROI.
-%
-
 if nargin < 10 || isempty(bmask),  bmask   = false;  end
 if nargin < 9, mcodes = []; end;
 if nargin < 8, rcodes = []; end;

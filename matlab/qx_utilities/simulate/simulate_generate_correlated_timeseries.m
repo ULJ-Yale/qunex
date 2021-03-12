@@ -24,14 +24,6 @@ function [ts, er, dr] = simulate_generate_correlated_timeseries(r, len, md)
 %       maximal difference between desired and actual correlation
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-% 	2010-10-09 Grega Repovs
-%              Initial version.
-%	
-
 if nargin < 3
     md = [];
     if nargin < 2

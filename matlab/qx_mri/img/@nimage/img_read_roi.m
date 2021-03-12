@@ -97,24 +97,6 @@ function [img] = img_read_roi(roiinfo, roi2, check)
 %       roi = nimage.img_read_roi('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-05-10 Grega Repovs 
-%              Initial version.
-%   2013-07-24 Grega Repovs 
-%              adjusted to create either single or multiple volume ROI
-%   2015-12-08 Grega Repovs 
-%              added option for named region codes
-%   2017-03-04 Grega Repovs 
-%              updated documentatio
-%   2017-09-29 Grega Repovs 
-%              enabled relative paths to roi image
-%   2018-10-19 Aleksij Kraljic 
-%              added ROI checking functionality
-
-
 %   ---- Named region codes
 rcodes.lcgray = [3 415 417 419 421:422 424 427 429 431 433 435 438 1000:1035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181 9000:9006 11100:11175];
 rcodes.rcgray = [42 416 418 420 423 425:426 428 430 432 434 436 439 2000:2035 2100:2104 2105:2181 2200:2202 2205:2207 2210:2212 9500:9506 12100:12175 ];

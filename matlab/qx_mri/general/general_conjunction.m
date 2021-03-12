@@ -45,16 +45,6 @@ function [p, t, c] = general_conjunction(img, method, effect, q, data)
 %		image with number of sessions that show significant effect
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%	2015-10-20 Grega Repovs
-%              Updated argument parsing
-%   2018-06-25 Grega Repovs
-%              Replaced icdf and cdf with norminv and normcdf to support Octave
-%
-
 %  ---- parsing arguments
 
 if nargin < 5 || isempty(data),   data   = 'z';      end

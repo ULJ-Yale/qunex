@@ -32,14 +32,6 @@ function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbo
 %   --verbose   should report each step [false]
 % 
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-10-09 Grega Repovs
-%              Rewritten from previous function with the same name.
-%
-
 if nargin < 6
     verbose = false;
     if nargin < 5

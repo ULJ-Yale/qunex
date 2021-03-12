@@ -103,15 +103,6 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2020-11-16 Grega Repovš
-               Initial version
-    """
-
     # get session id
     session = sinfo["id"]
 
@@ -332,15 +323,6 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
           --overwrite=no \
           --parsessions=2
 
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2020-11-16 Grega Repovš
-               Initial version
     """
 
     # get session id

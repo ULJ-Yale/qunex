@@ -16,15 +16,5 @@ function [r] = fc_fisherinv(fz)
 %		Pearson correlations
 %
 
-%	~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-% 
-%   2007-06-23 Grega Repovs
-%			   Initial version.	
-%	2017-03-19 Grega Repovs
-%			   Updated documentation.
-
 t = exp(fz*2);
 r = (t-1)./(t+1);
-

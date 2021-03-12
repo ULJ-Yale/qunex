@@ -38,14 +38,6 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 %       general_qa_concfile('OP337.conc', 'm,sd,min,max', 'OP337');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2017-03-19 Grega Repovs
-%              Updated documentation
-%              No file is saved if no target name is provided.
-%
-
 if nargin < 3 || isempty(target), target = ''    ; end
 if nargin < 2 || isempty(doIt),     doIt = {'m','sd'}; end
 

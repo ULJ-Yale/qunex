@@ -17,10 +17,6 @@ function F = general_create_glm_hipass_filter(nframes,levels)
 %	F
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Written by Grega Repovš
-
 F = zeros(nframes, levels);
 
 base = (0:nframes-1)'/(nframes-1);

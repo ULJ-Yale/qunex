@@ -60,18 +60,6 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %                          'SCZ_PFC-ACC', 'g', 'full');
 %
 
-%	~~~~~~~~~~~~~~~~~~
-%
-% 	Changelog
-%
-%   2010-08-09 Grega Repovs
-%              Initial version
-%   2017-03-19 Grega Repovs
-%              Updated documentation, cleaned code.
-%   2017-04-18 Grega Repovs
-%              Adjusted to use general_read_file_list
-
-
 if nargin < 7 || isempty(verbose), verbose = 'none'; end
 if nargin < 6 || isempty(options), options = 'g';    end
 if nargin < 5 root = []; end

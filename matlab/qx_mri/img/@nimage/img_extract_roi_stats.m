@@ -29,19 +29,6 @@ function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weig
 %   stats
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2015-12-09 Grega Repovs
-%              Adapted from existing img_extract_roi method.
-%
-%   TODO
-%   — computation of weighted mean SE
-%   — extraction of peak value
-%   — extraction of ROI coordinates (min, max, peak, geometric mean)
-%
-
 if nargin < 7; criterium = [];  end
 if nargin < 6; weight = [];     end
 if nargin < 5; frames = [];     end

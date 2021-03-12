@@ -47,16 +47,6 @@ function [roi] = img_mask_roi(img, roi2)
 %       sroi = nimage.img_read_roi('CCN.names', 'OP338.aseg+aparc.nii.gz');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2015-12-09 Grega Repovs
-%              Initial version
-%   2017-03-04 Grega Repovs
-%              Updated documentation
-%
-
 if nargin < 2
     error('\nERROR: Please provide information on second ROI file to mask the original one!\n');
 end

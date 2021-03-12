@@ -55,13 +55,6 @@ function [exsets] = img_get_extraction_matrices(obj, frames, options)
 %               -> eind    ... event indeces for each retained row
 %               -> estat   ... statistics (number of good trials) for each event
 %
-%   ---
-%   Written by Grega Repovš 2020-01-31.
-%
-%   Changelog
-%   2020-04-24 Grega Repovš
-%              - Added event indices and event statistics
-%   
 
 if nargin < 3 options = ''; end
 if nargin < 2 error('ERROR: Events string has to be specified!'); end

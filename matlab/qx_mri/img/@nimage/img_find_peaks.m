@@ -159,16 +159,6 @@ function [roi vol_peak peak] = img_find_peaks(img, mindim, maxdim, val, t, proje
 %       img_save_nifti(roi,'example_image_ROI.dscalar.nii');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   
-%   2017-07-07 Aleksij Kraljic
-%              Initial version.
-%	2017-07-17 Aleksij Kraljic
-%              Added option for passing specific surf.gii projection files
-%
-
 if nargin < 8 || isempty(verbose),    verbose = false;                            end
 if nargin < 7 || isempty(options),    options = '';                               end
 if nargin < 6 || isempty(projection_type), projection_type = 'type:midthickness'; end

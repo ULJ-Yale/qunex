@@ -27,14 +27,6 @@
 #					i/ime - intersection, none) [none]
 #
 
-#	~~~~~~~~~~~~~~~~~~
-#
-#   Changelog
-#	2011-07-26 Grega Repovs - First complete version of the script
-#	2012-09-20 Grega Repovs - Added reporting of stats after scrubbing
-#	2019-04-25 Grega Repovs - Changed subject to session
-#
-
 # ---> defaults
 
 folder	<- "."

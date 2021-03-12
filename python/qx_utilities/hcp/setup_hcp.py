@@ -184,36 +184,6 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         qunex setup_hcp sourcefolder=OP316 sourcefile=session.txt
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-02-07 Grega Repovš
-               Initial version
-    2017-02-07 Grega Repovš
-               Updated documentation
-    2017-08-17 Grega Repovš
-               Added mapping of GE Field Map images
-    2018-01-01 Grega Repovš
-               Changed parameter names
-    2018-04-01 Grega Repovš
-               Added options for checking whether the session is
-               hcp ready and what to do with existing files
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-12 Grega Repovš
-               Reports an error if no file is found to be mapped
-    2019-05-21 Grega Repovš
-               Added the 'boldnamekey' option
-    2019-05-24 Grega Repovš
-               Added HCP folder structure specification
-    2019-06-18 Grega Repovš
-               Updated documentation with multiple session runs
-    2020-04-08 Grega Repovš
-               Added hcp_suffix parameter
-    """
-
     print "Running setup_hcp\n================"
 
     inf   = gc.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]

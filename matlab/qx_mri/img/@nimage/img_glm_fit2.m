@@ -42,16 +42,6 @@ function [B, rss, p] = img_glm_fit2(obj, X)
 %		[B, rss, p] = img.img_glm_fit2(behmatrix);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2010-03-18 Grega Repovs
-%			   Initial version.
-%   2016-11-26 Grega Repovs
-%				Updated documentation.
-%
-
 % ---- check input
 
 if nargin < 2

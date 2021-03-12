@@ -39,14 +39,6 @@ function [ud] = general_upsample_data(oldData, oldSphere, newSphere, newData)
 %                'newData.shape.gii);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-07-26 Aleksij Kraljic
-%              Initial version.
-%
-
 deleteOutData = false;
 if nargin < 4 || isempty(newData),           newData = 'temp_new_data.shape.gii'; deleteOutData = true; end
 

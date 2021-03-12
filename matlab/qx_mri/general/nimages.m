@@ -91,14 +91,6 @@ function img = nimages(varone, dtype, frames, verbose)
 %   - img8 ... a dense scalar image with 5 maps named A to E.
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2018-08-11 Grega Repovs
-%              First version based on nimage code
-
-
 if nargin < 4, verbose = false;  end
 if nargin < 3, frames = [];      end
 if nargin < 2, dtype = 'single'; end

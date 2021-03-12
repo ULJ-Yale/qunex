@@ -39,17 +39,6 @@ function [B, Z] = img_compute_r_type3(obj, bdata, verbose)
 %   regressor.
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-03-18 Grega Repovs
-%   2016-11-26 Grega Repovs
-%              Updated documentation.
-%   2018-06-25 Grega Repovs
-%              Replaced icdf and cdf with norminv and fcdf to support Octave.
-%
-
 if nargin < 3
     verbose = false;
     if nargin < 2

@@ -8,17 +8,6 @@ computer cluster. It supports PBS, LSF, and SLURM. The functions are accessible
 and used both as terminal commands as well as internal use functions.
 """
 
-"""
-~~~~~~~~~~~~~~~~~~
-
-Change log
-
-2017-06-17 Grega Repovs
-           Initial version
-
-Copyright (c) Grega Repovs. All rights reserved.
-"""
-
 import subprocess
 import os
 import os.path
@@ -233,29 +222,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                        replace="in:t1.nii.gz|out:brain.nii.gz" \\
                        settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
                        workdir="/studies/WM/sessions/AP23791/images/structural"
-    """
-    
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-06-17 Grega Repovs
-               Initial version
-    2017-09-30 Grega Repovs
-               Added additional options to scheduling LSF jobs
-    2017-09-30 Grega Repovs
-               Added options to redirect job output to log files
-    2018-10-03 Grega Repovs
-               Added checking for validity of log file directories
-    2018-10-04 Grega Repovs
-               Excluded log validity checking for 'return'
-    2019-04-25 Grega Repovs
-               Changed subjects to sessions
-    2019-20-01 Jure Demsar
-               Upgraded job naming and PBS scheduler
-    2020-14-08 Jure Demsar
-               Added the bash parameter.
     """
 
     # --- check inputs

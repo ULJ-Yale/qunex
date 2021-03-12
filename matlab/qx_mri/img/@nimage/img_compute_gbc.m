@@ -141,26 +141,6 @@ function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, r
 %           false, 0.99, false, false, 100000);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-08 Grega Repovs
-%              Original version
-%   2010-10-13 Grega Repovs
-%              Version with multiple voxels at a time
-%   2013-01-22 Grega Repovs
-%              A version that computes strength and proportion ranges not yet 
-%              fully optimized
-%   2013-03-11 Grega Repovs
-%              Added an option to work with covariances instead of correlations
-%   2016-02-08 Grega Repovs
-%              Added an option to specify how many voxels to work with in a 
-%              single step
-%   2016-11-26 Grega Repovs
-%              Updated documentation.
-%
-
 if nargin < 9 || isempty(vstep), vstep = 1200; end
 if nargin < 8, cv = [];         end
 if nargin < 7, time = [];       end

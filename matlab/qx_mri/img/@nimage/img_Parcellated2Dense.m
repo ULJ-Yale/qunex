@@ -25,13 +25,6 @@ function [img] = img_parcellated2dense(img, verbose, defineMissing)
 %   image based on the information stored in cifti metatada.
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2019-06-29 Grega Repovs
-%              Initial version.
-%
-
 % --> process variables
 
 if nargin < 3 || isempty(defineMissing),  defineMissing = 0; end

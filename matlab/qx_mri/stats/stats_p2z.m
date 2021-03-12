@@ -31,17 +31,6 @@ function [img] = stats_p2z(img, out, tail)
 %		stats_p2z('WM_p.nii.gz', 'WM_Z.nii.gz');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-03-19 Grega Repovs
-%              Updated to use nimage objects
-%              Updated documentation
-%   2018-06-25 Grega Repovs
-%              Replaced icdf with norminv to support Octave
-
-
 if nargin < 3 || isempty(tail), tail = 'two'; end
 if nargin < 2 out = ''; end
 

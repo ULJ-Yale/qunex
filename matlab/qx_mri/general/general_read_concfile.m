@@ -16,13 +16,6 @@ function [files] = general_read_concfile(file)
 %		list of paths
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   Grega Repovš
-%	Initial version.
-
 [fin message] = fopen(file);
 if fin == -1
     error('\n\nERROR: Could not open %s for reading. Please check your paths!\n\nMatlab message: %s', file, message);

@@ -26,13 +26,6 @@ function [filename] = general_filename_join(elements, delim)
 %   will result in 'bold1_s_hpss'
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-02-11 Grega Repovš - Updated documentation
-
-
 if nargin < 2, delim = '_'; end
 
 items = length(elements);

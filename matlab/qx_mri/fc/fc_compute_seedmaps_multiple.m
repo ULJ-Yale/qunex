@@ -67,24 +67,7 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %
 %       fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', 'mean', ...
 %       'udvarsme', false);
-
-%   ~~~~~~~~~~~~~~~~~~
 %
-%   Changelog
-%
-%   2008-02-07 Grega Repovš
-%   2008-01-23 Grega Repovš
-%            - Adjusted for a different file list format and an additional ROI mask []
-%   2011-11-10 Grega Repovš
-%            - Changed to make use of nimage and allow ignoring of bad frames
-%   2014-09-03 Grega Repovš
-%            - Added option for computing covariances
-%   2017-03-19 Grega Repovš
-%            - Updated documentation
-%   2017-04-18 Grega Repovs
-%            - Adjusted to use updated general_read_file_list.
-%
-
 
 if nargin < 8 || isempty(cv),      cv     = false;  end
 if nargin < 7 || isempty(ignore),  ignore = 'no';   end

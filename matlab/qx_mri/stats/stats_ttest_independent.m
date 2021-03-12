@@ -33,15 +33,6 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 %   --verbose   should report each step [false]
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   
-%   2011-10-09 Grega Repovs
-%              Rewritten from previous function with the same name.
-%
-
-
 if nargin < 7
     verbose = false;
     if nargin < 6

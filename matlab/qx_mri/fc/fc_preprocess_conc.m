@@ -576,46 +576,6 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   	'.nii.gz', '', 'hipass=linear|regress=ignore|lopass=linear');
 %
 
-%	~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%   2011-01-24 Grega Repovs
-%              Created based on fc_preprocess.m and other previous cod
-%   2013-10-20 Grega Repovs (v0.9.3)
-%              Added option for ignoring the frames marked as not to be used.
-%   2014-07-20 Grega Repovs (v0.9.5)
-%              Rewrote with separate nuisance signal extraction and parallel 
-%			   processing.
-%   2014-09-15 Grega Repovs (v0.9.6)
-%              Added the option to smooth within a mask and use a dilation mask
-%   2015-05-26 Grega Repovs (v0.9.6)
-%              Added the option to provide alternative root names of bolds (boldname)
-%   2016-02-02 Grega Repovs (v0.9.8)
-%              Added additional GLM options
-%   2017-01-07 Grega Repovs (v0.9.9)
-%              Renamed from fc_preprocess_conc2 to fc_preprocess_conc.
-%   2017-03-11 Grega Repovs (v0.9.10)
-%              Updated documentation.
-%   2017-04-22 Grega Repovs (v0.9.11)
-%              Added the option for interpolation of bad frames after regression.
-%   2018-06-17 Grega Repovs (v0.9.12)
-%              Changes for Octave compatibility.
-%   2018-06-20 Grega Repovs (v0.9.12)
-%              Added more detailed reporting of parameters used.
-%   2018-06-26 Grega Repovs (v0.9.13)
-%              Changed to pretty struct printing.
-%              Added option to support hcp_bold variant processing.
-%   2018-09-22 Grega Repovs (v0.9.13)
-%              Fixed an issue with conversion of doIt from char to string
-%   2020-07-03 Grega Repovs (v0.9.14)
-%              Added support for img_suffix
-%   2020-10-05 Grega Repovs (v0.9.15)
-%              Enabled additional movement and nuisance regressor computation
-%   2020-11-05 Grega Repovs (v0.9.16)
-%              Corrected embedding of additional movement regressors
-%   
-
 if nargin < 16, done = [];                                  end
 if nargin < 15, options = '';                               end
 if nargin < 14, ignores = '';                               end

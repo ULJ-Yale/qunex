@@ -135,17 +135,6 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %   will be computed.
 %
 %   The results will be returned in a fcmat structure and, if so specified, saved.
-%   
-%
-%   EXAMPLE USE
-%   ===========
-%
-%
-%   ---
-%   Written by Grega Repovš 2020-02-03.
-%
-%   Changelog
-%   2020-11-19 Grega Repovš - Updated the code and documentation.
 %
 
 if nargin < 5 || isempty(options), options = '';  end

@@ -29,18 +29,6 @@ function [p Z M SE t] = img_ttest_zero(obj, verbose)
 %       an image with standard errors of means across all volumes
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-10-09 Grega Repovs
-%              Initial version.
-%   2018-06-19 Grega Repovs
-%              Changed ttest call to use named parameters.
-%   2018-06-25 Grega Repovs
-%              Replaced icdf with norminv to support Octave.
-%
-
 if nargin < 2
     verbose = false;
 end

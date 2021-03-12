@@ -75,15 +75,6 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %   general_create_task_regressors
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2013-09-15 Grega Repovs
-%              Initial version
-%   2017-03-12 Grega Repovs
-%              Updated documentation, cleaned code.
-
-
 if nargin < 5, ignore = []; end
 if nargin < 4 || isempty(inmask), inmask = 5; end
 if nargin < 3 || isempty(stats),  stats  = 'sd'; end

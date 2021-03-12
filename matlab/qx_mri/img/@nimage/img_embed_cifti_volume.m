@@ -22,13 +22,6 @@ function [img] = img_embed_cifti_volume(img, vol_img)
 %       img = img.img_embed_cifti_volume(vol_img);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2017-06-23 Aleksij Kraljic
-%			   Initial version.
-
 % import CIFTI-2 components from the .mat file
 load('cifti_brainmodel');
 

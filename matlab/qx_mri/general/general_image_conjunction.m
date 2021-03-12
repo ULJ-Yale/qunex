@@ -31,12 +31,6 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 %		image of frequency of passing threshold
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%	2015-10-14 Grega Repovs
-%			Initial version
-
 % parsing arguments
 
 if nargin < 6, data = []; end

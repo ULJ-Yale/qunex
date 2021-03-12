@@ -96,17 +96,6 @@ function [roi peak] = img_find_peaks_surface(img, surfaceComponent, projection, 
 %           250, 'b', 3, 'frames:[1 3 7]', 2);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-07-05 Aleksij Kraljic
-%              Initial version.   
-%
-%   TODO
-%   - add statistics calculations for the peak data structure
-%
-
 %% - I - import section
 if nargin < 9 || isempty(verbose), fp_param.verbose = false;       end
 if nargin < 8 || isempty(options), options = '';          end

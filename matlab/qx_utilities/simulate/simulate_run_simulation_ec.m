@@ -25,14 +25,6 @@ function [cors, sim] = simulate_run_simulation_ec(r, models, timepoints, nruns, 
 %       array with actual simulation data
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-10-09 Grega Repovs
-%              Initial version.
-%	
-
 if nargin < 6
     md = 0.01;
     if nargin < 5

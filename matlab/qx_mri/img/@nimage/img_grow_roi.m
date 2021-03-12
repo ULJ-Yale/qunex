@@ -30,18 +30,6 @@ function [img] = img_grow_roi(img, voxels)
 %       grownroi = roi.img_grow_roi(2);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-05-10 Grega Repovs
-%              Initial version
-%   2013-07-24 Grega Repovs
-%              Adjusted to use multiframe ROI images
-%   2017-03-04 Grega Repovs
-%              Updated documentation
-%
-
 if nargin < 2
     voxels = 1;
 end

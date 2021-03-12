@@ -81,32 +81,6 @@ function [roi peak] = img_find_peaks_volume(img, minsize, maxsize, val, t, optio
 %           'frames:[1 3 7]', 2);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   Written by Grega Repovs, 2015-04-11
-%
-%   Changelog
-%
-%   2015-04-11 Grega Repovs
-%              Initial version.
-%   2015-12-19 Grega Repovs,
-%              A faster flooding implementation.
-%              Optimised reflooding of small ROI.
-%              Flipped verbosity.
-%   2016-01-16 Grega Repovs,
-%              Now uses img_get_xyz to get world coordinates of peaks and centroids.
-%   2017-03-04 Grega Repovs
-%              Updated documentation
-%   2017-06-27 Aleksij Kraljic
-%              Added functionality for images with multiple frames.
-%            
-%
-%    TODO
-%    ??? Clean up code.
-%    ??? Maxsize optimization.
-%
-
 if nargin < 7 || isempty(verbose), verbose = false;            end
 if nargin < 6 || isempty(options), options = '';               end
 if nargin < 5 || isempty(t),       t       = 0;                end

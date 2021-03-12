@@ -32,14 +32,6 @@ function [ijk] = img_get_ijk(img, xyz)
 %   	ijk = img.img_get_ijk([34, 60, 24; 25, 52, 18]);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   
-%	2017-08-07 Aleksij Kraljic
-%		       Initial version.
-%
-
 if nargin < 2, xyz = []; end
 
 img.data = img.image4D;

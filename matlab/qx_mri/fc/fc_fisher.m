@@ -17,16 +17,6 @@ function [Fz] = fc_fisher(r)
 %		Fisher Z values
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-% 
-%   2007-06-23 Grega Repovs
-%			   Initial version.	
-%	2017-03-19 Grega Repovs
-%			   Updated documentation.
-
-
 r = double(r);
 r = r * 0.9999999;
 Fz = atanh(r);

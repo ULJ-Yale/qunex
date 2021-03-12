@@ -26,14 +26,6 @@ function [normals] = general_compute_vertex_normals(surface)
 %   normal_vectors = general_compute_vertex_normals('L_midthickness.surf.gii');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%	2017-07-27 Aleksij Kraljic
-%			   Initial version.
-%
-
 % --- read the surface file
 if ~isa(surface,'gifti')
     S = gifti(surface);

@@ -15,15 +15,7 @@ function [ts] = simulate_trim_pad(ts,l)
 %
 %   ts
 %		trimmed / padded timeseries
-%	
-
-%   ~~~~~~~~~~~~~~~~~~
 %
-%   Changelog
-%	
-%	2010-10-09 Grega Repovs
-%			   Initial version.
-%	
 
 if nargin < 2
     error('ERROR: not enough parameters to trim or pad the timeseries!');

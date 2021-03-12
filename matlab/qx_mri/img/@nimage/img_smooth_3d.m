@@ -39,16 +39,6 @@ function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)
 %   	smooth = img.img_smooth_3d(3, true);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2007-07-11 Grega Repovs
-%			   Initial version
-%   2017-02-10 Grega Repovs
-%			   Adapted to use either smooth3 or smooth3f.
-%
-
 if nargin < 5 || isempty(ksize),   ksize   = 7;          end
 if nargin < 4 || isempty(ftype),   ftype   = 'gaussian'; end
 if nargin < 3 || isempty(verbose), verbose = false;      end

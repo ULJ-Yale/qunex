@@ -18,26 +18,6 @@ function [img] = img_read_nifti(img, filename, dtype, frames, verbose)
 %   img
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-10-13 Grega Repovs
-%              Initial version.
-%   2011-10-13 Grega Repovs
-%              updated to read NIfTI-2
-%   2013-10-20 Grega Repovs
-%              added verbose option
-%   2014-05-04 Grega Repovs
-%              rewrite to support direct gunzipping
-%   2014-06-29 Grega Repovs
-%              rewrite to support mex reading
-%   2017-03-20 Grega Repovs
-%              change in reading cifti: not having frame number in dim field
-%   2017-07-02 Grega Repovs
-%              extract NamedMaps from .dscalar images and TR from .dtseries
-%
-
 if nargin < 5 verbose = false;  end
 if nargin < 4 frames = [];      end
 if nargin < 3 dtype = [];       end

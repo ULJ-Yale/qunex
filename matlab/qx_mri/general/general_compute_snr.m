@@ -25,32 +25,23 @@ function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, targe
 %
 %	slicesnr
 %		array of snr values for each slice
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%	2010-11-21 Grega Repovs
-%			   Initial version.
-%
-% 	Copyright (c) 2010 Grega Repovs. All rights reserved.
 %
 
-	if nargin < 6
-		fname = [];
-		if nargin < 5
-			slice = [];
-			if nargin < 4
-				target = '';
-				if nargin < 3
-					fmask = false;
-					if nargin < 2
-						imask = false;
-					end
+if nargin < 6
+	fname = [];
+	if nargin < 5
+		slice = [];
+		if nargin < 4
+			target = '';
+			if nargin < 3
+				fmask = false;
+				if nargin < 2
+					imask = false;
 				end
 			end
 		end
-	end		
+	end
+end		
 
 if isempty(fname)
 	fname = filename;

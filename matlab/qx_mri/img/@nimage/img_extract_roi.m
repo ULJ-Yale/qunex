@@ -30,19 +30,6 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 %   ts
 %   
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-08 Grega Repovs
-%              Initial version
-%   2013-07-24 Grega Repovs 
-%              Adjusted to use multivolume ROI objects
-%   2018-03-18 Grega Repovs 
-%              Added 'median' as an option for extraction method
-%   2019-04-25 Grega Repovs 
-%              Added 'all' as an option for extraction method
-
 if nargin < 6; criterium = [];  end
 if nargin < 5; weights = [];    end
 if nargin < 4; method = [];     end

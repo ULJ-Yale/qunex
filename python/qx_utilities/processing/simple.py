@@ -174,17 +174,6 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
               overwrite=no script=fcMRI/processdata.sh
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-06-24 Grega Repovš
-               Initial version
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    """
-
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nRunning script %s" % (options['script'])

@@ -17,14 +17,6 @@ function [ifh] = img_read_ifh(img, file)
 %
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-19 Grega Repovs
-%              Initial version.
-%
-
 file = strtrim(file);
 root = strrep(file, '.img', '');
 root = strrep(root, '.4dfp', '');

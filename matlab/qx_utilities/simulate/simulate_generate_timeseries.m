@@ -30,16 +30,6 @@ function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model,
 %   te
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-10-09 Grega Repovs
-%              Initial version.
-%   2017-02-11 Grega Repovs
-%              Updated to use the general general_hrf function.
-%
-
 if nargin < 4
     modeldata = [];
     if nargin < 3

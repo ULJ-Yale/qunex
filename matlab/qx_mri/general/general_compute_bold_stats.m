@@ -68,23 +68,6 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %       general_compute_bold_stats('bold1.nii.gz', [], 'movement', '', '', true);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2011-07-09 Grega Repovs
-%              Initial version
-%   2013-10-20 Grega Repovs
-%              Added embedding and scrubbing
-%   2013-12-18 Grega Repovs
-%              Split in two to enable single bold file processing
-%   2017-03-12 Grega Repovs
-%              Updated documentation
-%   2018-06-20 Grega Repovš
-%              Added more detailed reporting of parameters used.
-%   2018-08-24 Grega Repovš
-%              Saving parameters to *.scrub file
-%
-
 if nargin < 6, verbose = false; end
 if nargin < 5, scrub   = [];    end
 if nargin < 4, store   = [];    end

@@ -30,15 +30,6 @@ function [] = general_image_overlap(af, bf, tf, v)
 %		general_image_overlap(imga, imgb, 'atlas_subject_overlap.png');
 %
 
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2017-03-19 Grega Repovs
-%			   Updated documentation
-
-
 if nargin < 4 || isempty(v), v = 3; end
 if nargin < 3
 		help imgOverlap;

@@ -17,14 +17,6 @@ function [ts] = general_normalize_timeseries(ts)
 %		normalized timeseries matrix
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2008-07-16 Grega Repovs
-%			   Initial version.
-%
-
 tsize = size(ts);
 tsize(1) = 1;
 

@@ -41,16 +41,6 @@ function [img] = img_cifti_embed(img, structures, data)
 %           {cortex_left_data, cortex_right_data});
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2014-08-01 Grega Repovs
-%              Initial version
-%   2016-11-25 Grega Repovs
-%              Updated help information
-%
-
 if nargin < 3
     error('ERROR: Not enough parameters provided to embed data into CIFTI!');
 end

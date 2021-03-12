@@ -98,27 +98,6 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-% 	2009-11-04 Grega Repovs
-%              Initial version.
-% 	2010-11-16 Grega Repovs
-% 	2010-11-22 Grega Repovs
-%	2010-12-01 Grega Repovs
-%              Added in script for smoothing and dilation.
-%	2014-01-22 Grega Repovs
-%              Took care of commands that return mulitiple volumes (e.g. mFzp).
-%	2014-02-16 Grega Repovs
-%              Forked from fcComputeGBC3 to do distance based bands.
-%	2017-03-19 Grega Repovs
-%              Cleaned, updated documentation.
-%	2017-04-18 Grega Repovs
-%              Adopted use of general_read_file_list.
-%
-
-
 fprintf('\n\nStarting ...');
 
 if nargin < 16, criterium = []; end

@@ -237,36 +237,6 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
              root=sustained_aov
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-06 Grega Repovš
-               Initial version
-    2017-02-06 Grega Repovš
-               Updated documentation.
-    2017-05-01 Grega Repovš
-               Added custom 2D/3D specification of TFCE parameters
-    2017-05-09 Grega Repovš
-               Added ability to specify multiple image files for multimodal
-               analysis.
-    2017-07-21 Grega Repovš
-               Added ability to run ptseries CIFTI images.
-    2017-09-28 Grega Repovš
-               Updated documentation regarding location of design files.
-    2017-10-20 Grega Repovš
-               Added cleaning of preexisting image files.
-    2018-03-06 Grega Repovš
-               Correction to documentation
-    2018-07-26 Grega Repovš
-               Corrected for new locations of templates
-    2018-09-10 Grega Repovš
-               Added additional options and surface only processing
-    2019-01-25 Grega Repovš
-               Added cleanup option
-    """
-
     print "Running PALM\n============"
     print " --> checking environment"
 
@@ -679,17 +649,6 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join='OR
             maxv=0.017
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-06 Grega Repovš
-               Initial version
-    2017-02-06 Grega Repovš
-               Updated documentation
-    """
-
     print "Running mask_map\n==============="
 
     # --- process the arguments
@@ -788,17 +747,6 @@ def join_maps(images=None, output=None, names=None, originals=None):
                       names="A > B, B > C, A > C, ANOVA" \\
                       output="sustained_results.dscalar.nii" \\
                       originals=remove
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-06 Grega Repovš
-               Initial version
-    2017-02-06 Grega Repovš
-               Updated documentation
     """
 
     print "Running join_maps\n================"
@@ -920,15 +868,6 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     ::
 
         qunex create_ws_palm_design factors="2,3" nsubjects=33 root=WM.type_by_load
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-07-14 Grega Repovš
-               Initial version 
     """
 
     if factors is None:

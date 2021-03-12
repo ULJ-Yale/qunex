@@ -37,19 +37,6 @@ function [data, hdr, meta] = general_read_table(instr)
 %       [data, hdr, meta] = general_read_table('movement.dat');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2014-07-18 Grega Repovs
-%              Initial version
-%   2016-08-18 Grega Repovs
-%              Adapted to work with strings
-%   2017-03-19 Grega Repovs
-%              Updated documentation
-%
-
-
 hdr  = {};
 data = [];
 meta = [];

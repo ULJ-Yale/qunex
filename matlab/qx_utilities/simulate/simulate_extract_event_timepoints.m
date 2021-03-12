@@ -19,14 +19,6 @@ function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 %		matrix of extracted timepoints
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-% 	2010-10-09 Grega Repovs
-%			   Initial version.
-%	
-
 if nargin < 3
     error('ERROR: Not enough parameters to extract event timepoints!');
 end

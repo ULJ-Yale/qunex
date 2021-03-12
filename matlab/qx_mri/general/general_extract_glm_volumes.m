@@ -62,22 +62,6 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %       'encoding,delay', [], 'by_session');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2016-08-26 Grega Repovs
-%              Initial version.
-%   2017-03-04 Grega Repovs
-%              Updated documentation
-%   2017-07-01 Grega Repovs
-%              Added psc option.
-%   2018-10-13 Grega Repovs
-%              Added txtf option.
-%   2020-08-21 Grega Repovs
-%              Replaced spaces with underscores in saveoption parameter values
-%
-%
-
 if nargin < 8 || isempty(txtf),       txtf       = ''; end
 if nargin < 7, verbose   = false; end
 if nargin < 6 || isempty(values),     values     = 'raw'; end

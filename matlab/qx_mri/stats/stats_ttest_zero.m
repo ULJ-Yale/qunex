@@ -20,15 +20,6 @@ function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 %   --verbose   should report each step [false]
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-10-09 Grega Repovs
-%              Rewriten from previous function with the same name.
-
-
-
 if nargin < 4
     verbose = false;
     if nargin < 3

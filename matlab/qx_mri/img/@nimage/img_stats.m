@@ -51,22 +51,6 @@ function [out, doIt] = img_stats(img, doIt, exclude)
 %       msdimg = img.img_stats({'m', 'sd'});
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-03-18 Grega Repovs
-%              Initial version.
-%   2017-03-11 Grega Repovs
-%              Updated documentation.
-%              Now accepts string with a comma separated commands.
-%              Made loop more robust.
-%   2018-04-21 Grega Repovs
-%              Added computation of RMSD and intensity normalized RMDS.
-%   2018-06-25 Grega Repovs
-%              Replaced icdf and cdf with norminv and tcdf to support Octave
-
-
 if nargin < 3, exclude = [];            end
 if nargin < 2 || isempty(doIt), doIt = 'm'; end
 

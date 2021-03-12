@@ -89,15 +89,6 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %   	general_plot_bold_timeseries_list('bolds.list', [], 'QA_', 5, 'png', true);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2015-10-17 Grega Repovs
-%		       Initial version
-%   2018-01-20 Grega Repovs
-%              Added detailed documentation
-
 %  ---- initializing
 
 if nargin < 6 || isempty(verbose), verbose = false; end

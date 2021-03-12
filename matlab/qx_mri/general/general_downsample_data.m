@@ -53,12 +53,6 @@ function [rd] = general_downsample_data(input, inSurfaceProjection, inSphereSurf
 %                'downsampled_L_sphere.surf.gii);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   2017-06-25 Aleksij Kraljic
-%              Initial version.
-%
-
 deleteOutSphere = false;
 if nargin < 7 || isempty(wbPath),               wbPath = [];                                               end
 if nargin < 6 || isempty(outSphere),            outSphere = 'tempSphere.surf.gii'; deleteOutSphere = true; end

@@ -16,14 +16,6 @@ function [y] = changeform(x, d)
 %
 %   y
 %		output vector or matrix
-%	
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2010-10-09 Grega Repovs
-%			   Initial version.
 %
 
 if nargin < 2

@@ -84,24 +84,7 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %   the regions specified in the ccroi.names frames 2, 3, and 4. It would save
 %   the results in a file 'ccroits.mat'. At extraction it would ignore all
 %   frames that were marked bad using the 'udvarsme' criterion.
-
-
-%   ~~~~~~~~~~~~~~~~~~
 %
-%   Changelog
-%
-%   2008-01-22 Grega Repovs
-%              Initial version.
-%   2011-11-07 Grega Repovs
-%              Adjusted and partly rewriten to use nimage object.
-%   2012-04-20 Grega Repovs
-%              Added the option of scrubbing the data.
-%   2013-07-24 Grega Repovs
-%              Adjusted to use the new ROIMask method.
-%   2017-03-11 Grega Repovs
-%              Cleaned code and updated documentation.
-%   2017-04-18 Grega Repovs
-%              Adjusted to use updated general_read_file_list.
 
 if nargin < 6, scrubvar = []; end
 if nargin < 5, error('ERROR: Five arguments need to be specified for the function to run!'); end

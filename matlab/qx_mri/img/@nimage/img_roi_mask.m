@@ -24,16 +24,6 @@ function [mask] = img_roi_mask(img, roi)
 %   voxels with non-zero codes.
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2013-07-24 Grega Repovs
-%		       Initial version.
-%   2017-03-21 Grega Repovs
-%              With empty roi it now retuns mask of all nonzero voxels.
-%
-
 img.data = img.image2D;
 
 if nargin < 2 || isempty(roi)

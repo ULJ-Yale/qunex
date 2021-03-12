@@ -459,22 +459,6 @@ def get_dicom_fields(folder=".", targetfile="dicomFields.csv", limit="20"):
              --limit=10
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2018-10-24 Antonija Kolobarić
-               Initial version adopted from import_bids
-    2018-10-24 Grega Repovš
-               Updated documentation
-               Changed parameter names to match the convention and use elsewhere
-               Added input parameter checks
-    2018-11-11 Grega Repovš
-               The command does not change/save the files anymore
-               More robust checking of parameters             
-    """
-
     if not os.path.exists(folder):
         raise ge.CommandFailed("get_dicom_fields", "Folder not found", "The specified folder with DICOM files to analyse was not found:", "%s" % (folder), "Please check your paths!")
 
@@ -636,27 +620,6 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
              --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \
              --outputfolder=/data/studies/WM/sessions/MR/deid \
              --extension="v1"
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2018-10-24 Antonija Kolobarić and Grega Repovš
-               Initial version
-    2018-11-10 Grega Repovš
-               Updated documentation
-               Changed parameter names to match the convention and use elsewhere
-               Added input parameter checks
-    2018-11-11 Grega Repovš
-               Stores the correct renamed and processed files in the zip package
-               urlsafe hash encoding
-               More robust field checking
-    2018-11-13 Grega Repovš
-               Fixed in place processing of tar and zip archives
-               Fixed saving of gzipped dicom files
-               Expanded documentation
     """
 
     if extension:

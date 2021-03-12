@@ -520,63 +520,6 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %		'hipass:linear|regress=ignore|lopass=linear');
 %
 
-%	~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%	2007-10-29 Grega Repovs
-%			   Initial version.
-%	2007-11-15 Grega Repovs
-%	           Added regression of events
-%	2009-01-19 Grega Repovs
-%	           Adapted for new fcMRI workflow
-%	2009-05-18 Grega Repovs
-%	           Changed processing of filenames to alow arbitrary combination of 
-%			   steps
-%	2012-09-08 Grega Repovs
-%	           Implemented the option of specifying arbitrary ROI to be used for
-%	           definition of nuisance signal. Cleaned up help text.
-%	2013-10-20 Grega Repovs (v0.9.3)
-%	           Added option for ignoring the frames marked as not to be used
-%	2014-07-17 Grega Repovs (v0.9.4)
-%	           Moved to using external nuisance file and preprocessing nuisance 
-%			   in parallel. Scrubbing can now be re-defined here and a scrubbing 
-%			   file is saved (separately for variant if set).
-%	2014-09-15 Grega Repovs (v0.9.5)
-%	           Added the option to smooth within a mask and use a dilation mask
-%	2015-05-26 Grega Repovs (v0.9.6)
-%	           Added the option to provide alternative root names of bolds (boldname)
-%	2017-01-07 Grega Repovs (v0.9.7)
-%	           Renamed from fc_preprocess to fc_preprocess
-%	2017-03-11 Grega Repovs (v0.9.8)
-%	           Updated documentation and added default values for some of the 
-%			   parameters.
-%	2017-04-22 Grega Repovs (v0.9.10)
-%	           Added the option for interpolation of bad frames after regression.
-%	2018-06-17 Grega Repovs (v0.9.11)
-%	           Minor changes for Octave compatibility.
-%	2018-06-20 Grega Repovs (v0.9.12)
-%	           Added more detailed reporting of parameters used.
-%	2018-06-21 Grega Repovs (v0.9.13)
-%	           Updated the function to store GLM information ain the same manner 
-%			   as preprocess_conc.
-%	2018-06-26 Grega Repovs (v0.9.14)
-%	           Updated naming of residual files to include GLM name
-%	2018-06-26 Grega Repovs (v0.9.15)
-%	           Changed to pretty struct printing.
-%	           Added option to support hcp_bold variant processing.
-%	2018-09-22 Grega Repovs (v0.9.13)
-%	           Fixed an issue with conversion of doIt from char to string
-%   2020-07-03 Grega Repovs (v0.9.14)
-%              Added support for img_suffix
-%   2018-06-26 Grega Repovs (v0.9.15)
-%              Changed to pretty struct printing.
-%              Added option to support hcp_bold variant processing.
-%   2018-09-22 Grega Repovs (v0.9.16)
-%              Fixed an issue with conversion of doIt from char to string
-%   2020-10-05 Grega Repovs (v0.9.17)
-%              Enabled additional movement and nuisance regressor computation
-%
-
 if nargin < 15, options = '';       end
 if nargin < 14, ignores = '';       end
 if nargin < 13, scrub = '';         end

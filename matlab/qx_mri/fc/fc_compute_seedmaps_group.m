@@ -152,26 +152,6 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %                           'roimethod:mean|ignore:event');
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2008-02-07 Grega Repovš
-%       Initial version
-%   2008-01-23 Grega Repovš 
-%       Adjusted for a different file list format and an additional ROI mask.
-%   2011-11-10 Grega Repovš 
-%       Changed to make use of gmrimage and allow ignoring of bad frames.
-%   2013-12-28 Grega Repovš 
-%       Moved to a more general name, added block event extraction and use of 'use' info.
-%   2017-03-19 Grega Repovs 
-%       Cleaned code, updated documentation.
-%   2017-04-18 Grega Repovs 
-%       Adjusted to use updated general_read_file_list.
-%   2018-03-16 Grega Repovs 
-%       Added verbose to the parameter list
-%
-
 if nargin < 5 || isempty(options), options = '';  end
 if nargin < 4 || isempty(targetf), targetf = '.'; end
 if nargin < 3 frames  = []; end

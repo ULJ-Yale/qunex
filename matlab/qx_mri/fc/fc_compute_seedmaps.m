@@ -138,16 +138,6 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %   the ROI will be entered.
 %
 %   The results will be returned in a fcmaps structure and, if so specified, saved.
-%   
-%
-%   EXAMPLE USE
-%   ===========
-%
-%
-%   ---
-%   Written by Grega Repovš 2020-02-02.
-%
-%   Changelog
 %
 
 if nargin < 5 || isempty(options), options = '';  end

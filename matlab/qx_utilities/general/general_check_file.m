@@ -43,12 +43,6 @@ function [ok] = general_check_file(filename, description, v, prepend)
 %
 %   	general_check_file('images/functional/movement/bold1.dat', 'movement file', ...
 %		'full');
-
-%	~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%   2017-03-12 Grega Repovs
-%              Updated documentation
 %
 
 if nargin < 4 || isempty(prepend), prepend = '... '; end

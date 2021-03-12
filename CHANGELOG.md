@@ -1,4 +1,8 @@
-# Change Log 
+# Change Log
+
+## 0.90.2 (2021-02-21)
+
+Beautified some QuNex outputs and logs.
 
 ## 0.90.1 (2021-02-21)
 

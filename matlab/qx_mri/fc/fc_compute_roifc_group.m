@@ -122,15 +122,6 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %
 %   The results will be returned in a fcset structure and, if so specified, saved.
 %
-%   EXAMPLE USE
-%   ===========
-% 
-%   ---
-%   Written by Grega Repovš 2020-02-03.
-%
-%   Changelog
-%   2020-11-19 Grega Repovš - Updated the code and documentation.
-%
 
 if nargin < 5 || isempty(options), options = '';  end
 if nargin < 4 || isempty(targetf), targetf = '.'; end

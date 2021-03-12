@@ -45,16 +45,6 @@ function [B, res, rvar, Xdof] = img_glm_fit(obj, X)
 %		[B, res, rvar, Xdof] = img.img_glm_fit2(behmatrix);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2010-03-18 Grega Repovs
-%			   Initial version.
-%   2016-11-26 Grega Repovs
-%			   Updated documentation.
-%
-
 % ---- check input
 
 if nargin < 2

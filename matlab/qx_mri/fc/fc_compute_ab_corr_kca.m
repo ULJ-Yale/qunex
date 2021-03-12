@@ -70,18 +70,6 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %                              0, 'Th-PFC', 'g', 'correlations', 15);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-08-13 Grega Repovš
-%              Initial version
-%   2017-03-19 Grega Repovs
-%              Cleaned up the code and updated documentation
-%   2017-04-18 Grega Repovs
-%              Adjusted to use general_read_file_list
-%
-
 if nargin < 10 || isempty(verbose),  verbose  = 'none';            end
 if nargin < 9  || isempty(nrep),     nrep     = 10;                end
 if nargin < 8  || isempty(dmeasure), dmeasure = 'correlation';     end

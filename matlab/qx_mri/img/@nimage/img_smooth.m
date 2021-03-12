@@ -92,17 +92,6 @@ function img = img_smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %       img_smooth = img.img_smooth(3, true, 'gaussian', 8);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-07-11 Aleksij Kraljic
-%              Initial version
-%	2017-07-17 Aleksij Kraljic
-%              Added option for passing specific surf.gii projection files
-%   2017-12-20 Aleksij Kraljic
-%              Added option for smoothing thresholded multiple-frame images
-
 % input checking
 if nargin < 11 || isempty(frames),     frames = 1; warn = 1;             end
 if nargin < 10 || isempty(timeSeries), timeSeries = false;               end

@@ -26,14 +26,6 @@ function [elements] = general_filename_split(filename, delim)
 %   will result in `elements = {'bold3', 's', 'hpss'}`.
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-02-11 Grega Repovš
-%			   Updated documentation
-%
-
 if nargin < 2, delim = '_'; end
 
 [t, r] = strtok(filename, '.');

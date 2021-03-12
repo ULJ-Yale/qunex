@@ -26,19 +26,6 @@ function [img] = img_scrub(img, com)
 %       scrubbed image
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2012-10-29 Grega Repovs
-%              Initial version.
-%
-%   TODO:
-%       Needs shifting added to com and mask!
-%       (Might require changing com syntax)
-%
-%
-
 if nargin < 2
     fprintf('\n\nERROR in the use of nimage.img_scrub!')
     help('nimage.img_scrub');

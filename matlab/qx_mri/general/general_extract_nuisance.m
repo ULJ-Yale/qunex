@@ -33,15 +33,6 @@ function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, nt
 %   hdr
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-% 	ChangeLog
-%   2014-07-14 Grega Repovš
-%              Initial version.
-%   2018-06-20 Grega Repovš
-%            - Added more detailed reporting of parameters used.
-%
-
 if nargin < 10, verbose     = false; end
 if nargin < 9,  shrink      = true;  end
 if nargin < 8,  nroi        = [];    end

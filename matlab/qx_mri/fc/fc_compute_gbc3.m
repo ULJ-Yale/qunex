@@ -72,28 +72,6 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %       'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-04 Grega Repovš
-%              Initial version.
-%   2010-11-16 Grega Repovš
-%   2010-11-22 Grega Repovš
-%   2010-12-01 Grega Repovš
-%              Added in smoothing and dilation of images.
-%   2014-01-22 Grega Repovs
-%              Took care of commands that return mulitple volumes (e.g. mFzp).
-%   2016-02-08 Grega Repovš
-%              Added an option to specify how many voxels to work with in a single step.
-%   2016-11-26 Grega Repovš
-%              Updated documentation.
-%   2017-04-18 Grega Repovš
-%              Adopted use of general_read_file_list.
-%   2018-06-20 Grega Repovš
-%              Updated for Octave compatibility.
-%
-
 fprintf('\n\nStarting ...');
 
 if nargin < 11 || isempty(vstep), vstep = [];   end

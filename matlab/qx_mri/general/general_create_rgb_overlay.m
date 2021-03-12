@@ -25,14 +25,6 @@ function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices)
 %   img
 %
 
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2012-04-16 Grega Repovš
-%              Initial version.
-%
-
 savepng = true;
 if nargin < 7
     slices = [];
