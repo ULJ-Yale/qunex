@@ -242,7 +242,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
 
     if not "QUNEXPATH" in os.environ:
         raise ge.CommandError("run_palm", "QUNEXPATH environment variable not set.", "Can not find HCP Template files!")
-    atlas = os.path.join(os.environ['QUNEXPATH'], 'library', 'data', 'atlases')
+    atlas = os.path.join(os.environ['QUNEXPATH'], 'qx_library', 'data', 'atlases')
 
     # --- check for number of input files
 
