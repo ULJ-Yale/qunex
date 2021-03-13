@@ -447,7 +447,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
             if not 'surface' in options:
                 print "     ... Volume"
                 infiles = setInFiles(root, 'volume.nii', nimages)
-                inargs  = ['-m', os.path.join(atlas, 'HCP', 'masks', 'volume.cifti.mask.nii')]
+                inargs  = ['-m', os.path.join(atlas, 'hcp', 'masks', 'volume.cifti.mask.nii')]
                 command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
                 calls.append({'name': 'PALM Volume', 'args': command, 'sout': root + '_volume.log'})
                 if '-T' in command and t3set is not None:
@@ -455,7 +455,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
 
             print "     ... Left Surface"
             infiles = setInFiles(root, 'left.func.gii', nimages)
-            inargs  = ['-m', os.path.join(atlas, 'HCP', 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'HCP', 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
+            inargs  = ['-m', os.path.join(atlas, 'hcp', 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_L']
             if '-T' in command:
                 command += [t2set]
@@ -463,7 +463,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
 
             print "     ... Right Surface"
             infiles = setInFiles(root, 'right.func.gii', nimages)
-            inargs  = ['-m', os.path.join(atlas, 'HCP', 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'HCP', 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
+            inargs  = ['-m', os.path.join(atlas, 'hcp', 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_R']
             if '-T' in command:
                 command += [t2set]
@@ -550,13 +550,13 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
 
                             if 'surface' in options:
                                 command = ['wb_command', '-cifti-create-dense-scalar', targetfile,
-                                           '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
-                                           '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
+                                           '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'hcp', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
+                                           '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'hcp', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
                             else:
                                 command = ['wb_command', '-cifti-create-dense-scalar', targetfile,
-                                           '-volume', rvolume, os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'Atlas_ROIs.2.nii.gz'),
-                                           '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
-                                           '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
+                                           '-volume', rvolume, os.path.join(atlas, 'hcp', 'standard_mesh_atlases', 'Atlas_ROIs.2.nii.gz'),
+                                           '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'hcp', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
+                                           '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'hcp', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
                             if subprocess.call(command):
                                 raise ge.CommandFailed("run_palm", "Create cifti failed", "wb_command creating cifti file failed", "The command ran: %s" % (" ".join(command)))
 
