@@ -563,10 +563,15 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
 
     try:
         result = function(**args)
-    except (ge.CommandError, ge.CommandFailed) as e:
+    except ge.CommandNull as e:
         with lock:
-            print "\n\nERROR"
-            print e.message
+            print ge.reportCommandNull(name, e)
+            print
+        result = e.error
+    except ge.CommandFailed as e:
+        with lock:
+            print ge.reportCommandFailed(name, e)
+            print
         result = e.error
     except Exception as e:
         with lock:
