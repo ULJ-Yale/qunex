@@ -2,7 +2,7 @@
 
 ## 0.90.2 (2021-02-21)
 
-Beautified some QuNex outputs and logs.
+Beautified some QuNex outputs and logs. The run_palm command now has an option that allows it to use custom masks.
 
 ## 0.90.1 (2021-02-21)
 
