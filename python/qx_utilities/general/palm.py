@@ -192,22 +192,24 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
     Additional optional parameters
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-    --options         A | separate string of additional options to be passed to
-                      the command, e.g. specify 'surface' if only left and right
-                      surfaces from dtseries or dscalar files are to be
-                      analyzed.
-    --root            Optional root name for the result images, design name is
-                      used if the optional parameter is not specified.
-    --parelements     Number of elements to run in parallel for grayordinate
-                      decomposition, all available elements (3 max for left
-                      surface, right surface and volume files) will be used if
-                      not specified.
-    --overwrite       Whether to remove preexisting image files, if they exists,
-                      the command will exit with a warning if there are
-                      preexisting files and overwrite is set to 'no'
-                      (the default).
-    --cleanup         Should the command clean all the temporary generated files
-                      or not before the command exits. [yes]
+    --options       A | separate string of additional options to be passed to
+                    the command. The currently supported options are:
+                    - surface       Analyze only left and right surfaces from
+                                    dtseries or dscalar files
+                    - mask:<path>   Use the specified mask file instead of the
+                                    default mask files.
+    --root          Optional root name for the result images, design name is
+                    used if the optional parameter is not specified.
+    --parelements   Number of elements to run in parallel for grayordinate
+                    decomposition, all available elements (3 max for left
+                    surface, right surface and volume files) will be used if
+                    not specified.
+    --overwrite     Whether to remove preexisting image files, if they exists,
+                    the command will exit with a warning if there are
+                    preexisting files and overwrite is set to 'no'
+                    (the default).
+    --cleanup       Should the command clean all the temporary generated files
+                    or not before the command exits. [yes]
 
     USE
     ===
@@ -313,9 +315,19 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
     #     return
 
     if options is None:
-        options = []
+        options = {'flags': []}
     else:
-        options = [e.strip() for e in options.split('|')]
+        elements = [e.strip() for e in options.split('|')]
+        options = {'flags': []}
+        for element in elements:
+            if ':' in element:
+                try: 
+                    key, value = [e.strip() for e in element.split(':')]
+                except:
+                    raise ge.CommandFailed("run_palm", "Invalid option value", "The provided option is invalid: %s" % (element), "Please check option specification!")
+                options[key] = value
+            else:
+                options['flags'].append(element)
 
 
     # --- setup and run
@@ -323,6 +335,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
     toclean   = [];
     cnum = re.compile('.*_c([0-9]+).gii')
     mnum = re.compile('.*_m([0-9]+)_')
+
 
     try:
 
@@ -333,7 +346,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
             c += 1
             troot = "%s_i%d" % (root, c)
 
-            if '.nii.gz' in image:
+            if image.endswith('.nii.gz'):
                 simage = troot + '_volume.nii'
 
                 print " --> ungzipping %s" % (image)
@@ -342,15 +355,15 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
                 toclean.append(simage)
                 iformat = 'nifti'
 
-            elif '.ptseries.nii' in image:
+            elif image.endswith('.ptseries.nii'):
                 simage = troot + '_cifti.ptseries.nii'
                 shutil.copy(image, simage)
                 toclean.append(simage)
                 iformat = 'ptseries'
 
-            elif '.dtseries.nii' in image or '.dscalar.nii' in image:
+            elif image.endswith('.dtseries.nii') or image.endswith('.dscalar.nii'):
                 print " --> decomposing %s" % (image)
-                if 'surface' in options:
+                if 'surface' in options['flags']:
                     command = ['wb_command', '-cifti-separate', image, 'COLUMN',
                         '-metric', 'CORTEX_LEFT', troot + '_left.func.gii',
                         '-metric', 'CORTEX_RIGHT', troot + '_right.func.gii']
@@ -364,13 +377,13 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
                 if subprocess.call(command):
                     print "ERROR: Command failed: %s" % (" ".join(command))
                     raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
-                if 'surface' in options:
+                if 'surface' in options['flags']:
                     toclean += [troot + e for e in ['_left.func.gii', '_right.func.gii']]
                 else:
                     toclean += [troot + e for e in ['_volume.nii', '_left.func.gii', '_right.func.gii']]
                 iformat = 'dtseries'
 
-            elif '.nii' in image:
+            elif image.endswith('.nii'):
                 simage = troot + '_volume.nii'
                 shutil.copy(image, simage)
                 toclean.append(simage)
@@ -396,6 +409,87 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
                 else:
                     print "     ... %s file not found and won't be used [%s]" % (f, os.path.abspath(tfile))
 
+
+        # --- prepare (custom) mask(s)
+
+        # --> set the default CIFTI maps
+
+        mask_volume     = os.path.join(atlas, 'hcp', 'masks', 'volume.cifti.mask.nii')
+        mask_left       = os.path.join(atlas, 'hcp', 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii')
+        mask_right      = os.path.join(atlas, 'hcp', 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii')
+        mask_parcelated = None
+
+        # --> replace the default masks with custom masks if provided
+
+        if "mask" in options:
+
+            # --- does mask exist
+
+            if not os.path.exists(options['mask']):
+                raise ge.CommandFailed("run_palm", "Mask not found", "The specified mask file could not be found: %s" % (options['mask']), "Please check your paths!")
+            
+            # --- check for match with images and decompose if needed
+
+            if iformat is "nifti":
+                if options['mask'].endswith('.nii.gz'):
+                    mask_volume = troot + '_volume_mask.nii'
+
+                    print " --> ungzipping %s" % (options['mask'])
+                    with gzip.open(options['mask'], 'rb') as f_in, open(mask_volume, 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                    toclean.append(mask_volume)
+            
+                elif any([options['mask'].endswith(e) for e in ['.pscalar.nii', '.ptseries.nii', '.dtseries.nii', '.dscalar.nii']]):
+                    raise ge.CommandFailed("run_palm", "Invalid mask image", "A cifti mask file was provided for volume image input: %s" % (options['mask']), "Please provide a valid mask!")
+
+                elif options['mask'].endswith('.nii'):
+                    mask_volume = troot + '_volume_mask.nii'
+                    shutil.copy(options['mask'], mask_volume)
+                    toclean.append(mask_volume)
+
+                else:
+                    raise ge.CommandFailed("run_palm", "Invalid mask image", "The specified mask is not a valid image file: %s" % (options['mask']), "Please provide a valid mask!")
+            
+            elif iformat is "dtseries":
+                if options['mask'].endswith('.dtseries.nii') or options['mask'].endswith('.dscalar.nii'):
+                    
+                    mask_left   = troot + '_left_mask.func.gii'
+                    mask_right  = troot + '_right_mask.func.gii'
+                    mask_volume = troot + '_volume_mask.nii'
+
+                    print " --> decomposing mask %s" % (options['mask'])
+                    if 'surface' in options['flags']:                        
+                        command = ['wb_command', '-cifti-separate', options['mask'], 'COLUMN',
+                            '-metric', 'CORTEX_LEFT', mask_left,
+                            '-metric', 'CORTEX_RIGHT', mask_right]
+                    else:
+                        command = ['wb_command', '-cifti-separate', options['mask'], 'COLUMN',
+                            '-volume-all', mask_volume,                     # , '-roi', 'cifti_volume_mask.nii'
+                            '-metric', 'CORTEX_LEFT', mask_left,
+                            '-metric', 'CORTEX_RIGHT', mask_right]
+
+                    print " --> running:", " ".join(command)
+                    if subprocess.call(command):
+                        print "ERROR: Command failed: %s" % (" ".join(command))
+                        raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
+                    if 'surface' in options['flags']:
+                        toclean += [mask_left, mask_right]
+                    else:
+                        toclean += [mask_left, mask_right, mask_volume]
+
+                else:
+                    raise ge.CommandFailed("run_palm", "Invalid mask image", "The specified mask is not a valid image file for cifti input: %s" % (options['mask']), "Please provide a valid mask!")
+            
+            elif iformat is "ptseries":
+                if options['mask'].endswith('.ptseries.nii') or options['mask'].endswith('.pscalar.nii'):
+                    mask_parcelated = troot + '_cifti_mask.ptseries.nii'
+                    shutil.copy(options['mask'], mask_parcelated)
+                    toclean.append(mask_parcelated)
+                else:
+                    raise ge.CommandFailed("run_palm", "Invalid mask image", "The specified mask is not a valid image file for parcellated input: %s." % (options['mask']))    
+
+            else:
+                raise ge.CommandFailed("run_palm", "Mask not accepted", "Masks are not accepted for the provided input [%s]." % (iformat))
 
         # --- check for additional parameters
 
@@ -428,7 +522,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
         if iformat == 'nifti':
             print " --> running PALM for NIfTI input"
             infiles = setInFiles(root, 'volume.nii', nimages)
-            inargs  = ['-m', os.path.join(atlas, 'mni_templates', 'MNI152_T1_2mm_brain_mask_dil.nii')]
+            inargs  = ['-m', mask_volume]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
             if subprocess.call(command):
                 raise ge.CommandFailed("run_palm", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")
@@ -436,7 +530,11 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
         elif iformat == 'ptseries':
             print " --> running PALM for ptseries CIFTI input"
             infiles = setInFiles(root, 'cifti.ptseries.nii', nimages)
-            command = ['palm'] + infiles + dargs + sargs + ['-o', root]
+            if mask_parcelated:
+                inargs  = ['-m', mask_parcelated]
+            else:
+                inargs  = []
+            command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root]
             if subprocess.call(command):
                 raise ge.CommandFailed("run_palm", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")
 
@@ -444,10 +542,10 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
             print " --> setting up PALM for dtseries/dscalar CIFTI input"
             calls = []
 
-            if not 'surface' in options:
+            if not 'surface' in options['flags']:
                 print "     ... Volume"
                 infiles = setInFiles(root, 'volume.nii', nimages)
-                inargs  = ['-m', os.path.join(atlas, 'hcp', 'masks', 'volume.cifti.mask.nii')]
+                inargs  = ['-m', mask_volume]
                 command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
                 calls.append({'name': 'PALM Volume', 'args': command, 'sout': root + '_volume.log'})
                 if '-T' in command and t3set is not None:
@@ -455,7 +553,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
 
             print "     ... Left Surface"
             infiles = setInFiles(root, 'left.func.gii', nimages)
-            inargs  = ['-m', os.path.join(atlas, 'hcp', 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
+            inargs  = ['-m', mask_left, '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_L']
             if '-T' in command:
                 command += [t2set]
@@ -463,7 +561,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
 
             print "     ... Right Surface"
             infiles = setInFiles(root, 'right.func.gii', nimages)
-            inargs  = ['-m', os.path.join(atlas, 'hcp', 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
+            inargs  = ['-m', mask_right, '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_R']
             if '-T' in command:
                 command += [t2set]
@@ -507,7 +605,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
                         rleftsurfaces.sort()
                         rrightsurfaces.sort()
 
-                        if 'surface' in options:
+                        if 'surface' in options['flags']:
                             if rleftsurfaces:
                                 if len(rleftsurfaces) != len(rrightsurfaces):
                                     print "     ... WARNING: Nonmatching number of resulting surface files, please check PALM log for errors!"
@@ -519,7 +617,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
                                     continue
 
                         while rleftsurfaces:
-                            if 'surface' not in options:
+                            if 'surface' not in options['flags']:
                                 rvolume       = rvolumes.pop(0)
                             rleftsurface  = rleftsurfaces.pop(0)
                             rrightsurface = rrightsurfaces.pop(0)
@@ -548,7 +646,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
                             rleftsurface = rleftsurface.replace('.gii', '.func.gii')
                             rrightsurface = rrightsurface.replace('.gii', '.func.gii')
 
-                            if 'surface' in options:
+                            if 'surface' in options['flags']:
                                 command = ['wb_command', '-cifti-create-dense-scalar', targetfile,
                                            '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'hcp', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
                                            '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'hcp', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
@@ -562,7 +660,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
 
                             if os.path.exists(targetfile):
                                 print "... done!"
-                                if not 'surface' in options:
+                                if not 'surface' in options['flags']:
                                     os.remove(rvolume)
                                 os.remove(rleftsurface)
                                 os.remove(rrightsurface)
