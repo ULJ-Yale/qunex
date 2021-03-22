@@ -26,8 +26,7 @@ thresh=$2
 bin_flag=$3
 MNI_brain="\$FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz"
 
-execPath=`dirname $0`
-structures=$execPath/auto_ptx_dir/structure_list
+structures=$QXLIBRARYETC/auto_ptx/structure_list
 dest=$ResultsDir
 
 if [ "${bin_flag}" -eq "1" ]; then 
@@ -78,7 +77,7 @@ while read line; do
 	    tracts_thr=${struct}_bin
 	    $FSLDIR/bin/fslmaths $tracts -thr $thresh -bin -mul $comIt -range $tracts_thr
             setIntentCode $tracts_thr 3
-            viewstr=$viewstr\ $tracts_thr\ -b\ 0.1,${comIt}.01\ -l\ $execPath/auto_ptx_dir/luts/c${comIt}.lut
+            viewstr=$viewstr\ $tracts_thr\ -b\ 0.1,${comIt}.01\ -l\ $QXLIBRARYETC/auto_ptx/luts/c${comIt}.lut
 	else
             comIt=$(( $comIt - 1 ))
 	    tracts_thr=${struct}_thr

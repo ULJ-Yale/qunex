@@ -28,7 +28,6 @@ struct=$2
 MNI_to_FA_warp=$4
 FA_to_MNI_warp=$5
 nSeed=300
-execPath=`dirname $0`
 OutDir=$6
 GPU_flag=0
 
@@ -48,7 +47,7 @@ echo "running automated tractography of subject ${sub}, structure ${struct}, usi
 
 
 # sources
-masks=$execPath/auto_ptx_dir/protocols/$struct
+masks=$QXLIBRARYETC/auto_ptx/protocols/$struct
 # output
 tracts=${OutDir}/$struct
 mkdir -p $tracts

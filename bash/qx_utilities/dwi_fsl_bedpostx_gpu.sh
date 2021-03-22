@@ -368,10 +368,10 @@ fi
 
 # -- Report
 geho "--> Running FSL command:"
-echo "    ${FSLGPUBinary}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model}  ${GradientNonlinearitiesFlag} ${RicianFlag}"
+echo "    ${FSLGPUScripts}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model}  ${GradientNonlinearitiesFlag} ${RicianFlag}"
 
 # -- Execute
-${FSLGPUBinary}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model} ${GradientNonlinearitiesFlag} ${RicianFlag}
+${FSLGPUScripts}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model} ${GradientNonlinearitiesFlag} ${RicianFlag}
 
 # -- Perform completion checks
 echo ""

@@ -1,8 +1,8 @@
 # Change Log
 
-## 0.90.2 (2021-02-21)
+## 0.90.3 (2021-03-22)
 
-Beautified some QuNex outputs and logs. The run_palm command now has an option that allows it to use custom masks.
+Beautified some QuNex outputs and logs. The run_palm command now has an option that allows it to use custom masks. Moved all third party files into the QuNex library repository.
 
 ## 0.90.1 (2021-02-21)
 

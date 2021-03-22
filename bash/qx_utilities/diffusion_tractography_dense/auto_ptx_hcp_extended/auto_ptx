@@ -35,14 +35,11 @@ fi
 logDir=${OutDir}/logs
 rm -rf $logDir
 mkdir -p $logDir
-
-
 execPath=`dirname $0`
-
 
 cd ${InputDir}
 
-structures=$execPath/auto_ptx_dir/structure_list
+structures=$QXLIBRARYETC/auto_ptx/structure_list
 
 listJobs=""
 

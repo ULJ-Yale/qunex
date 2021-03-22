@@ -51,7 +51,7 @@ if [[ `nvcc --version | grep "release"` == *"9.1"* ]]; then bindir=${FSLGPUBinar
 
 # -- Define paths
 scriptsdir=$HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts
-TemplateFolder=$HCPPIPEDIR_dMRITractFull/templates
+TemplateFolder=$QXLIBRARYETC/diffusion_tractography_dense/templates
 
 # -- Check inputs
 if [ "$2" == "" ];then

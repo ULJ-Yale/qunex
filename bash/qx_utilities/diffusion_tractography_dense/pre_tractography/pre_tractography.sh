@@ -115,16 +115,17 @@ if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--
 fi
 
 scriptsdir="${HCPPIPEDIR_dMRITractFull}"/pre_tractography
+configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 
 StudyFolder=$1
 Session=$2
 MSMflag=$3
 LogFile=$4
 
-WholeBrainTrajectoryLabels=${scriptsdir}/config/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
-LeftCerebralTrajectoryLabels=${scriptsdir}/config/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt 
-RightCerebralTrajectoryLabels=${scriptsdir}/config/RightCerebralFreeSurferTrajectoryLabelTableLut.txt
-FreeSurferLabels=${scriptsdir}/config/FreeSurferAllLut.txt
+WholeBrainTrajectoryLabels=${configdir}/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
+LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt 
+RightCerebralTrajectoryLabels=${configdir}/RightCerebralFreeSurferTrajectoryLabelTableLut.txt
+FreeSurferLabels=${configdir}/FreeSurferAllLut.txt
 
 T1wDiffusionFolder="${StudyFolder}/${Session}/T1w/Diffusion"
 DiffusionResolution=`${FSLDIR}/bin/fslval ${T1wDiffusionFolder}/data pixdim1`
