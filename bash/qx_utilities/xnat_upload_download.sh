@@ -594,7 +594,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     
     ## -- Clean prior mapping
     unset TimeStampXNATPath TimeStamp TimeStampXNATPath XNATInfoPath
-    TimeStampXNATPath=`date +%Y-%m-%d_%H.%M.%S`
+    TimeStampXNATPath=`date +%Y-%m-%d_%H.%M.%10N`
     if [ -z {StudyFolder} ]; then
         XNATInfoPath="${DownloadPath}/XNATInfo_${TimeStampXNATPath}"
     else
@@ -676,7 +676,7 @@ fi
 if [[ ${RUN_TYPE} == "upload" ]]; then
     
     unset TimeStamp
-    TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 
     echo ""
     ceho "       ********************************************"

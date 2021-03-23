@@ -482,7 +482,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         logfolder, logname = os.path.split(logfile)
 
         base_logname, ext_logname = os.path.splitext(logname)
-        timestamp = datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
         logname  = base_logname + "_" + timestamp + ext_logname
 
         # truncate too long lognames

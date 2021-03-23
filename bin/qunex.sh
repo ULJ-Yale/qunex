@@ -1720,7 +1720,6 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     fi
     CommandToRun="run_qc"
     # -- Check all the user-defined parameters:
-    TimeStampRunQC=`date +%Y-%m-%d-%H-%M-%S`
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing."; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing."; exit 1; fi

@@ -564,7 +564,7 @@ else
     fi
 fi
 if [ -z ${TimeStamp} ]; then
-    TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
     Suffix="$CASE_$TimeStamp"
     echo "Time stamp for logging not found. Setting now: ${TimeStamp}"; echo ""
 fi

@@ -475,7 +475,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         gc.printAndLog(cBase, file=flog)
 
         scheduler = settings.split(',')[0].strip()
-        exectime  = datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+        exectime  = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
         logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
         result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash)
         jobs.append((jobid, command))
@@ -516,7 +516,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
             settings['jobnum'] = str(c)
             sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
-            exectime = datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+            exectime = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
             logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, c, exectime))
 
             jobname = "%s_#%02d" % (command, c)

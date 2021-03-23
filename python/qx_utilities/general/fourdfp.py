@@ -268,7 +268,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     # ---- run avi preprocessing
 
-    logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d.%H.%m.%S') + ".log"
+    logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%s') + ".log"
     print "...  running NIL preprocessing, saving log to %s " % (logname)
     logfile = open(os.path.join(folder, '4dfp', logname), 'w')
 
