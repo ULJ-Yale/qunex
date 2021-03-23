@@ -24,10 +24,9 @@ import general.core as gc
 import zipfile
 import tarfile
 import glob
-import datetime
 import json
 import ast
-
+from datetime import datetime
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
@@ -944,7 +943,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         mode = 'a'
 
     bout  = open(os.path.join(hfolder, 'hcpls2nii.log'), mode)
-    print >> bout, "HCPLS to nii mapping report, executed on %s" % (datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
+    print >> bout, "HCPLS to nii mapping report, executed on %s" % (datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
 
     # --- map files
 
