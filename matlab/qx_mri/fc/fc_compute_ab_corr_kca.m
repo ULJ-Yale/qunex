@@ -57,9 +57,9 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %   parameter. If more than one value is specfied, a solution will be computed
 %   for each value.
 %
-%   Correlations are computed using the img_compute_ab_correlation gmri method. Clustering
-%   is computed using kmeans function with dmeasure as distance measure, and
-%   taking the best of nrep replications.
+%   Correlations are computed using the img_compute_ab_correlation gmri method. 
+%   Clustering is computed using kmeans function with dmeasure as distance 
+%   measure, and taking the best of nrep replications.
 %
 %   EXAMPLE USE
 %   ===========

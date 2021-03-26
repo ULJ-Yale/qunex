@@ -9,13 +9,13 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %
 %   --flist     Conc-like style list of session image files or conc files:
 %
-%                   - session id:<session_id>
-%                   - roi:<path to the individual's ROI file>
-%                   - file:<path to bold files - one per line>
+%               - session id:<session_id>
+%               - roi:<path to the individual's ROI file>
+%               - file:<path to bold files - one per line>
 %
 %               or a well strucutured string (see general_read_file_list).
 %   --command   The type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, 
-%               aFzp, ...
+%               aFzp ...
 %
 %                   ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
 %
