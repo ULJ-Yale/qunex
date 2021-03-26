@@ -20,6 +20,24 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %
 %                   ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
 %
+%                mFz:t
+%                    computes mean Fz value across all voxels (over threshold t)
+%                aFz:t
+%                    computes mean absolute Fz value across all voxels (over 
+%                    threshold t)
+%                pFz:t
+%                    computes mean positive Fz value across all voxels (over 
+%                    threshold t)
+%                nFz:t
+%                    computes mean positive Fz value across all voxels (below 
+%                    threshold t)
+%                aD:t
+%                    computes proportion of voxels with absolute r over t
+%                pD:t
+%                    computes proportion of voxels with positive r over t
+%                nD:t
+%                    computes proportion of voxels with negative r below t
+%
 %   --roi        roi names file
 %   --rcodes     codes of regions from roi file to compute GBC for (all if not 
 %                provided or left empty)
