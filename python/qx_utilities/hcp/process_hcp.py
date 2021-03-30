@@ -2031,20 +2031,27 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     Example run from the base study folder with test flag::
 
         qunex hcp_diffusion \
-          --sessions="processing/batch.hcp.txt" \\
-          --sessionsfolder="sessions" \\
-          --parsessions="10" \\
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
           --overwrite="no" \\
           --test
 
-    Run using absolute paths with scheduler::
+    Run with scheduler, the compute node also loads the required CUDA module::
 
         qunex hcp_diffusion \
-          --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\
-          --sessionsfolder="<path_to_study_folder>/sessions" \\
-          --parsessions="4" \\
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
           --overwrite="yes" \\
-          --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
+          --bash="module load CUDA/9.1.85" \
+          --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
+
+    Run without a scheduler and without GPU support::
+
+        qunex hcp_diffusion \
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --overwrite="yes" \\
+          --hcp_dwi_nogpu
     """
 
     r = "\n------------------------------------------------------------"
