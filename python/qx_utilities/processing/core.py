@@ -562,7 +562,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
             fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
 
-    if os.path.exists(tfile) and not overwrite:
+    if tfile is not None and os.path.exists(tfile) and not overwrite:
         if verbose:
             r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
         report = "%s finished" % (command)
@@ -591,8 +591,9 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
                 report += ", full file check could not be completed"
                 passed = 'incomplete'
                 failed = 1
+
     else:
-        if verbose:
+        if verbose and tfile is not None:
             r += "\n---> %s test file missing:\n     %s" % (command, tfile)
         report = "%s not finished" % (command)
         passed = None

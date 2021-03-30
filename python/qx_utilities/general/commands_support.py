@@ -152,7 +152,8 @@ deprecated_commands = {
                         "longitudinal_freesurfer": ["longitudinalFS"],
                         "create_bold_list": ["createBoldList"],
                         "create_conc_list": ["createConcList"],
-                        "map_raw_data": ["mapRawData"]
+                        "map_raw_data": ["mapRawData"],
+                        "hcp_task_fmri_analysis" : ["hcp_TaskfMRIAnalysis"]
                       }
 
 # the function for checking whether a command is deprecated or not

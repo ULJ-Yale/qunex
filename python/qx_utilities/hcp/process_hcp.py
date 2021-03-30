@@ -19,6 +19,7 @@ consists of functions:
 --hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
 --hcp_dtifit                Runs DTI Fit.
 --hcp_bedpostx              Runs Bedpost X.
+--hcp_task_fmri_analysis    Runs HCP TaskfMRIanalysis.
 --map_hcp_data              Maps results of HCP preprocessing into `images` folder.
 
 All the functions are part of the processing suite. They should be called
@@ -839,7 +840,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PreFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PreFS failed"
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = "PreFS failed"
         failed = 1
@@ -1252,7 +1253,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurfer', e.function, "\n     ".join(e.report))
         report = "FS failed"
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1570,7 +1571,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurferLongitudinal', e.function, "\n     ".join(e.report))
         report = "FSLong failed"
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1821,7 +1822,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PostFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PostFS failed"
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1837,7 +1838,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_diffusion [... processing options]``
-    ``hcpd [... processing options]``
 
     Runs the Diffusion step of HCP Pipeline.
 
@@ -2023,14 +2023,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     masked. Diffusion directions and the gradient deviation estimates are also
     appropriately rotated and registered into structural space. The function
     enables the use of a number of parameters to customize the specific
-    preprocessing steps. A short name 'hcpd' can be used for this command.
+    preprocessing steps.
 
     EXAMPLE USE
     ===========
 
     Example run from the base study folder with test flag::
 
-        qunex hcp_diffusion \
+        qunex hcp_diffusion \\
           --sessions="processing/batch.hcp.txt" \\
           --sessionsfolder="sessions" \\
           --parsessions="10" \\
@@ -2039,7 +2039,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
     Run using absolute paths with scheduler::
 
-        qunex hcp_diffusion \
+        qunex hcp_diffusion \\
           --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\
           --sessionsfolder="<path_to_study_folder>/sessions" \\
           --parsessions="4" \\
@@ -2175,7 +2175,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if 'hcp_dwi_nogpu' == "True":
+            if options['hcp_dwi_nogpu'] == "True":
                 comm += "                --no-gpu"
 
 
@@ -2215,7 +2215,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             report = "HCP Diffusion can not be run"
             failed = 1
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -3021,7 +3021,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
     except:
@@ -3255,7 +3255,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -3492,7 +3492,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Surface failed')
     except:
@@ -3601,7 +3601,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -3980,16 +3980,16 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_icafix \
-            --sessions=processing/batch.txt \
+        qunex hcp_icafix \\
+            --sessions=processing/batch.txt \\
             --sessionsfolder=sessions
 
 
     ::
 
-        qunex hcp_icafix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
+        qunex hcp_icafix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     """
 
@@ -4128,7 +4128,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ICAFix failed')
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ICAFix failed')
     except:
@@ -4239,7 +4239,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -4372,7 +4372,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -4502,17 +4502,17 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_post_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
+        qunex hcp_post_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_post_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        qunex hcp_post_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -4605,7 +4605,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP PostFix failed')
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP PostFix failed')
     except:
@@ -4757,7 +4757,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # log beautify
         r += "\n\n"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -4894,17 +4894,17 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_reapply_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
+        qunex hcp_reapply_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_reapply_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        qunex hcp_reapply_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -5028,7 +5028,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ReApplyFix failed')
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ReApplyFix failed')
     except:
@@ -5162,7 +5162,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             report['failed'].append(printbold)
             boldok = False
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -5323,7 +5323,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -5413,7 +5413,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         # log beautify
         r += "\n"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r = str(errormessage)
         report['failed'].append(printbold)
@@ -5607,21 +5607,21 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP MSMAll after application of single-run ICAFix
-        qunex hcp_msmall \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
-            --hcp_msmall_bolds="REST_1,REST_2"
+        qunex hcp_msmall \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
+            --hcp_msmall_bolds="REST_1,REST_2" \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
         # HCP MSMAll after application of multi-run ICAFix
-        qunex hcp_msmall \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
-            --hcp_msmall_bolds="REST_1,REST_2"
+        qunex hcp_msmall \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
+            --hcp_msmall_bolds="REST_1,REST_2" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -5698,7 +5698,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP MSMAll failed')
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP MSMAll failed')
     except:
@@ -5864,7 +5864,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of bolds %s\n" % (msmallBolds)
         r += str(errormessage)
         report['failed'].append(msmallBolds)
@@ -6036,7 +6036,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -6169,19 +6169,19 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP DeDriftAndResample after application of single-run ICAFix
-        qunex hcp_dedrift_and_resample \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
+        qunex hcp_dedrift_and_resample \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
         # HCP DeDriftAndResample after application of multi-run ICAFix
-        qunex hcp_dedrift_and_resample \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
+        qunex hcp_dedrift_and_resample \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -6246,7 +6246,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
         failed = 1
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
     except:
@@ -6411,7 +6411,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(regname)
@@ -6667,7 +6667,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(grouptargets)
@@ -6753,7 +6753,7 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
             report = "HCP DTI Fit can not be run"
             failed = 1
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -6841,7 +6841,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
             report = "HCP BedpostX can not be run"
             failed = 1
 
-    except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -7162,7 +7162,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 report['boldfail'] += 1
                 failed += 1
 
-        except (ge.ExternalFailed, pc.NoSourceFolder), errormessage:
+        except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
             r = str(errormessage)
             report['boldfail'] += 1
             failed += 1
@@ -7184,3 +7184,284 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo['id'], rstatus, failed))
+
+def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_task_fmri_analysis [... processing options]``
+
+    Runs the Diffusion step of HCP Pipeline.
+
+    REQUIREMENTS
+    ============
+
+    The requirement for this command is a successful completion of the
+    minimal HCP preprocessing pipeline.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    --sessions          The batch.txt file with all the sessions
+                        information. [batch.txt]
+    --sessionsfolder    The path to the study/sessions folder, where the
+                        imaging  data is supposed to go. [.]
+    --parsessions       How many sessions to run in parallel. [1]
+    --overwrite         Whether to overwrite existing data (yes)
+                        or not (no). [no]
+    --hcp_suffix        Specifies a suffix to the session id if multiple
+                        variants are run, empty otherwise. []
+    --logfolder         The path to the folder where runlogs and comlogs
+                        are to be stored, if other than default [].
+    --log               Whether to keep ('keep') or remove ('remove') the
+                        temporary logs once jobs are completed. ['keep']
+                        When a comma or pipe ('|') separated list is given,
+                        the log will be created at the first provided
+                        location and then linked or copied to other
+                        locations. The valid locations are:
+
+                        - 'study' (for the default:
+                          `<study>/processing/logs/comlogs` location)
+                        - 'session' (for `<sessionid>/logs/comlogs`)
+                        - 'hcp' (for `<hcp_folder>/logs/comlogs`)
+                        - '<path>' (for an arbitrary directory)
+
+    Specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    --hcp_task_lvl1tasks            List of task fMRI scan names, which are
+                                    the prefixes of the time series filename
+                                    for the TaskName task. Multiple task fMRI
+                                    scan names should be provided as a comma
+                                    separated list. []
+    --hcp_task_lvl1fsfs             List of design names, which are the prefixes
+                                    of the fsf filenames for each scan run.
+                                    Should contain same number of design files
+                                    as time series images in --hcp_task_lvl1tasks
+                                    option (N-th design will be used for N-th
+                                    time series image). Provide a comma separated
+                                    list of design names. If no value is passed
+                                    to --hcp_task_lvl1fsfs, the value will be set
+                                    to --hcp_task_lvl1tasks.
+    --hcp_task_lvl2task             Name of Level2 subdirectory in which all
+                                    Level2 feat directories are written for
+                                    TaskName. [NONE]
+    --hcp_task_lvl2fsf              Prefix of design.fsf filename for the Level2
+                                    analysis for TaskName. If no value is passed
+                                    to --hcp_task_lvl2fsf, the value will be set
+                                    to the same list passed to
+                                    --hcp_task_lvl2task.
+    --hcp_task_confound             Confound matrix text filename (e.g., output
+                                    of fsl_motion_outliers). Assumes file is in
+                                    <SubjectID>/MNINonLinear/Results/<ScanName>.
+                                    [NONE]
+    --hcp_bold_smoothFWHM           Smoothing FWHM that matches what was used in
+                                    the fMRISurface pipeline. [2]
+    --hcp_bold_final_smoothFWHM     Value (in mm FWHM) of total desired
+                                    smoothing, reached by calculating the
+                                    additional smoothing required and applying
+                                    that additional amount to data previously
+                                    smoothed in fMRISurface. Default=2, which is
+                                    no additional smoothing above HCP minimal
+                                    preprocessing pipelines outputs.
+    --hcp_task_highpass             Apply additional highpass filter (in seconds)
+                                    to time series and task design. This is above
+                                    and beyond temporal filter applied during
+                                    preprocessing. To apply no additional
+                                    filtering, set to 'NONE'. [200]
+    --hcp_task_lowpass              Apply additional lowpass filter (in seconds)
+                                    to time series and task design. This is above
+                                    and beyond temporal filter applied during
+                                    preprocessing. Low pass filter is generally
+                                    not advised for Task fMRI analyses. [NONE]
+    --hcp_task_procstring           String value in filename of time series
+                                    image, specifying the additional processing
+                                    that was previously applied (e.g.,
+                                    FIX-cleaned data with 'hp2000_clean' in
+                                    filename). [NONE]
+    --hcp_regname                   Name of surface registration technique.
+                                    [MSMSulc]
+    --hcp_grayordinatesres          Value (in mm) that matches value in
+                                    'Atlas_ROIs' filename. [2]
+    --hcp_lowresmesh                Value (in mm) that matches surface resolution
+                                    for fMRI data. [32]
+    --hcp_task_vba                  A flag for using VBA. Only use this flag if you
+                                    want unconstrained volumetric blurring of your
+                                    data, otherwise set to NO for faster, less
+                                    biased, and more senstive processing
+                                    (grayordinates results do not use
+                                    unconstrained volumetric blurring and are
+                                    always produced). This flag is not set by
+                                    defult.
+    --hcp_task_parcellation         Name of parcellation scheme to conduct
+                                    parcellated analysis. Default setting is
+                                    NONE, which will perform dense analysis
+                                    instead. Non-greyordinates parcellations
+                                    are not supported because they are not valid
+                                    for cerebral cortex. Parcellation supersedes
+                                    smoothing (i.e. no smoothing is done). [NONE]
+    --hcp_task_parcellation_file    Absolute path to the parcellation dlabel
+                                    file [NONE]
+
+    OUTPUTS TODO
+    =======
+
+    The results of this step will be populated in the MNINonLinear folder inside
+    the same sessions's root hcp folder.
+
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        # First level HCP TaskfMRIanalysis
+        qunex hcp_task_fmri_analysis \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_task_lvl1tasks="TASK_1,TASK_2"
+
+    ::
+
+        # Second level HCP TaskfMRIanalysis
+        qunex hcp_task_fmri_analysis \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_task_lvl1tasks="TASK_1,TASK_2" \\
+            --hcp_task_lvl2task="study/lvl2feats"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP fMRI task analysis pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+
+    run    = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, 'hcp_task_fmri_analysis')
+        doHCPOptionsCheck(options, sinfo, 'hcp_task_fmri_analysis')
+        hcp = getHCPPaths(sinfo, options)
+
+        if 'hcp' not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
+            run = False
+
+        # parse input parameters
+        # hcp_task_lvl1tasks
+        lvl1tasks = ""
+        if options['hcp_task_lvl1tasks'] is not None:
+            lvl1tasks = options['hcp_task_lvl1tasks'].replace(",", "@")
+        else:
+            r += "\n---> ERROR: hcp_task_lvl1tasks parameter is not provided"
+            run = False
+
+        # hcp_task_lvl1fsfs
+        if options['hcp_task_lvl1fsfs'] is None:
+            lvl1fsfs = lvl1tasks
+        else:
+            lvl1fsfs = options['hcp_task_lvl1fsfs'].replace(",", "@")
+            if (len(lvl1sfs.split(",")) != len(lvl1tasks.split(","))):
+                r += "\n---> ERROR: mismatch in the length of hcp_task_lvl1tasks and hcp_task_lvl1fsfs"
+                run = False
+
+        # hcp_task_lvl2task
+        lvl2task = options['hcp_task_lvl2task']
+
+        # hcp_task_lvl2fsf
+        if options['hcp_task_lvl2fsf'] is None:
+            lvl2fsf = lvl2task
+        else:
+            lvl2fsf = options['hcp_task_lvl2fsf']
+
+        # --- build the command
+        if run:
+            comm = '%(script)s \
+                --path="%(path)s" \
+                --subject="%(subject)s" \
+                --lvl1tasks="%(lvl1tasks)s" \
+                --lvl1fsfs="%(lvl1fsfs)s" \
+                --lvl2task="%(lvl2task)s" \
+                --lvl2fsf="%(lvl2fsf)s" \
+                --confound="%(confound)s" \
+                --origsmoothingFWHM="%(origsmoothingFWHM)s" \
+                --finalsmoothingFWHM="%(finalsmoothingFWHM)s" \
+                --highpassfilter="%(highpassfilter)s" \
+                --lowpassfilter="%(lowpassfilter)s" \
+                --procstring="%(procstring)s" \
+                --regname="%(regname)s" \
+                --grayordinatesres="%(grayordinatesres)s" \
+                --lowresmesh="%(lowresmesh)s" \
+                --parcellation="%(parcellation)s" \
+                --parcellationfile="%(parcellationfile)s" ' % {
+                    'script'             : os.path.join(hcp['hcp_base'], 'TaskfMRIAnalysis', 'TaskfMRIAnalysis.sh'),
+                    'path'               : sinfo['hcp'],
+                    'subject'            : sinfo['id'] + options['hcp_suffix'],
+                    'lvl1tasks'          : lvl1tasks,
+                    'lvl1fsfs'           : lvl1fsfs,
+                    'lvl2task'           : lvl2task,
+                    'lvl2fsf'            : lvl2fsf,
+                    'confound'           : options['hcp_task_confound'],
+                    'origsmoothingFWHM'  : options['hcp_bold_smoothFWHM'],
+                    'finalsmoothingFWHM' : options['hcp_bold_final_smoothFWHM'],
+                    'highpassfilter'     : options['hcp_task_highpass'],
+                    'lowpassfilter'      : options['hcp_task_lowpass'],
+                    'procstring'         : options['hcp_task_procstring'],
+                    'regname'            : options['hcp_regname'],
+                    'grayordinatesres'   : options['hcp_grayordinatesres'],
+                    'lowresmesh'         : options['hcp_lowresmesh'],
+                    'parcellation'       : options['hcp_task_parcellation'],
+                    'parcellationfile'   : options['hcp_task_parcellation_file']
+                }
+
+            # flags
+            if options['hcp_task_vba'] == "True":
+                comm += '                --vba="YES"'
+
+            # -- Report command
+            if run:
+                r += "\n\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+            # -- Test files TODO
+            tfile = None
+            full_test = None
+
+        # -- Run
+        if run:
+            if options['run'] == "run":
+                if tfile is not None and overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, 'Running HCP fMRI task analysis', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=None, shell=True, r=r)
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(tfile, full_test, 'HCP Diffusion', r, overwrite=overwrite)
+                if passed is None:
+                    r += "\n---> HCP fMRI task analysis can be run"
+                    report = "HCP fMRI task analysis can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session can not be processed."
+            report = "HCP fMRI task analysis can not be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
+
+    r += "\n\nHCP fMRI task analysis Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, (sinfo['id'], report, failed))
