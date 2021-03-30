@@ -2404,7 +2404,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
             print "\n\n---=== PROCESSING %s ===---\n" % (session['sessionid'])
 
-            if masterinbox:
+            if masterinbox and not os.path.exists(ifolder):
                 os.makedirs(ifolder)
                 files = [file]
             else:
