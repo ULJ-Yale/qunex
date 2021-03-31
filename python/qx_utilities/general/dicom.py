@@ -2413,6 +2413,9 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                 else:
                     files = [ifolder]
 
+            dnum = 0
+            fnum = 0
+
             for p in files:
 
             # --- unzip or copy the package
@@ -2422,8 +2425,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                     ptype = "zip"
 
                     print "...  unzipping %s" % (os.path.basename(p))
-                    dnum = 0
-                    fnum = 0
 
                     try:
                         z = zipfile.ZipFile(p, 'r')
@@ -2475,8 +2476,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                     ptype = "tar"
 
                     print "...  untarring %s" % (os.path.basename(p))
-                    dnum = 0
-                    fnum = 0
 
                     tar = tarfile.open(p, 'r')
                     for tarinfo in tar:
