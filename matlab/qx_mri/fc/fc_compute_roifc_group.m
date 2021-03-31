@@ -275,7 +275,7 @@ for n = 1:nsub
 
     % ---> setting up bolds parameter
 
-    if isfield(subject(n), 'files')
+    if isfield(subject(n), 'files') && ~isempty(subject(n).conc) 
         for bold = subject(n).files
             go = go & general_check_file(bold{1}, 'bold file', 'error');
         end
@@ -284,7 +284,7 @@ for n = 1:nsub
         else
             bolds = [lname '_' subject(n).id '|' strjoin(subject(n).files, '|')];
         end
-    elseif isfield(subject(n), 'conc')
+    elseif isfield(subject(n), 'conc') && ~isempty(subject(n).conc) 
         go = go & general_check_file(subject(n).conc, 'conc file', 'error');
         if strcmp(options.itargetf, 'sfolder')
             bolds = [lname '|' subject(n).conc];

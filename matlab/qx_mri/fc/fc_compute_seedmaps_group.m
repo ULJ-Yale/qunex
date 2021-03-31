@@ -320,17 +320,20 @@ for n = 1:nsub
 
     % ---> setting up bolds parameter
 
-    if isfield(session(n), 'conc')
+    if isfield(session(n), 'conc') && ~isempty(session(n).conc) 
         go = go & general_check_file(session(n).conc, 'conc file', 'error');
         bolds = [lname '|' session(n).conc];
         reference_file = general_read_concfile(session(n).conc);
         reference_file = reference_file{1};
-    elseif isfield(session(n), 'file')
+    elseif isfield(session(n), 'files') && ~isempty(session(n).files) 
         for bold = session(n).files
             go = go & general_check_file(bold{1}, 'bold file', 'error');
         end
         bolds = [lname '|' strjoin(session(n).files, '|')];
         reference_file = session(n).files{1};
+    else
+        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', session(n).id);
+        go = false;
     end
 
     % ---> setting up frames parameter
@@ -340,7 +343,7 @@ for n = 1:nsub
             go = go & general_check_file(session(n).fidl, [session(n).id ' fidl file'], 'error');
             sframes = [session(n).fidl '|' frames];
         else
-            go = false
+            go = false;
             fprintf(' ... ERROR: %s missing fidl file specification!\n', session(n).id);
         end
     else
@@ -361,7 +364,7 @@ for n = 1:nsub
 
     % ---> run individual session
     try
-        fcmaps = fc_ComputeSeedMaps(bolds, roidef, sframes, stargetf, options);
+        fcmaps = fc_compute_seedmaps(bolds, roidef, sframes, stargetf, options);
     catch ME
         fprintf(' ... ERROR: Computation of seed maps for %s failed with error: %s\n', session(n).id, ME.message);
         continue
@@ -374,7 +377,7 @@ for n = 1:nsub
 
     for s = 1:nset
 
-        if n == 1
+        if first_subject
             fcset(s).name = fcmaps(s).title;
         end
 
