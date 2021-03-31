@@ -2408,7 +2408,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                 os.makedirs(ifolder)
                 files = [file]
             else:
-                if session['archives']:
+                if 'archives' in session and session['archives']:
                     files = session['archives']
                 else:
                     files = [ifolder]
@@ -2518,7 +2518,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
                 else:
                     ptype = "folder"
-                    if masterinbox:
+                    if masterinbox and ifolder != p:
                         if os.path.exists(ifolder):
                             shutil.rmtree(ifolder)
                         print "...  copying %s dicom files" % (os.path.basename(p))
