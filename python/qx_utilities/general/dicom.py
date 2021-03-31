@@ -2483,7 +2483,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                         if tarinfo.isfile():
                             if fnum % 1000 == 0:
                                 dnum += 1
-                                os.makedirs(os.path.join(ifolder, str(dnum)))
+                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
+                                    os.makedirs(os.path.join(ifolder, str(dnum)))
                             fnum += 1
 
                             print "...  extracting:", tarinfo.name, tarinfo.size
