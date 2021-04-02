@@ -48,7 +48,7 @@ deprecated_commands = {
                         "stats_ttest_zero": ["s_TTestZero"],
                         "run_qc": ["runQC","RunQC","QCPreproc"],
                         "parcellate_anat": ["ANATparcellate", "anat_parcellate"],
-                        "compute_fc_bold": ["BOLDcomputeFC", "bold_compute_fc"],
+                        "fc_compute_wrapper": ["BOLDcomputeFC", "bold_compute_fc", "compute_fc_bold"],
                         "parcellate_bold": ["BOLDparcellate", "bold_parcellate"],
                         "bold_parcellation": ["BOLDParcellation"],
                         "data_sync": ["DataSync"],

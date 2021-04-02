@@ -32,7 +32,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc compute_fc_bold parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -494,7 +494,7 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (compute_fc_bold.sh) via the QuNex bash wrapper
+# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (fc_compute_wrapper.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 compute_bold_fc() {
@@ -515,7 +515,7 @@ fi
 if [[ ${Calculation} == "seed" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -540,7 +540,7 @@ fi
 if [[ ${Calculation} == "gbc" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -569,7 +569,7 @@ fi
 if [[ ${Calculation} == "dense" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -587,7 +587,7 @@ fi
 }
 show_usage_compute_bold_fc() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2120,10 +2120,10 @@ if [ "$CommandToRun" == "parcellate_anat" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- compute_fc_bold
+# -- fc_compute_wrapper
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "compute_fc_bold" ]; then
+if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "fc_compute_wrapper" ]; then
     CommandToRun="compute_bold_fc"
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi

@@ -52,7 +52,6 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # hcp_bedpostx  Run FSL Bedpostx GPU.
 
 all_qunex_commands = r'''check_fidl                                Prints figures showing fidl events and their duration.
-compute_fc_bold                           Computes seed or GBC BOLD functional connectivity.
 compute_bold_stats                        Compute BOLD movement and signal statistics.
 create_batch                              Creates a joint batch file from source files in all session folders.
 create_bold_brain_masks                   Create brain masks for BOLD runs.
@@ -83,6 +82,7 @@ fc_compute_roifc_group                    Computes ROI functional connectivity m
 fc_compute_seedmaps                       Computes seed based functional connectivity maps for individual subject / session.
 fc_compute_seedmaps_group                 Computes seed based correlations maps for individuals as well as group maps.
 fc_compute_seedmaps_multiple              Computes seed based correlations maps for individuals as well as group maps.
+fc_compute_wrapper                        Computes seed or GBC BOLD functional connectivity.
 fc_extract_roi_timeseries_masked          Extracts and saves region timeseries defined by provided roiinfo file
 fc_extract_trial_timeseries_masked        Extracts trial timeseries for each of the specified ROI.
 fc_preprocess                             Runs single BOLD file based functional connectivity preprocessing.
