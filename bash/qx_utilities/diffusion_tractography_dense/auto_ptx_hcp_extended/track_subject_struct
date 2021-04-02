@@ -47,7 +47,7 @@ echo "running automated tractography of subject ${sub}, structure ${struct}, usi
 
 
 # sources
-masks=$QUNEXLIBARARYETC/auto_ptx/protocols/$struct
+masks=$QUNEXLIBRARYETC/auto_ptx/protocols/$struct
 # output
 tracts=${OutDir}/$struct
 mkdir -p $tracts

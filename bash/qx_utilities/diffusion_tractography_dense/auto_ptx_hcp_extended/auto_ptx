@@ -39,7 +39,7 @@ execPath=`dirname $0`
 
 cd ${InputDir}
 
-structures=$QUNEXLIBARARYETC/auto_ptx/structure_list
+structures=$QUNEXLIBRARYETC/auto_ptx/structure_list
 
 listJobs=""
 
