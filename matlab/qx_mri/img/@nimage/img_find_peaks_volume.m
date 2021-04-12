@@ -243,7 +243,7 @@ while ~isempty(small)
 
     if verbose, fprintf('\n---> %d regions too small, refilling %d regions of size %d', length(small), length(rtgts), rsize); end
 
-    for rtgt = rtgts(:)';
+    for rtgt = rtgts(:)'
 
         [vind, ~, vval] = find(seg(:) == rtgt);
         [~, s]    = sort(vval, 1, 'descend');
@@ -253,20 +253,31 @@ while ~isempty(small)
         done = false;
         for n = 1:nvox
 
+            % get all the neighbouring regions of each voxel of a the small region
             u = unique(seg((x(n)-1):(x(n)+1), (y(n)-1):(y(n)+1), (z(n)-1):(z(n)+1)));
+            % filter neighbouring voxels for regions
             u = u(u > 0 & u ~= rtgt);
 
+            % if only one region neighbours the small ROI assign it to that one
             if length(u) == 1
                 seg(seg==rtgt) = u;
                 peak(u).size = peak(u).size + peak(rtgt).size;
+                
+                % update peak info to the higher peak
+                if abs(peak(u).value) < abs(peak(rtgt).value)
+                    peak(u).value = peak(rtgt).value;
+                    peak(u).xyz   = peak(rtgt).xyz;
+                end
+                
                 done = true;
                 break
-
+            % if more than one region neighbours the small ROI assign each
+            % voxel of the small region to a closes neighbouring region
             elseif length(u) > 1
                 for m = 1:nvox
                     cparc = 0;
                     mdist = inf;
-                    for k = u(:)';
+                    for k = u(:)'
                         cdist = sqrt(sum(([x(m) y(m) z(m)] - peak(k).xyz).^2));
                         if cdist < mdist
                             mdist = cdist;
@@ -275,6 +286,12 @@ while ~isempty(small)
                     end
                     seg(x(m), y(m), z(m)) = cparc;
                     peak(cparc).size = peak(cparc).size + 1;
+                    
+                    % update peak info to the higher peak
+                    if abs(peak(cparc).value) < abs(data(x(m), y(m), z(m)))
+                       peak(cparc).value = data(x(m), y(m), z(m));
+                    end
+                    
                 end
                 done = true;
                 break
@@ -411,7 +428,7 @@ else
         peak(p).WeightedCentroid = roiinfo.wcxyz(p, end-2:end);
         peak(p).averageValue = mean(img.data(roi.data == peak(p).label));
         
-        if report, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  peak indeces: %3d %3d %3d  peak: %5.1f %5.1f %5.1f  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).ijk, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
+        if report, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  peak indices: %3d %3d %3d  peak: %5.1f %5.1f %5.1f  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).ijk, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
      end
 
     if report, fprintf('\n'); end

@@ -294,6 +294,54 @@ if strcmpi(img.imageformat, 'CIFTI-2')
             end
         end
     end
+    
+    % --- compute grayordinates of every peak
+    for i=1:1:length(vol_peak)
+       idx = find(roi.data == vol_peak(i).label);
+       roi_values = img.data(idx);
+       
+       if strcmpi(val, 'b')
+           [~, peak_ind] = max(abs(roi_values));
+       elseif strcmpi(val, 'p')
+           [~, peak_ind] = max(roi_values);
+       elseif strcmpi(val, 'n')
+           [~, peak_ind] = min(roi_values);
+       end
+       
+       roi_val = roi_values(peak_ind);
+       vol_peak(i).grayord = idx(peak_ind);
+       
+       % assert(vol_peak(i).value == roi_val, 'ROI peak does not match the maximum/minimum value in that region!\n');
+       if ~(vol_peak(i).value == roi_val)
+           warning('ROI peak does not match the maximum/minimum value in region %d!\n', vol_peak(i).label);
+       end
+    end
+    
+    for i=1:1:numel(img.cifti.shortnames)
+        if strcmp(cifti.(lower(img.cifti.shortnames{i})).type,'Surface')
+            for j=1:1:length(peak.(lower(img.cifti.shortnames{i})))
+                idx = find(roi.data == peak.(lower(img.cifti.shortnames{i}))(j).index);
+                roi_values = img.data(idx);
+                
+                if strcmpi(val, 'b')
+                    [~, peak_ind] = max(abs(roi_values));
+                elseif strcmpi(val, 'p')
+                    [~, peak_ind] = max(roi_values);
+                elseif strcmpi(val, 'n')
+                    [~, peak_ind] = min(roi_values);
+                end
+                
+                roi_val = roi_values(peak_ind);
+                peak.(lower(img.cifti.shortnames{i}))(j).grayord = idx(peak_ind);
+                
+                % assert(vol_peak(i).value == roi_val, 'ROI peak does not match the maximum/minimum value in that region!\n');
+                if ~(peak.(lower(img.cifti.shortnames{i}))(j).value == roi_val)
+                    warning('ROI peak does not match the maximum/minimum value in region %d!\n', peak.(lower(img.cifti.shortnames{i}))(j).index);
+                end
+            end
+        end
+    end
+    
 elseif strcmpi(img.imageformat, 'NIFTI')
     if verbose, fprintf('\nMAIN FIND PEAKS---> finding peaks for volume components'); end
     [roi vol_peak] = img.img_find_peaks_volume(minsize, maxsize, val, t, options, verbose_pass);

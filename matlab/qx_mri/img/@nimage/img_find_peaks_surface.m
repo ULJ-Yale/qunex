@@ -167,6 +167,7 @@ fp_param.cifti = cifti;
 fp_param = determineSurfaceProjection(fp_param);
 
 % --- Create an empty matrix to store the data globally for each hemisphere
+% TODO: unhardcode the size of the following array of zeros
 roiDataRaw = zeros(32492,1);
 %fp_param.surfaceComponent = lower(img.cifti.shortnames{fp_param.cmp});
 roiDataRaw(fp_param.cifti.(fp_param.surfaceComponent).mask) = img.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp));
@@ -347,6 +348,7 @@ for i=1:1:numel(fp_param.cifti.(fp_param.surfaceComponent).adj_list.neighbours)
             (roiData(i) >= max(roiData(fp_param.cifti.(fp_param.surfaceComponent).adj_list.neighbours{i})))
         ctn_peaks = ctn_peaks + 1;
         peak(ctn_peaks).index = i;
+        peak(ctn_peaks).grayord = i;
         peak(ctn_peaks).value = roiDataRaw(i);
         peak(ctn_peaks).x = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(i,1);
         peak(ctn_peaks).y = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(i,2);
@@ -354,7 +356,7 @@ for i=1:1:numel(fp_param.cifti.(fp_param.surfaceComponent).adj_list.neighbours)
     end
 end
 
-% --- Preapare the data to store the non-zero data to vval and corresponding sorted indices to s
+% --- Prepare the data to store the non-zero data to vval and corresponding sorted indices to s
 [vind, ~, vval] = find(roiData);
 [~, s] = sort(vval, 1, 'descend');
 
@@ -412,7 +414,7 @@ for i=1:1:length(peak)
 end
 end
 
-function [peak, indexedData] = removeTooSmallROIs(roiData, peak, indexedData, fp_param);
+function [peak, indexedData] = removeTooSmallROIs(roiData, peak, indexedData, fp_param)
 % --- Combine ROIs smaller then the min with the neighbouring ones
 if ~isempty(peak)
     small = peak([peak.area] < fp_param.minarea);
@@ -425,7 +427,7 @@ while ~isempty(small)
     
     % size of the smallest region
     rsize = min([small.area]);
-    % indices of the smallest region
+    % indices of the smallest region(s)
     rtgts = find([peak.area]==rsize);
     
     newId = [];
@@ -453,6 +455,15 @@ while ~isempty(small)
                     if (peak(u_id).area < fp_param.maxarea)
                         indexedData(indexedData == rtgt) = u_id;
                         peak(u_id).size = peak(rtgt).size + peak(u_id).size;
+                        
+                        % update peak info to the higher peak
+                        if abs(peak(u_id).value) < abs(peak(rtgt).value)
+                            peak(u_id).value = peak(rtgt).value;
+                            peak(u_id).x     = peak(rtgt).x;
+                            peak(u_id).y     = peak(rtgt).y;
+                            peak(u_id).z     = peak(rtgt).z;
+                        end
+                        
                         done = true;
                         break;
                     end
@@ -477,10 +488,20 @@ while ~isempty(small)
                 end
                 indexedData(indexedData == rtgt) = maxId;
                 peak(maxId).size = peak(rtgt).size + peak(maxId).size;
+                
+                % update peak info to the higher peak
+                if abs(peak(maxId).value) < abs(peak(rtgt).value)
+                    peak(maxId).value = peak(rtgt).value;
+                    peak(maxId).x     = peak(rtgt).x;
+                    peak(maxId).y     = peak(rtgt).y;
+                    peak(maxId).z     = peak(rtgt).z;
+                end
+                
                 done = true;
                 newId = maxId;
                 break;
             end
+            
         end
         if ~done
             indexedData(indexedData == rtgt) = 0;
