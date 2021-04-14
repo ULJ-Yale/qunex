@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [vol_img] = img_extract_cifti_volume(img, data_format)
 
 %``function [vol_img] = img_CIFTI2volume(img, data_format)``

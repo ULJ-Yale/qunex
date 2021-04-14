@@ -1,44 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, N3 Division, Yale University
-#
-# ## PRODUCT
-#
-# dwi_fsl_bedpostx_gpu.sh
-#
-# ## LICENSE
-#
-# * The dwi_fsl_bedpostx_gpu.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#   
-# This script, dwi_fsl_bedpostx_gpu.sh, implements FSL's bedpostX functionality within the QuNex Suite with GPU support
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * Connectome Workbench (v1.0 or above)
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./dwi_fsl_bedpostx_gpu.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files: $SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs

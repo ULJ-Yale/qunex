@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 
 %	``function [snr, sd] = general_compute_snr_group(flist, fmask, target, verbose)``

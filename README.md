@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 # README File for Quantitative Neuroimaging Environment & ToolboX (QuNex)
 
 The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number of scripts and functions written in several programming languages that support a flexible and extensible framework for data organization, preprocessing, quality assurance, and various analytics across neuroimaging modalities. The QuNex suite is designed to be flexible and can be developed by adding functions developed around its component tools.
@@ -19,8 +25,8 @@ The QuNex code is is co-developed and co-maintained by the:
 
 ## Version
 
-QuNex: 0.90.5
-qx_library: 0.90.2
+QuNex: 0.90.6
+qx_library: 0.90.3
 
 ## References
 

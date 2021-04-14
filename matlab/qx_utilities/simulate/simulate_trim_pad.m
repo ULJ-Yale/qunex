@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ts] = simulate_trim_pad(ts,l)
 
 %``function [ts] = simulate_trim_pad(ts,l)``

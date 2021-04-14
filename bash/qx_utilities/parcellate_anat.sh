@@ -1,46 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-#
-# ## PRODUCT
-#
-#  parcellate_anat.sh
-#
-# ## LICENSE
-#
-# * The parcellate_anat.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#   
-# This script, parcellate_anat.sh, implements parcellation structural data 
-# such as dense thickness and myelin maps.
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * Connectome Workbench (v1.0 or above)
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./parcellate_anat.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are thickness or myelin data from previous processing
-# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/ 
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 # -- General help usage function

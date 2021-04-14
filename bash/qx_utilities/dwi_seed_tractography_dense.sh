@@ -1,51 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, N3 Division, Yale University
-#
-# ## PRODUCT
-#
-# dwi_seed_tractography_dense.sh 
-#
-# ## LICENSE
-#
-# * The dwi_seed_tractography_dense.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION
-#
-# This script, dwi_seed_tractography_dense.sh, is a wrapper for deducting dense 
-# connectome DWI data with seed input. It implements reduction on the DWI dense 
-# connectomes using a given 'seed' structure (e.g. thalamus)
-#
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * Connectome Workbench (v1.0 or above)
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./dwi_seed_tractography_dense.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP dwi_probtrackx_dense_gpu function
-# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
-#
-#~ND~END~
-#
-# ------------------------------------------------------------------------------
-# -- General help usage function
-# ------------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 usage() {
  echo ""

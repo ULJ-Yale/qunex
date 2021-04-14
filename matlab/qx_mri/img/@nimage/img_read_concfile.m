@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [files, boldnum, sfolder] = img_read_concfile(file)
 
 %``function [files, boldnum, sfolder] = img_read_concfile(file)``

@@ -1,28 +1,15 @@
 #!/bin/bash
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
-# Copyright (C) 2015 Anticevic Lab, Yale University
-# Copyright (C) 2015 MBLAB, University of Ljubljana
-#
-# ## AUTHORS(s)
-#
-# * Grega Repovs, MBLab, University of Ljubljana
-# * Alan Anticevic, N3 Division, Yale University
-# * Zailyn Tamayo, N3 Division, Yale University 
 #
 # ## PRODUCT
 #
 #  qunex_container.sh
-#
-# ## LICENSE
-#
-# * The qunex_container.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## Description 
 #   

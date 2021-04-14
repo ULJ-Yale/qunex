@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [mask] = img_roi_mask(img, roi)
 
 %``function [mask] = img_roi_mask(img, roi)``

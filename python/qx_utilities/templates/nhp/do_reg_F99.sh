@@ -1,7 +1,11 @@
 #!/bin/bassh
 
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Registration to F99 macaque atlas
-# S. Jbabdi
+# Author: S. Jbabdi
 
 if [ "$2" == "" ];then
     echo ""

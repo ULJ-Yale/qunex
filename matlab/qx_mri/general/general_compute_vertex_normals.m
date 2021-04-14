@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [normals] = general_compute_vertex_normals(surface)
 %``function [normals] = general_compute_vertex_normals(surfaceFile)``
 %

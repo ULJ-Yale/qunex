@@ -1,46 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, N3 Division, Yale University
-#
-# ## PRODUCT
-#
-# dwi_parcellate.sh
-#
-# ## LICENSE
-#
-# * The dwi_parcellate.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#   
-# This script, dwi_parcellate.sh, implements parcellation on the DWI dense connectomes 
-# using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * Connectome Workbench (v1.0 or above)
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./dwi_parcellate.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP dwi_probtrackx_dense_gpu function
-# * These data are stored in: "$SessionsFolder/sessions/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 # -- General help usage function

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)
 
 %``function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``

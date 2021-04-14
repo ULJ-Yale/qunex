@@ -1,51 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, N3 Division, Yale University
-#
-# ## PRODUCT
-#
-#  dwi_eddy_qc.sh Wrapper for DWI EDDY QC code
-#
-# ## LICENSE
-#
-# * The dwi_eddy_qc.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#   
-# This script, dwi_eddy_qc.sh, is a wrapper for DWI EDDY QC code. 
-# It implements DWI eddy QC based on code developed by Matteo Bastiani, FMRIB 
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# -------------------------------------------
-# EDDY QC by Matteo Bastiani, FMRIB
-# Python library that contains tools based on FSL's eddy to perform quality control on diffusion mri (dMRI) datasets.
-# On HPC environment if missing sudo privileges then install the python code using:
-#     python setup.py install --prefix=/path_to_location
-# -------------------------------------------
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./dwi_eddy_qc.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are results following eddy. For instance:
-# * For instance, following HCP pipelines: "$SessionsFolder/$CASE/hcp/$CASE/Diffusion/eddy/ 
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 # -- General help usage function

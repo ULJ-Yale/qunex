@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)
 
 %``function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)``

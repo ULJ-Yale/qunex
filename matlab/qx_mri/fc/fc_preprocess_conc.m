@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
 %``function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``

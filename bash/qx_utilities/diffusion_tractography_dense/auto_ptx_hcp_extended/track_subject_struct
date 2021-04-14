@@ -1,7 +1,11 @@
 #!/bin/bash
-#   Automated probabilistic tractography plugin for FSL; tractography script.
-#   as in De Groot et al., NeuroImage 2013.
-
+#
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Automated probabilistic tractography plugin for FSL; tractography script.
+# as in De Groot et al., NeuroImage 2013.
 
 ptx_bin_CPU=$FSLDIR/bin/probtrackx2 #CPU_version
 ptx_bin_GPU=/gpfs/project/fas/n3/software/fsl-5.0.9/fsl/bin/probtrackx2_gpu #GPU_version

@@ -1,6 +1,9 @@
 #!/bin/bash
 #   Automated probabilistic tractography plugin for FSL; visualisation script.
-
+#
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 Usage() {
 cat << EOF

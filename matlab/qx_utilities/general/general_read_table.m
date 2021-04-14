@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [data, hdr, meta] = general_read_table(instr)
 
 %``function [data, hdr, meta] = general_read_table(instr)``
