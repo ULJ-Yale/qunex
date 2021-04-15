@@ -38,7 +38,7 @@ PMC4034208.
 
 ## GPL licenses
 
-QuNex container includes the following GPU licensed products:
+QuNex container includes the following GPL licensed products:
 
 * [CentOS](https://archive.softwareheritage.org/swh:1:dir:bd1c2d47a55882f6362f8747bbc2f4d6484091a7;origin=https://github.com/centos6/centos7;visit=swh:1:snp:c1e9c39b42beb9799d3f8e8c3b2e14499b8e72bc;anchor=swh:1:rev:dd6094662c406e300c64b926d2639dac60f5da96/),
 * [Connectome Workbench](https://archive.softwareheritage.org/swh:1:dir:e2cc8014a5f4604e0d39d96f43c5251389ecbb72;origin=https://github.com/Washington-University/workbench;visit=swh:1:snp:0e663b1bc7dabf4256ba430d54a2f5be8c5d3e7b;anchor=swh:1:rev:4d4e468dc3f817c0fecd626c11fd1d86e7c7ca45/),
