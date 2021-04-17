@@ -1691,23 +1691,25 @@ fi
             geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}
             echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             if [[ ${DATAFormat} == "HCPYA" ]]; then
-                HCPLSNameFormat='--nameformat="(?P<subject_id>[^/]+?)/unprocessed/(?P<session_name>.*?)/(?P<data>.*)" --hcplsname=hcpya'
+                HCPLSNameFormat="(?P<subject_id>[^/]+?)/unprocessed/(?P<session_name>.*?)/(?P<data>.*)"
+                HCPLSName="hcpya"
             else
-                HCPLSNameFormat="--hcplsname=hcpls"
+                HCPLSNameFormat="(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)"
+                HCPLSName="hcpls"
             fi
 
             if [[ ${INTYPE} == "zip" ]]; then
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 geho "  --> processing a single ${DATAFormat} formated package [${CASE}.zip]" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QuNexCommand} import_hcp --sessionsfolder=\"${SessionsFolder}\" --inbox=\"${SessionsFolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} import_hcp --sessionsfolder=\"${SessionsFolder}\" --inbox=\"${SessionsFolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" --nameformat=\"$HCPLSNameFormat\" --hcplsname=\"${HCPLSName}\"" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QuNexCommand} import_hcp --sessionsfolder="${SessionsFolder}" --inbox="${SessionsFolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+                ${QuNexCommand} import_hcp --sessionsfolder="${SessionsFolder}" --inbox="${SessionsFolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" --nameformat="$HCPLSNameFormat" --hcplsname="${HCPLSName}" >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 geho "  --> processing a single ${DATAFormat} session [${CASE}] from the ${DATAFormat} dataset" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QuNexCommand} import_hcp --sessionsfolder=\"${SessionsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} import_hcp --sessionsfolder=\"${SessionsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" --nameformat=\"$HCPLSNameFormat\" --hcplsname=\"${HCPLSName}\"" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QuNexCommand} import_hcp --sessionsfolder="${SessionsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+                ${QuNexCommand} import_hcp --sessionsfolder="${SessionsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" --nameformat="$HCPLSNameFormat" --hcplsname="${HCPLSName}" >> ${mapRawData_ComlogTmp}
             fi
 
             popd 2> /dev/null
