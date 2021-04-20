@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #ifndef _ZNZLIB_H_
 #define _ZNZLIB_H_
