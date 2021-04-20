@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices);
 
 %``function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices)``
@@ -23,14 +27,6 @@ function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices)
 %   ======
 %
 %   img
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2012-04-16 Grega Repovš
-%              Initial version.
 %
 
 savepng = true;

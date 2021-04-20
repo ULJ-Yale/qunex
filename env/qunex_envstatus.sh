@@ -1,30 +1,15 @@
 #!/bin/sh
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
-# Copyright (C) 2015 Anticevic Lab, Yale University
-# Copyright (C) 2015 MBLAB, University of Ljubljana
-#
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-# * Jure Demsar, University of Ljubljana
 #
 # ## PRODUCT
 #
 #  qunex_envstatus.sh
-#
-# ## LICENSE
-#
-# * The qunex_envstatus.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## TODO
-#
 #
 # ## DESCRIPTION:
 #
@@ -167,6 +152,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "                 CONDADIR : $CONDADIR";             if [[ -z $CONDADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport CONDADIR"; fi
     echo "                   FSLDIR : $FSLDIR";               if [[ -z $FSLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLDIR"; fi
     echo "                FSLGPUDIR : $FSLGPUDIR";            if [[ -z $FSLGPUDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUDIR"; fi
+    echo "            FSLGPUScripts : $FSLGPUScripts";         if [[ -z $FSLGPUScripts ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUScripts"; fi
     echo "             FSLGPUBinary : $FSLGPUBinary";         if [[ -z $FSLGPUBinary ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUBinary"; fi
     echo "               FSL_FIXDIR : $FSL_FIXDIR";           if [[ -z $FSL_FIXDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_FIXDIR"; fi
     # echo "            POSTFIXICADIR : $POSTFIXICADIR";        if [[ -z $POSTFIXICADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport POSTFIXICADIR"; fi

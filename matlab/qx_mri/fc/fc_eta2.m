@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [eta] = fc_eta2(a, b)
 
 %``function [eta] = fc_eta2(a, b)``
@@ -10,13 +14,6 @@ function [eta] = fc_eta2(a, b)
 %   homologous columns from both matrices. If the first argument is a column
 %   vector and the second a matrix, it returns an array of eta coefficients
 %   between the vector a and each column of the matrix b.
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-04-14 Grega Repovs
-%              Initial version.
 %
 
 if nargin > 1

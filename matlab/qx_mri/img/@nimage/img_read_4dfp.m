@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_read_4dfp(img, file, dtype, frames, verbose)
 
 %``function [img] = img_read_4dfp(img, file, dtype, frames, verbose)``
@@ -18,18 +22,6 @@ function [img] = img_read_4dfp(img, file, dtype, frames, verbose)
 %
 %   img
 %  
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-19 Grega Repovs
-%              Initial version.
-%   2011-07-31 Grega Repovs
-%              Changed the handling of conc files to nimage main method.
-%   2013-10-20 Grega Repovs
-%              Added verbose option
-%
 
 if nargin < 5
     verbose = false;

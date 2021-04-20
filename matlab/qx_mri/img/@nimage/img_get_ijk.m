@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ijk] = img_get_ijk(img, xyz)
 
 %``function [xyz] = img_get_ijk(img, xyz)``
@@ -30,14 +34,6 @@ function [ijk] = img_get_ijk(img, xyz)
 %   To get vertex indices for specific world coordinates::
 %
 %   	ijk = img.img_get_ijk([34, 60, 24; 25, 52, 18]);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   
-%	2017-08-07 Aleksij Kraljic
-%		       Initial version.
 %
 
 if nargin < 2, xyz = []; end

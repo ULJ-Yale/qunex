@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues)
 
 %``function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues)``
@@ -24,18 +28,6 @@ function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues
 %
 %   This method is used to expand a parcellated cifti data file to a cifti 
 %   dense data file based on the information stored in cifti metatada.
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2019-06-29 Grega Repovs
-%			   Initial version.
-%   2019-08-27 Andraz Matkovic
-%              Added ability to specify missing values value.
-%   2019-08-29 Grega Repovs
-%              Changed the missingvalues parameter name.
 %
 
 % --> process variables

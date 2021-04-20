@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_scrub(img, com)
 
 %``function [img] = img_scrub(img, com)``
@@ -24,19 +28,6 @@ function [img] = img_scrub(img, com)
 %   
 %   img
 %       scrubbed image
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2012-10-29 Grega Repovs
-%              Initial version.
-%
-%   TODO:
-%       Needs shifting added to com and mask!
-%       (Might require changing com syntax)
-%
 %
 
 if nargin < 2

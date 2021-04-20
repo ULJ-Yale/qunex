@@ -1,4 +1,9 @@
 #!/usr/bin/env python2.7
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # encoding: utf-8
 """
 ``fidl.py``
@@ -214,17 +219,6 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
         qunex join_fidl_folder concfolder=concs fidlfolder=fidls
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-05-12 Grega Repovš
-               Initial version
-    2019-05-12 Grega Repovš
-               Reports an error if no conc file is found to process
-    """
-
     if fidlfolder is None:
         fidlfolder = concfolder
 
@@ -347,17 +341,6 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     ::
 
         qunex check_fidl fidlfolder=jfidls
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-05-12 Grega Repovš
-               Initial version
-    2019-05-12 Grega Repovš
-               Reports an error if no fidl file is found to process
     """
 
     if fidlfile:

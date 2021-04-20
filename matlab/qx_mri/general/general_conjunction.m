@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [p, t, c] = general_conjunction(img, method, effect, q, data)
 
 %``[p, t, c] = general_conjunction(img, method, effect, q, data)``
@@ -43,16 +47,6 @@ function [p, t, c] = general_conjunction(img, method, effect, q, data)
 %
 %	c
 %		image with number of sessions that show significant effect
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%	2015-10-20 Grega Repovs
-%              Updated argument parsing
-%   2018-06-25 Grega Repovs
-%              Replaced icdf and cdf with norminv and normcdf to support Octave
 %
 
 %  ---- parsing arguments

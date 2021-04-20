@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [out, done] = img_stats_time(img, doIt, mask)
 
 %``function [out, done] = img_stats_time(img, doIt, mask)``
@@ -33,22 +37,6 @@ function [out, done] = img_stats_time(img, doIt, mask)
 %   done
 %       A cell array of the executed commands.
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-07-09 Grega Repovs
-%              Initial version.
-%   2011-10-24 Grega Repovš
-%              Checks what was actually executed instead of just returning the
-%              do cell array
-%   2017-03-11 Grega Repovs
-%              - updated documentation
-%              - command can now be specified using a comma separated string
-%              - more robust do loop
-%
-
 
 if nargin < 3, mask = []; end
 if nargin < 2, doIt = [];   end

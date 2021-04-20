@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_read_roi(roiinfo, roi2, check)
 
 %``function [img] = img_read_roi(roiinfo, roi2, check)``
@@ -96,24 +100,6 @@ function [img] = img_read_roi(roiinfo, roi2, check)
 %
 %       roi = nimage.img_read_roi('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-05-10 Grega Repovs 
-%              Initial version.
-%   2013-07-24 Grega Repovs 
-%              adjusted to create either single or multiple volume ROI
-%   2015-12-08 Grega Repovs 
-%              added option for named region codes
-%   2017-03-04 Grega Repovs 
-%              updated documentatio
-%   2017-09-29 Grega Repovs 
-%              enabled relative paths to roi image
-%   2018-10-19 Aleksij Kraljic 
-%              added ROI checking functionality
-
 
 %   ---- Named region codes
 rcodes.lcgray = [3 415 417 419 421:422 424 427 429 431 433 435 438 1000:1035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181 9000:9006 11100:11175];

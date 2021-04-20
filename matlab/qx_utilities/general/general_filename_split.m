@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [elements] = general_filename_split(filename, delim)
 
 %``function [elements] = general_filename_split(filename, delim)``
@@ -24,14 +28,6 @@ function [elements] = general_filename_split(filename, delim)
 %   	elements = general_filename_split('bold3_s_hpss.nii.gz');
 %
 %   will result in `elements = {'bold3', 's', 'hpss'}`.
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-02-11 Grega Repovš
-%			   Updated documentation
 %
 
 if nargin < 2, delim = '_'; end

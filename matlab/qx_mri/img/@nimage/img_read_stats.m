@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [obj] = img_read_stats(obj, verbose)
 
 %``function [obj] = img_read_stats(obj, verbose)``
@@ -31,22 +35,6 @@ function [obj] = img_read_stats(obj, verbose)
 %   ::
 %   
 %       img = img.img_read_stats();
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-07-31 Grega Repovs 
-%              Initial version.
-%   2013-10-19 Grega Repovs 
-%              Added reading embedded data.
-%   2013-10-20 Grega Repovs 
-%              Added verbose option.
-%   2014-07-19 Grega Repovs 
-%              Switched to general_read_table.
-%   2017-03-11 Grega Repovs 
-%              Updated documentation and simplified arguments.
 %
 
 if nargin < 2, verbose = false; end

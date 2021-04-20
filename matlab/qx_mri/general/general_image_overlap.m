@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = general_image_overlap(af, bf, tf, v)
 
 %``function [] = general_image_overlap(af, bf, tf, v)``
@@ -29,15 +33,6 @@ function [] = general_image_overlap(af, bf, tf, v)
 %
 %		general_image_overlap(imga, imgb, 'atlas_subject_overlap.png');
 %
-
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2017-03-19 Grega Repovs
-%			   Updated documentation
-
 
 if nargin < 4 || isempty(v), v = 3; end
 if nargin < 3

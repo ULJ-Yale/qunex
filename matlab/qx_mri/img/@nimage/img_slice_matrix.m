@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [panel] = img_slice_matrix(img, sdim, slices)
 
 %``function [panel] = img_slice_matrix(img, sdim, slices)``
@@ -28,14 +32,6 @@ function [panel] = img_slice_matrix(img, sdim, slices)
 %	
 %		panel = img.img_slice_matrix(2);
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2010-04-18 Grega Repovs - Entry into repository (as RGBReshape)
-%	2017-03-03 Grega Repovs - Moved to nimage method, renamed, adjusted
-%                             and updated documentation
 
 if nargin < 3,	slices = []; end
 if nargin < 2   sdim   = 3;  end

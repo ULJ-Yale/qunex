@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [rd] = general_downsample_data(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurface, outSphere, wbPath)
 %``function [rd] = general_downsample_data(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurfaceProjection, wbPath)``
 %
@@ -51,12 +55,6 @@ function [rd] = general_downsample_data(input, inSurfaceProjection, inSphereSurf
 %                10000,...
 %                'downsampled_L_midthickness.surf.gii',...
 %                'downsampled_L_sphere.surf.gii);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   2017-06-25 Aleksij Kraljic
-%              Initial version.
 %
 
 deleteOutSphere = false;

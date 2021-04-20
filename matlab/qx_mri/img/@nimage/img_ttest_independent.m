@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [p Z M D SE t] = img_ttest_independent(A, B, vartype, verbose)
 
 %``function [p Z M D SE t] = img_ttest_zero(A, B, vartype, verbose)``
@@ -33,18 +37,6 @@ function [p Z M D SE t] = img_ttest_independent(A, B, vartype, verbose)
 %
 %   SE  
 %       an image with standard errors of both groups
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-10-09 Grega Repovs
-%              Initial version.
-%   2018-06-19 Grega Repovs
-%              Changed ttest call to use named parameters.
-%   2018-06-25 Grega Repovs
-%              Replaced icdf with norminv to support Octave
 %
 
 if nargin < 4

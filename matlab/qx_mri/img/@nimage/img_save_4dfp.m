@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [res] = img_save_4dfp(obj, filename, extra)
 
 %   ``function [res] = img_save_4dfp(obj, filename, extra)``
@@ -16,22 +20,10 @@ function [res] = img_save_4dfp(obj, filename, extra)
 %	
 %	res
 %
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2009-11-19 Grega Repovs
-%			   Initial version.
-%	2013-10-19 Grega Repovs
-%			   Added call for embedding data
-
 
 if nargin < 3
 	extra = [];
 end
-
 
 % ---> embed extra data if available
 

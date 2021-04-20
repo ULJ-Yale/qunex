@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)
 
 %``function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)``
@@ -88,15 +92,6 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %
 %   	general_plot_bold_timeseries_list('bolds.list', [], 'QA_', 5, 'png', true);
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2015-10-17 Grega Repovs
-%		       Initial version
-%   2018-01-20 Grega Repovs
-%              Added detailed documentation
 
 %  ---- initializing
 

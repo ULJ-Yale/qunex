@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
 
 %``function [img] = img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)``
@@ -22,17 +26,6 @@ function [img] = img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
 %   img
 %       filtered image
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2013-10-20 Grega Repovs
-%              Added the ignore / interpolate option.
-%   2015-10-22 Grega Repovs
-%              Optimized to ignore 0-variance voxels.
-
-
 
 %------- Check input
 

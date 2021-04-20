@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ifh] = img_read_ifh(img, file)
 
 %``function [ifh] = img_read_ifh(img, file)``
@@ -15,14 +19,6 @@ function [ifh] = img_read_ifh(img, file)
 %
 %   ifh
 %
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-19 Grega Repovs
-%              Initial version.
 %
 
 file = strtrim(file);

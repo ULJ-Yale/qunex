@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_read_glm(img, fname, dtype, verbose)
 
 %``function [img] = img_read_glm(img, fname, dtype, verbose)``
@@ -16,14 +20,6 @@ function [img] = img_read_glm(img, fname, dtype, verbose)
 %   ======
 %
 %   img
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2013-11-16 Grega Repovs
-%              Initial version.
 %
 
 if nargin < 4

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 
 %	``function [snr, sd] = general_compute_snr_group(flist, fmask, target, verbose)``
@@ -17,16 +21,6 @@ function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 %	--fmask		an array mask defining which frames to use (1) and which not (0)
 %	--verbose	to report on progress or not [not]
 %	
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%	2010-11-21 Grega Repovs
-%			   Initial version.
-%
-% 	Copyright (c) 2010 Grega Repovs. All rights reserved.
-%
 
 if nargin < 4
 	verbose = false;

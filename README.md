@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 # README File for Quantitative Neuroimaging Environment & ToolboX (QuNex)
 
 The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number of scripts and functions written in several programming languages that support a flexible and extensible framework for data organization, preprocessing, quality assurance, and various analytics across neuroimaging modalities. The QuNex suite is designed to be flexible and can be developed by adding functions developed around its component tools.
@@ -19,8 +25,8 @@ The QuNex code is is co-developed and co-maintained by the:
 
 ## Version
 
-QuNex: 0.90.1
-qx_library: 0.90.0
+QuNex: 0.90.6
+qx_library: 0.90.3
 
 ## References
 
@@ -29,3 +35,14 @@ Krystal JH, Wang XJ, Pearlson GD, Glahn DC, Anticevic A. Altered global brain
 signal in schizophrenia. Proc Natl Acad Sci U S A. 2014 May 20;111(20):7438-43.
 doi: 10.1073/pnas.1405289111. PubMed PMID: 24799682; PubMed Central PMCID:
 PMC4034208.
+
+## GPL licenses
+
+QuNex container includes the following GPL licensed products:
+
+* [CentOS](https://archive.softwareheritage.org/swh:1:dir:bd1c2d47a55882f6362f8747bbc2f4d6484091a7;origin=https://github.com/centos6/centos7;visit=swh:1:snp:c1e9c39b42beb9799d3f8e8c3b2e14499b8e72bc;anchor=swh:1:rev:dd6094662c406e300c64b926d2639dac60f5da96/),
+* [Connectome Workbench](https://archive.softwareheritage.org/swh:1:dir:e2cc8014a5f4604e0d39d96f43c5251389ecbb72;origin=https://github.com/Washington-University/workbench;visit=swh:1:snp:0e663b1bc7dabf4256ba430d54a2f5be8c5d3e7b;anchor=swh:1:rev:4d4e468dc3f817c0fecd626c11fd1d86e7c7ca45/),
+* [GNU Octave](https://ftp.gnu.org/gnu/octave/octave-4.4.1.tar.gz),
+* [nose](https://archive.softwareheritage.org/swh:1:dir:5bcf732f09d096b24a55863df4ffea7e9e098b69;origin=https://github.com/nose-devs/nose;visit=swh:1:snp:a4952aa8d112feb64d14ceb9573f352e0a8c5058;anchor=swh:1:rev:7c26ad1e6b7d308cafa328ad34736d34028c122a/),
+* [PALM](https://archive.softwareheritage.org/swh:1:dir:56bdf688d7e2c58426dec6ededc9041884760cc7;origin=https://github.com/andersonwinkler/PALM;visit=swh:1:snp:fda2137b2d29f3bda5a4d87fcebe000a66afa9c4;anchor=swh:1:rev:0692998568513e8e1488000162c76a98c6c1fb98/),
+* [sphinx](https://archive.softwareheritage.org/swh:1:dir:7bd6b26a7db338cc4604118f11ccc0d20efed70a;origin=https://github.com/sphinx-doc/sphinx;visit=swh:1:snp:4a8aedfea5a1f7518f09ed7f13f52353823ddb43;anchor=swh:1:rev:d2f7628f8dc929b24bf8a1cfbff091e253de0e36/).

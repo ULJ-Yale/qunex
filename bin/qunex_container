@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function, division
 import subprocess
@@ -183,29 +187,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     - mail-user        ... Email address to send notifications to
     - mail-type        ... On what events to send emails
 
-    '''
-
-    '''
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-06-17 Grega Repovs
-               Initial version
-    2017-09-30 Grega Repovs
-               Added additional options to scheduling LSF jobs.
-    2017-09-30 Grega Repovs
-               Added options to redirect job output to log files.
-    2018-10-03 Grega Repovs
-               Added checking for validity of log file directories.
-    2019-03-07 Jure Demsar
-               Python3 support.
-    2019-04-14 Grega Repovs
-               Updated documentation
-    2019-09-23 Grega Repovs
-               UTF8 encoded input to stdin.
-    2019-20-01 Jure Demšar
-               Upgraded job naming and PBS scheduler
     '''
 
     # --- check inputs
@@ -408,14 +389,6 @@ def getSessionIDsFromBatchFile(filename):
 
     '''
 
-    '''
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    Written by Grega Repovs and Jure Demsar.
-    '''
-
     if not os.path.exists(filename):
         print("\n\n=====================================================\nERROR: Batch file does not exist [%s]", file=filename)
         raise ValueError("ERROR: Batch file not found: %s" % (filename))
@@ -456,13 +429,6 @@ def getSessionIDsFromList(filename):
 
     '''
 
-    '''
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-    Written by Grega Repovs and Jure Demsar.
-    '''
-
     if not os.path.exists(filename):
         print("\n\n=====================================================\nERROR: List file does not exist [%s]", file=filename)
         raise ValueError("ERROR: List file not found: %s" % (filename))
@@ -494,13 +460,6 @@ def getSessionIDs(listString, sessionsfolder=None):
     - a path to a batch file (identified by .txt extension),
     - a path to a *.list file (identified by .list extension).
 
-    '''
-
-    '''
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-    Written by Grega Repovs and Jure Demsar.
     '''
 
     listString = listString.strip()
@@ -696,32 +655,6 @@ def main(args=None):
         --container=/singularity/qunex_suite-0_38_10.simg \\
         --scheduler="SLURM,time=2-00:00:00,ntasks=1,cpus-per-task=2,mem-per-cpu=15000,partition=pi_anticevic"
 
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-03-23 Grega Repovs
-               First complete version with documentation.
-    2019-04-15 Grega Repovs
-               Updated Docker submission to enable script support.
-               Changed image parameter to container
-    2019-07-25 Grega Repovs
-               Updated the call to use sessions rather than subjects
-    2019-08-26 Grega Repovs
-               Added the csessions parameter
-    2019-09-28 Grega Repovs
-               Fixed csession order bug
-    2020-01-15 Jure Demsar
-               Added the bash parameter
-    2020-01-21 Jure Demsar
-               Added the bind parameter
-    2020-01-21 Jure Demsar
-               Added the bash_post parameter
-    2020-08-24 Jure Demsar
-               Added the nv parameter
     """
 
     if args is None:

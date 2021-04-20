@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 
 %``function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)``
@@ -39,16 +43,6 @@ function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 %	::
 %
 %   	img = img.img_compute_ab_correlation(roiAimage, roiBimage);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2010-08-08 Grega Repovs
-%			   Initial version.
-%   2016-11-25 Grega Repovs
-%			   Updated documentation.
 %
 
 if nargin < 4

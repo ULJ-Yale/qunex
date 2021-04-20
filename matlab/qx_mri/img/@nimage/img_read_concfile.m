@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [files, boldnum, sfolder] = img_read_concfile(file)
 
 %``function [files, boldnum, sfolder] = img_read_concfile(file)``
@@ -32,17 +36,6 @@ function [files, boldnum, sfolder] = img_read_concfile(file)
 %	::
 %
 %       files = nimage.img_read_concfile('OP236-WM.conc');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2017-03-11 Grega Repovs
-%              Updated documentation.
-%   2017-03-21 Grega Repovs
-%              Added output of bold numbers and session folders in which the bolds are located.
-%              Can also process a cell array of file paths.
 %
 
 files = {};

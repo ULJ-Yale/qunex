@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``ge_HCP.py``
 
@@ -198,20 +203,6 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     be processed, files would be linked, files that already exist would be 
     skipped, and any files for which the path include 'unprocessed', '
     MotionMatrices' or 'MotionCorrection' would be excluded from the mapping.
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-05-29 Grega Repovš
-               Initial version
-    2019-05-30 Grega Repovš
-               Modified documentation
-               Excluding 'unprocessed' is now an explicit option
-    2019-09-22 Grega Repovš
-               Folder timestamps are now kept when moving files.
     """
 
     # load gu

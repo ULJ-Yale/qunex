@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ts] = general_normalize_timeseries(ts)
 
 %``function [ts] = general_normalize_timeseries(ts)``
@@ -15,14 +19,6 @@ function [ts] = general_normalize_timeseries(ts)
 %
 %	ts
 %		normalized timeseries matrix
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2008-07-16 Grega Repovs
-%			   Initial version.
 %
 
 tsize = size(ts);

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose);
 
 %``function [] = general_extract_roi_glm_values(flist, roif, effects, frames, values, tformat, verbose)`
@@ -56,21 +60,6 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %
 %       general_extract_roi_glm_values('wm-glm.list', 'CCN.names', [], 'encoding, ...
 %       delay', [], 'psc', 'long');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2015-12-09 Grega Repovš
-%              Initial version
-%   2016-09-25 Grega Repovš
-%              Added option of wide and mat target format.
-%   2017-03-04 Grega Repovš
-%              Updated documentation.
-%
-%   TODO
-%   — selection of stats to save
-%   — additional info (roi xyz, peak value ...)
 %
 
 if nargin < 8, verbose = false; end

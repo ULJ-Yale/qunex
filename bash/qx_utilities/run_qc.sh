@@ -1,47 +1,10 @@
 #!/bin/sh 
-#set -x
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-#
-# ## PRODUCT
-#
-#  run_qc.sh is a QC processing wrapper
-#
-# ## LICENSE
-#
-# * The run_qc.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#
-# This script, run_qc.sh, implements quality control for various stages of 
-# HCP preprocessed data
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * Connectome Workbench (v1.0 or above)
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./run_qc.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are HCP files from previous processing
-# * These may be stored in: "$SessionsFolder/$CASE/hcp/$CASE/ 
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 # -- General help usage function
@@ -564,7 +527,7 @@ else
     fi
 fi
 if [ -z ${TimeStamp} ]; then
-    TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
     Suffix="$CASE_$TimeStamp"
     echo "Time stamp for logging not found. Setting now: ${TimeStamp}"; echo ""
 fi
@@ -1603,9 +1566,7 @@ main() {
             # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
             # =-=-=-=-=-=- End of BOLD QC Section =-=-=-=-=
             # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-            
-            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            
+
             # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
             # =-=-= remaining modalities (i.e. T1w, T2w, Myelin or DWI) =-=
             # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

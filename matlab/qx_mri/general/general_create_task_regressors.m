@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)
 
 %``function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)``
@@ -94,38 +98,6 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   Assumed response regressors get normalized to 1 only within each run, not
 %   across runs.
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2008-07-11 Grega Repovš
-%              Initial version.
-%   2008-07-16 Grega Repovš
-%              Updated
-%   2011-01-24 Grega Repovš
-%              Updated
-%   2011-02-11 Grega Repovš
-%              Updated
-%   2011-07-31 Grega Repovš
-%              Updated to use two decimal points precision and area under the 
-%              curve
-%   2015-10-23 Grega Repovš
-%              Updated (Error reporting for missing event info.)
-%   2016-02-04 Grega Repovš
-%              Updated (Added behavioral regressors and changed output structure)
-%   2017-02-11 Grega Repovš
-%              Updated to use the general general_hrf function.
-%   2017-03-12 Grega Repovš
-%              Updated documentation
-%   2017-10-18 Aleksij Kraljic
-%              Added an option for handling event name mismatch between fidlf 
-%              and model
-%   2020-11-04 Grega Repovš
-%              Changed variable name 'events' to 'tevents' to not conflict with
-%              reserved word 'events'
-%
-
 
 % ---> set variables
 

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [obj] = img_fcmri_segment(obj, smask, tmask, options, verbose)
 
 %``function [obj] = img_fcmri_segment(obj, ssmask, tmask, options, verbose)``
@@ -18,14 +22,6 @@ function [obj] = img_fcmri_segment(obj, smask, tmask, options, verbose)
 %
 %   Returns WTA results and correlations with each target ROI.
 %   Returned image is masked!
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-08-07 Grega Repovs
-%              Initial version.
 %
 
 if nargin < 5

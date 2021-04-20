@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [options] = general_parse_options(options, s, default)
 
 %``function [options] = general_parse_options(options, s, default)``
@@ -118,21 +122,6 @@ function [options] = general_parse_options(options, s, default)
 %       a.vars   = {'a', 'b', 'c'}
 %       a.values = [1, 2, 3]
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2014-07-22 Grega Repovs
-%              Initial version
-%   2015-10-17 Grega Repovs
-%               Updated to enable structure arrays and specification of single
-%              layer depth structures.
-%   2017-03-19 Grega Repovs
-%              Made the function more robust and updated the documentation.
-%   2020-02-02 Grega Repovs
-%              Added the option for input to be structs
-
 
 if nargin < 3, default = ''; end
 if nargin < 2, error('ERROR: Not enough arguments passed to general_parse_options!'); end

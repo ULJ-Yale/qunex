@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [roi] = img_mask_roi(img, roi2)
 
 %``function [img] = img_mask_roi(img, roi2)``
@@ -45,16 +49,6 @@ function [roi] = img_mask_roi(img, roi2)
 %   is provided::
 %
 %       sroi = nimage.img_read_roi('CCN.names', 'OP338.aseg+aparc.nii.gz');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2015-12-09 Grega Repovs
-%              Initial version
-%   2017-03-04 Grega Repovs
-%              Updated documentation
 %
 
 if nargin < 2

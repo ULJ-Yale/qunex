@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
 
 %``function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)``
@@ -154,26 +158,6 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %       [72 80], [300 350], 'b', 3, 'fwhm:1', ...
 %       'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', ...
 %       [], 1);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   Written by Grega Repovs, 2015-04-11
-%
-%   Changelog
-%   2015-04-11 Grega Repovs
-%              Initial version
-%	2016-01-16 Grega Repovs
-%              Added presmoothing option.
-%		       Added printing of report file.
-%   2017-03-04 Grega Repovs
-%              Updated documentation.
-%   2017-07-10 Aleksij Kraljic
-%              Added functionality for CIFTI-2 files
-%   2017-08-02 Aleksij Kraljic
-%              Fixed mistakes in the help menu and set default values for
-%              smoothing to 0
 %
 
 % --- read image and call FindPeaks

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)
 
 %``function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)``
@@ -28,16 +32,6 @@ function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model,
 %   tso
 %
 %   te
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-10-09 Grega Repovs
-%              Initial version.
-%   2017-02-11 Grega Repovs
-%              Updated to use the general general_hrf function.
 %
 
 if nargin < 4

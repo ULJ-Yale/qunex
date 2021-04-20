@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``workflow.py``
 
@@ -216,35 +221,6 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
 
         qunex create_bold_brain_masks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no nifti_tail=_hp2000_clean bolds=all parelements=8
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2016-12-24 Grega Repovš
-               Initial version
-    2016-12-24 Grega Repovš
-               Added documentation, fixed issue with cifti targets, switched
-               to gmri functions to extract the first frame and convert the
-               image.
-    2018-06-16 Grega Repovs
-               Changed to include boldnumber in log and to use useOrSkipBOLD
-               to identify and report, which bolds to run on.
-    2018-11-14 Jure Demsar
-               Parallel implementation.
-    2019-01-12 Grega Repovš
-               More robust identification of cifti files
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-11-09 Grega Repovš
-               Added use and information on hcp_nifti_tail and bold_variant
-               Made sure that the volume image is used for computing stats
-    2020-11-13 Grega Repovš
-               Changed hcp_nifti_tail to nifti_tail
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -673,34 +649,6 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
              mov_before=1 mov_after= 2
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2016-12-26 Grega Repovš
-               Initial version
-    2016-12-26 Grega Repovš
-               Added documentation, fixed the issue with cifti targets, added
-               summary reporting.
-    2018-06-16 Grega Repovs
-               Changed to include boldnumber in log and to use useOrSkipBOLD
-               to identify and report, which bolds to run on.
-    2018-11-16 Jure Demsar
-               Parallel implementation.
-    2019-01-12 Grega Repovš
-               More robust identification of cifti files
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-11-09 Grega Repovš
-               Added use and information on hcp_nifti_tail and bold_variant
-               Made sure that the volume image is used for computing stats
-    2020-11-13 Grega Repovš
-               Changed hcp_nifti_tail to nifti_tail
-    """
-
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
 
     r = "\n---------------------------------------------------------"
@@ -1027,28 +975,6 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
               --sessionsfolder=sessions --overwrite=no --bolds=all
               --nifti_tail=_hp2000_clean --parsessions=1 --mov_plot=""
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2016-12-26 Grega Repovš
-               Initial version
-    2016-12-26 Grega Repovš
-               Added documentation, added summary reporting.
-    2018-06-16 Grega Repovs
-               Changed to use useOrSkipBOLD to identify and report, which bolds
-               to run on.
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-11-09 Grega Repovš
-               Added use and information on hcp_nifti_tail and bold_variant
-    2020-11-13 Grega Repovš
-               Changed hcp_nifti_tail to nifti_tail
     """
 
     preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0, 'boldskipped': 0}
@@ -1391,33 +1317,6 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
 
         qunex extract_nuisance_signal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
              overwrite=no bolds=all parsessions=10
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2016-12-26 Grega Repovš
-               Initial version
-    2016-12-26 Grega Repovš
-               Added documentation, fixed the issue with cifti targets, added
-               summary reporting.
-    2018-06-16 Grega Repovs
-               Changed to include boldnumber in log and to use useOrSkipBOLD
-               to identify and report, which bolds to run on.
-    2018-11-16 Jure Demsar
-               Parallel implementation.
-    2019-01-12 Grega Repovš
-               More robust identification of cifti files
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-11-09 Grega Repovš
-               Added use and information on img_suffix, hcp_nifti_tail and bold_variant
-    2020-11-13 Grega Repovš
-               Changed hcp_nifti_tail to nifti_tail
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1992,34 +1891,6 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
              mov_bad=udvarsme \\
              pignore="hipass=linear|regress=ignore|lopass=linear" \\
              nprocess=0
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-11 Grega Repovš
-               Initial version
-    2017-02-11 Grega Repovš
-               Added additional documentation.
-    2017-08-11 Grega Repovš
-               Added ability to process ptseries images.
-    2018-06-16 Grega Repovs
-               Changed to include boldnumber in log and to use useOrSkipBOLD
-               to identify and report, which bolds to run on.
-    2018-11-16 Jure Demsar
-               Parallel implementation.
-    2019-01-12 Grega Repovš
-               Changed how bold_tail is identified
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-11-09 Grega Repovš
-               Added use and information on hcp_nifti/cifti_tail and bold_variant
-    2020-11-13 Grega Repovš
-               Changed hcp_nifti_tail to nifti_tail
     """
 
     doOptionsCheck(options, sinfo, 'preprocess_bold')
@@ -2648,35 +2519,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
              event_string="block:boynton|target:9" \\
              glm_matrix=none glm_residuals=save nprocess=0 \\
              pignore="hipass=linear|regress=ignore|lopass=linear"
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2016-12-26 Grega Repovš
-               Initial version
-    2016-12-26 Grega Repovš
-               Added initial documentation.
-    2017-01-07 Grega Repovš
-               Added additional documentation.
-    2017-08-11 Grega Repovš
-               Added ability to work with ptseries images.
-    2018-12-12 Jure Demsar
-               preprocess_conc function uses the conc_use parameter for
-               absolute or relative path interpretation from conc files.
-    2019-01-12 Grega Repovš
-               Changed how bold_tail is identified
-               Updated documentation
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-11-06 Grega Repovš
-               Updated documentation and file naming
-    2020-11-13 Grega Repovš
-               Changed hcp_nifti_tail and hcp_cifti_tail to nifti_tail and cifti_tail
     """
 
     doOptionsCheck(options, sinfo, 'preprocess_conc')

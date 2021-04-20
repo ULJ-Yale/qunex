@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_embed_meta(img, data, code, name, verbose)
 
 %``function [img] = img_embed_meta(img, data, code, name, verbose)``
@@ -43,18 +47,6 @@ function [img] = img_embed_meta(img, data, code, name, verbose)
 %	::
 %   
 %		img = img.img_embed_meta(datatable, [], 'Behavioral results');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2016-08-20 Grega Repovs
-%			   Initial version.
-%   2016-12-13 Grega Repovs
-%			   Updated documentation
-%   2018-06-17 Grega Repovs
-%			   Explicit conversion of 10 to string.
 %
 
 if nargin < 5 || isempty(verbose), verbose = false; end

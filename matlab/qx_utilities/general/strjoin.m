@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [s] = strjoin(list, delim)
 
 %``function [s] = strjoin(list, delim)``
@@ -17,13 +21,6 @@ function [s] = strjoin(list, delim)
 %   s
 %		joined string
 %
-
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2016-02-05 Grega Repovs
-%			   Extracted to a separate function.
 
 if nargin < 2 || isempty(delim), delim = ' '; end
 

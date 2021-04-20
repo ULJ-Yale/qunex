@@ -1,23 +1,14 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``img.py``
 
 Some basic functions to be used for work with nifti and 4dfp images.
-"""
-
-"""
-~~~~~~~~~~~~~~~~~~
-
-Change log
-
-2011-03-05 Grega Repovš
-           Initial version
-2011-07-30 Grega Repovš
-           Added function for reporting basic information
-
-Copyright (c) Grega Repovs and Jure Demsar.
-All rights reserved.
 """
 
 import struct
@@ -756,17 +747,6 @@ def slice_image(sourcefile, targetfile, frames=1):
         qunex slice_image sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2016-12-25 Grega Repovš
-               Initial version
-    2016-12-25 Grega Repovš
-               Adopted from a selfstanding command in the dofcMRIp package,
-               added documentation.
-    """
     frames = int(frames)
     if 'nii' in getImgFormat(sourcefile):
         sliceNIfTI(sourcefile, targetfile, frames)

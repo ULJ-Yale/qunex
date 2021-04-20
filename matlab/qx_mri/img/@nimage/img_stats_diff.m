@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)
 
 %``function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)``
@@ -60,20 +64,6 @@ function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)
 %
 %       vdiff = imga.img_StatDiff(imgb, 'dvar, fp');
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-03-18 Grega Repovs
-%              Initial version.
-%   2017-03-11 Grega Repovs
-%              - updated documentation
-%              - made the loop more robust
-%              - added ability to specify commands in comma separated string
-%              - renamed to img_stats_diff
-%   2018-06-25 Grega Repovs
-%              Replaced icdf and cdf with norminv and tcdf to support Octave
 
 if nargin < 4,  exclude = []; end
 if nargin < 3 || isempty(doIt), doIt = 'dm'; end

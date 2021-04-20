@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``core.py``
 
@@ -15,7 +20,6 @@ import shutil
 import subprocess
 import time
 import multiprocessing
-import datetime
 import glob
 import sys
 import types
@@ -24,6 +28,7 @@ import gzip
 import filelock as fl
 import exceptions as ge
 import commands_support as gcs
+from datetime import datetime
 
 
 def readSessionData(filename, verbose=False):
@@ -39,17 +44,6 @@ def readSessionData(filename, verbose=False):
     returns a list of sessions with the information on images and the additional
     parameters specified in the header.
 
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-05-22 Grega Repovš
-               Initial version
-    2019-05-22 Grega Repovš
-               Now only reads '_' parameters as global variables in the initial section
     """
 
     if not os.path.exists(filename):
@@ -186,12 +180,6 @@ def readList(filename, verbose=False):
     returns a list of sessions each with the provided list of files.
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Written by Grega Repovš.
-    """
-
     slist   = []
     session = {}
 
@@ -252,12 +240,6 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
     ids.
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Written by Grega Repovš.
-    """
-
     gpref = {}
 
     listString = listString.strip()
@@ -308,14 +290,6 @@ def deduceFolders(args):
 
     Tries to deduce the location of study specific folders based on the provided
     arguments. For internal use only.
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-    Change log
-
-    2018-03-31 Grega Repovš
-               Initial version
     """
 
     reference  = args.get('reference')
@@ -381,12 +355,6 @@ def runExternalParallel(calls, cores=None, prepend=''):
         runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, cores=1, prepend=' ... ')
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-    
-    Written by Grega Repovš.
-    """
-
     if cores is None or cores in ['all', 'All', 'ALL']:
         cores = multiprocessing.cpu_count()
     else:
@@ -408,16 +376,19 @@ def runExternalParallel(calls, cores=None, prepend=''):
                     sout = open(call['sout'], 'a', 1)
                 else:
                     sout = open(os.devnull, 'w')
-                print >> sout, "Starting log for %s at %s\nThe command being run: \n>> %s\n" % (call['name'], str(datetime.datetime.now()).split('.')[0], " ".join(call['args']))
+
+                print >> sout, "Starting log for %s at %s\nThe command being run: \n>> %s\n" % (call['name'], str(datetime.now()).split('.')[0], " ".join(call['args']))
+
                 try:
                     if 'shell' in call and call['shell']:
                         running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0, shell=True)})
                     else:
                         running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0)})
+
                     if call['sout']:
-                        print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.datetime.now()).split('.')[0], call['sout'])
+                        print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.now()).split('.')[0], call['sout'])
                     else:
-                        print prepend + "started running %s at %s" % (call['name'], str(datetime.datetime.now()).split('.')[0])
+                        print prepend + "started running %s at %s" % (call['name'], str(datetime.now()).split('.')[0])
                 except:
                     print prepend + "failed to start running %s. Please check your environment!" % (call['name'])
                     completed.append({'exit': -9, 'name': call['name'], 'log': call['sout'], 'args': call['args']})
@@ -462,16 +433,6 @@ def record(response):
     Appends response from a completed function.
 
     For internal use only.
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-    Change log
-
-    2018-03-31 Grega Repovš
-               Initial version
-    2019-01-17 Grega Repovš
-               Fixed the correct response
     """
 
     global results
@@ -519,16 +480,6 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
     For internal use only.
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-    Change log
-
-    2021-01-19 Jure Demšar
-               Comlogs are now never too long
-    2018-03-31 Grega Repovš
-               Initial version
-    """
-
     if name is None:
         name = function.__name__
 
@@ -536,7 +487,8 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         logfolder, logname = os.path.split(logfile)
 
         base_logname, ext_logname = os.path.splitext(logname)
-        logname  = base_logname + "_" + datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f") + ext_logname
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
+        logname  = base_logname + "_" + timestamp + ext_logname
 
         # truncate too long lognames
         max_log_length = 150
@@ -545,10 +497,15 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
 
         tlogfile = os.path.join(logfolder, 'tmp_' + logname)
 
+
+
         if not os.path.exists(logfolder):
             os.makedirs(logfolder)
         with lock:
-            print prepend + "started running %s at %s, track progress in %s" % (name, str(datetime.datetime.now()).split('.')[0], tlogfile)
+            # header
+            print "# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp), tlogfile
+            print "#", tlogfile
+            print prepend + "started running %s at %s, track progress in %s" % (name, str(datetime.now()).split('.')[0], tlogfile)
 
         sysstdout = sys.stdout
         sysstderr = sys.stderr
@@ -556,17 +513,26 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         sys.stderr = sys.stdout
     else:
         with lock:
-            print prepend + "started running %s at %s" % (name, str(datetime.datetime.now()).split('.')[0])
+            print "# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp)
+            print "#"
+            print prepend + "started running %s at %s" % (name, str(datetime.now()).split('.')[0])
 
     with lock:
-        print "Started running %s at %s\ncall: gmri %s %s\n-----------------------------------------" % (name, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), function.__name__, " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()]))
+        print "# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp)
+        print "#"
+        print "Started running %s at %s\ncall: gmri %s %s\n-----------------------------------------" % (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), function.__name__, " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()]))
 
     try:
         result = function(**args)
-    except (ge.CommandError, ge.CommandFailed) as e:
+    except ge.CommandNull as e:
         with lock:
-            print "\n\nERROR"
-            print e.message
+            print ge.reportCommandNull(name, e)
+            print
+        result = e.error
+    except ge.CommandFailed as e:
+        with lock:
+            print ge.reportCommandFailed(name, e)
+            print
         result = e.error
     except Exception as e:
         with lock:
@@ -575,7 +541,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         result = e.message
 
     with lock:
-        print "\n-----------------------------------------\nFinished at %s" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        print "\n-----------------------------------------\nFinished at %s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     # schedule command fix
     if name == "schedule":
@@ -615,6 +581,11 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         # print to runlog file and close
         logfile = os.path.join(logfolder, runlogname)
         lf = open(logfile, 'a')
+
+        # header
+        lf.write("# Generated by QuNex %s on %s\n" % (get_qunex_version(), timestamp))
+        lf.write("#\n")
+
         # split name to command name and session
         split = name.split(": ")
 
@@ -669,14 +640,6 @@ def runInParallel(calls, cores=None, prepend=""):
     ::
 
         runInParallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'sout': 'sort_dicom.log'}, cores=1, prepend=' ... ')
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-    Change log
-
-    2018-03-31 Grega Repovš
-               Initial version
     """
 
     global results
@@ -855,14 +818,6 @@ def getLogFile(folders=None, tags=None):
 
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-    Change log
-
-    2019-05-29 Grega Repovš
-               Initial version
-    """
-
     folders = deduceFolders(folders)
 
     if 'logfolder' not in folders:
@@ -871,7 +826,7 @@ def getLogFile(folders=None, tags=None):
     if isinstance(tags, basestring) or tags is None:
         tags = []
 
-    logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname  = tags + [logstamp]
     logname  = [e for e in logname if e]
     logname  = "_".join(logname)
@@ -887,14 +842,6 @@ def closeLogFile(logfile=None, logname=None, status="done"):
 
     Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at
     the start of the logname to the provided status.
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-    Change log
-
-    2019-05-29 Grega Repovš
-               Initial version
     """
 
     if logfile:
@@ -1070,14 +1017,6 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     Creates the generic, non pipeline specific, session file.
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-    Change log
-
-    2020-06-09 Jure Demšar
-               Initial version
-    """
-
     # open fifle
     sfile = os.path.join(sfolder, 'session.txt')
     if os.path.exists(sfile):
@@ -1088,6 +1027,8 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
             raise ge.CommandFailed(command, "session.txt file already present!", "A session.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout = open(sfile, 'w')
+    print >> sout, "# Generated by QuNex %s on %s" % (get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
+    print >> sout, "#"
     print >> sout, 'id:', session
     print >> sout, 'subject:', subject
      
@@ -1110,3 +1051,14 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
 
     # return
     return sout
+
+def get_qunex_version():
+    """
+    Returns the version of currently used QuNex suite.
+    """
+
+    # open the version file and read its contents
+    with open(os.path.join(os.environ['TOOLS'], os.environ['QUNEXREPO'], 'VERSION.md'), "r") as f:
+        version  = f.read().strip()
+
+    return version

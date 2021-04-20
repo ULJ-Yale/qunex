@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 [submodule "library"]
 	path = qx_library
 	url = git@bitbucket.org:oriadev/library.git

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function img = img_smooth_3d_masked(img, mask, fwhm, mlimit, verbose, ftype, ksize)
 
 %function img = img_smooth_3d_masked(img, mask, fwhm, mlimit, verbose, ftype, ksize)
@@ -56,20 +60,6 @@ function img = img_smooth_3d_masked(img, mask, fwhm, mlimit, verbose, ftype, ksi
 %   ::
 %   
 %       smoothed = img_smooth_3d_masked(subjectMask, 3, atlasMask);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-11-16 Grega Repovs
-%              Initial version
-%   2010-12-01 Grega Repovs
-%              Modifications
-%   2014-08-15 Grega Repovs
-%              Further update
-%   2017-02-10 Grega Repovs
-%              Added ftype and ksize options, updated documentation
 %
 
 % ---------  basic settings

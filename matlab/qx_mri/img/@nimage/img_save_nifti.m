@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [res] = img_save_nifti(img, filename, datatype, verbose)
 
 %``function [res] = img_save_nifti(obj, filename, datatype, verbose)``
@@ -17,23 +21,6 @@ function [res] = img_save_nifti(img, filename, datatype, verbose)
 %   ======
 %   
 %   res
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-10-13 Grega Repovs
-%              Initial version.
-%   2011-10-13 Grega Repovs
-%              Updated to write NIfTI-2
-%   2013-10-19 Grega Repovs
-%              Added call for embedding data
-%   2014-06-29 Grega Repovs
-%              Update to use MEX function
-%   2017-07-02 Grega Repovs
-%              Uses xml templates to embed metadata for standard .dscalar and 
-%              dtseries.
 %
 
 if nargin < 4, verbose = false; end

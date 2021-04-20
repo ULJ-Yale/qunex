@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ok] = general_check_folder(filename, description, create, v)
 
 %``function [ok] = general_check_folder(filename, description, create, v)``
@@ -31,12 +35,6 @@ function [ok] = general_check_folder(filename, description, create, v)
 %
 %   	general_check_folder('images/functional/movement', 'movement folder', ...
 %		true, true);
-
-%	~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%   2017-03-12 Grega Repovs
-%              Updated documentation
 %
 
 if nargin < 4, v = true; end

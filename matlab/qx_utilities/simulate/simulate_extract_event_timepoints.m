@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 
 %``function [tp] = simulate_extract_event_timepoints(ts, eventlist, timepoints)``
@@ -18,14 +22,6 @@ function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 %   tp
 %		matrix of extracted timepoints
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-% 	2010-10-09 Grega Repovs
-%			   Initial version.
-%	
 
 if nargin < 3
     error('ERROR: Not enough parameters to extract event timepoints!');

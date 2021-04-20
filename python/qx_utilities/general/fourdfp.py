@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``4dfp.py``
 
@@ -268,7 +273,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     # ---- run avi preprocessing
 
-    logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d.%H.%m.%S') + ".log"
+    logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%s') + ".log"
     print "...  running NIL preprocessing, saving log to %s " % (logname)
     logfile = open(os.path.join(folder, '4dfp', logname), 'w')
 

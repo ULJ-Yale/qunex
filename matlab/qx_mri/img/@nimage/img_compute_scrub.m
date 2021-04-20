@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img, param] = img_compute_scrub(img, comm)
 
 %``function [img, param] = img_compute_scrub(img, comm)``
@@ -92,23 +96,6 @@ function [img, param] = img_compute_scrub(img, comm)
 %   The image is not scrubbed, only the scrubbing parameters are computed and
 %   the chosen criterium is used to create the "img.use" mask that in other
 %   functions and methods defines what frames to use or not.
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2013-10-20 Grega Repovs
-%              Initial version.
-%   2016-11-29 Grega Repovs
-%              Updated documentation.
-%   2018-08-24 Grega Repovs
-%              Now also returning the parameters used.
-%
-%   TODO
-%
-%   - Add computation of frame statistics if they are not already present.
-%
-
 
 param.before   = 0;
 param.after    = 0;

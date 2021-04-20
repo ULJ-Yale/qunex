@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, verbose, cv)
 
 %``function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, verbose, cv)``
@@ -49,24 +53,6 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %   ::
 %
 %       [rimg, pimg] = img.img_compute_correlations(behdata);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-03-18 Grega Repovs
-%              Initial version.
-%   2014-09-03 Grega Repovs
-%              Added covariance option.
-%   2016-11-25 Grega Repovs
-%              Updated documentation.
-%   2017-07-10 Grega Repovs
-%              Added Z-scores.
-%   2017-07-19 Grega Repovs
-%              Fixed significance output.
-%   2018-06-25 Grega Repovs
-%              Replaced cdf and with normcdf to support Octave
 %
 
 if nargin < 4 || isempty(cv),      cv      = false; end

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)
 
 %``function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``
@@ -45,22 +49,6 @@ function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, 
 %   ::
 %
 %       general_write_table('mov.dat', movdata, 'frame,X,Y,Z', 'mean,sd,min,max');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2014-07-18 Grega Repovs
-%              Initial version
-%   2016-02-05 Grega Repovs
-%              Added pre and post options
-%   2016-08-18 Grega Repovs
-%              Added printing to string
-%   2017-03-19 Grega Repovs
-%              Updated documentation
-%   2018-06-16 Grega Repovs
-%              Adjusted to work with Octave
 %
 
 if nargin < 8                    post  = [];                end

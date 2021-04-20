@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function img = nimages(varone, dtype, frames, verbose)
 
 %``function img = nimages(varone, dtype, frames, verbose)``
@@ -90,14 +94,6 @@ function img = nimages(varone, dtype, frames, verbose)
 %   - img7 ... a dense timeseries CIFTI image with 5 frames.
 %   - img8 ... a dense scalar image with 5 maps named A to E.
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2018-08-11 Grega Repovs
-%              First version based on nimage code
-
 
 if nargin < 4, verbose = false;  end
 if nargin < 3, frames = [];      end

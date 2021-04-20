@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 sfunction [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)
 
 %``function [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)``
@@ -221,23 +225,6 @@ sfunction [] = general_plot_bold_timeseries(images, elements, masks, filename, s
 %   		--skip="0" \
 %   		--sessionid="AP1937" \
 %   		--verbose="true"
-
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2015-10-17 Grega Repovs
-%			   Initial version.
-%   2018-01-20 Grega Repovs
-%              Written detailed documentation
-%   2018-08-04 Alan Anticevic
-%              Edited documentation & adjusted variable names
-%   2018-08-06 Grega Repovs
-%              Added option to specify element colormap, edited documentation and variable names
-%   2018-08-09 Grega Repovs
-%              Further changes to variable names and documentation
-%
 %
 
 %  ---- initializing

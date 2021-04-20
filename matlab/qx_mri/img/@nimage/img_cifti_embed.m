@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_cifti_embed(img, structures, data)
 %``function [img] = img_cifti_embed(img, structures, data)``
 %
@@ -39,16 +43,6 @@ function [img] = img_cifti_embed(img, structures, data)
 %
 %       img = img.img_cifti_embed({'CORTEX_LEFT', 'CORTEX_RIGHT'}, ...
 %           {cortex_left_data, cortex_right_data});
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2014-08-01 Grega Repovs
-%              Initial version
-%   2016-11-25 Grega Repovs
-%              Updated help information
 %
 
 if nargin < 3

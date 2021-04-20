@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
 
 %``function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
@@ -57,9 +61,9 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %   parameter. If more than one value is specfied, a solution will be computed
 %   for each value.
 %
-%   Correlations are computed using the img_compute_ab_correlation gmri method. Clustering
-%   is computed using kmeans function with dmeasure as distance measure, and
-%   taking the best of nrep replications.
+%   Correlations are computed using the img_compute_ab_correlation gmri method. 
+%   Clustering is computed using kmeans function with dmeasure as distance 
+%   measure, and taking the best of nrep replications.
 %
 %   EXAMPLE USE
 %   ===========
@@ -68,18 +72,6 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %
 %       fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', [3:9], ...
 %                              0, 'Th-PFC', 'g', 'correlations', 15);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-08-13 Grega Repovš
-%              Initial version
-%   2017-03-19 Grega Repovs
-%              Cleaned up the code and updated documentation
-%   2017-04-18 Grega Repovs
-%              Adjusted to use general_read_file_list
 %
 
 if nargin < 10 || isempty(verbose),  verbose  = 'none';            end

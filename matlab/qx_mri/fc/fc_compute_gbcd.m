@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)
 
 %``function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)`
@@ -19,6 +23,24 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %                aFzp, ...
 %
 %                   ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
+%
+%                mFz:t
+%                    computes mean Fz value across all voxels (over threshold t)
+%                aFz:t
+%                    computes mean absolute Fz value across all voxels (over 
+%                    threshold t)
+%                pFz:t
+%                    computes mean positive Fz value across all voxels (over 
+%                    threshold t)
+%                nFz:t
+%                    computes mean positive Fz value across all voxels (below 
+%                    threshold t)
+%                aD:t
+%                    computes proportion of voxels with absolute r over t
+%                pD:t
+%                    computes proportion of voxels with positive r over t
+%                nD:t
+%                    computes proportion of voxels with negative r below t
 %
 %   --roi        roi names file
 %   --rcodes     codes of regions from roi file to compute GBC for (all if not 
@@ -97,27 +119,6 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       fc_compute_gbcd('scz.list', mFz:0.1|pFz:0.1', 'dlpfc.names', [], 10, 0, ...
 %       true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-% 	2009-11-04 Grega Repovs
-%              Initial version.
-% 	2010-11-16 Grega Repovs
-% 	2010-11-22 Grega Repovs
-%	2010-12-01 Grega Repovs
-%              Added in script for smoothing and dilation.
-%	2014-01-22 Grega Repovs
-%              Took care of commands that return mulitiple volumes (e.g. mFzp).
-%	2014-02-16 Grega Repovs
-%              Forked from fcComputeGBC3 to do distance based bands.
-%	2017-03-19 Grega Repovs
-%              Cleaned, updated documentation.
-%	2017-04-18 Grega Repovs
-%              Adopted use of general_read_file_list.
-%
-
 
 fprintf('\n\nStarting ...');
 

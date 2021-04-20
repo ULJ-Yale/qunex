@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [vol_img] = img_extract_cifti_volume(img, data_format)
 
 %``function [vol_img] = img_CIFTI2volume(img, data_format)``
@@ -25,13 +29,6 @@ function [vol_img] = img_extract_cifti_volume(img, data_format)
 %
 %       vol_img = img.img_extract_cifti_volume();
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2017-06-23 Aleksij Kraljic
-%			   Initial version.
 
 % set Image2D as the default data format (if data_format is not passed)
 if nargin < 2

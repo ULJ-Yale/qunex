@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [normals] = general_compute_vertex_normals(surface)
 %``function [normals] = general_compute_vertex_normals(surfaceFile)``
 %
@@ -24,14 +28,6 @@ function [normals] = general_compute_vertex_normals(surface)
 %   To get vertex normal vectors of a surface file 'L_midthickness.surf.gii' use::
 %
 %   normal_vectors = general_compute_vertex_normals('L_midthickness.surf.gii');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%
-%	2017-07-27 Aleksij Kraljic
-%			   Initial version.
 %
 
 % --- read the surface file

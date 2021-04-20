@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose);
 
 %``function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
@@ -37,16 +41,6 @@ function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, 
 %   
 %   report
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2014-08-26 Grega Repovs
-%              Initial version
-%   2018-06-13 Grega Repovs
-%              Implemented printing in long format
-%
-
 
 if nargin < 7, verbose = false; end
 if nargin < 6 || isempty(stats),  stats   = 'rsize, rmean, mean';    end

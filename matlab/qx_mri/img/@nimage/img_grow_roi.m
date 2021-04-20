@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_grow_roi(img, voxels)
 
 %``function [img] = img_grow_roi(img, voxels)``
@@ -28,18 +32,6 @@ function [img] = img_grow_roi(img, voxels)
 %   To grow all regions by two voxels::
 %
 %       grownroi = roi.img_grow_roi(2);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-05-10 Grega Repovs
-%              Initial version
-%   2013-07-24 Grega Repovs
-%              Adjusted to use multiframe ROI images
-%   2017-03-04 Grega Repovs
-%              Updated documentation
 %
 
 if nargin < 2

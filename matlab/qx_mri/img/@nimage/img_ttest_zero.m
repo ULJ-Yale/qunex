@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [p Z M SE t] = img_ttest_zero(obj, verbose)
 
 %``function [p Z M SE t] = img_ttest_zero(obj, verbose)``
@@ -27,18 +31,6 @@ function [p Z M SE t] = img_ttest_zero(obj, verbose)
 %
 %   SE
 %       an image with standard errors of means across all volumes
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-10-09 Grega Repovs
-%              Initial version.
-%   2018-06-19 Grega Repovs
-%              Changed ttest call to use named parameters.
-%   2018-06-25 Grega Repovs
-%              Replaced icdf with norminv to support Octave.
 %
 
 if nargin < 2

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [xyz] = img_get_xyz(img, ijk)
 
 %``function [xyz] = img_get_xyz(img, ijk)``
@@ -49,16 +53,6 @@ function [xyz] = img_get_xyz(img, ijk)
 %   To get weighted ROI centroids::
 %
 %       wcentroids = roi.img_get_xyz(zimg);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2016-01-16 Grega Repovs
-%              Initial version.
-%   2017-03-04 Grega Repovs
-%              Updated documentation.
 %
 
 if nargin < 2, ijk = []; end

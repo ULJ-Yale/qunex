@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``dicom.py``
 
@@ -108,16 +113,6 @@ def readPARInfo(filename):
     - datetime
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2018-07-03 Grega Repovš
-               Initial version
-    """
-
-
     if not os.path.exists(filename):
         raise ValueError('PAR file %s does not exist!' % (filename))
 
@@ -173,18 +168,6 @@ def readDICOMInfo(filename):
     - volumes
     - slices
     - datetime
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2018-07-03 Grega Repovš
-               Initial version
-    2019-04-07 Grega Repovš
-               Made reading of SeriesDescription more robust also to Anonymous 
-               value.
     """
 
     if not os.path.exists(filename):
@@ -529,26 +512,6 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
           --unzip=yes \\
           --gzip=no \\
           --parelements=3
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-08 Grega Repovš
-               Initial version
-    2017-02-08 Grega Repovš
-               Updated documentation
-    2018-04-01 Grega Repovš
-               Updated documentation with information on running for multiple
-               sessions and scheduling
-    2018-09-26 Grega Repovš
-               Added checking for existence of dicom folder
-    2019-04-25 Grega Repovs
-               Changed subjects to sessions
-    2019-06-22 Grega Repovš
-               Added multiple sessions example
     """
 
     print "Running dicom2nii\n================="
@@ -1066,52 +1029,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
           --parelements=3
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-08 Grega Repovš
-               Initial version
-    2017-02-08 Grega Repovš
-               Updated documentation
-    2017-07-07 Grega Repovš
-               Modified from dicom2nii to use dcm2niix
-    2018-01-01 Grega Repovš
-               Added optional specification of subjectid
-    2018-04-01 Grega Repovš
-               Updated documentation with information on running for multiple
-               sessions and scheduling
-    2018-07-03 Grega Repovš
-               Changed to work with readDICOMInfo and readPARInfo, and to
-               support PAR/REC files.
-    2018-07-03 Grega Repovš
-               Changed to use dicm2nii for PAR/REC files and to save both
-               magnitude and real image in case of Philips fieldmap files.
-    2018-09-26 Grega Repovš
-               Added checking for existence of dicom folder
-    2018-10-06 Grega Repovš
-               Added tool parameter to specify the tool for nifti conversion
-    2018-10-18 Grega Repovš
-               Added options parameter and adding Image Type to sequence names
-    2019-04-07 Grega Repovš
-               Added copying of json files
-               Added error when no DICOM files are found to process
-               Added generation of json sidecars for all dcm2niix calls
-    2019-04-21 Grega Repovš
-               Changed subjectid to sessionid
-               Added extraction of subject id
-    2019-04-22 Unknown
-               Changed addImageType option to specify the number of last labels 
-               to retain
-    2019-04-25 Unknown
-               Changed subjects to sessions
-    2019-06-22 Grega Repovš
-               Added multiple sessions example
-    2020-06-15 Grega Repovš
-               Added addJSONInfo option and improved handling of JSON files
-    """
-
     print "Running dicom2niix\n=================="
 
     if sessionid and sessionid.lower() == 'none':
@@ -1576,30 +1493,6 @@ def sort_dicom(folder=".", **kwargs):
           --sessions="OP*"
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-08 Grega Repovš
-               Initial version
-    2017-02-08 Grega Repovš
-               Updated documentation
-    2018-04-01 Grega Repovš
-               Updated documentation with information on running for multiple
-               sessions and scheduling
-    2018-07-03 Grega Repovš
-               Changed to work with readDICOMInfo and readPARInfo, and to
-               support PAR/REC files.
-    2018-07-20 Grega Repovš
-               Added more robust checking for and reporting of presence of image 
-               files in sort_dicom
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-06-22 Grega Repovš
-               Added multiple sessions example
-    """
-
     # --- should we copy or move
 
     print "Running sort_dicom\n================="
@@ -1759,19 +1652,6 @@ def list_dicom(folder=None):
         qunex list_dicom folder=OP269/dicom
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-08 Grega Repovš
-               Initial version
-    2017-02-08 Grega Repovš
-               Updated documentation
-    2019-05-12 Grega Repovš
-               Reports an error if no file is found
-    """
-
     if folder is None:
         folder = os.path.join(".", 'inbox')
 
@@ -1826,21 +1706,6 @@ def split_dicom(folder=None):
     ::
 
         qunex split_dicom folder=dicommess
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-08 Grega Repovš
-               Initial version
-    2017-02-08 Grega Repovš
-               Updated documentation
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-12 Grega Repovš
-               Reports an error if no file is found
     """
 
     if folder is None:
@@ -2255,45 +2120,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
     the successful processing.
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-08 Grega Repovš
-               Initial version
-    2017-02-08 Grega Repovš
-               Updated documentation
-    2017-12-25 Grega Repovš
-               Added the option for arbitrary inbox folder
-    2018-03-18 Grega Repovš
-               Added more detailed informaton on existing session folders in
-               documentation
-    2018-07-03 Grega Repovš
-               Changed to work with readDICOMInfo and readPARInfo, and to
-               support PAR/REC files.
-    2018-10-06 Grega Repovš
-               Added tool parameter to specify the tool for nifti conversion.
-    2018-10-18 Grega Repovš
-               Added options to parameters
-    2018-11-15 Grega Repovš
-               Added the ability to process tar packages.
-    2019-04-20 Grega Repovs
-               Extended for use with existing session folders
-    2019-04-25 Grega Repovs
-               Report when no packets were processed
-               Changed inbox to masterinbox
-               Added no package/session reporting
-               Changed the default pattern
-    2019-05-18 Grega Repovš
-               Added nameformat parameter
-               Updated documentation
-    2019-06-22 Grega Repovš
-               Updated documentation with examples
-    2019-07-15 Grega Repovš
-               Added ovewrite parameter
-    """
-
     print "Running import_dicom\n===================="
 
     # check settings
@@ -2583,14 +2409,17 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
             print "\n\n---=== PROCESSING %s ===---\n" % (session['sessionid'])
 
-            if masterinbox:
+            if masterinbox and not os.path.exists(ifolder):
                 os.makedirs(ifolder)
                 files = [file]
             else:
-                if session['archives']:
+                if 'archives' in session and session['archives']:
                     files = session['archives']
                 else:
                     files = [ifolder]
+
+            dnum = 0
+            fnum = 0
 
             for p in files:
 
@@ -2601,8 +2430,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                     ptype = "zip"
 
                     print "...  unzipping %s" % (os.path.basename(p))
-                    dnum = 0
-                    fnum = 0
 
                     try:
                         z = zipfile.ZipFile(p, 'r')
@@ -2654,15 +2481,14 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                     ptype = "tar"
 
                     print "...  untarring %s" % (os.path.basename(p))
-                    dnum = 0
-                    fnum = 0
 
                     tar = tarfile.open(p, 'r')
                     for tarinfo in tar:
                         if tarinfo.isfile():
                             if fnum % 1000 == 0:
                                 dnum += 1
-                                os.makedirs(os.path.join(ifolder, str(dnum)))
+                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
+                                    os.makedirs(os.path.join(ifolder, str(dnum)))
                             fnum += 1
 
                             print "...  extracting:", tarinfo.name, tarinfo.size
@@ -2697,7 +2523,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
                 else:
                     ptype = "folder"
-                    if masterinbox:
+                    if masterinbox and ifolder != p:
                         if os.path.exists(ifolder):
                             shutil.rmtree(ifolder)
                         print "...  copying %s dicom files" % (os.path.basename(p))
@@ -2822,22 +2648,6 @@ def get_dicom_info(dicomfile=None, scanner='siemens'):
     ::
 
         qunex get_dicom_info dicomfile=ap308e727bxehd2.372.2342.42566.dcm
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-08 Grega Repovš
-               Initial version
-    2017-02-08 Grega Repovš
-               Updated documentation
-    2018-01-01 Grega Repovš
-               Changed dfile to dicomfile
-    2018-05-05 Grega Repovš
-               Added support for Philips in get_dicom_info
-               NOTE: computation of dwelltime needs to be verified!
     """
 
     if dicomfile is None:

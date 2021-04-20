@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 
 %``function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)``
@@ -30,12 +34,6 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 %	'_Conj_c'
 %		image of frequency of passing threshold
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%	Changelog
-%	2015-10-14 Grega Repovs
-%			Initial version
 
 % parsing arguments
 

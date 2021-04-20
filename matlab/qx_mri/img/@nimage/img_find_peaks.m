@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [roi vol_peak peak] = img_find_peaks(img, mindim, maxdim, val, t, projection_type, options, verbose)
 
 %``function [roi vol_peak peak] = img_find_peaks(img, mindim, maxdim, val, t, projection_type, options, verbose)``
@@ -157,16 +161,6 @@ function [roi vol_peak peak] = img_find_peaks(img, mindim, maxdim, val, t, proje
 %       
 %       %% export the modified image
 %       img_save_nifti(roi,'example_image_ROI.dscalar.nii');
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   
-%   2017-07-07 Aleksij Kraljic
-%              Initial version.
-%	2017-07-17 Aleksij Kraljic
-%              Added option for passing specific surf.gii projection files
 %
 
 if nargin < 8 || isempty(verbose),    verbose = false;                            end

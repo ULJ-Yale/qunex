@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)
 
 %``function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)``
@@ -37,16 +41,6 @@ function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)
 %	::
 %
 %   	smooth = img.img_smooth_3d(3, true);
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2007-07-11 Grega Repovs
-%			   Initial version
-%   2017-02-10 Grega Repovs
-%			   Adapted to use either smooth3 or smooth3f.
 %
 
 if nargin < 5 || isempty(ksize),   ksize   = 7;          end

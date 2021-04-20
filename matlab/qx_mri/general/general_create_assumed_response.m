@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)
 
 %``function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)``
@@ -23,21 +27,6 @@ function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_
 %
 %   - ts       - a timeseries of the task regressor
 %
-
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   NOTES
-%   - would be good to include other HRF types as well as estimated HRF
-%
-%   Changelog
-%
-%	2008-07-12 Grega Repovš
-%			   Initial version
-%   2017-02-11 Grega Repovš
-%			   Updated to use general_hrf function.
-%
-
 
 %======================================================================
 %                                                  create the right HRF

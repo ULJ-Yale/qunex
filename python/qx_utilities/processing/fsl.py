@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``fsl.py``
 
@@ -101,15 +106,6 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
           --overwrite=no \
           --parsessions=2
 
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2020-11-16 Grega Repovš
-               Initial version
     """
 
     # get session id
@@ -332,15 +328,6 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
           --overwrite=no \
           --parsessions=2
 
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2020-11-16 Grega Repovš
-               Initial version
     """
 
     # get session id

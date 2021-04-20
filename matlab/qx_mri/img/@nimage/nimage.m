@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 classdef nimage
 %
 %   nimage class offers an object to store MR image data. It provides basic
@@ -119,31 +123,6 @@ classdef nimage
 %       A cell array providing header information for nuisance matrix
 %   cifti         
 %       A structure providing CIFTI information
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-10-04 Grega Repovs
-%              Initial version.
-%   2011-07-31 Grega Repovs
-%              Added importing of existing movement, fstat and scrubbing data
-%   2016-01-16 Grega Repovs
-%              Added GetXY and specifying save format with file extension.
-%   2017-03-21 Grega Repovs
-%              horzcat now supports concatenation of empty objects.
-%              img_read_concfile returns more information
-%   2017-07-02 Grega Repovs
-%              horzcat, zeroframes and sliceframe suport img.cifti.maps
-%   2018-03-17 Grega Repovs
-%              nimage now supports creation of dtseries and dscalar standard 
-%              CIFTI images from numeric data
-%   2020-04-24 Grega Repovs
-%              added events field
-%              added nimage field specifications
-%   2020-11-04 Grega Repovš
-%              Changed variable name 'events' to 'tevents' to not conflict with
-%              reserved word 'events'
 
     properties
         data
@@ -285,13 +264,6 @@ classdef nimage
         %   img7 ... A dense timeseries CIFTI image with 5 frames.
         %   img8 ... A dense scalar image with 5 maps named A to E.
         %
-        %   ---
-        %   Written by Grega Repovs
-        %
-        %   Changelog
-        %       2017-02-11 Grega Repovs - Updated the documentation
-        %       2018-03-17 Grega Repovs - Added the ability to create standard cifti files
-
 
             if nargin < 4, verbose = false;  end
             if nargin < 3, frames = [];      end

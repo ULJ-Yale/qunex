@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)
 
 %``function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)``
@@ -74,15 +78,6 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %   nimage.img_stats
 %   general_create_task_regressors
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2013-09-15 Grega Repovs
-%              Initial version
-%   2017-03-12 Grega Repovs
-%              Updated documentation, cleaned code.
-
 
 if nargin < 5, ignore = []; end
 if nargin < 4 || isempty(inmask), inmask = 5; end

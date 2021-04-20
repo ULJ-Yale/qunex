@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_embed_stats(img)
 
 %``function [img] = img_embed_stats(img)``
@@ -24,14 +28,6 @@ function [img] = img_embed_stats(img)
 %   measure, and frame displacement measure), movement statistics (displacement
 %   in each direction, rotation across each axis).
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2013-10-19 Grega Repovs
-%              Initial version.
-%
-
 
 mdata = 0;
 fdata = 0;

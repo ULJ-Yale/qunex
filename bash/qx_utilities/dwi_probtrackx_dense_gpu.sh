@@ -1,46 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, N3 Division, Yale University
-#
-# ## PRODUCT
-#
-#  dwi_probtrackx_dense_gpu.sh
-#
-# ## LICENSE
-#
-# * The dwi_probtrackx_dense_gpu.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#   
-# This script, dwi_probtrackx_dense_gpu.sh, implements probtrackX GPU version on HCP-processed DWI data
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * HCP Pipelines
-# * FSL
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./dwi_probtrackx_dense_gpu.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are BOLD data from previous processing
-# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/T1w/Diffusion/BedpostX 
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 # -- General help usage function

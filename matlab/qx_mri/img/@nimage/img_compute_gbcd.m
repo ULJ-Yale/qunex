@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)
 
 %``function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)``
@@ -82,23 +86,6 @@ function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes,
 %   specifies the membership of the distance bands for all the voxels GBC was
 %   computed on (.d field).
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2009-11-08 Grega Repovs
-%              Original version
-%   2010-10-13 Grega Repovs
-%              Version with multiple voxels at a time
-%   2014-01-22 Grega Repovs
-%              A version that computes strength and proportion ranges not yet 
-%              fully optimized
-%   2014-02-04 Grega Repovs
-%              Forked and adopted version to support computation of GBC based on 
-%               distance
-%
-
 
 if nargin < 13, criterium = []; end
 if nargin < 12, weights = [];   end

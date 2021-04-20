@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [B, Z] = img_compute_r_type1(obj, bdata, verbose)
 
 %``function [B, Z] = img_compute_r_type1(obj, bdata, verbose)``
@@ -38,18 +42,6 @@ function [B, Z] = img_compute_r_type1(obj, bdata, verbose)
 %   they were first added to the regression, and Z, a significance map for
 %   addition of each of the regressors in order.
 %
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-03-18 Grega Repovs
-%              Initial version.
-%   2016-11-26 Grega Repovš
-%              Updated documentation.
-%   2018-06-25 Grega Repovs
-%              Replaced icdf and cdf with norminv and fcdf to support Octave.
 %
 
 if nargin < 3

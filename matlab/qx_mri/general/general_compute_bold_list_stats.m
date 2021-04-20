@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)
 
 %``function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)``
@@ -32,20 +36,6 @@ function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbo
 %   sessions specified in the list file. Please see general_compute_bold_stats for
 %   more detailed information. If arguments are left empty, the defaults in
 %   general_compute_bold_stats will be used.
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%   2011-07-09 Grega Repovš
-%              Initial version 
-%   2013-10-20 Grega Repovs
-%              Added embedding and scrubbing
-%   2013-12-19 Grega Repovs
-%              Split into two functions to separate list processing and actual statistic computation
-%   2017-03-12 Grega Repovs
-%              Updated documentation
-%   2018-06-20 Grega Repovš
-%              Added more detailed reporting of parameters used.
 %
 
 if nargin < 5 || isempty(verbose), verbose = false; end

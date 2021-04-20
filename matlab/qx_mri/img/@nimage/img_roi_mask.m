@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [mask] = img_roi_mask(img, roi)
 
 %``function [mask] = img_roi_mask(img, roi)``
@@ -22,16 +26,6 @@ function [mask] = img_roi_mask(img, roi)
 %   Use this method to get a binary mask of specified ROI. If no ROI codes are
 %   provided or an empty matrix is passed, the mask has true values for all the
 %   voxels with non-zero codes.
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%	2013-07-24 Grega Repovs
-%		       Initial version.
-%   2017-03-21 Grega Repovs
-%              With empty roi it now retuns mask of all nonzero voxels.
 %
 
 img.data = img.image2D;

@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``simple.py``
 
@@ -172,17 +177,6 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
 
         qunex run_shell_script sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
               overwrite=no script=fcMRI/processdata.sh
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-06-24 Grega Repovš
-               Initial version
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
     """
 
     r = "\n---------------------------------------------------------"

@@ -1,5 +1,9 @@
 #!/usr/bin/Rscript
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # 	Plots movement data, creates movement reports and information for data 
 #   scrubbing.
 #
@@ -25,14 +29,6 @@
 #	--post			whether to create report of scrubbing effect and what to base 
 #					it on (fd, dvars, dvarsme, u/ume - union, 
 #					i/ime - intersection, none) [none]
-#
-
-#	~~~~~~~~~~~~~~~~~~
-#
-#   Changelog
-#	2011-07-26 Grega Repovs - First complete version of the script
-#	2012-09-20 Grega Repovs - Added reporting of stats after scrubbing
-#	2019-04-25 Grega Repovs - Changed subject to session
 #
 
 # ---> defaults

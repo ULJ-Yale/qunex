@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``process_hcp.py``
 
@@ -522,51 +527,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             overwrite=no parsessions=10 hcp_t2=NONE
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-01-08 Grega Repovš
-               Initial version
-    2017-01-08 Grega Repovš
-               Updated documentation
-    2017-08-17 Grega Repovš
-               Added checking for field map images
-    2018-12-14 Grega Repovš
-               Cleaned up
-    2019-01-16 Grega Repovš
-               HCP Pipelines compatible
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-22 Grega Repovš
-               Added reading individual image parameters and matching SE images
-    2019-05-24 Grega Repovš
-               Added support for v2 folder structure
-    2019-05-26 Grega Repovš
-               Updated and simplified
-               Added full file checking
-    2019-05-31 Grega Repovš
-               Updated target check image
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2019-10-20 Grega Repovš
-               Adjusted parameters, help and processing to use integrated HCPpipelines
-    2020-01-05 Grega Repovš
-               Updated documentation
-    2020-01-16 Grega Repovš
-               Updated documentation on SE label specification
-    2020-07-03 Aleksij Kraljič
-               Included fieldmap distortion correction for Philips scanners
-               Solved a bug with fieldmap distortion correction for General Electric scanners
-    2020-04-23 Grega Repovš
-               Removed full file checking from documentation
-    2020-08-04 Aleksij Kraljič
-               Updated documentation
-    2020-08-22 Grega Repovš
-               Added the use of use_sequence_info parameter
-    """
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
@@ -1070,61 +1030,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
               hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-01-08 Grega Repovš
-               Initial version
-    2017-01-08 Grega Repovš
-               Updated documentation
-    2017-03-19 Alan Anticevic
-               Updated documentation
-    2017-03-20 Alan Anticevic
-               Updated documentation
-    2018-05-05 Grega Repovš
-               Optimized version checking
-    2018-12-09 Grega Repovš
-               Integrated changes from Lisa Ji
-               Optimized folder construction
-               Adapted removal of preexisting data for longitudinal run
-    2018-12-14 Grega Repovš
-               Cleaned up, updated documentation
-    2019-01-12 Grega Repovš
-               Cleaned up furher, added updates by Lisa Ji
-    2019-01-16 Grega Repovš
-               Added HCP Pipelines options
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-26 Grega Repovš
-               Updated and simplified
-               Made compatible with latest HCP code
-               Added full file checking
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2019-10-20 Grega Repovš
-               Adjusted parameters, help and processing to use integrated HCPpipelines
-    2019-10-24 Grega Repovš
-               Added flair option and documentation
-    2020-01-05 Grega Repovš
-               Updated documentation
-    2020-04-23 Grega Repovš
-               Removed full file checking from documentation
-    2020-08-04 Aleksij Kraljič
-               Updated documentation
-
-    ----------------
-    2019-10-20 Future tasks:
-             - Adjust code to enable running with FreeSurfer 5.3-HCP
-             - Enable longitudinal mode
-             - Enable using additional parameters
-                -> hcp_control_points
-                -> hcp_wm_edits
-                -> hcp_fs_brainmask
-                -> hcp_autotopofix_off
-    """
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
@@ -1502,30 +1407,6 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
               hcp_freesurfer_module=YES
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2018-09-14 Grega Repovš
-               Initial version
-    2018-12-09 Grega Repovš
-               Adjusted paths creation
-    2018-12-14 Grega Repovš
-               Updated documentation
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-26 Grega Repovš
-               Updated and simplified
-               Added full file checking
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-04-23 Grega Repovš
-               Removed full file checking from documentation
-    2020-08-04 Aleksij Kraljič
-               Updated documentation
-    """
-
     r = "\n------------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
@@ -1820,37 +1701,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_t2=NONE
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-01-08 Grega Repovš
-               Initial version
-    2017-01-08 Grega Repovš
-               Updated documentation.
-    2018-04-23 Grega Repovš
-               Added new options and updated documentation.
-    2018-12-13 Grega Repovš
-               Updated test files and documentation
-    2019-01-12 Grega Repovš
-               Cleaned up, added updates by Lisa Ji
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-26 Grega Repovš
-               Updated and simplified
-               Added full file checking
-               Made congruent with latest HCP pipeline
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2019-10-20 Grega Repovš
-               Adjusted parameters, help and processing to use integrated HCPpipelines
-    2020-01-05 Grega Repovš
-               Updated documentation
-    2020-04-23 Grega Repovš
-               Removed full file checking from documentation
     """
 
     r = "\n------------------------------------------------------------"
@@ -2186,46 +2036,27 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     Example run from the base study folder with test flag::
 
         qunex hcp_diffusion \
-          --sessions="processing/batch.hcp.txt" \\
-          --sessionsfolder="sessions" \\
-          --parsessions="10" \\
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
           --overwrite="no" \\
           --test
 
-    Run using absolute paths with scheduler::
+    Run with scheduler, the compute node also loads the required CUDA module::
 
         qunex hcp_diffusion \
-          --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\
-          --sessionsfolder="<path_to_study_folder>/sessions" \\
-          --parsessions="4" \\
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
           --overwrite="yes" \\
-          --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
-    """
+          --bash="module load CUDA/9.1.85" \
+          --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
 
-    """
-    ~~~~~~~~~~~~~~~~~~
+    Run without a scheduler and without GPU support::
 
-    Change log
-
-    2018-01-14 Grega Repovš
-               Initial version
-    2018-01-14 Alan Anticevic
-               Added inline documentation
-    2019-04-25 Grega Repovs
-               Changed subjects to sessions
-    2019-05-25 Grega Repovs
-               Updated with additional HCP parameters
-               Simplified calling and testing
-               Added gdcoeffs processing
-               Added full file checking
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2020-01-05 Grega Repovš
-               Updated documentation
-    2020-04-23 Grega Repovš
-               Removed full file checking from documentation
-    2020-08-22 Grega Repovš
-               Added the use of use_sequence_info parameter
+        qunex hcp_diffusion \
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --overwrite="yes" \\
+          --hcp_dwi_nogpu
     """
 
     r = "\n------------------------------------------------------------"
@@ -2718,53 +2549,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
               overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
               hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-06 Grega Repovš
-               Initial version
-    2017-02-06 Grega Repovš
-               Updated documentation.
-    2017-09-02 Grega Repovs
-               Changed looking for relevant SE images
-    2018-11-17 Jure Demsar
-               Parallel implementation.
-    2018-11-20 Jure Demsar
-               Optimized parallelization that now covers all scenarios.
-    2018-12-14 Grega Repovš
-               Added FS longitudinal option and documentation
-    2019-01-12 Grega Repovš
-               Cleaned up, added updates by Lisa Ji
-    2019-01-16 Grega Repovš
-               HCP Pipelines compatible.
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-22 Grega Repovš
-               Added support for boldnamekey
-               Added reading of individual BOLD parameters
-    2019-05-26 Grega Repovš
-               Updated, simplified calling and testing
-               Added full file checking
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2019-10-20 Grega Repovš
-               Initial adjustment of parameters, help and processing to use integrated HCPpipelines
-    2020-01-05 Grega Repovš
-               Updated documentation
-    2020-01-16 Grega Repovš
-               Introduced bold specific SE options and updated documentation
-    2020-01-28 Grega Repovš
-               Made SE selection more robust
-    2020-04-23 Grega Repovš
-               Removed full file checking from documentation
-    2020-08-22 Grega Repovš
-               Added the use of use_sequence_info parameter
-    2020-07-21 Aleksij Kraljič
-               Implemented Philips B0-map field map distortion correction
     """
 
     r = "\n------------------------------------------------------------"
@@ -3626,37 +3410,6 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
               overwrite=no parsessions=10
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2017-02-06 Grega Repovš
-               Initial version
-    2017-02-06 Grega Repovš
-               Updated documentation.
-    2018-11-17 Jure Demsar
-               Parallel implementation.
-    2018-12-14 Grega Repovš
-               FS Longitudinal implementation and documentation
-    2019-01-12 Grega Repovš
-               Cleaned furher, added updates by Lisa Ji
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-26 Grega Repovš
-               Added support for boldnamekey
-               Updated, simplified calling and testing
-               Added full file checking
-    2019-06-06 Grega Repovš
-               Enabled multiple log file locations
-    2019-10-20 Grega Repovš
-               Adjusted parameters, help and processing to use integrated HCPpipelines
-    2020-01-05 Grega Repovš
-               Updated documentation
-    2020-04-23 Grega Repovš
-               Removed full file checking from documentation
-    """
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Surface registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
@@ -4252,17 +4005,6 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-10-09 Jure Demšar
-               Initial version
-    2019-10-09 Jure Demsar
-               Core functionality.
-    """
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP ICAFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
@@ -4786,17 +4528,6 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             --hcp_matlab_mode="interpreted"
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-10-11 Jure Demsar
-               Initial version
-    2019-10-11 Jure Demsar
-               Core functionality.
-    """
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PostFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
@@ -5187,17 +4918,6 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
             --hcp_matlab_mode="interpreted"
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2019-10-15 Jure Demsar
-               Initial version
-    2019-10-15 Jure Demsar
-               Core functionality.
     """
 
     r = "\n------------------------------------------------------------"
@@ -5917,19 +5637,6 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
             --hcp_matlab_mode="interpreted"
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2020-30-04 Jure Demsar
-               Initial version
-    2020-30-04 Jure Demsar
-               Upgraded in accordance with CCF comments
-    2020-01-04 Jure Demsar
-               Core functionality
-    """
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP MSMAll registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
@@ -6488,19 +6195,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
             --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
             --hcp_matlab_mode="interpreted"
-    """
-
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2020-30-04 Jure Demsar
-               Initial version
-    2020-30-04 Jure Demsar
-               Upgraded in accordance with CCF comments.
-    2020-10-04 Jure Demsar
-               Core functionality.
     """
 
     r = "\n------------------------------------------------------------"
@@ -7289,34 +6983,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
               overwrite=no hcp_cifti_tail=_Atlas bolds=all
     """
 
-    """
-    ~~~~~~~~~~~~~~~~~~
-
-    Change log
-
-    2016-12-24 Grega Repovš
-               Initial version
-    2016-12-24 Grega Repovš
-               Added documentation, fixed copy of volume images
-    2017-03-25 Grega Repovš
-               Added more detailed reporting of progress
-    2018-07-17 Grega Repovš
-               Added hcp_bold_variant option
-    2019-04-25 Grega Repovš
-               Changed subjects to sessions
-    2019-05-26 Grega Repovš
-               Added support for boldnamekey
-    2020-01-14 Grega Repovš
-               Expanded documentation on use of boldname and hcp_cifti_tail
-    2020-06-23 Grega Repovš
-               Fixed use of hcp_suffix and added use of img_suffix
-    2020-11-08 Grega Repovš
-               Added the use of hcp_nifti_tail and bold_variant
-    2020-11-13 Grega Repovš
-               Added the use of qx_nifti_tail and qx_cifti_tail
-    """
-
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
@@ -7484,6 +7150,8 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(os.path.join(hcp_bold_path, 'Movement_Regressors.txt')):
                         mdata = [line.strip().split() for line in open(os.path.join(hcp_bold_path, 'Movement_Regressors.txt'))]
                         mfile = open(f['bold_mov'], 'w')
+                        print >> mfile, "# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
+                        print >> mfile, "#"
                         print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
                         c = 0
                         for mline in mdata:

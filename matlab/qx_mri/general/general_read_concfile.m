@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [files] = general_read_concfile(file)
 
 %``function [files] = general_read_concfile(file)``
@@ -15,13 +19,6 @@ function [files] = general_read_concfile(file)
 %	files
 %		list of paths
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   Grega Repovš
-%	Initial version.
 
 [fin message] = fopen(file);
 if fin == -1

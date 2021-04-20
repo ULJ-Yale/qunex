@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose)
 
 %``function [session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose)``
@@ -45,24 +49,6 @@ function [session, nsessions, nfiles, listname] = general_read_file_list(flist, 
 %
 %       [sessions, nsessions] = general_read_file_list('scz.list', true);
 %
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2010-11-23 Grega Repovš
-%              Initial version.
-%   2012-05-20 Grega Repovš
-%              Changed to omit missing files
-%   2013-07-26 Grega Repovš
-%              Added folder to the list of things to list
-%   2015-12-09 Grega Repovš
-%              Added reading of fidl and glm files
-%   2017-03-19 Grega Repovš
-%              Updated documentation
-%   2017-04-18 Grega Repovš
-%              Added option of string parsing
-
 
 if nargin < 2
     verbose = false;

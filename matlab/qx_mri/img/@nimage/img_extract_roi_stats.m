@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weight, criterium)
 
 %``function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weight, criterium)``
@@ -27,19 +31,6 @@ function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weig
 %   ======
 %
 %   stats
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2015-12-09 Grega Repovs
-%              Adapted from existing img_extract_roi method.
-%
-%   TODO
-%   — computation of weighted mean SE
-%   — extraction of peak value
-%   — extraction of ROI coordinates (min, max, peak, geometric mean)
 %
 
 if nargin < 7; criterium = [];  end

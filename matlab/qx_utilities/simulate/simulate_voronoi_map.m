@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [m] = simulate_voronoi_map(w,h,p)
 
 %``function [m] = simulate_voronoi_map(w,h,p)``
@@ -15,14 +19,6 @@ function [m] = simulate_voronoi_map(w,h,p)
 %	======
 %
 %	m
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-05-29 Grega Repovs
-%			   Initial version.
 %
 
 if nargin < 3

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [out] = general_read_event_file(file, tunit)
 
 %``function [out] = general_read_event_file(file, tunit)``
@@ -23,21 +27,6 @@ function [out] = general_read_event_file(file, tunit)
 %		- event   ... event code
 %		- events  ... list of event names
 %		- TR      ... TR in s
-%
-
-%   ~~~~~~~~~~~~~~~~~~
-%
-%   Changelog
-%
-%   2011-07-30 Grega Repovš
-%			   Added coding of frames to ignore
-%   2016-02-03 Grega Repovš
-%			   Added checking for event length in ms
-%   2018-07-27 Grega Repovš
-%			   Updated checking for event length in ms
-%   2020-11-04 Grega Repovš
-%              Changed variable name 'events' to 'tevents' to not conflict with
-%              reserved word 'events'
 %
 
 if nargin < 2 || isempty(tunit), tunit = 's'; end
