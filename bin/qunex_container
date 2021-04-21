@@ -709,12 +709,11 @@ def main(args=None):
         elif "sessionsfolder=" in arg:
             k, sessionsfolder = arg.split("=", 1)
             command += '%s="%s" ' % (k, sessionsfolder)
+        elif "sessions=" in arg:
+            k, sessions = arg.split("=", 1)
         elif "csessions=" in arg:
             k, csessions = arg.split("=", 1)
             command += '--sessions="%s" ' % (csessions)
-        elif "sessions=" in arg:            
-            k, sessions = arg.split("=", 1)
-            command += '%s="%s" ' % (k, sessions)        
         elif "sessionids=" in arg:
             sessionids_provided = True
             k, sessionids = arg.split("=", 1)
@@ -812,9 +811,12 @@ def main(args=None):
         # add sessionids to command?
         if i < len(sessionidsArray) and sessionids_provided:
             sessionids = sessionidsArray[i]
-            scheduleCommand += 'sessionids="%s" ' % (sessionids)
+            scheduleCommand += '--sessionids="%s" ' % (sessionids)
+            scheduleCommand += '--sessions="%s" ' % (sessionids)
+        else:
+            scheduleCommand += '--sessions="%s" ' % (sessions)
 
-        # setup script        
+        # setup script
         fid, scriptPath = tempfile.mkstemp(dir=homedir)
         scriptName = os.path.basename(scriptPath)
         f = os.fdopen(fid, 'w')
