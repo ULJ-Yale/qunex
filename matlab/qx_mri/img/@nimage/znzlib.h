@@ -1,6 +1,6 @@
-// SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+// SPDX-FileCopyrightText: 2004 FMRIB Centre, University of Oxford <https://www.ndcn.ox.ac.uk/divisions/fmrib/about-fmrib>
 //
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: CC-BY-4.0
 
 #ifndef _ZNZLIB_H_
 #define _ZNZLIB_H_
