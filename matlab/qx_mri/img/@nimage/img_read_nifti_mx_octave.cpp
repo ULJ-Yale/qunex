@@ -1,7 +1,3 @@
-// SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-//
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "mex.h"
 #include <math.h>
 #include <stdio.h>
