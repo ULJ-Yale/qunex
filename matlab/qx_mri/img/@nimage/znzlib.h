@@ -1,7 +1,3 @@
-// SPDX-FileCopyrightText: 2004 FMRIB Centre, University of Oxford <https://www.ndcn.ox.ac.uk/divisions/fmrib/about-fmrib>
-//
-// SPDX-License-Identifier: CC-BY-4.0
-
 #ifndef _ZNZLIB_H_
 #define _ZNZLIB_H_
 #define HAVE_ZLIB

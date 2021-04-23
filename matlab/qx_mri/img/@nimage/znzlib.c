@@ -1,7 +1,3 @@
-// SPDX-FileCopyrightText: 2004 FMRIB Centre, University of Oxford <https://www.ndcn.ox.ac.uk/divisions/fmrib/about-fmrib>
-//
-// SPDX-License-Identifier: CC-BY-4.0
-
 /** \file znzlib.c
     \brief Low level i/o interface to compressed and noncompressed files.
         Written by Mark Jenkinson, FMRIB
