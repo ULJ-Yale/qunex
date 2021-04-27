@@ -44,15 +44,13 @@ function [data, hdr, meta] = general_read_table(instr)
 hdr  = {};
 data = [];
 meta = [];
-l    = 0;
 
 instr = instr(:)';
 if isempty(regexp(instr, '\n', 'once'))
     instr = fileread(instr);
 end
 
-lines = textscan(instr, '%s', 'delimiter', '\n');
-lines = lines{1};
+lines = strsplit(instr, '\n', 'CollapseDelimiters', false);
 
 header = true;
 l = 0;
