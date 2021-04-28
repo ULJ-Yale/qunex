@@ -21,7 +21,7 @@ function [] = general_get_peak_values(peak_report, fin, fout)
 if nargin < 3 || isempty(fout), fout = peak_report; end
 
 % -- read ROI report (output from general_find_peaks)
-in_table = readtable(peak_report);
+in_table = readtable(peak_report,'Format','%s%s%s%s%s%s%d%s%s%s%s%s%s%s%s%s');
 
 % -- check if the table is empty (meaning that the file is a simple csv
 %    list of grayordinates)
@@ -81,7 +81,8 @@ else
     out_table = in_table;
     
     % -- append new column to the data
-    fin_string = regexp(fin,'^([^.]+)','match');
+    fin_temp = regexp(fin,'[^/]+$','match');
+    fin_string = regexp(fin_temp{1},'^([^.]+)','match');
     if size(out_val,2) > 1
         for i=1:1:size(out_val,2)
             frame_string = sprintf('%s_frame_%d',fin_string{1},i);
