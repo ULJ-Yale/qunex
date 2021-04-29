@@ -253,12 +253,12 @@ while ~isempty(small)
         done = false;
         for n = 1:nvox
 
-            % get all the neighbouring regions of each voxel of a the small region
+            % get all the neighboring regions of each voxel of a the small region
             u = unique(seg((x(n)-1):(x(n)+1), (y(n)-1):(y(n)+1), (z(n)-1):(z(n)+1)));
-            % filter neighbouring voxels for regions
+            % filter neighboring voxels for regions
             u = u(u > 0 & u ~= rtgt);
 
-            % if only one region neighbours the small ROI assign it to that one
+            % if only one region neighbors the small ROI assign it to that one
             if length(u) == 1
                 seg(seg==rtgt) = u;
                 peak(u).size = peak(u).size + peak(rtgt).size;
@@ -271,8 +271,8 @@ while ~isempty(small)
                 
                 done = true;
                 break
-            % if more than one region neighbours the small ROI assign each
-            % voxel of the small region to a closes neighbouring region
+            % if more than one region neighbors the small ROI assign each
+            % voxel of the small region to a closes neighboring region
             elseif length(u) > 1
                 for m = 1:nvox
                     cparc = 0;
@@ -290,6 +290,7 @@ while ~isempty(small)
                     % update peak info to the higher peak
                     if abs(peak(cparc).value) < abs(data(x(m), y(m), z(m)))
                        peak(cparc).value = data(x(m), y(m), z(m));
+                       peak(cparc).xyz = [x(m), y(m), z(m)];
                     end
                     
                 end
