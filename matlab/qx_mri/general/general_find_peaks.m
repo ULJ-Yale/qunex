@@ -86,6 +86,15 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %                     of -100
 %                   - 'boundary:wire'       ... remove ROI data and return only 
 %                     ROI boundaries
+%                 c) whether to generate a .txt file reporting ROI 
+%                    composition across CIFTI-2 volume structures and/or an
+%                    input atlas (output file name: <fin>_parcels.txt):
+%                   - []  ... no file is generated
+%                   - 'parcels:volume'  ... ROI composition across CIFTI-2
+%                     volume structures
+%                   - 'parcels:<path to atlas>'  ... ROI composition across
+%                     CIFTI-2 volume structures and parcels of the input
+%                     atlas
 %
 %   --verbose     whether to be verbose:
 %
@@ -220,6 +229,15 @@ if verbose >= 2, fprintf('\n---> Saving image'); end
 printReport(img, fin, fout, peak, vol_peak, fp_params, presmooth, cifti)
 
 roi.img_saveimage(fout);
+
+if isfield(opt,'parcels') && ~isempty(opt.parcels)
+    if strcmpi(opt.parcels,'volume')
+        general_get_roi_parcels(fout, []);
+    else
+        general_get_roi_parcels(fout, [], opt.parcels);
+    end
+end
+
 if verbose >= 2, fprintf('\n---> Done\n'); end
 
 end
