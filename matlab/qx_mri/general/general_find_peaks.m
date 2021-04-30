@@ -186,10 +186,14 @@ if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 verbose = verbose + 1;
 
 frames = [];
+parcels = [];
 if ~isempty(options)
     opt = general_parse_options([],options);
     if isfield(opt,'frames')
         frames = opt.frames;
+    end
+    if isfield(opt,'parcels')
+        parcels = opt.parcels;
     end
 end
    
@@ -230,11 +234,11 @@ printReport(img, fin, fout, peak, vol_peak, fp_params, presmooth, cifti)
 
 roi.img_saveimage(fout);
 
-if isfield(opt,'parcels') && ~isempty(opt.parcels)
-    if strcmpi(opt.parcels,'volume')
+if ~isempty(parcels)
+    if strcmpi(parcels,'volume')
         general_get_roi_parcels(fout, []);
     else
-        general_get_roi_parcels(fout, [], opt.parcels);
+        general_get_roi_parcels(fout, [], parcels);
     end
 end
 
