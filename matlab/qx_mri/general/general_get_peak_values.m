@@ -32,7 +32,7 @@ function [] = general_get_peak_values(peak_report, fin, fout)
 if nargin < 3 || isempty(fout), fout = peak_report; end
 
 % -- read ROI report (output from general_find_peaks)
-in_table = readtable(peak_report,'Format','%s%s%s%s%s%s%d%s%s%s%s%s%s%s%s%s');
+in_table = readtable(peak_report, 'HeaderLines', 3, 'Format','%s%s%s%s%s%s%d%s%s%s%s%s%s%s%s%s');
 
 % -- check if the table is empty (meaning that the file is a simple csv
 %    list of grayordinates)
