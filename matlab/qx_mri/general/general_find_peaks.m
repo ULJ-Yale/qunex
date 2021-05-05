@@ -95,6 +95,12 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %                   - 'parcels:<path to atlas>'  ... ROI composition across
 %                     CIFTI-2 volume structures and parcels of the input
 %                     atlas
+%                 d) whether to limit the growth of regions to subcortical
+%                    structures as defined in CIFTI-2 format (applies to
+%                    volume structures only)
+%                   - []  ... growth of regions is not limited
+%                   - 'limitvol:1'  ... growth of regions is limited
+%                   - 'limitvol:0'... growth of regions is not limited
 %
 %   --verbose     whether to be verbose:
 %

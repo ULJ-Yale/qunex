@@ -47,6 +47,15 @@ function [roi vol_peak peak] = img_find_peaks(img, mindim, maxdim, val, t, proje
 %                           'boundary:wire'           
 %                               remove ROI data and return only ROI boundaries
 %
+%                       - to limit the growth of regions to subcortical structures:
+%    
+%                           []
+%                               growth not limited
+%                           'limitvol:1'
+%                               limit growth of regions to subcortical structures
+%                           'limitvol:0'
+%                               growth not limited
+%
 %   --verbose           whether to report the peaks (1) and also be verbose:
 %
 %                       a) on the first level (2)
@@ -224,11 +233,15 @@ end
 if ~isfield(options_parsed,'boundary')
     options_parsed.boundary = '';
 end
+if ~isfield(options_parsed,'limitvol')
+    options_parsed.limitvol = '';
+end
 frames = options_parsed.frames;
 if strcmp(frames,'all')
     frames = 1:1:img.frames;
 end
-options_single_frame = strcat('boundary:',options_parsed.boundary);
+options_single_frame = strcat('boundary:',options_parsed.boundary,...
+                              '|limitvol:',num2str(options_parsed.limitvol));
 
 % --- Check for the number of frames in the image
 if img.frames > 1
