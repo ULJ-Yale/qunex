@@ -321,13 +321,12 @@ for j=1:img.frames
     
     if ~isempty(vol_peakCell{j})
         for p = 1:length(vol_peakCell{j})
-            component = 'volume';
             if strcmpi(img.imageformat, 'CIFTI-2')
                 fprintf(repf, '\n%s\t%d\t%.1f\t%.1f\t%d\tNA\t%d',...
-                    component, vol_peakCell{j}(p).label, vol_peakCell{j}(p).value, vol_peakCell{j}(p).averageValue, vol_peakCell{j}(p).size, vol_peakCell{j}(p).grayord);
+                    vol_peakCell{j}(p).component, vol_peakCell{j}(p).label, vol_peakCell{j}(p).value, vol_peakCell{j}(p).averageValue, vol_peakCell{j}(p).size, vol_peakCell{j}(p).grayord);
             else
                 fprintf(repf, '\n%s\t%d\t%.1f\t%.1f\t%d\tNA\tNA',...
-                    component, vol_peakCell{j}(p).label, vol_peakCell{j}(p).value, vol_peakCell{j}(p).averageValue, vol_peakCell{j}(p).size);
+                    vol_peakCell{j}(p).component, vol_peakCell{j}(p).label, vol_peakCell{j}(p).value, vol_peakCell{j}(p).averageValue, vol_peakCell{j}(p).size);
             end
             fprintf(repf, '\t%5.1f', [vol_peakCell{j}(p).xyz, vol_peakCell{j}(p).Centroid, vol_peakCell{j}(p).WeightedCentroid]);
             if strcmp(img.imageformat, '4dfp')
