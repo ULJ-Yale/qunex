@@ -325,7 +325,8 @@ if strcmpi(img.imageformat, 'CIFTI-2')
        vol_peak(i).grayord = idx(peak_ind);
        
        % assert(vol_peak(i).value == roi_val, 'ROI peak does not match the maximum/minimum value in that region!\n');
-       if ~(vol_peak(i).value == roi_val)
+       if isempty(options_parsed.boundary) && ~(vol_peak(i).value == roi_val)
+           fprintf('\n');
            warning('ROI peak does not match the maximum/minimum value in region %d!\n', vol_peak(i).label);
        end
     end
@@ -348,7 +349,8 @@ if strcmpi(img.imageformat, 'CIFTI-2')
                 peak.(lower(img.cifti.shortnames{i}))(j).grayord = idx(peak_ind);
                 
                 % assert(vol_peak(i).value == roi_val, 'ROI peak does not match the maximum/minimum value in that region!\n');
-                if ~(peak.(lower(img.cifti.shortnames{i}))(j).value == roi_val)
+                if isempty(options_parsed.boundary) && ~(peak.(lower(img.cifti.shortnames{i}))(j).value == roi_val)
+                    fprintf('\n');
                     warning('ROI peak does not match the maximum/minimum value in region %d!\n', peak.(lower(img.cifti.shortnames{i}))(j).index);
                 end
             end

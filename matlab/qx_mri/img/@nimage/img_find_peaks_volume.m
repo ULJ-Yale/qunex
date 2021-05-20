@@ -234,9 +234,10 @@ while min(assigned_vox) == 0
         
         if limit_growth
             vox_a = [x(n),y(n),z(n)];
-            neibg_list = combvec((x(n)-1):(x(n)+1), (y(n)-1):(y(n)+1), (z(n)-1):(z(n)+1))';
-            for neibg=1:size(neibg_list,1)
-                if (~isSameStructure(vox_a-1, neibg_list(neibg,:)-1, img, components))
+            neigb_list = combvec((x(n)-1):(x(n)+1), (y(n)-1):(y(n)+1), (z(n)-1):(z(n)+1))';
+            neigb_list = neigb_list(~any(min(neigb_list,2)<=1,2),:);
+            for neibg=1:size(neigb_list,1)
+                if (~isSameStructure(vox_a-1, neigb_list(neibg,:)-1, img, components))
                     neighborhood(neibg) = 0;
                 end
             end
@@ -253,6 +254,13 @@ while min(assigned_vox) == 0
             seg(x(n), y(n), z(n)) = u;
             peak(u).size = peak(u).size + 1;
             assigned_vox(n) = 1;
+            
+            % update peak info to the higher peak
+            if abs(peak(u).value) < abs(data(x(n), y(n), z(n)))
+                peak(u).value = data(x(n), y(n), z(n));
+                peak(u).xyz   = [x(n), y(n), z(n)];
+            end
+            
         elseif length(u) > 1 % put it to the closest peak
             curr_dist = inf;
             % loop across neighboring peaks and assign the closer one
@@ -266,6 +274,13 @@ while min(assigned_vox) == 0
             bpx(x(n), y(n), z(n)) = closer_peak;
             peak(closer_peak).size = peak(closer_peak).size + 1;
             assigned_vox(n) = 1;
+            
+            % update peak info to the higher peak
+            if abs(peak(closer_peak).value) < abs(data(x(n), y(n), z(n)))
+                peak(closer_peak).value = data(x(n), y(n), z(n));
+                peak(closer_peak).xyz   = [x(n), y(n), z(n)];
+            end
+            
         end
     end
     seg = seg + bpx;
@@ -303,9 +318,10 @@ while ~isempty(small)
             % filter neighboring voxels for regions
             if limit_growth
                 vox_a = [x(n),y(n),z(n)];
-                neibg_list = combvec((x(n)-1):(x(n)+1), (y(n)-1):(y(n)+1), (z(n)-1):(z(n)+1))';
-                for neibg=1:size(neibg_list,1)
-                    if (~isSameStructure(vox_a-1, neibg_list(neibg,:)-1, img, components))
+                neigb_list = combvec((x(n)-1):(x(n)+1), (y(n)-1):(y(n)+1), (z(n)-1):(z(n)+1))';
+                neigb_list = neigb_list(~any(min(neigb_list,2)<=1,2),:);
+                for neibg=1:size(neigb_list,1)
+                    if (~isSameStructure(vox_a-1, neigb_list(neibg,:)-1, img, components))
                         neighborhood(neibg) = 0;
                     end
                 end
@@ -317,6 +333,7 @@ while ~isempty(small)
             
             % if only one region neighbors the small ROI assign it to that one
             if length(u) == 1
+                
                 seg(seg==rtgt) = u;
                 peak(u).size = peak(u).size + peak(rtgt).size;
                 
