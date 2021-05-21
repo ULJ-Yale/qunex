@@ -360,16 +360,14 @@ end
 [vind, ~, vval] = find(roiData);
 [~, s] = sort(vval, 1, 'descend');
 
-%boundaries = zeros(size(roiData));
-
 % --- First flooding
 if fp_param.verbose, fprintf('\n---> flooding %d peaks', length(peak)); end
 
 % assign IDs to the peaks in the indexedData variable
 for n = 1:length(peak)
     indexedData(peak(n).index) = n;
-    peak(n).size = 1;
-    peak(n).area = 0;
+    peak(n).size  = 1;
+    peak(n).area  = 0; 
 end
 
 % flood the data starting from the highest value.
@@ -384,6 +382,16 @@ for n = 1:numel(vval)
             % if only one neighbour belongs to a ROI assign it to that one
             indexedData(vind(s(n))) = u_id;
             peak(u_id).size = peak(u_id).size + 1;
+            
+            % update peak info to the higher peak
+            if abs(peak(u_id).value) < abs(vval(s(n)))
+                peak(u_id).grayord = vind(s(n));
+                peak(u_id).value   = vval(s(n));
+                peak(u_id).x       = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(vind(s(n)),1);
+                peak(u_id).y       = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(vind(s(n)),2);
+                peak(u_id).z       = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(vind(s(n)),3);
+            end
+            
         elseif numel(u_id) > 1
             % if some neighbours belong to other ROIs, assign it to the largest ROI
             [~, ~, nROIs] = mode(id);
@@ -404,13 +412,23 @@ for n = 1:numel(vval)
             end
             indexedData(vind(s(n))) = maxID;
             peak(maxID).size = peak(maxID).size + 1;
+            
+            % update peak info to the higher peak
+            if abs(peak(maxID).value) < abs(roiData(vind(s(n))))
+                peak(maxID).grayord = vind(s(n));
+                peak(maxID).value   = roiData(vind(s(n)));
+                peak(maxID).x       = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(vind(s(n)),1);
+                peak(maxID).y       = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(vind(s(n)),2);
+                peak(maxID).z       = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(vind(s(n)),3);
+            end
+            
         end
     end
 end
 
 % --- Calculate areas of regions
 for i=1:1:length(peak)
-    peak(i).area = getRegionArea(i, indexedData, fp_param);
+    peak(i).area = getRegionArea(i, indexedData, fp_param);   
 end
 end
 
@@ -458,10 +476,11 @@ while ~isempty(small)
                         
                         % update peak info to the higher peak
                         if abs(peak(u_id).value) < abs(peak(rtgt).value)
-                            peak(u_id).value = peak(rtgt).value;
-                            peak(u_id).x     = peak(rtgt).x;
-                            peak(u_id).y     = peak(rtgt).y;
-                            peak(u_id).z     = peak(rtgt).z;
+                            peak(u_id).value   = peak(rtgt).value;
+                            peak(u_id).grayord = peak(rtgt).grayord;
+                            peak(u_id).x       = peak(rtgt).x;
+                            peak(u_id).y       = peak(rtgt).y;
+                            peak(u_id).z       = peak(rtgt).z;
                         end
                         
                         done = true;
@@ -491,10 +510,11 @@ while ~isempty(small)
                 
                 % update peak info to the higher peak
                 if abs(peak(maxId).value) < abs(peak(rtgt).value)
-                    peak(maxId).value = peak(rtgt).value;
-                    peak(maxId).x     = peak(rtgt).x;
-                    peak(maxId).y     = peak(rtgt).y;
-                    peak(maxId).z     = peak(rtgt).z;
+                    peak(maxId).value  = peak(rtgt).value;
+                    peak(maxId).grayord = peak(rtgt).grayord;
+                    peak(maxId).x      = peak(rtgt).x;
+                    peak(maxId).y      = peak(rtgt).y;
+                    peak(maxId).z      = peak(rtgt).z;
                 end
                 
                 done = true;

@@ -256,10 +256,11 @@ while min(assigned_vox) == 0
             assigned_vox(n) = 1;
             
             % update peak info to the higher peak
-            if abs(peak(u).value) < abs(data(x(n), y(n), z(n)))
-                peak(u).value = data(x(n), y(n), z(n));
-                peak(u).xyz   = [x(n), y(n), z(n)];
-            end
+            peak = update_peak_information(peak, u, [x(n), y(n), z(n)], data);
+%             if abs(peak(u).value) < abs(data(x(n), y(n), z(n)))
+%                 peak(u).value = data(x(n), y(n), z(n));
+%                 peak(u).xyz   = [x(n), y(n), z(n)];
+%             end
             
         elseif length(u) > 1 % put it to the closest peak
             curr_dist = inf;
@@ -276,10 +277,11 @@ while min(assigned_vox) == 0
             assigned_vox(n) = 1;
             
             % update peak info to the higher peak
-            if abs(peak(closer_peak).value) < abs(data(x(n), y(n), z(n)))
-                peak(closer_peak).value = data(x(n), y(n), z(n));
-                peak(closer_peak).xyz   = [x(n), y(n), z(n)];
-            end
+            peak = update_peak_information(peak, closer_peak, [x(n), y(n), z(n)], data);
+%             if abs(peak(closer_peak).value) < abs(data(x(n), y(n), z(n)))
+%                 peak(closer_peak).value = data(x(n), y(n), z(n));
+%                 peak(closer_peak).xyz   = [x(n), y(n), z(n)];
+%             end
             
         end
     end
@@ -338,10 +340,11 @@ while ~isempty(small)
                 peak(u).size = peak(u).size + peak(rtgt).size;
                 
                 % update peak info to the higher peak
-                if abs(peak(u).value) < abs(peak(rtgt).value)
-                    peak(u).value = peak(rtgt).value;
-                    peak(u).xyz   = peak(rtgt).xyz;
-                end
+                peak = update_peak_information(peak, u, rtgt);
+%                 if abs(peak(u).value) < abs(peak(rtgt).value)
+%                     peak(u).value = peak(rtgt).value;
+%                     peak(u).xyz   = peak(rtgt).xyz;
+%                 end
                 
                 done = true;
                 break
@@ -362,10 +365,11 @@ while ~isempty(small)
                     peak(closer_peak).size = peak(closer_peak).size + 1;
                     
                     % update peak info to the higher peak
-                    if abs(peak(closer_peak).value) < abs(data(x(m), y(m), z(m)))
-                        peak(closer_peak).value = data(x(m), y(m), z(m));
-                        peak(closer_peak).xyz = [x(m), y(m), z(m)];
-                    end
+                    peak = update_peak_information(peak, closer_peak, [x(m), y(m), z(m)], data);
+%                     if abs(peak(closer_peak).value) < abs(data(x(m), y(m), z(m)))
+%                         peak(closer_peak).value = data(x(m), y(m), z(m));
+%                         peak(closer_peak).xyz = [x(m), y(m), z(m)];
+%                     end
                     
                 end
                 done = true;
@@ -419,6 +423,8 @@ for b  = big(:)'
         
         seg(x, y, z) = b ;
         peak(b).size = peak(b).size + 1;
+        % update peak info to the higher peak
+        peak = update_peak_information(peak, b, [x, y, z], data);
         [seg, plist, np] = addPriority(data, seg, plist, x, y, z, np);
         
         if peak(b).size >= maxsize
@@ -557,4 +563,29 @@ else
 end
 end
 
+function peak = update_peak_information(peak, current_peak, appended_index, data)
+update_from_peak = false;
+if nargin < 4 || isempty(data), update_from_peak = true; end
+
+if ~update_from_peak && length(appended_index) ~= 3
+    error('If updating from the data matrix, appended_index should be an (x,y,z) vector!\n');
+end
+
+if update_from_peak
+    if abs(peak(current_peak).value) < abs(peak(appended_index).value)
+        peak(current_peak).value = peak(appended_index).value;
+        peak(current_peak).xyz   = peak(appended_index).xyz;
+    end
+else
+    x = appended_index(1);
+    y = appended_index(2);
+    z = appended_index(3);
+    if abs(peak(current_peak).value) < abs(data(x, y, z))
+        peak(current_peak).value = data(x, y, z);
+        peak(current_peak).xyz   = appended_index;
+    end
+end
+
+
+end
 
