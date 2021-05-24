@@ -1,30 +1,15 @@
 #!/bin/sh
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
-# Copyright (C) 2015 Anticevic Lab, Yale University
-# Copyright (C) 2015 MBLAB, University of Ljubljana
-#
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-# * Jure Demsar, University of Ljubljana
 #
 # ## PRODUCT
 #
 #  qunex_envstatus.sh
-#
-# ## LICENSE
-#
-# * The qunex_envstatus.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## TODO
-#
 #
 # ## DESCRIPTION:
 #

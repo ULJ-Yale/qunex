@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = stats_anova_2way_repeated(dfile, a, b, output, verbose)
 
 %``function [] = stats_anova_2way_repeated(dfile, a, b, output, verbose)``

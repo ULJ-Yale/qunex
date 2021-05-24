@@ -1,44 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-#
-# ## PRODUCT
-#
-# * data_sync.sh
-#
-# ## LICENCE
-#
-# * The data_sync.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#
-# * This is a data_sync.sh wrapper developed for Sync from a cluster to local storage
-#
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# N/A
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# N/A
-#
-# ## PREREQUISITE PRIOR PROCESSING
-#
-# N/A
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

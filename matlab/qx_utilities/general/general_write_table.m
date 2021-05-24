@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)
 
 %``function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``

@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf);
 
 %``function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``

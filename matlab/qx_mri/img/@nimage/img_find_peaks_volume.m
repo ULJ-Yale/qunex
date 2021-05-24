@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [roi peak] = img_find_peaks_volume(img, minsize, maxsize, val, t, options, verbose)
 
 %function [roi peak] = img_find_peaks_volume(img, minsize, maxsize, val, t, options, verbose)

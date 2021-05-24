@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)
 %``function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)``
 %

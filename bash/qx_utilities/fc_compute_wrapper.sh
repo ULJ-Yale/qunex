@@ -1,46 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, N3 Division, Yale University
-#
-# ## PRODUCT
-#
-#  fc_compute_wrapper.sh
-#
-# ## LICENSE
-#
-# * The fc_compute_wrapper.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## Description 
-#   
-# This script, fc_compute_wrapper.sh, implements functional connectivity
-# using QuNex Suite Matlab tools (e.g. fc_compute_seedmaps_multiple)
-# 
-# ## Prerequisite Installed Software
-#
-# * QuNex Suite
-#
-# ## Prerequisite Environment Variables
-#
-# See output of usage function: e.g. $./fc_compute_wrapper.sh --help
-#
-# ### Expected Previous Processing
-# 
-# * The necessary input files are BOLD from previous processing
-# * These may be stored in: "$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 usage() {
 

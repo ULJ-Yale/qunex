@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 
 %``function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)``

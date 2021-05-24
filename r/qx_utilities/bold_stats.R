@@ -1,5 +1,10 @@
 #!/usr/bin/env Rscript
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+#
 #   Plots movement data, creates movement reports and information for data scrubbing
 #
 #   Options
