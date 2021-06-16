@@ -460,6 +460,9 @@ fi
 
 OVERWRITE_SESSION=`opts_GetOpt "--overwritesession" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
+if [ -z "$OVERWRITE_STEP" ]; then
+    OVERWRITE_STEP=`opts_GetOpt "--overwrite" "$@"`
+fi
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
 OVERWRITE_PROJECT_FORCE=`opts_GetOpt "--overwriteprojectforce" $@`
 OVERWRITE_PROJECT_XNAT=`opts_GetOpt "--overwriteprojectxnat" $@`
