@@ -676,7 +676,6 @@ def main(args=None):
     sessions            = None
     sessionsfolder      = None
     sessionids          = None
-    sessionids_provided = False
     envars              = None
     dockeropt           = None
     output              = None
@@ -715,7 +714,6 @@ def main(args=None):
             k, csessions = arg.split("=", 1)
             command += '--sessions="%s" ' % (csessions)
         elif "sessionids=" in arg:
-            sessionids_provided = True
             k, sessionids = arg.split("=", 1)
         elif "=" in arg:
             k, v = arg.split('=', 1)
@@ -765,14 +763,13 @@ def main(args=None):
     # - sessions is not None
     sessionidsArray = []
     if parsessions is not None and sessions is not None and scheduler is not None:
-                
+
         # split sessions via sessionids or split existing sessionids
         if sessionids is None:
             sessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
         else:
             getsessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
             sessionidsSplit = re.split(' +|,|\|', sessionids)
-            print("sessionidsSplit:", sessionidsSplit, "\nsessionids",  sessionids, "\ngetsessionids", getsessionids)
             sessionids = [e for e in getsessionids if e in sessionidsSplit]
 
         if scheduler is None:
@@ -785,7 +782,7 @@ def main(args=None):
             for i in range(start, end, chunks):
                 start = i
                 sessionidsChunk = sessionids[start:start+chunks]
-                sessionidsArray.append(','.join(sessionidsChunk))        
+                sessionidsArray.append(','.join(sessionidsChunk))
         
         else:
             containers = 0
@@ -809,11 +806,10 @@ def main(args=None):
         scheduleCommand = command
 
         # add sessionids to command?
-        if i < len(sessionidsArray) and sessionids_provided:
-            sessionids = sessionidsArray[i]
-            scheduleCommand += '--sessionids="%s" ' % (sessionids)
-            scheduleCommand += '--sessions="%s" ' % (sessionids)
-        else:
+        if i < len(sessionidsArray):
+            scheduleCommand += '--sessionids="%s" ' % (sessionidsArray[i])
+            scheduleCommand += '--sessions="%s" ' % (sessionidsArray[i])
+        elif sessions is not None:
             scheduleCommand += '--sessions="%s" ' % (sessions)
 
         # setup script
