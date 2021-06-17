@@ -749,7 +749,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     fi
 
     # -- Obtain temp info on subjects and experiments in the project
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/sessions?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv
     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv
 
     # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
@@ -1229,19 +1229,19 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             ;;
         hcp_post_freesurfer|run_qc_t1w|run_qc_t2w|run_qc_myelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp_fmri_volume)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/*nii*' --include='T1w/*nii*' --include='BOLD*/*nii*' --include='*fMRI*/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/*nii*' --include='T1w/*nii*' --include='T2w/*nii*' --include='BOLD*/*nii*' --include='*fMRI*/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcpd|run_qc_dwi|dwi_legacy|run_qc_dwi_legacy|dwi_eddy_qc|run_qc_dwi_eddy|dwi_fsl_dtifit|run_qc_dwi_fsl_dtifit|dwi_fsl_bedpostx_gpu|run_qc_dwi_process|run_qc_dwi_bedpostx)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='T2w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
