@@ -308,7 +308,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
                 sCommand += "#BSUB -%s %s\n" % (k, v)
-            elif k is 'jobName' and jobname == 'schedule':
+            elif k == 'jobName' and jobname == 'schedule':
                 jobname = v
 
         # jobname
@@ -664,6 +664,7 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
+    env_status          = False
     scheduler           = None
     conimage            = None
     command             = ""
@@ -682,6 +683,8 @@ def main(args=None):
     csessions           = None
 
     for arg in args:
+        if "env_status" in arg or "envstatus" in arg:
+            env_status = True
         if "scheduler=" in arg:
             k, scheduler = arg.split("=", 1)
         elif "container=" in arg:
@@ -721,6 +724,30 @@ def main(args=None):
         else:
             command += '%s ' % (arg)
 
+    if conimage is None:
+        if "QUNEXCONIMAGE" in os.environ:
+            conimage = os.environ['QUNEXCONIMAGE']
+        else:
+            print("ERROR: No Singularity image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
+            exit(1)
+
+    # docker or Singularity
+    singularity = conimage.endswith(".simg") or conimage.endswith(".sif")
+
+    # just report env status and quit
+    if env_status:
+        # singularity
+        if singularity:
+            env_command = "singularity exec %s bash /opt/qunex/env/qunex_container_env_status.sh" % conimage
+
+        # docker
+        else:
+            env_command = "docker run %s bash -c \"/opt/qunex/env/qunex_container_env_status.sh\"" % conimage
+
+        # run
+        subprocess.Popen(env_command, shell=True)
+        exit(0)
+
     if csessions is not None and sessions is not None:
         print("ERROR: Please specify either sessions or csessions, but not both!")
         exit(1)
@@ -731,15 +758,8 @@ def main(args=None):
         print(schedule.__doc__)
         exit()
 
-    if conimage is None:
-        if "QUNEXCONIMAGE" in os.environ:
-            conimage = os.environ['QUNEXCONIMAGE']
-        else:
-            print("ERROR: No Singularity image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
-            exit(1)
 
     # -- check for environment variables
-
     if envars:
         envars = [e for e in envars.split('|')]
         envars = [e.split('=>') for e in envars if '=>' in e]
@@ -747,7 +767,6 @@ def main(args=None):
         envars = []
 
     # -- check for docker options
-
     if dockeropt is None:
         if "QUNEXDOCKEROPT" in os.environ:
             dockeropt = os.environ['QUNEXDOCKEROPT']
@@ -799,8 +818,6 @@ def main(args=None):
         # add sessionids filter back if exists
         if sessionids is not None:
             sessionidsArray.append(sessionids)
-
-    singularity = conimage.endswith(".simg") or conimage.endswith(".sif")
 
     for i in range(0, containers):
         scheduleCommand = command
