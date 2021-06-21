@@ -653,15 +653,20 @@ alias qx_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 alias qunex_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 alias qx_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 
-alias qunex_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qx_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qunex_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qx_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh'
+alias qunex_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qx_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qunex_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qx_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qunex_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qx_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh'
 
-alias qunex_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
+alias qunex_container_env_status=`qunex_container --env_status`
+alias qunex_container_envstatus=`qunex_container --env_status`
+
+alias qunex_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
 
 # ------------------------------------------------------------------------------
 # -- Setup HCP Pipeline paths
@@ -1267,12 +1272,12 @@ export BedpostXGPUDir; export ProbTrackXDIR; export bindir; PATH=${bindir}:${PAT
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${bindir}/lib
 
 
-QuNexEnvCheck=`source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus | grep "ERROR"` > /dev/null 2>&1
+QuNexEnvCheck=`source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus | grep "ERROR"` > /dev/null 2>&1
 if [[ -z ${QuNexEnvCheck} ]]; then
     geho " ---> QuNex environment set successfully!"
     echo ""
 else
-    reho "   --> ERROR in QuNex environment. Run 'qunex_envstatus' to check missing variables!"
+    reho "   --> ERROR in QuNex environment. Run 'qunex_env_status' to check missing variables!"
     echo ""
 fi
 
