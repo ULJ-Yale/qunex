@@ -25,7 +25,6 @@ import glob
 import getpass
 import re
 import subprocess
-import commands as gcom
 import commands_support as gcs
 import process as gp
 import core as gc
@@ -1818,7 +1817,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
                             commandParameters[k] = eargs[k]
 
             # -- remove parameters that are not allowed
-
+            import commands as gcom
             if commandName in gcom.commands:
                 allowedParameters = list(gcom.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
