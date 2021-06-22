@@ -825,7 +825,12 @@ def main(args=None):
         # add sessionids to command?
         if i < len(sessionidsArray):
             scheduleCommand += '--sessionids="%s" ' % (sessionidsArray[i])
-            scheduleCommand += '--sessions="%s" ' % (sessionidsArray[i])
+            
+            # if sessions is a batch file
+            if os.path.isfile(sessions):
+                scheduleCommand += '--sessions="%s" ' % (sessions)
+            else:
+                scheduleCommand += '--sessions="%s" ' % (sessionidsArray[i])
         elif sessions is not None:
             scheduleCommand += '--sessions="%s" ' % (sessions)
 
