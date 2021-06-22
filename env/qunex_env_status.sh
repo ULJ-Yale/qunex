@@ -9,7 +9,7 @@
 #
 # ## PRODUCT
 #
-#  qunex_envstatus.sh
+#  qunex_env_status.sh
 #
 # ## DESCRIPTION:
 #

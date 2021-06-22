@@ -308,7 +308,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
                 sCommand += "#BSUB -%s %s\n" % (k, v)
-            elif k is 'jobName' and jobname == 'schedule':
+            elif k == 'jobName' and jobname == 'schedule':
                 jobname = v
 
         # jobname
@@ -664,6 +664,7 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
+    env_status          = False
     scheduler           = None
     conimage            = None
     command             = ""
@@ -676,13 +677,14 @@ def main(args=None):
     sessions            = None
     sessionsfolder      = None
     sessionids          = None
-    sessionids_provided = False
     envars              = None
     dockeropt           = None
     output              = None
     csessions           = None
 
     for arg in args:
+        if "env_status" in arg or "envstatus" in arg:
+            env_status = True
         if "scheduler=" in arg:
             k, scheduler = arg.split("=", 1)
         elif "container=" in arg:
@@ -715,13 +717,36 @@ def main(args=None):
             k, csessions = arg.split("=", 1)
             command += '--sessions="%s" ' % (csessions)
         elif "sessionids=" in arg:
-            sessionids_provided = True
             k, sessionids = arg.split("=", 1)
         elif "=" in arg:
             k, v = arg.split('=', 1)
             command += '%s="%s" ' % (k, v)
         else:
             command += '%s ' % (arg)
+
+    if conimage is None:
+        if "QUNEXCONIMAGE" in os.environ:
+            conimage = os.environ['QUNEXCONIMAGE']
+        else:
+            print("ERROR: No Singularity image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
+            exit(1)
+
+    # docker or Singularity
+    singularity = conimage.endswith(".simg") or conimage.endswith(".sif")
+
+    # just report env status and quit
+    if env_status:
+        # singularity
+        if singularity:
+            env_command = "singularity exec %s bash /opt/qunex/env/qunex_container_env_status.sh" % conimage
+
+        # docker
+        else:
+            env_command = "docker run %s bash -c \"/opt/qunex/env/qunex_container_env_status.sh\"" % conimage
+
+        # run
+        subprocess.Popen(env_command, shell=True)
+        exit(0)
 
     if csessions is not None and sessions is not None:
         print("ERROR: Please specify either sessions or csessions, but not both!")
@@ -733,15 +758,8 @@ def main(args=None):
         print(schedule.__doc__)
         exit()
 
-    if conimage is None:
-        if "QUNEXCONIMAGE" in os.environ:
-            conimage = os.environ['QUNEXCONIMAGE']
-        else:
-            print("ERROR: No Singularity image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
-            exit(1)
 
     # -- check for environment variables
-
     if envars:
         envars = [e for e in envars.split('|')]
         envars = [e.split('=>') for e in envars if '=>' in e]
@@ -749,7 +767,6 @@ def main(args=None):
         envars = []
 
     # -- check for docker options
-
     if dockeropt is None:
         if "QUNEXDOCKEROPT" in os.environ:
             dockeropt = os.environ['QUNEXDOCKEROPT']
@@ -765,14 +782,13 @@ def main(args=None):
     # - sessions is not None
     sessionidsArray = []
     if parsessions is not None and sessions is not None and scheduler is not None:
-                
+
         # split sessions via sessionids or split existing sessionids
         if sessionids is None:
             sessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
         else:
             getsessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
             sessionidsSplit = re.split(' +|,|\|', sessionids)
-            print("sessionidsSplit:", sessionidsSplit, "\nsessionids",  sessionids, "\ngetsessionids", getsessionids)
             sessionids = [e for e in getsessionids if e in sessionidsSplit]
 
         if scheduler is None:
@@ -785,7 +801,7 @@ def main(args=None):
             for i in range(start, end, chunks):
                 start = i
                 sessionidsChunk = sessionids[start:start+chunks]
-                sessionidsArray.append(','.join(sessionidsChunk))        
+                sessionidsArray.append(','.join(sessionidsChunk))
         
         else:
             containers = 0
@@ -803,17 +819,14 @@ def main(args=None):
         if sessionids is not None:
             sessionidsArray.append(sessionids)
 
-    singularity = conimage.endswith(".simg") or conimage.endswith(".sif")
-
     for i in range(0, containers):
         scheduleCommand = command
 
         # add sessionids to command?
-        if i < len(sessionidsArray) and sessionids_provided:
-            sessionids = sessionidsArray[i]
-            scheduleCommand += '--sessionids="%s" ' % (sessionids)
-            scheduleCommand += '--sessions="%s" ' % (sessionids)
-        else:
+        if i < len(sessionidsArray):
+            scheduleCommand += '--sessionids="%s" ' % (sessionidsArray[i])
+            scheduleCommand += '--sessions="%s" ' % (sessionidsArray[i])
+        elif sessions is not None:
             scheduleCommand += '--sessions="%s" ' % (sessions)
 
         # setup script
