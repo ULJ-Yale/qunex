@@ -637,7 +637,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \
 bash_call_execute
 }
 
-show_usage_bold_parcellation() {
+show_usage_parcellate_bold() {
 echo ""; echo "qunex ${usage_input}"
 ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh
 }
