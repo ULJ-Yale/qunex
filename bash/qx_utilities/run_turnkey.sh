@@ -2129,7 +2129,7 @@ fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
+        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_ReorderedByNetworks.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
             ${QuNexCommand} dwi_parcellate --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
@@ -2413,7 +2413,7 @@ fi
                if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
                if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
                # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-               if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
+               if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_ReorderedByNetworks.dlabel.nii"; fi
                if [ -z "$OutName" ]; then OutNameParcelation="BOLD-CAB-NP-v1.0"; else OutNameParcelation="${OutName}"; fi
                if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
                if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
@@ -2451,7 +2451,7 @@ fi
 
             for Parcellation in ${RunParcellations}; do
                 if [ ${Parcellation} == "CANP" ]; then
-                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"
+                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_ReorderedByNetworks.dlabel.nii"
                     OutNameParcelation="BOLD-CAB-NP-v1.0"
                 elif [ ${Parcellation} == "HCP" ]; then
                     ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/glasser_parcellation/Q1-Q6_RelatedParcellation210.LR.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii"
