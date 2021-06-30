@@ -90,6 +90,21 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %                     of -100
 %                   - 'boundary:wire'       ... remove ROI data and return only 
 %                     ROI boundaries
+%                 c) whether to generate a .txt file reporting ROI 
+%                    composition across CIFTI-2 volume structures and/or an
+%                    input atlas (output file name: <fin>_parcels.txt):
+%                   - []  ... no file is generated
+%                   - 'parcels:volume'  ... ROI composition across CIFTI-2
+%                     volume structures
+%                   - 'parcels:<path to atlas>'  ... ROI composition across
+%                     CIFTI-2 volume structures and parcels of the input
+%                     atlas
+%                 d) whether to limit the growth of regions to subcortical
+%                    structures as defined in CIFTI-2 format (applies to
+%                    volume structures only)
+%                   - []  ... growth of regions is not limited
+%                   - 'limitvol:1'  ... growth of regions is limited
+%                   - 'limitvol:0'... growth of regions is not limited
 %
 %   --verbose     whether to be verbose:
 %
@@ -181,10 +196,14 @@ if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 verbose = verbose + 1;
 
 frames = [];
+parcels = [];
 if ~isempty(options)
     opt = general_parse_options([],options);
     if isfield(opt,'frames')
         frames = opt.frames;
+    end
+    if isfield(opt,'parcels')
+        parcels = opt.parcels;
     end
 end
    
@@ -224,6 +243,15 @@ if verbose >= 2, fprintf('\n---> Saving image'); end
 printReport(img, fin, fout, peak, vol_peak, fp_params, presmooth, cifti)
 
 roi.img_saveimage(fout);
+
+if ~isempty(parcels)
+    if strcmpi(parcels,'volume')
+        general_get_roi_parcels(fout, []);
+    else
+        general_get_roi_parcels(fout, [], parcels);
+    end
+end
+
 if verbose >= 2, fprintf('\n---> Done\n'); end
 
 end
@@ -290,16 +318,20 @@ for j=1:img.frames
             fprintf(repf, '\n');
         end
         fprintf(repf,...
-        ['\nComponent\tLabel\tPeak_value\tAvg_value\tSize\tArea_mm2\tPeak_x',...
+        ['\nComponent\tLabel\tPeak_value\tAvg_value\tSize\tArea_mm2\tGrayord\tPeak_x',...
         '\tPeak_y\tPeak_z\tCentroid_x\tCentroid_y\tCentroid_z\tWcentroid_x',...
         '\tWcentroid_y\tWcentroid_z']);
     end
     
     if ~isempty(vol_peakCell{j})
         for p = 1:length(vol_peakCell{j})
-            component = 'volume';
-            fprintf(repf, '\n%s\t%d\t%.1f\t%.1f\t%d\tNA',...
-                component, vol_peakCell{j}(p).label, vol_peakCell{j}(p).value, vol_peakCell{j}(p).averageValue, vol_peakCell{j}(p).size);
+            if strcmpi(img.imageformat, 'CIFTI-2')
+                fprintf(repf, '\n%s\t%d\t%.1f\t%.1f\t%d\tNA\t%d',...
+                    vol_peakCell{j}(p).component, vol_peakCell{j}(p).label, vol_peakCell{j}(p).value, vol_peakCell{j}(p).averageValue, vol_peakCell{j}(p).size, vol_peakCell{j}(p).grayord);
+            else
+                fprintf(repf, '\n%s\t%d\t%.1f\t%.1f\t%d\tNA\tNA',...
+                    vol_peakCell{j}(p).component, vol_peakCell{j}(p).label, vol_peakCell{j}(p).value, vol_peakCell{j}(p).averageValue, vol_peakCell{j}(p).size);
+            end
             fprintf(repf, '\t%5.1f', [vol_peakCell{j}(p).xyz, vol_peakCell{j}(p).Centroid, vol_peakCell{j}(p).WeightedCentroid]);
             if strcmp(img.imageformat, '4dfp')
                 roi.hdr4dfp.key{end+1}   = 'region names';
@@ -314,11 +346,13 @@ for j=1:img.frames
             for c = 1:length(img.cifti.shortnames)
                 if strcmp(cifti.(lower(img.cifti.shortnames{c})).type,'Surface')
                     for p = 1:length(peakCell{j}.(lower(img.cifti.shortnames{c})))
-                        fprintf(repf, '\n%s\t%d\t%.1f\t%.3f\t%d\t%.3f\t%.3f\t%.3f\t%.3f\tNA\tNA\tNA\tNA\tNA\tNA',...
+                        fprintf(repf, '\n%s\t%d\t%.1f\t%.3f\t%d\t%.3f\t%d\t%.3f\t%.3f\t%.3f\tNA\tNA\tNA\tNA\tNA\tNA',...
                             lower(img.cifti.shortnames{c}), peakCell{j}.(lower(img.cifti.shortnames{c}))(p).index,...
                             peakCell{j}.(lower(img.cifti.shortnames{c}))(p).value,peakCell{j}.(lower(img.cifti.shortnames{c}))(p).averageValue,...
                             peakCell{j}.(lower(img.cifti.shortnames{c}))(p).size,...
-                            peakCell{j}.(lower(img.cifti.shortnames{c}))(p).area,peakCell{j}.(lower(img.cifti.shortnames{c}))(p).x,...
+                            peakCell{j}.(lower(img.cifti.shortnames{c}))(p).area,...
+                            peakCell{j}.(lower(img.cifti.shortnames{c}))(p).grayord,...
+                            peakCell{j}.(lower(img.cifti.shortnames{c}))(p).x,...
                             peakCell{j}.(lower(img.cifti.shortnames{c}))(p).y,peakCell{j}.(lower(img.cifti.shortnames{c}))(p).z);
                     end
                 end

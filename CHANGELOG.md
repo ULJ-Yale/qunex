@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.90.8 (2021-06-28)
+
+The output of the general_find_peaks function now includes grayordinates of the identified regions of interest (ROI). The qunex_container scripts now properly passes the sessions parameter to all commands.
+
 ## 0.90.7 (2021-06-21)
 
 Minor bug fixes (ordering of entries in create_stats_report output, python exceptions are now always properly printed), fixed the reference in the README file. The qunex_container script now allows direct prinout of the environment status through the --env_status flag.
