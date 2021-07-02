@@ -17,7 +17,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -677,12 +677,12 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-# -- dwi_fsl_dtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
+# -- dwi_dtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-dwi_fsl_dtifit() {
+dwi_dtifit() {
 # -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --overwrite='${Overwrite}' \
@@ -690,18 +690,18 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh \
 # -- QuNex bash execute function
 bash_call_execute
 }
-show_usage_dwi_fsl_dtifit() {
+show_usage_dwi_dtifit() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-# -- dwi_fsl_bedpostx_gpu - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
+# -- dwi_bedpostx_gpu - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-dwi_fsl_bedpostx_gpu() {
+dwi_bedpostx_gpu() {
 # -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --fibers='${Fibers}' \
@@ -716,9 +716,9 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.s
 # -- QuNex bash execute function
 bash_call_execute
 }
-show_usage_dwi_fsl_bedpostx_gpu() {
+show_usage_dwi_bedpostx_gpu() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -726,7 +726,7 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh
 # -------------------------------------------------------------------------------------------------------------------------------
 
 auto_ptx() {
-geho "WARNING: auto_ptx is deprecated, you should probably use fsl_xtract instead!"
+geho "WARNING: auto_ptx is deprecated, you should probably use dwi_xtract instead!"
 
 # -- Check inputs
 if [[ -d ${BedPostXFolder} ]]; then 
@@ -1475,7 +1475,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     GroupBar=`get_parameters "${setflag}groupvar" $@`
     OutputDir=`get_parameters "${setflag}outputdir" $@`
     Update=`get_parameters "${setflag}update" $@`
-    # -- Input flags for dwi_fsl_bedpostx_gpu
+    # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`
     Weight=`get_parameters "${setflag}weight" $@`
     Burnin=`get_parameters "${setflag}burnin" $@`
@@ -1982,10 +1982,10 @@ if [ "$CommandToRun" == "parcellate_anat" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- dwi_fsl_dtifit
+# -- dwi_dtifit
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "dwi_fsl_dtifit" ]; then
+if [ "$CommandToRun" == "dwi_dtifit" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2011,10 +2011,10 @@ if [ "$CommandToRun" == "dwi_fsl_dtifit" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- dwi_fsl_bedpostx_gpu
+# -- dwi_bedpostx_gpu
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "dwi_fsl_bedpostx_gpu" ]; then
+if [ "$CommandToRun" == "dwi_bedpostx_gpu" ]; then
     # -- Check required parameters
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study Folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi

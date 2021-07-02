@@ -480,8 +480,8 @@ calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,   
           [],
           ['rsc',     'run_shell_script',           simple.run_shell_script,                        "Runs the specified script."],
           [],
-          ['f99',    'fsl_f99',                     fsl.fsl_f99,                                    "Run FSL F99 command."],
-          ['fslx',   'fsl_xtract',                  fsl.fsl_xtract,                                 "Run FSL XTRACT command."],
+          ['f99',    'dwi_f99',                     fsl.dwi_f99,                                    "Run FSL F99 command."],
+          ['fslx',   'dwi_xtract',                  fsl.dwi_xtract,                                 "Run FSL XTRACT command."],
 ]
 
 lalist = [['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]]

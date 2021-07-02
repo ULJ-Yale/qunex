@@ -11,8 +11,8 @@
 This file holds code for running FSL commands. It
 consists of functions:
 
---fsl_f99       Runs FSL F99 command.
---fsl_xtract    Runs FSL XTRACT command.
+--dwi_f99       Runs FSL F99 command.
+--dwi_xtract    Runs FSL XTRACT command.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -32,9 +32,9 @@ import os
 
 from core import *
 
-def fsl_f99(sinfo, options, overwrite=False, thread=0):
+def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
-    ``fsl_f99 [... processing options]``
+    ``dwi_f99 [... processing options]``
     ``f99 [... processing options]``
 
     This command executes FSL's F99 script for registering your own diffusion
@@ -44,7 +44,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    Succesfull completion of FSL's dtifit processing (dwi_fsl_dtifit command in
+    Succesfull completion of FSL's dtifit processing (dwi_dtifit command in
     QuNex).
 
     INPUTS
@@ -100,7 +100,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex fsl_f99 \
+        qunex dwi_f99 \
           --sessionsfolder="/data/macaque_study/sessions" \
           --sessions="hilary,jane" \
           --overwrite=no \
@@ -120,10 +120,10 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        doOptionsCheck(options, sinfo, "fsl_f99")
+        doOptionsCheck(options, sinfo, "dwi_f99")
         
         # construct dirs
-        fsl_f99_dir = os.path.join(os.environ["FSLDIR"], "data/xtract_data/standard/F99")
+        dwi_f99_dir = os.path.join(os.environ["FSLDIR"], "data/xtract_data/standard/F99")
         nhp_dir = os.path.join(options["sessionsfolder"], session, "NHP")
         f99reg_dir = os.path.join(nhp_dir, "F99reg")
         if not os.path.exists(f99reg_dir):
@@ -151,7 +151,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
                 "script"    : f99_script,
                 "input"     : dti_file,
                 "output"    : f99reg_dir + "/F99",
-                "f99dir"    : fsl_f99_dir}
+                "f99dir"    : dwi_f99_dir}
 
         # report command
         r += "\n\n------------------------------------------------------------\n"
@@ -214,9 +214,9 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def fsl_xtract(sinfo, options, overwrite=False, thread=0):
+def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     """
-    ``fsl_xtract [... processing options]``
+    ``dwi_xtract [... processing options]``
     ``fslx [... processing options]``
 
     This command executes FSL's XTRACT (cross-species tractography) command.
@@ -228,9 +228,9 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    Succesfull completion of FSL's bedpostx processing (dwi_fsl_bedpostx_gpu
+    Succesfull completion of FSL's bedpostx processing (dwi_bedpostx_gpu
     command in QuNex). For macaques FSL F99 registration is also required
-    (fsl_f99 command in QuNex).
+    (dwi_f99 command in QuNex).
 
     INPUTS
     ======
@@ -279,7 +279,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
                             Default for humans is set to session's:
                             [acpc_dc2standard.nii.gz and standard2acpc_dc.nii.gz],
                             for macaques warp fields from F99 registration
-                            command (fsl_f99) are used by default.
+                            command (dwi_f99) are used by default.
     --xtract_resolution     Output resolution in mm. Default is the same as in
                             the protocols folder unless --native is used.
     --xtract_ptx_options    Pass extra probtrackx2 options as a text file to
@@ -315,13 +315,13 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex fsl_xtract \
+        qunex dwi_xtract \
           --sessionsfolder="/data/example_study/sessions" \
           --sessions="OP110" \
           --species="human" \
           --overwrite=yes
 
-        qunex fsl_xtract \
+        qunex dwi_xtract \
           --sessionsfolder="/data/macaque_study/sessions" \
           --sessions="hilary,jane" \
           --species="macaque" \
@@ -342,7 +342,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        doOptionsCheck(options, sinfo, "fsl_xtract")
+        doOptionsCheck(options, sinfo, "dwi_xtract")
         
         # get species
         species = "HUMAN"
