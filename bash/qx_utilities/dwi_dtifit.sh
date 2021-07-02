@@ -165,7 +165,7 @@ ymin=`opts_GetOpt "--ymin" $@`
 ymax=`opts_GetOpt "--ymax" $@`
 xmin=`opts_GetOpt "--xmin" $@`
 xmax=`opts_GetOpt "--xmax" $@`
-gradnonlin=`get_flags "--gradnonlin" $@`
+gradnonlin=`opts_GetOpt "--gradnonlin" $@`
 
 # -- Check required parameters
 if [ -z "$SessionsFolder" ]; then reho "Error: Sessions Folder"; exit 1; fi
@@ -304,8 +304,8 @@ fi
 
 # gradnonlin
 if [[ -n ${gradnonlin} ]]; then
-    echo "   gradnonlin: yes"
-    optional_parameters="${optional_parameters} --gradnonlin"
+    echo "   gradnonlin: ${gradnonlin}"
+    optional_parameters="${optional_parameters} --gradnonlin='${gradnonlin}'"
 fi
 
 

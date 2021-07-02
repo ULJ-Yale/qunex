@@ -799,7 +799,7 @@ fi
 # gradnonlin
 if [[ -n ${gradnonlin} ]]; then
     optional_parameters="${optional_parameters} \
-    --gradnonlin'
+    --gradnonlin='${gradnonlin}''
     "
 fi
 
@@ -1625,7 +1625,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ymax=`get_parameters "${setflag}ymax" $@`
     xmin=`get_parameters "${setflag}xmin" $@`
     xmax=`get_parameters "${setflag}xmax" $@`
-    gradnonlin=`get_flags "${setflag}gradnonlin" $@`
+    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
     # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`
     Weight=`get_parameters "${setflag}weight" $@`
