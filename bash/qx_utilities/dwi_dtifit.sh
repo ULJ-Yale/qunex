@@ -42,7 +42,7 @@ usage() {
   echo "--littlebit        Only process small area of brain [not set by default]."
   echo "--save_tensor      Save the elements of the tensor [not set by default]."
   echo "--zmin             Min z [not set by default]."
-  echo "--zmax             Max z[not set by default]."
+  echo "--zmax             Max z [not set by default]."
   echo "--ymin             Min y [not set by default]."
   echo "--ymax             Max y [not set by default]."
   echo "--xmin             Min x [not set by default]."
