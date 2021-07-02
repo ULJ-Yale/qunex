@@ -68,8 +68,8 @@ dicom2nii                                 Converts MR images from DICOM to NIfTI
 dicom2niix                                Converts MR images from DICOM and PAR/REC files to NIfTI format.
 dwi_legacy                                Diffusion image processing for data with or without standard fieldmaps.
 dwi_eddy_qc                               Runs quality control on diffusion datasets following eddy outputs.
-dwi_fsl_dtifit                            Runs FSL's dtifit tool (cluster usable).
-dwi_fsl_bedpostx_gpu                      Runs FSL GPU-enabled bedpostx.
+dwi_dtifit                            Runs FSL's dtifit tool (cluster usable).
+dwi_bedpostx_gpu                      Runs FSL GPU-enabled bedpostx.
 dwi_pre_tractography                      Generates space for dense whole-brain connectomes.
 dwi_probtrackx_dense_gpu                  Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.
 dwi_seed_tractography_dense               Reduces dense tractography data using a seed structure.
@@ -91,8 +91,8 @@ fc_extract_trial_timeseries_masked        Extracts trial timeseries for each of 
 fc_preprocess                             Runs single BOLD file based functional connectivity preprocessing.
 fc_preprocess_conc                        Runs fcMRI preprocessing and GLM analysis a set of BOLD files.
 fc_segment_mri                            Segments the voxels in smask based on their connectivity with tmask ROI.
-fsl_f99                                   Runs FSL F99 command.
-fsl_xtract                                Runs FSL XTRACT command.
+dwi_f99                                   Runs FSL F99 command.
+dwi_xtract                                Runs FSL XTRACT command.
 general_compute_bold_list_stats           Computes BOLD run per frame statistics and scrubbing information for a list of sessions.
 general_compute_bold_stats                Computes BOLD run per frame statistics and scrubbing information.
 general_compute_group_bold_stats          Extracts image statistics over the whole group.
