@@ -695,7 +695,7 @@ def run(command, args):
     # -----------------------------------------------------------------------
     #                                                             local queue
 
-    if options['scheduler'] == 'local' or options['run'] == 'test':
+    if options['scheduler'] == 'local':
 
         consoleLog = ""
 
