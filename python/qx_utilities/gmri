@@ -165,7 +165,7 @@ def runCommand(command, args):
         return
     elif command in gm.functions:
         if 'scheduler' in args:
-            gs.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
+            gs.runThroughScheduler(command, sessions=None, args=args, logfolder=folders['logfolder'])
         else:
             gm.run(command, args)
         return
