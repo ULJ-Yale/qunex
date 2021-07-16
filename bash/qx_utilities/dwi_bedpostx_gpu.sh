@@ -74,6 +74,9 @@ usage() {
  echo "                   - 3 ... with zeppelins. [2]"
  echo "--rician           Replace the default Gaussian noise assumption with"
  echo "                   Rician noise (yes/no). [yes]"
+ echo "--gradnonlin       Consider gradient nonlinearities (yes/no). By default set"
+ echo "                   automatically. Set to yes if the file grad_dev.nii.gz"
+ echo "                   is present, set to no if it is not."
  echo "--overwrite        Delete prior run for a given session. [no]"
  echo "--scheduler        A string for the cluster scheduler (LSF, PBS or SLURM)"
  echo "                   followed by relevant options, e.g. for SLURM the string"
@@ -188,6 +191,7 @@ Jumps=`opts_GetOpt "--jumps" $@`
 Sample=`opts_GetOpt "--sample" $@`
 Model=`opts_GetOpt "--model" $@`
 Rician=`opts_GetOpt "--rician" $@`
+Gradnonlin=`opts_GetOpt "--gradnonlin" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
 Species=`opts_GetOpt "--species" $@`
 CASE=`opts_GetOpt "--session" $@`
@@ -319,17 +323,26 @@ else
     RicianFlag="--rician"
 fi
 
-# -- Command to run
-if [ -f "$DiffusionFolder"/grad_dev.nii.gz ]; then
-    echo ""
-    geho "--> Using gradient nonlinearities flag -g"
-    echo ""
-    GradientNonlinearitiesFlag="-g"
+# -- Gradnon lin
+# -- Set automatically by default 
+if [ -z "$Gradnonlin" ]; then
+    if [ -f "$DiffusionFolder"/grad_dev.nii.gz ]; then
+        echo ""
+        geho "--> Using gradient nonlinearities flag -g"
+        echo ""
+        GradientNonlinearitiesFlag="-g"
+    else
+        echo ""
+        geho "--> Not using gradient nonlinearities flag -g"
+        echo ""
+        GradientNonlinearitiesFlag=""
+    fi
 else
-    echo ""
-    geho "--> Not using gradient nonlinearities flag -g"
-    echo ""
-    GradientNonlinearitiesFlag=""
+    if [ "$Gradnonlin" == "no" ] || [ "$Gradnonlin" == "NO" ]; then
+        GradientNonlinearitiesFlag=""
+    else
+        GradientNonlinearitiesFlag="-g"
+    fi
 fi
 
 # -- Report

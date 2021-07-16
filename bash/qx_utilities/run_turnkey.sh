@@ -620,6 +620,7 @@ Model=`opts_GetOpt "--model" $@`
 Burnin=`opts_GetOpt "--burnin" $@`
 Jumps=`opts_GetOpt "--jumps" $@`
 Rician=`opts_GetOpt "--rician" $@`
+Gradnonlin=`opts_GetOpt "--gradnonlin" $@`
 # -- dwi_probtrackx_dense_gpu input flags
 MatrixOne=`opts_GetOpt "--omatrix1" $@`
 MatrixThree=`opts_GetOpt "--omatrix3" $@`
@@ -2094,7 +2095,8 @@ fi
         if [ -z "$Model" ]; then Model="3"; fi
         if [ -z "$Burnin" ]; then Burnin="3000"; fi
         if [ -z "$Rician" ]; then Rician="yes"; fi
-        ${QuNexCommand} dwi_bedpostx_gpu --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
+        if [ -z "$Gradnonlin" ]; then Gradnonlin="yes"; fi
+        ${QuNexCommand} dwi_bedpostx_gpu --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}" --gradnonlin="${Gradnonlin}"
     }
     # -- run_qc_dwi_dtifit (after dwi_dtifit)
     turnkey_run_qc_dwi_dtifit() {
