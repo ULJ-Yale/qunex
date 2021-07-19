@@ -124,7 +124,7 @@ if ~isfield(options_parsed,'boundary')
     options_parsed.boundary = '';
 end
 if ~isfield(options_parsed,'limitvol')
-    options_parsed.limit_growth = false;
+    options_parsed.limitvol = false;
 end
 frames = options_parsed.frames;
 boundary = options_parsed.boundary;

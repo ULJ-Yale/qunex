@@ -308,6 +308,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             elif k == 'nodes':
                 sCommand += "#PBS -l nodes=%s\n" % v
 
+        # set default nodes
         if ("nodes" not in setDict.keys()):
             sCommand += "#PBS -l nodes=%s:ppn=%s\n" % (parsessions + 1, parelements)
 
@@ -366,10 +367,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
         # set default ntasks and cpus-per-task
-        if ("ntasks" not in setDict.keys() or "n" not in setDict.keys()):
+        if ("ntasks" not in setDict.keys() and "n" not in setDict.keys()):
             sCommand += "#SBATCH --ntasks=%s\n" % (parsessions + 1)
-        if ("cpus-per-task" not in setDict.keys() or "c" not in setDict.keys()):
+        if ("cpus-per-task" not in setDict.keys() and "c" not in setDict.keys()):
             sCommand += "#SBATCH --cpus-per-task=%s\n" % (parelements)
+
+        print(sCommand)
+        exit(1)
 
         # jobname
         if (comname != ""):

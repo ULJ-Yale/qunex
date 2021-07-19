@@ -833,6 +833,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \
 --sample='${Sample}' \
 --model='${Model}' \
 --rician='${Rician}' \
+--gradnonlin='${Gradnonlin}' \
 --overwrite='${Overwrite}' \
 --species=${Species}"
 # -- QuNex bash execute function
@@ -1634,6 +1635,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Sample=`get_parameters "${setflag}sample" $@`
     Model=`get_parameters "${setflag}model" $@`
     Rician=`get_parameters "${setflag}rician" $@`
+    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
     # -- Input flags for dwi_probtrackx_dense_gpu
     MatrixOne=`get_parameters "${setflag}omatrix1" $@`
     MatrixThree=`get_parameters "${setflag}omatrix3" $@`
