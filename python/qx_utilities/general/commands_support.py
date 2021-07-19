@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``commands_support.py``
 
@@ -48,15 +53,15 @@ deprecated_commands = {
                         "stats_ttest_zero": ["s_TTestZero"],
                         "run_qc": ["runQC","RunQC","QCPreproc"],
                         "parcellate_anat": ["ANATparcellate", "anat_parcellate"],
-                        "compute_fc_bold": ["BOLDcomputeFC", "bold_compute_fc"],
+                        "fc_compute_wrapper": ["BOLDcomputeFC", "bold_compute_fc", "compute_fc_bold"],
                         "parcellate_bold": ["BOLDparcellate", "bold_parcellate"],
                         "bold_parcellation": ["BOLDParcellation"],
                         "data_sync": ["DataSync"],
                         "run_qc_dwi_eddy": ["runQC_DWIeddyQC"],
                         "dwi_eddy_qc": ["DWIeddyQC"],
-                        "dwi_fsl_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU"],
-                        "dwi_fsl_dtifit": ["DWIFSLdtifit", "FSLDTtifit"],
-                        "run_qc_dwi_fsl_dtifit": ["runQC_DWIFSLdtifit"],
+                        "dwi_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU", "dwi_fsl_bedpostx_gpu"],
+                        "dwi_dtifit": ["DWIFSLdtifit", "FSLDTtifit", "dwi_fsl_dtifit"],
+                        "run_qc_dwi_dtifit": ["runQC_DWIFSLdtifit", "run_qc_dwi_fsl_dtifit"],
                         "dwi_legacy": ["hcpdLegacy", "DWILegacy"],
                         "run_qc_dwi_legacy": ["runQC_DWILegacy"],
                         "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
@@ -153,7 +158,9 @@ deprecated_commands = {
                         "create_bold_list": ["createBoldList"],
                         "create_conc_list": ["createConcList"],
                         "map_raw_data": ["mapRawData"],
-                        "hcp_task_fmri_analysis" : ["hcp_TaskfMRIAnalysis"]
+                        "hcp_task_fmri_analysis" : ["hcp_TaskfMRIAnalysis"],
+                        "dwi_xtract": ["fsl_xtract"],
+                        "dwi_f99": ["fsl_f99"]
                       }
 
 # the function for checking whether a command is deprecated or not

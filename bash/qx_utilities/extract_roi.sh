@@ -1,46 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-# * Charles Scheleifer, Department of Psychiatry, Yale University
-#
-# ## PRODUCT
-#
-# Wrapper to run MATLAB function to extract ROIs from input file based on template file
-#
-# ## LICENCE
-#
-# * The roi_extract.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## DESCRIPTION 
-#   
-# This script, roi_extract.sh, implements ROI extraction
-# using a pre-specified ROI file in NIFTI or CIFTI format
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * QuNex Suite
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./roi_extract.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are imaging data from previous processing and ROI file
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 # -- General help usage function

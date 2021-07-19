@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [img] = img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
 
 %``function [img] = img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)``

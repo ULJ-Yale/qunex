@@ -1,12 +1,11 @@
 #!/bin/bash
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
-#
-# ## Copyright Notice
-##
-# * Copyright (C) 2004 University of Oxford
-# * Copyright (C) 2017 Yale University
 #
 # ## Author(s)
 #
@@ -16,15 +15,6 @@
 # ## Product
 #
 #  Wrapper for RunMatrix3 GPU without scheduler specification
-#
-# ## License
-#
-# * The run_matrix3.sh = the "Software"
-# * This Software is distributed "AS IS" without warranty of any kind, either 
-# * expressed or implied, including, but not limited to, the implied warranties
-# * of merchantability and fitness for a particular purpose.
-#
-# ### TODO
 #
 # ## Description 
 #   
@@ -51,7 +41,7 @@ if [[ `nvcc --version | grep "release"` == *"9.1"* ]]; then bindir=${FSLGPUBinar
 
 # -- Define paths
 scriptsdir=$HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts
-TemplateFolder=$HCPPIPEDIR_dMRITractFull/templates
+TemplateFolder=$QUNEXLIBRARYETC/diffusion_tractography_dense/templates
 
 # -- Check inputs
 if [ "$2" == "" ];then

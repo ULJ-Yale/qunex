@@ -1,81 +1,178 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options)
 
 %``function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options)``
 %
-%   Computes seed based functional connectivity maps for individual subject / session.
+%   Computes seed based functional connectivity maps for individual subject / 
+%   session.
 %
 %   INPUTS
 %   ======
 %
-%   --bolds     A string with a pipe separated list of paths to .conc or bold files. 
-%               The first element has to be the name of the file or group to be used when saving the data. 
-%               E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'
-%   --roiinfo   A path to the names file specifying group based seeds. Additionaly, separated by a pipe '|'
-%               symbol, a path to an image file holding subject/session specific ROI definition.
+%   --bolds     A string with a pipe separated list of paths to .conc or bold 
+%               files. The first element has to be the name of the file or group 
+%               to be used when saving the data. E.g.::
+%
+%                   'rest|<path to rest file 1>|<path to rest file 2>'
+%
+%   --roiinfo   A path to the names file specifying group based seeds. Additionally, 
+%               separated by a pipe '|' symbol, a path to an image file holding 
+%               subject/session specific ROI definition.
 %   --frames    The definition of which frames to extract, specifically:
-%               ->  a numeric array mask defining which frames to use (1) and which not (0), or 
-%               ->  a single number, specifying the number of frames to skip at the start of each bold, or
-%               ->  a string describing which events to extract timeseries for, and the frame offset from 
-%                   the start and end of the event in format: 
-%                   '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>') 
-%                   where:
-%                   -> fidlfile         ... is a path to the fidle file that defines the events    
-%                   -> extraction name  ... is the name for the specific extraction definition    
-%                   -> event list       ... is a comma separated list of events for which data is to be extracted    
-%                   -> extraction start ... is a frame number relative to event start or end when the extraction should start    
-%                   -> extraction end   ... is a frame number relative to event start or end when the extraction should start    
-%                      the extraction start and end should be given as '<s|e><frame number>'. E.g.:
-%                       s0  ... the frame of the event onset 
-%                       s2  ... the second frame from the event onset 
-%                       e1  ... the first frame from the event end 
-%                       e0  ... the last frame of the event 
-%                       e-2 ... the two frames before the event end
-%                      example:
-%                       '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
-%   --tagetf    The folder to save images in ['.'].
-%   --options   A string specifying additional analysis options formated as pipe separated pairs of colon separated
-%               key, value pairs: "<key>:<value>|<key>:<value>"
+%
+%               - a numeric array mask defining which frames to use (1) and 
+%                 which not (0), or 
+%               - a single number, specifying the number of frames to skip at 
+%                 the start of each bold, or
+%               - a string describing which events to extract timeseries for, 
+%                 and the frame offset from the start and end of the event in 
+%                 format::
+% 
+%                     '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>') 
+%
+%                 where:
+%
+%                 fidlfile         
+%                     is a path to the fidle file that defines the events    
+%                 extraction name  
+%                     is the name for the specific extraction definition    
+%                 event list       
+%                     is a comma separated list of events for which data is to 
+%                     be extracted    
+%                 extraction start 
+%                     is a frame number relative to event start or end when the 
+%                     extraction should start    
+%                 extraction end   
+%                     is a frame number relative to event start or end when the 
+%                     extraction should start the extraction start and end 
+%                     should be given as '<s|e><frame number>'. E.g.:
+%
+%                      - s0  ... the frame of the event onset 
+%                      - s2  ... the second frame from the event onset 
+%                      - e1  ... the first frame from the event end 
+%                      - e0  ... the last frame of the event 
+%                      - e-2 ... the two frames before the event end
+%
+%                      Example::
+%
+%                      '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%
+%   --targetf   The folder to save images in ['.'].
+%   --options   A string specifying additional analysis options formated as pipe 
+%               separated pairs of colon separated key, value pairs: 
+%               "<key>:<value>|<key>:<value>".
+%
 %               It takes the following keys and values:
-%               -> roimethod ... what method to use to compute ROI signal, 'mean', 'median', or 'pca' ['mean']
-%               -> eventdata ... what data to use from each event:
-%                                -> all      ... use all identified frames of all events
-%                                -> mean     ... use the mean across frames of each identified event
-%                                -> min      ... use the minimum value across frames of each identified event
-%                                -> max      ... use the maximum value across frames of each identified event
-%                                -> median   ... use the median value across frames of each identified event
-%                                ['all']
-%               -> ignore    ... a comma separated list of information to identify frames to ignore, options are:
-%                                -> use      ... ignore frames as marked in the use field of the bold file
-%                                -> fidl     ... ignore frames as marked in .fidl file (only available with event extraction)
-%                                -> <column> ... the column name in *_scrub.txt file that matches bold file to be used for ignore mask
-%                                ['use,fidl']
-%               -> badevents ... what to do with events that have frames marked as bad, options are:
-%                                -> use      ... use any frames that are not marked as bad
-%                                -> <number> ... use the frames that are not marked as bad if at least <number> ok frames exist
-%                                -> ignore   ... if any frame is marked as bad, ignore the full event
-%                                ['use']
-%               -> fcmeasure ... which functional connectivity measure to compute, the options are:
-%                                -> r        ... pearson's r value
-%                                -> cv       ... covariance estimate
-%                                ['r']
-%               -> saveind   ... a comma separted list of individual session / subject files to save
-%                                -> r        ... save Pearson correlation coefficients (r only) separately for each roi
-%                                -> fz       ... save Fisher Z values (r only) separately for each roi
-%                                -> z        ... save Z statistic (r only) separately for each roi
-%                                -> p        ... save p value (r only) separately for each roi
-%                                -> cv       ... save covariances (cv only) separately for each roi
-%                                -> allbyroi ... save all relevant values by roi
-%                                -> jr       ... save Pearson correlation coefficients (r only) in a single file for all roi
-%                                -> jfz      ... save Fisher Z values (r only) in a single file for all roi
-%                                -> jz       ... save Z statistic (r only) in a single file for all roi
-%                                -> jp       ... save p value (r only) in a single file for all roi
-%                                -> jcv      ... save covariances (cv only) in a single file for all roi
-%                                -> alljoint ... save all relevant values in a joint file
-%                                -> none     ... do not save any individual level results
-%                                ['none']
-%                                Default is 'none'. Any invalid options will be ignored without a warning.
-%               -> subjectname   an optional name to add to the output files, if empty, it won't be used ['']
-%               -> verbose   ... Whether to be verbose 'true' or not 'false', when running the analysis ['false']
+%
+%               roimethod
+%                   what method to use to compute ROI signal, 'mean', 'median', 
+%                   or 'pca' ['mean']
+%
+%               eventdata
+%                   what data to use from each event:
+%
+%                   all      
+%                       use all identified frames of all events
+%                   mean     
+%                       use the mean across frames of each identified event
+%                   min      
+%                       use the minimum value across frames of each identified 
+%                       event
+%                   max      
+%                       use the maximum value across frames of each identified 
+%                       event
+%                   median   
+%                       use the median value across frames of each identified 
+%                       event
+%                   
+%                   ['all']
+%
+%               ignore   
+%                   a comma separated list of information to identify frames to 
+%                   ignore, options are:
+%
+%                   use      
+%                       ignore frames as marked in the use field of the bold file
+%                   fidl     
+%                       ignore frames as marked in .fidl file (only available 
+%                       with event extraction)
+%                   <column> 
+%                       the column name in *_scrub.txt file that matches bold 
+%                       file to be used for ignore mask
+%
+%                   ['use,fidl']
+%
+%               badevents
+%                   what to do with events that have frames marked as bad, 
+%                   options are:
+%
+%                   use      
+%                       use any frames that are not marked as bad
+%                   <number> 
+%                       use the frames that are not marked as bad if at least 
+%                       <number> ok frames exist
+%                   ignore   
+%                       if any frame is marked as bad, ignore the full event
+%                   
+%                   ['use']
+%
+%               fcmeasure
+%                   which functional connectivity measure to compute, the 
+%                   options are:
+%
+%                   - r  ... pearson's r value
+%                   - cv ... covariance estimate
+%
+%                   ['r']
+%
+%               saveind  
+%                   a comma separted list of individual session / subject files 
+%                   to save
+%
+%                   r        
+%                       save Pearson correlation coefficients (r only) 
+%                       separately for each roi
+%                   fz       
+%                       save Fisher Z values (r only) separately for each roi
+%                   z        
+%                       save Z statistic (r only) separately for each roi
+%                   p        
+%                       save p value (r only) separately for each roi
+%                   cv       
+%                       save covariances (cv only) separately for each roi
+%                   allbyroi 
+%                       save all relevant values by roi
+%                   jr       
+%                       save Pearson correlation coefficients (r only) in a 
+%                       single file for all roi
+%                   jfz      
+%                       save Fisher Z values (r only) in a single file for all roi
+%                   jz       
+%                       save Z statistic (r only) in a single file for all roi
+%                   jp       
+%                       save p value (r only) in a single file for all roi
+%                   jcv      
+%                       save covariances (cv only) in a single file for all roi
+%                   alljoint 
+%                       save all relevant values in a joint file
+%                   none     
+%                       do not save any individual level results
+%
+%                   ['none']
+%
+%                   Default is 'none'. Any invalid options will be ignored 
+%                   without a warning.
+%
+%               subjectname
+%                   an optional name to add to the output files, if empty, it 
+%                   won't be used ['']
+%
+%               verbose
+%                   Whether to be verbose 'true' or not 'false', when running 
+%                   the analysis ['false']
 %
 %   RESULTS
 %   =======
@@ -84,13 +181,16 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %   data extraction:
 %
 %   fcmaps
-%
-%        - title:     the title of the extraction as specifed in the frames string, 
-%                     empty if extraction was specified using a numeric value 
-%        - fc:        the functional connectivity map, with one seed-map per frame
-%        - roi:       a cell array with the names of the ROI used in the order 
-%                     of their seed-maps in the fc image
-%        - N:         number of frames over which the map was computed
+%       title
+%           the title of the extraction as specifed in the frames string, empty 
+%           if extraction was specified using a numeric value 
+%       fc
+%           the functional connectivity map, with one seed-map per frame
+%       roi
+%           a cell array with the names of the ROI used in the order of their 
+%           seed-maps in the fc image
+%       N
+%           number of frames over which the map was computed
 %
 %   Based on saveind option specification the following files may be saved:
 %
@@ -109,18 +209,18 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %   `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_cv`
 %       covariance
 %
-%   `<roi>` is the name of the ROI for which the seed map was computed for.
-%   `<name>` is the provided name of the bold(s).
-%   `<subjectname>` is the provided name of the subject, if it was specified.
-%   `<title>` is the title of the extraction event(s), if event string was
-%   specified.
+%   - `<roi>` is the name of the ROI for which the seed map was computed for.
+%   - `<name>` is the provided name of the bold(s).
+%   - `<subjectname>` is the provided name of the subject, if it was specified.
+%   - `<title>` is the title of the extraction event(s), if event string was
+%     specified.
 %
 %   USE
 %   ===
 % 
 %   The function computes seed maps for the specified ROI. If an event string is
 %   provided, it has to start with a path to the .fidl file to be used to extract 
-%   the events, following by a pipe separated list of event extraction definitions:
+%   the events, following by a pipe separated list of event extraction definitions::
 %
 %       <title>:<eventlist>:<frame offset1>:<frame offset2>
 %

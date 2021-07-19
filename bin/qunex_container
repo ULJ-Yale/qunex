@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function, division
 import subprocess
@@ -43,7 +47,7 @@ class CommandFailed(Exception):
         self.report   = (error,) + hints
 
 
-def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
+def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, parsessions=1, parelements=1):
     '''
     qunex_command scheduler 
 
@@ -186,7 +190,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     '''
 
     # --- check inputs
-
     if command is None and script is None:
         raise CommandError("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
 
@@ -197,7 +200,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         raise CommandError("schedule", "Missing parameter", "Settings need to be provided to run scheduler!")
 
     # --- parse settings
-
     try:
         setList   = [e.strip() for e in settings.split(",")]
         scheduler = setList.pop(0)
@@ -223,7 +225,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", settings)
 
     # --- compile command to pass
-
     if command is None:
         if not os.path.exists(script):
             raise CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
@@ -240,7 +241,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         command = open(environment, "r") + "\n" + command
 
     # --- do search replace
-
     if replace is not None:
         replace = [e.strip().split(":") for e in replace.split("|")]
 
@@ -249,7 +249,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
 
     # --- parse output
-
     outputs = {'stdout': None, 'stderr': None, 'both': None, 'return': None}
 
     if output is not None:
@@ -263,7 +262,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         outputs['stdout'] = outputs['both']
 
     # --- build scheduler commands
-
     sCommand = ""
 
     if scheduler == "PBS":
@@ -280,6 +278,10 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 jobname = v
             elif k == 'nodes':
                 sCommand += "#PBS -l nodes=%s\n" % v
+
+        # set default nodes
+        if ("nodes" not in setDict.keys()):
+            sCommand += "#PBS -l nodes=%s:ppn=%s\n" % (parsessions + 1, parelements)
 
         # job name
         if (comname != ""):
@@ -304,8 +306,12 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
                 sCommand += "#BSUB -%s %s\n" % (k, v)
-            elif k is 'jobName' and jobname == 'schedule':
+            elif k == 'jobName' and jobname == 'schedule':
                 jobname = v
+
+        # set default cores
+        if ("cores" not in setDict.keys()):
+            sCommand += "#BSUB -n %s\n" % ((parsessions + 1) * parelements)
 
         # jobname
         if (comname != ""):
@@ -331,6 +337,12 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
+        # set default ntasks and cpus-per-task
+        if ("ntasks" not in setDict.keys() and "n" not in setDict.keys()):
+            sCommand += "#SBATCH --ntasks=%s\n" % (parsessions + 1)
+        if ("cpus-per-task" not in setDict.keys() and "c" not in setDict.keys()):
+            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parelements)
+
         # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
@@ -345,8 +357,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         com = 'sbatch'
 
     # --- run scheduler
-
-    print("Submitting:\n------------------------------\n", sCommand + command)
+    print("\nSubmitting:\n------------------------------")
+    print(sCommand)
+    print(command + "\n")
 
     if outputs['return'] is None:
         serr = None
@@ -366,7 +379,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     run.stdin.close()
 
     # ---- returning results
-
     if outputs['return'] in ['both', 'stdout']:
         result = run.stdout.read()
         return result
@@ -546,7 +558,15 @@ def main(args=None):
     --output        A string specifying where to redirect the standard output 
                     and error when using the scheduler. See "Redirecting 
                     output" for details!
-    
+    --parjobs       Specify the maximum amount of jobs that will be created
+                    and run in parallel. By default this equals the number
+                    of sessions your provided.
+    --parsessions   Specify the amount of sessions that will be run in parallel
+                    inside each created job. [1]
+    --parelements   Specify the amount of elements that will be run in parallel
+                    inside each session (for example BOLDs in hcp_fmri_volume).
+                    [1]
+
     RESULTS
     =======
 
@@ -567,8 +587,8 @@ def main(args=None):
     Docker container. 
 
 
-    Scheduling containers
-    ---------------------
+    Scheduling jobs
+    ---------------
 
     Container commands can be submitted to a scheduling system by specifying 
     the `--scheduler` parameter with a settings string. The settings string 
@@ -587,15 +607,15 @@ def main(args=None):
         "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=pi_anticevic"
 
 
-    Scheduling multiple containers in parallel
-    ------------------------------------------
+    Scheduling multiple jobs in parallel
+    ------------------------------------
     
     If the parameters provided include --parsessions, --scheduler, and --sessions, 
     then qunex_container will spread the execution of the command by scheduling 
-    multiple containers to run on separate nodes. Specifically, it will schedule
+    multiple jobs to run on separate nodes. Specifically, it will schedule
     each node to run a container with `parsessions` sessions. E.g. if 10 sessions are 
-    specified and parsessions is set to 4, the command will schedule four containers 
-    to run on four nodes. The first three containers will each run three 
+    specified and parsessions is set to 4, the command will schedule four jobs 
+    to run on four nodes. The first three jobs will each run three 
     sessions in parallel, the fourth container will run the remaining session. 
 
 
@@ -660,6 +680,7 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
+    env_status          = False
     scheduler           = None
     conimage            = None
     command             = ""
@@ -668,17 +689,21 @@ def main(args=None):
     bind                = None
     nv                  = None
     script              = None
+    parjobs             = None
     parsessions         = 1
+    parelements         = 1
     sessions            = None
     sessionsfolder      = None
     sessionids          = None
-    sessionids_provided = False
     envars              = None
     dockeropt           = None
     output              = None
     csessions           = None
+    test                = None
 
     for arg in args:
+        if "env_status" in arg or "envstatus" in arg:
+            env_status = True
         if "scheduler=" in arg:
             k, scheduler = arg.split("=", 1)
         elif "container=" in arg:
@@ -699,36 +724,34 @@ def main(args=None):
             nv = True
         elif "script=" in arg:
             k, script = arg.split("=", 1)
+        elif "parjobs=" in arg:
+            k, parjobs = arg.split("=", 1)
+            parjobs = int(parjobs)
         elif "parsessions=" in arg:
             k, parsessions = arg.split("=", 1)
             command += '%s="%s" ' % (k, parsessions)
+            parsessions = int(parsessions)
+        elif "parsessions=" in arg:
+            k, parelements = arg.split("=", 1)
+            command += '%s="%s" ' % (k, parelements)
+            parelements = int(parelements)
         elif "sessionsfolder=" in arg:
             k, sessionsfolder = arg.split("=", 1)
             command += '%s="%s" ' % (k, sessionsfolder)
+        elif "sessions=" in arg:
+            k, sessions = arg.split("=", 1)
         elif "csessions=" in arg:
             k, csessions = arg.split("=", 1)
             command += '--sessions="%s" ' % (csessions)
-        elif "sessions=" in arg:            
-            k, sessions = arg.split("=", 1)
-            command += '%s="%s" ' % (k, sessions)        
         elif "sessionids=" in arg:
-            sessionids_provided = True
             k, sessionids = arg.split("=", 1)
         elif "=" in arg:
             k, v = arg.split('=', 1)
             command += '%s="%s" ' % (k, v)
+        elif arg.replace("-", "") == "test":
+            test = True
         else:
             command += '%s ' % (arg)
-
-    if csessions is not None and sessions is not None:
-        print("ERROR: Please specify either sessions or csessions, but not both!")
-        exit(1)
-
-    parsessions = int(parsessions)
-
-    if command.startswith('?scheduler'):
-        print(schedule.__doc__)
-        exit()
 
     if conimage is None:
         if "QUNEXCONIMAGE" in os.environ:
@@ -737,8 +760,32 @@ def main(args=None):
             print("ERROR: No Singularity image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
             exit(1)
 
-    # -- check for environment variables
+    # docker or Singularity
+    singularity = conimage.endswith(".simg") or conimage.endswith(".sif")
 
+    # just report env status and quit
+    if env_status:
+        # singularity
+        if singularity:
+            env_command = "singularity exec %s bash /opt/qunex/env/qunex_container_env_status.sh" % conimage
+
+        # docker
+        else:
+            env_command = "docker run %s bash -c \"/opt/qunex/env/qunex_container_env_status.sh\"" % conimage
+
+        # run
+        subprocess.Popen(env_command, shell=True)
+        exit(0)
+
+    if csessions is not None and sessions is not None:
+        print("ERROR: Please specify either sessions or csessions, but not both!")
+        exit(1)
+
+    if command.startswith('?scheduler'):
+        print(schedule.__doc__)
+        exit()
+
+    # -- check for environment variables
     if envars:
         envars = [e for e in envars.split('|')]
         envars = [e.split('=>') for e in envars if '=>' in e]
@@ -746,7 +793,6 @@ def main(args=None):
         envars = []
 
     # -- check for docker options
-
     if dockeropt is None:
         if "QUNEXDOCKEROPT" in os.environ:
             dockeropt = os.environ['QUNEXDOCKEROPT']
@@ -756,115 +802,163 @@ def main(args=None):
     homedir = os.path.expanduser("~")
     dockeropt += " -v %s:%s" % (homedir, homedir)
 
-    # run in parallel if:
-    # - parsessions is not None
-    # - schedulers is not None
-    # - sessions is not None
-    sessionidsArray = []
-    if parsessions is not None and sessions is not None and scheduler is not None:
-                
-        # split sessions via sessionids or split existing sessionids
+    # number of sessions
+    n_sessions = None
+
+    # split sessions via sessionids or split existing sessionids
+    if sessions is not None:
         if sessionids is None:
             sessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
         else:
             getsessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
             sessionidsSplit = re.split(' +|,|\|', sessionids)
-            print("sessionidsSplit:", sessionidsSplit, "\nsessionids",  sessionids, "\ngetsessionids", getsessionids)
             sessionids = [e for e in getsessionids if e in sessionidsSplit]
 
-        if scheduler is None:
-            containers = parsessions
+        n_sessions = len(sessionids)
 
-            # split sessionids according to parsessions and add to array
-            start = 0
-            end = len(sessionids)
-            chunks = int(math.ceil(end / float(parsessions)))
-            for i in range(start, end, chunks):
-                start = i
-                sessionidsChunk = sessionids[start:start+chunks]
-                sessionidsArray.append(','.join(sessionidsChunk))        
-        
-        else:
-            containers = 0
+    # array for storing session ids
+    sessionids_array = []
 
-            # split sessionids according to parsessions and add to array
+    # if scheduler is not None then setup parallelism
+    if scheduler and sessions is not None:
+        # if parjobs is None each session is its own job
+        if parjobs is None:
+            parjobs = 0
+
+            # append to array
             while sessionids:
-                containers += 1
-                sessionidsChunk = [sessionids.pop(0) for e in range(parsessions) if sessionids]
-                sessionidsArray.append(','.join(sessionidsChunk))
+                parjobs += 1
+                sessionids_chunk = [sessionids.pop(0) for e in range(parsessions) if sessionids]
+                sessionids_array.append(','.join(sessionids_chunk))
+
+        # else split jobs into chunks
+        else:
+            # how big are chunks of sessions
+            chunks = int(math.ceil(n_sessions / float(parsessions)))
+
+            chunk_size = int(math.ceil(n_sessions / float(chunks)))
+
+            # if chunks is lower then parjobs tweak parjobs
+            if chunks < parjobs:
+                parjobs = chunks
+
+            # init queues
+            sessionids_array = [""] * parjobs
+
+            # divide sessions among jobs
+            job = 0
+            start = 0
+            for i in range(chunks):
+                # get job index
+                job = i % parjobs
+
+                if start < n_sessions:
+                    # get chunk
+                    sessionids_chunk = sessionids[start:start+chunk_size]
+                    # add comma if not empty
+                    if sessionids_array[job] != "":
+                        sessionids_array[job] = sessionids_array[job] + ","
+                    # append chunk
+                    sessionids_array[job] = sessionids_array[job] + ",".join(sessionids_chunk)
+                
+                # increase start index
+                start = start + chunk_size
 
     else:
-        # do not run parallel
-        containers = 1
-        # add sessionids filter back if exists
+        # do not run in parallel
+        parjobs = 1
+
+        # add session ids
         if sessionids is not None:
-            sessionidsArray.append(sessionids)
+            sessionids_array.append(",".join(sessionids))
 
-    singularity = conimage.endswith(".simg") or conimage.endswith(".sif")
+    # print out details
+    if n_sessions is not None:
+        print("\n--> QuNex will run the command over %s sessions. It will utilize:\n" % n_sessions)
+    else:
+        print("\n--> QuNex will utilize:\n")
+    print("    Scheduled jobs: %s " % parjobs)
 
-    for i in range(0, containers):
-        scheduleCommand = command
+    if n_sessions is not None:
+        print("    Maximum sessions run in parallel for a job: %s." % parsessions)
+        print("    Maximum elements run in parallel for a session: %s." % parelements)
+        print("    Up to %s processes will be utilized for a job.\n" % (parelements * parsessions))
 
-        # add sessionids to command?
-        if i < len(sessionidsArray) and sessionids_provided:
-            sessionids = sessionidsArray[i]
-            scheduleCommand += 'sessionids="%s" ' % (sessionids)
+        for i in range(0, parjobs):
+            print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
 
-        # setup script        
-        fid, scriptPath = tempfile.mkstemp(dir=homedir)
-        scriptName = os.path.basename(scriptPath)
-        f = os.fdopen(fid, 'w')
+    # schedule
+    if test is None:
+        for i in range(0, parjobs):
+            scheduleCommand = command
 
-        for k, v in envars:
-            print("export con_%s=\"%s\"" % (k, v), file=f)
-        print("source /opt/qunex/env/qunex_environment.sh", file=f)
+            # add sessionids to command?
+            if i < len(sessionids_array):
+                scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
+                
+                # if sessions is a batch file
+                if os.path.isfile(sessions):
+                    scheduleCommand += '--sessions="%s" ' % (sessions)
+                else:
+                    scheduleCommand += '--sessions="%s" ' % (sessionids_array[i])
+            elif sessions is not None:
+                scheduleCommand += '--sessions="%s" ' % (sessions)
 
-        if bash_post:
-            print(bash_post, file=f)
+            # setup script
+            fid, scriptPath = tempfile.mkstemp(dir=homedir)
+            scriptName = os.path.basename(scriptPath)
+            f = os.fdopen(fid, 'w')
 
-        if script:
+            for k, v in envars:
+                print("export con_%s=\"%s\"" % (k, v), file=f)
+            print("source /opt/qunex/env/qunex_environment.sh", file=f)
+
+            if bash_post:
+                print(bash_post, file=f)
+
+            if script:
+                if singularity:
+                    print("bash " + script, file=f)
+                else:
+                    with open(script, 'r') as sfile:
+                        for line in sfile:
+                            print(line, file=f)
+            elif 'runTurnkey' in scheduleCommand:
+                scheduleCommand = scheduleCommand.replace('runTurnkey', '')
+                print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + scheduleCommand, file=f)
+                
+            else:        
+                print("bash /opt/qunex/bin/qunex.sh " + scheduleCommand, file=f)
+
+            containerCommand = ""
+            if bash_pre:
+                containerCommand += bash_pre + ";"
+
             if singularity:
-                print("bash " + script, file=f)
+                print("rm " + scriptPath, file=f)
+                f.close()
+
+                containerCommand += "singularity exec "
+
+                # nv
+                if nv:
+                    containerCommand += "--nv "
+
+                # bind
+                if bind:
+                    containerCommand += "-B %s " % bind
+
+                containerCommand +=  "%s bash %s" % (conimage, scriptPath)
             else:
-                with open(script, 'r') as sfile:
-                    for line in sfile:
-                        print(line, file=f)
-        elif 'runTurnkey' in scheduleCommand:
-            scheduleCommand = scheduleCommand.replace('runTurnkey', '')
-            print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + scheduleCommand, file=f)
-            
-        else:        
-            print("bash /opt/qunex/bin/qunex.sh " + scheduleCommand, file=f)
+                print("rm " + os.path.join(homedir, scriptName), file=f)
+                f.close()
 
-        containerCommand = ""
-        if bash_pre:
-            containerCommand += bash_pre + ";"
+                containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
 
-        if singularity:
-            print("rm " + scriptPath, file=f)
-            f.close()
-
-            containerCommand += "singularity exec "
-
-            # nv
-            if nv:
-                containerCommand += "--nv "
-
-            # bind
-            if bind:
-                containerCommand += "-B %s " % bind
-
-            containerCommand +=  "%s bash %s" % (conimage, scriptPath)
-        else:
-            print("rm " + os.path.join(homedir, scriptName), file=f)
-            f.close()
-
-            containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
-
-        if scheduler:
-            schedule(command=containerCommand, settings=scheduler, output=output)
-        else:
-            subprocess.Popen(containerCommand, shell=True)
+            if scheduler:
+                schedule(command=containerCommand, settings=scheduler, output=output, parsessions=parsessions, parelements=parelements)
+            else:
+                subprocess.Popen(containerCommand, shell=True, parsessions=parsessions)
 
 if __name__ == "__main__":
     main()

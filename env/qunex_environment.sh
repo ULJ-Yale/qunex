@@ -1,30 +1,15 @@
 #!/bin/sh
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
-# Copyright (C) 2015 Anticevic Lab, Yale University
-# Copyright (C) 2015 MBLAB, University of Ljubljana
-#
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-# * Jure Demsar, University of Ljubljana
 #
 # ## PRODUCT
 #
 #  qunex_environment.sh
-#
-# ## LICENSE
-#
-# * The qunex_environment.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# ## TODO
-#
 #
 # ## DESCRIPTION:
 #
@@ -243,7 +228,7 @@ fi
 #  Environment clear and check functions
 # ------------------------------------------------------------------------------
 
-ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLGPUDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder FSLGPUBinary EDDYCUDADIR USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW'
+ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLGPUDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder FSLGPUScripts FSLGPUBinary EDDYCUDADIR USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW'
 export ENVVARIABLES
 
 # -- Check if inside the container and reset the environment on first setup
@@ -634,6 +619,9 @@ export RDIR PATH
 # -- Setup overall QuNex paths
 # ------------------------------------------------------------------------------
 
+export QUNEXLIBRARY=$QUNEXPATH/qx_library
+export QUNEXLIBRARYETC=$QUNEXLIBRARY/etc
+
 HCPATLAS=$QUNEXPATH/qx_library/data/atlases/hcp
 PATH=${HCPATLAS}:${PATH}
 export HCPATLAS PATH
@@ -665,15 +653,20 @@ alias qx_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 alias qunex_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 alias qx_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 
-alias qunex_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qx_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qunex_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus'
-alias qx_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh'
+alias qunex_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qx_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qunex_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qx_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qunex_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qx_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh'
 
-alias qunex_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
-alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envclear'
+alias qunex_container_env_status=`qunex_container --env_status`
+alias qunex_container_envstatus=`qunex_container --env_status`
+
+alias qunex_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
 
 # ------------------------------------------------------------------------------
 # -- Setup HCP Pipeline paths
@@ -710,7 +703,8 @@ export HCPPIPEDIR_dMRITract=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tr
 export HCPPIPEDIR_dMRITractFull=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
 export HCPPIPEDIR_dMRILegacy=${TOOLS}/${QUNEXREPO}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
-export FSLGPUBinary=${HCPPIPEDIR_dMRITractFull}/fsl_gpu_binaries; PATH=${FSLGPUBinary}:${PATH}; export PATH
+export FSLGPUScripts=${HCPPIPEDIR_dMRITractFull}/fsl_gpu; PATH=${FSLGPUScripts}:${PATH}; export PATH
+export FSLGPUBinary=${QUNEXLIBRARYETC}/fsl_gpu_binaries; PATH=${FSLGPUBinary}:${PATH}; export PATH
 export DefaultCUDAVersion="9.1";
 export EDDYCUDADIR=${FSLGPUBinary}/eddy_cuda; PATH=${EDDYCUDADIR}:${PATH}; export PATH; eddy_cuda="eddy_cuda_wQC"; export eddy_cuda
 
@@ -1278,12 +1272,12 @@ export BedpostXGPUDir; export ProbTrackXDIR; export bindir; PATH=${bindir}:${PAT
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${bindir}/lib
 
 
-QuNexEnvCheck=`source ${TOOLS}/${QUNEXREPO}/env/qunex_envstatus.sh --envstatus | grep "ERROR"` > /dev/null 2>&1
+QuNexEnvCheck=`source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus | grep "ERROR"` > /dev/null 2>&1
 if [[ -z ${QuNexEnvCheck} ]]; then
     geho " ---> QuNex environment set successfully!"
     echo ""
 else
-    reho "   --> ERROR in QuNex environment. Run 'qunex_envstatus' to check missing variables!"
+    reho "   --> ERROR in QuNex environment. Run 'qunex_env_status' to check missing variables!"
     echo ""
 fi
 

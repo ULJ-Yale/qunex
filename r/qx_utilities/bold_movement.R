@@ -1,5 +1,9 @@
 #!/usr/bin/Rscript
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # 	Plots movement data, creates movement reports and information for data 
 #   scrubbing.
 #
@@ -102,6 +106,11 @@ if (mreport != ""){
 	} else {
 		header = FALSE
 	}
+
+	# lock movement report file
+	mreportlockfile <- paste0(mreport, ".lck")
+	mreportlock <- lock(mreportlockfile)
+
 	mrfile <- file(mreport, "a")
 	
 	if (header){
@@ -121,6 +130,11 @@ if (preport != ""){
 	} else {
 		header = FALSE
 	}
+
+	# lock post scrubbing report file
+	preportlockfile <- paste0(preport, ".lck")
+	preportlock <- lock(preportlockfile)
+
 	prfile <- file(preport, "a")
 	
 	if (header){
@@ -140,6 +154,11 @@ if (sreport != ""){
 	} else {
 		header = FALSE
 	}
+
+	# lock scrubbing report file
+	sreportlockfile <- paste0(sreport, ".lck")
+	sreportlock <- lock(sreportlockfile)
+
 	srfile <- file(sreport, "a")
 	
 	if (header){
@@ -313,7 +332,6 @@ for (f in flist){
 		}
 	}
 
-	
 	# --- prepare data for figures
 	
 	if (plot) {
@@ -437,9 +455,19 @@ for (f in flist){
 	
 }
 
-if (msummary) close(mrfile)
-if (psummary) close(prfile)
-if (ssummary) close(srfile)
+# --- close and unlock files
+if (msummary) { 
+	close(mrfile)
+	unlock(mreportlock)
+}
+if (psummary) {
+	close(prfile)
+	unlock(preportlock)
+}
+if (ssummary) {
+	close(srfile)
+	unlock(sreportlock)
+}
 
 if (plot) {
 	major <- (nframes %/% 300 + 2) * 10

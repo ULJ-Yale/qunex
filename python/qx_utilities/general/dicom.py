@@ -1,5 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``dicom.py``
 
@@ -2404,14 +2409,17 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
             print "\n\n---=== PROCESSING %s ===---\n" % (session['sessionid'])
 
-            if masterinbox:
+            if masterinbox and not os.path.exists(ifolder):
                 os.makedirs(ifolder)
                 files = [file]
             else:
-                if session['archives']:
+                if 'archives' in session and session['archives']:
                     files = session['archives']
                 else:
                     files = [ifolder]
+
+            dnum = 0
+            fnum = 0
 
             for p in files:
 
@@ -2422,8 +2430,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                     ptype = "zip"
 
                     print "...  unzipping %s" % (os.path.basename(p))
-                    dnum = 0
-                    fnum = 0
 
                     try:
                         z = zipfile.ZipFile(p, 'r')
@@ -2475,15 +2481,14 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                     ptype = "tar"
 
                     print "...  untarring %s" % (os.path.basename(p))
-                    dnum = 0
-                    fnum = 0
 
                     tar = tarfile.open(p, 'r')
                     for tarinfo in tar:
                         if tarinfo.isfile():
                             if fnum % 1000 == 0:
                                 dnum += 1
-                                os.makedirs(os.path.join(ifolder, str(dnum)))
+                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
+                                    os.makedirs(os.path.join(ifolder, str(dnum)))
                             fnum += 1
 
                             print "...  extracting:", tarinfo.name, tarinfo.size
@@ -2518,7 +2523,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
                 else:
                     ptype = "folder"
-                    if masterinbox:
+                    if masterinbox and ifolder != p:
                         if os.path.exists(ifolder):
                             shutil.rmtree(ifolder)
                         print "...  copying %s dicom files" % (os.path.basename(p))

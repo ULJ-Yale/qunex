@@ -1,47 +1,10 @@
 #!/bin/sh
-#
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
+
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-#
-# ## PRODUCT
-#
-#  XNATUpload.sh
-#
-# ## LICENSE
-#
-# * The xnat_upload_download.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
-# --> Add functionality to take in all data types into the XNAT database
-#
-# ## DESCRIPTION 
-#   
-# This script, XNATUpload.sh, implements upload of the data to the XNAT host via the curl API 
-# 
-# ## PREREQUISITE INSTALLED SOFTWARE
-#
-# * curl
-#
-# ## PREREQUISITE ENVIRONMENT VARIABLES
-#
-# See output of usage function: e.g. $./XNATUpload.sh --help
-#
-# ## PREREQUISITE PRIOR PROCESSING
-# 
-# * The necessary input files are data stored in the following format
-# * These data are stored in: "$SessionsFolder/$CASE/
-#
-#~ND~END~
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
 # -- General help usage function
@@ -594,7 +557,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     
     ## -- Clean prior mapping
     unset TimeStampXNATPath TimeStamp TimeStampXNATPath XNATInfoPath
-    TimeStampXNATPath=`date +%Y-%m-%d_%H.%M.%S`
+    TimeStampXNATPath=`date +%Y-%m-%d_%H.%M.%10N`
     if [ -z {StudyFolder} ]; then
         XNATInfoPath="${DownloadPath}/XNATInfo_${TimeStampXNATPath}"
     else
@@ -676,7 +639,7 @@ fi
 if [[ ${RUN_TYPE} == "upload" ]]; then
     
     unset TimeStamp
-    TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 
     echo ""
     ceho "       ********************************************"

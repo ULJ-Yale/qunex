@@ -1,6 +1,10 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import os
 import os.path
 import sys
@@ -22,15 +26,14 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 ============================
  
  qunex <command_name>
-\n   --parameterA=<required-parameter-args>
-\n   [--parameterB=<optional-parameter-args>]
+  --parameterA=<required-parameter-args>
+  [--parameterB=<optional-parameter-args>]
 
   =>  --   Dashes or “flags” denote input parameters.
-  =>  []   Square brackets denote optional parameters. 
-        Note: Arguments is shown inside [] denote default behavior of optional parameters. 
+  =>  []   Square brackets denote optional parameters.
+           Note: Arguments shown inside [] denote default behavior of optional parameters.
   =>  <>   Angle brackets denote user-specified arguments for a given parameter.
   => Command names, parameters and arguments are shown in small or “camel” case.
-
 
  Specific command usage
 =======================
@@ -52,7 +55,6 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # hcp_bedpostx  Run FSL Bedpostx GPU.
 
 all_qunex_commands = r'''check_fidl                                Prints figures showing fidl events and their duration.
-compute_fc_bold                           Computes seed or GBC BOLD functional connectivity.
 compute_bold_stats                        Compute BOLD movement and signal statistics.
 create_batch                              Creates a joint batch file from source files in all session folders.
 create_bold_brain_masks                   Create brain masks for BOLD runs.
@@ -66,8 +68,8 @@ dicom2nii                                 Converts MR images from DICOM to NIfTI
 dicom2niix                                Converts MR images from DICOM and PAR/REC files to NIfTI format.
 dwi_legacy                                Diffusion image processing for data with or without standard fieldmaps.
 dwi_eddy_qc                               Runs quality control on diffusion datasets following eddy outputs.
-dwi_fsl_dtifit                            Runs FSL's dtifit tool (cluster usable).
-dwi_fsl_bedpostx_gpu                      Runs FSL GPU-enabled bedpostx.
+dwi_dtifit                            Runs FSL's dtifit tool (cluster usable).
+dwi_bedpostx_gpu                      Runs FSL GPU-enabled bedpostx.
 dwi_pre_tractography                      Generates space for dense whole-brain connectomes.
 dwi_probtrackx_dense_gpu                  Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.
 dwi_seed_tractography_dense               Reduces dense tractography data using a seed structure.
@@ -83,13 +85,14 @@ fc_compute_roifc_group                    Computes ROI functional connectivity m
 fc_compute_seedmaps                       Computes seed based functional connectivity maps for individual subject / session.
 fc_compute_seedmaps_group                 Computes seed based correlations maps for individuals as well as group maps.
 fc_compute_seedmaps_multiple              Computes seed based correlations maps for individuals as well as group maps.
+fc_compute_wrapper                        Computes seed or GBC BOLD functional connectivity.
 fc_extract_roi_timeseries_masked          Extracts and saves region timeseries defined by provided roiinfo file
 fc_extract_trial_timeseries_masked        Extracts trial timeseries for each of the specified ROI.
 fc_preprocess                             Runs single BOLD file based functional connectivity preprocessing.
 fc_preprocess_conc                        Runs fcMRI preprocessing and GLM analysis a set of BOLD files.
 fc_segment_mri                            Segments the voxels in smask based on their connectivity with tmask ROI.
-fsl_f99                                   Runs FSL F99 command.
-fsl_xtract                                Runs FSL XTRACT command.
+dwi_f99                                   Runs FSL F99 command.
+dwi_xtract                                Runs FSL XTRACT command.
 general_compute_bold_list_stats           Computes BOLD run per frame statistics and scrubbing information for a list of sessions.
 general_compute_bold_stats                Computes BOLD run per frame statistics and scrubbing information.
 general_compute_group_bold_stats          Extracts image statistics over the whole group.
@@ -163,7 +166,7 @@ def runCommand(command, args):
         return
     elif command in gm.functions:
         if 'scheduler' in args:
-            gs.runThroughScheduler(command, sessions=None, args=args, parsessions=1, logfolder=folders['logfolder'])
+            gs.runThroughScheduler(command, sessions=None, args=args, logfolder=folders['logfolder'])
         else:
             gm.run(command, args)
         return

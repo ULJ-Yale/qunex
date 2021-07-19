@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)
 
 %``function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)``

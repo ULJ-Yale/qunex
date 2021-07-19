@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
 
 %``function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)``
@@ -9,15 +13,60 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %
 %   --flist     Conc-like style list of session image files or conc files:
 %
-%                   - session id:<session_id>
-%                   - roi:<path to the individual's ROI file>
-%                   - file:<path to bold files - one per line>
+%               - session id:<session_id>
+%               - roi:<path to the individual's ROI file>
+%               - file:<path to bold files - one per line>
 %
 %               or a well strucutured string (see general_read_file_list).
 %   --command   The type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, 
-%               aFzp, ...
+%               aFzp ...
 %
 %                   ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
+%
+%               Following options are available:
+%
+%               mFz:t
+%                   computes mean Fz value across all voxels (over threshold t)
+%               aFz:t
+%                   computes mean absolute Fz value across all voxels (over 
+%                   threshold t)
+%               pFz:t
+%                   computes mean positive Fz value across all voxels (over 
+%                   threshold t)
+%               nFz:t
+%                   computes mean positive Fz value across all voxels (below 
+%                   threshold t)
+%               aD:t
+%                   computes proportion of voxels with absolute r over t
+%               pD:t
+%                   computes proportion of voxels with positive r over t
+%               nD:t
+%                   computes proportion of voxels with negative r below t
+%               mFzp:n
+%                   computes mean Fz value across n proportional ranges
+%               aFzp:n
+%                   computes mean absolute Fz value across n proportional ranges
+%               mFzs:n
+%                   computes mean Fz value across n strength ranges
+%               pFzs:n
+%                   computes mean Fz value across n strength ranges for positive 
+%                   correlations
+%               nFzs:n
+%                   computes mean Fz value across n strength ranges for negative 
+%                   correlations
+%               aFzs:n
+%                   computes mean absolute Fz value across n strength ranges
+%               mDs:n
+%                   computes proportion of voxels within n strength ranges of r
+%               aDs:n
+%                   computes proportion of voxels within n strength ranges of 
+%                   absolute r
+%               pDs:n
+%                   computes proportion of voxels within n strength ranges of 
+%                   positive r
+%               nDs:n
+%                   computes proportion of voxels within n strength ranges of 
+%                   negative r
 %
 %   --mask      An array mask defining which frames to use (1) and which not (0). 
 %               All if empty.
