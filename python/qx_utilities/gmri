@@ -117,6 +117,7 @@ hcp_post_fix                              Runs HCP PostFix pipeline.
 hcp_post_freesurfer                       Runs HCP Post FreeSurfer pipeline.
 hcp_pre_freesurfer                        Runs HCP PreFreeSurfer pipeline.
 hcp_reapply_fix                           Runs HCP ReApplyFix pipeline.
+hcp_asl                                   Runs HCP ASL pipeline.
 import_bids                               Maps a BIDS dataset to the QuNex Suite file structure.
 import_dicom                              Processes sessions's DICOM or PAR/REC files and generates NIfTI files.
 import_hcp                                Maps HCPLS data to the QuNex Suite file structure. 

@@ -22,6 +22,7 @@ consists of functions:
 --hcp_reapply_fix           Runs HCP ReApplyFix.
 --hcp_msmall                Runs HCP MSMAll.
 --hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
+--hcp_asl                   Runs HCP ASL pipeline.
 --hcp_dtifit                Runs DTI Fit.
 --hcp_bedpostx              Runs Bedpost X.
 --map_hcp_data              Maps results of HCP preprocessing into `images` folder.
@@ -279,8 +280,6 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
         gdcfile = "NONE"
 
     return gdcfile, r, run
-
-
 
 
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
@@ -1981,8 +1980,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                             used. Note that CUDA 9.1 is installed in the
                             container. []
     --hcp_dwi_nogpu         If specified, use the non-GPU-enabled version
-                            of eddy. Defaults to using the GPU-enabled
-                            version of eddy. []
+                            of eddy. The flag is not set by default.
 
     Gradient Coefficient File Specification:
     ----------------------------------------
@@ -2181,13 +2179,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_name'] is not None:
                 comm += "                --dwiname=" + options['hcp_dwi_name']
 
-            if options['hcp_dwi_selectbestb0'] == "True":
+            if options['hcp_dwi_selectbestb0']:
                 comm += "                --select-best-b0"
 
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if 'hcp_dwi_nogpu' == "True":
+            if options['hcp_dwi_nogpu']:
                 comm += "                --no-gpu"
 
 
@@ -3951,10 +3949,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
                                           for multi-run HCP ICAFix.
     --hcp_icafix_threshold                ICAFix threshold that controls the
                                           sensitivity/specificity tradeoff. [10]
-    --hcp_icafix_deleteintermediates      If TRUE, deletes both the concatenated
+    --hcp_icafix_deleteintermediates      If True, deletes both the concatenated
                                           high-pass filtered and non-filtered
                                           timeseries files that are
-                                          prerequisites to FIX cleaning. [FALSE]
+                                          prerequisites to FIX cleaning. [False]
     --hcp_icafix_postfix                  Whether to automatically run HCP
                                           PostFix if HCP ICAFix finishes
                                           successfully. [TRUE]
@@ -4223,7 +4221,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                     report['done'].append(printbold)
 
                 # if all ok execute PostFix if enabled
-                if options['hcp_icafix_postfix'] == "True":
+                if options['hcp_icafix_postfix'].lower() == "true":
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
                         r += result['r']
@@ -4356,7 +4354,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                     report['done'].append(groupname)
 
                 # if all ok execute PostFix if enabled
-                if options['hcp_icafix_postfix'] == "True":
+                if options['hcp_icafix_postfix'].lower() == "true":
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
                         r += result['r']
@@ -4480,7 +4478,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     --hcp_postfix_singlescene       Path to an alternative template scene, if
                                     empty HCP default single scene will be used
                                     [].
-    --hcp_postfix_reusehighpass     Whether to reuse highpass. [YES]
+    --hcp_postfix_reusehighpass     Whether to reuse highpass. [True]
 
     OUTPUTS
     =======
@@ -4673,7 +4671,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         r, boldok = pc.checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         # hcp_postfix_reusehighpass
-        if options['hcp_postfix_reusehighpass'] == "True":
+        if options['hcp_postfix_reusehighpass'].lower() == "true":
             reusehighpass = "YES"
         else:
             reusehighpass = "NO"
@@ -5686,7 +5684,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         report['skipped']    += tempReport['skipped']
 
         # if all ok execute DeDrifAndResample if enabled
-        if options['hcp_msmall_resample'] == "True":
+        if options['hcp_msmall_resample'].lower() == "true":
             if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                 # single-run
                 if singleRun:
@@ -6688,6 +6686,311 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         report['failed'].append(grouptargets)
 
     return {'r': r, 'report': report}
+
+
+def hcp_asl(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_asl [... processing options]``
+    ``hcpa [... processing options]``
+
+    Runs the HCP ASL Pipeline.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the first three HCP preprocessing steps
+    (hcp_pre_freesurfer, hcp_freesurfer and hcp_post_freesurfer) to have
+    been run and finished successfully.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions            The batch.txt file with all the sessions information.
+                          [batch.txt]
+    --sessionsfolder      The path to the study/sessions folder, where the
+                          imaging data is supposed to go. [.]
+    --parsessions         How many sessions to run in parallel. [1]
+    --overwrite           Whether to overwrite existing data (yes) or not (no).
+                          [no]
+    --hcp_suffix          Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise. []
+    --logfolder           The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default. []
+    --log                 Whether to keep ("keep") or remove ("remove") the
+                          temporary logs once jobs are completed. ["keep"]
+                          When a comma or pipe ("|") separated list is given,
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations.
+                          The valid locations are:
+
+                          - "study" (for the default:
+                            "<study>/processing/logs/comlogs" location)
+                          - "session" (for "<sessionid>/logs/comlogs")
+                          - "hcp" (for "<hcp_folder>/logs/comlogs")
+                          - "<path>" (for an arbitrary directory)
+
+    In addition a number of *specific* parameters can be used to guide the
+    processing in this step:
+
+    HCP ASL parameters
+    ------------------
+
+    --hcp_gdcoeffs          Path to a file containing gradient distortion
+                            coefficients, alternatively a string describing
+                            multiple options (see below) can be provided.
+    --hcp_asl_cores         Number of cores to use when applying motion
+                            correction and other potentially multi-core
+                            operations. [1]
+    --hcp_asl_use_t1        If specified, the T1 estimates from the satrecov
+                            model fit will be used in perfusion estimation
+                            in oxford_asl. The flag is not set by default.
+    --hcp_asl_interpolation Interpolation order for registrations corresponding
+                            to scipy’s map_coordinates function. [1]
+    --hcp_asl_nobandingcorr If this option is provided, MT and ST banding
+                            corrections won’t be applied. The flag is not set
+                            by default.
+
+    Gradient coefficient file specification:
+    ----------------------------------------
+
+    `--hcp_gdcoeffs` parameter can be set to either "NONE", a path to a specific
+    file to use, or a string that describes, which file to use in which case.
+    Each option of the string has to be divided by a pipe "|" character and it
+    has to specify, which information to look up, a possible value, and a file
+    to use in that case, separated by a colon ":" character. The information
+    too look up needs to be present in the description of that session.
+    Standard options are e.g.::
+
+        institution: Yale
+        device: Siemens|Prisma|123456
+
+    Where device is formatted as <manufacturer>|<model>|<serial number>.
+
+    If specifying a string it also has to include a `default` option, which
+    will be used in the information was not found. An example could be::
+
+        "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
+
+    With the information present above, the file `/data/gc/Prisma.conf` would
+    be used.
+
+    OUTPUTS
+    =======
+
+    The results of this step will be present in the ASL folder in the
+    sessions's root hcp folder.
+
+    EXAMPLE USE
+    ===========
+
+    !!!!! TODO
+
+    Example run from the base study folder with test flag::
+
+        qunex hcp_diffusion \
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --overwrite="no" \\
+          --test
+
+    Run with scheduler, the compute node also loads the required CUDA module::
+
+        qunex hcp_diffusion \
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --overwrite="yes" \\
+          --bash="module load CUDA/9.1.85" \
+          --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
+
+    Run without a scheduler and without GPU support::
+
+        qunex hcp_diffusion \
+          --sessionsfolder="<path_to_study_folder>/sessions" \
+          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --overwrite="yes" \\
+          --hcp_dwi_nogpu
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
+
+    run    = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, "hcp_asl")
+        doHCPOptionsCheck(options, sinfo, "hcp_asl")
+        hcp = getHCPPaths(sinfo, options)
+
+        if "hcp" not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo["id"])
+            run = False
+
+        # get library path
+        asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
+
+        # lookup gdcoeffs file
+        gdcfile, r, run = checkGDCoeffFile(options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run)
+        if gdcfile == "NONE":
+            r += "\n---> ERROR: Gradient coefficient file is required!"
+            run = False
+
+        # mtname
+        mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
+
+        # get struct files
+        # ACPC-aligned, DC-restored structural image
+        t1w_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz")
+        if not os.path.exists(t1w_file):
+            r += "\n---> ERROR: ACPC-aligned, DC-restored structural image not found [%s]" % t1w_file
+            run = False
+
+        # Brain-extracted ACPC-aligned DC-restored structural image
+        t1w_brain_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore_brain.nii.gz")
+        if not os.path.exists(t1w_brain_file):
+            r += "\n---> ERROR: Brain-extracted ACPC-aligned DC-restored structural image not found [%s]" % t1w_brain_file
+            run = False
+
+        # mbpcasl_file image
+        mbpcasl_file = os.path.join(sinfo["hcp"], sinfo["id"], "unprocessed/mbPCASLhr", sinfo["id"] + "_mbPCASLhr_PA.nii.gz")
+        if not os.path.exists(mbpcasl_file):
+            r += "\n---> ERROR: MbPCASLhr acquistion data not found [%s]" % mbpcasl_file
+            run = False
+
+        # AP and PA fieldmaps for use in distortion correction
+        fmap_ap_file = os.path.join(sinfo["hcp"], sinfo["id"], "unprocessed/mbPCASLhr", sinfo["id"] + "_PCASLhr_SpinEchoFieldMap_AP.nii.gz")
+        if not os.path.exists(fmap_ap_file):
+            r += "\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file
+            run = False
+
+        fmap_pa_file = os.path.join(sinfo["hcp"], sinfo["id"], "unprocessed/mbPCASLhr", sinfo["id"] + "_PCASLhr_SpinEchoFieldMap_PA.nii.gz")
+        if not os.path.exists(fmap_ap_file):
+            r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
+            run = False
+
+        # wmparc
+        wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
+        if not os.path.exists(wmparc_file):
+            r += "\n---> ERROR: wmparc.nii.gz from FreeSurfer not found [%s]" % wmparc_file
+            run = False
+
+        # ribbon
+        ribbon_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz")
+        if not os.path.exists(ribbon_file):
+            r += "\n---> ERROR: ribbon.nii.gz from FreeSurfer not found [%s]" % ribbon_file
+            run = False
+
+        # territories atlas and labels
+        territories_atlas = os.path.join(asl_library, "vascular_territories_eroded5_atlas.nii.gz")
+        territories_labels = os.path.join(asl_library, "vascular_territories_atlas.txt")
+
+        # build the command
+        if run:
+            comm = '%(script)s \
+                --studydir="%(studydir)s" \
+                --subid="%(subid)s" \
+                --visit="%(visit)s" \
+                --mtname="%(mtname)s" \
+                --grads="%(grads)s" \
+                --struct="%(struct)s" \
+                --sbrain="%(sbrain)s" \
+                --mbpcasl="%(mbpcasl)s" \
+                --fmap_ap="%(fmap_ap)s" \
+                --fmap_pa="%(fmap_pa)s" \
+                --wmparc="%(wmparc)s" \
+                --ribbon="%(ribbon)s" \
+                --territories_atlas="%(territories_atlas)s" \
+                --territories_labels="%(territories_labels)s" \
+                --pvcorr \
+                --wbdir="%(wbdir)s" \
+                --verbose' % {
+                    "script"                : "hcp_asl",
+                    "studydir"              : options["sessionsfolder"],
+                    "subid"                : sinfo["id"],
+                    "visit"                 : "V1", # !!!!! TODO REMOVE THIS
+                    "mtname"                : mtname,
+                    "grads"                 : gdcfile,
+                    "struct"                : t1w_file,
+                    "sbrain"                : t1w_brain_file,
+                    "mbpcasl"               : mbpcasl_file,
+                    "fmap_ap"               : fmap_ap_file,
+                    "fmap_pa"               : fmap_pa_file,
+                    "wmparc"                : wmparc_file,
+                    "ribbon"                : ribbon_file,
+                    "territories_atlas"     : territories_atlas,
+                    "territories_labels"    : territories_labels,
+                    "wbdir"                 : os.environ["WBDIR"]}
+
+            # -- Optional parameters
+            if options["hcp_asl_use_t1"]:
+                comm += "                --use_t1"
+
+            if options["hcp_asl_nobandingcorr"]:
+                comm += "                --nobandingcorr"
+
+            if options['hcp_asl_interpolation'] is not None:
+                comm += "                --interpolation=" + options['hcp_asl_interpolation']
+
+            if options['hcp_asl_cores'] is not None:
+                comm += "                --cores=" + options['hcp_asl_cores']
+
+            # -- Report command
+            if run:
+                r += "\n\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+            exit(1)
+
+            # -- Test files
+            # !!!!! TODO
+            tfile = None
+
+            if hcp["hcp_asl_check"]:
+                full_test = {"tfolder": hcp["base"], "tfile": hcp["hcp_asl_check"], "fields": [("sessionid", sinfo["id"])], "specfolder": options["specfolder"]}
+            else:
+                full_test = None
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP ASL", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP ASL", r, overwrite=overwrite)
+                if passed is None:
+                    r += "\n---> HCP ASL can be run"
+                    report = "HCP ASL can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session can not be processed."
+            report = "HCP ASL can not be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
+
+    r += "\n\nHCP ASL Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
 
 
 def hcp_dtifit(sinfo, options, overwrite=False, thread=0):

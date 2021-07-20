@@ -361,6 +361,7 @@ fi
 
 # -- Check if folders for dependencies are set in the global path
 if [[ -z ${FSLDIR} ]]; then FSLDIR="${TOOLS}/fsl/fsl"; export FSLDIR; fi
+if [[ -z ${FSLCONFDIR} ]]; then FSLCONFDIR="${FSLDIR}/config"; export FSLCONFDIR; fi
 if [[ -z ${FSL_FIXDIR} ]]; then FSL_FIXDIR="${TOOLS}/fsl/fix"; fi
 if [[ -z ${FREESURFERDIR} ]]; then FREESURFERDIR="${TOOLS}/freesurfer/freesurfer-6.0"; export FREESURFERDIR; fi
 if [[ -z ${FreeSurferSchedulerDIR} ]]; then FreeSurferSchedulerDIR="${TOOLS}/freesurfer/FreeSurferScheduler"; export FreeSurferSchedulerDIR; fi
@@ -382,6 +383,7 @@ if [[ -z ${USEOCTAVE} ]]; then USEOCTAVE="FALSE"; export USEOCTAVE; fi
 if [[ -z ${MSMBINDIR} ]]; then MSMBINDIR="$TOOLS/MSM_HOCR_v3/Centos"; export MSMBINDIR; fi
 if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/HCP/HCPpipelines"; export HCPPIPEDIR; fi
 if [[ -z ${MSMCONFIGDIR} ]]; then MSMCONFIGDIR=${HCPPIPEDIR}/MSMConfig; export MSMCONFIGDIR; fi
+if [[ -z ${ASLDIR} ]]; then ASLDIR="${HCPPIPEDIR}/hcp-asl"; export ASLDIR; fi
 
 # -- The line below points to the environment expectation if using the 'dev' extended version of HCP Pipelines directly from QuNex repo
 #if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/qunex/hcp"; export HCPPIPEDIR; fi
@@ -575,7 +577,11 @@ elif [ "$OSInfo" == "RedHat" ]; then
     WORKBENCHDIR=${HCPWBDIR}/bin_rh_linux64
 fi
 PATH=${WORKBENCHDIR}:${PATH}
-export WORKBENCHDIR PATH
+
+# WBDIR is required for ASL pipelines
+WBDIR=$WORKBENCHDIR
+
+export WBDIR WORKBENCHDIR PATH
 MATLABPATH=$WORKBENCHDIR:$MATLABPATH
 export MATLABPATH
 

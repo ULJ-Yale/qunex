@@ -391,6 +391,12 @@ arglist = [
            ['hcp_resample_extractextraregnames', '',                              isNone, "Extract multi-run HCP ICAFix runs for additional surface registrations, often MSMSulc."],
            ['hcp_resample_extractvolume', '',                                     isNone,   "Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work."],
 
+           ['# --- hcp_asl options'],
+           ['hcp_asl_cores', '',                                                  isNone,  "Number of cores to use when applying motion correction and other potentially multi-core operations."],
+           ['hcp_asl_interpolation', '',                                          isNone, "Interpolation order for registrations corresponding to scipy’s map_coordinates function."],
+           ['hcp_asl_use_t1', 'FALSE',                                            torf,   "If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl."],
+           ['hcp_asl_nobandingcorr', 'FALSE',                                     torf,   "If this option is provided, MT and ST banding corrections won’t be applied."],
+
            ['# --- HCP file checking'],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file)."],
            ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file)."],
@@ -417,9 +423,11 @@ arglist = [
 #   4/ short description
 
 flaglist = [
-    ['test',                    'run',                  'test', 'Run a test only.'],
-    ['hcp_dwi_nogpu',           'hcp_dwi_nogpu',        'TRUE', 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
-    ['hcp_dwi_selectbestb0',    'hcp_dwi_selectbestb0', 'TRUE', "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+    ['test',                     'run',                   'test', 'Run a test only.'],
+    ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',         'TRUE', 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
+    ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',  'TRUE', "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+    ['hcp_asl_use_t1',           'hcp_asl_use_t1',        'TRUE', 'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
+    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', 'TRUE', 'If this option is provided, MT and ST banding corrections won’t be applied.'],
 ]
 
 
@@ -465,7 +473,7 @@ calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,   
           [],
           ['hcp1',    'hcp_pre_freesurfer',         process_hcp.hcp_pre_freesurfer,                 "Run HCP PreFS pipeline."],
           ['hcp2',    'hcp_freesurfer',             process_hcp.hcp_freesurfer,                     "Run HCP FS pipeline."],
-          ['hcp3',    'hcp_post_freesurfer',                 process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
+          ['hcp3',    'hcp_post_freesurfer',        process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
           ['hcp4',    'hcp_fmri_volume',            process_hcp.hcp_fmri_volume,                    "Run HCP fMRI Volume pipeline."],
           ['hcp5',    'hcp_fmri_surface',           process_hcp.hcp_fmri_surface,                   "Run HCP fMRI Surface pipeline."],
           ['hcp6',    'hcp_icafix',                 process_hcp.hcp_icafix,                         "Run HCP ICAFix pipeline."],
@@ -475,6 +483,7 @@ calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,   
           ['hcp10',   'hcp_dedrift_and_resample',   process_hcp.hcp_dedrift_and_resample,           "Run HCP DeDriftAndResample pipeline."],
           [],
           ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
+          ['hpca',    'hcp_asl',                    process_hcp.hcp_asl,                            "Run HCP ASL pipeline."],
           # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
           # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
           [],
