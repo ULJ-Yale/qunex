@@ -337,7 +337,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
                 sCommand += "#BSUB -%s %s\n" % (k, v)
-            elif k is 'jobName' and jobname == 'schedule':
+            elif k == 'jobName' and jobname == 'schedule':
                 jobname = v
 
         # set default cores
