@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -30,9 +30,10 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import re
-from core import *
-from general.img import *
 from datetime import datetime
+
+import general.img as gi
+import processing.core as pc
 
 
 def create_bold_list(sinfo, options, overwrite=False, thread=0):
@@ -51,11 +52,11 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
                     if v['task'] in options['bolds'].split("|"):
                         bolds.append(v['name'])
         if len(bolds) > 0:
-            f = getFileNames(session, options)
+            f = pc.getFileNames(session, options)
             print >> bfile, "    session id:%s" % (session['id'])
             print >> bfile, "    roi:%s" % (os.path.abspath(f['fs_aparc_bold']))
             for bold in bolds:
-                f = getBOLDFileNames(session, boldname=bold, options=options)
+                f = pc.getBOLDFileNames(session, boldname=bold, options=options)
                 print >> bfile, "    file:%s" % (os.path.abspath(f['bold_final']))
 
     bfile.close()
@@ -72,13 +73,13 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
     fidls = options['event_file'].split("|")
 
     if len(concs) != len(fidls):
-        print "\nWARNING: Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls))
+        print("\nWARNING: Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls)))
 
     else:
         for session in sinfo:
             try:
-                f = getFileNames(session, options)
-                d = getSessionFolders(session, options)
+                f = pc.getFileNames(session, options)
+                d = pc.getSessionFolders(session, options)
 
                 print >> bfile, "session id:%s" % (session['id'])
                 print >> bfile, "    roi:%s" % (f['fs_aparc_bold'])
@@ -92,7 +93,7 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
                 print >> bfile, "    file:%s" % (f_conc)
 
             except:
-                print "ERROR processing session %s!" % (session['id'])
+                print("ERROR processing session %s!" % (session['id']))
                 raise
 
     bfile.close()
@@ -188,7 +189,8 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         assert (options['script'] is not None), "ERROR: No script was referenced!"
         assert (os.path.exists(options['script'])), "ERROR: The referenced script does not exist in the path provided!"
 
-        script = file(options['script']).read()
+        file = open(options['script'], 'r')
+        script = file.read()
 
         # --- place session specific data
 
@@ -216,25 +218,25 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         description = "run_shell_script: %s" % (options['script'])
         task = "run_shell_script-%s" % (options['script'])
 
-        r += runScriptThroughShell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
+        r += pc.runScriptThroughShell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
 
-    except AssertionError, message:
+    except AssertionError as message:
         r += str(message) + "\n---------------------------------------------------------"
-        print r
+        print(r)
         return (r, (sinfo['id'], message, 1))
 
-    except ExternalFailed, errormessage:
+    except pc.ExternalFailed as errormessage:
         r += str(errormessage) + "\n---------------------------------------------------------"
-        print r
-        return (r, (sinfo['id'], "Failed: " + str(message), 1))
+        print(r)
+        return (r, (sinfo['id'], "Failed: " + str(errormessage), 1))
 
     except:
         message = 'ERROR: Error in parsing or executing script %s' % (options['script'])
         r += "\n" + message + "\n---------------------------------------------------------"
-        print r
+        print(r)
         raise
         return (r, (sinfo['id'], message, 1))
 
     r += "\n\nrun_shell_script %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    print r
+    print(r)
     return (r, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))

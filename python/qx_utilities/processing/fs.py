@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -31,17 +31,12 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import shutil
-import re
-import subprocess
-import glob
-import exceptions
-import sys
 import traceback
 import time
-import general.img as gi
 from datetime import datetime
-from core import *
 
+import general.img as gi
+from processing.core import *
 
 def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
     """
@@ -126,20 +121,20 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
             r, endlog, status, failed = runExternalForFile(f['t1_seg'], 'g_FlipFormat %s %s' % (tfiles, f['t1_seg'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tfiles)), overwrite=overwrite, thread=sinfo['id'], logfolder=options['comlogs'], logtags=options['logtag'], r=r)
 
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ExternalFailed, NoSourceFolder) as errormessage:
         r += str(errormessage)
         r += "\nBasic structural segmentation failed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-        print r
+        print(r)
         return r
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         time.sleep(15)
-        print r
+        print(r)
         return r
 
     r += "\nBasic structural segmentation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
-    print r
+    print(r)
     return r
 
 
@@ -223,12 +218,12 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         time.sleep(1)
-        print r
+        print(r)
         return r
 
     if verbose:
         r += "\nCheck completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-        print r
+        print(r)
 
     return r
 
@@ -347,20 +342,20 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
                 r += "ERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
 
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ExternalFailed, NoSourceFolder) as errormessage:
         r += str(errormessage)
         r += "\nFreeSurfer segmentation failed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-        print r
+        print(r)
         return r
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         time.sleep(15)
-        print r
+        print(r)
         return r
 
     r += "\nFreeSurfer segmentation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
-    print r
+    print(r)
     return r
 
 
@@ -451,19 +446,18 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
                 r += "ERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
 
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (ExternalFailed, NoSourceFolder) as errormessage:
         r += str(errormessage)
         r += "\nFreeSurfer segmentation failed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-        print r
+        print(r)
         return r
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         time.sleep(15)
-        print r
+        print(r)
         return r
 
     r += "\nFreeSurfer segmentation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
-    print r
+    print(r)
     return r
-

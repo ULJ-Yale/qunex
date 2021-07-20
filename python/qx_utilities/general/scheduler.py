@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -20,8 +20,9 @@ import os.path
 import datetime
 import time
 import re
-import exceptions as ge
-import core as gc
+
+import general.exceptions as ge
+import general.core as gc
 
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None, parsessions=1, parelements=1):
@@ -258,7 +259,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     if command is None:
         if not os.path.exists(script):
             raise ge.CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
-        command = file(script).read()
+        file = open(script, 'r')
+        command = file.read()
 
     if workdir is not None:
         if not os.path.exists(workdir):

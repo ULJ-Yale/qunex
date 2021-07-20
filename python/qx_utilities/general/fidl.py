@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -15,14 +15,14 @@ Adapted from previous join fidl python script
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import img as qxi
-import exceptions as ge
 import re
 import os
 import os.path
 import glob
 import subprocess
 
+import general.img as gi
+import general.exceptions as ge
 
 ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
 
@@ -33,7 +33,8 @@ class Usage(Exception):
 
 
 def readLines(filename):
-    s = file(filename).read()
+    file = open(filename, 'r')
+    s = file.read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")
     s = s.split("\n")
@@ -43,10 +44,10 @@ def readLines(filename):
 def boldInfo(boldfile):
     if ".4dfp.img" in boldfile:
         ifhfile = boldfile.replace('.img', '.ifh')
-        ifh = qxi.ifhhdr(ifhfile)
+        ifh = gi.ifhhdr(ifhfile)
         hdr = ifh.toNIfTI()
     elif ".nii" in boldfile:
-        hdr = qxi.niftihdr(boldfile)
+        hdr = gi.niftihdr(boldfile)
     else:
         hdr = None
 
@@ -68,11 +69,11 @@ def readFidl(fidlf):
 def readConc(concf, TR):
     s = readLines(concf)
     nfiles = int(s[0].split(":")[1])
-    print " ... %d bolds:" % (nfiles),
+    print(" ... %d bolds:" % (nfiles), end=" ")
     s = [e for e in s if "file:" in e]
 
     if len(s) != nfiles:
-        print "===> ERROR: number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles)
+        print("===> ERROR: number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles))
         return []
 
     boldfiles = [e.split(":")[1].strip() for e in s]
@@ -80,7 +81,7 @@ def readConc(concf, TR):
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
             print
-            print "===> ERROR: image does not exist! (%s)" % (boldfile)
+            print("===> ERROR: image does not exist! (%s)" % (boldfile))
             return []
 
     # m = re.compile('_b.*?([0-9]+)')
@@ -89,7 +90,7 @@ def readConc(concf, TR):
     start = 0
     for boldfile in boldfiles:
         boldname = m.match(boldfile).group(1)
-        print boldname,
+        print(boldname, end=" ")
         length = boldInfo(boldfile).frames * TR
         bolds.append([boldname, start, length, boldfile])
         start += length
@@ -138,16 +139,16 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     # ---> read the conc file, check if the number matches
 
-    print "\n===> reading %s" % (os.path.basename(concfile))
+    print("\n===> reading %s" % (os.path.basename(concfile)))
     bolddata = readConc(concfile, TR)
 
     if len(fidldata) != len(bolddata):
-        print "\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata]))
+        print("\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata])))
         raise ge.CommandFailed("join_fidl", "File number mismatch", "Number of fidl [%d] and bold [%d] files do not match!" % (len(fidldata), len(bolddata)), "Please check report!")
 
     # ---> start the matching loop
 
-    print "---> Matching bold and fidl files\n     \tBOLD file\tfidl file\tbold [s]\tfidl [s]\tdiff [s]\t "
+    print("---> Matching bold and fidl files\n     \tBOLD file\tfidl file\tbold [s]\tfidl [s]\tdiff [s]\t ")
     tfidl = []
     c = 0
     for bold in bolddata:
@@ -167,13 +168,13 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
         dlen = bold[2] - levent
 
         if dlen >= 0:
-            # print "last event in %s %.1fs [at: %.1f] before end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2])
+            # print("last event in %s %.1fs [at: %.1f] before end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2]))
             pass
         else:
-            # print "WARNING: last event in %s %.1fs [at: %.1f] after end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), -dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2])
+            # print("WARNING: last event in %s %.1fs [at: %.1f] after end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), -dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2]))
             w = "WARNING: fidl too long for bold!"
 
-        print "     \t%s\t%s\t%.1f\t%.1f\t%.1f\t%s" % (os.path.basename(bold[3]), os.path.basename(fidlf[c]), bold[2], levent, dlen, w)
+        print("     \t%s\t%s\t%.1f\t%.1f\t%.1f\t%s" % (os.path.basename(bold[3]), os.path.basename(fidlf[c]), bold[2], levent, dlen, w))
 
         tfidl = tfidl + [[e[0] + bold[1]] + e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
@@ -181,7 +182,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     jointfile = fidlroot + fidlname + '.fidl'
     if outfolder is not None:
         if not os.path.exists(outfolder):
-            print "--> Creating output folder:", outfolder
+            print("--> Creating output folder:", outfolder)
             os.makedirs(outfolder)
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
@@ -239,9 +240,9 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
             failed.append([concfolder, e.error])
 
     if failed:
-        print "ERROR: Joining fidls failed for the following conc files:"
+        print("ERROR: Joining fidls failed for the following conc files:")
         for concfile, error in failed:
-            print "       - %s [%s]" % (concfile, error)
+            print("       - %s [%s]" % (concfile, error))
 
         raise ge.CommandFailed("join_fidl_folder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
 

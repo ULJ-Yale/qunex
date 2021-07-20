@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -15,7 +15,8 @@ import struct
 import re
 import gzip
 import os.path
-import exceptions as ge
+
+import general.exceptions as ge
 
 niftiDataTypes = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
 niftiBytesPerVoxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
@@ -36,7 +37,8 @@ def sign(x):
 
 
 def readTextFileToLines(filename):
-    s = file(filename).read()
+    file = open(filename, 'r')
+    s = file.read()
     s = s.replace('\r', '\n')
     s = s.replace('\n\n', '\n')
     s = s.split('\n')
@@ -133,7 +135,7 @@ def printniftihdr(filename=None):
     """
 
     hdr = niftihdr(filename)
-    print hdr
+    print(hdr)
 
 
 
@@ -258,7 +260,8 @@ class ifhhdr:
 
     def readHeader(self, filename):
         filename = filename.replace('.img', '.ifh')
-        s = file(filename).read()
+        file = open(filename, 'r')
+        s = file.read()
         self.unpackHdr(s)
         self.hdr = s
 
@@ -720,9 +723,7 @@ class niftihdr:
             if k in decodef:
                 self.__dict__[k] = decodef[k](v)
             else:
-                print "WARNING: %s not a valid key for NIfTI header" % (k)
-
-
+                print("WARNING: %s not a valid key for NIfTI header" % (k))
 
 
 def slice_image(sourcefile, targetfile, frames=1):

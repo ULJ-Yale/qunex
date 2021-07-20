@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -25,10 +25,11 @@ import sys
 import types
 import traceback
 import gzip
-import filelock as fl
-import exceptions as ge
-import commands_support as gcs
 from datetime import datetime
+
+import general.filelock as fl
+import general.exceptions as ge
+import general.commands_support as gcs
 
 
 def readSessionData(filename, verbose=False):
@@ -47,10 +48,11 @@ def readSessionData(filename, verbose=False):
     """
 
     if not os.path.exists(filename):
-        print "\n\n=====================================================\nERROR: Batch file does not exist [%s]" % (filename)
+        print("\n\n=====================================================\nERROR: Batch file does not exist [%s]" % (filename))
         raise ValueError("ERROR: Batch file not found: %s" % (filename))
 
-    s = file(filename).read()
+    file = open(filename, 'r')
+    s = file.read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")
     s = re.sub("^#.*?\n", "", s)
@@ -133,7 +135,7 @@ def readSessionData(filename, verbose=False):
 
                     ni = len(line)
                     if ni < 3:
-                        print "Missing data for conc entry!"
+                        print("Missing data for conc entry!")
                         raise AssertionError('Not enough values in conc definition line!')
 
                     conc['label'] = line[1]
@@ -149,10 +151,10 @@ def readSessionData(filename, verbose=False):
             if len(dic) > 0:
                 if "id" not in dic:
                     if verbose:
-                        print "WARNING: There is a record missing an id field and is being omitted from processing."
+                        print("WARNING: There is a record missing an id field and is being omitted from processing.")
                 # elif "data" not in dic:
                 #    if verbose:
-                #        print "WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id'])
+                #        print("WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id']))
                 else:
                     slist.append(dic)
 
@@ -161,11 +163,11 @@ def readSessionData(filename, verbose=False):
             for field in ['dicom', 'raw_data', 'data', 'hpc']:
                 if field in dic:
                     if not os.path.exists(dic[field]) and verbose:
-                        print "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
+                        print("WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename)))
 
 
     except:
-        print "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
+        print("\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line))
         raise
 
     return slist, gpref
@@ -265,11 +267,11 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
                 nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{'id': os.path.basename(e)} for e in nlist]
 
-    if sessionids is not None and sessionids.strip() is not "":
+    if sessionids is not None and sessionids.strip() != "":
         sessionids = re.split(' +|,|\|', sessionids)
         slist = [e for e in slist if e['id'] in sessionids]
 
-    if filter is not None and filter.strip() is not "":
+    if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
         except:
@@ -386,11 +388,11 @@ def runExternalParallel(calls, cores=None, prepend=''):
                         running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0)})
 
                     if call['sout']:
-                        print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.now()).split('.')[0], call['sout'])
+                        print(prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.now()).split('.')[0], call['sout']))
                     else:
-                        print prepend + "started running %s at %s" % (call['name'], str(datetime.now()).split('.')[0])
+                        print(prepend + "started running %s at %s" % (call['name'], str(datetime.now()).split('.')[0]))
                 except:
-                    print prepend + "failed to start running %s. Please check your environment!" % (call['name'])
+                    print(prepend + "failed to start running %s. Please check your environment!" % (call['name']))
                     completed.append({'exit': -9, 'name': call['name'], 'log': call['sout'], 'args': call['args']})
                 continue
 
@@ -402,9 +404,9 @@ def runExternalParallel(calls, cores=None, prepend=''):
             if running[n]['p'].poll() is not None:
                 running[n]['sout'].close()
                 if running[n]['call']['sout']:
-                    print prepend + "finished running %s (exit code: %d), log in %s" % (running[n]['call']['name'], running[n]['p'].poll(), running[n]['call']['sout'])
+                    print(prepend + "finished running %s (exit code: %d), log in %s" % (running[n]['call']['name'], running[n]['p'].poll(), running[n]['call']['sout']))
                 else:
-                    print prepend + "finished running %s (exit code: %d)" % (running[n]['call']['name'], running[n]['p'].poll())
+                    print(prepend + "finished running %s (exit code: %d)" % (running[n]['call']['name'], running[n]['p'].poll()))
                 completed.append({'exit': running[n]['p'].poll(), 'name': running[n]['call']['name'], 'log': running[n]['call']['sout'], 'args': running[n]['call']['args']})
                 done.append(n)
         if done:
@@ -414,7 +416,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
         # --- check if we are done:
         if not calls and not running:
-            print prepend + "DONE"
+            print(prepend + "DONE")
             break
 
         # --- wait a bit
@@ -447,9 +449,9 @@ def record(response):
             see = "."
 
         if result:
-            print "%s%s failed%s" % (prepend, name, see)
+            print("%s%s failed%s" % (prepend, name, see))
         else:
-            print "%s%s finished successfully%s" % (prepend, name, see)
+            print("%s%s finished successfully%s" % (prepend, name, see))
 
 # Logger class that prints both to stdour and to console
 class Logger(object):
@@ -480,6 +482,8 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
     For internal use only.
     """
 
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
+
     if name is None:
         name = function.__name__
 
@@ -487,7 +491,6 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         logfolder, logname = os.path.split(logfile)
 
         base_logname, ext_logname = os.path.splitext(logname)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
         logname  = base_logname + "_" + timestamp + ext_logname
 
         # truncate too long lognames
@@ -503,9 +506,9 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
             os.makedirs(logfolder)
         with lock:
             # header
-            print "# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp), tlogfile
-            print "#", tlogfile
-            print prepend + "started running %s at %s, track progress in %s" % (name, str(datetime.now()).split('.')[0], tlogfile)
+            print("# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp), tlogfile)
+            print("#", tlogfile)
+            print(prepend + "started running %s at %s, track progress in %s" % (name, str(datetime.now()).split('.')[0], tlogfile))
 
         sysstdout = sys.stdout
         sysstderr = sys.stderr
@@ -513,42 +516,42 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         sys.stderr = sys.stdout
     else:
         with lock:
-            print "# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp)
-            print "#"
-            print prepend + "started running %s at %s" % (name, str(datetime.now()).split('.')[0])
+            print("# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp))
+            print("#")
+            print(prepend + "started running %s at %s" % (name, str(datetime.now()).split('.')[0]))
 
     with lock:
-        print "# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp)
-        print "#"
-        print "Started running %s at %s\ncall: gmri %s %s\n-----------------------------------------" % (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), function.__name__, " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()]))
+        print("# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp))
+        print("#")
+        print("Started running %s at %s\ncall: gmri %s %s\n-----------------------------------------" % (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), function.__name__, " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()])))
 
     try:
         result = function(**args)
     except ge.CommandNull as e:
         with lock:
-            print ge.reportCommandNull(name, e)
+            print(ge.reportCommandNull(name, e))
             print
         result = e.error
     except ge.CommandFailed as e:
         with lock:
-            print ge.reportCommandFailed(name, e)
+            print(ge.reportCommandFailed(name, e))
             print
         result = e.error
     except Exception as e:
         with lock:
-            print "\n\nERROR"
-            print traceback.format_exc()
+            print("\n\nERROR")
+            print(traceback.format_exc())
         result = e.message
 
     with lock:
-        print "\n-----------------------------------------\nFinished at %s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        print("\n-----------------------------------------\nFinished at %s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
     # schedule command fix
     if name == "schedule":
         result = False
 
     if not result:
-        print "\n===> Successful completion of task"
+        print("\n===> Successful completion of task")
 
     if logfile:
         sys.stdout.close()
@@ -572,7 +575,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
                     os.makedirs(logfolder)
                 except:
                     r = "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
-                    print r
+                    print(r)
                     raise ge.CommandFailed(function="runWithLog", error=r)
 
         # runlog file
@@ -780,7 +783,7 @@ def printAndLog(*args, **kwargs):
 
     for element in args + (end, ):
         if not silent:
-            print element, 
+            print(element, end=" ")
         for out in [append, write, file]:
             if out:
                 print >> out, element,
@@ -823,6 +826,7 @@ def getLogFile(folders=None, tags=None):
     if 'logfolder' not in folders:
         raise ge.CommandFailed("getLogFile", "Logfolder not found" , "Could not deduce the location of the log folder based on the provided information!")
 
+    basestring = (str, bytes)
     if isinstance(tags, basestring) or tags is None:
         tags = []
 
@@ -1022,7 +1026,7 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print prefix + "--> removed existing session.txt file"
+            print(prefix + "--> removed existing session.txt file")
         else:
             raise ge.CommandFailed(command, "session.txt file already present!", "A session.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 

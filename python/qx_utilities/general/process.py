@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -18,15 +18,17 @@ None of the code is run directly from the terminal interface.
 """
 
 # imports
-import core, scheduler
 import os
 import os.path
-import core as gc
-import exceptions as ge
-import commands_support as gcs
-from processing import fs, fsl, simple, workflow
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+import general.scheduler as gs
+import general.core as gc
+import general.exceptions as ge
+import general.commands_support as gcs
+from processing import fs, fsl, simple, workflow
+
 
 # pipelines imports
 from hcp import process_hcp
@@ -211,7 +213,7 @@ arglist = [
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
-           ['use_sequence_info',  'all',                                         core.pcslist, "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
+           ['use_sequence_info',  'all',                                         gc.pcslist, "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
            ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
@@ -570,7 +572,7 @@ def run(command, args):
     if 'filter' in args:
         options['filter'] = args['filter']
 
-    sessions, gpref = core.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
+    sessions, gpref = gc.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
     # --- check if we are running across subjects rather than sessions
     if command in lactions:
@@ -621,7 +623,7 @@ def run(command, args):
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
    
-    studyfolders = core.deduceFolders(options)
+    studyfolders = gc.deduceFolders(options)
     logfolder    = studyfolders['logfolder']
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
@@ -659,7 +661,7 @@ def run(command, args):
     # --- check if there are no sessions
     if not sessions:
         sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!"
-        print sout
+        print(sout)
         writelog(sout)
         exit()
 
@@ -669,25 +671,25 @@ def run(command, args):
     else:
         sout += "\nRunning test on %s ...\n" % (options['sessions'])
 
-    print sout
+    print(sout)
     writelog(sout)
 
     # -----------------------------------------------------------------------
     #                                                           print options
 
     if printoptions:
-        print "\nFull list of options:"
+        print("\nFull list of options:")
         writelog("\nFull list of options:\n")
         for line in arglist:
             if len(line) == 4:
-                print "%-25s :" % (line[0]), options[line[0]]
+                print("%-25s :" % (line[0]), options[line[0]])
                 writelog("  %-25s : %s" % (line[0], str(options[line[0]])))
 
     # -----------------------------------------------------------------------
     #                                                              print info
 
     if printinfo:
-        print sessions
+        print(sessions)
 
 
     # =======================================================================
@@ -708,7 +710,7 @@ def run(command, args):
 
         consoleLog = ""
 
-        print "---- Running local"
+        print("---- Running local")
         c = 0
         if parsessions == 1 or options['run'] == 'test':
             if command in plactions:
@@ -721,11 +723,11 @@ def run(command, args):
                             action = 'processing'
                         soptions = updateOptions(session, options)
                         consoleLog += "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        print "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        print("\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
                         r, status = procResponse(pending_actions(session, soptions, overwrite, c + 1))
                         writelog(r)
                         consoleLog += r
-                        print r
+                        print(r)
                         stati.append(status)
                         c += 1
                         if nprocess and c >= nprocess:
@@ -747,7 +749,7 @@ def run(command, args):
                     if len(session['id']) > 1:
                         soptions = updateOptions(session, options)
                         consoleLog += "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        print "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        print("\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
                         future = processPoolExecutor.submit(pending_actions, session, soptions, overwrite, c + 1)
                         futures.append(future)
                         c += 1
@@ -758,7 +760,7 @@ def run(command, args):
                     result = future.result()
                     writelog(result)
                     consoleLog += result[0]
-                    print result[0]
+                    print(result[0])
 
             if command in sactions:
                 pending_actions = sactions[command]
@@ -766,8 +768,8 @@ def run(command, args):
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 
-        # print console log
-        # print consoleLog
+        # print(console log)
+        # print(consoleLog)
 
         # --- Create log
 
@@ -779,13 +781,13 @@ def run(command, args):
         for e in log:
             print >> f, e
 
-        print "\n\n===> Final report for command", options['command_ran']
+        print("\n\n===> Final report for command", options['command_ran'])
         print >> f, "\n\n===> Final report for command", options['command_ran']
         failedTotal = 0
 
         for sid, report, failed in stati:
             if "Unknown" not in sid:
-                print "... %s ---> %s" % (sid, report)
+                print("... %s ---> %s" % (sid, report))
                 print >> f, "... %s ---> %s" % (sid, report)
                 if failed is None:
                     failedTotal = None
@@ -793,13 +795,13 @@ def run(command, args):
                     if failedTotal is not None:
                         failedTotal += failed
         if failedTotal is None:
-            print "===> Success status not reported for some or all tasks"
+            print("===> Success status not reported for some or all tasks")
             print >> f, "===> Success status not reported for some or all tasks"
         elif failedTotal > 0:
-            print "===> Not all tasks completed fully!"
+            print("===> Not all tasks completed fully!")
             print >> f, "===> Not all tasks completed fully!"
         else:
-            print "===> Successful completion of all tasks"
+            print("===> Successful completion of all tasks")
             print >> f, "===> Successful completion of all tasks"
 
         f.close()
@@ -809,5 +811,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-        scheduler.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
+        gs.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
 

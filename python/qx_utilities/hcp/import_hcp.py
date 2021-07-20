@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -62,7 +62,7 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
         session = m.group('session_name')
         data    = m.group('data').split(pathsep)
     except:
-        print "ERROR: Could not parse file:", file
+        print("ERROR: Could not parse file:", file)
         return False
 
     if any([e[0] == '.' for e in [subjid, session] + data]):
@@ -79,26 +79,26 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
         sessions['list'].append(sessionid)
         if os.path.exists(tfolder):
             if overwrite == 'yes':
-                print prefix + "--> hcpls for session %s already exists: cleaning session" % (sessionid)
+                print(prefix + "--> hcpls for session %s already exists: cleaning session" % (sessionid))
                 shutil.rmtree(tfolder)
                 sessions['clean'].append(sessionid)
             elif not os.path.exists(os.path.join(tfolder, 'hcpfs2nii.log')):
-                print prefix + "--> incomplete hcpls for session %s already exists: cleaning session" % (session)
+                print(prefix + "--> incomplete hcpls for session %s already exists: cleaning session" % (session))
                 shutil.rmtree(tfolder)                    
                 sessions['clean'].append(session)
             else:
                 sessions['skip'].append(session)
-                print prefix + "--> hcpls for session %s already exists: skipping session" % (session)
-                print prefix + "    files previously mapped:"
+                print(prefix + "--> hcpls for session %s already exists: skipping session" % (session))
+                print(prefix + "    files previously mapped:")
                 with open(os.path.join(tfolder, 'hcpfs2nii.log')) as hcplsLog:
                     for logline in hcplsLog:
                         if 'HCPFS to nii mapping report' in logline:
                             continue
                         elif '=>' in logline:                            
                             mappedFile = logline.split('=>')[0].strip()
-                            print prefix + "    ... %s" % (os.path.basename(mappedFile))
+                            print(prefix + "    ... %s" % (os.path.basename(mappedFile)))
         else:
-            print prefix + "--> creating hcpl session %s" % (sessionid)
+            print(prefix + "--> creating hcpl session %s" % (sessionid))
             sessions['map'].append(sessionid)
 
     if os.path.exists(tfile):
@@ -300,7 +300,7 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         qunex import_hcp sessionsfolder=myStudy/sessions inbox=HCPLS overwrite=yes hcplsname=hcpls
     """
 
-    print "Running import_hcp\n=================="
+    print("Running import_hcp\n==================")
 
     if action not in ['link', 'copy', 'move']:
         raise ge.CommandError("import_hcp", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
@@ -338,17 +338,17 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     # ---> Check for folders
     if not os.path.exists(os.path.join(sessionsfolder, 'inbox', 'HCPLS')):
         os.makedirs(os.path.join(sessionsfolder, 'inbox', 'HCPLS'))
-        print "--> creating inbox HCPLS folder"
+        print("--> creating inbox HCPLS folder")
 
     if not os.path.exists(os.path.join(sessionsfolder, 'archive', 'HCPLS')):
         os.makedirs(os.path.join(sessionsfolder, 'archive', 'HCPLS'))
-        print "--> creating archive HCPLS folder"
+        print("--> creating archive HCPLS folder")
 
     # ---> identification of files
     if sessions:
         sessions = [e.strip() for e in re.split(r' +|\| *|, *', sessions)]
 
-    print "--> identifying files in %s" % (inbox)
+    print("--> identifying files in %s" % (inbox))
 
     sourceFiles = []
 
@@ -388,11 +388,11 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         raise ge.CommandFailed("import_hcp", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
     # ---> mapping data to sessions' folders
-    print "--> mapping files to QuNex hcpls folders"
+    print("--> mapping files to QuNex hcpls folders")
 
     for file in sourceFiles:
         if file.endswith('.zip'):
-            print "    --> processing zip package [%s]" % (file)
+            print("    --> processing zip package [%s]" % (file))
 
             try:
                 z = zipfile.ZipFile(file, 'r')
@@ -406,15 +406,15 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                             fout.close()
                 z.close()
 
-                print "        -> done!"
+                print("        -> done!")
             except:
-                print "        => Error: Processing of zip package failed. Please check the package!"
+                print("        => Error: Processing of zip package failed. Please check the package!")
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 allOk = False
                 raise
 
         elif '.tar' in file or '.tgz' in file:
-            print "   --> processing tar package [%s]" % (file)
+            print("   --> processing tar package [%s]" % (file))
 
             try:
                 tar = tarfile.open(file)
@@ -430,9 +430,9 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                             fout.close()
                 tar.close()
 
-                print "        -> done!"
+                print("        -> done!")
             except:
-                print "        => Error: Processing of tar package failed. Please check the package!"
+                print("        => Error: Processing of tar package failed. Please check the package!")
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 allOk = False
 
@@ -446,47 +446,47 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
     # ---> archiving the dataset
     if errors:
-        print "   ==> The following errors were encountered when mapping the files:"
-        print errors
+        print("   ==> The following errors were encountered when mapping the files:")
+        print(errors)
     else:
         if os.path.isfile(inbox) or not os.path.samefile(inbox, os.path.join(sessionsfolder, 'inbox', 'HCPLS')):
             try:
                 if archive == 'move':
-                    print "--> moving dataset to archive" 
+                    print("--> moving dataset to archive")
                     shutil.move(inbox, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                 elif archive == 'copy':
-                    print "--> copying dataset to archive"
+                    print("--> copying dataset to archive")
                     shutil.copy2(inbox, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                 elif archive == 'delete':
-                    print "--> deleting dataset"
+                    print("--> deleting dataset")
                     if os.path.isfile(inbox):
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
             except:
-                print "==> %s failed!" % (archive)
+                print("==> %s failed!" % (archive))
         else:
             files = glob.glob(os.path.join(inbox, '*'))
             for file in files:
                 try:
                     if archive == 'move':
-                        print "--> moving dataset to archive" 
+                        print("--> moving dataset to archive")
                         shutil.move(file, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                     elif archive == 'copy':
-                        print "--> copying dataset to archive"
+                        print("--> copying dataset to archive")
                         shutil.copy2(file, os.path.join(sessionsfolder, 'archive', 'HCPLS'))
                     elif archive == 'delete':
-                        print "--> deleting dataset"
+                        print("--> deleting dataset")
                         if os.path.isfile(file):
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
                 except:
-                    print "==> %s of %s failed!" % (archive, file)
+                    print("==> %s of %s failed!" % (archive, file))
 
     # ---> check status
     if not allOk:
-        print "\nFinal report\n============"
+        print("\nFinal report\n============")
         raise ge.CommandFailed("import_hcp", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
 
     # ---> mapping data to QuNex nii folder
@@ -514,13 +514,13 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                         report.append('%s mapped incompletely [%d images, %d mapped]' % (info, nimg, nmapped))
                         allOk = False
                 except ge.CommandFailed as e:
-                    print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
+                    print("===> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
                     report.append('%s failed' % (info))
                     allOk = False
 
-    print "\nFinal report\n============"
+    print("\nFinal report\n============")
     for line in report:
-        print line
+        print(line)
 
     if not allOk:
         raise ge.CommandFailed("import_hcp", "Some actions failed", "Please check report!")
@@ -661,7 +661,7 @@ def processHCPLS(sessionfolder, filesort):
 
     # sort folders
 
-    print "--> filesort:", filesort
+    print("--> filesort:", filesort)
 
     for sortkey in filesort.split('_'):
         if sortkey == 'name':
@@ -882,11 +882,11 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     if sessionid:
         info += ", session " + sessionid
 
-    print 'info:', info
+    print('info:', info)
 
     splash = "Running map_hcpls2nii for %s" % (info)
-    print splash
-    print "".join(['=' for e in range(len(splash))])
+    print(splash)
+    print("".join(['=' for e in range(len(splash))]))
 
 
     splash = "\n\nParameters for " + info
@@ -913,7 +913,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
             else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
-                print "--> cleaned nii folder, removed existing files"
+                print("--> cleaned nii folder, removed existing files")
     else:
         os.makedirs(nfolder)
 
@@ -925,7 +925,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     if os.path.exists(sfile):
         if overwrite == 'yes':
             os.remove(sfile)
-            print "--> removed existing session_hcp.txt file"
+            print("--> removed existing session_hcp.txt file")
         else:
             raise ge.CommandFailed("map_hcpls2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
@@ -979,7 +979,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
             if status:
                 nmapped += 1
-                print "--> linked %02d.nii.gz <-- %s" % (imgn, fileInfo['name'])
+                print("--> linked %02d.nii.gz <-- %s" % (imgn, fileInfo['name']))
 
                 # -- Institution and device information
 
@@ -1079,8 +1079,8 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                         phenc = [e for e in ['LR', 'RL', 'AP', 'PA'] if e in fileInfo['parts']] + ['NA']
                         phenc = phenc[0]                        
                     
-                    if phenc == 'NA':                          
-                        print "==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (imgn, fileInfo['name'])
+                    if phenc == 'NA':
+                        print("==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (imgn, fileInfo['name']))
                         phencstr = ""
                     else:
                         phencstr = ": phenc(%s) " % (phenc)
@@ -1117,8 +1117,8 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                         phenc = [e for e in ['LR', 'RL', 'AP', 'PA'] if e in fileInfo['parts']] + ['NA']
                         phenc = phenc[0]
                     
-                    if phenc == 'NA':                          
-                        print "==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (imgn, fileInfo['name'])
+                    if phenc == 'NA':
+                        print("==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (imgn, fileInfo['name']))
                         phencstr = ""
                     else:
                         phencstr = ": phenc(%s)" % (phenc)
@@ -1151,7 +1151,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                 print >> bout, "%s => %s" % (fileInfo['path'], tfile)
             else:
                 allOk = False
-                print "==> ERROR: Linking failed: %02d.nii.gz <-- %s" % (imgn, fileInfo['name'])
+                print("==> ERROR: Linking failed: %02d.nii.gz <-- %s" % (imgn, fileInfo['name']))
                 print >> bout, "FAILED: %s => %s" % (fileInfo['path'], tfile)
 
             status = True
@@ -1165,8 +1165,8 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'))                    
 
                 if not all([statusA, statusB]):
-                    print "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn)
-                    print "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, fileInfo['name'].replace('.nii.gz', '.bval/.bvec'))
+                    print("==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn))
+                    print("==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, fileInfo['name'].replace('.nii.gz', '.bval/.bvec')))
                     allOk = False
 
     sout.close()

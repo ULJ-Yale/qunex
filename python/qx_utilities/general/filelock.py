@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -6,6 +7,8 @@
 
 """
 ``filelock.py``
+
+A python filelocking library.
 """
 
 from __future__ import print_function
@@ -168,7 +171,6 @@ def remove(filename):
         return None
     except (OSError, IOError) as e:
         return e.strerror
-
 
 
 # lock storage

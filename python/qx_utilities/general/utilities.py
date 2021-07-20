@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -18,20 +18,20 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
-import time
 import errno
 import shutil
 import glob
 import getpass
 import re
 import subprocess
-import commands_support as gcs
-import process as gp
-import core as gc
-import processing.core as gpc
-import exceptions as ge
-import filelock as fl
 from datetime import datetime
+
+import general.commands_support as gcs
+import general.process as gp
+import general.core as gc
+import processing.core as gpc
+import general.exceptions as ge
+import general.filelock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
@@ -111,7 +111,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
 
     if create:
         if verbose:
-            print "\nCreating study folder structure:"
+            print("\nCreating study folder structure:")
 
     for folder in folders:
         tfolder = os.path.join(*[studyfolder] + folder)
@@ -120,11 +120,11 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
             try:
                 os.makedirs(tfolder)
                 if verbose:
-                    print " ... created:", tfolder
+                    print(" ... created:", tfolder)
             except OSError as e:
                 if e.errno == errno.EEXIST:
                     if verbose:
-                        print " ... folder exists:", tfolder
+                        print(" ... folder exists:", tfolder)
                 else:
                     errstr = os.strerror(e.errno)
                     raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), "Folder could not be created due to '%s' error!" % (errstr), "Folder to create: %s" % (tfolder), "Please check paths and permissions!")
@@ -132,14 +132,14 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
         else:
             if os.path.exists(tfolder):
                 if verbose:
-                    print " ... folder exists:", tfolder
+                    print(" ... folder exists:", tfolder)
             else:  
                 if verbose:
-                    print " ... folder does not exist:", tfolder
+                    print(" ... folder does not exist:", tfolder)
 
     if create:
         if verbose:
-            print "\nPreparing template files:"
+            print("\nPreparing template files:")
 
         # --> parameter template
         paramFile = os.path.join(studyfolder, 'sessions', 'specs', 'batch_example.txt')
@@ -155,12 +155,12 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                     os.write(f, "#\n# " + line[0] + '\n#\n')
             os.close(f)
             if verbose:
-                print " ... created batch_example.txt file" 
+                print(" ... created batch_example.txt file")
 
         except OSError as e:
             if e.errno == errno.EEXIST:
                 if verbose:
-                    print " ... batch_example.txt file already exists" 
+                    print(" ... batch_example.txt file already exists")
             else:
                 errstr = os.strerror(e.errno)
                 raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
@@ -181,12 +181,12 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                 os.write(dstFile, srcContent)
                 os.close(dstFile)
                 if verbose:
-                    print " ... created %s file" % dstFile
+                    print(" ... created %s file" % dstFile)
 
             except OSError as e:
                 if e.errno == errno.EEXIST:
                     if verbose:
-                        print " ... %s file already exists" % dstFile
+                        print(" ... %s file already exists" % dstFile)
                 else:
                     errstr = os.strerror(e.errno)
                     raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
@@ -202,11 +202,11 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                 os.write(f, markcontent)
                 os.close(f)
                 if verbose:
-                    print " ... converted .mnapstudy file to .qunexstudy"
+                    print(" ... converted .mnapstudy file to .qunexstudy")
             except OSError as e:
                 if e.errno == errno.EEXIST:
                     if verbose:
-                        print " ... .qunexstudy file already exists" 
+                        print(" ... .qunexstudy file already exists")
                 else:
                     errstr = os.strerror(e.errno)
                     raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
@@ -227,12 +227,12 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
             os.write(f, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username))
             os.close(f)
             if verbose:
-                print " ... created .qunexstudy file"
+                print(" ... created .qunexstudy file")
         
         except OSError as e:
             if e.errno == errno.EEXIST:
                 if verbose:
-                    print " ... .qunexstudy file already exists" 
+                    print(" ... .qunexstudy file already exists")
             else:
                 errstr = os.strerror(e.errno)
                 raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
@@ -370,7 +370,7 @@ def create_study(studyfolder=None, folders=None):
         qunex create_study studyfolder=/Volumes/data/studies/WM.v4
     """
 
-    print "Running create_study\n==================="
+    print("Running create_study\n===================")
 
     if studyfolder is None:
         raise ge.CommandError("create_study", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
@@ -489,7 +489,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         qunex create_batch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
     """
 
-    print "Running create_batch\n==================="
+    print("Running create_batch\n===================")
 
     if sessions and sessions.lower() == 'none':
         sessions = None
@@ -512,22 +512,22 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
 
     if os.path.exists(targetfile):
         if overwrite == 'ask':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
-            s = raw_input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
+            print("WARNING: target file %s already exists!" % (os.path.abspath(targetfile)))
+            s = input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
             if s == 'o':
-                print "         Overwriting exisiting file."
+                print("         Overwriting exisiting file.")
                 overwrite = 'yes'
             elif s == 'a':
-                print "         Appending to exisiting file."
+                print("         Appending to exisiting file.")
                 overwrite = 'append'
             else:
                 raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
         elif overwrite == 'yes':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
-            print "         Overwriting exisiting file."
+            print("WARNING: target file %s already exists!" % (os.path.abspath(targetfile)))
+            print("         Overwriting exisiting file.")
         elif overwrite == 'append':
-            print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
-            print "         Appending to exisiting file."
+            print("WARNING: target file %s already exists!" % (os.path.abspath(targetfile)))
+            print("         Appending to exisiting file.")
         elif overwrite == 'no':
             raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
     else:
@@ -535,7 +535,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
 
     targetFolder = os.path.dirname(targetfile)
     if not os.path.exists(targetFolder):
-        print "---> Creating target folder %s" % (targetFolder)
+        print("---> Creating target folder %s" % (targetFolder))
         os.makedirs(targetFolder)
 
     try:
@@ -549,7 +549,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         slist = []
         
         if overwrite == 'yes':
-            print "---> Creating file %s [%s]" % (os.path.basename(targetfile), targetfile)
+            print("---> Creating file %s [%s]" % (os.path.basename(targetfile), targetfile))
             jfile = open(targetfile, 'w')
             # header
             print >> jfile, "# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
@@ -560,9 +560,9 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         elif overwrite == 'append':
             slist, parameters = gc.getSessionList(targetfile)
             slist = [e['id'] for e in slist]
-            print "---> Appending to file %s [%s]" % (os.path.basename(targetfile), targetfile)
+            print("---> Appending to file %s [%s]" % (os.path.basename(targetfile), targetfile))
             if paramfile and preexist:
-                print "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
+                print("---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!")
             jfile = open(targetfile, 'a')
 
         # --- check for param file
@@ -571,7 +571,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             if paramfile is None:
                 paramfile = os.path.join(sessionsfolder, 'specs', 'batch.txt')
                 if not os.path.exists(paramfile):
-                    print "---> WARNING: Creating empty parameter file!"
+                    print("---> WARNING: Creating empty parameter file!")
                     pfile = open(paramfile, 'w')
                     print >> pfile, parameterTemplateHeader
                     for line in gp.arglist:
@@ -582,13 +582,13 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                     pfile.close()
 
             if os.path.exists(paramfile):
-                print "---> appending parameter file [%s]." % (paramfile)
+                print("---> appending parameter file [%s]." % (paramfile))
                 print >> jfile, "# Parameter file: %s\n#" % (paramfile)
                 with open(paramfile) as f:
                     for line in f:
                         print >> jfile, line,
             else:
-                print "---> parameter files does not exist, skipping [%s]." % (paramfile)
+                print("---> parameter files does not exist, skipping [%s]." % (paramfile))
 
         # -- get list of sessions folders
 
@@ -603,7 +603,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                     if nfiles:
                         files += nfiles
                     else:
-                        print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(sessionsfolder, session['id'], sfile))
+                        print("---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(sessionsfolder, session['id'], sfile)))
                         missing += 1
         else:
             files = []
@@ -617,9 +617,9 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         for file in files:
             sessionid = os.path.basename(os.path.dirname(file))
             if sessionid in slist:
-                print "---> Skipping: %s" % (sessionid)
+                print("---> Skipping: %s" % (sessionid))
             else:
-                print "---> Adding: %s" % (sessionid)
+                print("---> Adding: %s" % (sessionid))
                 print >> jfile, "\n---"
                 with open(file) as f:
                     for line in f:
@@ -883,20 +883,20 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
         roi:<sessionsfolder>/<session id>/images/segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii
     """
 
-    print "Running create_list\n=================="
+    print("Running create_list\n==================")
 
     def checkFile(fileName):
         if check == 'no':
             return True
         elif check == 'present':
             if not os.path.exists(fileName):
-                print "WARNING: File does not exist [%s]!" % (fileName)
+                print("WARNING: File does not exist [%s]!" % (fileName))
                 return False
             else:
                 return True
         elif check == 'warn':
             if not os.path.exists(fileName):
-                print "WARNING: File does not exist, but will be included in the list anyway [%s]!" % (fileName)
+                print("WARNING: File does not exist, but will be included in the list anyway [%s]!" % (fileName))
             return True
         else:
             if not os.path.exists(fileName):
@@ -932,24 +932,24 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
     if listfile is None:
         listfile = os.path.join(os.path.dirname(sessionsfolder), 'processing', 'lists', 'sessions.list')
-        print "WARNING: No target list file name specified.\n         The list will be created as: %s!" % (listfile)
+        print("WARNING: No target list file name specified.\n         The list will be created as: %s!" % (listfile))
 
     if os.path.exists(listfile):
-        print "WARNING: Target list file %s already exists!" % (os.path.abspath(listfile))
+        print("WARNING: Target list file %s already exists!" % (os.path.abspath(listfile)))
         if overwrite == 'ask':
-            s = raw_input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
+            s = input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
             if s == 'o':
-                print "         Overwriting exisiting file."
+                print("         Overwriting exisiting file.")
                 overwrite = 'yes'
             elif s == 'a':
-                print "         Appending to exisiting file."
+                print("         Appending to exisiting file.")
                 overwrite = 'append'
             else:
                 raise ge.CommandFailed("create_list", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
         elif overwrite == 'yes':
-            print "         Overwriting the exisiting file."
+            print("         Overwriting the exisiting file.")
         elif overwrite == 'append':
-            print "         Appending to the exisiting file."
+            print("         Appending to the exisiting file.")
         elif overwrite == 'no':
             raise ge.CommandFailed("create_list", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
     else:
@@ -957,13 +957,13 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
     targetFolder = os.path.dirname(listfile)
     if targetFolder and not os.path.exists(targetFolder):
-        print "---> Creating target folder %s" % (targetFolder)
+        print("---> Creating target folder %s" % (targetFolder))
         os.makedirs(targetFolder)
 
     # --- check sessions
 
     if sessions is None:
-        print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        print("WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
         sessions = glob.glob(os.path.join(sessionsfolder, '*', images_folder))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
@@ -1030,13 +1030,13 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
     # --- write to target file
 
     if overwrite == 'yes':
-        print "---> Creating file %s" % (os.path.basename(listfile))
+        print("---> Creating file %s" % (os.path.basename(listfile)))
         lfile = open(listfile, 'w')
         print >> lfile, "# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
         print >> lfile, "#"
 
     elif overwrite == 'append':
-        print "---> Appending to file %s" % (os.path.basename(listfile))
+        print("---> Appending to file %s" % (os.path.basename(listfile)))
         lfile = open(listfile, 'a')
         print >> lfile, "# Appended to file on %s" % (datetime.today())
 
@@ -1225,14 +1225,14 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
             return True
         elif not os.path.exists(fileName):
             if check == 'warn':
-                print "     WARNING: File does not exist [%s]!" % (fileName)
+                print("     WARNING: File does not exist [%s]!" % (fileName))
                 return True
             else:
-                print "     ERROR: File does not exist [%s]!" % (fileName)
+                print("     ERROR: File does not exist [%s]!" % (fileName))
                 return False
         return True
 
-    print "Running create_conc\n=================="
+    print("Running create_conc\n==================")
 
     # --- check sessions
 
@@ -1264,16 +1264,16 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
 
     if concfolder is None:
         concfolder = os.path.join(sessionsfolder, 'inbox', 'concs')
-        print "WARNING: No target conc folder specified.\n         The conc files will be created in folder: %s!" % (concfolder)
+        print("WARNING: No target conc folder specified.\n         The conc files will be created in folder: %s!" % (concfolder))
 
     if not os.path.exists(concfolder):
-        print "---> Creating target folder %s" % (concfolder)
+        print("---> Creating target folder %s" % (concfolder))
         os.makedirs(concfolder)
 
     # --- check sessions
 
     if sessions is None:
-        print "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        print("WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
         sessions = glob.glob(os.path.join(sessionsfolder, '*', images_folder))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
@@ -1288,7 +1288,7 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
     error = False
     for session in sessions:
 
-        print "---> Processing session %s" % (session['id'])
+        print("---> Processing session %s" % (session['id']))
         files = []
         complete = True
 
@@ -1316,24 +1316,24 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         concfile = os.path.join(concfolder, session['id'] + concname + '.conc')
 
         if not complete and check == 'yes':
-            print "     WARNING: Due to missing source files conc file was not created!"
+            print("     WARNING: Due to missing source files conc file was not created!")
             error = True
             continue
 
         if os.path.exists(concfile):
-            print "     WARNING: Conc file %s already exists!" % (os.path.abspath(concfile))
+            print("     WARNING: Conc file %s already exists!" % (os.path.abspath(concfile)))
             if overwrite == 'ask':
-                s = raw_input("              Do you want to overwrite it (o) or skip (s) creating this file? [o/s]: ")
+                s = input("              Do you want to overwrite it (o) or skip (s) creating this file? [o/s]: ")
                 if s == 'o':
-                    print "              Overwriting exisiting file."
+                    print("              Overwriting exisiting file.")
                     overwrite = 'yes'
                 else:
-                    print "              Skipping."
+                    print("              Skipping.")
                     continue
             elif overwrite == 'yes':
-                print "              Overwriting the exisiting file."
+                print("              Overwriting the exisiting file.")
             elif overwrite == 'no':
-                print "              Skipping this conc file."
+                print("              Skipping this conc file.")
                 error = True
                 continue
         else:
@@ -1342,7 +1342,7 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         # --- write to target file
 
         if overwrite == 'yes':
-            print "     ... creating %s with %d files" % (os.path.basename(concfile), len(files))
+            print("     ... creating %s with %d files" % (os.path.basename(concfile), len(files)))
             cfile = open(concfile, 'w')
 
             print >> cfile, "number_of_files: %d" % (len(files))
@@ -1694,7 +1694,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
     if not os.path.isdir(runlogfolder):
         os.makedirs(runlogfolder)
 
-    print "===> Saving the run_list runlog to: %s" % runlogfolder
+    print("===> Saving the run_list runlog to: %s" % runlogfolder)
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname = os.path.join(runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
@@ -1784,7 +1784,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
         raise ge.CommandFailed("run_list", "Cannot open log", "Unable to open log [%s]" % (logname), "Please check the paths!")
 
     print >> log, "\n\n============================== RUNLIST LOG ==============================\n"
-    print "===> Running commands from the following lists:", ", ".join(runLists)
+    print("===> Running commands from the following lists:", ", ".join(runLists))
     print >> log, "===> Running commands from the following lists:", ", ".join(runLists), "\n"
 
     for runListName in runLists:
@@ -1793,7 +1793,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
 
         summary += "\n\n===> list: %s" % (runListName)
 
-        print "===> Running commands from list:", runListName
+        print("===> Running commands from list:", runListName)
         print >> log, "\n----------==================== LIST ====================---------\n"
         print >> log, "===> Running commands from list:", runListName, "\n"
 
@@ -1846,7 +1846,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
                     command.append('--%s=%s' % (param, value))
                     commandr += ' \\\n          --%s="%s"' % (param, value)
                         
-            print commandr
+            print(commandr)
             print >> log, commandr
 
             # -- run command
@@ -1857,7 +1857,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
             logging = verbose
 
             for line in iter(process.stdout.readline, b''):
-                print line,
+                print(line, end=" ")
                 if "ERROR in completing" in line or "ERROR:" in line or "failed with error" in line:
                     error = True
                 if "Final report" in line:
@@ -1878,15 +1878,15 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
                 log.close()
                 raise ge.CommandFailed("runlist", "Runlist command failed", "Command '%s' inside list '%s' failed" % (commandName, runListName), "See errors above for details")
             else:
-                summary += "\n---> command %-20s OK" % (commandName)                
-                print "===> Successful completion of runlist command %s" % (commandName)
+                summary += "\n---> command %-20s OK" % (commandName)
+                print("===> Successful completion of runlist command %s" % (commandName))
     summary += "\n\n----------==== END SUMMARY ====----------"
     
     print >> log, summary
     print >> log, "\n===> Successful completion of task: run_lists %s" % (", ".join(runLists))
 
-    print "===> Successful completion of run_lists %s" % (", ".join(runLists))
-    print summary
+    print("===> Successful completion of run_lists %s" % (", ".join(runLists)))
+    print(summary)
 
     log.close()
 
@@ -1962,7 +1962,7 @@ def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number'
         else:
             boldlist.append(str(boldnumber))
 
-    print "BOLDS:%s" % (",".join(boldlist))
+    print("BOLDS:%s" % (",".join(boldlist)))
 
 
 def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="behavior.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
@@ -2150,7 +2150,7 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
 
     # --- Start it up
 
-    print "Running gather_behavior\n======================"
+    print("Running gather_behavior\n======================")
 
     # --- check subjects folder
 
@@ -2192,7 +2192,7 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
     # --- check sessions
 
     if sessions is None:
-        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        print("---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
         sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
@@ -2259,19 +2259,19 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
     reportit = [('ok', 'Successfully processed sessions:'), ('missing', 'Sessions for which no behavioral data was found'), ('error', 'Sessions for which an error was encountered')]
 
     if any([processReport[status] for status, message in reportit]):
-        print "===> Final report"
+        print("===> Final report")
         for status, message in reportit:
             if processReport[status]:
-                print '--->', message
+                print('--->', message)
                 if report and status != 'ok':
                     print >> fout, '#', message
                 for info in processReport[status]:
                     if status == 'error':
-                        print '     %s [%s]' % info
+                        print('     %s [%s]' % info)
                         if report:
                             print >> fout, '# -> %s: %s' % info
                     else:
-                        print '     %s' % (info)
+                        print('     %s' % (info))
                         if report and status != 'ok':
                             print >> fout, '# -> %s' % (info)
 
@@ -2469,7 +2469,7 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
 
     # --- Start it up
 
-    print "Running pull_sequence_names\n========================="
+    print("Running pull_sequence_names\n=========================")
 
     # --- check sessions folder
 
@@ -2511,7 +2511,7 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
     # --- check sessions
 
     if sessions is None:
-        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        print("---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
         sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
@@ -2567,19 +2567,19 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
     reportit = [('ok', 'Successfully processed sessions:'), ('missing', 'Sessions for which no imaging data was found'), ('error', 'Sessions for which an error was encountered')]
 
     if any([processReport[status] for status, message in reportit]):
-        print "===> Final report"
+        print("===> Final report")
         for status, message in reportit:
             if processReport[status]:
-                print '--->', message
+                print('--->', message)
                 if report and status != 'ok':
                     print >> fout, '#', message
                 for info in processReport[status]:
                     if status == 'error':
-                        print '     %s [%s]' % info
+                        print('     %s [%s]' % info)
                         if report:
                             print >> fout, '# -> %s: %s' % info
                     else:
-                        print '     %s' % (info)
+                        print('     %s' % (info))
                         if report and status != 'ok':
                             print >> fout, '# -> %s' % (info)
 
@@ -2748,7 +2748,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         qunex create_session_info sessions="processing/batch_new.txt" sessionsfolder=session mapping=session/hcp_mapping.txt
     """
 
-    print "Running create_session_info\n==================="
+    print("Running create_session_info\n===================")
 
     # get all pipelines
     pipelines = pipelines.split(",")
@@ -2769,7 +2769,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         if not os.path.exists(mapping):
             raise ge.CommandFailed("create_session_info", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
 
-        print " ... Reading pipeline mapping from %s" % (mapping)
+        print(" ... Reading pipeline mapping from %s" % (mapping))
 
         mapping = [line.strip() for line in open(mapping) if line[0] != "#"]
         mapping = [e.split('=>') for e in mapping]
@@ -2788,7 +2788,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         for session in sessions:
             newSet = glob.glob(os.path.join(sessionsfolder, session['id']))
             if not newSet:
-                print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(sessionsfolder, session['id']))
+                print("WARNING: No folders found that match %s. Please check your data!" % (os.path.join(sessionsfolder, session['id'])))
             sfolders += newSet
 
         # -- check if we have any
@@ -2808,10 +2808,10 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             if not os.path.exists(ssfile):
                 report['missing source'].append(sfolder)
                 continue
-            print " ... Processing folder %s" % (sfolder)
+            print(" ... Processing folder %s" % (sfolder))
 
             if os.path.exists(stfile) and overwrite != "yes":
-                print "     ... Target file already exists, skipping! [%s]" % (stfile)
+                print("     ... Target file already exists, skipping! [%s]" % (stfile))
                 report['pre-existing target'].append(sfolder)
                 continue
 
@@ -2911,9 +2911,9 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
                 index += 1
 
             if fmag_ctn != fpha_ctn:
-                print "WARNING: Field map correction (Siemens/Philips) requires one or more complete pairs of scans: FM-Magnitude/FM-Phase"
+                print("WARNING: Field map correction (Siemens/Philips) requires one or more complete pairs of scans: FM-Magnitude/FM-Phase")
             if sa_ctn != sb_ctn:
-                print "WARNING: Spin-echo field map correction requires one or more complete pairs of scans: SE-FM-PA/SE-FM-AP or SE-FM-LR/SE-FM-RL"
+                print("WARNING: Spin-echo field map correction requires one or more complete pairs of scans: SE-FM-PA/SE-FM-AP or SE-FM-LR/SE-FM-RL")
 
             for item in imgtrack:
                 if imgtrack[item]['fm'] == 0 and fmtrack and re.search(r'(SE-FM)', nlines[item]) is None:
@@ -2926,24 +2926,24 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
                     nlines[item] = nlines[item] + ": se(%d)" % (setrack[crspse]['num'])
 
             if pipelineok:
-                print "     ... %s already pipeline ready" % (sourcefile)
+                print("     ... %s already pipeline ready" % (sourcefile))
                 if sourcefile != targetfile:
                     shutil.copyfile(sourcefile, targetfile)
                 report['pre-processed source'].append(sfolder)
             else:
-                print "     ... writing %s" % (targetfile)
+                print("     ... writing %s" % (targetfile))
                 fout = open(stfile, 'w')
                 for line in nlines:
                     print >> fout, line
                 report['processed'].append(sfolder)
 
-    print "\n===> Final report"
+    print("\n===> Final report")
 
     for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:
         if report[status]:
-            print "---> sessions with %s file:" % (status)
+            print("---> sessions with %s file:" % (status))
             for session in report[status]:
-                print "     -> %s " % (os.path.basename(session))
+                print("     -> %s " % (os.path.basename(session)))
 
     if report['missing source']:
         raise ge.CommandFailed("create_session_info", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sourcefile), "Please check the data and parameters!")

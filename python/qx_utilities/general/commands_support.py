@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -177,8 +177,8 @@ def check_deprecated_commands(command):
         # if deprecated warn the user and call the new one
         if command.lower() in [s.lower() for s in old_names] and command != new_name:
             new_command = new_name
-            print "\n\nWARNING: Use of a deprecated command! Command %s is now known as %s" % (command, new_command)
-            print ""
+            print("\n\nWARNING: Use of a deprecated command! Command %s is now known as %s" % (command, new_command))
+            print("")
             break
 
     return new_command
@@ -353,7 +353,7 @@ def check_deprecated_parameters(options, command):
             if s in v:
                 # warning message
                 msg = towarn_parameters[k][1]
-                print "\nWARNING: %s\n" % msg
+                print("\nWARNING: %s\n" % msg)
 
     return new_options
 
@@ -374,7 +374,7 @@ def impute_parameters(options, command):
     for target_option, source_option in to_impute:
         if options[target_option] is None:
             options[target_option] = options[source_option]
-            print "WARNING: Parameter %s was not specified. Its value was imputed from parameter %s and set to '%s'!" % (target_option, source_option, str(options[source_option])) 
+            print("WARNING: Parameter %s was not specified. Its value was imputed from parameter %s and set to '%s'!"  % (target_option, source_option, str(options[source_option])))
     
     return options
 

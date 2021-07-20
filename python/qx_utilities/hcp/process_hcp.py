@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -843,7 +843,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PreFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PreFS failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = "PreFS failed"
         failed = 1
@@ -1256,7 +1256,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurfer', e.function, "\n     ".join(e.report))
         report = "FS failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1574,7 +1574,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurferLongitudinal', e.function, "\n     ".join(e.report))
         report = "FSLong failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1825,7 +1825,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PostFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PostFS failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -2225,7 +2225,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             report = "HCP Diffusion can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -2942,7 +2942,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- are we using previous reference
 
-            if fmriref is not "NONE":
+            if fmriref != "NONE":
                 r += '\n     ... using %s as movement correction reference' % (fmriref)
                 refimg = 'NONE'
                 if options['hcp_processing_mode'] == 'HCPStyleData' and options['hcp_bold_refreg'] == 'nonlinear':
@@ -3031,7 +3031,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
     except:
@@ -3265,7 +3265,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -3502,7 +3502,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Surface failed')
     except:
@@ -3611,7 +3611,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -4138,7 +4138,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ICAFix failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ICAFix failed')
     except:
@@ -4249,7 +4249,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -4300,7 +4300,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldimgs is not "":
+                if boldimgs != "":
                     boldimgs = boldimgs + "@"
 
                 # add latest image
@@ -4382,7 +4382,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -4615,7 +4615,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP PostFix failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP PostFix failed')
     except:
@@ -4767,7 +4767,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # log beautify
         r += "\n\n"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -5038,7 +5038,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ReApplyFix failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ReApplyFix failed')
     except:
@@ -5172,7 +5172,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             report['failed'].append(printbold)
             boldok = False
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -5223,7 +5223,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldtargets is not "":
+                if boldtargets != "":
                     boldtargets = boldtargets + "@"
 
                 # add latest image
@@ -5333,7 +5333,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -5423,7 +5423,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         # log beautify
         r += "\n"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r = str(errormessage)
         report['failed'].append(printbold)
@@ -5708,7 +5708,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP MSMAll failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP MSMAll failed')
     except:
@@ -5776,7 +5776,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             # if msmallBolds is not defined add all icafix bolds
             if options['hcp_msmall_bolds'] is None:
                 # add @ separator
-                if msmallBolds is not "":
+                if msmallBolds != "":
                     msmallBolds = msmallBolds + "@"
 
                 # add latest image
@@ -5874,7 +5874,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bolds %s\n" % (msmallBolds)
         r += str(errormessage)
         report['failed'].append(msmallBolds)
@@ -5935,7 +5935,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldtargets is not "":
+                if boldtargets != "":
                     boldtargets = boldtargets + "@"
 
                 # add latest image
@@ -6046,7 +6046,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -6256,7 +6256,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
     except:
@@ -6316,7 +6316,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 boldsok = False
 
             # add @ separator
-            if boldtargets is not "":
+            if boldtargets != "":
                 boldtargets = boldtargets + "@"
 
             # add latest image
@@ -6421,7 +6421,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(regname)
@@ -6481,7 +6481,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                     runok = False
 
                 # add @ separator
-                if groupbolds is not "":
+                if groupbolds != "":
                     groupbolds = groupbolds + "@"
 
                 # add latest image
@@ -6497,7 +6497,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 runok = False
 
             # add @ or % separator
-            if grouptargets is not "":
+            if grouptargets != "":
                 grouptargets = grouptargets + "@"
                 boldtargets = boldtargets + "%"
 
@@ -6603,7 +6603,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                         boldnames = en_split[1].replace(",", "@")
 
                 # add @ or % separator
-                if extractnames is not "":
+                if extractnames != "":
                     extractconcatnames = extractconcatnames + "@"
                     extractnames = extractnames + "%"
 
@@ -6677,7 +6677,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(grouptargets)
@@ -6980,7 +6980,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             report = "HCP ASL can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -7068,7 +7068,7 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
             report = "HCP DTI Fit can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -7156,7 +7156,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
             report = "HCP BedpostX can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -7165,7 +7165,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
-    print r
+    print(r)
     return (r, (sinfo['id'], report, failed))
 
 
@@ -7371,7 +7371,8 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 npre += 1
             else:
                 if ".spec" in tfile:
-                    s = file(sfile).read()
+                    file = open(sfile, 'r')
+                    s = file.read()
                     s = s.replace(sid + ".", "")
                     tf = open(tfile, 'w')
                     print >> tf, s
@@ -7477,7 +7478,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 report['boldfail'] += 1
                 failed += 1
 
-        except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+        except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
             r = str(errormessage)
             report['boldfail'] += 1
             failed += 1

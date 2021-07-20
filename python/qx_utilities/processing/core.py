@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -25,12 +25,13 @@ import shutil
 import re
 import subprocess
 import glob
-import general.exceptions as ge
 import sys
 import traceback
 import time
-import general.core as gc
 from datetime import datetime
+
+import general.exceptions as ge
+import general.core as gc
 from general.img import *
 from general.meltmovfidl import *
 
@@ -60,21 +61,21 @@ def print_exc_plus():
         f = f.f_back
     stack.reverse()
     traceback.print_exc()
-    print "Locals by frame, innermost last"
+    print("Locals by frame, innermost last")
     for frame in stack:
         print
-        print "Frame %s in %s at line %s" % (frame.f_code.co_name,
+        print("Frame %s in %s at line %s" % (frame.f_code.co_name,
                                              frame.f_code.co_filename,
-                                             frame.f_lineno)
+                                             frame.f_lineno))
         for key, value in frame.f_locals.items():
-            print "\t%20s = " % key,
+            print("\t%20s = " % key, end=" ")
             # We have to be careful not to cause a new error in our error
             # printer! Calling str() on an unknown object could cause an
             # error we don't want.
             try:
-                print value
+                print(value)
             except:
-                print "<ERROR WHILE PRINTING VALUE>"
+                print("<ERROR WHILE PRINTING VALUE>")
 
 
 class ExternalFailed(Exception):
@@ -221,10 +222,10 @@ def getExactFile(candidate):
     if len(g) == 1:
         return g[0]
     elif len(g) > 1:
+        # print("WARNING: there are %d files matching %s" % (len(g), candidate))
         return g[0]
-        print "WARNING: there are %d files matching %s" % (len(g), candidate)
     else:
-        # print "WARNING: there are no files matching %s" % (candidate)
+        # print("WARNING: there are no files matching %s" % (candidate))
         return ''
 
 
@@ -365,7 +366,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     ext = getExtension(options['image_target'])
 
-    # print "root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext
+    # print("root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext)
 
     rgss = options['bold_nuisance']
     rgss = rgss.translate(None, ' ,;|')
@@ -379,7 +380,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     # --- alternative check for 4dfp preprocessing
 
     if f['bold_source'] == '' and options['image_target'] == '4dfp':
-        # print "Searching in the atlas folder ..."
+        # print("Searching in the atlas folder ...")
         f['bold_source']        = getExactFile(os.path.join(d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
 
     # --- bold masks
@@ -516,10 +517,10 @@ def getSessionFolders(sinfo, options):
     d['qc_mov']             = os.path.join(d['qc'], 'movement' + options['img_suffix'] + options['bold_variant'])
 
     if not os.path.exists(d['s_source']) and options['source_folder']:
-        print "WARNING: Source folder not found, waiting 15s to give it a chance to come online!"
+        print("WARNING: Source folder not found, waiting 15s to give it a chance to come online!")
         time.sleep(15)
         if not os.path.exists(d['s_source']):
-            print "WARNING: Source folder still not found, if data has not been copied over the processing will fail!"
+            print("WARNING: Source folder still not found, if data has not been copied over the processing will fail!")
             # errormessage = "\n... ERROR: Source folder does not exist or is not reachable [%s]" % (d['s_source'])
             # raise NoSourceFolder(errormessage)
 
@@ -529,7 +530,7 @@ def getSessionFolders(sinfo, options):
                 try:
                     os.makedirs(fpath)
                 except:
-                    print "ERROR: Could not create folder %s! Please check paths and permissions!" % (fpath)
+                    print("ERROR: Could not create folder %s! Please check paths and permissions!" % (fpath))
                     raise
 
     return d
@@ -711,7 +712,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         r += '\n\n%s' % (description)
 
         # --- set up parameters
-
+        basestring = (str, bytes)
         if isinstance(logtags, basestring) or logtags is None:
             logtags = [logtags]
 
@@ -819,7 +820,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     """
 
     r = '\n\n%s' % (description)
-
+    basestring = (str, bytes)
     if isinstance(logtags, basestring):
         logtags = [logtags]
 

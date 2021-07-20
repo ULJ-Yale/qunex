@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -60,7 +60,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
         file_split = file.split(pathsep)
 
         if ("dMRI" not in file_split):
-            print prefix + "--> skipping %s, not a dMRI file" % (file)
+            print(prefix + "--> skipping %s, not a dMRI file" % (file))
             return False
         else:
           session = file_split[-3]
@@ -71,20 +71,20 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
           # store data
           data_file = file_split[-1]
     except:
-        print "ERROR: Could not parse file:", file
+        print("ERROR: Could not parse file:", file)
         return False
 
     # target folder and file
     tfile = os.path.join(sessionsfolder, session, "NHP", "dMRI", data_file)
-    print prefix + "--> Processing session %s, file %s" % (session, data_file)
+    print(prefix + "--> Processing session %s, file %s" % (session, data_file))
 
     # overwrite?
     if os.path.exists(tfile):
         if overwrite == "yes":
-            print prefix + "--> file %s already exists: deleting ..." % (tfile)
+            print(prefix + "--> file %s already exists: deleting ..." % (tfile))
             os.remove(tfile)
         else:
-            print prefix + "--> file %s already exists: skipping ..." % (tfile)
+            print(prefix + "--> file %s already exists: skipping ..." % (tfile))
             return False
 
     return [session, tfile]
@@ -186,8 +186,8 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
         qunex import_nhp sessionsfolder=myStudy/sessions inbox=myData/NHP overwrite=yes
     """
 
-    print "Running import_nhp"
-    print "=================="
+    print("Running import_nhp")
+    print("==================")
 
     # check inputs
     if action not in ["link", "copy", "move"]:
@@ -211,17 +211,17 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
     # check for folders
     if not os.path.exists(os.path.join(sessionsfolder, "inbox", "NHP")):
         os.makedirs(os.path.join(sessionsfolder, "inbox", "NHP"))
-        print "--> creating inbox NHP folder"
+        print("--> creating inbox NHP folder")
 
     if not os.path.exists(os.path.join(sessionsfolder, "archive", "NHP")):
         os.makedirs(os.path.join(sessionsfolder, "archive", "NHP"))
-        print "--> creating archive NHP folder"
+        print("--> creating archive NHP folder")
 
     # identification of files
     if sessions:
         sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
-    print "--> identifying files in %s" % (inbox)
+    print("--> identifying files in %s" % (inbox))
 
     source_files = []
 
@@ -248,11 +248,11 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
         raise ge.CommandFailed("import_nhp", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
     # mapping data to sessions" folders
-    print "--> mapping files to QuNex NHP folders"
+    print("--> mapping files to QuNex NHP folders")
     report = {}
     for file in source_files:
         if file.endswith(".zip"):
-            print "    --> processing zip package [%s]" % (file)
+            print("    --> processing zip package [%s]" % (file))
 
             try:
                 z = zipfile.ZipFile(file, "r")
@@ -273,15 +273,15 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
                               report[result[0]].append(tfile)
                 z.close()
 
-                print "        --> done!"
+                print("        --> done!")
             except:
-                print "           ERROR: Processing of zip package failed. Please check the package!"
+                print("           ERROR: Processing of zip package failed. Please check the package!")
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 all_ok = False
                 raise
 
         elif ".tar" in file or '.tgz' in file:
-            print "   --> processing tar package [%s]" % (file)
+            print("   --> processing tar package [%s]" % (file))
 
             try:
                 tar = tarfile.open(file)
@@ -304,9 +304,9 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
                               report[result[0]].append(tfile)
                 tar.close()
 
-                print "        --> done!"
+                print("        --> done!")
             except:
-                print "           ERROR: Processing of tar package failed. Please check the package!"
+                print("           ERROR: Processing of tar package failed. Please check the package!")
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 all_ok = False
 
@@ -327,50 +327,50 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
 
     # ---> archiving the dataset
     if errors:
-        print "   ==> The following errors were encountered when mapping the files:"
-        print errors
+        print("   ==> The following errors were encountered when mapping the files:")
+        print(errors)
     else:
         if os.path.isfile(inbox) or not os.path.samefile(inbox, os.path.join(sessionsfolder, "inbox", "NHP")):
             try:
                 if archive == "move":
-                    print "--> moving dataset to archive" 
+                    print("--> moving dataset to archive")
                     shutil.move(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
                 elif archive == "copy":
-                    print "--> copying dataset to archive"
+                    print("--> copying dataset to archive")
                     shutil.copy2(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
                 elif archive == "delete":
-                    print "--> deleting dataset"
+                    print("--> deleting dataset")
                     if os.path.isfile(inbox):
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
             except:
-                print "==> %s failed!" % (archive)
+                print("==> %s failed!" % (archive))
         else:
             files = glob.glob(os.path.join(inbox, "*"))
             for file in files:
                 try:
                     if archive == "move":
-                        print "--> moving dataset to archive" 
+                        print("--> moving dataset to archive")
                         shutil.move(file, os.path.join(sessionsfolder, "archive", "NHP"))
                     elif archive == "copy":
-                        print "--> copying dataset to archive"
+                        print("--> copying dataset to archive")
                         shutil.copy2(file, os.path.join(sessionsfolder, "archive", "NHP"))
                     elif archive == "delete":
-                        print "--> deleting dataset"
+                        print("--> deleting dataset")
                         if os.path.isfile(file):
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
                 except:
-                    print "==> %s of %s failed!" % (archive, file)
+                    print("==> %s of %s failed!" % (archive, file))
 
     if not all_ok:
         raise ge.CommandFailed("import_nhp", "Some actions failed", "Please check report!")
 
     # final report and session.txt creation
     if len(report) > 0:
-        print "\nFinal report\n============\n"
+        print("\nFinal report\n============\n")
 
         for s in report:
             # print session info
@@ -388,7 +388,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
             if os.path.exists(sfile):
                 if overwrite == 'yes':
                     os.remove(sfile)
-                    print "    --> removed existing session_nhp.txt file"
+                    print("    --> removed existing session_nhp.txt file")
                 else:
                     raise ge.CommandFailed("import_nhp", "session_nhp.txt file already present!", "A session_nhp.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
@@ -416,4 +416,4 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
                 i = i + 1
 
             # for nicer output
-            print ""
+            print("")

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -12,7 +12,7 @@ Definition of commands used in gmri along with their parameters.
 """
 
 # qx_utilities imports
-import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities, meltmovfidl, commands_support
+from general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities, meltmovfidl, commands_support
 
 # pipeline imports
 from hcp import import_hcp, setup_hcp, process_hcp, export_hcp
