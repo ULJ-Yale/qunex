@@ -28,14 +28,14 @@ def lock(filename, delay=0.5, identifier="Python process"):
         # create lock file
         try:
             f = os.open(lock_file, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-            os.write(f, bytes(identifier))
+            os.write(f, bytes(identifier, encoding='utf8'))
             os.close(f)
 
             # store lock file
             locks.append(lock_file)
-
             break
-        except:
+        except Exception as e:
+            print(e)
             pass
 
         # try again soon

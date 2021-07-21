@@ -529,17 +529,17 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         with lock:
             print(ge.reportCommandNull(name, e))
             print
-        result = e.error
+        result = e
     except ge.CommandFailed as e:
         with lock:
             print(ge.reportCommandFailed(name, e))
             print
-        result = e.error
+        result = e
     except Exception as e:
         with lock:
             print("\n\nERROR")
             print(traceback.format_exc())
-        result = e.message
+        result = e
 
     with lock:
         print("\n-----------------------------------------\nFinished at %s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S")))

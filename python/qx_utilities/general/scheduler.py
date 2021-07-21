@@ -412,15 +412,15 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     run = subprocess.Popen(com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True)
 
-    run.stdin.write(sCommand + command)
+    run.stdin.write((sCommand + command).encode('utf-8'))
     run.stdin.close()
 
     # --- getting results
     result = ""
     if outputs['return'] in ['both', 'stdout']:
-        result = run.stdout.read()
+        result = run.stdout.read().decode('utf-8')
     elif outputs['return'] in ['stderr']:
-        result = run.stderr.read()
+        result = run.stderr.read().decode('utf-8')
 
     # --- extracting job id
     jobid = 'NA'

@@ -113,6 +113,7 @@ def getHCPPaths(sinfo, options):
     d['hcp_nonlin']         = os.path.join(hcpbase, 'MNINonLinear')
     d['T1w_source']         = os.path.join(d['source'], 'T1w')
     d['DWI_source']         = os.path.join(d['source'], 'Diffusion')
+    d['ASL_source']         = os.path.join(d['source'], 'mbPCASLhr')
 
     d['T1w_folder']         = os.path.join(hcpbase, 'T1w')
     d['DWI_folder']         = os.path.join(hcpbase, 'Diffusion')
@@ -2187,7 +2188,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             if options['hcp_dwi_nogpu']:
                 comm += "                --no-gpu"
-
 
             # -- Report command
             if run:
@@ -6859,18 +6859,21 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # mbpcasl_file image
-        mbpcasl_file = os.path.join(sinfo["hcp"], sinfo["id"], "unprocessed/mbPCASLhr", sinfo["id"] + "_mbPCASLhr_PA.nii.gz")
+        asl_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "mbPCASLhr"][0]["filename"]
+        mbpcasl_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
         if not os.path.exists(mbpcasl_file):
             r += "\n---> ERROR: MbPCASLhr acquistion data not found [%s]" % mbpcasl_file
             run = False
 
         # AP and PA fieldmaps for use in distortion correction
-        fmap_ap_file = os.path.join(sinfo["hcp"], sinfo["id"], "unprocessed/mbPCASLhr", sinfo["id"] + "_PCASLhr_SpinEchoFieldMap_AP.nii.gz")
+        asl_ap_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "PCASLhr" and v["phenc"] == "AP"][0]["filename"]
+        fmap_ap_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_ap_filename + ".nii.gz")
         if not os.path.exists(fmap_ap_file):
             r += "\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file
             run = False
 
-        fmap_pa_file = os.path.join(sinfo["hcp"], sinfo["id"], "unprocessed/mbPCASLhr", sinfo["id"] + "_PCASLhr_SpinEchoFieldMap_PA.nii.gz")
+        asl_pa_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "PCASLhr" and v["phenc"] == "PA"][0]["filename"]
+        fmap_pa_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_pa_filename + ".nii.gz")
         if not os.path.exists(fmap_ap_file):
             r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
             run = False
@@ -6935,11 +6938,14 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if options["hcp_asl_nobandingcorr"]:
                 comm += "                --nobandingcorr"
 
-            if options['hcp_asl_interpolation'] is not None:
-                comm += "                --interpolation=" + options['hcp_asl_interpolation']
+            if options["hcp_asl_interpolation"] is not None:
+                comm += "                --interpolation=" + options["hcp_asl_interpolation"]
 
-            if options['hcp_asl_cores'] is not None:
-                comm += "                --cores=" + options['hcp_asl_cores']
+            if options["hcp_asl_cores"] is not None:
+                comm += "                --cores=" + options["hcp_asl_cores"]
+
+            print(comm)
+            exit(1)
 
             # -- Report command
             if run:
@@ -6948,16 +6954,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
 
-            exit(1)
-
             # -- Test files
             # !!!!! TODO
-            tfile = None
-
-            if hcp["hcp_asl_check"]:
-                full_test = {"tfolder": hcp["base"], "tfile": hcp["hcp_asl_check"], "fields": [("sessionid", sinfo["id"])], "specfolder": options["specfolder"]}
-            else:
-                full_test = None
+            tfile = "TODO.TXT"
+            full_test = None
 
         # -- Run
         if run:

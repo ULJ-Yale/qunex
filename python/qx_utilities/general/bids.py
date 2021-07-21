@@ -1095,7 +1095,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     # --- check for presence of nifti files
 
     if os.path.exists(nfolder):
-        nfiles = glob.glob(os.path.join(nfolder, '*.nii*'))
+        nfiles = len(glob.glob(os.path.join(nfolder, '*.nii*')))
         if nfiles > 0:
             if overwrite == 'no':
                 raise ge.CommandFailed("map_bids2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'overwrite' to yes!")

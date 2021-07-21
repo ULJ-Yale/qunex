@@ -899,14 +899,14 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     # --- process hcpls folder
 
     hcplsData = processHCPLS(hfolder, filesort)
-       
+
     if not hcplsData:
         raise ge.CommandFailed("map_hcpls2nii", "No image files in hcpls folder!", "There are no image files in the hcpls folder [%s]" % (hfolder), "Please check your data!")
 
     # --- check for presence of nifti files
 
     if os.path.exists(nfolder):
-        nfiles = glob.glob(os.path.join(nfolder, '*.nii*'))
+        nfiles = len(glob.glob(os.path.join(nfolder, '*.nii*')))
         if nfiles > 0:
             if overwrite == 'no':
                 raise ge.CommandFailed("map_hcpls2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'overwrite' to yes!")
@@ -1148,6 +1148,30 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     out = ": filename(%s)" % "_".join(fileInfo['parts'])
                     print(out, file=sout)
                     print(out, file=sout_hcp)
+
+                # -- ASL
+                elif fileInfo['parts'][0] in ['mbPCASLhr', 'PCASLhr']:
+                    # phenc
+                    phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
+                    if phenc:
+                        phenc = PEDirMap.get(phenc, 'NA')
+                    else:
+                        phenc = fileInfo['parts'][2]
+
+                    out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']), phenc)
+
+                    print(out, end= " ", file=sout)
+                    print(out, end= " ", file=sout_hcp)
+
+                    # add filename
+                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    print(out, file=sout)
+                    print(out, file=sout_hcp)
+
+                    print("\n" + fileInfo['parts'][0], file=rout)
+                    print("".join(['-' for e in range(len(fileInfo['parts'][0]))]), file=rout)
+                    print("%-25s : %.8f" % ("_hcp_%ssamplespacing" % (fileInfo['parts'][0][:2]), echospacing), file=rout)
+                    print("%-25s : %s" % ("_hcp_unwarpdir", unwarp[fileInfo['json'].get('ReadoutDirection', None)]), file=rout)
 
                 print("%s => %s" % (fileInfo['path'], tfile), file=bout)
             else:

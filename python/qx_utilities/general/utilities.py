@@ -489,7 +489,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         qunex create_batch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
     """
 
-    print("Running create_batch\n===================")
+    print("Running create_batch\n====================")
 
     if sessions and sessions.lower() == 'none':
         sessions = None
@@ -505,6 +505,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         sfiles.append("session_hcp.txt")
     else:
         sfiles = sourcefiles.split(",")
+
 
     # --- prepare target file name and folder
     if targetfile is None:
@@ -566,7 +567,6 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             jfile = open(targetfile, 'a')
 
         # --- check for param file
-
         if overwrite == 'yes' or not preexist:
             if paramfile is None:
                 paramfile = os.path.join(sessionsfolder, 'specs', 'batch.txt')
@@ -591,7 +591,6 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 print("---> parameter files does not exist, skipping [%s]." % (paramfile))
 
         # -- get list of sessions folders
-
         missing = 0
 
         if sessions is not None:
