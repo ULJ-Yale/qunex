@@ -88,8 +88,8 @@ def main(argv=None):
                 options['verbose'] = True
 
     except Usage as err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-        print >> sys.stderr, "for help use --help"
+        print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
         return 2
     
     cfile  = args[0]
@@ -100,8 +100,8 @@ def main(argv=None):
     try:
         meltmovfidl(cfile, ifile, iffile, offile)
     except Usage as err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-        print >> sys.stderr, "for help use --help"
+        print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
         return 2
     
     

@@ -1116,7 +1116,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         mode = 'a'
 
     bout  = open(os.path.join(bfolder, 'bids2nii.log'), mode)
-    print >> bout, "BIDS to nii mapping report, executed on %s" % (datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
+    print("BIDS to nii mapping report, executed on %s" % (datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")), file=bout)
 
     # --- map files
 
@@ -1132,35 +1132,35 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         if status:
             print("--> linked %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename']))
             if fileinfo == 'short':
-                print >> sout, "%02d: %s" % (imgn, bidsData['images']['info'][image]['tag'])
+                print("%02d: %s" % (imgn, bidsData['images']['info'][image]['tag']), file=sout)
             elif fileinfo == 'full':
                 fullinfo = bidsData['images']['info'][image]['filename'].replace('.nii.gz', '').replace('sub-%s_' % (subject), '').replace('ses-%s_' % (sessionid), '')
-                print >> sout, "%02d: %s" % (imgn, fullinfo)
+                print("%02d: %s" % (imgn, fullinfo), file=sout)
 
-            print >> bout, "%s => %s" % (bidsData['images']['info'][image]['filepath'], tfile)
+            print("%s => %s" % (bidsData['images']['info'][image]['filepath'], tfile), file=bout)
         else:
             allOk = False
             print("==> ERROR: Linking failed: %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename']))
-            print >> bout, "FAILED: %s => %s" % (bidsData['images']['info'][image]['filepath'], tfile)
+            print("FAILED: %s => %s" % (bidsData['images']['info'][image]['filepath'], tfile), file=bout)
 
         status = True
         if bidsData['images']['info'][image]['label'] == 'dwi':
             sbvec = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bvec')
             tbvec = tfile.replace('.nii.gz', '.bvec')
             if gc.moveLinkOrCopy(sbvec, tbvec, action='link'):
-                print >> bout, "%s => %s" % (sbvec, tbvec)
+                print("%s => %s" % (sbvec, tbvec), file=bout)
             else:
                 status = False
 
             sbval = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bval')
             tbval = tfile.replace('.nii.gz', '.bval')
             if gc.moveLinkOrCopy(sbval, tbval, action='link', status=status):
-                print >> bout, "%s => %s" % (sbval, tbval)
+                print("%s => %s" % (sbval, tbval), file=bout)
             else:
                 status = False
 
             if not status:
-                print >> bout, "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz [%s]!" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec'))
+                print("==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz [%s]!" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec')), file=bout)
                 print("==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec')))
                 allOk = False
     
@@ -1230,7 +1230,7 @@ def mapBIDS2behavior(sfolder='.', behavior=[], overwrite='no'):
         if len(outlines) >= 2:                     
             with open(os.path.join(bfolder, bfilename), 'w') as ofile:
                 for oline in outlines:
-                    print >> ofile, oline
+                    print(oline, file=ofile)
             print("--> mapped:", bfilename)
             report['mapped'].append(bfilename)
         elif len(outlines) < 2:

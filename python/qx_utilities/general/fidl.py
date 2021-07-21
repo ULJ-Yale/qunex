@@ -187,10 +187,10 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
     out = open(jointfile, 'w')
-    print >> out, sfidl['header']
+    print(sfidl['header'], file=out)
 
     for l in tfidl:
-        print >> out, "%g\t%s" % (l[0], "\t".join(l[1:]))
+        print("%g\t%s" % (l[0], "\t".join(l[1:])), file=out)
 
     out.close()
     return 
@@ -299,7 +299,7 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
         # ---> print header
 
-        print >> ffile, fidldata['header']
+        print(fidldata['header'], file=ffile)
 
         # return {'header': header, 'TR':TR, 'events':s, 'source': fidlf}
 
@@ -307,7 +307,7 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
         for l in fidldata['events']:
             if l[0] >= bstart and l[0] < bend:
-                print >> ffile, "%.2f\t%s" % (l[0] - bstart, "\t".join(l[1:]))
+                print("%.2f\t%s" % (l[0] - bstart, "\t".join(l[1:])), file=ffile)
 
         # ---> close fidl file
 

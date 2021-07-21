@@ -587,7 +587,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         d = readDICOMBase(glob.glob(os.path.join(folder, "*.dcm"))[-1])
 
         if d is None:
-            print >> r, "# WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+            print("# WARNING: Could not read dicom file! Skipping folder %s" % (folder), file=r)
             print("===> WARNING: Could not read dicom file! Skipping folder %s" % (folder))
             continue
 
@@ -595,19 +595,19 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         if first:
             first = False
             time = getDicomTime(d)
-            print >> r, "Report for %s scanned on %s\n" % (getID(d), time)
+            print("Report for %s scanned on %s\n" % (getID(d), time), file=r)
             if verbose:
                 print("\n\nProcessing images from %s scanned on %s\n" % (getID(d), time))
 
             # --- setup session.txt file
 
-            print >> stxt, "id:", getID(d)
-            print >> stxt, "subject:", getID(d)
-            print >> stxt, "dicom:", os.path.abspath(os.path.join(base, 'dicom'))
-            print >> stxt, "raw_data:", os.path.abspath(os.path.join(base, 'nii'))
-            print >> stxt, "data:", os.path.abspath(os.path.join(base, '4dfp'))
-            print >> stxt, "hcp:", os.path.abspath(os.path.join(base, 'hcp'))
-            print >> stxt, ""
+            print("id:", getID(d), file=stxt)
+            print("subject:", getID(d), file=stxt)
+            print("dicom:", os.path.abspath(os.path.join(base, 'dicom')), file=stxt)
+            print("raw_data:", os.path.abspath(os.path.join(base, 'nii')), file=stxt)
+            print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
+            print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
+            print("", file=stxt)
 
         try:
             seriesDescription = d.SeriesDescription
@@ -662,7 +662,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
             reps.append("---> %4d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
 
         if niinum > 0:
-            print >> stxt, "%4d: %s" % (niinum, seriesDescription)
+            print("%4d: %s" % (niinum, seriesDescription))
 
         niiid = str(niinum)
         calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
@@ -673,7 +673,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     for niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices in files:
 
-        print >> r, logs.pop(0),
+        print(logs.pop(0), file=r)
         if verbose:
             print(reps.pop(0), end=" ")
             if debug:
@@ -748,12 +748,12 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         # --- check if resulting nifti is present
 
         if len(imgs) == 0:
-            print >> r, " WARNING: no NIfTI file created!"
+            print(" WARNING: no NIfTI file created!", file=r)
             if verbose:
                 print(" WARNING: no NIfTI file created!")
             continue
         else:
-            print >>r, ""
+            print("", file=r)
             print("")
 
 
@@ -779,28 +779,28 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
             hdr = gi.niftihdr(tfname)
 
             if hdr.sizez > hdr.sizey:
-                print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames), file=r)
                 if verbose:
                     print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames))
 
             if nframes > 1:
                 if hdr.frames != nframes:
-                    print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
+                    print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes), file=r)
                     if verbose:
                         print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes))
                     if nslices > 0:
                         gframes = int(hdr.sizez / nslices)
                         if gframes > 1:
-                            print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
+                            print("     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes), file=r)
                             if verbose:
                                 print("     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes))
                             gn.reslice(tfname, nslices)
                         else:
-                            print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
+                            print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez), file=r)
                             if verbose:
                                 print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez))
                     else:
-                        print >> r, "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
+                        print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname), file=r)
                         if verbose:
                             print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname))
 
@@ -1166,7 +1166,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     info['frames']     = info['volumes']
                     info['directions'] = info['volumes']
             except:
-                print >> r, "# WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+                print("# WARNING: Could not read dicom file! Skipping folder %s" % (folder), file=r)
                 print("===> WARNING: Could not read dicom file! Skipping folder %s" % (folder))
                 continue
 
@@ -1188,19 +1188,19 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             else:
                 subjectid = sessionid
 
-            print >> r, "Report for %s (%s) scanned on %s\n" % (sessionid, info['sessionid'], info['datetime'])
+            print("Report for %s (%s) scanned on %s\n" % (sessionid, info['sessionid'], info['datetime']), file=r)
             if verbose:
                 print("\nProcessing images from %s (%s) scanned on %s" % (sessionid, info['sessionid'], info['datetime']))
 
             # --- setup session.txt file
 
-            print >> stxt, "id:", sessionid
-            print >> stxt, "subject:", subjectid
-            print >> stxt, "dicom:", os.path.abspath(os.path.join(base, 'dicom'))
-            print >> stxt, "raw_data:", os.path.abspath(os.path.join(base, 'nii'))
-            print >> stxt, "data:", os.path.abspath(os.path.join(base, '4dfp'))
-            print >> stxt, "hcp:", os.path.abspath(os.path.join(base, 'hcp'))
-            print >> stxt, ""
+            print("id:", sessionid, file=stxt)
+            print("subject:", subjectid, file=stxt)
+            print("dicom:", os.path.abspath(os.path.join(base, 'dicom')), file=stxt)
+            print("raw_data:", os.path.abspath(os.path.join(base, 'nii')), file=stxt)
+            print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
+            print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
+            print("", file=stxt)
 
         # recenter, dofz2zf, fz, reorder = False, False, "", False
         # try:
@@ -1271,7 +1271,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     print("\nProcessed sequences:")
     for niinum, folder, info in files:
 
-        print >> r, logs.pop(0),
+        print(logs.pop(0), end=" ", file=r)
         if verbose:
             print(reps.pop(0), end=" ")
             if debug:
@@ -1285,17 +1285,17 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
         nimg = len(imgs)
         if nimg == 0:
-            print >> r, " WARNING: no NIfTI file created!"
+            print(" WARNING: no NIfTI file created!")
             if verbose:
                 print(" WARNING: no NIfTI file created!")
             continue
         elif nimg > 9:
-            print >> r, " WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!"
+            print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
             if verbose:
                 print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
             continue
         else:
-            print >> r, ""
+            print("", file=r)
             print("")
 
             imgnum = 0
@@ -1371,7 +1371,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                             if 'ReadoutDirection' in jinf and ('ReadoutDirection' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
                                 jsoninfo += ": ReadoutDirection(%-2s)" % (jinf['ReadoutDirection'])
                         except:
-                            print >> r, "     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc)
+                            print("     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc), file=r)
                             if verbose:
                                 print("     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc))
 
@@ -1381,7 +1381,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 if nimg > 1:
                     numinfo = " [%d/%d]" % (imgnum, nimg)
 
-                print >> stxt, "%-4s: %-25s %s" % (tbasename, info['seriesDescription'] + numinfo + suffix, jsoninfo)
+                print("%-4s: %-25s %s" % (tbasename, info['seriesDescription'] + numinfo + suffix, jsoninfo), file=stxt)
 
                 # --- check final geometry
 
@@ -1389,28 +1389,28 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     hdr = gi.niftihdr(tfname)
 
                     if hdr.sizez > hdr.sizey and hdr.sizex < 150 :
-                        print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                        print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames), file=r)
                         if verbose:
                             print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames))
 
                     if info['volumes'] > 1:
                         if hdr.frames != info['volumes']:
-                            print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, info['volumes'])
+                            print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, info['volumes']), file=r)
                             if verbose:
                                 print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, info['volumes']))
                             if info['slices'] > 0:
                                 gframes = int(hdr.sizez / info['slices'])
                                 if gframes > 1:
-                                    print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes)
+                                    print("     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes), file=r)
                                     if verbose:
                                         print("     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes))
                                     gn.reslice(tfname, info['slices'])
                                 else:
-                                    print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
+                                    print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez), file=r)
                                     if verbose:
                                         print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez))
                             else:
-                                print >> r, "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
+                                print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname), file=r)
                                 if verbose:
                                     print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname))
 
