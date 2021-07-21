@@ -112,7 +112,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
 
     btargets = options['bolds'].split("|")
 
-    for (k, v) in sinfo.iteritems():
+    for (k, v) in sinfo.items():
         if k.isdigit():
             bnum = bsearch.match(v['name'])
             if bnum:

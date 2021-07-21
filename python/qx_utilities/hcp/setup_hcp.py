@@ -244,7 +244,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         print(" ---> Creating base folder %s " % (basef))
         os.makedirs(basef)
 
-    i = [k for k, v in inf.iteritems() if k.isdigit()]
+    i = [k for k, v in inf.items() if k.isdigit()]
     i.sort(key=int, reverse=True)
     boldn = '99'
     mapped = False

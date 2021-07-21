@@ -45,7 +45,7 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
 
     for session in sinfo:
         bolds = []
-        for (k, v) in session.iteritems():
+        for (k, v) in session.items():
             if k.isdigit():
                 bnum = bsearch.match(v['name'])
                 if bnum:
@@ -53,11 +53,11 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
                         bolds.append(v['name'])
         if len(bolds) > 0:
             f = pc.getFileNames(session, options)
-            print >> bfile, "    session id:%s" % (session['id'])
-            print >> bfile, "    roi:%s" % (os.path.abspath(f['fs_aparc_bold']))
+            print("    session id:%s" % (session['id']), file=bfile)
+            print("    roi:%s" % (os.path.abspath(f['fs_aparc_bold'])), file=bfile)
             for bold in bolds:
                 f = pc.getBOLDFileNames(session, boldname=bold, options=options)
-                print >> bfile, "    file:%s" % (os.path.abspath(f['bold_final']))
+                print("    file:%s" % (os.path.abspath(f['bold_final'])), file=bfile)
 
     bfile.close()
 
@@ -81,16 +81,16 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
                 f = pc.getFileNames(session, options)
                 d = pc.getSessionFolders(session, options)
 
-                print >> bfile, "session id:%s" % (session['id'])
-                print >> bfile, "    roi:%s" % (f['fs_aparc_bold'])
+                print("session id:%s" % (session['id']), file=bfile)
+                print("    roi:%s" % (f['fs_aparc_bold']), file=bfile)
 
                 tfidl  = fidls[0].strip().replace(".fidl", "")
 
                 f_conc = os.path.join(d['s_bold_concs'], f['conc_final'])
                 f_fidl = os.path.join(d['s_bold_events'], tfidl + ".fidl")
 
-                print >> bfile, "    fidl:%s" % (f_fidl)
-                print >> bfile, "    file:%s" % (f_conc)
+                print("    fidl:%s" % (f_fidl), file=bfile)
+                print("    file:%s" % (f_conc), file=bfile)
 
             except:
                 print("ERROR processing session %s!" % (session['id']))
@@ -107,7 +107,7 @@ def list_session_info(sinfo, options, overwrite=False, thread=0):
     bfile = open(os.path.join(options['sessionsfolder'], 'SessionInfo.txt'), 'w')
 
     for session in sinfo:
-        print >> bfile, "session: %s, group: %s" % (session['id'], session['group'])
+        print("session: %s, group: %s" % (session['id'], session['group']), file=bfile)
 
     bfile.close()
 
@@ -194,13 +194,13 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
 
         # --- place session specific data
 
-        for key, value in sinfo.iteritems():
+        for key, value in sinfo.items():
             if not key.isdigit():
                 script = script.replace("{{%s}}" % (key), str(value))
 
         # --- place options
 
-        for key, value in options.iteritems():
+        for key, value in options.items():
             if not key.isdigit():
                 script = script.replace("{{%s}}" % (key), str(value))
 

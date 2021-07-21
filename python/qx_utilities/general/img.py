@@ -103,9 +103,9 @@ def readConc(filename, boldname=None, check=False):
 def writeConc(filename, conc):
     f = open(filename, 'w')
     nfiles = len(conc)
-    print >> f, "   number_of_files:  %d" % (nfiles)
+    print("   number_of_files:  %d" % (nfiles), file=f)
     for c in conc:
-        print >> f, "      file:%s" % (c[0])
+        print("      file:%s" % (c[0]), file=f)
     f.close()
 
 
@@ -191,11 +191,11 @@ class fidl:
                 raise Usage("ERROR: No filename provided to save fidl file")
 
         fout = open(filename, 'w')
-        print >> fout, "%.2f %s" % (self.TR, " ".join(self.codes))
+        print("%.2f %s" % (self.TR, " ".join(self.codes)), file=fout)
 
         for event in self.events:
             event[1] = int(event[1])
-            print >> fout, "\t".join([str(e) for e in event])
+            print("\t".join([str(e) for e in event]), file=fout)
 
         fout.close()
 
@@ -236,7 +236,7 @@ class ifhhdr:
         for k in self.vlist:
             s += "%s %s:= %s\n" % (k, " " * (35 - len(k)), d[k])
             del d[k]
-        for k, v in d.iteritems():
+        for k, v in d.items():
             s += "%s %s:= %s\n" % (k, " " * (35 - len(k)), v)
 
         return s

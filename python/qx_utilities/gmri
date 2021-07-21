@@ -355,7 +355,7 @@ def printHelp(com):
     if com == 'available':
         available_commands = []
         # -> gmri commands
-        for c, _ in gcom.commands.iteritems():
+        for c, _ in gcom.commands.items():
             available_commands.append(c)
         # -> complex processing commands
         for l in gp.calist:

@@ -519,7 +519,7 @@ def run_palm(image, design=None, args=None, root=None, options=None, parelements
         # --- put together statistics and other related arguments
 
         sargs = []
-        for k, v in arguments.iteritems():
+        for k, v in arguments.items():
             sargs += ['-' + k]
             if v is not None:
                 sargs += v
@@ -1008,7 +1008,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
         if nfactors == 1:
             for f1l in blocks[0]:
                 line = f1l + sline
-                print >> df, ",".join([str(e) for e in line])
+                print(",".join([str(e) for e in line]), file=df)
 
         # ---- 2 factor within design
 
@@ -1028,7 +1028,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
                     # --- print it out
 
-                    print >> df, ",".join([str(e) for e in line])
+                    print(",".join([str(e) for e in line]), file=df)
 
 
         # ---- 3 factor within design
@@ -1056,7 +1056,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
                         # --- print it out
 
-                        print >> df, ",".join([str(e) for e in line])
+                        print(",".join([str(e) for e in line]), file=df)
 
 
         # ---- 4 factor within design
@@ -1095,7 +1095,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
                             # --- print it out
 
-                            print >> df, ",".join([str(e) for e in line])
+                            print(",".join([str(e) for e in line]), file=df)
 
     df.close()
 
@@ -1106,7 +1106,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     ebf = open(root + '_eb.csv', 'w')
     for s in range(nsubjects):
         for l in range(nlevels):
-            print >> ebf, s + 1
+            print(s + 1, file=ebf)
 
 
     # -------------------------------------------------------------
@@ -1137,7 +1137,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     for l in range(ndvars):
         line = [0 for e in range(ndvars + nsubjects)]
         line[l] = 1
-        print >> tf, ",".join([str(e) for e in line])
+        print(",".join([str(e) for e in line]), file=tf)
     tf.close()
 
     # -------------------------------------------------------------
@@ -1150,6 +1150,6 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     ff = open(root + '_f.csv', 'w')
     for l in range(nfac):
         line = [code[l == e] for e in range(nfac) for i in range(tlen[e])]
-        print >> ff, ",".join([str(e) for e in line])
+        print(",".join([str(e) for e in line]), file=ff)
     ff.close()
 

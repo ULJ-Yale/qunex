@@ -442,7 +442,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
     # ---- setup options to pass to each job
     nopt = []
-    for (k, v) in args.iteritems():
+    for (k, v) in args.items():
         if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'bash', 'parjobs']:
             nopt.append((k, v))
 

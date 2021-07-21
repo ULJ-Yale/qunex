@@ -293,13 +293,13 @@ def check_deprecated_parameters(options, command):
     # variable for storing new options
     new_options = {}
     # iterate over all options
-    for k, v in options.iteritems():
+    for k, v in options.items():
         if k in deprecated_parameters:
             # if v is a dictionary then
             # the parameter was remaped to multiple values
             mapto = deprecated_parameters[k]
             if type(mapto) is dict:
-                for k2, v2 in mapto.iteritems():
+                for k2, v2 in mapto.items():
                     if command in v2:
                         mapto = k2
                         break
@@ -332,7 +332,7 @@ def check_deprecated_parameters(options, command):
             print("         ... %s" % (k))
 
     # -> check new parameter values
-    for k, v in new_options.iteritems():
+    for k, v in new_options.items():
         if k in deprecated_values:
             if v in deprecated_values[k]:
                 new_options[k] = deprecated_values[k][v]
@@ -346,7 +346,7 @@ def check_deprecated_parameters(options, command):
         print("         Please correct the listed parameter values in command line or batch file!")
 
     # -> warn if some parameter values might be deprecated
-    for k, v in new_options.iteritems():
+    for k, v in new_options.items():
         if k in towarn_parameters:
             # search string
             s = towarn_parameters[k][0]

@@ -180,7 +180,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
     if not info:
         raise ValueError("ERROR: No data in session.txt! [%s]!" % (sourcefile))
 
-    for k, v in info[0].iteritems():
+    for k, v in info[0].items():
         if k == 'raw_data':
             raw = v
         elif k == 'data':
@@ -242,7 +242,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         params = params.replace('{{bolds}}', " ".join([k+".nii.gz" for k, b in bold]))
 
         pfile = open(os.path.join(folder, '4dfp', 'params'), 'w')
-        print >> pfile, params
+        print(params, file=pfile)
         pfile.close()
 
     else:

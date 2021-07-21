@@ -120,7 +120,7 @@ def getHCPPaths(sinfo, options):
 
     # T1w file
     try:
-        T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+        T1w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T1w'][0]
         filename = T1w.get('filename', None)
         if filename and options['hcp_filename'] == "original":
             d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*' + filename + '*.nii.gz')))
@@ -149,7 +149,7 @@ def getHCPPaths(sinfo, options):
         d['T2w'] = 'NONE'
     else:
         try:
-            T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
+            T2w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T2w'][0]
             filename = T2w.get('filename', None)
             if filename and options['hcp_filename'] == "original":
                 d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '*' + filename + '*.nii.gz')))
@@ -549,7 +549,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         for tfile in hcp['T1w'].split("@"):
             if os.path.exists(tfile):
                 r += "\n---> T1w image file present."
-                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+                T1w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T1w'][0]
                 if 'DwellTime' in T1w and checkInlineParameterUse('T1w', 'DwellTime', options):
                     options['hcp_t1samplespacing'] = T1w['DwellTime']
                     r += "\n---> T1w image specific EchoSpacing: %s s" % (options['hcp_t1samplespacing'])
@@ -573,7 +573,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             for tfile in hcp['T2w'].split("@"):
                 if os.path.exists(tfile):
                     r += "\n---> T2w image file present."
-                    T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
+                    T2w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T2w'][0]
                     if 'DwellTime' in T2w and checkInlineParameterUse('T2w', 'DwellTime', options):
                         options['hcp_t2samplespacing'] = T2w['DwellTime']
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (options['hcp_t2samplespacing'])
@@ -605,7 +605,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     sesettings = False
 
             try:
-                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+                T1w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T1w'][0]
                 senum = T1w.get('se', None)
                 if senum:
                     try:
@@ -647,7 +647,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                     # get SE info from session info
                     try:
-                        seInfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and 'SE-FM' in v['name'] and 'se' in v and v['se'] == str(senum)][0]
+                        seInfo = [v for (k, v) in sinfo.items() if k.isdigit() and 'SE-FM' in v['name'] and 'se' in v and v['se'] == str(senum)][0]
                     except:
                         seInfo = None
 
@@ -681,7 +681,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             fmnum = T1w.get('fm', None)
             ## include => if fmnum is None, same as for senum
 
-            for i, v in hcp['fieldmap'].iteritems():
+            for i, v in hcp['fieldmap'].items():
                 if os.path.exists(hcp['fieldmap'][i]['GE']):
                     r += "\n---> Gradient Echo Field Map %d file present." % (i)
                 else:
@@ -695,7 +695,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap', 'PhilipsFieldMap']:
             fmnum = T1w.get('fm', None)
 
-            for i, v in hcp['fieldmap'].iteritems():
+            for i, v in hcp['fieldmap'].items():
                 if os.path.exists(hcp['fieldmap'][i]['magnitude']):
                     r += "\n---> Magnitude Field Map %d file present." % (i)
                 else:
@@ -2132,7 +2132,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         gdcfile, r, run = checkGDCoeffFile(options['hcp_dwi_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # -- set echospacing
-        dwiinfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'DWI'][0]
+        dwiinfo = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'DWI'][0]
 
         if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
             echospacing = dwiinfo['EchoSpacing']
@@ -2838,7 +2838,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                for i, v in hcp['fieldmap'].iteritems():
+                for i, v in hcp['fieldmap'].items():
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
@@ -2858,7 +2858,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_bold_dcmethod'].lower() in ['generalelectricfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                for i, v in hcp['fieldmap'].iteritems():
+                for i, v in hcp['fieldmap'].items():
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
                 fmmag = None
@@ -2870,7 +2870,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_bold_dcmethod'].lower() in ['philipsfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                for i, v in hcp['fieldmap'].iteritems():
+                for i, v in hcp['fieldmap'].items():
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
@@ -7375,7 +7375,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     s = file.read()
                     s = s.replace(sid + ".", "")
                     tf = open(tfile, 'w')
-                    print >> tf, s
+                    print(s, file=tf)
                     tf.close()
                     r += "\n     -> updated .spec file [%s]" % (sid)
                     ncp += 1
@@ -7454,15 +7454,15 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(os.path.join(hcp_bold_path, 'Movement_Regressors.txt')):
                         mdata = [line.strip().split() for line in open(os.path.join(hcp_bold_path, 'Movement_Regressors.txt'))]
                         mfile = open(f['bold_mov'], 'w')
-                        print >> mfile, "# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
-                        print >> mfile, "#"
-                        print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
+                        print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=mfile)
+                        print("#", file=mfile)
+                        print("#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)", file=mfile)
                         c = 0
                         for mline in mdata:
                             if len(mline) >= 6:
                                 c += 1
                                 mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
-                                print >> mfile, mline.replace(' -', '-')
+                                print(mline.replace(' -', '-'), file=mfile)
                         mfile.close()
                         r += "\n     ... movement data prepared"
                     else:

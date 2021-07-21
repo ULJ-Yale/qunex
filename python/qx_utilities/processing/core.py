@@ -129,7 +129,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
 
     bsearch  = re.compile('bold([0-9]+)')
     btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
-    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
+    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k) for (k, v) in sinfo.items() if k.isdigit() and bsearch.match(v['name'])]
     bskip    = []
     nbolds   = len(bolds)
 
@@ -524,7 +524,7 @@ def getSessionFolders(sinfo, options):
             # errormessage = "\n... ERROR: Source folder does not exist or is not reachable [%s]" % (d['s_source'])
             # raise NoSourceFolder(errormessage)
 
-    for (key, fpath) in d.iteritems():
+    for (key, fpath) in d.items():
         if key != 's_source':
             if not os.path.exists(fpath):
                 try:
@@ -748,7 +748,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         # --- run command
         try:
             # add command call to start of the log
-            print >> nf, printComm
+            print(printComm, file=nf)
 
             # close and switch to append mode
             nf.close()
@@ -783,7 +783,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         # --- End
 
         if status and status == 'done':
-            print >> nf, "\n\n===> Successful completion of task\n"
+            print("\n\n===> Successful completion of task\n", file=nf)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
         else:
             if status and status == 'incomplete':
@@ -835,7 +835,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     endlog      = None
 
     nf = open(tmplogfile, 'w')
-    print >> nf, "\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description)
+    print("\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description), file=nf)
 
     ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
     if ret:
@@ -845,7 +845,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
         endlog = errlogfile
         raise ExternalFailed(r)
     else:
-        print >> nf, "\n\n===> Successful completion of task\n"
+        print("\n\n===> Successful completion of task\n", file=nf)
         nf.close()
         if remove:
             os.remove(tmplogfile)
