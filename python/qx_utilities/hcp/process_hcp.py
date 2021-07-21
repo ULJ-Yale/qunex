@@ -6944,9 +6944,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if options["hcp_asl_cores"] is not None:
                 comm += "                --cores=" + options["hcp_asl_cores"]
 
-            print(comm)
-            exit(1)
-
             # -- Report command
             if run:
                 r += "\n\n------------------------------------------------------------\n"

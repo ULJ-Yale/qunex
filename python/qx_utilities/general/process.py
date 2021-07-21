@@ -104,6 +104,21 @@ def torf(s):
         return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
 
 
+def flag(f):
+    '''
+    ``flag(f)``
+
+    Converts a flag (f) passed as a string to a boolean.
+    '''
+
+    if type(f) == bool:
+        return f
+    elif f in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']:
+        return True
+    else:
+        return False
+
+
 def isNone(s):
     '''
     ``isNone(s)``
@@ -349,8 +364,8 @@ arglist = [
            ['hcp_dwi_extraeddyarg',   '',                                         isNone, "A string specifying additional arguments to pass to eddy processing. Defaults to ''."],
            ['hcp_dwi_name',           '',                                         isNone, "Name to give DWI output directories."],
            ['hcp_dwi_cudaversion',    '',                                         isNone, "If using the GPU-enabled version of eddy, then this option can be used to specify which eddy_cuda binary version to use. If X.Y is specified, then FSLDIR/bin/eddy_cudaX.Y will be used. Note that CUDA 9.1 is installed in the container."],
-           ['hcp_dwi_nogpu',          'FALSE',                                    torf, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
-           ['hcp_dwi_selectbestb0',   'FALSE',                                    torf, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+           ['hcp_dwi_nogpu',          None,                                       flag, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
+           ['hcp_dwi_selectbestb0',   None,                                       flag, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
 
            ['# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options'],
            ['hcp_icafix_bolds',       '',                                         isNone, "A string specifying a list of bolds for ICAFix. Also used later in PostFix, ReApplyFix, MSMAll and DeDriftAndResample. Defaults to ''."],
@@ -396,8 +411,8 @@ arglist = [
            ['# --- hcp_asl options'],
            ['hcp_asl_cores', '',                                                  isNone,  "Number of cores to use when applying motion correction and other potentially multi-core operations."],
            ['hcp_asl_interpolation', '',                                          isNone, "Interpolation order for registrations corresponding to scipy’s map_coordinates function."],
-           ['hcp_asl_use_t1', 'FALSE',                                            torf,   "If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl."],
-           ['hcp_asl_nobandingcorr', 'FALSE',                                     torf,   "If this option is provided, MT and ST banding corrections won’t be applied."],
+           ['hcp_asl_use_t1', None,                                               flag,   "If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl."],
+           ['hcp_asl_nobandingcorr', None,                                        flag,   "If this option is provided, MT and ST banding corrections won’t be applied."],
 
            ['# --- HCP file checking'],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file)."],
@@ -426,10 +441,10 @@ arglist = [
 
 flaglist = [
     ['test',                     'run',                   'test', 'Run a test only.'],
-    ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',         'TRUE', 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
-    ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',  'TRUE', "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
-    ['hcp_asl_use_t1',           'hcp_asl_use_t1',        'TRUE', 'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
-    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', 'TRUE', 'If this option is provided, MT and ST banding corrections won’t be applied.'],
+    ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',         True, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
+    ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',  True, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+    ['hcp_asl_use_t1',           'hcp_asl_use_t1',        True, 'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
+    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', True, 'If this option is provided, MT and ST banding corrections won’t be applied.'],
 ]
 
 
@@ -558,7 +573,6 @@ def run(command, args):
     options = {'command_ran': command}
 
     # --- set up default options
-
     for line in arglist:
         if len(line) == 4:
             options[line[0]] = line[1]
@@ -596,7 +610,11 @@ def run(command, args):
     # --- parse command line options
     for (k, v) in args.items():
         if k in flist:
-            options[flist[k][0]] = flist[k][1]
+            if v != True:
+                options[flist[k][0]] = v
+            else:
+                options[flist[k][0]] = flist[k][1]
+
         else:
             options[k] = v
 
@@ -608,15 +626,12 @@ def run(command, args):
             except:
                 raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
 
-
     # ---- Take care of variable expansion
-
     for key in options:
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
     # ---- Set key parameters
-
     overwrite    = options['overwrite']
     parsessions  = options['parsessions']
     nprocess     = options['nprocess']
