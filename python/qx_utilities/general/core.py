@@ -392,7 +392,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
                     else:
                         print(prepend + "started running %s at %s" % (call['name'], str(datetime.now()).split('.')[0]))
                 except:
-                    print(prepend + "failed to start running %s. Please check your environment!" % (call['name']))
+                    print(prepend + "ERROR: failed to start running %s. Please check your environment!" % (call['name']))
                     completed.append({'exit': -9, 'name': call['name'], 'log': call['sout'], 'args': call['args']})
                 continue
 
