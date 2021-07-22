@@ -91,7 +91,7 @@ def cleanup():
 def open_status(filename, status=""):
     try:
         f = os.open(filename, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-        os.write(f, bytes(status))
+        os.write(f, bytes(status, encoding='utf8'))
         os.close(f)
 
         # store lock file
