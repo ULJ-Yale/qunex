@@ -6937,8 +6937,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 r += "\n------------------------------------------------------------\n"
 
             # -- Test files
-            # !!!!! TODO
-            tfile = "TODO.TXT"
+            tfile = os.path.join(hcp["hcp_nonlin"], "ASL", "arrival_Atlas.dscalar.nii")
             full_test = None
 
         # -- Run
