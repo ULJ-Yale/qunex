@@ -6789,32 +6789,19 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    !!!!! TODO
+    Example run:
 
-    Example run from the base study folder with test flag::
+        qunex hcp_asl \
+            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessions="<path_to_study_folder>/processing/batch.txt"
 
-        qunex hcp_diffusion \
-          --sessionsfolder="<path_to_study_folder>/sessions" \
-          --sessions="$<path_to_study_folder>/processing/batch.txt" \
-          --overwrite="no" \\
-          --test
+    Run with scheduler, while bumbing up the number of used cores:
 
-    Run with scheduler, the compute node also loads the required CUDA module::
-
-        qunex hcp_diffusion \
-          --sessionsfolder="<path_to_study_folder>/sessions" \
-          --sessions="$<path_to_study_folder>/processing/batch.txt" \
-          --overwrite="yes" \\
-          --bash="module load CUDA/9.1.85" \
-          --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
-
-    Run without a scheduler and without GPU support::
-
-        qunex hcp_diffusion \
-          --sessionsfolder="<path_to_study_folder>/sessions" \
-          --sessions="$<path_to_study_folder>/processing/batch.txt" \
-          --overwrite="yes" \\
-          --hcp_dwi_nogpu
+        qunex hcp_asl \
+            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessions="<path_to_study_folder>/processing/batch.txt"
+            --hcp_asl_cores="8" \
+            --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
     """
 
     r = "\n------------------------------------------------------------"
@@ -6915,9 +6902,8 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --wbdir="%(wbdir)s" \
                 --verbose' % {
                     "script"                : "hcp_asl",
-                    "studydir"              : options["sessionsfolder"],
-                    "subid"                : sinfo["id"],
-                    "visit"                 : "V1", # !!!!! TODO REMOVE THIS
+                    "studydir"              : sinfo['hcp'],
+                    "subid"                 : sinfo["id"],
                     "mtname"                : mtname,
                     "grads"                 : gdcfile,
                     "struct"                : t1w_file,
