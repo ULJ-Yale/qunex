@@ -6886,7 +6886,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             comm = '%(script)s \
                 --studydir="%(studydir)s" \
                 --subid="%(subid)s" \
-                --visit="%(visit)s" \
                 --mtname="%(mtname)s" \
                 --grads="%(grads)s" \
                 --struct="%(struct)s" \
