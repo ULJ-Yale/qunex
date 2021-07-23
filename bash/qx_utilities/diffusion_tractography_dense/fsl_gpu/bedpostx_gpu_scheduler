@@ -10,7 +10,7 @@
 ## -- set the default binary location
 
 # cuda 9.1 is the default
-bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_9.1/bedpostx_gpu
+bindir=${FSLGPUBinary}/${BedpostXGPUDir}/bedpostx_gpu
 
 #-- set binary location depending on CUDA
 if [[ `nvcc --version | grep "release"` == *"7.5"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_7.5/bedpostx_gpu; fi

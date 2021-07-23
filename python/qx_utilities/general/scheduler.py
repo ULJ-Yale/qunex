@@ -14,6 +14,7 @@ and used both as terminal commands as well as internal use functions.
 """
 
 import subprocess
+import math
 import os
 import os.path
 import datetime
@@ -23,7 +24,7 @@ import exceptions as ge
 import core as gc
 
 
-def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None):
+def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None, parsessions=1, parelements=1):
     """
     ::
 
@@ -230,7 +231,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     """
 
     # --- check inputs
-
     if command is None and script is None:
         raise ge.CommandError("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
 
@@ -241,7 +241,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         raise ge.CommandError("schedule", "Missing parameter", "Settings need to be provided to run scheduler!")
 
     # --- parse settings
-
     try:
         setList   = [e.strip() for e in settings.split(",")]
         scheduler = setList.pop(0)
@@ -256,7 +255,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         raise ge.CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", settings)
 
     # --- compile command to pass
-
     if command is None:
         if not os.path.exists(script):
             raise ge.CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
@@ -273,16 +271,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         command = file(environment).read() + "\n" + command
 
     # --- do search replace
-
     if replace is not None:
         replace = [e.strip().split(":") for e in replace.split("|")]
 
         for key, value in replace:
             command.replace("{{%s}}" % (key), value)
 
-
     # --- parse output
-
     outputs = {'stdout': None, 'stderr': None, 'both': None, 'return': None}
 
     if output is not None:
@@ -296,7 +291,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         outputs['stdout'] = outputs['both']
 
     # --- build scheduler commands
-
     sCommand = ""
 
     if scheduler == "PBS":
@@ -313,7 +307,11 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 jobname = v
             elif k == 'nodes':
                 sCommand += "#PBS -l nodes=%s\n" % v
-        
+
+        # set default nodes
+        if ("nodes" not in setDict.keys()):
+            sCommand += "#PBS -l nodes=%s:ppn=%s\n" % (parsessions + 1, parelements)
+
         # job name
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
@@ -340,6 +338,10 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             elif k is 'jobName' and jobname == 'schedule':
                 jobname = v
 
+        # set default cores
+        if ("cores" not in setDict.keys()):
+            sCommand += "#BSUB -n %s\n" % ((parsessions + 1) * parelements)
+
         # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
@@ -364,6 +366,12 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
+        # set default ntasks and cpus-per-task
+        if ("ntasks" not in setDict.keys() and "n" not in setDict.keys()):
+            sCommand += "#SBATCH --ntasks=%s\n" % (parsessions + 1)
+        if ("cpus-per-task" not in setDict.keys() and "c" not in setDict.keys()):
+            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parelements)
+
         # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
@@ -378,12 +386,14 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         com = 'sbatch'
 
     # --- run scheduler
-
     # add bash commands before the qunex command if specified
     if bash:
         sCommand += "\n" + bash + "\n"
 
-    print "Submitting:\n------------------------------\n", sCommand + command
+    # --- report
+    print("\nSubmitting:\n------------------------------")
+    print(sCommand)
+    print(command + "\n")
 
     if outputs['return'] is None:
         serr = None
@@ -404,7 +414,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     run.stdin.close()
 
     # --- getting results
-
     result = ""
     if outputs['return'] in ['both', 'stdout']:
         result = run.stdout.read()
@@ -412,7 +421,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         result = run.stderr.read()
 
     # --- extracting job id
-
     jobid = 'NA'
     for search in [r'Submitted batch job ([0-9]+)']:
         m = re.search(search, result)
@@ -420,7 +428,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             jobid = m.group(1)
 
     # --- returning results
-
     return result, jobid
 
 
@@ -432,14 +439,12 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     jobs = []
 
     # ---- setup options to pass to each job
-
     nopt = []
     for (k, v) in args.iteritems():
-        if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'bash']:
+        if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'bash', 'parjobs']:
             nopt.append((k, v))
 
     # ---- open log
-
     if logname:
         flog = open(logname, "w")
     else:
@@ -448,17 +453,22 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     gc.printAndLog("===> Running scheduler for command %s" % (command), file=flog)
 
     # ---- setup scheduler options
-
     settings    = args['scheduler']
     workdir     = args.get('scheduler_workdir', None)
     environment = args.get('scheduler_environment', None)
     sleeptime   = args.get('scheduler_sleep', 0)
+    parjobs     = args.get('parjobs', None)
+    if parjobs is not None:
+        parjobs = int(parjobs)
+    parelements = args.get('parelements', 1)
+    if parelements is not None:
+        parelements = int(parelements)
+    test        = args.get('run', 'run')
 
     # ---- setup bash (commands to run inside compute node before the QuNex command)
     bash  = args.get('bash', None)
 
     # --- set logfolder
-
     if logfolder is None:
         logfolder = os.path.abspath(".")
     else:
@@ -466,7 +476,6 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
             os.makedirs(logfolder)
 
     # ---- construct gmri command
-
     cBase = "\ngmri " + command
 
     for (k, v) in nopt:
@@ -474,19 +483,18 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
             cBase += ' --%s="%s"' % (k, v)
 
     # ---- if sessions is None
-
     if sessions is None:
         gc.printAndLog("\n---> submitting %s" % (command), file=flog)
         gc.printAndLog(cBase, file=flog)
 
-        scheduler = settings.split(',')[0].strip()
-        exectime  = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
-        logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
-        result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash)
-        jobs.append((jobid, command))
+        if test == "run":
+            scheduler = settings.split(',')[0].strip()
+            exectime  = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
+            logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
+            result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash, parsessions=parsessions, parelements=parelements)
+            jobs.append((jobid, command))
 
     # ---- if session list is present
-
     else:
         settingsList  = settings.split(',')
         scheduler = settingsList.pop(0).strip()
@@ -504,47 +512,86 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
         settings['jobname'] = settings.get('jobname', command)
 
-        c = 0
+        # split sessions
+        # how big are chunks of sessions
+        n_sessions = len(sessions)
+        chunks = int(math.ceil(n_sessions / float(parsessions)))
+        chunk_size = int(math.ceil(n_sessions / float(chunks)))
 
-        while sessions:
+        # is parjobs none create a job for each session
+        if parjobs is None:
+            parjobs = n_sessions
 
-            c += 1
+        # if chunks is lower then parjobs tweak parjobs
+        if chunks < parjobs:
+            parjobs = chunks
 
-            # ---- get session subset
+        # init queues
+        sessionids_array = [""] * parjobs
 
-            slist = []
-            [slist.append(sessions.pop(0)['id']) for e in range(parsessions) if sessions]   # might need to change to id
+        # divide sessions among jobs
+        job = 0
+        start = 0
+        for i in range(chunks):
+            # get job index
+            job = i % parjobs
 
-            cStr = cBase + ' --sessionids="%s"' % ("|".join(slist))
+            if start < n_sessions:
+                # get chunk
+                sessionids_chunk = []
+                for j in range(start, start+chunk_size):
+                    if (j < n_sessions):
+                        sessionids_chunk.append(sessions[j]['id'])
 
-            # ---- set sheduler settings
+                # add comma if not empty
+                if sessionids_array[job] != "":
+                    sessionids_array[job] = sessionids_array[job] + ","
+                # append chunk
+                sessionids_array[job] = sessionids_array[job] + ",".join(sessionids_chunk)
 
-            settings['jobnum'] = str(c)
-            sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
-            exectime = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
-            logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, c, exectime))
+            # increase start index
+            start = start + chunk_size
 
-            jobname = "%s_#%02d" % (command, c)
+        # print out details
+        print("\n--> QuNex will run the command over %s sessions. It will utilize:\n" % n_sessions)
+        print("    Scheduled jobs: %s " % parjobs)
+        print("    Maximum sessions run in parallel for a job: %s." % parsessions)
+        print("    Maximum elements run in parallel for a session: %s." % parelements)
+        print("    Up to %s processes will be utilized for a job.\n" % (parelements * parsessions))
 
-            gc.printAndLog("\n---> submitting %s" % (jobname), file=flog)
-            gc.printAndLog(cStr, file=flog)
+        for i in range(0, parjobs):
+            print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
 
-            result, jobid = schedule(command=cStr, settings=sString, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash)
-            jobs.append((jobid, jobname))
+        if test == "run":
+            for i in range(parjobs):
 
-            gc.printAndLog("...\n", result, file=flog)
+                # ---- set sessionids
+                cStr = cBase + ' --sessionids="%s"' % sessionids_array[i]
 
-            time.sleep(sleeptime)
+                # ---- set sheduler settings
+                settings['jobnum'] = str(i)
+                sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
+                exectime = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
+                logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, i, exectime))
+
+                jobname = "%s_#%02d" % (command, i)
+
+                gc.printAndLog("\n---> submitting %s" % (jobname), file=flog)
+                gc.printAndLog(cStr, file=flog)
+
+                result, jobid = schedule(command=cStr, settings=sString, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash, parsessions=parsessions, parelements=parelements)
+                jobs.append((jobid, jobname))
+
+                gc.printAndLog("...\n", result, file=flog)
+
+                time.sleep(sleeptime)
 
     # --- print report
-
     if jobs:
-        gc.printAndLog("\n===> Submitted jobs", file=flog)        
+        gc.printAndLog("\n===> Submitted jobs", file=flog)
         for jobid, jobname in jobs:
-            gc.printAndLog("     %s -> %s" % (jobid, jobname), file=flog)        
+            gc.printAndLog("     %s -> %s" % (jobid, jobname), file=flog)
 
     # --- close log if specified
-
     if flog:
         flog.close()
-

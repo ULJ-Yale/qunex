@@ -74,6 +74,9 @@ usage() {
  echo "                   - 3 ... with zeppelins. [2]"
  echo "--rician           Replace the default Gaussian noise assumption with"
  echo "                   Rician noise (yes/no). [yes]"
+ echo "--gradnonlin       Consider gradient nonlinearities (yes/no). By default set"
+ echo "                   automatically. Set to yes if the file grad_dev.nii.gz"
+ echo "                   is present, set to no if it is not."
  echo "--overwrite        Delete prior run for a given session. [no]"
  echo "--scheduler        A string for the cluster scheduler (LSF, PBS or SLURM)"
  echo "                   followed by relevant options, e.g. for SLURM the string"
@@ -89,14 +92,14 @@ usage() {
  echo ""
  echo "Run directly via::"
  echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh \ "
+ echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \ "
  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
  echo ""
  reho "NOTE: --scheduler is not available via direct script call."
  echo ""
  echo "Run via:: "
  echo ""
- echo " qunex dwi_fsl_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN> "
+ echo " qunex dwi_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN> "
  echo ""
  geho "NOTE: scheduler is available via qunex call."
  echo ""
@@ -111,7 +114,7 @@ usage() {
  echo ""    
  echo "::"
  echo ""
- echo " qunex dwi_fsl_bedpostx_gpu \ "
+ echo " qunex dwi_bedpostx_gpu \ "
  echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
  echo " --sessions='<comma_separarated_list_of_cases>' \ "
  echo " --fibers='3' \ "
@@ -188,6 +191,7 @@ Jumps=`opts_GetOpt "--jumps" $@`
 Sample=`opts_GetOpt "--sample" $@`
 Model=`opts_GetOpt "--model" $@`
 Rician=`opts_GetOpt "--rician" $@`
+Gradnonlin=`opts_GetOpt "--gradnonlin" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
 Species=`opts_GetOpt "--species" $@`
 CASE=`opts_GetOpt "--session" $@`
@@ -212,7 +216,7 @@ StudyFolder=`pwd` &> /dev/null
 
 # -- Report run parameters
 echo ""
-echo " --> Executing ${scriptName} dwi_fsl_bedpostx_gpu:"
+echo " --> Executing ${scriptName} dwi_bedpostx_gpu:"
 echo "     Study Folder: ${StudyFolder}"
 echo "     Sessions Folder: ${SessionsFolder}"
 echo "     Session: ${CASE}"
@@ -319,22 +323,31 @@ else
     RicianFlag="--rician"
 fi
 
-# -- Command to run
-if [ -f "$DiffusionFolder"/grad_dev.nii.gz ]; then
-    echo ""
-    geho "--> Using gradient nonlinearities flag -g"
-    echo ""
-    GradientNonlinearitiesFlag="-g"
+# -- Gradnon lin
+# -- Set automatically by default 
+if [ -z "$Gradnonlin" ]; then
+    if [ -f "$DiffusionFolder"/grad_dev.nii.gz ]; then
+        echo ""
+        geho "--> Using gradient nonlinearities flag -g"
+        echo ""
+        GradientNonlinearitiesFlag="-g"
+    else
+        echo ""
+        geho "--> Not using gradient nonlinearities flag -g"
+        echo ""
+        GradientNonlinearitiesFlag=""
+    fi
 else
-    echo ""
-    geho "--> Not using gradient nonlinearities flag -g"
-    echo ""
-    GradientNonlinearitiesFlag=""
+    if [ "$Gradnonlin" == "no" ] || [ "$Gradnonlin" == "NO" ]; then
+        GradientNonlinearitiesFlag=""
+    else
+        GradientNonlinearitiesFlag="-g"
+    fi
 fi
 
 # -- Report
 geho "--> Running FSL command:"
-echo "    ${FSLGPUScripts}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model}  ${GradientNonlinearitiesFlag} ${RicianFlag}"
+echo "    ${FSLGPUScripts}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model} ${GradientNonlinearitiesFlag} ${RicianFlag}"
 
 # -- Execute
 ${FSLGPUScripts}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model} ${GradientNonlinearitiesFlag} ${RicianFlag}
