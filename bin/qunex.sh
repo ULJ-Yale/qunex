@@ -835,7 +835,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \
 --rician='${Rician}' \
 --gradnonlin='${Gradnonlin}' \
 --overwrite='${Overwrite}' \
---species=${Species}"
+--species='${Species}'"
 # -- QuNex bash execute function
 bash_call_execute
 }
