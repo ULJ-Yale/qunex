@@ -409,6 +409,9 @@ arglist = [
            ['hcp_resample_extractvolume', '',                                     isNone,   "Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work."],
 
            ['# --- hcp_asl options'],
+           ['hcp_asl_mtname', '',                                                 isNone,  "Filename for empirically estimated MT-correction scaling factors."],
+           ['hcp_asl_territories_atlas', '',                                      isNone,  "Atlas of vascular territories from Mutsaerts."],
+           ['hcp_asl_territories_labels', '',                                     isNone,  "Labels corresponding to territories_atlas."],
            ['hcp_asl_cores', '',                                                  isNone,  "Number of cores to use when applying motion correction and other potentially multi-core operations."],
            ['hcp_asl_interpolation', '',                                          isNone, "Interpolation order for registrations corresponding to scipy’s map_coordinates function."],
            ['hcp_asl_use_t1', None,                                               flag,   "If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl."],

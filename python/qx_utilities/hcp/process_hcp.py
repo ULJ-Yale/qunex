@@ -6741,20 +6741,37 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     HCP ASL parameters
     ------------------
 
-    --hcp_gdcoeffs          Path to a file containing gradient distortion
-                            coefficients, alternatively a string describing
-                            multiple options (see below) can be provided.
-    --hcp_asl_cores         Number of cores to use when applying motion
-                            correction and other potentially multi-core
-                            operations. [1]
-    --hcp_asl_use_t1        If specified, the T1 estimates from the satrecov
-                            model fit will be used in perfusion estimation
-                            in oxford_asl. The flag is not set by default.
-    --hcp_asl_interpolation Interpolation order for registrations corresponding
-                            to scipy’s map_coordinates function. [1]
-    --hcp_asl_nobandingcorr If this option is provided, MT and ST banding
-                            corrections won’t be applied. The flag is not set
-                            by default.
+    --hcp_gdcoeffs                  Path to a file containing gradient
+                                    distortion coefficients, alternatively a
+                                    string describing multiple options
+                                    (see below) can be provided.
+    --hcp_asl_mtname                Filename for empirically estimated
+                                    MT-correction scaling factors. []
+    --hcp_asl_territories_atlas     Atlas of vascular territories from
+                                    Mutsaerts. []
+    --hcp_asl_territories_labels    Labels corresponding to territories_atlas. []
+    --hcp_asl_cores                 Number of cores to use when applying motion
+                                    correction and other potentially multi-core
+                                    operations. [1]
+    --hcp_asl_use_t1                If specified, the T1 estimates from the
+                                    satrecov model fit will be used in perfusion
+                                    estimation in oxford_asl. The flag is not
+                                    set by default.
+    --hcp_asl_interpolation         Interpolation order for registrations
+                                    corresponding to scipy’s map_coordinates
+                                    function. [1]
+    --hcp_asl_nobandingcorr         If this option is provided, MT and ST
+                                    banding corrections won’t be applied.
+                                    The flag is not set by default.
+
+            if options["hcp_asl_mtname"] is not None:
+                comm += "                --mtname=" + options["hcp_asl_mtname"]
+
+            if options["hcp_asl_territories_atlas"] is not None:
+                comm += "                --territories_atlas=" + options["hcp_asl_territories_atlas"]
+
+            if options["hcp_asl_territories_labels"] is not None:
+                comm += "                --territories_labels=" + options["hcp_asl_territories_labels"]
 
     Gradient coefficient file specification:
     ----------------------------------------
@@ -6829,9 +6846,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: Gradient coefficient file is required!"
             run = False
 
-        # mtname
-        mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
-
         # get struct files
         # ACPC-aligned, DC-restored structural image
         t1w_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz")
@@ -6877,16 +6891,11 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: ribbon.nii.gz from FreeSurfer not found [%s]" % ribbon_file
             run = False
 
-        # territories atlas and labels
-        territories_atlas = os.path.join(asl_library, "vascular_territories_eroded5_atlas.nii.gz")
-        territories_labels = os.path.join(asl_library, "vascular_territories_atlas.txt")
-
         # build the command
         if run:
             comm = '%(script)s \
                 --studydir="%(studydir)s" \
                 --subid="%(subid)s" \
-                --mtname="%(mtname)s" \
                 --grads="%(grads)s" \
                 --struct="%(struct)s" \
                 --sbrain="%(sbrain)s" \
@@ -6895,15 +6904,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --fmap_pa="%(fmap_pa)s" \
                 --wmparc="%(wmparc)s" \
                 --ribbon="%(ribbon)s" \
-                --territories_atlas="%(territories_atlas)s" \
-                --territories_labels="%(territories_labels)s" \
-                --pvcorr \
-                --wbdir="%(wbdir)s" \
                 --verbose' % {
                     "script"                : "hcp_asl",
                     "studydir"              : sinfo['hcp'],
                     "subid"                 : sinfo["id"],
-                    "mtname"                : mtname,
                     "grads"                 : gdcfile,
                     "struct"                : t1w_file,
                     "sbrain"                : t1w_brain_file,
@@ -6911,12 +6915,18 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     "fmap_ap"               : fmap_ap_file,
                     "fmap_pa"               : fmap_pa_file,
                     "wmparc"                : wmparc_file,
-                    "ribbon"                : ribbon_file,
-                    "territories_atlas"     : territories_atlas,
-                    "territories_labels"    : territories_labels,
-                    "wbdir"                 : os.environ["WBDIR"]}
+                    "ribbon"                : ribbon_file}
 
             # -- Optional parameters
+            if options["hcp_asl_mtname"] is not None:
+                comm += "                --mtname=" + options["hcp_asl_mtname"]
+
+            if options["hcp_asl_territories_atlas"] is not None:
+                comm += "                --territories_atlas=" + options["hcp_asl_territories_atlas"]
+
+            if options["hcp_asl_territories_labels"] is not None:
+                comm += "                --territories_labels=" + options["hcp_asl_territories_labels"]
+
             if options["hcp_asl_use_t1"]:
                 comm += "                --use_t1"
 
