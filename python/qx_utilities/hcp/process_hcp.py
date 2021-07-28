@@ -6764,15 +6764,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                                     banding corrections won’t be applied.
                                     The flag is not set by default.
 
-            if options["hcp_asl_mtname"] is not None:
-                comm += "                --mtname=" + options["hcp_asl_mtname"]
-
-            if options["hcp_asl_territories_atlas"] is not None:
-                comm += "                --territories_atlas=" + options["hcp_asl_territories_atlas"]
-
-            if options["hcp_asl_territories_labels"] is not None:
-                comm += "                --territories_labels=" + options["hcp_asl_territories_labels"]
-
     Gradient coefficient file specification:
     ----------------------------------------
 
