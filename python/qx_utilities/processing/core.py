@@ -597,6 +597,11 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
                 passed = 'incomplete'
                 failed = 1
 
+    elif tfile is None:
+        report = "%s finished" % (command)
+        passed = 'done'
+        failed = 0
+
     else:
         if verbose and tfile is not None:
             r += "\n---> %s test file missing:\n     %s" % (command, tfile)
