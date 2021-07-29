@@ -7428,7 +7428,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                 comm += "                --confound==\"%s\"" % options['hcp_task_confound']
 
             # origsmoothingFWHM
-            if options['hcp_bold_smoothFWHM'] is not None:
+            if options['hcp_bold_smoothFWHM'] is not None and options['hcp_bold_smoothFWHM'] != "2":
                 comm += "                --origsmoothingFWHM=\"%s\"" % options['hcp_bold_smoothFWHM']
 
             # finalsmoothingFWHM
@@ -7448,15 +7448,15 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                 comm += "                --procstring=\"%s\"" % options['hcp_task_procstring']
 
             # regname
-            if options['hcp_regname'] is not None:
+            if options['hcp_regname'] is not None and options['hcp_regname'] not in ["MSMSulc", "NONE", "none", "None"]:
                 comm += "                --regname=\"%s\"" % options['hcp_regname']
 
             # grayordinatesres
-            if options['hcp_grayordinatesres'] is not None:
+            if options['hcp_grayordinatesres'] is not None and options['hcp_grayordinatesres'] != 2:
                 comm += "                --grayordinatesres=\"%d\"" % options['hcp_grayordinatesres']
 
             # lowresmesh
-            if options['hcp_lowresmesh'] is not None:
+            if options['hcp_lowresmesh'] is not None and options['hcp_lowresmesh'] != "32":
                 comm += "                --lowresmesh=\"%s\"" % options['hcp_lowresmesh']
 
             # parcellation
