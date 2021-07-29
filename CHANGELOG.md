@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.0 (2021-29-07)
+
+QuNex Python codebase upgraded to python3. Integration of the `hcp_asl` pipelines. Fixed a bug in `import_dicom` and `qunex_container` that caused the command to crash under a certain conditions.
+
 ## 0.90.10 (2021-23-07)
 
 Consistent naming of dwi functions, upgraded `dwi_dtifit` so it now supports all of the FSL's dtifit parameters. Fixed a bug with `dwi_bedpostx_gpu` when running through the container. Fixed a bug in DWI `run_qc`.
