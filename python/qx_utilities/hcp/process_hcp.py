@@ -7267,6 +7267,13 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                                     to --hcp_task_lvl2fsf, the value will be set
                                     to the same list passed to
                                     --hcp_task_lvl2task.
+    --hcp_task_summaryname          Naming convention for single-subject summary
+                                    directory. Mandatory when running Level1
+                                    analysis only, and should match naming of
+                                    Level2 summary directories. Default when running
+                                    Level2 analysis is derived from
+                                    --hcp_task_lvl2task and --hcp_task_lvl2fsf options
+                                    'tfMRI_TaskName/DesignName_TaskName'. [NONE]
     --hcp_task_confound             Confound matrix text filename (e.g., output
                                     of fsl_motion_outliers). Assumes file is in
                                     <SubjectID>/MNINonLinear/Results/<ScanName>.
@@ -7372,66 +7379,96 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: hcp_task_lvl1tasks parameter is not provided"
             run = False
 
-        # hcp_task_lvl1fsfs
-        if options['hcp_task_lvl1fsfs'] is None:
-            lvl1fsfs = lvl1tasks
-        else:
-            lvl1fsfs = options['hcp_task_lvl1fsfs'].replace(",", "@")
-            if (len(lvl1sfs.split(",")) != len(lvl1tasks.split(","))):
-                r += "\n---> ERROR: mismatch in the length of hcp_task_lvl1tasks and hcp_task_lvl1fsfs"
-                run = False
-
-        # hcp_task_lvl2task
-        lvl2task = options['hcp_task_lvl2task']
-
-        # hcp_task_lvl2fsf
-        if options['hcp_task_lvl2fsf'] is None:
-            lvl2fsf = lvl2task
-        else:
-            lvl2fsf = options['hcp_task_lvl2fsf']
-
         # --- build the command
         if run:
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
-                --lvl1tasks="%(lvl1tasks)s" \
-                --lvl1fsfs="%(lvl1fsfs)s" \
-                --lvl2task="%(lvl2task)s" \
-                --lvl2fsf="%(lvl2fsf)s" \
-                --confound="%(confound)s" \
-                --origsmoothingFWHM="%(origsmoothingFWHM)s" \
-                --finalsmoothingFWHM="%(finalsmoothingFWHM)s" \
-                --highpassfilter="%(highpassfilter)s" \
-                --lowpassfilter="%(lowpassfilter)s" \
-                --procstring="%(procstring)s" \
-                --regname="%(regname)s" \
-                --grayordinatesres="%(grayordinatesres)s" \
-                --lowresmesh="%(lowresmesh)s" \
-                --parcellation="%(parcellation)s" \
-                --parcellationfile="%(parcellationfile)s" ' % {
+                --lvl1tasks="%(lvl1tasks)s" ' % {
                     'script'             : os.path.join(hcp['hcp_base'], 'TaskfMRIAnalysis', 'TaskfMRIAnalysis.sh'),
                     'path'               : sinfo['hcp'],
                     'subject'            : sinfo['id'] + options['hcp_suffix'],
-                    'lvl1tasks'          : lvl1tasks,
-                    'lvl1fsfs'           : lvl1fsfs,
-                    'lvl2task'           : lvl2task,
-                    'lvl2fsf'            : lvl2fsf,
-                    'confound'           : options['hcp_task_confound'],
-                    'origsmoothingFWHM'  : options['hcp_bold_smoothFWHM'],
-                    'finalsmoothingFWHM' : options['hcp_bold_final_smoothFWHM'],
-                    'highpassfilter'     : options['hcp_task_highpass'],
-                    'lowpassfilter'      : options['hcp_task_lowpass'],
-                    'procstring'         : options['hcp_task_procstring'],
-                    'regname'            : options['hcp_regname'],
-                    'grayordinatesres'   : options['hcp_grayordinatesres'],
-                    'lowresmesh'         : options['hcp_lowresmesh'],
-                    'parcellation'       : options['hcp_task_parcellation'],
-                    'parcellationfile'   : options['hcp_task_parcellation_file']
+                    'lvl1tasks'          : lvl1tasks
                 }
 
-            # flags
-            if options['hcp_task_vba'] == "True":
+            # optional parameters
+
+            # hcp_task_lvl1fsfs
+            if options['hcp_task_lvl1fsfs'] is not None:
+                lvl1fsfs = options['hcp_task_lvl1fsfs'].replace(",", "@")
+                if (len(lvl1sfs.split(",")) != len(lvl1tasks.split(","))):
+                    r += "\n---> ERROR: mismatch in the length of hcp_task_lvl1tasks and hcp_task_lvl1fsfs"
+                    run = False
+
+                comm += "                --lvl1fsfs=\"%s\"" % lvl1fsfs
+
+            # hcp_task_lvl2task
+            if options['hcp_task_lvl2task'] is not None:
+                comm += "                --lvl2task=\"%s\"" % options['hcp_task_lvl2task']
+
+                # hcp_task_lvl2fsf
+                if options['hcp_task_lvl2fsf'] is not None:
+                    lvl2fsf = lvl2task
+                else:
+                    lvl2fsf = options['hcp_task_lvl2fsf']
+
+                comm += "                --lvl2fsf=\"%s\"" % lvl2fsf
+
+            # summary name
+            # mandatory for Level1
+            if options['hcp_task_lvl2task'] is None and options['hcp_task_summaryname'] is None:
+                r += "\n---> ERROR: hcp_task_summaryname is mandatory when running Level1 analysis!"
+                run = False
+            
+            if options['hcp_task_summaryname'] is not None:
+                comm += "                --summaryname=\"%s\"" % options['hcp_task_summaryname']
+
+            # confound
+            if options['hcp_task_confound'] is not None:
+                comm += "                --confound==\"%s\"" % options['hcp_task_confound']
+
+            # origsmoothingFWHM
+            if options['hcp_bold_smoothFWHM'] is not None:
+                comm += "                --origsmoothingFWHM=\"%s\"" % options['hcp_bold_smoothFWHM']
+
+            # finalsmoothingFWHM
+            if options['hcp_bold_final_smoothFWHM'] is not None:
+                comm += "                --finalsmoothingFWHM=\"%s\"" % options['hcp_bold_final_smoothFWHM']
+
+            # highpassfilter
+            if options['hcp_task_highpass'] is not None:
+                comm += "                --highpassfilter=\"%s\"" % options['hcp_task_highpass']
+
+            # lowpassfilter
+            if options['hcp_task_lowpass'] is not None:
+                comm += "                --lowpassfilter=\"%s\"" % options['hcp_task_lowpass']
+
+            # procstring
+            if options['hcp_task_procstring'] is not None:
+                comm += "                --procstring=\"%s\"" % options['hcp_task_procstring']
+
+            # regname
+            if options['hcp_regname'] is not None:
+                comm += "                --regname=\"%s\"" % options['hcp_regname']
+
+            # grayordinatesres
+            if options['hcp_grayordinatesres'] is not None:
+                comm += "                --grayordinatesres=\"%d\"" % options['hcp_grayordinatesres']
+
+            # lowresmesh
+            if options['hcp_lowresmesh'] is not None:
+                comm += "                --lowresmesh=\"%s\"" % options['hcp_lowresmesh']
+
+            # parcellation
+            if options['hcp_task_parcellation'] is not None:
+                comm += "                --parcellation=\"%s\"" % options['hcp_task_parcellation']
+
+            # parcellationfile
+            if options['hcp_task_parcellation_file'] is not None:
+                comm += "                --parcellationfile=\"%s\"" % options['hcp_task_parcellation_file']
+
+            # hcp_task_vba flag
+            if options['hcp_task_vba']:
                 comm += '                --vba="YES"'
 
             # -- Report command

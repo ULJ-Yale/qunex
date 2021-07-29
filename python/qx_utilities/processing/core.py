@@ -698,7 +698,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     comm = run.replace(" --", "\n     --").replace("             ", "")
     comm += "\n"
     printComm += comm
-    if checkfile is not None or checkfile != "":
+    if checkfile is not None and checkfile != "":
         printComm += "\nTest file: \n%s\n" % checkfile
     printComm += "------------------------------------------------------------"
 
