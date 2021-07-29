@@ -372,9 +372,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         if ("cpus-per-task" not in setDict.keys() and "c" not in setDict.keys()):
             sCommand += "#SBATCH --cpus-per-task=%s\n" % (parelements)
 
-        print(sCommand)
-        exit(1)
-
         # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)

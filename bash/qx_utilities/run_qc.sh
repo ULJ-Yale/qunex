@@ -81,7 +81,7 @@ usage() {
  echo "                       E.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' "
  echo "                       would be specified as --hcp_suffix='-run2' "
  echo "--scenetemplatefolder  Specify the absolute path name of the template folder "
- echo "                       [default: $TOOLS/${QUNEXREPO}/qx_library/data/scenes/qc]"
+ echo "                       [default: ${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc]"
  echo ""
  echo "                       Note: relevant scene template data has to be in the same "
  echo "                       folder as the template scenes."
@@ -495,10 +495,10 @@ if [ -z "$UserSceneFile" ]; then
         echo "---> Template folder path value not explicitly specified."; echo ""
         echo "---> Using QuNex defaults: ${scenetemplatefolder}"; echo ""
     fi
-    if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
+    if ls ${scenetemplatefolder}/*${modality_lower}*.scene 1> /dev/null 2>&1; then 
         echo ""
         echo "---> Scene files found in: "; echo ""
-        echo "`ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
+        echo "`ls ${scenetemplatefolder}/*${modality_lower}*.scene` "; echo ""
     else 
         reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
@@ -901,7 +901,7 @@ completionCheck() {
                 return 1
             fi
             if [ "$SceneZip" == "yes" ]; then
-                if [ -f ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip]; then
+                if [[ -f ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip ]]; then
                     echo ""
                     geho "---> Scene zip file found and generated: ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip"
                     echo ""
@@ -926,7 +926,7 @@ completionCheck() {
                 return 1
             fi
             if [ "$SceneZip" == "yes" ]; then
-                if [ -f ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip]; then
+                if [ -f ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip ]; then
                     echo ""
                     geho "---> Scene zip file found and generated: ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip"
                     echo ""
@@ -1223,7 +1223,7 @@ main() {
     get_options "$@"
     for CASE in ${CASES}; do
         # -- Set basics
-       
+
         # -- Set session_hcp.txt file 
         if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
             SessAcqInfoFile="session_hcp.txt"
@@ -1233,7 +1233,7 @@ main() {
                SessAcqInfoFile="subject_hcp.txt"
            fi
         fi
-        
+
         CASEName="${CASE}${HCPSuffix}"
         HCPFolder="${SessionsFolder}/${CASE}/hcp/${CASEName}"
         if [ ! -z "$HCPSuffix" ]; then 
@@ -1266,13 +1266,13 @@ main() {
             fi
             
             # -- Check if ${SessAcqInfoFile} is present:
-            if [[ ${BOLDS} == "${SessAcqInfoFile}" ]]; then
+            if [[ -n ${SessAcqInfoFile} ]] && [[ ${BOLDS} == "${SessAcqInfoFile}" ]]; then
                 echo ""
                 echo "---> Using ${SessAcqInfoFile} individual information files. Verifying that ${SessAcqInfoFile} exists."; echo ""
                 if [[ -f "${SessionsFolder}/${CASE}/${SessAcqInfoFile}" ]]; then
                     echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} found. Proceeding..."
                 else
-                    reho "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check BOLD inputs."
+                    reho "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your inputs."
                     echo ""
                     exit 1
                 fi
@@ -1288,8 +1288,24 @@ main() {
                         echo " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASEName}.${Modality}.${BOLD}.* "
                         rm -f ${OutPath}/${CASEName}.${Modality}.${BOLD}.* &> /dev/null
                     done
+                elif [ ${Modality} == "DWI" ]; then
+                    echo " --- Note: Overwrite requested. "
+
+                    # delete general DWI qc
+                    rm -f ${OutPath}/${CASEName}.${Modality}.QC.* &> /dev/null
+
+                    # if bedpostxqc is set delete bedpostx
+                    if [ "$BedpostXQC" == "yes" ]; then
+                        rm -f ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.* &> /dev/null
+                    fi
+
+                    # if dtifitqc is set delete dtifitqx
+                    if [ "$DtiFitQC" == "yes" ]; then
+                        rm -f ${OutPath}/${CASEName}.${Modality}.dtifit.QC.* &> /dev/null
+                    fi
                 else
                     echo " --- Note: Overwrite requested. Removing existing ${Modality} QC scene: ${OutPath}/${WorkingSceneFile} "
+
                     rm -f ${OutPath}/${CASEName}.${Modality}.* &> /dev/null
                 fi
                 echo ""
@@ -1853,7 +1869,7 @@ main() {
                     ComRunPngName="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingSceneFile}"
                     Com5="$Com5; $ComRunPngName"
                     # -- Output image of the scene
-                    Com6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539"
+                    Com6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
                     echo ""
                     geho "---> Running PNG extraction using the following command..."
                     echo "      $Com6"
@@ -1864,7 +1880,7 @@ main() {
                         Com5a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingDTISceneFile}"
                         PNGNameDtiFit="${WorkingDTISceneFile}.png"
                         ComRunPngNameDtiFit="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingDTISceneFile}"
-                        Com5b="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.png 1194 539"
+                        Com5b="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
                         Com5="$Com5; $ComRunPngNameDtiFit; $Com5a; $Com5b"
                     fi
                     # -- Check of bedpostx QC is requested
@@ -1872,7 +1888,7 @@ main() {
                         Com5c="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingBedpostXSceneFile}"
                         PNGNameBedpostX="${WorkingDTISceneFile}.png"
                         ComRunPngNameBedpostX="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingDTISceneFile}"
-                        Com5d="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.png 1194 539"
+                        Com5d="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
                         Com5="$Com5; $ComRunPngNameBedpostX; $Com5c; $Com5d"
                     fi
                     

@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.90.9 (2021-07-07)
+## 0.90.10 (2021-23-07)
 
-Consistent naming of dwi functions, upgraded `dwi_dtifit` so it now supports all of the FSL's dtifit parameters. Fixed a bug with `dwi_bedpostx_gpu` when running through the container.
+Consistent naming of dwi functions, upgraded `dwi_dtifit` so it now supports all of the FSL's dtifit parameters. Fixed a bug with `dwi_bedpostx_gpu` when running through the container. Fixed a bug in DWI `run_qc`.
 
 ## 0.90.8 (2021-06-28)
 

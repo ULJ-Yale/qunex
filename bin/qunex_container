@@ -808,13 +808,13 @@ def main(args=None):
     # split sessions via sessionids or split existing sessionids
     if sessions is not None:
         if sessionids is None:
-            sessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
-        else:
             getsessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
+        else:
+            temp_sessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
             sessionidsSplit = re.split(' +|,|\|', sessionids)
-            sessionids = [e for e in getsessionids if e in sessionidsSplit]
+            getsessionids = [e for e in temp_sessionids if e in sessionidsSplit]
 
-        n_sessions = len(sessionids)
+        n_sessions = len(getsessionids)
 
     # array for storing session ids
     sessionids_array = []
@@ -826,12 +826,13 @@ def main(args=None):
             parjobs = 0
 
             # append to array
-            while sessionids:
+            while getsessionids:
                 parjobs += 1
-                sessionids_chunk = [sessionids.pop(0) for e in range(parsessions) if sessionids]
+
+                sessionids_chunk = [getsessionids.pop(0) for e in range(parsessions)]
                 sessionids_array.append(','.join(sessionids_chunk))
 
-        # else split jobs into chunks
+        # else split jobs into chunkse
         else:
             # how big are chunks of sessions
             chunks = int(math.ceil(n_sessions / float(parsessions)))
@@ -854,7 +855,7 @@ def main(args=None):
 
                 if start < n_sessions:
                     # get chunk
-                    sessionids_chunk = sessionids[start:start+chunk_size]
+                    sessionids_chunk = getsessionids[start:start+chunk_size]
                     # add comma if not empty
                     if sessionids_array[job] != "":
                         sessionids_array[job] = sessionids_array[job] + ","
@@ -869,8 +870,8 @@ def main(args=None):
         parjobs = 1
 
         # add session ids
-        if sessionids is not None:
-            sessionids_array.append(",".join(sessionids))
+        if getsessionids is not None:
+            sessionids_array.append(",".join(getsessionids))
 
     # print out details
     if n_sessions is not None:
@@ -894,15 +895,21 @@ def main(args=None):
 
             # add sessionids to command?
             if i < len(sessionids_array):
-                scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
-                
                 # if sessions is a batch file
                 if os.path.isfile(sessions):
                     scheduleCommand += '--sessions="%s" ' % (sessions)
+                    scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
                 else:
                     scheduleCommand += '--sessions="%s" ' % (sessionids_array[i])
+
+                    if (sessionids is not None):
+                        scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
+
             elif sessions is not None:
                 scheduleCommand += '--sessions="%s" ' % (sessions)
+
+                if (sessionids is not None):
+                    scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
 
             # setup script
             fid, scriptPath = tempfile.mkstemp(dir=homedir)
@@ -927,7 +934,7 @@ def main(args=None):
                 scheduleCommand = scheduleCommand.replace('runTurnkey', '')
                 print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + scheduleCommand, file=f)
                 
-            else:        
+            else:
                 print("bash /opt/qunex/bin/qunex.sh " + scheduleCommand, file=f)
 
             containerCommand = ""
@@ -958,7 +965,7 @@ def main(args=None):
             if scheduler:
                 schedule(command=containerCommand, settings=scheduler, output=output, parsessions=parsessions, parelements=parelements)
             else:
-                subprocess.Popen(containerCommand, shell=True, parsessions=parsessions)
+                subprocess.Popen(containerCommand, shell=True)
 
 if __name__ == "__main__":
     main()

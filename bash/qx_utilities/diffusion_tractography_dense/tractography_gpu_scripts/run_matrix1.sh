@@ -51,11 +51,28 @@ if [ "$2" == "" ];then
     exit 1
 fi
 
+# input parameters
 SessionsFolder=$1 # "$1" #Path to Generic Study folder
 Session=$2 # "$2" #SessionID
 Nsamples=$3 # "$3" #Number of Samples to compute
 
-if [ "$3" == "" ];then Nsamples=10000; fi
+# -- distance correction flag
+distance_correction=$4
+if [ "$distance_correction" == "yes" ]; then
+    distance_correction_flag="--pd"
+else
+    distance_correction_flag=""
+fi
+
+# -- store streamlines length flag
+store_streamlines_length=$5
+if [ "$store_streamlines_length" == "yes" ]; then
+    store_streamlines_length_flag="--ompl"
+else
+    store_streamlines_length_flag=""
+fi
+
+# Out name
 OutFileName="Conn1.dconn.nii"
 
 # -- Generate folder structure
@@ -98,7 +115,7 @@ echo $ResultsFolder/CIFTI_STRUCTURE_THALAMUS_LEFT >> $ResultsFolder/volseeds
 echo $ResultsFolder/CIFTI_STRUCTURE_THALAMUS_RIGHT >> $ResultsFolder/volseeds
 
 # -- Define Generic Options
-generic_options=" --loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -P ${Nsamples} -S 2000 --steplength=0.5"
+generic_options=" --loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -P ${Nsamples} -S 2000 --steplength=0.5 $distance_correction_flag $store_streamlines_length_flag"
 o=" -s $BedpostxFolder/merged -m $DtiMask --meshspace=caret"
 
 # -- Define Seed
