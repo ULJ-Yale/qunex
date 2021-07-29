@@ -7382,11 +7382,11 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         # --- build the command
         if run:
             comm = '%(script)s \
-                --path="%(path)s" \
+                --study-folder="%(studyfolder)s" \
                 --subject="%(subject)s" \
                 --lvl1tasks="%(lvl1tasks)s" ' % {
                     'script'             : os.path.join(hcp['hcp_base'], 'TaskfMRIAnalysis', 'TaskfMRIAnalysis.sh'),
-                    'path'               : sinfo['hcp'],
+                    'studyfolder'        : sinfo['hcp'],
                     'subject'            : sinfo['id'] + options['hcp_suffix'],
                     'lvl1tasks'          : lvl1tasks
                 }
@@ -7408,7 +7408,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
                 # hcp_task_lvl2fsf
                 if options['hcp_task_lvl2fsf'] is not None:
-                    lvl2fsf = lvl2task
+                    lvl2fsf = options['hcp_task_lvl2task']
                 else:
                     lvl2fsf = options['hcp_task_lvl2fsf']
 
