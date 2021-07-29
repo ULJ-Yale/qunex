@@ -7326,7 +7326,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     --hcp_task_parcellation_file    Absolute path to the parcellation dlabel
                                     file [NONE]
 
-    OUTPUTS TODO
+    OUTPUTS
     =======
 
     The results of this step will be populated in the MNINonLinear folder inside
@@ -7474,7 +7474,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
 
-            # -- Test files TODO
+            # -- Test files
             tfile = None
             full_test = None
 
