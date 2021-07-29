@@ -910,6 +910,8 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_g
 --omatrix3='${MatrixThree}' \
 --nsamplesmatrix1='${NsamplesMatrixOne}' \
 --nsamplesmatrix3='${NsamplesMatrixThree}' \
+--distancecorrection='${distance_correction}' \
+--storestreamlineslength='${store_streamlines_length}' \
 --overwrite='${Overwrite}' "
 # -- QuNex bash execute function
 bash_call_execute
@@ -1641,6 +1643,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     MatrixThree=`get_parameters "${setflag}omatrix3" $@`
     NsamplesMatrixOne=`get_parameters "${setflag}nsamplesmatrix1" $@`
     NsamplesMatrixThree=`get_parameters "${setflag}nsamplesmatrix3" $@`
+    distance_correction=`get_parameters "--distancecorrection" $@`
+    store_streamlines_length=`get_parameters "--storestreamlineslength" $@`
     ScriptsFolder=`get_parameters "${setflag}scriptsfolder" $@`
     # -- Input flags for run_qc 
     OutPath=`get_parameters "${setflag}outpath" $@`
@@ -2610,12 +2614,10 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
     if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "ERROR: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
-    if [ "$MatrixOne" == "yes" ]; then
-        if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
-    fi
-    if [ "$MatrixThree" == "yes" ]; then
-        if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
-    fi
+    if [ -z "$MatrixOne" ]; then MatrixOne="no"; fi
+    if [ -z "$MatrixThree" ]; then MatrixThree="no"; fi
+    if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
+    if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
         if [[ -z ${Scheduler} ]]; then reho "ERROR: Scheduler specification and options missing."; exit 1; fi
@@ -2629,6 +2631,21 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     else
         OutFolderReport=${OutFolder}
     fi
+
+    # -- distance correction flag
+    if [ "$distance_correction" == "yes" ] || [ "$distance_correction" == "YES" ]; then
+        distance_correction="yes"
+    else
+        distance_correction="no"
+    fi
+
+    # -- store streamlines length flag
+    if [ "$store_streamlines_length" == "yes" ] || [ "$store_streamlines_length" == "YES" ]; then
+        store_streamlines_length="yes"
+    else
+        store_streamlines_length="no"
+    fi
+
     # -- Report parameters
     echo ""
     echo "Running $CommandToRun with the following parameters:"
@@ -2643,6 +2660,8 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Compute Matrix3: ${MatrixThree}"
     echo "   Number of samples for Matrix1: ${NsamplesMatrixOne}"
     echo "   Number of samples for Matrix3: ${NsamplesMatrixThree}"
+    echo "   Distance correction: ${distance_correction}"
+    echo "   Store streamlines length: ${store_streamlines_length}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
     # -- Execute
