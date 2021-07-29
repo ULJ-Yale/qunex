@@ -7408,11 +7408,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
                 # hcp_task_lvl2fsf
                 if options['hcp_task_lvl2fsf'] is not None:
-                    lvl2fsf = options['hcp_task_lvl2task']
-                else:
-                    lvl2fsf = options['hcp_task_lvl2fsf']
-
-                comm += "                --lvl2fsf=\"%s\"" % lvl2fsf
+                    comm += "                --lvl2fsf=\"%s\"" % options['hcp_task_lvl2fsf']
 
             # summary name
             # mandatory for Level1
