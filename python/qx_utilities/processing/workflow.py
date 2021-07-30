@@ -405,14 +405,12 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
         report['boldfail'] += 1
     except Exception as e:
-        print("!!!!!! e ", e)
-        exit(1)
         # unlock template file if it crashed there
         if templatefile is not None and os.path.exists(templatefile):
             fl.unlock(templatefile)
 
         report['boldfail'] += 1
-        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        r += "\nERROR: Unknown error occured: \n...................................\n%s\n%s...................................\n" % (e, traceback.format_exc())
         time.sleep(1)
 
     # merge into final comlog
