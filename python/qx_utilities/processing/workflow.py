@@ -280,7 +280,6 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
             report['boldfail'] += tempReport['boldfail']
             report['boldmissing'] += tempReport['boldmissing']
 
-
     r += "\n\nBold mask creation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d" % (report)
 
@@ -405,9 +404,12 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         fl.unlock(templatefile)
 
         report['boldfail'] += 1
-    except:
-        # unlock tempalte file if it crashed there
-        fl.unlock(templatefile)
+    except Exception as e:
+        print("!!!!!! e ", e)
+        exit(1)
+        # unlock template file if it crashed there
+        if templatefile is not None and os.path.exists(templatefile):
+            fl.unlock(templatefile)
 
         report['boldfail'] += 1
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())

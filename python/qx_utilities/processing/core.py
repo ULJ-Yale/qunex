@@ -237,7 +237,7 @@ def getFileNames(sinfo, options):
     d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
-    rgss = rgss.translate(None, ' ,;|') + options['glm_name']
+    rgss = rgss.translate(str.maketrans('','',' ,;|')) + options['glm_name']
 
     concname = "_".join(e for e in [options['boldname'] + options.get('bold_tail', ''), options['image_target'].replace('cifti', 'dtseries'), options.get('concname', 'conc'), options.get('fidlname', '')] if e)
 
@@ -369,7 +369,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     # print("root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext)
 
     rgss = options['bold_nuisance']
-    rgss = rgss.translate(None, ' ,;|')
+    rgss = rgss.translate(str.maketrans('','',' ,;|'))
 
     if 'path_' + boldname in options:
         f['bold_source']        = getExactFile(os.path.join(d['s_source'], options['path_' + boldname]))
