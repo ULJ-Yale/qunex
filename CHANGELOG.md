@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.91.0 (2021-29-07)
 
-QuNex Python codebase upgraded to python3. Integration of the `hcp_asl` pipelines. Fixed a bug in `import_dicom` and `qunex_container` that caused the command to crash under a certain conditions.
+QuNex Python codebase upgraded to Python 3. Integration of the HCP ASL and the HCP task analysis pipelines. Fixed a bug in `import_dicom` and `qunex_container` that caused the command to crash under a certain conditions. Added support for distance correction parameters in `dwi_probtrackx_dense_gpu`.
 
 ## 0.90.10 (2021-23-07)
 
