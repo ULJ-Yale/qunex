@@ -210,8 +210,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     
     ## -- Check for HCPpipedir
     if [[ -e $HCPPIPEDIR/version.txt ]]; then
-        echo "        HCPpipelines : $(cat $HCPPIPEDIR/version.txt)"
-
         # add specific TAG and commit hash
         echo "    HCPpipelines TAG : $(git --git-dir ${HCPPIPEDIR}/.git describe --abbrev=0)"
         echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
