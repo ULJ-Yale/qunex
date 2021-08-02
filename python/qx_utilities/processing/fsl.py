@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -29,8 +29,10 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 import os
+import datetime
+import traceback
 
-from core import *
+import processing.core as pc
 
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
@@ -113,14 +115,14 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s FSL F99 registration [%s] ..." % (action("Running", options["run"]), session)
+    r += "\n%s FSL F99 registration [%s] ..." % (pc.action("Running", options["run"]), session)
 
     # status variables
     run = True
 
     try:
         # check base settings
-        doOptionsCheck(options, sinfo, "dwi_f99")
+        pc.doOptionsCheck(options, sinfo, "dwi_f99")
         
         # construct dirs
         dwi_f99_dir = os.path.join(os.environ["FSLDIR"], "data/xtract_data/standard/F99")
@@ -181,7 +183,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 comm = comm_pre + comm + comm_post
 
                 # execute
-                r, endlog, _, failed = runExternalForFile(target_file, comm, "Running FSL F99", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL F99", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     r += "\n---> FSL F99 processing for session %s failed" % session
@@ -192,7 +194,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = checkRun(target_file, None, "FSL F99 " + session, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(target_file, None, "FSL F99 " + session, r, overwrite=overwrite)
 
                 if passed is None:
                     r += "\n---> FSL F99 can be run"
@@ -202,7 +204,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo['id'], "FSL F99 would be skipped", 1)
 
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
         r += str(errormessage)
         report = (sinfo['id'], "FSL F99 failed", 1)
@@ -335,14 +337,14 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s FSL XTRACT [%s] ..." % (action("Running", options["run"]), session)
+    r += "\n%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session)
 
     # status variables
     run = True
 
     try:
         # check base settings
-        doOptionsCheck(options, sinfo, "dwi_xtract")
+        pc.doOptionsCheck(options, sinfo, "dwi_xtract")
         
         # get species
         species = "HUMAN"
@@ -455,7 +457,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     os.remove(target_file)
 
                 # execute
-                r, endlog, _, failed = runExternalForFile(target_file, comm, "Running FSL XTRACT", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL XTRACT", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     r += "\n---> FSL XTRACT processing for session %s failed" % session
@@ -466,7 +468,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = checkRun(target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite)
 
                 if passed is None:
                     r += "\n---> FSL XTRACT can be run"
@@ -475,7 +477,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> FSL XTRACT processing for session %s would be skipped" % session
                     report = (sinfo['id'], "FSL XTRACT would be skipped", 1)
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
         r += str(errormessage)
         report = (sinfo['id'], "FSL XTRACT failed", 1)

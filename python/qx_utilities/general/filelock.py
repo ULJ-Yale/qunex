@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -6,6 +7,8 @@
 
 """
 ``filelock.py``
+
+A python filelocking library.
 """
 
 from __future__ import print_function
@@ -25,14 +28,14 @@ def lock(filename, delay=0.5, identifier="Python process"):
         # create lock file
         try:
             f = os.open(lock_file, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-            os.write(f, bytes(identifier))
+            os.write(f, bytes(identifier, encoding='utf8'))
             os.close(f)
 
             # store lock file
             locks.append(lock_file)
-
             break
-        except:
+        except Exception as e:
+            print(e)
             pass
 
         # try again soon
@@ -88,7 +91,7 @@ def cleanup():
 def open_status(filename, status=""):
     try:
         f = os.open(filename, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-        os.write(f, bytes(status))
+        os.write(f, bytes(status, encoding='utf8'))
         os.close(f)
 
         # store lock file
@@ -168,7 +171,6 @@ def remove(filename):
         return None
     except (OSError, IOError) as e:
         return e.strerror
-
 
 
 # lock storage

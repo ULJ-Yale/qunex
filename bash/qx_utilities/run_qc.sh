@@ -1288,8 +1288,24 @@ main() {
                         echo " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASEName}.${Modality}.${BOLD}.* "
                         rm -f ${OutPath}/${CASEName}.${Modality}.${BOLD}.* &> /dev/null
                     done
+                elif [ ${Modality} == "DWI" ]; then
+                    echo " --- Note: Overwrite requested. "
+
+                    # delete general DWI qc
+                    rm -f ${OutPath}/${CASEName}.${Modality}.QC.* &> /dev/null
+
+                    # if bedpostxqc is set delete bedpostx
+                    if [ "$BedpostXQC" == "yes" ]; then
+                        rm -f ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.* &> /dev/null
+                    fi
+
+                    # if dtifitqc is set delete dtifitqx
+                    if [ "$DtiFitQC" == "yes" ]; then
+                        rm -f ${OutPath}/${CASEName}.${Modality}.dtifit.QC.* &> /dev/null
+                    fi
                 else
                     echo " --- Note: Overwrite requested. Removing existing ${Modality} QC scene: ${OutPath}/${WorkingSceneFile} "
+
                     rm -f ${OutPath}/${CASEName}.${Modality}.* &> /dev/null
                 fi
                 echo ""

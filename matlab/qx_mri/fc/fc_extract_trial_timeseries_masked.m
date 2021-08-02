@@ -161,7 +161,7 @@ for s = 1:nsub
 
     if scrubit
         if size(y.scrub, 1) ~= y.frames
-            fprintf('\n     ... WARNING: missing or invalid scrubbing info!!!')
+            fprintf('\n     ... WARNING: missing or invalid scrubbing info!')
             scrub = zeros(1, y.frames);
         else
             scrub = y.scrub(:, ismember(y.scrub_hdr, scrubvar))';

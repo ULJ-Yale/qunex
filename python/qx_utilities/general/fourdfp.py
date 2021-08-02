@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -25,8 +25,9 @@ import os.path
 import glob
 import re
 import datetime
-import core as gc
-import exceptions as ge
+
+import general.core as gc
+import general.exceptions as ge
 
 
 template = '''@ economy = 5
@@ -98,37 +99,37 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     subjs = [(e, os.path.exists(os.path.join(e, 'session.txt')), os.path.exists(os.path.join(e, 'dicom', 'DICOM-Report.txt')), os.path.exists(os.path.join(e, '4dfp', 'params'))) for e in subjs]
 
     do = []
-    print "\n---=== Running NIL preprocessing on folder %s ===---\n" % folder
-    print "List of sessions to process\n"
-    print "%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params")
+    print("\n---=== Running NIL preprocessing on folder %s ===---\n" % folder)
+    print("List of sessions to process\n")
+    print("%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params"))
     for subj, stxt, sdicom, sparam in subjs:
-        print "%-15s%-15s%-15s%-10s --->" % (os.path.basename(subj), recode[stxt], recode[sdicom], recode[sparam]),
+        print("%-15s%-15s%-15s%-10s --->" % (os.path.basename(subj), recode[stxt], recode[sdicom], recode[sparam]), end=" ")
         if not stxt:
-            print "skipping processing"
+            print("skipping processing")
         else:
             if not sdicom:
-                print "estimating TR as 2.49836",
+                print("estimating TR as 2.49836", end=" ")
             if not sparam:
-                print "creating param file",
+                print("creating param file", end=" ")
             elif overwrite:
-                print "overwriting existing params file",
+                print("overwriting existing params file", end=" ")
             else:
-                print "working with exisiting params file",
+                print("working with exisiting params file", end=" ")
             do.append(subj)
-        print ""
+        print("")
 
-    s = raw_input("\n===> Do we process the listed sessions? [y/n]: ")
-    if s is not "y":
-        print "===> Aborting processing\n\n"
+    s = input("\n===> Do we process the listed sessions? [y/n]: ")
+    if s != "y":
+        print("===> Aborting processing\n\n")
         return
 
     for s in do:
         try:
             run_nil(s, overwrite, sourcefile)
         except:
-            print "---> Failed running NIL preprocessing on", s
+            print("---> Failed running NIL preprocessing on", s)
 
-    print "\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder)
+    print("\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder))
 
 
 def run_nil(folder=".", overwrite=None, sourcefile=None):
@@ -166,7 +167,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
     if sourcefile is None:
         sourcefile = "session.txt"
 
-    print "\n---> processing session %s" % (os.path.basename(folder))
+    print("\n---> processing session %s" % (os.path.basename(folder)))
 
     # ---> process session.txt
 
@@ -179,7 +180,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
     if not info:
         raise ValueError("ERROR: No data in session.txt! [%s]!" % (sourcefile))
 
-    for k, v in info[0].iteritems():
+    for k, v in info[0].items():
         if k == 'raw_data':
             raw = v
         elif k == 'data':
@@ -196,12 +197,12 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
                 bold.append((k, rb.group(1)))
     bold.sort(key=lambda e: e[1])
 
-    print "...  identified images: t1: %s, t2: %s, bold:" % (t1, t2), [k for k, b in bold]
+    print("...  identified images: t1: %s, t2: %s, bold:" % (t1, t2), [k for k, b in bold])
 
     # ---- check for 4dfp folder
 
     if not os.path.exists(os.path.join(folder, '4dfp')):
-        print "...  creating 4dfp folder"
+        print("...  creating 4dfp folder")
         os.mkdir(os.path.join(folder, '4dfp'))
 
     # ---- check for params
@@ -219,7 +220,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
                         if m:
                             TR = m.group(1)
                             TR = float(TR) / 1000
-                            print "...  Extracted TR info from DICOM-Report, using TR of", TR
+                            print("...  Extracted TR info from DICOM-Report, using TR of", TR)
                             break
         if TR is None or TR == 0.0:
             "...  No DICOM-Report, assuming TR of 2.49836"
@@ -227,7 +228,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
         # ---- create params content
 
-        print "...  creating params file"
+        print("...  creating params file")
         params = template
         params = params.replace('{{data}}', data)
         params = params.replace('{{inpath}}', raw)
@@ -241,11 +242,11 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         params = params.replace('{{bolds}}', " ".join([k+".nii.gz" for k, b in bold]))
 
         pfile = open(os.path.join(folder, '4dfp', 'params'), 'w')
-        print >> pfile, params
+        print(params, file=pfile)
         pfile.close()
 
     else:
-        print "...  using existing params file"
+        print("...  using existing params file")
 
     # ---- check for existing BOLD data
 
@@ -258,23 +259,23 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     if isthere:
         if overwrite:
-            print "...  Some bolds exist and will be overwritten! [%s]" % (" ".join(isthere))
+            print("...  Some bolds exist and will be overwritten! [%s]" % (" ".join(isthere)))
             if ismissing:
-                print "...  Some bolds were missing! [%s]" % (" ".join(ismissing))
+                print("...  Some bolds were missing! [%s]" % (" ".join(ismissing)))
         else:
             if ismissing:
-                print "...  Some bolds exist [%s], however some are missing [%s]!" % (" ".join(isthere), " ".join(ismissing))
-                print "...  Skipping this session!"
+                print("...  Some bolds exist [%s], however some are missing [%s]!" % (" ".join(isthere), " ".join(ismissing)))
+                print("...  Skipping this session!")
                 return
             else:
-                print "...  BOLD files are allready processed! [%s]" % (" ".join(isthere))
-                print "...  Skipping this session!"
+                print("...  BOLD files are allready processed! [%s]" % (" ".join(isthere)))
+                print("...  Skipping this session!")
                 return
 
     # ---- run avi preprocessing
 
     logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%s') + ".log"
-    print "...  running NIL preprocessing, saving log to %s " % (logname)
+    print("...  running NIL preprocessing, saving log to %s " % (logname))
     logfile = open(os.path.join(folder, '4dfp', logname), 'w')
 
     r = subprocess.call(['preproc_avi_nifti', os.path.join(folder, '4dfp', 'params')], stdout=logfile, stderr=subprocess.STDOUT)
@@ -282,9 +283,9 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
     logfile.close()
 
     if r:
-        print "...  WARNING: preproc_NIL_nifti finished with errors, please check log file"
+        print("...  WARNING: preproc_NIL_nifti finished with errors, please check log file")
     else:
-        print "...  preproc_NIL_nifti finished successfully"
+        print("...  preproc_NIL_nifti finished successfully")
 
 
 def map2pals(volume, metric, atlas='711-2C', method='interpolated', mapping='afm'):
@@ -330,7 +331,7 @@ def map2pals(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
     for volume in volumes:
         volume = volume.replace('.img', '').replace('.ifh', '').replace('.4dfp', '') + '.4dfp.ifh'
         for structure in ['LEFT', 'RIGHT']:
-            print "---> mapping %s to PALS %s [%s %s %s]" % (volume, structure, atlas, method, " ".join(mapping))
+            print("---> mapping %s to PALS %s [%s %s %s]" % (volume, structure, atlas, method, " ".join(mapping)))
             subprocess.call(['caret_command', '-volume-map-to-surface-pals', metric, metric, atlas, structure, method, volume] + mapping)
 
 
@@ -369,7 +370,7 @@ def map2hcp(volume, method='trilinear'):
     volumes = volume.split()
     for volume in volumes:
         target = volume.replace('.nii', '').replace('.gz', '') + '.dscalar.nii'
-        print "---> mapping %s to %s using %s" % (volume, target, method,)
+        print("---> mapping %s to %s using %s" % (volume, target, method))
         for structure in ['L', 'R']:
             subprocess.call(['wb_command', '-volume-to-surface-mapping', volume, os.path.join(apath, "Q1-Q6_R440.%s.midthickness.32k_fs_LR.surf.gii" % (structure)), "tmp.%s.func.gii" % (structure), method])
         subprocess.call(['wb_command', '-cifti-create-dense-scalar', target, '-volume', volume, os.path.join(tpath, 'Atlas_ROIs.2.nii.gz'),

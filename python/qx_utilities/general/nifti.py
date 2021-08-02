@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -23,10 +23,11 @@ Created by Grega Repovs on 2013-04-08.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import img as gi
-import qximg as qxi
 import numpy as np
 import gzip
+
+import general.img as gi
+import general.qximg as qxi
 
 def fz2zf(inf, outf=None):
     """

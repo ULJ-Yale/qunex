@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -18,15 +18,17 @@ None of the code is run directly from the terminal interface.
 """
 
 # imports
-import core, scheduler
 import os
 import os.path
-import core as gc
-import exceptions as ge
-import commands_support as gcs
-from processing import fs, fsl, simple, workflow
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+import general.scheduler as gs
+import general.core as gc
+import general.exceptions as ge
+import general.commands_support as gcs
+from processing import fs, fsl, simple, workflow
+
 
 # pipelines imports
 from hcp import process_hcp
@@ -59,7 +61,7 @@ def writelog(item):
     log.append(r)
     stati.append(status)
     f = open(logname, "a")
-    print >> f, r
+    print(r, file=f)
     f.close()
 
 
@@ -102,6 +104,21 @@ def torf(s):
         return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
 
 
+def flag(f):
+    '''
+    ``flag(f)``
+
+    Converts a flag (f) passed as a string to a boolean.
+    '''
+
+    if type(f) == bool:
+        return f
+    elif f in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']:
+        return True
+    else:
+        return False
+
+
 def isNone(s):
     '''
     ``isNone(s)``
@@ -123,7 +140,7 @@ def updateOptions(session, options):
     sessions that started with an underscore '_' are mapped into options.
     '''
     soptions = dict(options)
-    for key, value in session.iteritems():
+    for key, value in session.items():
         if key.startswith('_'):
             soptions[key[1:]] = value
     return soptions
@@ -211,7 +228,7 @@ arglist = [
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
-           ['use_sequence_info',  'all',                                         core.pcslist, "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
+           ['use_sequence_info',  'all',                                         gc.pcslist, "which sequence specific information extracted from JSON sidecar files and present inline in batch file to use (pipe, comma or space separated list of <information>, <modality>:<information>, 'all' or 'none')"],
            ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
@@ -295,7 +312,7 @@ arglist = [
            ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution (in mm) of the structural images templates to use in the prefs step."],
            ['hcp_sephaseneg',         '',                                         str,    "spin echo field map volume with a negative phase encoding direction: (AP, PA, LR, RL) ['']."],
            ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) ['']."],
-           ['hcp_bold_smoothFWHM',    '2',                                        str,    "Whether slices were acquired in an interleaved fashion (odd or even) or not (empty)."],
+           ['hcp_bold_smoothFWHM',    '',                                         isNone, "Whether slices were acquired in an interleaved fashion (odd or even) or not (empty)."],
 
            ['# --- hcp_freesurfer options'],
            ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
@@ -347,8 +364,8 @@ arglist = [
            ['hcp_dwi_extraeddyarg',   '',                                         isNone, "A string specifying additional arguments to pass to eddy processing. Defaults to ''."],
            ['hcp_dwi_name',           '',                                         isNone, "Name to give DWI output directories."],
            ['hcp_dwi_cudaversion',    '',                                         isNone, "If using the GPU-enabled version of eddy, then this option can be used to specify which eddy_cuda binary version to use. If X.Y is specified, then FSLDIR/bin/eddy_cudaX.Y will be used. Note that CUDA 9.1 is installed in the container."],
-           ['hcp_dwi_nogpu',          'FALSE',                                    torf, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
-           ['hcp_dwi_selectbestb0',   'FALSE',                                    torf, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+           ['hcp_dwi_nogpu',          None,                                       flag, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
+           ['hcp_dwi_selectbestb0',   None,                                       flag, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
 
            ['# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options'],
            ['hcp_icafix_bolds',       '',                                         isNone, "A string specifying a list of bolds for ICAFix. Also used later in PostFix, ReApplyFix, MSMAll and DeDriftAndResample. Defaults to ''."],
@@ -389,7 +406,31 @@ arglist = [
            ['hcp_resample_inregname', 'NONE',                                     str,    "A string to enable multiple fMRI resolutions (e.g._1.6mm)."],
            ['hcp_resample_extractnames', '',                                      isNone, "List of bolds and concat names provided in the same format as the hcp_icafix_bolds parameter. Defines which bolds to extract. Exists to enable extraction of a subset of the runs in a multi-run HCP ICAFix group into a new concatenated series."],
            ['hcp_resample_extractextraregnames', '',                              isNone, "Extract multi-run HCP ICAFix runs for additional surface registrations, often MSMSulc."],
-           ['hcp_resample_extractvolume', '',                                     isNone,   "Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work."],
+           ['hcp_resample_extractvolume', '',                                     isNone, "Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work."],
+
+           ['# --- hcp_task_fmri_analysis options'],
+           ['hcp_task_lvl1tasks', '',                                             isNone, "Comma separated list of task fMRI scan names."],
+           ['hcp_task_lvl1fsfs', '',                                              isNone, "Comma separated list of of design names."],
+           ['hcp_task_lvl2task', '',                                              isNone, "Name of Level2 subdirectory in which all Level2 feat directories are written for TaskName."],
+           ['hcp_task_lvl2fsf', '',                                               isNone, "Prefix of design.fsf filename for the Level2 analysis for TaskName."],
+           ['hcp_task_summaryname', '',                                           isNone, "Naming convention for single-subject summary directory. Mandatory when running Level1 analysis only, and should match naming of Level2 summary directories. Default when running Level2 analysis is derived from --hcp_task_lvl2task and --hcp_task_lvl2fsf options tfMRI_TaskName/DesignName_TaskName."],
+           ['hcp_task_confound', '',                                              isNone, "Confound matrix text filename (e.g., output of fsl_motion_outliers)."],
+           ['hcp_bold_final_smoothFWHM', '',                                      isNone, "Value (in mm FWHM) of total desired smoothing."],
+           ['hcp_task_highpass', '',                                              isNone, "Apply additional highpass filter (in seconds) to time series and task design."],
+           ['hcp_task_lowpass', '',                                               isNone, "Apply additional lowpass filter (in seconds) to time series and task design."],
+           ['hcp_task_procstring', '',                                            isNone, "String value in filename of time series image."],
+           ['hcp_task_parcellation', '',                                          isNone, "Name of parcellation scheme to conduct parcellated analysis."],
+           ['hcp_task_parcellation_file', '',                                     isNone, "Absolute path to the parcellation dlabel."],
+           ['hcp_task_vba', None,                                                 flag,   "VBA YES/NO.."],
+
+           ['# --- hcp_asl options'],
+           ['hcp_asl_mtname', '',                                                 isNone,  "Filename for empirically estimated MT-correction scaling factors."],
+           ['hcp_asl_territories_atlas', '',                                      isNone,  "Atlas of vascular territories from Mutsaerts."],
+           ['hcp_asl_territories_labels', '',                                     isNone,  "Labels corresponding to territories_atlas."],
+           ['hcp_asl_cores', '',                                                  isNone,  "Number of cores to use when applying motion correction and other potentially multi-core operations."],
+           ['hcp_asl_interpolation', '',                                          isNone, "Interpolation order for registrations corresponding to scipy’s map_coordinates function."],
+           ['hcp_asl_use_t1', None,                                               flag,   "If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl."],
+           ['hcp_asl_nobandingcorr', None,                                        flag,   "If this option is provided, MT and ST banding corrections won’t be applied."],
 
            ['# --- HCP file checking'],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file)."],
@@ -417,9 +458,12 @@ arglist = [
 #   4/ short description
 
 flaglist = [
-    ['test',                    'run',                  'test', 'Run a test only.'],
-    ['hcp_dwi_nogpu',           'hcp_dwi_nogpu',        'TRUE', 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
-    ['hcp_dwi_selectbestb0',    'hcp_dwi_selectbestb0', 'TRUE', "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+    ['test',                     'run',                   'test', 'Run a test only.'],
+    ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',         True, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
+    ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',  True, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+    ['hcp_asl_use_t1',           'hcp_asl_use_t1',        True, 'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
+    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', True, 'If this option is provided, MT and ST banding corrections won’t be applied.'],
+    ['hcp_task_vba',             'hcp_task_vba',          True, "VBA YES/NO."],
 ]
 
 
@@ -465,7 +509,7 @@ calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,   
           [],
           ['hcp1',    'hcp_pre_freesurfer',         process_hcp.hcp_pre_freesurfer,                 "Run HCP PreFS pipeline."],
           ['hcp2',    'hcp_freesurfer',             process_hcp.hcp_freesurfer,                     "Run HCP FS pipeline."],
-          ['hcp3',    'hcp_post_freesurfer',                 process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
+          ['hcp3',    'hcp_post_freesurfer',        process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
           ['hcp4',    'hcp_fmri_volume',            process_hcp.hcp_fmri_volume,                    "Run HCP fMRI Volume pipeline."],
           ['hcp5',    'hcp_fmri_surface',           process_hcp.hcp_fmri_surface,                   "Run HCP fMRI Surface pipeline."],
           ['hcp6',    'hcp_icafix',                 process_hcp.hcp_icafix,                         "Run HCP ICAFix pipeline."],
@@ -473,8 +517,10 @@ calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,   
           ['hcp8',    'hcp_reapply_fix',            process_hcp.hcp_reapply_fix,                    "Run HCP ReApplyFix pipeline."],
           ['hcp9',    'hcp_msmall',                 process_hcp.hcp_msmall,                         "Run HCP MSMAll pipeline."],
           ['hcp10',   'hcp_dedrift_and_resample',   process_hcp.hcp_dedrift_and_resample,           "Run HCP DeDriftAndResample pipeline."],
+          ['hcp11',   'hcp_task_fmri_analysis',     process_hcp.hcp_task_fmri_analysis,             "Run HCP TaskfMRIanalysis pipeline."],
           [],
           ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
+          ['hpca',    'hcp_asl',                    process_hcp.hcp_asl,                            "Run HCP ASL pipeline."],
           # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
           # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
           [],
@@ -547,7 +593,6 @@ def run(command, args):
     options = {'command_ran': command}
 
     # --- set up default options
-
     for line in arglist:
         if len(line) == 4:
             options[line[0]] = line[1]
@@ -561,7 +606,7 @@ def run(command, args):
     if 'filter' in args:
         options['filter'] = args['filter']
 
-    sessions, gpref = core.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
+    sessions, gpref = gc.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
     # --- check if we are running across subjects rather than sessions
     if command in lactions:
@@ -579,13 +624,17 @@ def run(command, args):
         sessions = [subjectInfo[e] for e in subjectList]
 
     # --- take parameters from batch file
-    for (k, v) in gpref.iteritems():
+    for (k, v) in gpref.items():
         options[k] = v
 
     # --- parse command line options
-    for (k, v) in args.iteritems():
+    for (k, v) in args.items():
         if k in flist:
-            options[flist[k][0]] = flist[k][1]
+            if v != True:
+                options[flist[k][0]] = v
+            else:
+                options[flist[k][0]] = flist[k][1]
+
         else:
             options[k] = v
 
@@ -597,22 +646,19 @@ def run(command, args):
             except:
                 raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
 
-
     # ---- Take care of variable expansion
-
     for key in options:
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
     # ---- Set key parameters
-
     overwrite    = options['overwrite']
     parsessions  = options['parsessions']
     nprocess     = options['nprocess']
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
    
-    studyfolders = core.deduceFolders(options)
+    studyfolders = gc.deduceFolders(options)
     logfolder    = studyfolders['logfolder']
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
@@ -642,7 +688,7 @@ def run(command, args):
     sout += "=================================================================\n"
     sout += "gmri " + command + " \\\n"
 
-    for (k, v) in args.iteritems():
+    for (k, v) in args.items():
         sout += '  --%s="%s" \\\n' % (k, v)
 
     sout += "=================================================================\n"
@@ -650,7 +696,7 @@ def run(command, args):
     # --- check if there are no sessions
     if not sessions:
         sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!"
-        print sout
+        print(sout)
         writelog(sout)
         exit()
 
@@ -660,25 +706,25 @@ def run(command, args):
     else:
         sout += "\nRunning test on %s ...\n" % (options['sessions'])
 
-    print sout
+    print(sout)
     writelog(sout)
 
     # -----------------------------------------------------------------------
     #                                                           print options
 
     if printoptions:
-        print "\nFull list of options:"
+        print("\nFull list of options:")
         writelog("\nFull list of options:\n")
         for line in arglist:
             if len(line) == 4:
-                print "%-25s :" % (line[0]), options[line[0]]
+                print("%-25s :" % (line[0]), options[line[0]])
                 writelog("  %-25s : %s" % (line[0], str(options[line[0]])))
 
     # -----------------------------------------------------------------------
     #                                                              print info
 
     if printinfo:
-        print sessions
+        print(sessions)
 
 
     # =======================================================================
@@ -699,7 +745,7 @@ def run(command, args):
 
         consoleLog = ""
 
-        print "---- Running local"
+        print("---- Running local")
         c = 0
         if parsessions == 1 or options['run'] == 'test':
             if command in plactions:
@@ -712,11 +758,11 @@ def run(command, args):
                             action = 'processing'
                         soptions = updateOptions(session, options)
                         consoleLog += "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        print "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        print("\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
                         r, status = procResponse(pending_actions(session, soptions, overwrite, c + 1))
                         writelog(r)
                         consoleLog += r
-                        print r
+                        print(r)
                         stati.append(status)
                         c += 1
                         if nprocess and c >= nprocess:
@@ -738,7 +784,7 @@ def run(command, args):
                     if len(session['id']) > 1:
                         soptions = updateOptions(session, options)
                         consoleLog += "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        print "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        print("\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
                         future = processPoolExecutor.submit(pending_actions, session, soptions, overwrite, c + 1)
                         futures.append(future)
                         c += 1
@@ -749,7 +795,7 @@ def run(command, args):
                     result = future.result()
                     writelog(result)
                     consoleLog += result[0]
-                    print result[0]
+                    print(result[0])
 
             if command in sactions:
                 pending_actions = sactions[command]
@@ -757,41 +803,41 @@ def run(command, args):
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 
-        # print console log
-        # print consoleLog
+        # print(console log)
+        # print(consoleLog)
 
         # --- Create log
 
         f = open(logname, "w")
         # header
-        print >> f, "# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
-        print >> f, "#"
-        print >> f, "\n\n============================= LOG ================================\n"
+        print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=f)
+        print("#", file=f)
+        print("\n\n============================= LOG ================================\n", file=f)
         for e in log:
-            print >> f, e
+            print(e, file=f)
 
-        print "\n\n===> Final report for command", options['command_ran']
-        print >> f, "\n\n===> Final report for command", options['command_ran']
+        print("\n\n===> Final report for command", options['command_ran'])
+        print("\n\n===> Final report for command", options['command_ran'], file=f)
         failedTotal = 0
 
         for sid, report, failed in stati:
             if "Unknown" not in sid:
-                print "... %s ---> %s" % (sid, report)
-                print >> f, "... %s ---> %s" % (sid, report)
+                print("... %s ---> %s" % (sid, report))
+                print("... %s ---> %s" % (sid, report), file=f)
                 if failed is None:
                     failedTotal = None
                 else:
                     if failedTotal is not None:
                         failedTotal += failed
         if failedTotal is None:
-            print "===> Success status not reported for some or all tasks"
-            print >> f, "===> Success status not reported for some or all tasks"
+            print("===> Success status not reported for some or all tasks")
+            print("===> Success status not reported for some or all tasks", file=f)
         elif failedTotal > 0:
-            print "===> Not all tasks completed fully!"
-            print >> f, "===> Not all tasks completed fully!"
+            print("===> Not all tasks completed fully!")
+            print("===> Not all tasks completed fully!", file=f)
         else:
-            print "===> Successful completion of all tasks"
-            print >> f, "===> Successful completion of all tasks"
+            print("===> Successful completion of all tasks")
+            print("===> Successful completion of all tasks", file=f)
 
         f.close()
 
@@ -800,5 +846,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-        scheduler.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
+        gs.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
 
