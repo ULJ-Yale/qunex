@@ -158,6 +158,7 @@ deprecated_commands = {
                         "create_bold_list": ["createBoldList"],
                         "create_conc_list": ["createConcList"],
                         "map_raw_data": ["mapRawData"],
+                        "hcp_task_fmri_analysis" : ["hcp_TaskfMRIAnalysis"],
                         "dwi_xtract": ["fsl_xtract"],
                         "dwi_f99": ["fsl_f99"]
                       }

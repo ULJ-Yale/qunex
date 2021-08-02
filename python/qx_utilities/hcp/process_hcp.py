@@ -24,6 +24,7 @@ consists of functions:
 --hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
 --hcp_dtifit                Runs DTI Fit.
 --hcp_bedpostx              Runs Bedpost X.
+--hcp_task_fmri_analysis    Runs HCP TaskfMRIanalysis.
 --map_hcp_data              Maps results of HCP preprocessing into `images` folder.
 
 All the functions are part of the processing suite. They should be called
@@ -1842,7 +1843,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_diffusion [... processing options]``
-    ``hcpd [... processing options]``
 
     Runs the Diffusion step of HCP Pipeline.
 
@@ -2028,7 +2028,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     masked. Diffusion directions and the gradient deviation estimates are also
     appropriately rotated and registered into structural space. The function
     enables the use of a number of parameters to customize the specific
-    preprocessing steps. A short name 'hcpd' can be used for this command.
+    preprocessing steps.
 
     EXAMPLE USE
     ===========
@@ -2037,7 +2037,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         qunex hcp_diffusion \
           --sessionsfolder="<path_to_study_folder>/sessions" \
-          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --sessions="<path_to_study_folder>/processing/batch.txt" \
           --overwrite="no" \\
           --test
 
@@ -2054,7 +2054,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         qunex hcp_diffusion \
           --sessionsfolder="<path_to_study_folder>/sessions" \
-          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --sessions="<path_to_study_folder>/processing/batch.txt" \
           --overwrite="yes" \\
           --hcp_dwi_nogpu
     """
@@ -2187,7 +2187,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if 'hcp_dwi_nogpu' == "True":
+            if options['hcp_dwi_nogpu'] == "True":
                 comm += "                --no-gpu"
 
 
@@ -3992,16 +3992,16 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_icafix \
-            --sessions=processing/batch.txt \
+        qunex hcp_icafix \\
+            --sessions=processing/batch.txt \\
             --sessionsfolder=sessions
 
 
     ::
 
-        qunex hcp_icafix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
+        qunex hcp_icafix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     """
 
@@ -4514,17 +4514,17 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_post_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
+        qunex hcp_post_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_post_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        qunex hcp_post_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -4906,17 +4906,17 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_reapply_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
+        qunex hcp_reapply_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_reapply_fix \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
+        qunex hcp_reapply_fix \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -5619,21 +5619,21 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP MSMAll after application of single-run ICAFix
-        qunex hcp_msmall \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
-            --hcp_msmall_bolds="REST_1,REST_2"
+        qunex hcp_msmall \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
+            --hcp_msmall_bolds="REST_1,REST_2" \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
         # HCP MSMAll after application of multi-run ICAFix
-        qunex hcp_msmall \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
-            --hcp_msmall_bolds="REST_1,REST_2"
+        qunex hcp_msmall \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
+            --hcp_msmall_bolds="REST_1,REST_2" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -6181,19 +6181,19 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP DeDriftAndResample after application of single-run ICAFix
-        qunex hcp_dedrift_and_resample \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
+        qunex hcp_dedrift_and_resample \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
             --hcp_matlab_mode="interpreted"
 
     ::
 
         # HCP DeDriftAndResample after application of multi-run ICAFix
-        qunex hcp_dedrift_and_resample \
-            --sessions=processing/batch.txt \
-            --sessionsfolder=sessions \
-            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
+        qunex hcp_dedrift_and_resample \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
             --hcp_matlab_mode="interpreted"
     """
 
@@ -7196,3 +7196,317 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo['id'], rstatus, failed))
+
+def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_task_fmri_analysis [... processing options]``
+
+    Runs the Diffusion step of HCP Pipeline.
+
+    REQUIREMENTS
+    ============
+
+    The requirement for this command is a successful completion of the
+    minimal HCP preprocessing pipeline.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    --sessions          The batch.txt file with all the sessions
+                        information. [batch.txt]
+    --sessionsfolder    The path to the study/sessions folder, where the
+                        imaging  data is supposed to go. [.]
+    --parsessions       How many sessions to run in parallel. [1]
+    --overwrite         Whether to overwrite existing data (yes)
+                        or not (no). [no]
+    --hcp_suffix        Specifies a suffix to the session id if multiple
+                        variants are run, empty otherwise. []
+    --logfolder         The path to the folder where runlogs and comlogs
+                        are to be stored, if other than default [].
+    --log               Whether to keep ('keep') or remove ('remove') the
+                        temporary logs once jobs are completed. ['keep']
+                        When a comma or pipe ('|') separated list is given,
+                        the log will be created at the first provided
+                        location and then linked or copied to other
+                        locations. The valid locations are:
+
+                        - 'study' (for the default:
+                          `<study>/processing/logs/comlogs` location)
+                        - 'session' (for `<sessionid>/logs/comlogs`)
+                        - 'hcp' (for `<hcp_folder>/logs/comlogs`)
+                        - '<path>' (for an arbitrary directory)
+
+    Specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    --hcp_task_lvl1tasks            List of task fMRI scan names, which are
+                                    the prefixes of the time series filename
+                                    for the TaskName task. Multiple task fMRI
+                                    scan names should be provided as a comma
+                                    separated list. []
+    --hcp_task_lvl1fsfs             List of design names, which are the prefixes
+                                    of the fsf filenames for each scan run.
+                                    Should contain same number of design files
+                                    as time series images in --hcp_task_lvl1tasks
+                                    option (N-th design will be used for N-th
+                                    time series image). Provide a comma separated
+                                    list of design names. If no value is passed
+                                    to --hcp_task_lvl1fsfs, the value will be set
+                                    to --hcp_task_lvl1tasks.
+    --hcp_task_lvl2task             Name of Level2 subdirectory in which all
+                                    Level2 feat directories are written for
+                                    TaskName. [NONE]
+    --hcp_task_lvl2fsf              Prefix of design.fsf filename for the Level2
+                                    analysis for TaskName. If no value is passed
+                                    to --hcp_task_lvl2fsf, the value will be set
+                                    to the same list passed to
+                                    --hcp_task_lvl2task.
+    --hcp_task_summaryname          Naming convention for single-subject summary
+                                    directory. Mandatory when running Level1
+                                    analysis only, and should match naming of
+                                    Level2 summary directories. Default when running
+                                    Level2 analysis is derived from
+                                    --hcp_task_lvl2task and --hcp_task_lvl2fsf options
+                                    'tfMRI_TaskName/DesignName_TaskName'. [NONE]
+    --hcp_task_confound             Confound matrix text filename (e.g., output
+                                    of fsl_motion_outliers). Assumes file is in
+                                    <SubjectID>/MNINonLinear/Results/<ScanName>.
+                                    [NONE]
+    --hcp_bold_smoothFWHM           Smoothing FWHM that matches what was used in
+                                    the fMRISurface pipeline. [2]
+    --hcp_bold_final_smoothFWHM     Value (in mm FWHM) of total desired
+                                    smoothing, reached by calculating the
+                                    additional smoothing required and applying
+                                    that additional amount to data previously
+                                    smoothed in fMRISurface. Default=2, which is
+                                    no additional smoothing above HCP minimal
+                                    preprocessing pipelines outputs.
+    --hcp_task_highpass             Apply additional highpass filter (in seconds)
+                                    to time series and task design. This is above
+                                    and beyond temporal filter applied during
+                                    preprocessing. To apply no additional
+                                    filtering, set to 'NONE'. [200]
+    --hcp_task_lowpass              Apply additional lowpass filter (in seconds)
+                                    to time series and task design. This is above
+                                    and beyond temporal filter applied during
+                                    preprocessing. Low pass filter is generally
+                                    not advised for Task fMRI analyses. [NONE]
+    --hcp_task_procstring           String value in filename of time series
+                                    image, specifying the additional processing
+                                    that was previously applied (e.g.,
+                                    FIX-cleaned data with 'hp2000_clean' in
+                                    filename). [NONE]
+    --hcp_regname                   Name of surface registration technique.
+                                    [MSMSulc]
+    --hcp_grayordinatesres          Value (in mm) that matches value in
+                                    'Atlas_ROIs' filename. [2]
+    --hcp_lowresmesh                Value (in mm) that matches surface resolution
+                                    for fMRI data. [32]
+    --hcp_task_vba                  A flag for using VBA. Only use this flag if you
+                                    want unconstrained volumetric blurring of your
+                                    data, otherwise set to NO for faster, less
+                                    biased, and more senstive processing
+                                    (grayordinates results do not use
+                                    unconstrained volumetric blurring and are
+                                    always produced). This flag is not set by
+                                    defult.
+    --hcp_task_parcellation         Name of parcellation scheme to conduct
+                                    parcellated analysis. Default setting is
+                                    NONE, which will perform dense analysis
+                                    instead. Non-greyordinates parcellations
+                                    are not supported because they are not valid
+                                    for cerebral cortex. Parcellation supersedes
+                                    smoothing (i.e. no smoothing is done). [NONE]
+    --hcp_task_parcellation_file    Absolute path to the parcellation dlabel
+                                    file [NONE]
+
+    OUTPUTS
+    =======
+
+    The results of this step will be populated in the MNINonLinear folder inside
+    the same sessions's root hcp folder.
+
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        # First level HCP TaskfMRIanalysis
+        qunex hcp_task_fmri_analysis \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_task_lvl1tasks="TASK_1,TASK_2"
+
+    ::
+
+        # Second level HCP TaskfMRIanalysis
+        qunex hcp_task_fmri_analysis \\
+            --sessions=processing/batch.txt \\
+            --sessionsfolder=sessions \\
+            --hcp_task_lvl1tasks="TASK_1,TASK_2" \\
+            --hcp_task_lvl2task="study/lvl2feats"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP fMRI task analysis pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+
+    run    = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, 'hcp_task_fmri_analysis')
+        doHCPOptionsCheck(options, sinfo, 'hcp_task_fmri_analysis')
+        hcp = getHCPPaths(sinfo, options)
+
+        if 'hcp' not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
+            run = False
+
+        # parse input parameters
+        # hcp_task_lvl1tasks
+        lvl1tasks = ""
+        if options['hcp_task_lvl1tasks'] is not None:
+            lvl1tasks = options['hcp_task_lvl1tasks'].replace(",", "@")
+        else:
+            r += "\n---> ERROR: hcp_task_lvl1tasks parameter is not provided"
+            run = False
+
+        # --- build the command
+        if run:
+            comm = '%(script)s \
+                --study-folder="%(studyfolder)s" \
+                --subject="%(subject)s" \
+                --lvl1tasks="%(lvl1tasks)s" ' % {
+                    'script'             : os.path.join(hcp['hcp_base'], 'TaskfMRIAnalysis', 'TaskfMRIAnalysis.sh'),
+                    'studyfolder'        : sinfo['hcp'],
+                    'subject'            : sinfo['id'] + options['hcp_suffix'],
+                    'lvl1tasks'          : lvl1tasks
+                }
+
+            # optional parameters
+
+            # hcp_task_lvl1fsfs
+            if options['hcp_task_lvl1fsfs'] is not None:
+                lvl1fsfs = options['hcp_task_lvl1fsfs'].replace(",", "@")
+                if (len(lvl1sfs.split(",")) != len(lvl1tasks.split(","))):
+                    r += "\n---> ERROR: mismatch in the length of hcp_task_lvl1tasks and hcp_task_lvl1fsfs"
+                    run = False
+
+                comm += "                --lvl1fsfs=\"%s\"" % lvl1fsfs
+
+            # hcp_task_lvl2task
+            if options['hcp_task_lvl2task'] is not None:
+                comm += "                --lvl2task=\"%s\"" % options['hcp_task_lvl2task']
+
+                # hcp_task_lvl2fsf
+                if options['hcp_task_lvl2fsf'] is not None:
+                    comm += "                --lvl2fsf=\"%s\"" % options['hcp_task_lvl2fsf']
+
+            # summary name
+            # mandatory for Level1
+            if options['hcp_task_lvl2task'] is None and options['hcp_task_summaryname'] is None:
+                r += "\n---> ERROR: hcp_task_summaryname is mandatory when running Level1 analysis!"
+                run = False
+            
+            if options['hcp_task_summaryname'] is not None:
+                comm += "                --summaryname=\"%s\"" % options['hcp_task_summaryname']
+
+            # confound
+            if options['hcp_task_confound'] is not None:
+                comm += "                --confound==\"%s\"" % options['hcp_task_confound']
+
+            # origsmoothingFWHM
+            if options['hcp_bold_smoothFWHM'] is not None and options['hcp_bold_smoothFWHM'] != "2":
+                comm += "                --origsmoothingFWHM=\"%s\"" % options['hcp_bold_smoothFWHM']
+
+            # finalsmoothingFWHM
+            if options['hcp_bold_final_smoothFWHM'] is not None:
+                comm += "                --finalsmoothingFWHM=\"%s\"" % options['hcp_bold_final_smoothFWHM']
+
+            # highpassfilter
+            if options['hcp_task_highpass'] is not None:
+                comm += "                --highpassfilter=\"%s\"" % options['hcp_task_highpass']
+
+            # lowpassfilter
+            if options['hcp_task_lowpass'] is not None:
+                comm += "                --lowpassfilter=\"%s\"" % options['hcp_task_lowpass']
+
+            # procstring
+            if options['hcp_task_procstring'] is not None:
+                comm += "                --procstring=\"%s\"" % options['hcp_task_procstring']
+
+            # regname
+            if options['hcp_regname'] is not None and options['hcp_regname'] not in ["MSMSulc", "NONE", "none", "None"]:
+                comm += "                --regname=\"%s\"" % options['hcp_regname']
+
+            # grayordinatesres
+            if options['hcp_grayordinatesres'] is not None and options['hcp_grayordinatesres'] != 2:
+                comm += "                --grayordinatesres=\"%d\"" % options['hcp_grayordinatesres']
+
+            # lowresmesh
+            if options['hcp_lowresmesh'] is not None and options['hcp_lowresmesh'] != "32":
+                comm += "                --lowresmesh=\"%s\"" % options['hcp_lowresmesh']
+
+            # parcellation
+            if options['hcp_task_parcellation'] is not None:
+                comm += "                --parcellation=\"%s\"" % options['hcp_task_parcellation']
+
+            # parcellationfile
+            if options['hcp_task_parcellation_file'] is not None:
+                comm += "                --parcellationfile=\"%s\"" % options['hcp_task_parcellation_file']
+
+            # hcp_task_vba flag
+            if options['hcp_task_vba']:
+                comm += '                --vba="YES"'
+
+            # -- Report command
+            if run:
+                r += "\n\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+            # -- Test files
+            tfile = None
+            full_test = None
+
+        # -- Run
+        if run:
+            if options['run'] == "run":
+                if tfile is not None and overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, 'Running HCP fMRI task analysis', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=None, shell=True, r=r)
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(tfile, full_test, 'HCP Diffusion', r, overwrite=overwrite)
+                if passed is None:
+                    r += "\n---> HCP fMRI task analysis can be run"
+                    report = "HCP fMRI task analysis can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session can not be processed."
+            report = "HCP fMRI task analysis can not be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
+
+    r += "\n\nHCP fMRI task analysis Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, (sinfo['id'], report, failed))
