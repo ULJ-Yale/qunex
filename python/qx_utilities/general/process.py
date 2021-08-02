@@ -421,7 +421,7 @@ arglist = [
            ['hcp_task_procstring', '',                                            isNone, "String value in filename of time series image."],
            ['hcp_task_parcellation', '',                                          isNone, "Name of parcellation scheme to conduct parcellated analysis."],
            ['hcp_task_parcellation_file', '',                                     isNone, "Absolute path to the parcellation dlabel."],
-           ['hcp_task_vba', None,                                                 flag,   "VBA YES/NO.."],
+           ['hcp_task_vba', None,                                                 flag,   "VBA YES/NO."],
 
            ['# --- hcp_asl options'],
            ['hcp_asl_mtname', '',                                                 isNone,  "Filename for empirically estimated MT-correction scaling factors."],
