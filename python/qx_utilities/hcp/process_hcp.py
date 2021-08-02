@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -22,6 +22,7 @@ consists of functions:
 --hcp_reapply_fix           Runs HCP ReApplyFix.
 --hcp_msmall                Runs HCP MSMAll.
 --hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
+--hcp_asl                   Runs HCP ASL pipeline.
 --hcp_dtifit                Runs DTI Fit.
 --hcp_bedpostx              Runs Bedpost X.
 --map_hcp_data              Maps results of HCP preprocessing into `images` folder.
@@ -112,6 +113,7 @@ def getHCPPaths(sinfo, options):
     d['hcp_nonlin']         = os.path.join(hcpbase, 'MNINonLinear')
     d['T1w_source']         = os.path.join(d['source'], 'T1w')
     d['DWI_source']         = os.path.join(d['source'], 'Diffusion')
+    d['ASL_source']         = os.path.join(d['source'], 'mbPCASLhr')
 
     d['T1w_folder']         = os.path.join(hcpbase, 'T1w')
     d['DWI_folder']         = os.path.join(hcpbase, 'Diffusion')
@@ -119,7 +121,7 @@ def getHCPPaths(sinfo, options):
 
     # T1w file
     try:
-        T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+        T1w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T1w'][0]
         filename = T1w.get('filename', None)
         if filename and options['hcp_filename'] == "original":
             d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*' + filename + '*.nii.gz')))
@@ -148,7 +150,7 @@ def getHCPPaths(sinfo, options):
         d['T2w'] = 'NONE'
     else:
         try:
-            T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
+            T2w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T2w'][0]
             filename = T2w.get('filename', None)
             if filename and options['hcp_filename'] == "original":
                 d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '*' + filename + '*.nii.gz')))
@@ -279,8 +281,6 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
         gdcfile = "NONE"
 
     return gdcfile, r, run
-
-
 
 
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
@@ -550,7 +550,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         for tfile in hcp['T1w'].split("@"):
             if os.path.exists(tfile):
                 r += "\n---> T1w image file present."
-                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+                T1w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T1w'][0]
                 if 'DwellTime' in T1w and checkInlineParameterUse('T1w', 'DwellTime', options):
                     options['hcp_t1samplespacing'] = T1w['DwellTime']
                     r += "\n---> T1w image specific EchoSpacing: %s s" % (options['hcp_t1samplespacing'])
@@ -574,7 +574,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             for tfile in hcp['T2w'].split("@"):
                 if os.path.exists(tfile):
                     r += "\n---> T2w image file present."
-                    T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
+                    T2w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T2w'][0]
                     if 'DwellTime' in T2w and checkInlineParameterUse('T2w', 'DwellTime', options):
                         options['hcp_t2samplespacing'] = T2w['DwellTime']
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (options['hcp_t2samplespacing'])
@@ -606,7 +606,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     sesettings = False
 
             try:
-                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+                T1w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T1w'][0]
                 senum = T1w.get('se', None)
                 if senum:
                     try:
@@ -648,7 +648,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                     # get SE info from session info
                     try:
-                        seInfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and 'SE-FM' in v['name'] and 'se' in v and v['se'] == str(senum)][0]
+                        seInfo = [v for (k, v) in sinfo.items() if k.isdigit() and 'SE-FM' in v['name'] and 'se' in v and v['se'] == str(senum)][0]
                     except:
                         seInfo = None
 
@@ -682,7 +682,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             fmnum = T1w.get('fm', None)
             ## include => if fmnum is None, same as for senum
 
-            for i, v in hcp['fieldmap'].iteritems():
+            for i, v in hcp['fieldmap'].items():
                 if os.path.exists(hcp['fieldmap'][i]['GE']):
                     r += "\n---> Gradient Echo Field Map %d file present." % (i)
                 else:
@@ -696,7 +696,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap', 'PhilipsFieldMap']:
             fmnum = T1w.get('fm', None)
 
-            for i, v in hcp['fieldmap'].iteritems():
+            for i, v in hcp['fieldmap'].items():
                 if os.path.exists(hcp['fieldmap'][i]['magnitude']):
                     r += "\n---> Magnitude Field Map %d file present." % (i)
                 else:
@@ -844,7 +844,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PreFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PreFS failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = "PreFS failed"
         failed = 1
@@ -1257,7 +1257,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurfer', e.function, "\n     ".join(e.report))
         report = "FS failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1575,7 +1575,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurferLongitudinal', e.function, "\n     ".join(e.report))
         report = "FSLong failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1826,7 +1826,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PostFreeSurfer', e.function, "\n     ".join(e.report))
         report = "PostFS failed"
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -1981,8 +1981,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                             used. Note that CUDA 9.1 is installed in the
                             container. []
     --hcp_dwi_nogpu         If specified, use the non-GPU-enabled version
-                            of eddy. Defaults to using the GPU-enabled
-                            version of eddy. []
+                            of eddy. The flag is not set by default.
 
     Gradient Coefficient File Specification:
     ----------------------------------------
@@ -2134,7 +2133,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         gdcfile, r, run = checkGDCoeffFile(options['hcp_dwi_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # -- set echospacing
-        dwiinfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'DWI'][0]
+        dwiinfo = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'DWI'][0]
 
         if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
             echospacing = dwiinfo['EchoSpacing']
@@ -2181,15 +2180,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_name'] is not None:
                 comm += "                --dwiname=" + options['hcp_dwi_name']
 
-            if options['hcp_dwi_selectbestb0'] == "True":
+            if options['hcp_dwi_selectbestb0']:
                 comm += "                --select-best-b0"
 
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if 'hcp_dwi_nogpu' == "True":
+            if options['hcp_dwi_nogpu']:
                 comm += "                --no-gpu"
-
 
             # -- Report command
             if run:
@@ -2227,7 +2225,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             report = "HCP Diffusion can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -2840,7 +2838,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                for i, v in hcp['fieldmap'].iteritems():
+                for i, v in hcp['fieldmap'].items():
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
@@ -2860,7 +2858,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_bold_dcmethod'].lower() in ['generalelectricfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                for i, v in hcp['fieldmap'].iteritems():
+                for i, v in hcp['fieldmap'].items():
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
                 fmmag = None
@@ -2872,7 +2870,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             elif options['hcp_bold_dcmethod'].lower() in ['philipsfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
-                for i, v in hcp['fieldmap'].iteritems():
+                for i, v in hcp['fieldmap'].items():
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
                     r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
                     boldok = boldok and fieldok
@@ -2944,7 +2942,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- are we using previous reference
 
-            if fmriref is not "NONE":
+            if fmriref != "NONE":
                 r += '\n     ... using %s as movement correction reference' % (fmriref)
                 refimg = 'NONE'
                 if options['hcp_processing_mode'] == 'HCPStyleData' and options['hcp_bold_refreg'] == 'nonlinear':
@@ -3033,7 +3031,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
     except:
@@ -3267,7 +3265,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -3504,7 +3502,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP fMRI Surface failed')
     except:
@@ -3613,7 +3611,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -3951,10 +3949,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
                                           for multi-run HCP ICAFix.
     --hcp_icafix_threshold                ICAFix threshold that controls the
                                           sensitivity/specificity tradeoff. [10]
-    --hcp_icafix_deleteintermediates      If TRUE, deletes both the concatenated
+    --hcp_icafix_deleteintermediates      If True, deletes both the concatenated
                                           high-pass filtered and non-filtered
                                           timeseries files that are
-                                          prerequisites to FIX cleaning. [FALSE]
+                                          prerequisites to FIX cleaning. [False]
     --hcp_icafix_postfix                  Whether to automatically run HCP
                                           PostFix if HCP ICAFix finishes
                                           successfully. [TRUE]
@@ -4140,7 +4138,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ICAFix failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ICAFix failed')
     except:
@@ -4223,7 +4221,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                     report['done'].append(printbold)
 
                 # if all ok execute PostFix if enabled
-                if options['hcp_icafix_postfix'] == "True":
+                if options['hcp_icafix_postfix'].lower() == "true":
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
                         r += result['r']
@@ -4251,7 +4249,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -4302,7 +4300,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldimgs is not "":
+                if boldimgs != "":
                     boldimgs = boldimgs + "@"
 
                 # add latest image
@@ -4356,7 +4354,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                     report['done'].append(groupname)
 
                 # if all ok execute PostFix if enabled
-                if options['hcp_icafix_postfix'] == "True":
+                if options['hcp_icafix_postfix'].lower() == "true":
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
                         r += result['r']
@@ -4384,7 +4382,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -4480,7 +4478,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     --hcp_postfix_singlescene       Path to an alternative template scene, if
                                     empty HCP default single scene will be used
                                     [].
-    --hcp_postfix_reusehighpass     Whether to reuse highpass. [YES]
+    --hcp_postfix_reusehighpass     Whether to reuse highpass. [True]
 
     OUTPUTS
     =======
@@ -4617,7 +4615,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP PostFix failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP PostFix failed')
     except:
@@ -4673,7 +4671,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         r, boldok = pc.checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         # hcp_postfix_reusehighpass
-        if options['hcp_postfix_reusehighpass'] == "True":
+        if options['hcp_postfix_reusehighpass'].lower() == "true":
             reusehighpass = "YES"
         else:
             reusehighpass = "NO"
@@ -4769,7 +4767,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         # log beautify
         r += "\n\n"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -5040,7 +5038,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP ReApplyFix failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP ReApplyFix failed')
     except:
@@ -5174,7 +5172,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
             report['failed'].append(printbold)
             boldok = False
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r += str(errormessage)
         report['failed'].append(printbold)
@@ -5225,7 +5223,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldtargets is not "":
+                if boldtargets != "":
                     boldtargets = boldtargets + "@"
 
                 # add latest image
@@ -5335,7 +5333,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -5425,7 +5423,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         # log beautify
         r += "\n"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
         r = str(errormessage)
         report['failed'].append(printbold)
@@ -5686,7 +5684,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         report['skipped']    += tempReport['skipped']
 
         # if all ok execute DeDrifAndResample if enabled
-        if options['hcp_msmall_resample'] == "True":
+        if options['hcp_msmall_resample'].lower() == "true":
             if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                 # single-run
                 if singleRun:
@@ -5710,7 +5708,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP MSMAll failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP MSMAll failed')
     except:
@@ -5778,7 +5776,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             # if msmallBolds is not defined add all icafix bolds
             if options['hcp_msmall_bolds'] is None:
                 # add @ separator
-                if msmallBolds is not "":
+                if msmallBolds != "":
                     msmallBolds = msmallBolds + "@"
 
                 # add latest image
@@ -5876,7 +5874,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bolds %s\n" % (msmallBolds)
         r += str(errormessage)
         report['failed'].append(msmallBolds)
@@ -5937,7 +5935,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldtargets is not "":
+                if boldtargets != "":
                     boldtargets = boldtargets + "@"
 
                 # add latest image
@@ -6048,7 +6046,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (groupname)
         r += str(errormessage)
         report['failed'].append(groupname)
@@ -6258,7 +6256,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
         r +=  "\n\nERROR in completing %s:\n     %s\n" % (e.function, "\n     ".join(e.report))
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
         failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo['id'], 'HCP DeDriftAndResample failed')
     except:
@@ -6318,7 +6316,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
                 boldsok = False
 
             # add @ separator
-            if boldtargets is not "":
+            if boldtargets != "":
                 boldtargets = boldtargets + "@"
 
             # add latest image
@@ -6423,7 +6421,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(regname)
@@ -6483,7 +6481,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                     runok = False
 
                 # add @ separator
-                if groupbolds is not "":
+                if groupbolds != "":
                     groupbolds = groupbolds + "@"
 
                 # add latest image
@@ -6499,7 +6497,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 runok = False
 
             # add @ or % separator
-            if grouptargets is not "":
+            if grouptargets != "":
                 grouptargets = grouptargets + "@"
                 boldtargets = boldtargets + "%"
 
@@ -6605,7 +6603,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                         boldnames = en_split[1].replace(",", "@")
 
                 # add @ or % separator
-                if extractnames is not "":
+                if extractnames != "":
                     extractconcatnames = extractconcatnames + "@"
                     extractnames = extractnames + "%"
 
@@ -6679,7 +6677,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             else:
                 r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % ("DeDriftAndResample")
         r += str(errormessage)
         report['failed'].append(grouptargets)
@@ -6688,6 +6686,293 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
         report['failed'].append(grouptargets)
 
     return {'r': r, 'report': report}
+
+
+def hcp_asl(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_asl [... processing options]``
+    ``hcpa [... processing options]``
+
+    Runs the HCP ASL Pipeline.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the first three HCP preprocessing steps
+    (hcp_pre_freesurfer, hcp_freesurfer and hcp_post_freesurfer) to have
+    been run and finished successfully.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions            The batch.txt file with all the sessions information.
+                          [batch.txt]
+    --sessionsfolder      The path to the study/sessions folder, where the
+                          imaging data is supposed to go. [.]
+    --parsessions         How many sessions to run in parallel. [1]
+    --overwrite           Whether to overwrite existing data (yes) or not (no).
+                          [no]
+    --hcp_suffix          Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise. []
+    --logfolder           The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default. []
+    --log                 Whether to keep ("keep") or remove ("remove") the
+                          temporary logs once jobs are completed. ["keep"]
+                          When a comma or pipe ("|") separated list is given,
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations.
+                          The valid locations are:
+
+                          - "study" (for the default:
+                            "<study>/processing/logs/comlogs" location)
+                          - "session" (for "<sessionid>/logs/comlogs")
+                          - "hcp" (for "<hcp_folder>/logs/comlogs")
+                          - "<path>" (for an arbitrary directory)
+
+    In addition a number of *specific* parameters can be used to guide the
+    processing in this step:
+
+    HCP ASL parameters
+    ------------------
+
+    --hcp_gdcoeffs                  Path to a file containing gradient
+                                    distortion coefficients, alternatively a
+                                    string describing multiple options
+                                    (see below) can be provided.
+    --hcp_asl_mtname                Filename for empirically estimated
+                                    MT-correction scaling factors. []
+    --hcp_asl_territories_atlas     Atlas of vascular territories from
+                                    Mutsaerts. []
+    --hcp_asl_territories_labels    Labels corresponding to territories_atlas. []
+    --hcp_asl_cores                 Number of cores to use when applying motion
+                                    correction and other potentially multi-core
+                                    operations. [1]
+    --hcp_asl_use_t1                If specified, the T1 estimates from the
+                                    satrecov model fit will be used in perfusion
+                                    estimation in oxford_asl. The flag is not
+                                    set by default.
+    --hcp_asl_interpolation         Interpolation order for registrations
+                                    corresponding to scipy’s map_coordinates
+                                    function. [1]
+    --hcp_asl_nobandingcorr         If this option is provided, MT and ST
+                                    banding corrections won’t be applied.
+                                    The flag is not set by default.
+
+    Gradient coefficient file specification:
+    ----------------------------------------
+
+    `--hcp_gdcoeffs` parameter can be set to either "NONE", a path to a specific
+    file to use, or a string that describes, which file to use in which case.
+    Each option of the string has to be divided by a pipe "|" character and it
+    has to specify, which information to look up, a possible value, and a file
+    to use in that case, separated by a colon ":" character. The information
+    too look up needs to be present in the description of that session.
+    Standard options are e.g.::
+
+        institution: Yale
+        device: Siemens|Prisma|123456
+
+    Where device is formatted as <manufacturer>|<model>|<serial number>.
+
+    If specifying a string it also has to include a `default` option, which
+    will be used in the information was not found. An example could be::
+
+        "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
+
+    With the information present above, the file `/data/gc/Prisma.conf` would
+    be used.
+
+    OUTPUTS
+    =======
+
+    The results of this step will be present in the ASL folder in the
+    sessions's root hcp folder.
+
+    EXAMPLE USE
+    ===========
+
+    Example run:
+
+        qunex hcp_asl \
+            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessions="<path_to_study_folder>/processing/batch.txt"
+
+    Run with scheduler, while bumbing up the number of used cores:
+
+        qunex hcp_asl \
+            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessions="<path_to_study_folder>/processing/batch.txt"
+            --hcp_asl_cores="8" \
+            --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
+
+    run    = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, "hcp_asl")
+        doHCPOptionsCheck(options, sinfo, "hcp_asl")
+        hcp = getHCPPaths(sinfo, options)
+
+        if "hcp" not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo["id"])
+            run = False
+
+        # get library path
+        asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
+
+        # lookup gdcoeffs file
+        gdcfile, r, run = checkGDCoeffFile(options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run)
+        if gdcfile == "NONE":
+            r += "\n---> ERROR: Gradient coefficient file is required!"
+            run = False
+
+        # get struct files
+        # ACPC-aligned, DC-restored structural image
+        t1w_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz")
+        if not os.path.exists(t1w_file):
+            r += "\n---> ERROR: ACPC-aligned, DC-restored structural image not found [%s]" % t1w_file
+            run = False
+
+        # Brain-extracted ACPC-aligned DC-restored structural image
+        t1w_brain_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore_brain.nii.gz")
+        if not os.path.exists(t1w_brain_file):
+            r += "\n---> ERROR: Brain-extracted ACPC-aligned DC-restored structural image not found [%s]" % t1w_brain_file
+            run = False
+
+        # mbpcasl_file image
+        asl_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "mbPCASLhr"][0]["filename"]
+        mbpcasl_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
+        if not os.path.exists(mbpcasl_file):
+            r += "\n---> ERROR: MbPCASLhr acquistion data not found [%s]" % mbpcasl_file
+            run = False
+
+        # AP and PA fieldmaps for use in distortion correction
+        asl_ap_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "PCASLhr" and v["phenc"] == "AP"][0]["filename"]
+        fmap_ap_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_ap_filename + ".nii.gz")
+        if not os.path.exists(fmap_ap_file):
+            r += "\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file
+            run = False
+
+        asl_pa_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "PCASLhr" and v["phenc"] == "PA"][0]["filename"]
+        fmap_pa_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_pa_filename + ".nii.gz")
+        if not os.path.exists(fmap_ap_file):
+            r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
+            run = False
+
+        # wmparc
+        wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
+        if not os.path.exists(wmparc_file):
+            r += "\n---> ERROR: wmparc.nii.gz from FreeSurfer not found [%s]" % wmparc_file
+            run = False
+
+        # ribbon
+        ribbon_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz")
+        if not os.path.exists(ribbon_file):
+            r += "\n---> ERROR: ribbon.nii.gz from FreeSurfer not found [%s]" % ribbon_file
+            run = False
+
+        # build the command
+        if run:
+            comm = '%(script)s \
+                --studydir="%(studydir)s" \
+                --subid="%(subid)s" \
+                --grads="%(grads)s" \
+                --struct="%(struct)s" \
+                --sbrain="%(sbrain)s" \
+                --mbpcasl="%(mbpcasl)s" \
+                --fmap_ap="%(fmap_ap)s" \
+                --fmap_pa="%(fmap_pa)s" \
+                --wmparc="%(wmparc)s" \
+                --ribbon="%(ribbon)s" \
+                --verbose' % {
+                    "script"                : "hcp_asl",
+                    "studydir"              : sinfo['hcp'],
+                    "subid"                 : sinfo["id"],
+                    "grads"                 : gdcfile,
+                    "struct"                : t1w_file,
+                    "sbrain"                : t1w_brain_file,
+                    "mbpcasl"               : mbpcasl_file,
+                    "fmap_ap"               : fmap_ap_file,
+                    "fmap_pa"               : fmap_pa_file,
+                    "wmparc"                : wmparc_file,
+                    "ribbon"                : ribbon_file}
+
+            # -- Optional parameters
+            if options["hcp_asl_mtname"] is not None:
+                comm += "                --mtname=" + options["hcp_asl_mtname"]
+
+            if options["hcp_asl_territories_atlas"] is not None:
+                comm += "                --territories_atlas=" + options["hcp_asl_territories_atlas"]
+
+            if options["hcp_asl_territories_labels"] is not None:
+                comm += "                --territories_labels=" + options["hcp_asl_territories_labels"]
+
+            if options["hcp_asl_use_t1"]:
+                comm += "                --use_t1"
+
+            if options["hcp_asl_nobandingcorr"]:
+                comm += "                --nobandingcorr"
+
+            if options["hcp_asl_interpolation"] is not None:
+                comm += "                --interpolation=" + options["hcp_asl_interpolation"]
+
+            if options["hcp_asl_cores"] is not None:
+                comm += "                --cores=" + options["hcp_asl_cores"]
+
+            # -- Report command
+            if run:
+                r += "\n\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+            # -- Test files
+            tfile = os.path.join(hcp["hcp_nonlin"], "ASL", "arrival_Atlas.dscalar.nii")
+            full_test = None
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP ASL", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP ASL", r, overwrite=overwrite)
+                if passed is None:
+                    r += "\n---> HCP ASL can be run"
+                    report = "HCP ASL can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session can not be processed."
+            report = "HCP ASL can not be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
+
+    r += "\n\nHCP ASL Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
 
 
 def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
@@ -6765,7 +7050,7 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
             report = "HCP DTI Fit can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -6853,7 +7138,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
             report = "HCP BedpostX can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:
@@ -6862,7 +7147,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
-    print r
+    print(r)
     return (r, (sinfo['id'], report, failed))
 
 
@@ -7068,10 +7353,11 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 npre += 1
             else:
                 if ".spec" in tfile:
-                    s = file(sfile).read()
+                    file = open(sfile, 'r')
+                    s = file.read()
                     s = s.replace(sid + ".", "")
                     tf = open(tfile, 'w')
-                    print >> tf, s
+                    print(s, file=tf)
                     tf.close()
                     r += "\n     -> updated .spec file [%s]" % (sid)
                     ncp += 1
@@ -7150,15 +7436,15 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(os.path.join(hcp_bold_path, 'Movement_Regressors.txt')):
                         mdata = [line.strip().split() for line in open(os.path.join(hcp_bold_path, 'Movement_Regressors.txt'))]
                         mfile = open(f['bold_mov'], 'w')
-                        print >> mfile, "# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
-                        print >> mfile, "#"
-                        print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
+                        print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=mfile)
+                        print("#", file=mfile)
+                        print("#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)", file=mfile)
                         c = 0
                         for mline in mdata:
                             if len(mline) >= 6:
                                 c += 1
                                 mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
-                                print >> mfile, mline.replace(' -', '-')
+                                print(mline.replace(' -', '-'), file=mfile)
                         mfile.close()
                         r += "\n     ... movement data prepared"
                     else:
@@ -7174,7 +7460,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 report['boldfail'] += 1
                 failed += 1
 
-        except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+        except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
             r = str(errormessage)
             report['boldfail'] += 1
             failed += 1

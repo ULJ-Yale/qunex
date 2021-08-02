@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -10,6 +10,7 @@ import os.path
 import sys
 import copy
 import datetime
+
 from general import scheduler as gs
 from general import utilities as gu
 from general import process as gp
@@ -54,94 +55,95 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # hcp_dtifit    Run FSL DTI fit.
 # hcp_bedpostx  Run FSL Bedpostx GPU.
 
-all_qunex_commands = r'''check_fidl                                Prints figures showing fidl events and their duration.
-compute_bold_stats                        Compute BOLD movement and signal statistics.
-create_batch                              Creates a joint batch file from source files in all session folders.
-create_bold_brain_masks                   Create brain masks for BOLD runs.
-create_conc                               Creates a set of .conc formated files.
-create_list                               Creates a .list formated file.
-create_session_info                       Creates session.txt files.
-create_stats_report                       Create BOLD movement statistic reports and plots.
-create_study                              Creates the base study folder structure.
-create_ws_palm_design                     Prepares the design file.
-dicom2nii                                 Converts MR images from DICOM to NIfTI format.
-dicom2niix                                Converts MR images from DICOM and PAR/REC files to NIfTI format.
-dwi_legacy                                Diffusion image processing for data with or without standard fieldmaps.
-dwi_eddy_qc                               Runs quality control on diffusion datasets following eddy outputs.
-dwi_dtifit                            Runs FSL's dtifit tool (cluster usable).
-dwi_bedpostx_gpu                      Runs FSL GPU-enabled bedpostx.
-dwi_pre_tractography                      Generates space for dense whole-brain connectomes.
-dwi_probtrackx_dense_gpu                  Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.
-dwi_seed_tractography_dense               Reduces dense tractography data using a seed structure.
-dwi_parcellate                            Parcellates dense tractography data.
-extract_nuisance_signal                   Extracts nuisance signal from BOLD images.
-extract_roi                               Extracts data from pre-specified ROIs in CIFTI or NIFTI.
-fc_compute_ab_corr                        Computes the correlation of each source mask voxel with each target mask voxel.
-fc_compute_ab_corr_kca                    Segments the voxels in smask based on their connectivity pattern with tmask voxels.
-fc_compute_gbc3                           Computes GBC maps for individuals as well as group maps.
-fc_compute_gbcd                           Computes GBC averages for each specified ROI for n bands defined as distance from ROI.
-fc_compute_roifc                          Computes ROI functional connectivity matrices for individual subject / session.
-fc_compute_roifc_group                    Computes ROI functional connectivity matrices for a group of sujects/sessions.
-fc_compute_seedmaps                       Computes seed based functional connectivity maps for individual subject / session.
-fc_compute_seedmaps_group                 Computes seed based correlations maps for individuals as well as group maps.
-fc_compute_seedmaps_multiple              Computes seed based correlations maps for individuals as well as group maps.
-fc_compute_wrapper                        Computes seed or GBC BOLD functional connectivity.
-fc_extract_roi_timeseries_masked          Extracts and saves region timeseries defined by provided roiinfo file
-fc_extract_trial_timeseries_masked        Extracts trial timeseries for each of the specified ROI.
-fc_preprocess                             Runs single BOLD file based functional connectivity preprocessing.
-fc_preprocess_conc                        Runs fcMRI preprocessing and GLM analysis a set of BOLD files.
-fc_segment_mri                            Segments the voxels in smask based on their connectivity with tmask ROI.
-dwi_f99                                   Runs FSL F99 command.
-dwi_xtract                                Runs FSL XTRACT command.
-general_compute_bold_list_stats           Computes BOLD run per frame statistics and scrubbing information for a list of sessions.
-general_compute_bold_stats                Computes BOLD run per frame statistics and scrubbing information.
-general_compute_group_bold_stats          Extracts image statistics over the whole group.
-general_extract_glm_volumes               Extracts and saves the GLM estimates of the effects of interests.
-general_extract_roi_glm_values            Extracts per ROI estimates of specified effects from a volume or cifti GLM files.
-general_extract_roi_values                Extracts desired statistics from provided files for each ROI.
-general_find_peaks                        Performs smoothing and defines ROIs from peaks.
-general_image_conjunction                 Reads image file, computes conjunction using g_conjunction and saves results.
-general_image_overlap                     Prints the overlap of two images, one in red, another in green.
-general_parcellated2dense                 Expands the parcelated file to a dense file.
-general_plot_bold_timeseries              Creates and saves a plot of BOLD timeseries.
-general_plot_bold_timeseries_list         Creates and saves a plot of BOLD timeseries for a list of sessions.
-general_qa_concfile                       Computes and saves the specified statistics on images specified in the conc file.
-hcp_dedrift_and_resample                  Runs HCP MSMAll pipeline.
-hcp_diffusion                             Runs HCP DWI pipeline.
-hcp_fmri_surface                          Runs HCP fMRI Surface pipeline.
-hcp_fmri_volume                           Runs HCP fMRI Volume pipeline.
-hcp_freesurfer                            Runs HCP FreeSurfer pipeline.
-hcp_icafix                                Runs HCP ICAFix pipeline.
-hcp_msmall                                Runs HCP MSMAll pipeline.
-hcp_post_fix                              Runs HCP PostFix pipeline.
-hcp_post_freesurfer                       Runs HCP Post FreeSurfer pipeline.
-hcp_pre_freesurfer                        Runs HCP PreFreeSurfer pipeline.
-hcp_reapply_fix                           Runs HCP ReApplyFix pipeline.
-import_bids                               Maps a BIDS dataset to the QuNex Suite file structure.
-import_dicom                              Processes sessions's DICOM or PAR/REC files and generates NIfTI files.
-import_hcp                                Maps HCPLS data to the QuNex Suite file structure. 
-join_fidl                                 Combines all the fidl files matching root based on the information in conc file.
-join_fidl_folder                          Joins all the fidl files that match the name of each conc file in the concfolder.
-list_dicom                                Inspects a folder for dicom files and prints a detailed reports of the results.
-map_bids2nii                              Maps BIDS data to the QuNex folder structure.
-map_hcp_data                              Maps HCP preprocessed data to sessions' image folder.
-map_hcpls2nii                             Maps HCPLS data to the QuNex folder structure.
-parcellate_anat                           Parcellate T1w and T2w derived measures (e.g. myelin or thickness).
-parcellate_bold                           Parcellate BOLD data and generate pconn files.
-preprocess_bold                           Preprocesses single BOLD images.
-preprocess_conc                           Preprocesses conc bundles of BOLD images.
-run_palm                                  Runs second level analysis using PALM permutation resampling.
-run_qc                                    Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.
-run_turnkey                               Exectues turnkey QuNex workflow compatible with XNAT Docker engine.
-setup_hcp                                 Maps images from the sessions's nii folder to HCP minimal preprocessing structure.
-sort_dicom                                Sorts DICOM files.
-split_dicom                               Sorts out DICOM images from different sessions.
-split_fidl                                Splits a multi-bold fidl file into run specific bold files.
-stats_compute_behavioral_correlations     Computes correlations between given images and provided data.
-stats_p2z                                 Converts p to Z values considering one or two tails.
-stats_ttest_dependent                     Computes t-test of differences between two dependent groups.
-stats_ttest_independent                   Computes t-test of differences between two independent groups.
-stats_ttest_zero                          Computes t-test against zero and saves specified results.
+all_qunex_commands = r'''check_fidl                              Prints figures showing fidl events and their duration.
+compute_bold_stats                      Compute BOLD movement and signal statistics.
+create_batch                            Creates a joint batch file from source files in all session folders.
+create_bold_brain_masks                 Create brain masks for BOLD runs.
+create_conc                             Creates a set of .conc formated files.
+create_list                             Creates a .list formated file.
+create_session_info                     Creates session.txt files.
+create_stats_report                     Create BOLD movement statistic reports and plots.
+create_study                            Creates the base study folder structure.
+create_ws_palm_design                   Prepares the design file.
+dicom2nii                               Converts MR images from DICOM to NIfTI format.
+dicom2niix                              Converts MR images from DICOM and PAR/REC files to NIfTI format.
+dwi_legacy                              Diffusion image processing for data with or without standard fieldmaps.
+dwi_eddy_qc                             Runs quality control on diffusion datasets following eddy outputs.
+dwi_dtifit                              Runs FSL's dtifit tool (cluster usable).
+dwi_bedpostx_gpu                        Runs FSL GPU-enabled bedpostx.
+dwi_pre_tractography                    Generates space for dense whole-brain connectomes.
+dwi_probtrackx_dense_gpu                Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.
+dwi_seed_tractography_dense             Reduces dense tractography data using a seed structure.
+dwi_parcellate                          Parcellates dense tractography data.
+extract_nuisance_signal                 Extracts nuisance signal from BOLD images.
+extract_roi                             Extracts data from pre-specified ROIs in CIFTI or NIFTI.
+fc_compute_ab_corr                      Computes the correlation of each source mask voxel with each target mask voxel.
+fc_compute_ab_corr_kca                  Segments the voxels in smask based on their connectivity pattern with tmask voxels.
+fc_compute_gbc3                         Computes GBC maps for individuals as well as group maps.
+fc_compute_gbcd                         Computes GBC averages for each specified ROI for n bands defined as distance from ROI.
+fc_compute_roifc                        Computes ROI functional connectivity matrices for individual subject / session.
+fc_compute_roifc_group                  Computes ROI functional connectivity matrices for a group of sujects/sessions.
+fc_compute_seedmaps                     Computes seed based functional connectivity maps for individual subject / session.
+fc_compute_seedmaps_group               Computes seed based correlations maps for individuals as well as group maps.
+fc_compute_seedmaps_multiple            Computes seed based correlations maps for individuals as well as group maps.
+fc_compute_wrapper                      Computes seed or GBC BOLD functional connectivity.
+fc_extract_roi_timeseries_masked        Extracts and saves region timeseries defined by provided roiinfo file
+fc_extract_trial_timeseries_masked      Extracts trial timeseries for each of the specified ROI.
+fc_preprocess                           Runs single BOLD file based functional connectivity preprocessing.
+fc_preprocess_conc                      Runs fcMRI preprocessing and GLM analysis a set of BOLD files.
+fc_segment_mri                          Segments the voxels in smask based on their connectivity with tmask ROI.
+dwi_f99                                 Runs FSL F99 command.
+dwi_xtract                              Runs FSL XTRACT command.
+general_compute_bold_list_stats         Computes BOLD run per frame statistics and scrubbing information for a list of sessions.
+general_compute_bold_stats              Computes BOLD run per frame statistics and scrubbing information.
+general_compute_group_bold_stats        Extracts image statistics over the whole group.
+general_extract_glm_volumes             Extracts and saves the GLM estimates of the effects of interests.
+general_extract_roi_glm_values          Extracts per ROI estimates of specified effects from a volume or cifti GLM files.
+general_extract_roi_values              Extracts desired statistics from provided files for each ROI.
+general_find_peaks                      Performs smoothing and defines ROIs from peaks.
+general_image_conjunction               Reads image file, computes conjunction using g_conjunction and saves results.
+general_image_overlap                   Prints the overlap of two images, one in red, another in green.
+general_parcellated2dense               Expands the parcelated file to a dense file.
+general_plot_bold_timeseries            Creates and saves a plot of BOLD timeseries.
+general_plot_bold_timeseries_list       Creates and saves a plot of BOLD timeseries for a list of sessions.
+general_qa_concfile                     Computes and saves the specified statistics on images specified in the conc file.
+hcp_dedrift_and_resample                Runs HCP MSMAll pipeline.
+hcp_diffusion                           Runs HCP DWI pipeline.
+hcp_fmri_surface                        Runs HCP fMRI Surface pipeline.
+hcp_fmri_volume                         Runs HCP fMRI Volume pipeline.
+hcp_freesurfer                          Runs HCP FreeSurfer pipeline.
+hcp_icafix                              Runs HCP ICAFix pipeline.
+hcp_msmall                              Runs HCP MSMAll pipeline.
+hcp_post_fix                            Runs HCP PostFix pipeline.
+hcp_post_freesurfer                     Runs HCP Post FreeSurfer pipeline.
+hcp_pre_freesurfer                      Runs HCP PreFreeSurfer pipeline.
+hcp_reapply_fix                         Runs HCP ReApplyFix pipeline.
+hcp_asl                                 Runs HCP ASL pipeline.
+import_bids                             Maps a BIDS dataset to the QuNex Suite file structure.
+import_dicom                            Processes sessions's DICOM or PAR/REC files and generates NIfTI files.
+import_hcp                              Maps HCPLS data to the QuNex Suite file structure. 
+join_fidl                               Combines all the fidl files matching root based on the information in conc file.
+join_fidl_folder                        Joins all the fidl files that match the name of each conc file in the concfolder.
+list_dicom                              Inspects a folder for dicom files and prints a detailed reports of the results.
+map_bids2nii                            Maps BIDS data to the QuNex folder structure.
+map_hcp_data                            Maps HCP preprocessed data to sessions' image folder.
+map_hcpls2nii                           Maps HCPLS data to the QuNex folder structure.
+parcellate_anat                         Parcellate T1w and T2w derived measures (e.g. myelin or thickness).
+parcellate_bold                         Parcellate BOLD data and generate pconn files.
+preprocess_bold                         Preprocesses single BOLD images.
+preprocess_conc                         Preprocesses conc bundles of BOLD images.
+run_palm                                Runs second level analysis using PALM permutation resampling.
+run_qc                                  Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.
+run_turnkey                             Exectues turnkey QuNex workflow compatible with XNAT Docker engine.
+setup_hcp                               Maps images from the sessions's nii folder to HCP minimal preprocessing structure.
+sort_dicom                              Sorts DICOM files.
+split_dicom                             Sorts out DICOM images from different sessions.
+split_fidl                              Splits a multi-bold fidl file into run specific bold files.
+stats_compute_behavioral_correlations   Computes correlations between given images and provided data.
+stats_p2z                               Converts p to Z values considering one or two tails.
+stats_ttest_dependent                   Computes t-test of differences between two dependent groups.
+stats_ttest_independent                 Computes t-test of differences between two independent groups.
+stats_ttest_zero                        Computes t-test against zero and saves specified results.
 '''
 
 def runCommand(command, args):
@@ -170,7 +172,7 @@ def runCommand(command, args):
             gm.run(command, args)
         return
     else:
-        print "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command)
+        print("ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command))
         sys.exit(1)
 
     # --- process commands
@@ -189,7 +191,7 @@ def runCommand(command, args):
         for k, v in eargs.items():
             if k not in gcs.extra_parameters:
                 bad.append(k)
-                print "ERROR: Extra argument %s is not valid! Please check your command!" % (k)
+                print("ERROR: Extra argument %s is not valid! Please check your command!" % (k))
         if bad:
             raise ge.CommandError("gmri", "Invalid arguments", "The extra argument(s) provided is/are not valid! [%s]" % (", ".join(bad)))
 
@@ -273,7 +275,7 @@ def runCommand(command, args):
             else:
                 bargs['eargs'] = eargs
                 gcom.commands[command]['com'](**bargs)
-                print "\n===> Successful completion of task"
+                print("\n===> Successful completion of task")
 
     # -- all other commands    
     else:
@@ -328,23 +330,23 @@ def runCommand(command, args):
     if calls:
         callInfo = "Running %s" % (command)
         callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
-        print callInfo
+        print(callInfo)
         
-        print "\n===> Running %s through %d sessions in parallel" % (command, parsessions)
+        print("\n===> Running %s through %d sessions in parallel" % (command, parsessions))
 
         results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
-        print "\n===> Final report for command", command
+        print("\n===> Final report for command", command)
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
             if result:                
                 ok = False
             else:
                 result = 'completed'
-            print "%s %s %s [log: %s]" % (prepend, name, result, targetLog)
+            print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
         if ok:
-            print "\n===> Successful completion of task"
+            print("\n===> Successful completion of task")
 
 
 def printHelp(com):
@@ -353,7 +355,7 @@ def printHelp(com):
     if com == 'available':
         available_commands = []
         # -> gmri commands
-        for c, _ in gcom.commands.iteritems():
+        for c, _ in gcom.commands.items():
             available_commands.append(c)
         # -> complex processing commands
         for l in gp.calist:
@@ -376,7 +378,7 @@ def printHelp(com):
 
         # print the commands
         available_commands.sort()
-        print " ".join(available_commands)
+        print(" ".join(available_commands))
 
     # --- print list of processing options and flags
     # elif com in ['o']:
@@ -405,15 +407,15 @@ def printHelp(com):
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
         os.system("qunex -splash")
-        print all_qunex_commands
+        print(all_qunex_commands)
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
-        print "\nqunex", gcom.commands[com]['com'].__doc__.strip(), "\n"
+        print("\nqunex", gcom.commands[com]['com'].__doc__.strip(), "\n")
 
     # --- print help for processing actions
     elif com in gp.allactions:
-        print "\nqunex", gp.allactions[com].__doc__.strip(), "\n"
+        print("\nqunex", gp.allactions[com].__doc__.strip(), "\n")
 
     # --- print help for matlab functions
     elif com in gm.functions:
@@ -421,7 +423,7 @@ def printHelp(com):
 
     # --- print error
     else:
-        print "\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n" % com
+        print("\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n" % com)
 
 
 def main(args=None):
@@ -432,7 +434,7 @@ def main(args=None):
 
     if len(args) == 0:
         os.system("qunex -splash")
-        print help
+        print(help)
         sys.exit(0)
 
     comm = args[0]
@@ -447,8 +449,8 @@ def main(args=None):
             command = gcs.check_deprecated_commands(command)
             printHelp(command)
         except:
-            print "ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:])
-            print help
+            print("ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:]))
+            print(help)
             raise
         sys.exit(0)
 
@@ -468,30 +470,30 @@ def main(args=None):
 
 
     except ge.CommandNull as e:
-        print ge.reportCommandNull(comm, e)
+        print(ge.reportCommandNull(comm, e))
         print
         sys.exit(0)
     except ge.CommandFailed as e:
-        print ge.reportCommandFailed(comm, e)
+        print(ge.reportCommandFailed(comm, e))
         print
         sys.exit(1)
     except ge.CommandError as e:
-        print ge.reportCommandError(comm, e)
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
-        print "\nPlease run `qunex ?%s` to get help for the failed command.\n" % (comm)
+        print(ge.reportCommandError(comm, e))
+        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs)))
+        print("\nPlease run `qunex ?%s` to get help for the failed command.\n" % (comm))
         sys.exit(1)
     except ValueError as e:
-        print "\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm)
-        print e
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
+        print("\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm))
+        print(e)
+        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs)))
         raise
     except SystemExit as e:
         sys.exit(e)
     except:
-        print "\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
-        print "       Please check documentation for the command (`qunex ?%s`)!" % (comm)
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
-        print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
+        print("\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm))
+        print("       Please check documentation for the command (`qunex ?%s`)!" % (comm))
+        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs)))
+        print("\n--------------------------------------------------------------\nHere's the error as caught by python:\n")
         raise
 
 

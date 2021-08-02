@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -20,8 +20,9 @@ import os.path
 import datetime
 import time
 import re
-import exceptions as ge
-import core as gc
+
+import general.exceptions as ge
+import general.core as gc
 
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None, parsessions=1, parelements=1):
@@ -258,7 +259,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     if command is None:
         if not os.path.exists(script):
             raise ge.CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
-        command = file(script).read()
+        file = open(script, 'r')
+        command = file.read()
 
     if workdir is not None:
         if not os.path.exists(workdir):
@@ -335,7 +337,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
                 sCommand += "#BSUB -%s %s\n" % (k, v)
-            elif k is 'jobName' and jobname == 'schedule':
+            elif k == 'jobName' and jobname == 'schedule':
                 jobname = v
 
         # set default cores
@@ -410,15 +412,15 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     run = subprocess.Popen(com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True)
 
-    run.stdin.write(sCommand + command)
+    run.stdin.write((sCommand + command).encode('utf-8'))
     run.stdin.close()
 
     # --- getting results
     result = ""
     if outputs['return'] in ['both', 'stdout']:
-        result = run.stdout.read()
+        result = run.stdout.read().decode('utf-8')
     elif outputs['return'] in ['stderr']:
-        result = run.stderr.read()
+        result = run.stderr.read().decode('utf-8')
 
     # --- extracting job id
     jobid = 'NA'
@@ -440,7 +442,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
     # ---- setup options to pass to each job
     nopt = []
-    for (k, v) in args.iteritems():
+    for (k, v) in args.items():
         if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'bash', 'parjobs']:
             nopt.append((k, v))
 
