@@ -1149,18 +1149,14 @@ if [[ $is_gmri_command == 1 ]]; then
         unset gmriinput
 
         for inputarg in "$@"; do
-            # add single or double quotes around parameters
-            if [[ $inputarg =~ "-" ]]; then
+
+            # flags
+            if [[ ${inputarg} =~ '=' ]]; then
                 if [[ $inputarg =~ "\"" ]]; then
                     inputarg=`echo "${inputarg}'" | sed "0,/=/s//=\'/"`
                 else
                     inputarg=`echo "${inputarg}\"" | sed "0,/=/s//=\"/"`
                 fi
-            fi
-
-            # flags
-            if [[ ${inputarg} =~ '=' ]] && [[ -z `echo ${inputarg} | grep '-'` ]]; then
-               inputarg="--${inputarg}"
             fi
 
             if [[ -z $gmriinput ]]; then
