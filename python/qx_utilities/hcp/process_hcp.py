@@ -7785,7 +7785,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             report = "HCP fMRI task analysis can not be run"
             failed = 1
 
-    except (pc.ExternalFailed, pc.NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
     except:

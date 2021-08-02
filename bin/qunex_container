@@ -470,7 +470,7 @@ def getSessionIDs(listString, sessionsfolder=None):
 
     '''
 
-    listString = listString.strip()
+    listString = listString.strip().replace(" ", "")
 
     if re.match(".*\.list$", listString):
         sessionids = getSessionIDsFromList(listString)
