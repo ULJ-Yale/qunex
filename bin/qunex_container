@@ -731,7 +731,7 @@ def main(args=None):
             k, parsessions = arg.split("=", 1)
             command += '%s="%s" ' % (k, parsessions)
             parsessions = int(parsessions)
-        elif "parsessions=" in arg:
+        elif "parelements=" in arg:
             k, parelements = arg.split("=", 1)
             command += '%s="%s" ' % (k, parelements)
             parelements = int(parelements)
