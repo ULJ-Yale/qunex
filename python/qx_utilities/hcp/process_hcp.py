@@ -7701,7 +7701,10 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             if options['hcp_task_lvl2task'] is None and options['hcp_task_summaryname'] is None:
                 r += "\n---> ERROR: hcp_task_summaryname is mandatory when running Level1 analysis!"
                 run = False
-            
+            # workaround in case 
+            elif options['hcp_task_lvl2task'] is not None and options['hcp_task_summaryname'] is None:
+                options['hcp_task_summaryname'] = "%s/%s" % (options['hcp_task_lvl2task'], options['hcp_task_lvl2task'])
+
             if options['hcp_task_summaryname'] is not None:
                 comm += "                --summaryname=\"%s\"" % options['hcp_task_summaryname']
 
