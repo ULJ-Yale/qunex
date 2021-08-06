@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.2 (2021-29-07)
+
+Environment status script now works properly, upgraded the automatic setting of parallelism parameters and the default value setting in HCP TaskfMRIAnalysis pipeline.
+
 ## 0.91.1 (2021-29-07)
 
 Fixed a bug where input flags were not properly parsed.

@@ -175,7 +175,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "                     RDIR : $RDIR";                 if [[ -z $RDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport RDIR"; fi
     echo "                  PALMDIR : $PALMDIR";              if [[ -z $PALMDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport PALMDIR"; fi
     echo ""
-    geho "   HCP Pipelines Environment Variables"
+    geho "   HCP Pipelines"
     geho "----------------------------------------------"
     echo ""
     echo "               HCPPIPEDIR : $HCPPIPEDIR";               if [[ -z $HCPPIPEDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR"; fi
@@ -207,9 +207,9 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     
     unset BinaryErrorReport
     unset BinaryError
-    
+
     ## -- Check for HCPpipedir
-    if [[ -e $HCPPIPEDIR/version.txt ]]; then
+    if [[ -e $HCPPIPEDIR/global/scripts/versioning/base.txt ]]; then
         # add specific TAG and commit hash
         echo "    HCPpipelines TAG : $(git --git-dir ${HCPPIPEDIR}/.git describe --abbrev=0)"
         echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
