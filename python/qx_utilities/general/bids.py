@@ -877,7 +877,7 @@ def processBIDS(bfolder):
         for modality in bids['modalities']:
             if modality in bidsData[session]:
                 for key in bids[modality]['sort']:
-                    bidsData[session][modality].sort(key=lambda x: x[key])
+                    bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
     # --> prepare and sort images
 
