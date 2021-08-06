@@ -178,16 +178,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     geho "   HCP Pipelines"
     geho "----------------------------------------------"
     echo ""
-    if [[ -e $HCPPIPEDIR/show_version ]]; then
-        ${HCPPIPEDIR}/show_version
-        echo ""
-    else
-        BinaryError="yes"; BinaryErrorReport="HCPPipelines"
-        reho "        HCPpipelines : Version not found!"
-        if [[ -L "$HCPPIPEDIR"  && ! -e "$HCPPIPEDIR" ]]; then
-            reho "                     : $HCPPIPEDIR is a link to a nonexisiting folder!"
-        fi
-    fi
     echo "               HCPPIPEDIR : $HCPPIPEDIR";               if [[ -z $HCPPIPEDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR"; fi
     echo "            GRADUNWARPDIR : $GRADUNWARPDIR";            if [[ -z $GRADUNWARPDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport GRADUNWARPDIR"; fi
     echo "     HCPPIPEDIR_Templates : $HCPPIPEDIR_Templates";     if [[ -z $HCPPIPEDIR_Templates ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_Templates"; fi
@@ -217,6 +207,20 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     
     unset BinaryErrorReport
     unset BinaryError
+
+    ## -- Check for HCPpipedir
+    if [[ -e $HCPPIPEDIR/global/scripts/versioning/base.txt ]]; then
+        # add specific TAG and commit hash
+        echo "    HCPpipelines TAG : $(git --git-dir ${HCPPIPEDIR}/.git describe --abbrev=0)"
+        echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
+    else
+        BinaryError="yes"; BinaryErrorReport="HCPPipelines"
+        reho "        HCPpipelines : Version not found!"
+        if [[ -L "$HCPPIPEDIR"  && ! -e "$HCPPIPEDIR" ]]; then
+            reho "                     : $HCPPIPEDIR is a link to a nonexisiting folder!"
+        fi
+    fi
+    echo ""
 
     ## -- Check for FSL
     echo "         FSL Binary  : $(which fsl 2>&1 | grep -v 'no fsl')"
