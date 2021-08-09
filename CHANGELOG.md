@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.4 (2021-06-08)
+
+Improved completion checking in several commands and removed a bug when reslicing nifti images.
+
 ## 0.91.3 (2021-06-08)
 
 Default summaryname value setting in HCP TaskfMRIAnalysis pipeline. Fixed BIDS import.

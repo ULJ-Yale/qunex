@@ -143,7 +143,7 @@ def reslice(inf, slices, outf=None):
     gframes = int(nihdr.sizez / slices)
     eslices = nihdr.sizez % slices
 
-    sdelete = range(0,slices,2) + range(1,slices,2)
+    sdelete = list(range(0,slices,2)) + list(range(1,slices,2))
     sdelete = sdelete[0:eslices]
     indeces = [gframes+1 if n in sdelete else gframes for n in range(slices)]
     indeces = [sum(indeces[0:n+1])-1 for n in range(slices)]

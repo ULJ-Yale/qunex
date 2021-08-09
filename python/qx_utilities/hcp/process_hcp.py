@@ -519,12 +519,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
             overwrite=no parsessions=10 hcp_brainsize=170
 
     ::
 
-        qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
             overwrite=no parsessions=10 hcp_t2=NONE
     """
 
@@ -1011,24 +1011,24 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10 hcp_fs_longitudinal=TemplateA
 
     ::
 
-        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10 hcp_t2=NONE
 
     ::
 
-        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no parsessions=10 hcp_t2=NONE \\
-              hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
+        qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
+              overwrite=no parsessions=10 hcp_t2=NONE \
+              hcp_freesurfer_home=<absolute_path_to_freesurfer_binary>
     """
 
     r = "\n------------------------------------------------------------"
@@ -1392,19 +1392,19 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10
 
     ::
 
-        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10 hcp_t2=NONE
 
     ::
 
-        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no parsessions=10 hcp_t2=NONE \\
-              hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
+        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
+              overwrite=no parsessions=10 hcp_t2=NONE \
+              hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \
               hcp_freesurfer_module=YES
     """
 
@@ -1695,12 +1695,12 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10 hcp_t2=NONE
     """
 
@@ -2037,7 +2037,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         qunex hcp_diffusion \
           --sessionsfolder="<path_to_study_folder>/sessions" \
           --sessions="<path_to_study_folder>/processing/batch.txt" \
-          --overwrite="no" \\
+          --overwrite="no" \
           --test
 
     Run with scheduler, the compute node also loads the required CUDA module::
@@ -2045,7 +2045,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         qunex hcp_diffusion \
           --sessionsfolder="<path_to_study_folder>/sessions" \
           --sessions="$<path_to_study_folder>/processing/batch.txt" \
-          --overwrite="yes" \\
+          --overwrite="yes" \
           --bash="module load CUDA/9.1.85" \
           --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
 
@@ -2054,7 +2054,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         qunex hcp_diffusion \
           --sessionsfolder="<path_to_study_folder>/sessions" \
           --sessions="<path_to_study_folder>/processing/batch.txt" \
-          --overwrite="yes" \\
+          --overwrite="yes" \
           --hcp_dwi_nogpu
     """
 
@@ -2539,13 +2539,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
+        qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
+              overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \
               hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     """
 
@@ -3399,12 +3399,12 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10
 
     ::
 
-        qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no parsessions=10
     """
 
@@ -3990,16 +3990,16 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_icafix \\
-            --sessions=processing/batch.txt \\
+        qunex hcp_icafix \
+            --sessions=processing/batch.txt \
             --sessionsfolder=sessions
 
 
     ::
 
-        qunex hcp_icafix \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
+        qunex hcp_icafix \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
             --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     """
 
@@ -4512,17 +4512,17 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_post_fix \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
+        qunex hcp_post_fix \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_post_fix \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
+        qunex hcp_post_fix \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
+            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
             --hcp_matlab_mode="interpreted"
     """
 
@@ -4904,17 +4904,17 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex hcp_reapply_fix \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
+        qunex hcp_reapply_fix \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
             --hcp_matlab_mode="interpreted"
 
     ::
 
-        qunex hcp_reapply_fix \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
+        qunex hcp_reapply_fix \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
+            --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \
             --hcp_matlab_mode="interpreted"
     """
 
@@ -5617,21 +5617,21 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP MSMAll after application of single-run ICAFix
-        qunex hcp_msmall \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
-            --hcp_msmall_bolds="REST_1,REST_2" \\
+        qunex hcp_msmall \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
+            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
+            --hcp_msmall_bolds="REST_1,REST_2" \
             --hcp_matlab_mode="interpreted"
 
     ::
 
         # HCP MSMAll after application of multi-run ICAFix
-        qunex hcp_msmall \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
-            --hcp_msmall_bolds="REST_1,REST_2" \\
+        qunex hcp_msmall \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
+            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
+            --hcp_msmall_bolds="REST_1,REST_2" \
             --hcp_matlab_mode="interpreted"
     """
 
@@ -6179,19 +6179,19 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     ::
 
         # HCP DeDriftAndResample after application of single-run ICAFix
-        qunex hcp_dedrift_and_resample \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
+        qunex hcp_dedrift_and_resample \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
+            --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \
             --hcp_matlab_mode="interpreted"
 
     ::
 
         # HCP DeDriftAndResample after application of multi-run ICAFix
-        qunex hcp_dedrift_and_resample \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
+        qunex hcp_dedrift_and_resample \
+            --sessions=processing/batch.txt \
+            --sessionsfolder=sessions \
+            --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \
             --hcp_matlab_mode="interpreted"
     """
 
@@ -7264,7 +7264,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex map_hcp_data sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        qunex map_hcp_data sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
               overwrite=no hcp_cifti_tail=_Atlas bolds=all
     """
 
@@ -7506,8 +7506,6 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     --sessionsfolder    The path to the study/sessions folder, where the
                         imaging  data is supposed to go. [.]
     --parsessions       How many sessions to run in parallel. [1]
-    --overwrite         Whether to overwrite existing data (yes)
-                        or not (no). [no]
     --hcp_suffix        Specifies a suffix to the session id if multiple
                         variants are run, empty otherwise. []
     --logfolder         The path to the folder where runlogs and comlogs
@@ -7625,19 +7623,20 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     ::
 
         # First level HCP TaskfMRIanalysis
-        qunex hcp_task_fmri_analysis \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_task_lvl1tasks="TASK_1,TASK_2"
+        qunex hcp_task_fmri_analysis \
+            --sessionsfolder="<study_path>/sessions" \
+            --sessions="<study_path>/processing/batch.txt" \
+            --hcp_task_lvl1tasks="tfMRI_GUESSING_PA" \
+            --hcp_task_summaryname="tfMRI_GUESSING/tfMRI_GUESSING"
 
     ::
 
         # Second level HCP TaskfMRIanalysis
-        qunex hcp_task_fmri_analysis \\
-            --sessions=processing/batch.txt \\
-            --sessionsfolder=sessions \\
-            --hcp_task_lvl1tasks="TASK_1,TASK_2" \\
-            --hcp_task_lvl2task="study/lvl2feats"
+        qunex hcp_task_fmri_analysis \
+            --sessionsfolder="<study_path>/sessions" \
+            --sessions="<study_path>/processing/batch.txt" \
+            --hcp_task_lvl1tasks="tfMRI_GUESSING_AP@tfMRI_GUESSING_PA" \
+            --hcp_task_lvl2task="tfMRI_GUESSING"
     """
 
     r = "\n------------------------------------------------------------"
@@ -7678,11 +7677,10 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                 }
 
             # optional parameters
-
             # hcp_task_lvl1fsfs
             if options['hcp_task_lvl1fsfs'] is not None:
                 lvl1fsfs = options['hcp_task_lvl1fsfs'].replace(",", "@")
-                if (len(lvl1sfs.split(",")) != len(lvl1tasks.split(","))):
+                if (len(lvl1fsfs.split(",")) != len(lvl1tasks.split(","))):
                     r += "\n---> ERROR: mismatch in the length of hcp_task_lvl1tasks and hcp_task_lvl1fsfs"
                     run = False
 
@@ -7701,9 +7699,6 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             if options['hcp_task_lvl2task'] is None and options['hcp_task_summaryname'] is None:
                 r += "\n---> ERROR: hcp_task_summaryname is mandatory when running Level1 analysis!"
                 run = False
-            # workaround in case 
-            elif options['hcp_task_lvl2task'] is not None and options['hcp_task_summaryname'] is None:
-                options['hcp_task_summaryname'] = "%s/%s" % (options['hcp_task_lvl2task'], options['hcp_task_lvl2task'])
 
             if options['hcp_task_summaryname'] is not None:
                 comm += "                --summaryname=\"%s\"" % options['hcp_task_summaryname']
@@ -7763,21 +7758,14 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
 
-            # -- Test files
-            tfile = None
-            full_test = None
-
         # -- Run
         if run:
             if options['run'] == "run":
-                if tfile is not None and overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, 'Running HCP fMRI task analysis', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=None, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(None, comm, 'Running HCP fMRI task analysis', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=None, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = pc.checkRun(tfile, full_test, 'HCP Diffusion', r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(None, None, 'HCP Diffusion', r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP fMRI task analysis can be run"
                     report = "HCP fMRI task analysis can be run"
