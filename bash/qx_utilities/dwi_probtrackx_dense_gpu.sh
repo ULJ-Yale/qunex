@@ -283,7 +283,7 @@ main() {
     # -------------------------------------------------
 
     # completion check
-    COMPLETIONCHECK=1
+    COMPLETIONCHECK=0
 
     for CASE in $CASES; do
         # output folder
@@ -347,11 +347,11 @@ main() {
             if [[ ! -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
                 # print error for this case
                 reho "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
-                # set as failed
-                COMPLETIONCHECK=0
             else
-                # pring sucess for this case
+                # print success for this case
                 geho "dwi_probtracx_dense_gpu for $CASE completed successfully!"
+                # set as success
+                COMPLETIONCHECK=1
             fi
         done
     done
