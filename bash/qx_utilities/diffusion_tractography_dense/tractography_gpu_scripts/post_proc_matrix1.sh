@@ -37,3 +37,5 @@ ${Caret7_command} -cifti-math "log(1+a)" $ResultsFolder/${OutFileTemp}_waytotnor
 gzip --force $ResultsFolder/${OutFileName} --fast
 gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
 gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii --fast
+gzip --force $ResultsFolder/Mat1.dconn.nii --fast
+gzip --force $ResultsFolder/Mat1_transp.dconn.nii --fast
