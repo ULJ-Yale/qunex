@@ -991,6 +991,19 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     print(out, file=sout_hcp)
                     firstImage = False
 
+                # -- Echospacing
+                echospacing = 0
+                if fileInfo['json'].get('DwellTime', None):
+                    echospacing = fileInfo['json'].get('DwellTime')
+                    out = ": DwellTime(%.10f)" % (echospacing)
+                    print(out, end= " ", file=sout)
+                    print(out, end= " ", file=sout_hcp)
+                elif fileInfo['json'].get('EchoSpacing', None):
+                    echospacing = fileInfo['json'].get('EchoSpacing')
+                    out = ": EchoSpacing(%.10f)" % (echospacing)
+                    print(out, end= " ", file=sout)
+                    print(out, end= " ", file=sout_hcp)
+
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
                     # -29s fol alignment purposes (output generation is slightly different with T1w and T2w)
@@ -1003,17 +1016,6 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                         print(out, end= " ", file=sout_hcp)
                     if folder['fmnum']:
                         out = ": fm(%d)" % (folder['fmnum'])
-                        print(out, end= " ", file=sout)
-                        print(out, end= " ", file=sout_hcp)
-                    echospacing = 0
-                    if fileInfo['json'].get('DwellTime', None):
-                        echospacing = fileInfo['json'].get('DwellTime')
-                        out = ": DwellTime(%.10f)" % (echospacing)
-                        print(out, end= " ", file=sout)
-                        print(out, end= " ", file=sout_hcp)
-                    elif fileInfo['json'].get('EchoSpacing', None):
-                        echospacing = fileInfo['json'].get('EchoSpacing')
-                        out = ": EchoSpacing(%.10f)" % (echospacing)
                         print(out, end= " ", file=sout)
                         print(out, end= " ", file=sout_hcp)
                     if fileInfo['json'].get('ReadoutDirection', None):

@@ -592,7 +592,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
 
         # print session if exists
         if len(split) > 1:
-            print("session: %s\n") % split[1]
+            print("session: %s\n" % split[1])
 
         # print command name
         lf.write("qunex %s\n" % split[0])

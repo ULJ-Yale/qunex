@@ -2551,7 +2551,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Volume registration [%s] ... " % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP fMRI Volume pipeline [%s] ... " % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -3410,7 +3410,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Surface registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP fMRI Surface pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -4005,7 +4005,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP ICAFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP ICAFix pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -4528,7 +4528,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PostFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP PostFix pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -4920,7 +4920,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP ReApplyFix registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP ReApplyFix pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -5637,7 +5637,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP MSMAll registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP MSMAll pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -6197,7 +6197,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DeDriftAndResample registration [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
+    r += "\n%s HCP DeDriftAndResample pipeline [%s] ..." % (pc.action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -6814,7 +6814,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
+    r += "\n%s HCP ASL Pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
 
     run    = True
     report = "Error"
@@ -6982,7 +6982,7 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DTI Fix ..." % (pc.action("Running", options['run']))
+    r += "\n%s HCP DTI Fit pipeline ..." % (pc.action("Running", options['run']))
 
     run    = True
     report = "Error"
@@ -7070,7 +7070,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP Bedpostx GPU ..." % (pc.action("Running", options['run']))
+    r += "\n%s HCP Bedpostx GPU pipeline ..." % (pc.action("Running", options['run']))
 
     run    = True
     report = "Error"
