@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.5 (2021-06-08)
+
+Optimized dwi_probtrackx_dense_gpu so it is now more robust and zips additional files at the end. Squashed some minor bugs that arose when transitioning from Python 2 to 3.
+
 ## 0.91.4 (2021-06-08)
 
 Improved completion checking in several commands and removed a bug when reslicing nifti images.
