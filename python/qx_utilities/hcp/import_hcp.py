@@ -1151,6 +1151,8 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
                 # -- ASL
                 elif fileInfo['parts'][0] in ['mbPCASLhr', 'PCASLhr']:
+                    print("!!!!! fileInfo: ", fileInfo)
+
                     # phenc
                     phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
                     if phenc:
@@ -1163,15 +1165,6 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     print(out, end= " ", file=sout)
                     print(out, end= " ", file=sout_hcp)
 
-                    # echospacing
-                    echospacing = 0
-                    if fileInfo['json'].get('DwellTime', None):
-                        echospacing = fileInfo['json'].get('DwellTime')
-                        out = ": DwellTime(%.10f)" % (echospacing)
-                    elif fileInfo['json'].get('EchoSpacing', None):
-                        echospacing = fileInfo['json'].get('EchoSpacing')
-                        out = ": EchoSpacing(%.10f)" % (echospacing)
-
                     # add filename
                     out = ": filename(%s)" % "_".join(fileInfo['parts'])
                     print(out, file=sout)
@@ -1179,7 +1172,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
                     print("\n" + fileInfo['parts'][0], file=rout)
                     print("".join(['-' for e in range(len(fileInfo['parts'][0]))]), file=rout)
-                    print("%-25s : %.8f" % ("_hcp_%ssamplespacing" % (fileInfo['parts'][0][:2]), echospacing), file=rout)
+                    print("%-25s : %.8f" % ("_hcp_%ssamplespacing" % (fileInfo['parts'][0][:2]), fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.), file=rout)
                     print("%-25s : %s" % ("_hcp_unwarpdir", unwarp[fileInfo['json'].get('ReadoutDirection', None)]), file=rout)
 
                 print("%s => %s" % (fileInfo['path'], tfile), file=bout)
