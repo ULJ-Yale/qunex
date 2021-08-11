@@ -1151,8 +1151,6 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
                 # -- ASL
                 elif fileInfo['parts'][0] in ['mbPCASLhr', 'PCASLhr']:
-                    print("!!!!! fileInfo: ", fileInfo)
-
                     # phenc
                     phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
                     if phenc:
