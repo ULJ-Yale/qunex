@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.7 (2021-11-08)
+
+Fixed a bug in hcp_fmri_task_analysis and made the command more robust.
+
 ## 0.91.6 (2021-06-08)
 
 Optimized dwi_probtrackx_dense_gpu so it is now more robust and zips additional files at the end. Squashed some minor bugs that arose when transitioning from Python 2 to 3. Fixed a bug when echospacing was not printed correctly in batch files.
