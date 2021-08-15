@@ -1,30 +1,15 @@
 #!/bin/bash
 #
-#set -x
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# ## COPYRIGHT NOTICE
-#
-# Copyright (C) 2015 Anticevic Lab, Yale University
-# Copyright (C) 2015 MBLAB, University of Ljubljana
-#
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
-# * Grega Repovs , Department of Psychology,  University of Ljubljana
-#
 # ## PRODUCT
 #
 # qunex.sh is a front-end bash integration script for the QuNex Suite
-#
-# ## LICENSE
-#
-# * The qunex.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
 #
 #~ND~END~
 
@@ -32,7 +17,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc compute_fc_bold parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -494,7 +479,7 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (compute_fc_bold.sh) via the QuNex bash wrapper
+# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (fc_compute_wrapper.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 compute_bold_fc() {
@@ -515,7 +500,7 @@ fi
 if [[ ${Calculation} == "seed" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -540,7 +525,7 @@ fi
 if [[ ${Calculation} == "gbc" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -569,7 +554,7 @@ fi
 if [[ ${Calculation} == "dense" ]]; then
     echo ""
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
     --sessionsfolder=${SessionsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -587,7 +572,7 @@ fi
 }
 show_usage_compute_bold_fc() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_fc_bold.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -652,7 +637,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \
 bash_call_execute
 }
 
-show_usage_bold_parcellation() {
+show_usage_parcellate_bold() {
 echo ""; echo "qunex ${usage_input}"
 ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh
 }
@@ -692,31 +677,153 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-# -- dwi_fsl_dtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
+# -- dwi_dtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-dwi_fsl_dtifit() {
+dwi_dtifit() {
+# -- Parse optional parameters
+optional_parameters=""
+
+# mask
+if [[ -n ${mask} ]]; then
+    optional_parameters=" \
+    --mask='${mask}'
+    "
+fi
+
+# bvecs
+if [[ -n ${bvecs} ]]; then
+    optional_parameters="${optional_parameters} \
+    --bvecs='${bvecs}'
+    "
+fi
+
+# bvals
+if [[ -n ${bvals} ]]; then
+    optional_parameters="${optional_parameters} \
+    --bvals='${bvals}'
+    "
+fi
+
+# cni
+if [[ -n ${cni} ]]; then
+    optional_parameters="${optional_parameters} \
+    --cni='${cni}'
+    "
+fi
+
+# sse
+if [[ -n ${sse} ]]; then
+    optional_parameters="${optional_parameters} \
+    --sse
+    "
+fi
+
+# wls
+if [[ -n ${wls} ]]; then
+    optional_parameters="${optional_parameters} \
+    --wls
+    "
+fi
+
+# kurt
+if [[ -n ${kurt} ]]; then
+    optional_parameters="${optional_parameters} \
+    --kurt
+    "
+fi
+
+# kurtdir
+if [[ -n ${kurtdir} ]]; then
+    optional_parameters="${optional_parameters} \
+    --kurtdir
+    "
+fi
+
+# littlebit
+if [[ -n ${littlebit} ]]; then
+    optional_parameters="${optional_parameters} \
+    --littlebit
+    "
+fi
+
+# save_tensor
+if [[ -n ${save_tensor} ]]; then
+    optional_parameters="${optional_parameters} \
+    --save_tensor
+    "
+fi
+
+# zmin
+if [[ -n ${zmin} ]]; then
+    optional_parameters="${optional_parameters} \
+    --zmin='${zmin}'
+    "
+fi
+
+# zmax
+if [[ -n ${zmax} ]]; then
+    optional_parameters="${optional_parameters} \
+    --zmax='${zmax}'
+    "
+fi
+
+# ymin
+if [[ -n ${ymin} ]]; then
+    optional_parameters="${optional_parameters} \
+    --ymin='${ymin}'
+    "
+fi
+
+# ymax
+if [[ -n ${ymax} ]]; then
+    optional_parameters="${optional_parameters} \
+    --ymax='${ymax}'
+    "
+fi
+
+# xmin
+if [[ -n ${xmin} ]]; then
+    optional_parameters="${optional_parameters} \
+    --xmin='${xmin}'
+    "
+fi
+
+# xmax
+if [[ -n ${xmax} ]]; then
+    optional_parameters="${optional_parameters} \
+    --xmax='${xmax}'
+    "
+fi
+
+# gradnonlin
+if [[ -n ${gradnonlin} ]]; then
+    optional_parameters="${optional_parameters} \
+    --gradnonlin='${gradnonlin}''
+    "
+fi
+
 # -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --overwrite='${Overwrite}' \
---species='${Species}' "
+--species='${Species}' ${optional_parameters}"
 # -- QuNex bash execute function
 bash_call_execute
 }
-show_usage_dwi_fsl_dtifit() {
+show_usage_dwi_dtifit() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_dtifit.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-# -- dwi_fsl_bedpostx_gpu - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
+# -- dwi_bedpostx_gpu - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-dwi_fsl_bedpostx_gpu() {
+dwi_bedpostx_gpu() {
 # -- Specify command variable
-QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \
 --sessionsfolder='${SessionsFolder}' \
 --session='${CASE}' \
 --fibers='${Fibers}' \
@@ -726,14 +833,15 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.s
 --sample='${Sample}' \
 --model='${Model}' \
 --rician='${Rician}' \
+--gradnonlin='${Gradnonlin}' \
 --overwrite='${Overwrite}' \
---species=${Species}"
+--species='${Species}'"
 # -- QuNex bash execute function
 bash_call_execute
 }
-show_usage_dwi_fsl_bedpostx_gpu() {
+show_usage_dwi_bedpostx_gpu() {
 echo ""; echo "qunex ${usage_input}"
-${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh
+${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -741,7 +849,7 @@ ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_fsl_bedpostx_gpu.sh
 # -------------------------------------------------------------------------------------------------------------------------------
 
 auto_ptx() {
-geho "WARNING: auto_ptx is deprecated, you should probably use fsl_xtract instead!"
+geho "WARNING: auto_ptx is deprecated, you should probably use dwi_xtract instead!"
 
 # -- Check inputs
 if [[ -d ${BedPostXFolder} ]]; then 
@@ -802,6 +910,8 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_g
 --omatrix3='${MatrixThree}' \
 --nsamplesmatrix1='${NsamplesMatrixOne}' \
 --nsamplesmatrix3='${NsamplesMatrixThree}' \
+--distancecorrection='${distance_correction}' \
+--storestreamlineslength='${store_streamlines_length}' \
 --overwrite='${Overwrite}' "
 # -- QuNex bash execute function
 bash_call_execute
@@ -894,6 +1004,18 @@ shift 1
 for fn in "$@" ; do
     if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
         echo $fn | sed "s/^${sopt}=//"
+        return 0
+    fi
+done
+}
+
+# -- Same as above except this works on flags
+get_flags() {
+sopt="$1"
+shift 1
+for fn in "$@" ; do
+    if [ `echo $fn | grep -- "^${sopt}" | wc -w` -gt 0 ]; then
+        echo "yes"
         return 0
     fi
 done
@@ -1027,18 +1149,14 @@ if [[ $is_gmri_command == 1 ]]; then
         unset gmriinput
 
         for inputarg in "$@"; do
-            # add single or double quotes around parameters
-            if [[ $inputarg =~ "-" ]]; then
+
+            # flags
+            if [[ ${inputarg} =~ '=' ]]; then
                 if [[ $inputarg =~ "\"" ]]; then
                     inputarg=`echo "${inputarg}'" | sed "0,/=/s//=\'/"`
                 else
                     inputarg=`echo "${inputarg}\"" | sed "0,/=/s//=\"/"`
                 fi
-            fi
-
-            # flags
-            if [[ ${inputarg} =~ '=' ]] && [[ -z `echo ${inputarg} | grep '-'` ]]; then
-               inputarg="--${inputarg}"
             fi
 
             if [[ -z $gmriinput ]]; then
@@ -1477,7 +1595,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WayTotal=`get_parameters "${setflag}waytotal" $@`
     # -- Input flags for  dwi_seed_tractography_dense
     SeedFile=`get_parameters "${setflag}seedfile" $@`
-    # -- Input flags for  dwi_eddy_qc
+    # -- Input flags for dwi_eddy_qc
     EddyBase=`get_parameters "${setflag}eddybase" $@`
     EddyPath=`get_parameters "${setflag}eddypath" $@`
     Report=`get_parameters "${setflag}report" $@`
@@ -1490,7 +1608,24 @@ if [[ ${setflag} =~ .*-.* ]]; then
     GroupBar=`get_parameters "${setflag}groupvar" $@`
     OutputDir=`get_parameters "${setflag}outputdir" $@`
     Update=`get_parameters "${setflag}update" $@`
-    # -- Input flags for dwi_fsl_bedpostx_gpu
+    # -- Input flags for dwi_dtifit
+    bvecs=`get_parameters "${setflag}bvecs" $@`
+    bvals=`get_parameters "${setflag}bvals" $@`
+    cni=`get_parameters "${setflag}cni" $@`
+    sse=`get_flags "${setflag}sse" $@`
+    wls=`get_flags "${setflag}wls" $@`
+    kurt=`get_flags "${setflag}kurt" $@`
+    kurtdir=`get_flags "${setflag}kurtdir" $@`
+    littlebit=`get_flags "${setflag}littlebit" $@`
+    save_tensor=`get_flags "${setflag}save_tensor" $@`
+    zmin=`get_parameters "${setflag}zmin" $@`
+    zmax=`get_parameters "${setflag}zmax" $@`
+    ymin=`get_parameters "${setflag}ymin" $@`
+    ymax=`get_parameters "${setflag}ymax" $@`
+    xmin=`get_parameters "${setflag}xmin" $@`
+    xmax=`get_parameters "${setflag}xmax" $@`
+    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
+    # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`
     Weight=`get_parameters "${setflag}weight" $@`
     Burnin=`get_parameters "${setflag}burnin" $@`
@@ -1498,11 +1633,14 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Sample=`get_parameters "${setflag}sample" $@`
     Model=`get_parameters "${setflag}model" $@`
     Rician=`get_parameters "${setflag}rician" $@`
+    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
     # -- Input flags for dwi_probtrackx_dense_gpu
     MatrixOne=`get_parameters "${setflag}omatrix1" $@`
     MatrixThree=`get_parameters "${setflag}omatrix3" $@`
     NsamplesMatrixOne=`get_parameters "${setflag}nsamplesmatrix1" $@`
     NsamplesMatrixThree=`get_parameters "${setflag}nsamplesmatrix3" $@`
+    distance_correction=`get_parameters "--distancecorrection" $@`
+    store_streamlines_length=`get_parameters "--storestreamlineslength" $@`
     ScriptsFolder=`get_parameters "${setflag}scriptsfolder" $@`
     # -- Input flags for run_qc 
     OutPath=`get_parameters "${setflag}outpath" $@`
@@ -1997,10 +2135,10 @@ if [ "$CommandToRun" == "parcellate_anat" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- dwi_fsl_dtifit
+# -- dwi_dtifit
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "dwi_fsl_dtifit" ]; then
+if [ "$CommandToRun" == "dwi_dtifit" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
@@ -2010,26 +2148,16 @@ if [ "$CommandToRun" == "dwi_fsl_dtifit" ]; then
     if [[ ${Cluster} == "2" ]]; then
         if [[ -z ${Scheduler} ]]; then reho "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
-    # -- Report parameters
-    echo ""
-    echo "Running $CommandToRun with the following parameters:"
-    echo "--------------------------------------------------------------"
-    echo "   Study Folder: ${StudyFolder}"
-    echo "   Sessions Folder: ${SessionsFolder}"
-    echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
-    echo "   Scheduler Name and Options: ${Scheduler}"
-    echo "   Overwrite prior run: ${Overwrite}"
-    echo ""
+
     # -- Loop through all the cases
     for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-# -- dwi_fsl_bedpostx_gpu
+# -- dwi_bedpostx_gpu
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "dwi_fsl_bedpostx_gpu" ]; then
+if [ "$CommandToRun" == "dwi_bedpostx_gpu" ]; then
     # -- Check required parameters
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study Folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
@@ -2120,10 +2248,10 @@ if [ "$CommandToRun" == "parcellate_anat" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- compute_fc_bold
+# -- fc_compute_wrapper
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "compute_fc_bold" ]; then
+if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "fc_compute_wrapper" ]; then
     CommandToRun="compute_bold_fc"
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
@@ -2476,18 +2604,16 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
-    # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
+    # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix3
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
     if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "ERROR: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
-    if [ "$MatrixOne" == "yes" ]; then
-        if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
-    fi
-    if [ "$MatrixThree" == "yes" ]; then
-        if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
-    fi
+    if [ -z "$MatrixOne" ]; then MatrixOne="no"; fi
+    if [ -z "$MatrixThree" ]; then MatrixThree="no"; fi
+    if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
+    if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
         if [[ -z ${Scheduler} ]]; then reho "ERROR: Scheduler specification and options missing."; exit 1; fi
@@ -2501,6 +2627,21 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     else
         OutFolderReport=${OutFolder}
     fi
+
+    # -- distance correction flag
+    if [ "$distance_correction" == "yes" ] || [ "$distance_correction" == "YES" ]; then
+        distance_correction="yes"
+    else
+        distance_correction="no"
+    fi
+
+    # -- store streamlines length flag
+    if [ "$store_streamlines_length" == "yes" ] || [ "$store_streamlines_length" == "YES" ]; then
+        store_streamlines_length="yes"
+    else
+        store_streamlines_length="no"
+    fi
+
     # -- Report parameters
     echo ""
     echo "Running $CommandToRun with the following parameters:"
@@ -2515,6 +2656,8 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Compute Matrix3: ${MatrixThree}"
     echo "   Number of samples for Matrix1: ${NsamplesMatrixOne}"
     echo "   Number of samples for Matrix3: ${NsamplesMatrixThree}"
+    echo "   Distance correction: ${distance_correction}"
+    echo "   Store streamlines length: ${store_streamlines_length}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
     # -- Execute

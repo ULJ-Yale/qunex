@@ -1,5 +1,10 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``matlab.py``
 
@@ -19,7 +24,7 @@ import subprocess
 
 
 if "QUNEXMCOMMAND" not in os.environ:
-    print "WARNING: QUNEXMCOMMAND environment variable not set. Matlab will be run by default!"
+    print("WARNING: QUNEXMCOMMAND environment variable not set. Matlab will be run by default!")
     mcommand = "matlab -nodisplay -nosplash -r"
 else:
     mcommand = os.environ['QUNEXMCOMMAND']
@@ -68,8 +73,7 @@ functions = {
     'stats_ttest_zero':                [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
 }
 
-functionList = functions.keys()
-functionList.sort()
+functionList = sorted(functions.keys())
 
 
 # ==============================================================================
@@ -79,10 +83,10 @@ functionList.sort()
 def help(command):
     '''Prints help for the command using Matlab.'''
 
-    print "\nDisplaying help for Matlab function %s\n--------------------------------------------------------------------------------\n" % (command)
+    print("\nDisplaying help for Matlab function %s\n--------------------------------------------------------------------------------\n" % (command))
     com = '%s "help %s; exit"' % (mcommand, command)
     subprocess.call(com, shell=True)
-    print "\n--------------------------------------------------------------------------------\n"
+    print("\n--------------------------------------------------------------------------------\n")
 
 
 # ==============================================================================
@@ -149,11 +153,11 @@ def run(command, args):
 
     # --- run command
 
-    print "\nRunning:\n>>> %s\n" % (mcom)
+    print("\nRunning:\n>>> %s\n" % (mcom))
 
     ret = subprocess.call(com, shell=True, stdout=sout, stderr=serr)
 
     if ret:
-        print "\n\nERROR: %s failed! Please check output / log!\n" % (command)
+        print("\n\nERROR: %s failed! Please check output / log!\n" % (command))
     else:
-        print "\n\n===> Successful completion of task\n"
+        print("\n\n===> Successful completion of task\n")

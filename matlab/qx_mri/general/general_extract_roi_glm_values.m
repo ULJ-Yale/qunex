@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose);
 
 %``function [] = general_extract_roi_glm_values(flist, roif, effects, frames, values, tformat, verbose)`

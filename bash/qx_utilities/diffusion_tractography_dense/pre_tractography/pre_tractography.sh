@@ -1,15 +1,11 @@
 #!/bin/bash
 #
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
-#
-# ## COPYRIGHT NOTICE
-#
-# Copyright (C) 2015 Anticevic Lab, Yale University
-#
-# ## AUTHORS(s)
-#
-# * Alan Anticevic, Department of Psychiatry, Yale University
 #
 # ## PRODUCT
 #

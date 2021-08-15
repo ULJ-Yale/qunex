@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function F = general_create_glm_hipass_filter(nframes,levels)
 
 %``function F = general_create_glm_hipass_filter(nframes,levels)`

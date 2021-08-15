@@ -1,5 +1,10 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``meltmovfidl``
 """
@@ -15,7 +20,8 @@ import re
 import os
 import os.path
 import glob
-import img
+
+import general.img as gi
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -37,11 +43,11 @@ def meltmovfidl(cfile, ifile, iffile, offile):
 
     # ---> read the original fidl file
     
-    ofidl = img.fidl(iffile)
+    ofidl = gi.fidl(iffile)
     
     # ---> create list of bolds with their offset times in conc
     
-    bolds = img.readConc(cfile)
+    bolds = gi.readConc(cfile)
     c = 0
     for bold in bolds:
         
@@ -54,12 +60,12 @@ def meltmovfidl(cfile, ifile, iffile, offile):
         if len(ifidl) != 1:
             raise Usage("ERROR: Can not match ignore fidl file to: %s (%s)" % (bold[0], bold[1]))
         
-        ifidl = img.fidl(ifidl[0])
+        ifidl = gi.fidl(ifidl[0])
         ifidl.adjustTime(c)
         ofidl.merge(ifidl, addcodes=False)
         
         # ---> read and add information on length
-        info = img.readBasicInfo(bold[0])
+        info = gi.readBasicInfo(bold[0])
         c += ofidl.TR * info['frames']    
         
     ofidl.save(offile)
@@ -73,7 +79,7 @@ def main(argv=None):
     try:
         try:
             opts, args = getopt.getopt(argv[1:], "hv", ["help", "verbose"])
-        except getopt.error, msg:
+        except getopt.error as msg:
             raise Usage(msg)
     
         # option processing
@@ -81,9 +87,9 @@ def main(argv=None):
             if option == "-v":
                 options['verbose'] = True
 
-    except Usage, err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-        print >> sys.stderr, "for help use --help"
+    except Usage as err:
+        print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
         return 2
     
     cfile  = args[0]
@@ -93,9 +99,9 @@ def main(argv=None):
     
     try:
         meltmovfidl(cfile, ifile, iffile, offile)
-    except Usage, err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-        print >> sys.stderr, "for help use --help"
+    except Usage as err:
+        print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
         return 2
     
     

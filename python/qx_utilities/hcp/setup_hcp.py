@@ -1,5 +1,10 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``setup_hcp.py``
 
@@ -184,7 +189,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         qunex setup_hcp sourcefolder=OP316 sourcefile=session.txt
     """
 
-    print "Running setup_hcp\n================"
+    print("Running setup_hcp\n================")
 
     inf   = gc.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
@@ -215,31 +220,31 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         if check == 'yes':
             raise ge.CommandFailed("setup_hcp", "Session not ready", "Session %s is not marked ready for HCP" % (sid), "Please check or run with check=no!")
         else:
-            print "WARNING: Session %s is not marked ready for HCP. Processing anyway." % (sid)
+            print("WARNING: Session %s is not marked ready for HCP. Processing anyway." % (sid))
 
     # -> does raw data exist
 
     if rawf is None or not os.path.exists(rawf):
         raise ge.CommandFailed("setup_hcp", "Data folder does not exist", "raw_data folder for %s does not exist!" % (sid), "Please check specified path [%s]" % (rawf))
 
-    print "===> Setting up HCP folder structure for %s\n" % (sid)
+    print("===> Setting up HCP folder structure for %s\n" % (sid))
 
     # -> does hcp folder already exist?
 
     if os.path.exists(basef):
         if existing == 'clear':
-            print " ---> Base folder %s already exist! Clearing existing files and folders! " % (basef)
+            print(" ---> Base folder %s already exist! Clearing existing files and folders! " % (basef))
             shutil.rmtree(basef)
             os.makedirs(basef)
         elif existing == 'add':
-            print " ---> Base folder %s already exist! Adding any new files specified! " % (basef)
+            print(" ---> Base folder %s already exist! Adding any new files specified! " % (basef))
         else:
             raise ge.CommandFailed("setup_hcp", "Base folder exists", "Base folder %s already exist!" % (basef), "Please check or specify `exisiting` as `add` or `clear` for desired action!")
     else:
-        print " ---> Creating base folder %s " % (basef)
+        print(" ---> Creating base folder %s " % (basef))
         os.makedirs(basef)
 
-    i = [k for k, v in inf.iteritems() if k.isdigit()]
+    i = [k for k, v in inf.items() if k.isdigit()]
     i.sort(key=int, reverse=True)
     boldn = '99'
     mapped = False
@@ -415,8 +420,17 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
             tfile = [tbase + e for e in ['.nii.gz', '.bval', '.bvec']]
             tfold = "Diffusion"
+
+        elif v['name'] in ["mbPCASLhr", "PCASLhr"]:
+            sfile = [k + e for e in ['.nii.gz']]
+
+            tbase = "_".join([sid, v['filename']])
+
+            tfile = [tbase + e for e in ['.nii.gz']]
+            tfold = "mbPCASLhr"
+
         else:
-            print "  ... skipping %s %s [unknown sequence label, please check]" % (v['ima'], v['name'])
+            print("  ... skipping %s %s [unknown sequence label, please check]" % (v['ima'], v['name']))
             continue
 
         if type(sfile) is not list:
@@ -426,23 +440,23 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
         for sfile, tfile in zip(list(sfile), list(tfile)):
             if not os.path.exists(os.path.join(rawf, sfile)):
-                print " ---> WARNING: Can not locate %s - skipping the file" % (os.path.join(rawf, sfile))
+                print(" ---> WARNING: Can not locate %s - skipping the file" % (os.path.join(rawf, sfile)))
                 continue
 
             if not os.path.exists(os.path.join(basef, tfold)):
-                print " ---> creating subfolder", tfold
+                print(" ---> creating subfolder", tfold)
                 os.makedirs(os.path.join(basef, tfold))
             else:
-                print "  ... %s subfolder already exists" % (tfold)
+                print("  ... %s subfolder already exists" % (tfold))
 
             mapped = True
 
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
-                print " ---> linking %s to %s" % (sfile, tfile)
+                print(" ---> linking %s to %s" % (sfile, tfile))
                 os.link(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))                
             else:
-                print "  ... %s already exists" % (tfile)
-                # print " ---> %s already exists, replacing it with %s " % (tfile, sfile)
+                print("  ... %s already exists" % (tfile))
+                # print(" ---> %s already exists, replacing it with %s " % (tfile, sfile))
                 # os.remove(os.path.join(basef,tfold,tfile))
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
     

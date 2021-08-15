@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [exsets] = img_get_extraction_matrices(obj, frames, options)
 
 %function [exsets] = img_get_extraction_matrices(obj, frames, options)

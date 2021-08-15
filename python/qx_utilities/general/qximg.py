@@ -1,5 +1,10 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``qximg.py``
 
@@ -13,11 +18,11 @@ Created by Grega Repovs on 2013-04-13.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import img as qxi
 import numpy as np
 import gzip
 import os.path
 
+import general.img as gi
 
 def removeExt(s, ext):
     if type(ext) not in (tuple, list):
@@ -60,6 +65,7 @@ class qximg(object):
         self.scrub        = False
         self.scrub_hdr    = False
 
+        basestring = (str, bytes)
         if isinstance(varone, basestring):
             self = self.readimage(varone, frames)
 
@@ -98,7 +104,7 @@ class qximg(object):
 
         # ---> check data format
 
-        sform = qxi.getImgFormat(filename)
+        sform = gi.getImgFormat(filename)
         if sform == '.nii.gz':
             sf = gzip.open(filename, 'r')
         else:
@@ -106,7 +112,7 @@ class qximg(object):
 
         # ---> read the header info
 
-        nihdr = qxi.niftihdr()
+        nihdr = gi.niftihdr()
         nihdr.unpackHdr(sf)
         dataType = np.dtype(nihdr.e + nihdr.dType)
 
@@ -182,7 +188,7 @@ class qximg(object):
         if filename == None:
             filename = self.filename
 
-        tform = qxi.getImgFormat(filename)
+        tform = gi.getImgFormat(filename)
         if tform == '.nii.gz':
             tf = gzip.open(filename, 'w')
         else:

@@ -1,5 +1,10 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 ``img.py``
 
@@ -10,7 +15,8 @@ import struct
 import re
 import gzip
 import os.path
-import exceptions as ge
+
+import general.exceptions as ge
 
 niftiDataTypes = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
 niftiBytesPerVoxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
@@ -31,7 +37,8 @@ def sign(x):
 
 
 def readTextFileToLines(filename):
-    s = file(filename).read()
+    file = open(filename, 'r')
+    s = file.read()
     s = s.replace('\r', '\n')
     s = s.replace('\n\n', '\n')
     s = s.split('\n')
@@ -96,9 +103,9 @@ def readConc(filename, boldname=None, check=False):
 def writeConc(filename, conc):
     f = open(filename, 'w')
     nfiles = len(conc)
-    print >> f, "   number_of_files:  %d" % (nfiles)
+    print("   number_of_files:  %d" % (nfiles), file=f)
     for c in conc:
-        print >> f, "      file:%s" % (c[0])
+        print("      file:%s" % (c[0]), file=f)
     f.close()
 
 
@@ -128,7 +135,7 @@ def printniftihdr(filename=None):
     """
 
     hdr = niftihdr(filename)
-    print hdr
+    print(hdr)
 
 
 
@@ -184,11 +191,11 @@ class fidl:
                 raise Usage("ERROR: No filename provided to save fidl file")
 
         fout = open(filename, 'w')
-        print >> fout, "%.2f %s" % (self.TR, " ".join(self.codes))
+        print("%.2f %s" % (self.TR, " ".join(self.codes)), file=fout)
 
         for event in self.events:
             event[1] = int(event[1])
-            print >> fout, "\t".join([str(e) for e in event])
+            print("\t".join([str(e) for e in event]), file=fout)
 
         fout.close()
 
@@ -229,7 +236,7 @@ class ifhhdr:
         for k in self.vlist:
             s += "%s %s:= %s\n" % (k, " " * (35 - len(k)), d[k])
             del d[k]
-        for k, v in d.iteritems():
+        for k, v in d.items():
             s += "%s %s:= %s\n" % (k, " " * (35 - len(k)), v)
 
         return s
@@ -253,7 +260,8 @@ class ifhhdr:
 
     def readHeader(self, filename):
         filename = filename.replace('.img', '.ifh')
-        s = file(filename).read()
+        file = open(filename, 'r')
+        s = file.read()
         self.unpackHdr(s)
         self.hdr = s
 
@@ -388,13 +396,13 @@ class niftihdr:
 
         s = struct.pack(self.e + "i", 348)                            # int       - must be 348
         for n in range(0, 10):                                        # char[10]  - unused
-            s += struct.pack(self.e + "c", " ")
+            s += struct.pack(self.e + "c", bytes(" ", "utf-8"))
         for n in range(0, 18):                                        # char[18]  - unused
-            s += struct.pack(self.e + "c", " ")
+            s += struct.pack(self.e + "c", bytes(" ", "utf-8"))
         s += struct.pack(self.e + "i", 0)                             # int       - unused
         s += struct.pack(self.e + "h", 0)                             # short     - unused
-        s += struct.pack(self.e + "c", " ")                           # char      - unused
-        s += struct.pack(self.e + "c", self.dim_info)                 # char      - MRI slice ordering ---- information not available in IFH
+        s += struct.pack(self.e + "c", bytes(" ", "utf-8"))           # char      - unused
+        s += struct.pack(self.e + "c", bytes(self.dim_info, "utf-8")) # char      - MRI slice ordering ---- information not available in IFH
         s += struct.pack(self.e + "h", self.ndimensions)              # short     - number of dimensions used
         s += struct.pack(self.e + "h", self.sizex)                    # short     - size in dimension x
         s += struct.pack(self.e + "h", self.sizey)                    # short     - size in dimension y
@@ -430,8 +438,8 @@ class niftihdr:
         s += struct.pack(self.e + "f", self.toffset)                  # float     - time offset for first datapoint
         s += struct.pack(self.e + "i", 0)                             # int       - unused
         s += struct.pack(self.e + "i", 0)                             # int       - unused
-        s += (self.descrip + "12345678901234567890123456789012345678901234567890123456789012345678901234567890")[0:80]  # char[80]  - data description
-        s += (self.aux_file + "123456789012345678901234")[0:24]       # char[24]  - auxilary filename
+        s += bytes((self.descrip + "12345678901234567890123456789012345678901234567890123456789012345678901234567890")[0:80], "utf-8") # char[80]  - data description
+        s += bytes((self.aux_file + "123456789012345678901234")[0:24], "utf-8") # char[24]  - auxilary filename
         s += struct.pack(self.e + "h", self.qform_code)               # short     - niftixform code
         s += struct.pack(self.e + "h", self.sform_code)               # short     - niftixform code
         s += struct.pack(self.e + "f", self.quatern_b)                # float     - Quaternion b param
@@ -443,9 +451,9 @@ class niftihdr:
         s += struct.pack(self.e + "ffff", self.srow_x[0], self.srow_x[1], self.srow_x[2], self.srow_x[3])  # float[4]  - affine transform data - row x
         s += struct.pack(self.e + "ffff", self.srow_y[0], self.srow_y[1], self.srow_y[2], self.srow_y[3])  # float[4]  - affine transform data - row y
         s += struct.pack(self.e + "ffff", self.srow_z[0], self.srow_z[1], self.srow_z[2], self.srow_z[3])  # float[4]  - affine transform data - row z
-        s += (self.intent_name + "1234567890123456")[0:16]            # char[16]  - intent name
-        s += self.magic[0:3] + chr(0)                                 # char[4]   - magic word and zero char
-        s += (self.ext + chr(0) * 4)[0:4]                             # char[4]   - extension
+        s += bytes((self.intent_name + "1234567890123456")[0:16], "utf-8") # char[16]  - intent name
+        s += bytes(self.magic[0:3] + chr(0), "utf-8")                 # char[4]   - magic word and zero char
+        s += bytes((self.ext + chr(0) * 4)[0:4], "utf-8")             # char[4]   - extension
 
         for msize, mcode, mdata in self.meta:
             s += struct.pack(self.e + "I", msize)                     # int       - length
@@ -475,7 +483,7 @@ class niftihdr:
         t = s.read(sc)                                                # char      - unused
 
         self.dim_info,       = struct.unpack(e + "c", s.read(sc))      # char      - MRI slice ordering ---- information not available in IFH
-
+        self.dim_info        = self.dim_info.decode("utf-8")
         self.ndimensions,    = struct.unpack(e + "h", s.read(sh))      # short     - number of dimensions used
         self.sizex,          = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension x
         self.sizey,          = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension y
@@ -509,11 +517,11 @@ class niftihdr:
         self.cal_min,        = struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
         self.slice_duration, = struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
         self.toffset,        = struct.unpack(e + "f", s.read(sf))      # float     - time offset for first datapoint
-        t = s.read(si)                                              # int       - unused
-        t = s.read(si)                                              # int       - unused
+        t = s.read(si)                                                 # int       - unused
+        t = s.read(si)                                                 # int       - unused
 
-        self.descrip         = s.read(sc * 80)                         # char[80]  - data description
-        self.aux_file        = s.read(sc * 24)                         # char[24]  - auxilary filename
+        self.descrip         = s.read(sc * 80).decode("utf-8")         # char[80]  - data description
+        self.aux_file        = s.read(sc * 24).decode("utf-8")         # char[24]  - auxilary filename
         self.qform_code,     = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
         self.sform_code,     = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
         self.quatern_b,      = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion b param
@@ -525,9 +533,9 @@ class niftihdr:
         self.srow_x          = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row x
         self.srow_y          = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row y
         self.srow_z          = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row z
-        self.intent_name     = s.read(sc * 16)                         # char[16]  - intent name
-        self.magic           = s.read(sc * 4)                          # char[4]   - magic word and zero char
-        self.ext             = s.read(sc * 4)                          # char[4]   - extension
+        self.intent_name     = s.read(sc * 16).decode("utf-8")         # char[16]  - intent name
+        self.magic           = s.read(sc * 4).decode("utf-8")          # char[4]   - magic word and zero char
+        self.ext             = s.read(sc * 4).decode("utf-8")          # char[4]   - extension
 
         self.dType           = niftiDataTypes[self.data_type]
 
@@ -715,9 +723,7 @@ class niftihdr:
             if k in decodef:
                 self.__dict__[k] = decodef[k](v)
             else:
-                print "WARNING: %s not a valid key for NIfTI header" % (k)
-
-
+                print("WARNING: %s not a valid key for NIfTI header" % (k))
 
 
 def slice_image(sourcefile, targetfile, frames=1):

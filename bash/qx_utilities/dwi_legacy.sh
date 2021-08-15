@@ -1,51 +1,10 @@
 #!/bin/bash
-#set -x
-#~ND~FORMAT~MARKDOWN~
-#~ND~START~
-#
-# # dwi_legacy.sh
-#
-# ## Copyright Notice
-#
+
 # Copyright (C)
+# Copyright Notice
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
-# * Yale University
-# * Oxford University
-#
-# ## Author(s)
-#
-# * Alan Anticevic, N3 Division, Yale University
-# * Stamatios Sotiropoulos, FMRIB Analysis Group, Oxford University
-#
-# ## Product
-#
-# DWI Processing pipeline adaptation for legacy data
-#
-# ## License
-#
-# * The DWI Legacy Preprocessing Pipeline = the "Software"
-# * This Software is distributed "AS IS" without warranty of any kind, either 
-# * expressed or implied, including, but not limited to, the implied warranties
-# * of merchantability and fitness for a particular purpose.
-#
-# Find out what actual license terms are to be applied. Commercial use allowed? 
-# If so, this would likely violate FSL terms.
-#
-# ## Description 
-#   
-# This script, DiffPreprocPieplineLegacy.sh, implements the Diffusion MRI Preprocessing
-# on legacy data that is not HCP compliant and cannot be used in TOPUP 
-# It generates data that can be used as input to the fibre orientation estimation 
-# scripts.
-# 
-# ## Prerequisite Installed Software
-#
-# * [FSL] - FMRIB's Software Library - Version 5.0.9 or later
-# * Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
-#
-# ## Prerequisite Environment Variables
-#
-# See output of usage function: e.g. $./dwi_legacy.sh --help
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # Load Function Libraries
 source ${HCPPIPEDIR}/global/scripts/log.shlib     # log_ functions

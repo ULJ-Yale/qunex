@@ -1,15 +1,16 @@
 #!/bin/bash
-
-#   Copyright (C) 2004 University of Oxford
 #
-#   SHCOPYRIGHT
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 #	Modified by Alan Anticevic for LSF, PBS and SLURM compatibility via QuNex code (07/01/2017)
+# Originally developed by University of Oxford
 
 ## -- set the default binary location
 
 # cuda 9.1 is the default
-bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_9.1/bedpostx_gpu
+bindir=${FSLGPUBinary}/${BedpostXGPUDir}/bedpostx_gpu
 
 #-- set binary location depending on CUDA
 if [[ `nvcc --version | grep "release"` == *"7.5"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_7.5/bedpostx_gpu; fi

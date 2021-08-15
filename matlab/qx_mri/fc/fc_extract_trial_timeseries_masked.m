@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)
 
 %``function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)``
@@ -157,7 +161,7 @@ for s = 1:nsub
 
     if scrubit
         if size(y.scrub, 1) ~= y.frames
-            fprintf('\n     ... WARNING: missing or invalid scrubbing info!!!')
+            fprintf('\n     ... WARNING: missing or invalid scrubbing info!')
             scrub = zeros(1, y.frames);
         else
             scrub = y.scrub(:, ismember(y.scrub_hdr, scrubvar))';

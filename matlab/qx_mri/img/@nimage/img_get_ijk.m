@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [ijk] = img_get_ijk(img, xyz)
 
 %``function [xyz] = img_get_ijk(img, xyz)``
