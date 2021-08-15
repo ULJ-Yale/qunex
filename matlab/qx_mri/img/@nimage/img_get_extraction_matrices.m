@@ -93,7 +93,6 @@ end
 
 obj.use = useframes;
 
-
 % ----- prepare run info
 
 nruns = length(obj.runframes);
@@ -126,9 +125,14 @@ if isnumeric(frames)
         exmat = ones(1, obj.frames);
     end
 
-    exsets.title = '';
+    % mask out frames to ignore
+    exmat(obj.use ~= 1) = 0;
+
+    exsets.title = 'timeseries';
     exsets.exdef = frames;
     exsets.exmat = exmat;
+    exsets.eind  = [1];
+    exsets.estat = sum(exmat,2);
     return
 end
 
