@@ -15,6 +15,8 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 %
 %                 - 'mean'      ... average value of the ROI
 %	              - 'median'    ... median value across the ROI
+%	              - 'max'       ... median value across the ROI
+%	              - 'min'       ... median value across the ROI
 %                 - 'pca'       ... first eigenvariate of the ROI
 %                 - 'threshold' ... average of all voxels above threshold
 %                 - 'maxn'      ... average of highest n voxels
@@ -41,7 +43,7 @@ method = lower(method);
 
 % ---- check method
 
-if ~ismember(method, {'mean', 'pca', 'threshold', 'maxn', 'weighted', 'median', 'all'})
+if ~ismember(method, {'mean', 'pca', 'max', 'min', 'threshold', 'maxn', 'weighted', 'median', 'all'})
     error('ERROR: Unrecognized method of computing ROI mean!')
 end
 
@@ -127,6 +129,12 @@ for r = 1:nrois
 
         case 'median'
             ts(r, :) = median(tmp, 1);
+        
+        case 'max'
+            ts(r, :) = max(tmp, [], 1);
+
+        case 'min'
+            ts(r, :) = max(tmp, [], 1);
 
         case 'weighted'
             tmpw = weights(roi.img_roi_mask(rcodes(r)), :);
