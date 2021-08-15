@@ -148,6 +148,7 @@ classdef nimage
         metadata        = [];
         list            = [];
         tevents         = [];
+        tframes         = [];
 
         % ---> various statistical data
 
@@ -688,9 +689,12 @@ classdef nimage
             obj.frames = obj.frames + add.frames;
             obj.runframes = [obj.runframes add.frames];
             obj.use  = [obj.use add.use];
-            if strcmp(obj.imageformat, 'CIFTI-2')
-                obj.dim = size(obj.data);
-            end
+
+            % --> dimensions for cifti files
+            %     commented as the second dimension should not be used
+            % if strcmp(obj.imageformat, 'CIFTI-2')
+            %     obj.dim = size(obj.data);
+            % end
 
             % --> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)
