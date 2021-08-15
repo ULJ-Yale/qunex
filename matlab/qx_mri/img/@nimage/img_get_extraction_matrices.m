@@ -185,6 +185,7 @@ end
 
 % ----- prepare extraction matrices
 
+c = 0;
 for n = 1:nexlists
 
     % --> extract the definition
@@ -195,8 +196,9 @@ for n = 1:nexlists
         continue
     end
     
-    exsets(n).exdef = exlist{n};
-    exsets(n).title = exdef{1};
+    c = c + 1;
+    exsets(c).exdef = exlist{n};
+    exsets(c).title = exdef{1};
 
     eventset = strtrim(regexp(exdef{2}, ',', 'split'));
     startref = exdef{3}(1);
@@ -280,7 +282,7 @@ for n = 1:nexlists
         okrows = sum(bsxfun(@and, exmat, ignore), 2) == 0;
     end
 
-    exsets(n).exmat = exmat(okrows, :);
-    exsets(n).eind  = eind(okrows);
-    exsets(n).estat = estat;
+    exsets(c).exmat = exmat(okrows, :);
+    exsets(c).eind  = eind(okrows);
+    exsets(c).estat = estat;
 end
