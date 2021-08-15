@@ -1,3 +1,7 @@
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 function [tsset] = fc_extract_roi_timeseries_group(flist, roiinfo, frames, targetf, options)
 
 %function [tsset] = fc_extract_roi_timeseries_group(flist, roiinfo, frames, targetf, options)
@@ -125,13 +129,14 @@ function [tsset] = fc_extract_roi_timeseries_group(flist, roiinfo, frames, targe
 %
 %               savegroup
 %                   a comma separated list of formats to use to save the group 
-%                   data:
+%                   data ['']:
 %
-%                   - long ... save the resulting data in a long format .tsv file
-%                   - wide ... save the resulting data in a wide format .tsv file
-%                   - mat  ... save the resulting data in a matlab .mat file
-%
-%                   ['']
+%                   long
+%                       save the resulting data in a long format .tsv file
+%                   wide
+%                       save the resulting data in a wide format .tsv file
+%                   mat
+%                       save the resulting data in a matlab .mat file
 %
 %               tsname   
 %                   an optional name to add to the output files, if empty, it 
@@ -139,20 +144,22 @@ function [tsset] = fc_extract_roi_timeseries_group(flist, roiinfo, frames, targe
 %
 %               saveind  
 %                   a comma separated list of formats to use to save the 
-%                   invidvidual data:
-%                   - long ... save the resulting data in a long format .tsv file
-%                   - wide ... save the resulting data in a wide format .tsv file
-%                   - mat  ... save the resulting data in a matlab .mat file
+%                   invidvidual data ['']:
 %
-%               ['']
+%                   long
+%                       save the resulting data in a long format .tsv file
+%                   wide
+%                       save the resulting data in a wide format .tsv file
+%                   mat
+%                       save the resulting data in a matlab .mat file
 %
 %               itargetf 
-%                   where to save the individual data:
+%                   where to save the individual data ['gfolder']:
 %
-%                   - gfolder ... in the group target folder
-%                   - sfolder ... in the individual session folder
-%                   
-%                   ['gfolder']
+%                   gfolder
+%                       in the group target folder
+%                   sfolder
+%                       in the individual session folder
 %
 %               verbose  
 %                   whether to be verbose 'true' or not 'false', when running 
@@ -198,7 +205,8 @@ function [tsset] = fc_extract_roi_timeseries_group(flist, roiinfo, frames, targe
 %   - name              - name
 %   - title             - title
 %   - subject           - subject
-%   - roi               - event
+%   - roi_name          - event
+%   - roi_code          - event
 %   - event             - frame
 %   - frame             - [<roi_code>]_<roi_name>
 %   - value
@@ -364,8 +372,9 @@ for n = 1:nsub
 
     for s = 1:nset
 
-        tsset(s).title = tsmat(s).title;            
-        tsset(s).roi   = tsmat(s).roi;                
+        tsset(s).title    = tsmat(s).title;            
+        tsset(s).roinames = tsmat(s).roinames;                
+        tsset(s).roicodes = tsmat(s).roicodes;                
 
         % -------> Embed data
 
@@ -420,18 +429,18 @@ if ismember({'long'}, options.savegroup)
     if verbose; fprintf('... saving long group tsv file'); end
 
     fout = fopen([basefilename '_long.tsv'], 'w');
-    fprintf(fout, 'name\ttitle\tsubject\troi\tevent\tframe\tvalue\n');
+    fprintf(fout, 'name\ttitle\tsubject\troi_name\troi_code\tevent\tframe\tvalue\n');
 
     for n = 1:length(tsset)
         if tsset(n).title, settitle = tsset(n).title; else settitle = 'timeseries'; end
 
-        nroi    = length(tsset(n).roi);
+        nroi    = length(tsset(n).roinames);
         % --- write up
         for sid = 1:noksub
             nframes = tsset(n).subject(sid).N;
             for r = 1:nroi
                 for f = 1:nframes            
-                    fprintf(fout, '%s\t%s\t%s\t%s\t%d\t%d\t%.5f\n', lname, settitle, tsset(n).subject(sid).id, tsset(n).roi{r}, tsset(n).subject(sid).tevents(f), tsset(n).subject(sid).tframes(f), tsset(n).subject(sid).ts(r,f));
+                    fprintf(fout, '%s\t%s\t%s\t%s\t%d\t%d\t%d\t%.5f\n', lname, settitle, tsset(n).subject(sid).id, tsset(n).roinames{r}, tsset(n).roicodes(r), tsset(n).subject(sid).tevents(f), tsset(n).subject(sid).tframes(f), tsset(n).subject(sid).ts(r,f));
                 end
             end
         end
@@ -446,11 +455,11 @@ end
 if ismember({'wide'}, options.savegroup)
     if verbose; fprintf('... saving wide tsv file'); end
     
-    nroi = length(tsset(1).roi);
+    nroi = length(tsset(1).roinames);
     fout = fopen([basefilename '_wide.tsv'], 'w');
     fprintf(fout, 'name\ttitle\tsubject\tevent\tframe');
     for r = 1:nroi
-        fprintf(fout, '\t[%d]_%s', r, tsset(1).roi{r});
+        fprintf(fout, '\t[%d]_%s', tsset(1).roicodes(r), tsset(1).roinames{r});
     end
 
     for n = 1:length(tsset)
