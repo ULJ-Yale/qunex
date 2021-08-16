@@ -818,6 +818,7 @@ def main(args=None):
 
     # array for storing session ids
     sessionids_array = []
+    getsessionids = None
 
     # if scheduler is not None then setup parallelism
     if scheduler and sessions is not None:
