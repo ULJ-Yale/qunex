@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -23,10 +23,11 @@ Created by Grega Repovs on 2013-04-08.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import img as gi
-import qximg as qxi
 import numpy as np
 import gzip
+
+import general.img as gi
+import general.qximg as qxi
 
 def fz2zf(inf, outf=None):
     """
@@ -142,7 +143,7 @@ def reslice(inf, slices, outf=None):
     gframes = int(nihdr.sizez / slices)
     eslices = nihdr.sizez % slices
 
-    sdelete = range(0,slices,2) + range(1,slices,2)
+    sdelete = list(range(0,slices,2)) + list(range(1,slices,2))
     sdelete = sdelete[0:eslices]
     indeces = [gframes+1 if n in sdelete else gframes for n in range(slices)]
     indeces = [sum(indeces[0:n+1])-1 for n in range(slices)]

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -59,9 +59,9 @@ deprecated_commands = {
                         "data_sync": ["DataSync"],
                         "run_qc_dwi_eddy": ["runQC_DWIeddyQC"],
                         "dwi_eddy_qc": ["DWIeddyQC"],
-                        "dwi_fsl_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU"],
-                        "dwi_fsl_dtifit": ["DWIFSLdtifit", "FSLDTtifit"],
-                        "run_qc_dwi_fsl_dtifit": ["runQC_DWIFSLdtifit"],
+                        "dwi_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU", "dwi_fsl_bedpostx_gpu"],
+                        "dwi_dtifit": ["DWIFSLdtifit", "FSLDTtifit", "dwi_fsl_dtifit"],
+                        "run_qc_dwi_dtifit": ["runQC_DWIFSLdtifit", "run_qc_dwi_fsl_dtifit"],
                         "dwi_legacy": ["hcpdLegacy", "DWILegacy"],
                         "run_qc_dwi_legacy": ["runQC_DWILegacy"],
                         "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
@@ -157,7 +157,10 @@ deprecated_commands = {
                         "longitudinal_freesurfer": ["longitudinalFS"],
                         "create_bold_list": ["createBoldList"],
                         "create_conc_list": ["createConcList"],
-                        "map_raw_data": ["mapRawData"]
+                        "map_raw_data": ["mapRawData"],
+                        "hcp_task_fmri_analysis" : ["hcp_TaskfMRIAnalysis"],
+                        "dwi_xtract": ["fsl_xtract"],
+                        "dwi_f99": ["fsl_f99"]
                       }
 
 # the function for checking whether a command is deprecated or not
@@ -175,8 +178,8 @@ def check_deprecated_commands(command):
         # if deprecated warn the user and call the new one
         if command.lower() in [s.lower() for s in old_names] and command != new_name:
             new_command = new_name
-            print "\n\nWARNING: Use of a deprecated command! Command %s is now known as %s" % (command, new_command)
-            print ""
+            print("\n\nWARNING: Use of a deprecated command! Command %s is now known as %s" % (command, new_command))
+            print("")
             break
 
     return new_command
@@ -291,13 +294,13 @@ def check_deprecated_parameters(options, command):
     # variable for storing new options
     new_options = {}
     # iterate over all options
-    for k, v in options.iteritems():
+    for k, v in options.items():
         if k in deprecated_parameters:
             # if v is a dictionary then
             # the parameter was remaped to multiple values
             mapto = deprecated_parameters[k]
             if type(mapto) is dict:
-                for k2, v2 in mapto.iteritems():
+                for k2, v2 in mapto.items():
                     if command in v2:
                         mapto = k2
                         break
@@ -330,7 +333,7 @@ def check_deprecated_parameters(options, command):
             print("         ... %s" % (k))
 
     # -> check new parameter values
-    for k, v in new_options.iteritems():
+    for k, v in new_options.items():
         if k in deprecated_values:
             if v in deprecated_values[k]:
                 new_options[k] = deprecated_values[k][v]
@@ -344,14 +347,14 @@ def check_deprecated_parameters(options, command):
         print("         Please correct the listed parameter values in command line or batch file!")
 
     # -> warn if some parameter values might be deprecated
-    for k, v in new_options.iteritems():
+    for k, v in new_options.items():
         if k in towarn_parameters:
             # search string
             s = towarn_parameters[k][0]
             if s in v:
                 # warning message
                 msg = towarn_parameters[k][1]
-                print "\nWARNING: %s\n" % msg
+                print("\nWARNING: %s\n" % msg)
 
     return new_options
 
@@ -372,7 +375,7 @@ def impute_parameters(options, command):
     for target_option, source_option in to_impute:
         if options[target_option] is None:
             options[target_option] = options[source_option]
-            print "WARNING: Parameter %s was not specified. Its value was imputed from parameter %s and set to '%s'!" % (target_option, source_option, str(options[source_option])) 
+            print("WARNING: Parameter %s was not specified. Its value was imputed from parameter %s and set to '%s'!"  % (target_option, source_option, str(options[source_option])))
     
     return options
 

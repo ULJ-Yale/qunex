@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -11,8 +11,8 @@
 This file holds code for running FSL commands. It
 consists of functions:
 
---fsl_f99       Runs FSL F99 command.
---fsl_xtract    Runs FSL XTRACT command.
+--dwi_f99       Runs FSL F99 command.
+--dwi_xtract    Runs FSL XTRACT command.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -29,12 +29,14 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 import os
+import datetime
+import traceback
 
-from core import *
+import processing.core as pc
 
-def fsl_f99(sinfo, options, overwrite=False, thread=0):
+def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
-    ``fsl_f99 [... processing options]``
+    ``dwi_f99 [... processing options]``
     ``f99 [... processing options]``
 
     This command executes FSL's F99 script for registering your own diffusion
@@ -44,7 +46,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    Succesfull completion of FSL's dtifit processing (dwi_fsl_dtifit command in
+    Succesfull completion of FSL's dtifit processing (dwi_dtifit command in
     QuNex).
 
     INPUTS
@@ -100,7 +102,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex fsl_f99 \
+        qunex dwi_f99 \
           --sessionsfolder="/data/macaque_study/sessions" \
           --sessions="hilary,jane" \
           --overwrite=no \
@@ -113,17 +115,17 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s FSL F99 registration [%s] ..." % (action("Running", options["run"]), session)
+    r += "\n%s FSL F99 registration [%s] ..." % (pc.action("Running", options["run"]), session)
 
     # status variables
     run = True
 
     try:
         # check base settings
-        doOptionsCheck(options, sinfo, "fsl_f99")
+        pc.doOptionsCheck(options, sinfo, "dwi_f99")
         
         # construct dirs
-        fsl_f99_dir = os.path.join(os.environ["FSLDIR"], "data/xtract_data/standard/F99")
+        dwi_f99_dir = os.path.join(os.environ["FSLDIR"], "data/xtract_data/standard/F99")
         nhp_dir = os.path.join(options["sessionsfolder"], session, "NHP")
         f99reg_dir = os.path.join(nhp_dir, "F99reg")
         if not os.path.exists(f99reg_dir):
@@ -151,7 +153,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
                 "script"    : f99_script,
                 "input"     : dti_file,
                 "output"    : f99reg_dir + "/F99",
-                "f99dir"    : fsl_f99_dir}
+                "f99dir"    : dwi_f99_dir}
 
         # report command
         r += "\n\n------------------------------------------------------------\n"
@@ -181,7 +183,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
                 comm = comm_pre + comm + comm_post
 
                 # execute
-                r, endlog, _, failed = runExternalForFile(target_file, comm, "Running FSL F99", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL F99", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     r += "\n---> FSL F99 processing for session %s failed" % session
@@ -192,7 +194,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = checkRun(target_file, None, "FSL F99 " + session, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(target_file, None, "FSL F99 " + session, r, overwrite=overwrite)
 
                 if passed is None:
                     r += "\n---> FSL F99 can be run"
@@ -202,7 +204,7 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo['id'], "FSL F99 would be skipped", 1)
 
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
         r += str(errormessage)
         report = (sinfo['id'], "FSL F99 failed", 1)
@@ -214,9 +216,9 @@ def fsl_f99(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def fsl_xtract(sinfo, options, overwrite=False, thread=0):
+def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     """
-    ``fsl_xtract [... processing options]``
+    ``dwi_xtract [... processing options]``
     ``fslx [... processing options]``
 
     This command executes FSL's XTRACT (cross-species tractography) command.
@@ -228,9 +230,9 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
     REQUIREMENTS
     ============
 
-    Succesfull completion of FSL's bedpostx processing (dwi_fsl_bedpostx_gpu
+    Succesfull completion of FSL's bedpostx processing (dwi_bedpostx_gpu
     command in QuNex). For macaques FSL F99 registration is also required
-    (fsl_f99 command in QuNex).
+    (dwi_f99 command in QuNex).
 
     INPUTS
     ======
@@ -279,7 +281,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
                             Default for humans is set to session's:
                             [acpc_dc2standard.nii.gz and standard2acpc_dc.nii.gz],
                             for macaques warp fields from F99 registration
-                            command (fsl_f99) are used by default.
+                            command (dwi_f99) are used by default.
     --xtract_resolution     Output resolution in mm. Default is the same as in
                             the protocols folder unless --native is used.
     --xtract_ptx_options    Pass extra probtrackx2 options as a text file to
@@ -315,13 +317,13 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex fsl_xtract \
+        qunex dwi_xtract \
           --sessionsfolder="/data/example_study/sessions" \
           --sessions="OP110" \
           --species="human" \
           --overwrite=yes
 
-        qunex fsl_xtract \
+        qunex dwi_xtract \
           --sessionsfolder="/data/macaque_study/sessions" \
           --sessions="hilary,jane" \
           --species="macaque" \
@@ -335,14 +337,14 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s FSL XTRACT [%s] ..." % (action("Running", options["run"]), session)
+    r += "\n%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session)
 
     # status variables
     run = True
 
     try:
         # check base settings
-        doOptionsCheck(options, sinfo, "fsl_xtract")
+        pc.doOptionsCheck(options, sinfo, "dwi_xtract")
         
         # get species
         species = "HUMAN"
@@ -455,7 +457,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
                     os.remove(target_file)
 
                 # execute
-                r, endlog, _, failed = runExternalForFile(target_file, comm, "Running FSL XTRACT", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL XTRACT", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     r += "\n---> FSL XTRACT processing for session %s failed" % session
@@ -466,7 +468,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = checkRun(target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite)
 
                 if passed is None:
                     r += "\n---> FSL XTRACT can be run"
@@ -475,7 +477,7 @@ def fsl_xtract(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> FSL XTRACT processing for session %s would be skipped" % session
                     report = (sinfo['id'], "FSL XTRACT would be skipped", 1)
 
-    except (ExternalFailed, NoSourceFolder), errormessage:
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
         r += str(errormessage)
         report = (sinfo['id'], "FSL XTRACT failed", 1)

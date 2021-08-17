@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -13,7 +13,6 @@ import re
 import os
 import gzip
 import glob
-import logging
 import tempfile
 import zipfile
 import tarfile
@@ -25,8 +24,8 @@ import functools
 import base64
 import struct
 import shutil
-import collections
-import exceptions as ge
+
+import general.exceptions as ge
 
 try:
     import pydicom
@@ -156,7 +155,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
         for filename in filenames:
             full_filename = os.path.join(dirpath, filename)
 
-            print "---> Inspecting", full_filename
+            print("---> Inspecting", full_filename)
 
             opened_dicom = None
 
@@ -168,10 +167,10 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     opened_dicom, gz = readDICOMBase(full_filename)
 
                 if opened_dicom:
-                    print "     ... read as dicom"
+                    print("     ... read as dicom")
 
                 modified_dicom = deid_function(opened_dicom, filename=os.path.relpath(full_filename, folder))
-                print "     ... processed"
+                print("     ... processed")
 
                 if save:
                     if output_folder is None:
@@ -203,7 +202,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     else:
                         file = open(output_file, mode='wb')
 
-                    print "     -> saving to", output_file
+                    print("     -> saving to", output_file)
                     modified_dicom.save_as(file)
 
                     if gz:
@@ -224,7 +223,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     file.extractall(temp_directory)
                     file.close()
 
-                    print " ... extracted as a zip file"
+                    print(" ... extracted as a zip file")
 
                     discoverDICOM(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
 
@@ -235,7 +234,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                             relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
                         
-                        print "===> zipping to", target_file
+                        print("===> zipping to", target_file)
                         file = zipfile.ZipFile(target_file, mode='w')
 
                         for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
@@ -261,7 +260,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     file.extractall(temp_directory)
                     file.close()
 
-                    print " ... extracted as a tar file"                    
+                    print(" ... extracted as a tar file")
 
                     opened_dicom = True
 
@@ -276,7 +275,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                             relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
 
-                        print "====> archiving to", target_file
+                        print("====> archiving to", target_file)
                         file = tarfile.open(target_file, mode2)                                                
 
                         for item in glob.glob(os.path.join(temp_out_directory, '*')):
@@ -292,7 +291,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     pass  # File was not a tar archive
 
             if opened_dicom is None:
-                print "... not a dicom file ... skipping"
+                print("... not a dicom file ... skipping")
                 # logging.warning("Unable to identify %s as a dicom file or zip archive to search.", full_filename)
                 continue
 
@@ -350,7 +349,7 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
     # order the dicom tags
 
     if debug:
-        print "     ... recursing tree"
+        print("     ... recursing tree")
 
     for data_element in dataset:
         if data_element.name == "Pixel Data":
@@ -370,25 +369,25 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
             node_path = parent_path + "/" + data_element_name
 
         if debug:
-            print "         > node id:", node_id, "node path:", node_path, 
-            print "> checking element type", 
+            print("         > node id:", node_id, "node path:", node_path, end=" ")
+            print("> checking element type", end=" ")
 
         if isinstance(data_element.value, pydicom.Sequence):   # a sequence
             if debug:
-                print "> a sequence"
+                print("> a sequence")
             for dataset in data_element.value:
                 recurse_tree(dataset, node_func, node_id, node_path)
         elif isinstance(data_element.value, pydicom.Dataset):
             if debug:
-                print "> a dataset"
+                print("> a dataset")
             recurse_tree(data_element.value, node_func, node_id, node_path)
         else:
             if debug:
-                print "> an element"
+                print("> an element")
             node_func(node_id, node_path, data_element)
 
     if debug:
-        print "     ... end recursing"
+        print("     ... end recursing")
 
 
 def dicom_scan(opened_dicom, filename=""):
@@ -1058,7 +1057,7 @@ def strip_dates(dicom_file, replacement_date=None):
     elif "SeriesDate" in dicom_file:
         target_date = dicom_file.SeriesDate
     else:
-        print "     -> WARNING: No StudyDate field present"
+        print("     -> WARNING: No StudyDate field present")
         return
 
     if replacement_date is None:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # encoding: utf-8
 
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -25,12 +25,13 @@ import shutil
 import re
 import subprocess
 import glob
-import general.exceptions as ge
 import sys
 import traceback
 import time
-import general.core as gc
 from datetime import datetime
+
+import general.exceptions as ge
+import general.core as gc
 from general.img import *
 from general.meltmovfidl import *
 
@@ -60,21 +61,21 @@ def print_exc_plus():
         f = f.f_back
     stack.reverse()
     traceback.print_exc()
-    print "Locals by frame, innermost last"
+    print("Locals by frame, innermost last")
     for frame in stack:
         print
-        print "Frame %s in %s at line %s" % (frame.f_code.co_name,
+        print("Frame %s in %s at line %s" % (frame.f_code.co_name,
                                              frame.f_code.co_filename,
-                                             frame.f_lineno)
+                                             frame.f_lineno))
         for key, value in frame.f_locals.items():
-            print "\t%20s = " % key,
+            print("\t%20s = " % key, end=" ")
             # We have to be careful not to cause a new error in our error
             # printer! Calling str() on an unknown object could cause an
             # error we don't want.
             try:
-                print value
+                print(value)
             except:
-                print "<ERROR WHILE PRINTING VALUE>"
+                print("<ERROR WHILE PRINTING VALUE>")
 
 
 class ExternalFailed(Exception):
@@ -128,7 +129,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
 
     bsearch  = re.compile('bold([0-9]+)')
     btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
-    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
+    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k) for (k, v) in sinfo.items() if k.isdigit() and bsearch.match(v['name'])]
     bskip    = []
     nbolds   = len(bolds)
 
@@ -221,10 +222,10 @@ def getExactFile(candidate):
     if len(g) == 1:
         return g[0]
     elif len(g) > 1:
+        # print("WARNING: there are %d files matching %s" % (len(g), candidate))
         return g[0]
-        print "WARNING: there are %d files matching %s" % (len(g), candidate)
     else:
-        # print "WARNING: there are no files matching %s" % (candidate)
+        # print("WARNING: there are no files matching %s" % (candidate))
         return ''
 
 
@@ -236,7 +237,7 @@ def getFileNames(sinfo, options):
     d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
-    rgss = rgss.translate(None, ' ,;|') + options['glm_name']
+    rgss = rgss.translate(str.maketrans('','',' ,;|')) + options['glm_name']
 
     concname = "_".join(e for e in [options['boldname'] + options.get('bold_tail', ''), options['image_target'].replace('cifti', 'dtseries'), options.get('concname', 'conc'), options.get('fidlname', '')] if e)
 
@@ -365,10 +366,10 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     ext = getExtension(options['image_target'])
 
-    # print "root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext
+    # print("root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext)
 
     rgss = options['bold_nuisance']
-    rgss = rgss.translate(None, ' ,;|')
+    rgss = rgss.translate(str.maketrans('','',' ,;|'))
 
     if 'path_' + boldname in options:
         f['bold_source']        = getExactFile(os.path.join(d['s_source'], options['path_' + boldname]))
@@ -379,7 +380,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     # --- alternative check for 4dfp preprocessing
 
     if f['bold_source'] == '' and options['image_target'] == '4dfp':
-        # print "Searching in the atlas folder ..."
+        # print("Searching in the atlas folder ...")
         f['bold_source']        = getExactFile(os.path.join(d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
 
     # --- bold masks
@@ -516,20 +517,20 @@ def getSessionFolders(sinfo, options):
     d['qc_mov']             = os.path.join(d['qc'], 'movement' + options['img_suffix'] + options['bold_variant'])
 
     if not os.path.exists(d['s_source']) and options['source_folder']:
-        print "WARNING: Source folder not found, waiting 15s to give it a chance to come online!"
+        print("WARNING: Source folder not found, waiting 15s to give it a chance to come online!")
         time.sleep(15)
         if not os.path.exists(d['s_source']):
-            print "WARNING: Source folder still not found, if data has not been copied over the processing will fail!"
+            print("WARNING: Source folder still not found, if data has not been copied over the processing will fail!")
             # errormessage = "\n... ERROR: Source folder does not exist or is not reachable [%s]" % (d['s_source'])
             # raise NoSourceFolder(errormessage)
 
-    for (key, fpath) in d.iteritems():
+    for (key, fpath) in d.items():
         if key != 's_source':
             if not os.path.exists(fpath):
                 try:
                     os.makedirs(fpath)
                 except:
-                    print "ERROR: Could not create folder %s! Please check paths and permissions!" % (fpath)
+                    print("ERROR: Could not create folder %s! Please check paths and permissions!" % (fpath))
                     raise
 
     return d
@@ -567,7 +568,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
             fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
 
-    if os.path.exists(tfile) and not overwrite:
+    if tfile is not None and os.path.exists(tfile) and not overwrite:
         if verbose:
             r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
         report = "%s finished" % (command)
@@ -596,8 +597,14 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
                 report += ", full file check could not be completed"
                 passed = 'incomplete'
                 failed = 1
+
+    elif tfile is None:
+        report = "%s finished" % (command)
+        passed = 'done'
+        failed = 0
+
     else:
-        if verbose:
+        if verbose and tfile is not None:
             r += "\n---> %s test file missing:\n     %s" % (command, tfile)
         report = "%s not finished" % (command)
         passed = None
@@ -694,10 +701,10 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     # external command info
     printComm += "------------------------------------------------------------\n"
     printComm += "Running external command via QuNex:\n"
-    comm = run.replace(" --", "\n     --").replace("             ", "")
+    comm = run.replace(" ", "").replace("--", " \ \n    --")
     comm += "\n"
     printComm += comm
-    if checkfile is not None or checkfile != "":
+    if checkfile is not None and checkfile != "":
         printComm += "\nTest file: \n%s\n" % checkfile
     printComm += "------------------------------------------------------------"
 
@@ -711,7 +718,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         r += '\n\n%s' % (description)
 
         # --- set up parameters
-
+        basestring = (str, bytes)
         if isinstance(logtags, basestring) or logtags is None:
             logtags = [logtags]
 
@@ -747,7 +754,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         # --- run command
         try:
             # add command call to start of the log
-            print >> nf, printComm
+            print(printComm, file=nf)
 
             # close and switch to append mode
             nf.close()
@@ -782,7 +789,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         # --- End
 
         if status and status == 'done':
-            print >> nf, "\n\n===> Successful completion of task\n"
+            print("\n\n===> Successful completion of task\n", file=nf)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
         else:
             if status and status == 'incomplete':
@@ -819,7 +826,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     """
 
     r = '\n\n%s' % (description)
-
+    basestring = (str, bytes)
     if isinstance(logtags, basestring):
         logtags = [logtags]
 
@@ -834,7 +841,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     endlog      = None
 
     nf = open(tmplogfile, 'w')
-    print >> nf, "\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description)
+    print("\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description), file=nf)
 
     ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
     if ret:
@@ -844,7 +851,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
         endlog = errlogfile
         raise ExternalFailed(r)
     else:
-        print >> nf, "\n\n===> Successful completion of task\n"
+        print("\n\n===> Successful completion of task\n", file=nf)
         nf.close()
         if remove:
             os.remove(tmplogfile)

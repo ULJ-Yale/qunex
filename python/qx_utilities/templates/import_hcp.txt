@@ -1,6 +1,6 @@
 {
     "files": {
-        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap"],        
+        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap", "mbPCASLhr"],
         "T1w": {
             "info":  [],
         },
@@ -21,11 +21,14 @@
         },
         "SpinEchoFieldMap": {
             "info":  ["phenc"]
+        },
+        "mbPCASLhr": {
+            "info":  []
         }
     },
     "folders": {
-        "order": {"T1w": 1, "T2w": 2, "rfMRI": 3, "tfMRI": 4, "Diffusion": 5},
-        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "Diffusion"],
+        "order": {"T1w": 1, "T2w": 2, "rfMRI": 3, "tfMRI": 4, "Diffusion": 5, "mbPCASLhr": 6},
+        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "Diffusion", "mbPCASLhr"],
         "T1w": {
             "info":  [],
             "check": [  
@@ -35,19 +38,19 @@
                         ["SpinEchoFieldMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
-                        ["T1w"]                        
+                        ["T1w"]
                       ]
         },
         "T2w": {
             "info":  [],
-            "check": [                        
+            "check": [
                         ["SpinEchoFieldMap", "AP"],
                         ["SpinEchoFieldMap", "PA"],
                         ["SpinEchoFieldMap", "LR"],
                         ["SpinEchoFieldMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
-                        ["T2w"]                        
+                        ["T2w"]
                      ]
         },
         "rfMRI": {
@@ -100,6 +103,14 @@
                         ["DWI",  "dir97", "RL", "SBRef"],
                         ["DWI",  "dir97", "RL", "-SBRef"]
                     ]
-        }
+        },
+        "mbPCASLhr": {
+            "info":  [],
+            "check": [  
+                        ["SpinEchoFieldMap", "AP"],
+                        ["SpinEchoFieldMap", "PA"],
+                        ["mbPCASLhr"]
+                      ]
+        },
     }    
 }

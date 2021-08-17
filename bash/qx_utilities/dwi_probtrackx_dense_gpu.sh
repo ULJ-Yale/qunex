@@ -30,7 +30,7 @@ usage() {
     echo "to run it locally from a GPU-equiped machine."
     echo ""
     echo "It explicitly assumes the Human Connectome Project folder structure and "
-    echo "completed dwi_fsl_bedpostx_gpu and dwi_pre_tractography functions processing:"
+    echo "completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:"
     echo ""     
     geho " - HCP Pipelines"
     geho " - FSL 5.0.9 or greater"
@@ -50,16 +50,20 @@ usage() {
     echo "INPUTS"
     echo "======"
     echo ""
-    echo "--sessionsfolder    Path to study folder that contains sessions"
-    echo "--sessions          Comma separated list of sessions to run"
-    echo "--overwrite         Delete a prior run for a given session (yes / no) [Note: "
-    echo "                    this will delete only the Matrix run specified by the "
-    echo "                    -omatrix flag]"
-    echo "--omatrix1          Specify if you wish to run matrix 1 model [yes or omit flag]"
-    echo "--omatrix3          Specify if you wish to run matrix 3 model [yes or omit flag]"
-    echo "--nsamplesmatrix1   Number of samples [10000]"
-    echo "--nsamplesmatrix3   Number of samples [3000]"
-    echo "--scriptsfolder     Location of the probtrackX GPU scripts"
+    echo "--sessionsfolder          Path to study folder that contains sessions"
+    echo "--sessions                Comma separated list of sessions to run"
+    echo "--overwrite               Delete a prior run for a given session (yes / no) [Note: "
+    echo "                          this will delete only the Matrix run specified by the "
+    echo "                          -omatrix flag]"
+    echo "--omatrix1                Specify if you wish to run matrix 1 model [yes or omit flag]"
+    echo "--omatrix3                Specify if you wish to run matrix 3 model [yes or omit flag]"
+    echo "--nsamplesmatrix1         Number of samples [10000]"
+    echo "--nsamplesmatrix3         Number of samples [3000]"
+    echo "--nsamplesmatrix1         Number of samples [10000]"
+    echo "--nsamplesmatrix3         Number of samples [3000]"
+    echo "--distancecorrection      Use distance correction [no]"
+    echo "--storestreamlineslength  Store average length of the streamlines [no]"
+    echo "--scriptsfolder           Location of the probtrackX GPU scripts"
     echo ""
     echo "Generic parameters set by default (will be parameterized in the future)::"
     echo ""
@@ -178,11 +182,13 @@ get_options() {
     unset Sessions
     unset Overwrite
     unset ScriptsFolder
-    unset NsamplesMatrixOne
-    unset NsamplesMatrixThree
+    unset NSamplesMatrixOne
+    unset NSamplesMatrixThree
     unset MatrixOne
     unset MatrixThree
     unset minimumfilesize
+    unset distance_correction
+    unset store_streamlines_length
 
     # -- Parse arguments
     SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
@@ -191,8 +197,10 @@ get_options() {
     ScriptsFolder=`opts_GetOpt "--scriptsfolder" $@`
     MatrixOne=`opts_GetOpt "--omatrix1" $@`
     MatrixThree=`opts_GetOpt "--omatrix3" $@`
-    NsamplesMatrixOne=`opts_GetOpt "--nsamplesmatrix1" $@`
-    NsamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
+    NSamplesMatrixOne=`opts_GetOpt "--nsamplesmatrix1" $@`
+    NSamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
+    distance_correction=`opts_GetOpt "--distancecorrection" $@`
+    store_streamlines_length=`opts_GetOpt "--storestreamlineslength" $@`
 
     if [[ -z ${SessionsFolder} ]]; then
         reho "ERROR: <sessionsfolder> not specified"
@@ -207,12 +215,10 @@ get_options() {
 
     # -- Check if Matrix 1 or 3 flag set
     if [[ -z "$MatrixOne" ]]  && [[ -z "$MatrixThree" ]]; then reho "ERROR: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix3='yes']"; exit 1; fi
-    if [[ "$MatrixOne" == "yes" ]]; then
-        if [[ -z "$NsamplesMatrixOne" ]]; then NsamplesMatrixOne=10000; fi
-    fi
-    if [[ "$MatrixThree" == "yes" ]]; then
-        if [[ -z "$NsamplesMatrixThree" ]]; then NsamplesMatrixThree=3000; fi
-    fi
+    if [ -z "$MatrixOne" ]; then MatrixOne="no"; fi
+    if [ -z "$MatrixThree" ]; then MatrixThree="no"; fi
+    if [[ -z "$NSamplesMatrixOne" ]]; then NSamplesMatrixOne=10000; fi
+    if [[ -z "$NSamplesMatrixThree" ]]; then NSamplesMatrixThree=3000; fi
     if [[ "$MatrixOne" == "yes" ]] && [[ "$MatrixThree" == "yes" ]]; then
         MNumber="1 3"
     elif [[ "$MatrixOne" == "yes" ]]; then
@@ -231,6 +237,20 @@ get_options() {
     cd $SessionsFolder/../ &> /dev/null
     StudyFolder=`pwd` &> /dev/null
 
+    # -- distance correction flag
+    if [ "$distance_correction" == "yes" ] || [ "$distance_correction" == "YES" ]; then
+        distance_correction="yes"
+    else
+        distance_correction="no"
+    fi
+
+    # -- store streamlines length flag
+    if [ "$store_streamlines_length" == "yes" ] || [ "$store_streamlines_length" == "YES" ]; then
+        store_streamlines_length="yes"
+    else
+        store_streamlines_length="no"
+    fi
+
     scriptName=$(basename ${0})
     # -- Report options
     echo ""
@@ -242,8 +262,10 @@ get_options() {
     echo "   probtrackX GPU scripts Folder: ${ScriptsFolder}"
     echo "   Compute Matrix1: ${MatrixOne}"
     echo "   Compute Matrix3: ${MatrixThree}"
-    echo "   Number of samples for Matrix1: ${NsamplesMatrixOne}"
-    echo "   Number of samples for Matrix3: ${NsamplesMatrixThree}"
+    echo "   Number of samples for Matrix1: ${NSamplesMatrixOne}"
+    echo "   Number of samples for Matrix3: ${NSamplesMatrixThree}"
+    echo "   Distance correction: ${distance_correction}"
+    echo "   Store streamlines length: ${store_streamlines_length}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
@@ -261,7 +283,7 @@ main() {
     # -------------------------------------------------
 
     # completion check
-    COMPLETIONCHECK=1
+    COMPLETIONCHECK=0
 
     for CASE in $CASES; do
         # output folder
@@ -276,8 +298,8 @@ main() {
         echo ""
         
         for MNum in $MNumber; do
-            if [[ "$MNum" == "1" ]]; then NSamples="${NsamplesMatrixOne}"; fi
-            if [[ "$MNum" == "3" ]]; then NSamples="${NsamplesMatrixThree}"; fi
+            if [[ "$MNum" == "1" ]]; then NSamples="${NSamplesMatrixOne}"; fi
+            if [[ "$MNum" == "3" ]]; then NSamples="${NSamplesMatrixThree}"; fi
             # -- Check of overwrite flag was set
             if [[ "$Overwrite" == "yes" ]]; then
                 echo ""
@@ -308,7 +330,7 @@ main() {
                 geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
                 echo ""
                 # -- Command to run
-                DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${Nsamples}"
+                DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${NSamples} ${distance_correction} ${store_streamlines_length}"
                 # -- Echo the command
                 echo "Running the following probtrackX GPU command: "
                 echo ""
@@ -325,11 +347,11 @@ main() {
             if [[ ! -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
                 # print error for this case
                 reho "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
-                # set as failed
-                COMPLETIONCHECK=0
             else
-                # pring sucess for this case
+                # print success for this case
                 geho "dwi_probtracx_dense_gpu for $CASE completed successfully!"
+                # set as success
+                COMPLETIONCHECK=1
             fi
         done
     done

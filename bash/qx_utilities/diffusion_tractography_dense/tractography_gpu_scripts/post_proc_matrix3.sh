@@ -35,3 +35,9 @@ ${Caret7_command} -cifti-math "log(1+a)" $ResultsFolder/${OutFileTemp}_waytotnor
 gzip --force $ResultsFolder/${OutFileName} --fast
 gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
 gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii --fast
+
+if [ -f ${ResultsFolder}/fdt_matrix3_lengths.dot ]; then
+    ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3_lengths.dot ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
+
+    gzip --force $ResultsFolder/${OutFileTemp}_lengths.dconn.nii --fast
+fi

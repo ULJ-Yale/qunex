@@ -712,10 +712,10 @@ echo ""
             ################## ACCEPTANCE TEST FOR EACH UNIT ###################
             #
             # -- SUPPORTED:
-            #    UnitTests="hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd dwi_fsl_dtifit dwi_fsl_bedpostx_gpu preprocess_bold compute_bold_fc_seed compute_bold_fc_gbc" 
+            #    UnitTests="hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd dwi_dtifit dwi_bedpostx_gpu preprocess_bold compute_bold_fc_seed compute_bold_fc_gbc" 
             #
             # -- Needs to be added:
-            #    UnitTests="hcpd dwi_legacy eddy_qc dwi_fsl_dtifit dwi_fsl_bedpostx_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation compute_bold_fc_seed compute_bold_fc_gbc"
+            #    UnitTests="hcpd dwi_legacy eddy_qc dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation compute_bold_fc_seed compute_bold_fc_gbc"
             #
             # -- FILES FOR EACH UNIT
             #
@@ -773,8 +773,8 @@ echo ""
                     elif [[ ${UnitTest} == "hcp_freesurfer" ]];    then UnitTestData="hcp/${CASE}/T1w/${CASE}/label/rh.entorhinal_exvivo.label"; UnitTestDataCheck
                     elif [[ ${UnitTest} == "hcp_post_freesurfer" ]];    then UnitTestData="hcp/${CASE}/MNINonLinear/ribbon.nii.gz"; UnitTestQCFolders="T1w T2w myelin"; UnitTestDataCheck
                     elif [[ ${UnitTest} == "hcpd" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/data.nii.gz"; UnitTestDataCheck
-                    elif [[ ${UnitTest} == "dwi_fsl_dtifit" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz"; UnitTestDataCheck
-                    elif [[ ${UnitTest} == "dwi_fsl_bedpostx_gpu" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion.bedpostX/mean_fsumsamples.nii.gz"; UnitTestDataCheck
+                    elif [[ ${UnitTest} == "dwi_dtifit" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz"; UnitTestDataCheck
+                    elif [[ ${UnitTest} == "dwi_bedpostx_gpu" ]]; then UnitTestData="hcp/${CASE}/T1w/Diffusion.bedpostX/mean_fsumsamples.nii.gz"; UnitTestDataCheck
                     fi
                     
                     if [[ ${RUN_TYPE} == "xnat" ]]; then 

@@ -102,3 +102,6 @@ settings.json
 
 # DS* files
 .DS*
+
+# .vscode
+.vscode
