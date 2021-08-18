@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.X
+
+Fixed a bug when running the create_study command through qunex_container. Optimized the environmelt setup. Fixed run_turnkey behavior when reran on the same study multiple times.
+
 ## 0.91.7 (2021-11-08)
 
 Fixed a bug in hcp_fmri_task_analysis and made the command more robust.

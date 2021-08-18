@@ -1903,7 +1903,7 @@ fi
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ create_batch"; echo ""
 
         # ------------------------------
-        ExecuteCall="${QuNexCommand} create_batch --sessionsfolder='${SessionsFolder}' --targetfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='append'"
+        ExecuteCall="${QuNexCommand} create_batch --sessionsfolder='${SessionsFolder}' --targetfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='yes'"
         echo ""
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall}
