@@ -47,7 +47,7 @@ if [ -f ${ResultsFolder}/fdt_matrix1_lengths.dot ]; then
 
     ${Caret7_command} -cifti-average ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -cifti ${ResultsFolder}/Mat1_lengths.dconn.nii -cifti ${ResultsFolder}/Mat1_lengths_transp.dconn.nii
 
-    gzip --force $ResultsFolder/Mat1_lengths.dconn.nii --fast
-    gzip --force $ResultsFolder/Mat1_lengths_transp.dconn.nii–fast
-    gzip --force $ResultsFolder/${OutFileTemp}_lengths.dconn.nii --fast
+    gzip --force ${ResultsFolder}/Mat1_lengths.dconn.nii --fast
+    gzip --force ${ResultsFolder}/Mat1_lengths_transp.dconn.nii --fast
+    gzip --force ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii --fast
 fi

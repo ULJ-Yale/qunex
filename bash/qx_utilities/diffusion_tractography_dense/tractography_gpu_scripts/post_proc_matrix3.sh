@@ -22,7 +22,7 @@ ResultsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/Results/T
 
 ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3.dot ${ResultsFolder}/${OutFileName} -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
 
-##Create RowSum of dconn to check gyral bias
+# Create RowSum of dconn to check gyral bias
 OutFileTemp=`echo ${OutFileName//".dconn.nii"/""}`
 ${Caret7_command} -cifti-reduce ${ResultsFolder}/${OutFileName} SUM ${ResultsFolder}/${OutFileTemp}_sum.dscalar.nii
 mv $ResultsFolder/waytotal $ResultsFolder/${OutFileTemp}_waytotal
@@ -39,5 +39,5 @@ gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii --fast
 if [ -f ${ResultsFolder}/fdt_matrix3_lengths.dot ]; then
     ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3_lengths.dot ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
 
-    gzip --force $ResultsFolder/${OutFileTemp}_lengths.dconn.nii --fast
+    gzip --force ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii --fast
 fi
