@@ -35,9 +35,16 @@ ${Caret7_command} -cifti-math "log(1+a)" $ResultsFolder/${OutFileTemp}_waytotnor
 gzip --force $ResultsFolder/${OutFileName} --fast
 gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
 gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii --fast
+gzip --force ${ResultsFolder}/fdt_matrix3.dot --fast
 
 if [ -f ${ResultsFolder}/fdt_matrix3_lengths.dot ]; then
-    ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3_lengths.dot ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
+    grep -v ' 0\(\.0*\)\?$' ${ResultsFolder}/fdt_matrix3_lengths.dot > ${ResultsFolder}/fdt_matrix3_lengths_temp.dot
+    echo 91282 91282 0 >> ${ResultsFolder}/fdt_matrix3_lengths_temp.dot
 
+    ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3_lengths_temp.dot ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
+
+    rm ${ResultsFolder}/fdt_matrix3_lengths_temp.dot
+
+    gzip --force ${ResultsFolder}/fdt_matrix3_lengths.dot --fast
     gzip --force ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii --fast
 fi
