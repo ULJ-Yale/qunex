@@ -14,7 +14,6 @@
 # -------------------------------------
 _hcp_Pipeline            : ${HCPPIPEDIR}
 _hcp_filename            : userdefined
-_hcp_processing_mode     : HCPStyleData
 
 # -------------------------------------
 # ---> Pre FreeSurfer parameters
