@@ -274,8 +274,8 @@ echo "--- Establishing paths for all input and output folders:"; echo ""
 if [ "$Lengths" == "yes" ]; then
     echo "--- Using streamline length dconn file"; echo ""
     DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_lengths.dconn.nii.gz"
-    DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_lengths.${OutName}.pconn.nii"
-    DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_lengths.${OutName}.pdconn.nii"
+    DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pconn.nii"
+    DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pdconn.nii"
     if [ ! "$WayTotal" == "none" ]; then
         echo "--- ignoring waytotal argument (should be set to none when parcellating the streamline lengths matrix)"; echo ""
     fi 
@@ -290,14 +290,14 @@ else
     if [ "$WayTotal" == "standard" ]; then
         echo "--- Using waytotal normalized dconn file"; echo ""
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
-        DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pdconn.nii"
+        DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pconn.nii"
+        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pdconn.nii"
     fi
     if [ "$WayTotal" == "log" ]; then
         echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
-        DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
+        DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pconn.nii"
+        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pdconn.nii"
     fi
 
 fi
