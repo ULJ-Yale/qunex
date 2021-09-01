@@ -28,9 +28,9 @@ import general.exceptions as ge
 import os.path
 import general.core as gc
 
-def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
+def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", folderstructure="hcpls", hcp_suffix=""):
     """
-    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=standard] [folderstructure=hcpls] [hcp_suffix=""]``
+    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [folderstructure=hcpls] [hcp_suffix=""]``
 
     The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
@@ -56,10 +56,10 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                           mapping)
 
     --hcp_filename      How to name the bold files in the hcp structure. The 
-                        default is to name them by their bold number 
-                        ('standard') (e.g. BOLD_1), the alternative is to use 
-                        their actual names ('original') (e.g. rfMRI_REST1_AP).
-                        ['standard']
+                        default ('automated') is to automatically name them by
+                        their bold number (e.g. BOLD_1), the alternative
+                        ('userdefined') is to use their user defined
+                        names  (e.g. rfMRI_REST1_AP). ['automated']
     --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
                         See below for details. ['hcpls'] 
     --hcp_suffix        Optional suffix to append to session id when creating 
@@ -198,7 +198,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     nT1w  = 0
     nT2w  = 0
 
-    filename = hcp_filename == 'original'
+    filename = hcp_filename == 'userdefined'
 
     if folderstructure not in ['initial', 'hcpls']:
         raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")

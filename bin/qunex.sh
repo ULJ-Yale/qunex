@@ -445,6 +445,7 @@ QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \
 --matrixversion=${MatrixVersion} \
 --parcellationfile=${ParcellationFile} \
 --waytotal=${WayTotal} \
+--lengths=${Lengths} \
 --outname=${OutName} \
 --overwrite=${Overwrite}"
 # -- QuNex bash execute function
@@ -1593,6 +1594,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
     OutName=`get_parameters "${setflag}outname" $@`
     WayTotal=`get_parameters "${setflag}waytotal" $@`
+    Lengths=`get_parameters "${setflag}lengths" $@`
     # -- Input flags for  dwi_seed_tractography_dense
     SeedFile=`get_parameters "${setflag}seedfile" $@`
     # -- Input flags for dwi_eddy_qc
@@ -2444,6 +2446,8 @@ if [ "$CommandToRun" == "dwi_parcellate" ]; then
             if [[ -z ${Scheduler} ]]; then reho "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
     if [ -z "$WayTotal" ]; then WayTotal="no"; echo "NOTE: --waytotal normalized data not specified. Assuming default [no]"; fi
+    if [ -z "$Lengths" ]; then Lengths="no"; echo "NOTE --lengths not specified. Assuming default [no]"; fi
+
     # -- Report parameters
     echo ""
     echo "Running $CommandToRun with the following parameters:"
@@ -2456,6 +2460,7 @@ if [ "$CommandToRun" == "dwi_parcellate" ]; then
     echo "   File to use for parcellation: ${ParcellationFile}"
     echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
     echo "   Waytotal normalization: ${WayTotal}"
+    echo "   Streamline Lengths: ${Lengths}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
     # -- Loop through all the cases

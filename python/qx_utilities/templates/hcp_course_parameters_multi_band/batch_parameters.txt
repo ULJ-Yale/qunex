@@ -13,9 +13,7 @@
 # ---> HCP Pipelines general parameters
 # -------------------------------------
 _hcp_Pipeline            : ${HCPPIPEDIR}
-_hcp_folderstructure     : hcpls
-_hcp_filename            : original
-_hcp_processing_mode     : HCPStyleData
+_hcp_filename            : userdefined
 
 # -------------------------------------
 # ---> Pre FreeSurfer parameters
