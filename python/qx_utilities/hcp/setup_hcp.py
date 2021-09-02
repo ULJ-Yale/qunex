@@ -55,12 +55,15 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                         - clear (remove any existing files and redo hcp 
                           mapping)
 
-    --hcp_filename      How to name the bold files in the hcp structure. The 
-                        default ('automated') is to automatically name them by
-                        their bold number (e.g. BOLD_1), the alternative
-                        ('userdefined') is to use their user defined
-                        names  (e.g. rfMRI_REST1_AP). ['automated']
-    --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
+    --hcp_filename      How to name the BOLD files once mapped into
+                        the hcp input folder structure. The default
+                        ('automated') will automatically name each
+                        file by their number (e.g. BOLD_1). The
+                        alternative ('userdefined') is to use the
+                        file names, which can be defined by the
+                        user prior to mapping (e.g. rfMRI_REST1_AP).
+                        ['automated']
+    --folderstructure   Which HCP folder structure to use 'hcpya' or 'hcpls'. 
                         See below for details. ['hcpls'] 
     --hcp_suffix        Optional suffix to append to session id when creating 
                         session folder within the hcp folder. The final path
@@ -200,10 +203,10 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
     filename = hcp_filename == 'userdefined'
 
-    if folderstructure not in ['initial', 'hcpls']:
+    if folderstructure not in ['hcpya', 'hcpls']:
         raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
 
-    if folderstructure == 'initial':
+    if folderstructure == 'hcpya':
         fctail = '_fncb'
         fmtail = '_strc'
         basef = os.path.join(sourcefolder, targetfolder, inf['id'] + hcp_suffix)

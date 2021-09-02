@@ -106,7 +106,7 @@ def getHCPPaths(sinfo, options):
     hcpbase                 = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
 
     d['base']               = hcpbase
-    if options['hcp_folderstructure'] == 'initial':
+    if options['hcp_folderstructure'] == 'hcpya':
         d['source'] = d['base']
     else:
         d['source'] = os.path.join(d['base'], 'unprocessed')
@@ -205,10 +205,10 @@ def getHCPPaths(sinfo, options):
 
 
 def doHCPOptionsCheck(options, sinfo, command):
-    if options['hcp_folderstructure'] not in ['initial', 'hcpls']:
+    if options['hcp_folderstructure'] not in ['hcpya', 'hcpls']:
         raise ge.CommandFailed(command, "Unknown HCP folder structure version", "The specified HCP folder structure version is unknown: %s" % (options['hcp_folderstructure']), "Please check the 'hcp_folderstructure' parameter!")
 
-    if options['hcp_folderstructure'] == 'initial':
+    if options['hcp_folderstructure'] == 'hcpya':
         options['fctail'] = '_fncb'
         options['fmtail'] = '_strc'
     else:
@@ -368,7 +368,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 processing functionality is allowed
                                 (LegacyStyleData). In this case running
                                 processing w/o a T2w image.
-    --hcp_folderstructure       If set to 'initial' the folder structure used
+    --hcp_folderstructure       If set to 'hcpya' the folder structure used
                                 in the initial HCP Young Adults study is used.
                                 Specifically, the source files are stored in
                                 individual folders within the main 'hcp' folder
@@ -381,11 +381,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 'unprocessed' folder in the main 'hcp' folder,
                                 parallel to the working folders and the
                                 'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the bold files in the hcp structure.
-                                The default ('automated') is to automatically
-                                name them by their bold number (e.g. BOLD_1),
-                                the alternative ('userdefined') is to use their
-                                user defined names  (e.g. rfMRI_REST1_AP).
+    --hcp_filename              How to name the BOLD files once mapped into
+                                the hcp input folder structure. The default
+                                ('automated') will automatically name each
+                                file by their number (e.g. BOLD_1). The
+                                alternative ('userdefined') is to use the
+                                file names, which can be defined by the
+                                user prior to mapping (e.g. rfMRI_REST1_AP).
                                 ['automated']
 
     Specific parameters
@@ -926,7 +928,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 processing functionality is allowed
                                 (LegacyStyleData). In this case running
                                 processing w/o a T2w image.
-    --hcp_folderstructure       If set to 'initial' the folder structure used
+    --hcp_folderstructure       If set to 'hcpya' the folder structure used
                                 in the initial HCP Young Adults study is used.
                                 Specifically, the source files are stored in
                                 individual folders within the main 'hcp' folder
@@ -939,11 +941,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 'unprocessed' folder in the main 'hcp' folder,
                                 parallel to the working folders and the
                                 'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the bold files in the hcp structure.
-                                The default ('automated') is to automatically
-                                name them by their bold number (e.g. BOLD_1),
-                                the alternative ('userdefined') is to use their
-                                user defined names  (e.g. rfMRI_REST1_AP).
+    --hcp_filename              How to name the BOLD files once mapped into
+                                the hcp input folder structure. The default
+                                ('automated') will automatically name each
+                                file by their number (e.g. BOLD_1). The
+                                alternative ('userdefined') is to use the
+                                file names, which can be defined by the
+                                user prior to mapping (e.g. rfMRI_REST1_AP).
                                 ['automated']
 
     Specific parameters
@@ -1346,7 +1350,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
                           - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                           - '<path>' (for an arbitrary directory)
 
-    --hcp_folderstructure       If set to 'initial' the folder structure used
+    --hcp_folderstructure       If set to 'hcpya' the folder structure used
                                 in the initial HCP Young Adults study is used.
                                 Specifically, the source files are stored in
                                 individual folders within the main 'hcp' folder
@@ -1359,11 +1363,13 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 'unprocessed' folder in the main 'hcp' folder,
                                 parallel to the working folders and the
                                 'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the bold files in the hcp structure.
-                                The default ('automated') is to automatically
-                                name them by their bold number (e.g. BOLD_1),
-                                the alternative ('userdefined') is to use their
-                                user defined names  (e.g. rfMRI_REST1_AP).
+    --hcp_filename              How to name the BOLD files once mapped into
+                                the hcp input folder structure. The default
+                                ('automated') will automatically name each
+                                file by their number (e.g. BOLD_1). The
+                                alternative ('userdefined') is to use the
+                                file names, which can be defined by the
+                                user prior to mapping (e.g. rfMRI_REST1_AP).
                                 ['automated']
 
     Specific parameters
@@ -1682,7 +1688,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 processing functionality is allowed
                                 (LegacyStyleData). In this case running
                                 processing w/o a T2w image.
-    --hcp_folderstructure       If set to 'initial' the folder structure used
+    --hcp_folderstructure       If set to 'hcpya' the folder structure used
                                 in the initial HCP Young Adults study is used.
                                 Specifically, the source files are stored in
                                 individual folders within the main 'hcp' folder
@@ -1695,11 +1701,13 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 'unprocessed' folder in the main 'hcp' folder,
                                 parallel to the working folders and the
                                 'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the bold files in the hcp structure.
-                                The default ('automated') is to automatically
-                                name them by their bold number (e.g. BOLD_1),
-                                the alternative ('userdefined') is to use their
-                                user defined names  (e.g. rfMRI_REST1_AP).
+    --hcp_filename              How to name the BOLD files once mapped into
+                                the hcp input folder structure. The default
+                                ('automated') will automatically name each
+                                file by their number (e.g. BOLD_1). The
+                                alternative ('userdefined') is to use the
+                                file names, which can be defined by the
+                                user prior to mapping (e.g. rfMRI_REST1_AP).
                                 ['automated']
 
     Specific parameters
@@ -2355,7 +2363,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             processing with slice timing correction,
                             external BOLD reference, or without a distortion
                             correction method.
-    --hcp_folderstructure   If set to 'initial' the folder structure used
+    --hcp_folderstructure   If set to 'hcpya' the folder structure used
                             in the initial HCP Young Adults study is used.
                             Specifically, the source files are stored in
                             individual folders within the main 'hcp' folder
@@ -2368,11 +2376,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             'unprocessed' folder in the main 'hcp' folder,
                             parallel to the working folders and the
                             'MNINonLinear' folder. ['hcpls']
-    --hcp_filename          How to name the bold files in the hcp structure.
-                            The default ('automated') is to automatically
-                            name them by their bold number (e.g. BOLD_1),
-                            the alternative ('userdefined') is to use their
-                            user defined names  (e.g. rfMRI_REST1_AP).
+    --hcp_filename          How to name the BOLD files once mapped into
+                            the hcp input folder structure. The default
+                            ('automated') will automatically name each
+                            file by their number (e.g. BOLD_1). The
+                            alternative ('userdefined') is to use the
+                            file names, which can be defined by the
+                            user prior to mapping (e.g. rfMRI_REST1_AP).
                             ['automated']
 
 
@@ -2401,11 +2411,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_prefix       The prefix to use when generating BOLD names 
                             (see 'hcp_filename') for BOLD working folders 
                             and results. [BOLD]
-    --hcp_filename          How to name the bold files in the hcp structure.
-                            The default ('automated') is to automatically
-                            name them by their bold number (e.g. BOLD_1),
-                            the alternative ('userdefined') is to use their
-                            user defined names  (e.g. rfMRI_REST1_AP).
+    --hcp_filename          How to name the BOLD files once mapped into
+                            the hcp input folder structure. The default
+                            ('automated') will automatically name each
+                            file by their number (e.g. BOLD_1). The
+                            alternative ('userdefined') is to use the
+                            file names, which can be defined by the
+                            user prior to mapping (e.g. rfMRI_REST1_AP).
                             ['automated']
 
 
@@ -3396,7 +3408,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
                             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                             - '<path>' (for an arbitrary directory)
 
-    --hcp_folderstructure   If set to 'initial' the folder structure used
+    --hcp_folderstructure   If set to 'hcpya' the folder structure used
                             in the initial HCP Young Adults study is used.
                             Specifically, the source files are stored in
                             individual folders within the main 'hcp' folder
@@ -3409,11 +3421,13 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
                             'unprocessed' folder in the main 'hcp' folder,
                             parallel to the working folders and the
                             'MNINonLinear' folder. ['hcpls']
-    --hcp_filename          How to name the bold files in the hcp structure.
-                            The default ('automated') is to automatically
-                            name them by their bold number (e.g. BOLD_1),
-                            the alternative ('userdefined') is to use their
-                            user defined names  (e.g. rfMRI_REST1_AP).
+    --hcp_filename          How to name the BOLD files once mapped into
+                            the hcp input folder structure. The default
+                            ('automated') will automatically name each
+                            file by their number (e.g. BOLD_1). The
+                            alternative ('userdefined') is to use the
+                            file names, which can be defined by the
+                            user prior to mapping (e.g. rfMRI_REST1_AP).
                             ['automated']
 
     In addition a number of *specific* parameters can be used to guide the

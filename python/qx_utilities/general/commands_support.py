@@ -241,8 +241,17 @@ deprecated_parameters = {
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
 deprecated_values = {
-    'hcp_processing_mode':  {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
-    'hcp_filename':         {'name': 'userdefined', 'number': 'automated', 'original': 'userdefined', 'standard': 'automated'}
+    'hcp_processing_mode': {
+        'hcp': 'HCPStyleData',
+        'legacy': 'LegacyStyleData'
+    },
+    'hcp_filename': {
+        'name': 'userdefined',
+        'number': 'automated',
+        'original': 'userdefined',
+        'standard': 'automated'
+    },
+    'hcp_folderstructure': {'initial': 'hcpya'}
 }
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 
