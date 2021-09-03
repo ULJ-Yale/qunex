@@ -1902,8 +1902,14 @@ fi
     turnkey_create_batch() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ create_batch"; echo ""
 
+        # is overwrite yes?
+        TURNKEY_OVERWRITE="append"
+        if [[ ${OVERWRITE_STEP} == "yes" ]]; then
+            TURNKEY_OVERWRITE="yes"
+        fi
+
         # ------------------------------
-        ExecuteCall="${QuNexCommand} create_batch --sessionsfolder='${SessionsFolder}' --targetfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='yes'"
+        ExecuteCall="${QuNexCommand} create_batch --sessionsfolder='${SessionsFolder}' --targetfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='${TURNKEY_OVERWRITE}'"
         echo ""
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall}
