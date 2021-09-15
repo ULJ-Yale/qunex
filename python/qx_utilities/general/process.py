@@ -624,7 +624,8 @@ def run(command, args):
         sessions = [subjectInfo[e] for e in subjectList]
 
     # --- take parameters from batch file
-    for (k, v) in gpref.items():
+    batch_args = gcs.check_deprecated_parameters(gpref, command)
+    for (k, v) in batch_args.items():
         options[k] = v
 
     # --- parse command line options

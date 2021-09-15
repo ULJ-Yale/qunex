@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.91.X ()
+## 0.91.9 (2021-15-09)
 
-Renamed the `hcp_folderstructure` parameter value from `initial` to `hcpya` to increase clarity.
+Renamed the `hcp_folderstructure` parameter value from `initial` to `hcpya` to increase clarity. Optimized the entry point script for faster execution of commands.
 
 ## 0.91.8 (2021-01-09)
 
