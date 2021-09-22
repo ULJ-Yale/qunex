@@ -797,7 +797,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant session variable for QuNex run: ${CASE}"
         echo ""
     else
-        CASE="${XNAT_SUBJECT_LABEL}"
+        CASE="${XNAT_SESSION_LABEL}"
     fi
 fi
 #
