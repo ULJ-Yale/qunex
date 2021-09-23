@@ -39,6 +39,7 @@ gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
 gzip --force $ResultsFolder/${OutFileTemp}_waytotnorm_log.dconn.nii --fast
 gzip --force $ResultsFolder/Mat1.dconn.nii --fast
 gzip --force $ResultsFolder/Mat1_transp.dconn.nii --fast
+gzip --force ${ResultsFolder}/fdt_matrix1.dot --fast
 
 if [ -f ${ResultsFolder}/fdt_matrix1_lengths.dot ]; then
     ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix1_lengths.dot ${ResultsFolder}/Mat1_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN
@@ -47,7 +48,8 @@ if [ -f ${ResultsFolder}/fdt_matrix1_lengths.dot ]; then
 
     ${Caret7_command} -cifti-average ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -cifti ${ResultsFolder}/Mat1_lengths.dconn.nii -cifti ${ResultsFolder}/Mat1_lengths_transp.dconn.nii
 
-    gzip --force $ResultsFolder/Mat1_lengths.dconn.nii --fast
-    gzip --force $ResultsFolder/Mat1_lengths_transp.dconn.nii–fast
-    gzip --force $ResultsFolder/${OutFileTemp}_lengths.dconn.nii --fast
+    gzip --force ${ResultsFolder}/fdt_matrix1_lengths.dot --fast
+    gzip --force ${ResultsFolder}/Mat1_lengths.dconn.nii --fast
+    gzip --force ${ResultsFolder}/Mat1_lengths_transp.dconn.nii --fast
+    gzip --force ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii --fast
 fi

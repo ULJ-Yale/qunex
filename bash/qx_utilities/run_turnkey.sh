@@ -181,11 +181,11 @@ usage() {
  echo "--hcp_filename          Specify how files and folders should be named using HCP "
  echo "                        processing:"
  echo ""
- echo "                        standard"
- echo "                           files should be named using QuNex standard naming "
+ echo "                        automated"
+ echo "                           files should be named using QuNex automated naming "
  echo "                           (e.g. BOLD_1_PA)"
- echo "                        original"
- echo "                           files should be named using their original names "
+ echo "                        userdefined"
+ echo "                           files should be named using user defined names "
  echo "                           (e.g. rfMRI_REST1_AP)"
  echo ""
  echo "                        Note that the filename to be used has to be provided in "
@@ -1902,8 +1902,14 @@ fi
     turnkey_create_batch() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ create_batch"; echo ""
 
+        # is overwrite yes?
+        TURNKEY_OVERWRITE="append"
+        if [[ ${OVERWRITE_STEP} == "yes" ]]; then
+            TURNKEY_OVERWRITE="yes"
+        fi
+
         # ------------------------------
-        ExecuteCall="${QuNexCommand} create_batch --sessionsfolder='${SessionsFolder}' --targetfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='append'"
+        ExecuteCall="${QuNexCommand} create_batch --sessionsfolder='${SessionsFolder}' --targetfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='${TURNKEY_OVERWRITE}'"
         echo ""
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall}

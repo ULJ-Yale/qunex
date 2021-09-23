@@ -275,7 +275,7 @@ arglist = [
 
            ['# --- general HCP options'],
            ['hcp_processing_mode',    'HCPStyleData',                             str,    "Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData)."],
-           ['hcp_folderstructure',    'hcpls',                                    str,    "Which version of HCP folder structure to use, initial or hcpls ['hcpls']."],
+           ['hcp_folderstructure',    'hcpls',                                    str,    "If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically, the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study is used. Specifically, the source files are all stored within their individual subfolders located in the joint 'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder. ['hcpls']"],
            ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder."],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE."],
            ['hcp_Pipeline',           '',                                         str,    "path to pipeline base folder."],
@@ -283,7 +283,7 @@ arglist = [
            ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE."],
            ['hcp_printcom',           '',                                         str,    "Print command for the HCP scripts: set to echo to have commands printed and not executed.."],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_filename') for bold working folders and results."],
-           ['hcp_filename',           'standard',                                 str,    "How to name the image files in the hcp structure. The default is to name them by their number ('standard') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('original') (e.g. rfMRI_REST1_AP). ['standard']."],
+           ['hcp_filename',           'automated',                                 str,    "How to name the image files in the hcp structure. The default ('automated') is to name them automatically by their number using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative ('userdefined') is to use their user defined names (e.g. rfMRI_REST1_AP). ['automated']."],
            ['hcp_lowresmesh',         '32',                                       str,    "Usually 32 vertices."],
            ['hcp_lowresmeshes',       '32',                                       str,    "Usually 32 vertices."],
            ['hcp_hiresmesh',          '164',                                      int,    "Usually 164 vertices."],
@@ -624,7 +624,8 @@ def run(command, args):
         sessions = [subjectInfo[e] for e in subjectList]
 
     # --- take parameters from batch file
-    for (k, v) in gpref.items():
+    batch_args = gcs.check_deprecated_parameters(gpref, command)
+    for (k, v) in batch_args.items():
         options[k] = v
 
     # --- parse command line options

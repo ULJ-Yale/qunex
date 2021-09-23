@@ -211,7 +211,11 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     ## -- Check for HCPpipedir
     if [[ -e $HCPPIPEDIR/global/scripts/versioning/base.txt ]]; then
         # add specific TAG and commit hash
-        echo "    HCPpipelines TAG : $(git --git-dir ${HCPPIPEDIR}/.git describe --abbrev=0)"
+        echo "    HCPpipelines TAG : $(cat $HCPPIPEDIR/global/scripts/versioning/base.txt)"
+        echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
+    elif [[ -e $HCPPIPEDIR/version.txt ]]; then
+        # add specific TAG and commit hash
+        echo "    HCPpipelines TAG : $(cat $HCPPIPEDIR/version.txt)"
         echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
     else
         BinaryError="yes"; BinaryErrorReport="HCPPipelines"
