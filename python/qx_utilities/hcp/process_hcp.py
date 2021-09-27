@@ -4316,7 +4316,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                     report['done'].append(printbold)
 
                 # if all ok execute PostFix if enabled
-                if options['hcp_icafix_postfix'].lower() == "true":
+                if options['hcp_icafix_postfix']:
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, True, bold)
                         r += result['r']
@@ -4449,7 +4449,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                     report['done'].append(groupname)
 
                 # if all ok execute PostFix if enabled
-                if options['hcp_icafix_postfix'].lower() == "true":
+                if options['hcp_icafix_postfix']:
                     if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                         result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, False, groupname)
                         r += result['r']
@@ -4766,7 +4766,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         r, boldok = pc.checkForFile2(r, icaimg, '\n     ... ICA %s present' % boldtarget, '\n     ... ERROR: ICA [%s] missing!' % icaimg, status=boldok)
 
         # hcp_postfix_reusehighpass
-        if options['hcp_postfix_reusehighpass'].lower() == "true":
+        if options['hcp_postfix_reusehighpass']:
             reusehighpass = "YES"
         else:
             reusehighpass = "NO"
@@ -5779,7 +5779,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         report['skipped']    += tempReport['skipped']
 
         # if all ok execute DeDrifAndResample if enabled
-        if options['hcp_msmall_resample'].lower() == "true":
+        if options['hcp_msmall_resample']:
             if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                 # single-run
                 if singleRun:
