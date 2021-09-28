@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_cluster_threshold(fname, tname, csize, t)
 
 %``function [] = general_cluster_threshold(fname, tname, csize, t)`
@@ -33,6 +29,10 @@ function [] = general_cluster_threshold(fname, tname, csize, t)
 %
 %   	general_cluster_threshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4 || isempty(t), t = 3; end
 if isempty(tname), tname = fname; end

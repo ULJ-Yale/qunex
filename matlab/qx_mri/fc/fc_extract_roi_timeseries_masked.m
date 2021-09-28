@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)
 
 %``function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``
@@ -117,6 +113,10 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %       fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 'inc:3:4', ...
 %       'con-ccnet-inc', 'm', 'pca', 'event');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 10 || isempty(bmask),  bmask   = false;  end
 if nargin < 9, mcodes = []; end;

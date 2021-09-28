@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose)
 
 %``function [session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose)``
@@ -49,6 +45,10 @@ function [session, nsessions, nfiles, listname] = general_read_file_list(flist, 
 %
 %       [sessions, nsessions] = general_read_file_list('scz.list', true);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2
     verbose = false;

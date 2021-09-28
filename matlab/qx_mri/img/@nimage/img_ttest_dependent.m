@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [p Z M D SE t] = img_ttest_dependent(A, B, verbose)
 
 %``function [p Z M D SE t] = img_ttest_dependent(A, B, verbose)``
@@ -36,6 +32,10 @@ function [p Z M D SE t] = img_ttest_dependent(A, B, verbose)
 %   SE
 %       an image with standard errors of both groups and their differences
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3
     verbose = false;

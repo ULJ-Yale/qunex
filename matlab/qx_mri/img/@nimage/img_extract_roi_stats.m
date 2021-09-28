@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weight, criterium)
 
 %``function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weight, criterium)``
@@ -32,6 +28,10 @@ function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weig
 %
 %   stats
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 7; criterium = [];  end
 if nargin < 6; weight = [];     end

@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [filename] = general_filename_join(elements, delim)
 
 %``function [filename] = general_filename_join(elements, delim)`
@@ -29,6 +25,10 @@ function [filename] = general_filename_join(elements, delim)
 %
 %   will result in 'bold1_s_hpss'
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2, delim = '_'; end
 

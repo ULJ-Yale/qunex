@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_scrub(img, com)
 
 %``function [img] = img_scrub(img, com)``
@@ -29,6 +25,10 @@ function [img] = img_scrub(img, com)
 %   img
 %       scrubbed image
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2
     fprintf('\n\nERROR in the use of nimage.img_scrub!')

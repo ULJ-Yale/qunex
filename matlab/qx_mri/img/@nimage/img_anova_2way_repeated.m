@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)
 %``function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)``
 %
@@ -45,6 +41,10 @@ function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)
 %   The algorithm was created based on the rm_anova2 function created by 
 %   Aron Schurger (2005-02-04).
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4
     verbose = false;

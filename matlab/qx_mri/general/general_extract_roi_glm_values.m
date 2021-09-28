@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose);
 
 %``function [] = general_extract_roi_glm_values(flist, roif, effects, frames, values, tformat, verbose)`
@@ -61,6 +57,10 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %       general_extract_roi_glm_values('wm-glm.list', 'CCN.names', [], 'encoding, ...
 %       delay', [], 'psc', 'long');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 8, verbose = false; end
 if nargin < 7 || isempty(tformat), tformat = 'wide,long,mat'; end

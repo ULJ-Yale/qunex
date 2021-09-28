@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)
 
 %``function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)``
@@ -98,6 +94,10 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   Assumed response regressors get normalized to 1 only within each run, not
 %   across runs.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 % ---> set variables
 

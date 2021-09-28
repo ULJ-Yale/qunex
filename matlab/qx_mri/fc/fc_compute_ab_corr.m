@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)
 
 %``function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)`
@@ -63,6 +59,10 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %       fc_compute_ab_corr('scz.list', 'PFC.names', 'ACC.names', 5, ...
 %                          'SCZ_PFC-ACC', 'g', 'full');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 7 || isempty(verbose), verbose = 'none'; end
 if nargin < 6 || isempty(options), options = 'g';    end

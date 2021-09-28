@@ -1,25 +1,25 @@
+function [res] = img_save_4dfp(obj, filename, extra)
+
+%  ``function [res] = img_save_4dfp(obj, filename, extra)``
+%
+%  Saves a 4dfp image based on the existing header information.
+%
+%  INPUTS
+%  ======
+%
+%    --obj      	 nimage object
+%    --filename 	 the filename to use
+%    --extra    	 key, value structure of fields to add to ifh header file []
+%
+%  OUTPUT
+%  ======
+%
+%    res
+%
+
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
-
-function [res] = img_save_4dfp(obj, filename, extra)
-
-%   ``function [res] = img_save_4dfp(obj, filename, extra)``
-%
-%   Saves a 4dfp image based on the existing header information.
-%
-%   INPUTS
-%	======
-%
-%   --obj      	 nimage object
-%   --filename 	 the filename to use
-%   --extra    	 key, value structure of fields to add to ifh header file []
-%
-%	OUTPUT
-%	======
-%	
-%	res
-%
 
 if nargin < 3
 	extra = [];

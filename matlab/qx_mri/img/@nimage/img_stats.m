@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [out, doIt] = img_stats(img, doIt, exclude)
 
 %``function [out, doIt] = img_stats(img, doIt, exclude)``
@@ -54,6 +50,10 @@ function [out, doIt] = img_stats(img, doIt, exclude)
 %
 %       msdimg = img.img_stats({'m', 'sd'});
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3, exclude = [];            end
 if nargin < 2 || isempty(doIt), doIt = 'm'; end

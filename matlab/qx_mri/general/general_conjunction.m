@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [p, t, c] = general_conjunction(img, method, effect, q, data)
 
 %``[p, t, c] = general_conjunction(img, method, effect, q, data)``
@@ -48,6 +44,10 @@ function [p, t, c] = general_conjunction(img, method, effect, q, data)
 %	c
 %		image with number of sessions that show significant effect
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 %  ---- parsing arguments
 

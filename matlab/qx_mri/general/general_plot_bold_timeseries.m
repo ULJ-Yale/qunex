@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 sfunction [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)
 
 %``function [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)``
@@ -226,6 +222,10 @@ sfunction [] = general_plot_bold_timeseries(images, elements, masks, filename, s
 %   		--sessionid="AP1937" \
 %   		--verbose="true"
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 %  ---- initializing
 

@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [m] = simulate_voronoi_map(w,h,p)
 
 %``function [m] = simulate_voronoi_map(w,h,p)``
@@ -21,10 +17,13 @@ function [m] = simulate_voronoi_map(w,h,p)
 %	m
 %
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 3
     error('ERROR: VoronoiMap needs three arguments (w, h, p) to create a map!');
 end
-
 
 % ---> prepare measuring sticks
 

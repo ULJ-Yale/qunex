@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [ok] = general_check_file(filename, description, v, prepend)
 
 %``function [ok] = general_check_file(filename, description, v, prepend)``
@@ -48,6 +44,10 @@ function [ok] = general_check_file(filename, description, v, prepend)
 %   	general_check_file('images/functional/movement/bold1.dat', 'movement file', ...
 %		'full');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4 || isempty(prepend), prepend = '... '; end
 if nargin < 3 || isempty(v), v = 'error stop'; end

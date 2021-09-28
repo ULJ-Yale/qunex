@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
 %function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
@@ -523,6 +519,10 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %		'', 2.5, '', '', true, '', 'udvarsme', ...
 %		'hipass:linear|regress=ignore|lopass=linear');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 15, options = '';       end
 if nargin < 14, ignores = '';       end

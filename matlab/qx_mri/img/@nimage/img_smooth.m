@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function img = img_smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
 
 %``function img = img_smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)``
@@ -95,6 +91,10 @@ function img = img_smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %
 %       img_smooth = img.img_smooth(3, true, 'gaussian', 8);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 % input checking
 if nargin < 11 || isempty(frames),     frames = 1; warn = 1;             end

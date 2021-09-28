@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [B, res rvar, Xdof] = simulate_compute_glm(y, X)
 
 %``function [B, res rvar, Xdof] = simulate_compute_glm(y, X)``
@@ -29,6 +25,10 @@ function [B, res rvar, Xdof] = simulate_compute_glm(y, X)
 %   Xdof
 %		model degrees of freedom
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2
     error('ERROR: Not enough parameters to run task removal!');

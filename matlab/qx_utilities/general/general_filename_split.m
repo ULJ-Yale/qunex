@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [elements] = general_filename_split(filename, delim)
 
 %``function [elements] = general_filename_split(filename, delim)``
@@ -29,6 +25,10 @@ function [elements] = general_filename_split(filename, delim)
 %
 %   will result in `elements = {'bold3', 's', 'hpss'}`.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2, delim = '_'; end
 

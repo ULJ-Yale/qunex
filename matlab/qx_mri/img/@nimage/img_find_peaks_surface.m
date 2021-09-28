@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [roi peak] = img_find_peaks_surface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)
 
 %``function [roi peak] = img_find_peaks_surface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)``
@@ -99,6 +95,10 @@ function [roi peak] = img_find_peaks_surface(img, surfaceComponent, projection, 
 %       roi = img.img_find_peaks_surface('cortex_left', 'midthickness', 50, ...
 %           250, 'b', 3, 'frames:[1 3 7]', 2);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 %% - I - import section
 if nargin < 9 || isempty(verbose), fp_param.verbose = false;       end

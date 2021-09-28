@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)
 
 %``function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``
@@ -50,6 +46,10 @@ function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, 
 %
 %       general_write_table('mov.dat', movdata, 'frame,X,Y,Z', 'mean,sd,min,max');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 8                    post  = [];                end
 if nargin < 7                    pre   = [];                end

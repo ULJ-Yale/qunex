@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 
 %``function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)``
@@ -44,6 +40,10 @@ function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 %
 %   	img = img.img_compute_ab_correlation(roiAimage, roiBimage);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4
     verbose = false;

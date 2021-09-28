@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [options] = general_parse_options(options, s, default)
 
 %``function [options] = general_parse_options(options, s, default)``
@@ -122,6 +118,10 @@ function [options] = general_parse_options(options, s, default)
 %       a.vars   = {'a', 'b', 'c'}
 %       a.values = [1, 2, 3]
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3, default = ''; end
 if nargin < 2, error('ERROR: Not enough arguments passed to general_parse_options!'); end

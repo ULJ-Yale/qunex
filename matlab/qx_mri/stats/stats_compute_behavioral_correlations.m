@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)
 
 %``function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)``
@@ -28,6 +24,10 @@ function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)
 %                   compute multiple regression (GLM) and report Type III SS 
 %                   based results
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 % ------ check the parameters
 

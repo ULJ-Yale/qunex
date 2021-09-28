@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [B, rss, p] = img_glm_fit2(obj, X)
 
 %`function [B, rss, p] = img_glm_fit2(obj, X)``
@@ -45,6 +41,10 @@ function [B, rss, p] = img_glm_fit2(obj, X)
 %
 %		[B, rss, p] = img.img_glm_fit2(behmatrix);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 % ---- check input
 

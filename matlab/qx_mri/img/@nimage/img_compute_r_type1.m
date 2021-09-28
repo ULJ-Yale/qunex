@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [B, Z] = img_compute_r_type1(obj, bdata, verbose)
 
 %``function [B, Z] = img_compute_r_type1(obj, bdata, verbose)``
@@ -43,6 +39,10 @@ function [B, Z] = img_compute_r_type1(obj, bdata, verbose)
 %   addition of each of the regressors in order.
 %
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3
     verbose = false;
