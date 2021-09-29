@@ -847,5 +847,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-        gs.runThroughScheduler(command, sessions=sessions, args=options, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
-
+        # schedule
+        gs.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
