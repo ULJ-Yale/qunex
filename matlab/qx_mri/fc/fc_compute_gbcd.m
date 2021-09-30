@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)
 
 %``function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)`
@@ -119,6 +115,10 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       fc_compute_gbcd('scz.list', mFz:0.1|pFz:0.1', 'dlpfc.names', [], 10, 0, ...
 %       true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 fprintf('\n\nStarting ...');
 

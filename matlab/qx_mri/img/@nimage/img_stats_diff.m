@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)
 
 %``function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)``
@@ -64,6 +60,10 @@ function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)
 %
 %       vdiff = imga.img_StatDiff(imgb, 'dvar, fp');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4,  exclude = []; end
 if nargin < 3 || isempty(doIt), doIt = 'dm'; end

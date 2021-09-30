@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [out] = img_shrink_roi(img, method, crit)
 
 %``function [out] = img_shrink_roi(img, method, crit)``
@@ -46,6 +42,10 @@ function [out] = img_shrink_roi(img, method, crit)
 %
 %       shrunkimg = img.img_shrink_roi('edge', 17);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2,  method = 'surface';  end
 

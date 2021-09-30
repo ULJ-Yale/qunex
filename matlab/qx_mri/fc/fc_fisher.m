@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [Fz] = fc_fisher(r)
 
 %``function [Fz] = fc_fisher(r)``
@@ -20,6 +16,10 @@ function [Fz] = fc_fisher(r)
 %	Fz
 %		Fisher Z values
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 r = double(r);
 r = r * 0.9999999;

@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = img_save_concfile(file, files)
 
 %``function [] = img_save_concfile(file, files)``
@@ -14,6 +10,10 @@ function [] = img_save_concfile(file, files)
 %	 --file    	path to conc file
 %	 --files   	list of image files
 %	
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 file = strtrim(file);
 [fout message] = fopen(file,'w');

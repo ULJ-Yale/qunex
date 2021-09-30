@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_grow_roi(img, voxels)
 
 %``function [img] = img_grow_roi(img, voxels)``
@@ -33,6 +29,10 @@ function [img] = img_grow_roi(img, voxels)
 %
 %       grownroi = roi.img_grow_roi(2);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2
     voxels = 1;

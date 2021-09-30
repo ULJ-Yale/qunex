@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [B, Z] = img_compute_r_type3(obj, bdata, verbose)
 
 %``function [B, Z] = img_compute_r_type3(obj, bdata, verbose)``
@@ -42,6 +38,10 @@ function [B, Z] = img_compute_r_type3(obj, bdata, verbose)
 %   the full model, and Z, a significance map of significances of adding the
 %   regressor.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3
     verbose = false;

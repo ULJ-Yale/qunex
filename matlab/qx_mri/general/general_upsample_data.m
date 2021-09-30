@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [ud] = general_upsample_data(oldData, oldSphere, newSphere, newData)
 %``function [ud] = general_upsample_data(data, oldSphere, newSphere, newData)``
 %
@@ -42,6 +38,10 @@ function [ud] = general_upsample_data(oldData, oldSphere, newSphere, newData)
 %                'L.sphere.32k_fs_LR.surf.gii',...
 %                'newData.shape.gii);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 deleteOutData = false;
 if nargin < 4 || isempty(newData),           newData = 'temp_new_data.shape.gii'; deleteOutData = true; end

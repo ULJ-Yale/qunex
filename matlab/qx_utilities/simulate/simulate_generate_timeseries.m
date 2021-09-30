@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)
 
 %``function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)``
@@ -33,6 +29,10 @@ function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model,
 %
 %   te
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4
     modeldata = [];

@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 classdef nimage
 %
 %   nimage class offers an object to store MR image data. It provides basic
@@ -123,6 +119,10 @@ classdef nimage
 %       A cell array providing header information for nuisance matrix
 %   cifti         
 %       A structure providing CIFTI information
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
     properties
         data

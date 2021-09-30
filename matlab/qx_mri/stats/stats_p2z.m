@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = stats_p2z(img, out, tail)
 
 %``function [img] = stats_p2z(img, out, tail)``
@@ -34,6 +30,10 @@ function [img] = stats_p2z(img, out, tail)
 %   
 %		stats_p2z('WM_p.nii.gz', 'WM_Z.nii.gz');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3 || isempty(tail), tail = 'two'; end
 if nargin < 2 out = ''; end

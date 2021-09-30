@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
 
 %``function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)``
@@ -38,23 +34,23 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %   RESULTS
 %   =======
 %
-%	It saves group files:
+%   It saves group files:
 %
 %   _group_Fz
 %       average Fz over all the sessions
-
+%
 %   _group_r   
 %       average Fz converted back to Pearson r
-
+%
 %   _group_Z   
 %       p values converted to Z scores based on t-test testing if Fz over session differ significantly from 0 (two-tailed)
-
+%
 %   _all_Fz    
 %       Fz values of all the participants
 %
 %   _group_cov 
 %       average covariance
-
+%
 %   _all_cov
 %       covariances of all the participants
 %
@@ -72,6 +68,10 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %       fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', 'mean', ...
 %       'udvarsme', false);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 8 || isempty(cv),      cv     = false;  end
 if nargin < 7 || isempty(ignore),  ignore = 'no';   end

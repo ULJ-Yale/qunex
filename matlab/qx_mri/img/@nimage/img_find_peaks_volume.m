@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [roi peak] = img_find_peaks_volume(img, minsize, maxsize, val, t, options, verbose)
 
 %function [roi peak] = img_find_peaks_volume(img, minsize, maxsize, val, t, options, verbose)
@@ -93,6 +89,10 @@ function [roi peak] = img_find_peaks_volume(img, minsize, maxsize, val, t, optio
 %       roi = img.img_find_peaks_volume([72 50], [300 250], 'b', 3, ...
 %           'frames:[1 3 7]', 2);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 7 || isempty(verbose), verbose = false;            end
 if nargin < 6 || isempty(options), options = '';               end

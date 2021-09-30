@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_read_4dfp(img, file, dtype, frames, verbose)
 
 %``function [img] = img_read_4dfp(img, file, dtype, frames, verbose)``
@@ -22,6 +18,10 @@ function [img] = img_read_4dfp(img, file, dtype, frames, verbose)
 %
 %   img
 %  
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5
     verbose = false;

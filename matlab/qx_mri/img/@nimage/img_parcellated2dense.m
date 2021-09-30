@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_parcellated2dense(img, verbose, defineMissing)
 
 %``function [img] = img_parcellated2dense(img, verbose)``
@@ -28,6 +24,10 @@ function [img] = img_parcellated2dense(img, verbose, defineMissing)
 %   This method is used to expand a parcellated cifti image to a dense cifti
 %   image based on the information stored in cifti metatada.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 % --> process variables
 

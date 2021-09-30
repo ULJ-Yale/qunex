@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)
 
 %``function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)``
@@ -27,6 +23,10 @@ function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_
 %
 %   - ts       - a timeseries of the task regressor
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 %======================================================================
 %                                                  create the right HRF

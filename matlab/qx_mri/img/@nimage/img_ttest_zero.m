@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [p Z M SE t] = img_ttest_zero(obj, verbose)
 
 %``function [p Z M SE t] = img_ttest_zero(obj, verbose)``
@@ -32,6 +28,10 @@ function [p Z M SE t] = img_ttest_zero(obj, verbose)
 %   SE
 %       an image with standard errors of means across all volumes
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2
     verbose = false;

@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)
 
 %``function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)``
@@ -42,6 +38,10 @@ function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)
 %
 %   	smooth = img.img_smooth_3d(3, true);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 || isempty(ksize),   ksize   = 7;          end
 if nargin < 4 || isempty(ftype),   ftype   = 'gaussian'; end

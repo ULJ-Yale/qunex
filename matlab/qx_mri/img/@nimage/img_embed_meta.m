@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_embed_meta(img, data, code, name, verbose)
 
 %``function [img] = img_embed_meta(img, data, code, name, verbose)``
@@ -48,6 +44,10 @@ function [img] = img_embed_meta(img, data, code, name, verbose)
 %   
 %		img = img.img_embed_meta(datatable, [], 'Behavioral results');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 || isempty(verbose), verbose = false; end
 if nargin < 4,                     name = []; end

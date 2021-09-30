@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options)
 
 %``function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options)``
@@ -239,6 +235,10 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %
 %   The results will be returned in a fcmaps structure and, if so specified, saved.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 || isempty(options), options = '';  end
 if nargin < 4 || isempty(targetf), targetf = '.'; end

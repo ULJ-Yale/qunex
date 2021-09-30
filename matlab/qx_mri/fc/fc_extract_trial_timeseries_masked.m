@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)
 
 %``function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)``
@@ -89,6 +85,10 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %   the results in a file 'ccroits.mat'. At extraction it would ignore all
 %   frames that were marked bad using the 'udvarsme' criterion.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 6, scrubvar = []; end
 if nargin < 5, error('ERROR: Five arguments need to be specified for the function to run!'); end

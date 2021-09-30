@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function  [] = general_check_glm(sfolder, tfolder)
 
 %``function  [] = general_check_glm(sfolder, tfolder)``
@@ -31,6 +27,10 @@ function  [] = general_check_glm(sfolder, tfolder)
 %
 %       general_check_glm('glms', 'glms/check');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2 || isempty(tfolder) , tfolder = '.'; end
 if nargin < 1 || isempty(sfolder) , sfolder = '.'; end

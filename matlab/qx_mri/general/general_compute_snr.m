@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, target, slice, fname)
 
 %``function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, target, slice, fname)``
@@ -30,6 +26,10 @@ function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, targe
 %	slicesnr
 %		array of snr values for each slice
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 6
 	fname = [];

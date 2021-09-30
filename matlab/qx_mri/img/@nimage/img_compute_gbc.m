@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)
 
 %``function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)``
@@ -144,6 +140,10 @@ function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, r
 %       img = img.img_compute_gbc('mFz:0.1|pFz:0.1|nFz:0.1', [], roiPFCimage, ...
 %           false, 0.99, false, false, 100000);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 9 || isempty(vstep), vstep = 1200; end
 if nargin < 8, cv = [];         end

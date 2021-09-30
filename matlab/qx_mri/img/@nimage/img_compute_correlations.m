@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, verbose, cv)
 
 %``function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, verbose, cv)``
@@ -54,6 +50,10 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %
 %       [rimg, pimg] = img.img_compute_correlations(behdata);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4 || isempty(cv),      cv      = false; end
 if nargin < 3 || isempty(verbose), verbose = false; end

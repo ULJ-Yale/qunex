@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_print_struct(info, ftitle);
 
 %``function [] = general_print_struct(info, ftitle)``
@@ -14,6 +10,10 @@ function [] = general_print_struct(info, ftitle);
 %   --info      a structure to print
 %   --ftitle    a title to print above the report
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2 || isempty(ftitle), ftitle = ''; end
 

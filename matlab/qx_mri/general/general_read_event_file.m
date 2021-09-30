@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [out] = general_read_event_file(file, tunit)
 
 %``function [out] = general_read_event_file(file, tunit)``
@@ -28,6 +24,10 @@ function [out] = general_read_event_file(file, tunit)
 %		- events  ... list of event names
 %		- TR      ... TR in s
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2 || isempty(tunit), tunit = 's'; end
 

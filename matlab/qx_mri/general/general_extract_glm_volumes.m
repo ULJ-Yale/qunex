@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf);
 
 %``function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
@@ -65,6 +61,10 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %       general_extract_glm_volumes('wm-glm.list', 'wm-encoding-delay', ...
 %       'encoding,delay', [], 'by_session');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 8 || isempty(txtf),       txtf       = ''; end
 if nargin < 7, verbose   = false; end

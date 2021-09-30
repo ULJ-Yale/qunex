@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
 
 %``function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
@@ -73,6 +69,10 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %       fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', [3:9], ...
 %                              0, 'Th-PFC', 'g', 'correlations', 15);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 10 || isempty(verbose),  verbose  = 'none';            end
 if nargin < 9  || isempty(nrep),     nrep     = 10;                end
