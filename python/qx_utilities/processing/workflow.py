@@ -392,7 +392,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
             # create link
             if not os.path.exists(templatefile):
                 # r += '\n ... link %s to %s' % (f['bold1_brain'], f['bold_template'])
-                os.link(f['bold1_brain'], f['bold_template'])
+                gc.linkOrCopy(f['bold1_brain'], f['bold_template'])
 
             # unlock
             fl.unlock(templatefile)
