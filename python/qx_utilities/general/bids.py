@@ -130,11 +130,11 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
         elif os.path.exists(folder):
             if overwrite == 'yes':
                 print(prefix + "--> bids for session %s already exists: cleaning session" % (session))
-                shutil.rmtree(folder)                    
+                shutil.rmtree(folder)
                 sessionsList['clean'].append(session)
             elif not os.path.exists(os.path.join(folder, 'bids2nii.log')):
                 print(prefix + "--> incomplete bids for session %s already exists: cleaning session" % (session))
-                shutil.rmtree(folder)                    
+                shutil.rmtree(folder)
                 sessionsList['clean'].append(session)
             else:
                 sessionsList['skip'].append(session)

@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.11 (2021-04-10)
+
+File link creation inside QuNex is now more robust and should not crash on certain file systems.
+
 ## 0.91.10 (2021-29-09)
 
 Removed a bug that caused the hcp_icafix command to crash, all QuNex functions imeplemented in MATLAB now again print their inline help when requested. When QuNex is running an external command the exact command call in the log is now printed out in a nicer fashion.

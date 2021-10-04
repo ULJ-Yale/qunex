@@ -456,12 +456,9 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
                 print(" ---> linking %s to %s" % (sfile, tfile))
-                os.link(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))                
+                gc.linkOrCopy(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
             else:
                 print("  ... %s already exists" % (tfile))
-                # print(" ---> %s already exists, replacing it with %s " % (tfile, sfile))
-                # os.remove(os.path.join(basef,tfold,tfile))
-                # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
     
     if not mapped:
         raise ge.CommandFailed("setup_hcp", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")     
