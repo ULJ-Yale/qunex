@@ -192,8 +192,8 @@ bash_call_execute() {
     TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
     if [[ ${CommandToRun} == "run_turnkey" ]]; then
         unset qxutil_command_to_run
-        if [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
-            if [[ ! -d ${WORKDIR} ]]; then 
+        if ( [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] || [[ ${TURNKEY_TYPE} == 'xnat' ]] ) && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
+            if [[ ! -d ${WORKDIR} ]]; then
                 mkdir -p ${WORKDIR} &> /dev/null
             fi
             gmri create_study ${StudyFolder}
