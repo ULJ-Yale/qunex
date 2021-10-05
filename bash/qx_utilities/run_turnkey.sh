@@ -1232,9 +1232,15 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp_post_freesurfer|run_qc_t1w|run_qc_t2w|run_qc_myelin)
+        hcp_post_freesurfer)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        run_qc_t1w|run_qc_t2w|run_qc_myelin)
+            # --- rsync relevant dependencies if and hcp or QC step is starting point
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
