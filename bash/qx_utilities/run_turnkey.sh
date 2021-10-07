@@ -96,6 +96,10 @@ usage() {
  echo "                      run."
  echo "--sessionids          Comma separated list of session IDs to select for a run "
  echo "                      via gMRI engine from the batch file."
+ echo "--sessionsfoldername  For backwards compatibility set to 'subjects' if running "
+ echo "                      on old QuNex studies where sessions were stored inside "
+ echo "                      the subjects folder. If not set to 'subjects' then the "
+ echo "                      default value, [sessions] will be used."
  echo "--turnkeysteps        Specify specific turnkey steps you wish to run:"
  echo "                      Supported: ${QuNexTurnkeyWorkflow} "
  echo "--turnkeycleanstep    Specify specific turnkey steps you wish to clean up "
@@ -433,9 +437,12 @@ CleanupSession=`opts_GetOpt "--cleanupsession" $@`
 CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 CleanupOldFiles=`opts_GetOpt "--cleanupoldfiles" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
+
+# sessions folder name
 SessionsFolderName=`opts_GetOpt "--sessionsfoldername" $@`
+
 if [[ -z ${SessionsFolderName} ]]; then
-    SessionsFolderName=`opts_GetOpt "${setflag}sessionfoldername" $@`   # session folder name
+    SessionsFolderName="sessions"
 fi
 
 #CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "${CASES}" | sed 's/,/ /g;s/|/ /g'`
@@ -709,7 +716,6 @@ fi
 # -- Check and set non-XNAT or XNAT specific parameters
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
    if [[ -z ${PROJECT_NAME} ]]; then reho "ERROR: Project name is missing."; exit 1; echo ''; fi
-   if [[ -z ${SessionsFolderName} ]]; then reho "ERROR: Sessions folder name is missing."; exit 1; echo ''; fi
    if [[ -z ${StudyFolder} ]]; then
        StudyFolder=${WORKDIR}/${PROJECT_NAME}
    else
@@ -808,10 +814,6 @@ fi
 # ------------------------------------------------------------------------------
 
 # -- subjects vs. sessions folder backwards compatibility settings
-if [[ -z ${SessionsFolderName} ]]; then
-    SessionsFolderName="sessions"
-fi
-
 if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
     echo ""
     mageho "WARNING: You are attempting to execute RunTurnkey using a conflicting QuNex file hierarchy:"
