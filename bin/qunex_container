@@ -566,6 +566,10 @@ def main(args=None):
     --parelements   Specify the amount of elements that will be run in parallel
                     inside each session (for example BOLDs in hcp_fmri_volume).
                     [1]
+    --parinfo       If this flag is set then qunex_container will not execute
+                    the command, it will only printout the parallelism
+                    information, e.g. how many jobs will be spawned, how many
+                    sessions will be run in parallel, etc.
 
     RESULTS
     =======
@@ -610,13 +614,16 @@ def main(args=None):
     Scheduling multiple jobs in parallel
     ------------------------------------
     
-    If the parameters provided include --parsessions, --scheduler, and --sessions, 
-    then qunex_container will spread the execution of the command by scheduling 
-    multiple jobs to run on separate nodes. Specifically, it will schedule
-    each node to run a container with `parsessions` sessions. E.g. if 10 sessions are 
-    specified and parsessions is set to 4, the command will schedule four jobs 
-    to run on four nodes. The first three jobs will each run three 
-    sessions in parallel, the fourth container will run the remaining session. 
+    If the parameters provided include --parjobs, --parsessions, --scheduler
+    and --sessions, then qunex_container will spread the execution of the
+    command by scheduling multiple jobs to run on separate nodes. Specifically,
+    if --parjobs is not provided then QuNex will schedule a job for each of the
+    sessions. If --parjobs is provided then QuNex will schedule at most the
+    requested amount of jobs, inside each job QuNex will run at most
+    --parsessions in parallel.  E.g. if 10 sessions are specified, parjobs
+    is set to 3 and parsessions is set to 4, QuNex will schedule 3 jobs. The first
+    job will run 4 sessions in parallel and the other 2 jobs will run 3 sessions
+    in parallel.
 
 
     Passing --sessions parameter values cleanly
@@ -699,7 +706,7 @@ def main(args=None):
     dockeropt           = None
     output              = None
     csessions           = None
-    test                = None
+    parinfo             = None
 
     for arg in args:
         if "env_status" in arg or "envstatus" in arg:
@@ -748,8 +755,8 @@ def main(args=None):
         elif "=" in arg:
             k, v = arg.split('=', 1)
             command += '%s="%s" ' % (k, v)
-        elif arg.replace("-", "") == "test":
-            test = True
+        elif arg.replace("-", "") == "parinfo":
+            parinfo = True
         else:
             command += '%s ' % (arg)
 
@@ -892,7 +899,7 @@ def main(args=None):
             print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
 
     # schedule
-    if test is None:
+    if parinfo is None:
         for i in range(0, parjobs):
             scheduleCommand = command
 
