@@ -163,10 +163,6 @@ def readSessionData(filename, verbose=False):
         print("\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line))
         raise
 
-    print("!!!! JD gpref: ", gpref)
-    print("!!!! JD slist: ", slist)
-    sys.exit(1)
-
     return slist, gpref
 
 
