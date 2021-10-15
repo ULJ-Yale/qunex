@@ -455,8 +455,17 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             mapped = True
 
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
+                # link the file
                 print(" ---> linking %s to %s" % (sfile, tfile))
                 gc.linkOrCopy(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
+
+                # check if json exists
+                sfile_json = sfile.split('.')[0] + '.json'
+                tfile_json = tfile.split('.')[0] + '.json'
+                json_path = os.path.join(rawf, sfile_json)
+                # link or copy if it exists
+                if os.path.exists(json_path):
+                    gc.linkOrCopy(json_path, os.path.join(basef, tfold, tfile_json))
             else:
                 print("  ... %s already exists" % (tfile))
     
