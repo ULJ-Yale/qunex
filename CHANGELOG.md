@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.91.X (2021-XY-10)
+
+Setup_hcp now also copies over the .json files associated with the mapped scan.
+
 ## 0.91.11 (2021-04-10)
 
 File link creation inside QuNex is now more robust and should not crash on certain file systems.
