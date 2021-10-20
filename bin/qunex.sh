@@ -1006,7 +1006,7 @@ show_usage_run_qc() {
 # -- Capture current working directory
 # ------------------------------------------------------------------------------
 dirs -c  &> /dev/null
-pushd `pwd`  &> /dev/null 
+pushd `pwd` &> /dev/null
 
 
 # ------------------------------------------------------------------------------
@@ -1206,6 +1206,8 @@ if [[ $is_gmri_command == 1 ]]; then
 
     # execute
     bash_call_execute
+
+    exit 0
 else
     unset qxutil_command_to_run
 fi
@@ -1385,10 +1387,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- If study folder is missing but sessions folder is defined assume standard QuNex folder structure
     if [[ -z ${StudyFolder} ]]; then
         if [[ ! -z ${SessionsFolder} ]] && [[ -d ${SessionsFolder} ]]; then
-            cd ${SessionsFolder}/../ &> /dev/null
-            StudyFolder=`pwd` &> /dev/null
-            popd  &> /dev/null
-            
+            StudyFolder="$(dirname "$SessionsFolder")"
+
             StudyFolderPath="${StudyFolder}"
             STUDY_PATH="${StudyFolder}"
         else
@@ -1851,6 +1851,9 @@ if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] 
     QuNexSessionsFolder="${StudyFolder}/sessions"
     SessionsFolderName="sessions"
 fi
+
+# -- return to stored folder
+popd &> /dev/null
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-= Execute specific commands =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
