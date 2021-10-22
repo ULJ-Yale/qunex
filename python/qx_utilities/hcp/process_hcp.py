@@ -1095,7 +1095,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
 
         if t2w == 'NONE' and options['hcp_processing_mode'] == 'HCPStyleData':
-            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, not T2w image was specified!\n            Consider using LegacyStyleData processing mode."
+            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode."
             run = False
 
         # -> check version of FS against previous version of FS
