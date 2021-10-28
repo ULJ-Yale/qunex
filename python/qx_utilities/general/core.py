@@ -144,7 +144,7 @@ def readSessionData(filename, verbose=False):
                     dic[line[0]] = ":".join(line[1:])
 
             if len(dic) > 0:
-                if "id" not in dic:
+                if ("id" not in dic) and ("session" not in dic):
                     if verbose:
                         print("WARNING: There is a record missing an id field and is being omitted from processing.")
                 # elif "data" not in dic:
