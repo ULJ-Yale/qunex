@@ -489,8 +489,6 @@ def getSessionIDs(listString, sessionsfolder=None):
 
 def main(args=None):
     """
-    qunex_container v0.1.0
-
     qunex_container is a self-standing command that can run QuNex commands 
     against a Singularity or a Docker QuNex container. To run an QuNex command 
     against a container the basic call is::
