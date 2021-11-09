@@ -491,7 +491,7 @@ def main(args=None):
     """
     qunex_container v0.1.0
 
-    qunexContaiiner is a self-standing command that can run QuNex commands 
+    qunex_container is a self-standing command that can run QuNex commands 
     against a Singularity or a Docker QuNex container. To run an QuNex command 
     against a container the basic call is::
 
@@ -528,6 +528,10 @@ def main(args=None):
     --bind          Used for binding external folder for execution via a 
                     singularity container, this is analog to the singularity's 
                     -B flag. ['']
+    --nocleanenv    By default QuNex will use the --cleanevn flag of Singularity
+                    so your local environment setup will not be propagated into
+                    the container. If you want to disable this functionality use
+                    this flag. The flag is not set by default.
     --nv            Required when using CUDA (GPU) inside singularity. If
                     provided then singularity exec --nv option will be used.
     --script        If a script is to be run against the Singularity container
@@ -694,6 +698,7 @@ def main(args=None):
     bash_pre            = None
     bash_post           = None
     bind                = None
+    nocleanenv          = None
     nv                  = None
     script              = None
     parjobs             = None
@@ -727,6 +732,8 @@ def main(args=None):
             k, bash_post = arg.split("=", 1)
         elif "bind=" in arg:
             k, bind = arg.split("=", 1)
+        elif arg == "--nocleanenv":
+            nocleanenv = True
         elif arg == "--nv":
             nv = True
         elif "script=" in arg:
@@ -957,9 +964,13 @@ def main(args=None):
 
                 containerCommand += "singularity exec "
 
+                # no clean env
+                if nocleanenv is None:
+                    containerCommand += "--cleanenv "
+
                 # nv
                 if nv:
-                    containerCommand += "--nv "
+                    containerCommand += " --nv "
 
                 # bind
                 if bind:
