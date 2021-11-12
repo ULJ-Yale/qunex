@@ -479,7 +479,7 @@ def getSessionIDs(listString, sessionsfolder=None):
         sessionids = getSessionIDsFromBatchFile(listString)
 
     elif re.match(".*\.txt$", listString) or '/' in listString:
-        raise ValueError("ERROR: The specified subject file is not found! [%s]!" % listString)
+        raise ValueError("ERROR: The specified file is not found! [%s]!" % listString)
 
     else:
         sessionids = [e.strip() for e in re.split(' +|,|\|', listString)]
