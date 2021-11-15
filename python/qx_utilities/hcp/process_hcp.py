@@ -23,6 +23,7 @@ consists of functions:
 --hcp_msmall                Runs HCP MSMAll.
 --hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
 --hcp_asl                   Runs HCP ASL pipeline.
+--hcp_temporal_ica          Runs HCP temporal ICA pipeline.
 --hcp_dtifit                Runs DTI Fit.
 --hcp_bedpostx              Runs Bedpost X.
 --hcp_task_fmri_analysis    Runs HCP TaskfMRIanalysis.
@@ -5636,7 +5637,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     --hcp_icafix_highpass           Value for the highpass filter, [0] for
                                     multi-run HCP ICAFix and [2000] for
                                     single-run HCP ICAFix. Should be identical
-                                    to the value used for ICAFIX.
+                                    to the value used for ICAFix.
     --hcp_msmall_outfmriname        The name which will be given to the
                                     concatenation of scans specified by the
                                     hcp_msmall_bold parameter. [rfMRI_REST]
@@ -6219,7 +6220,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     --hcp_icafix_highpass           Value for the highpass filter, [0] for
                                     multi-run HCP ICAFix and [2000] for
                                     single-run HCP ICAFix. Should be identical
-                                    to the value used for ICAFIX.
+                                    to the value used for ICAFix.
     --hcp_hiresmesh                 High resolution mesh node count. [164]
     --hcp_lowresmeshes              Low resolution meshes node count. To
                                     provide more values separate them with
@@ -7070,6 +7071,403 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_temporal_ica [... processing options]``
+    ``hcp_tica [... processing options]``
+
+    Runs the HCP ASL Pipeline.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the HCP minimal preprocessing pipeline and HCP ICAFix to
+    be executed.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions            The batch.txt file with all the sessions information.
+                          [batch.txt]
+    --sessionsfolder      The path to the study/sessions folder, where the
+                          imaging data is supposed to go. [.]
+    --parsessions         How many sessions to run in parallel. [1]
+    --overwrite           Whether to overwrite existing data (yes) or not (no).
+                          [no]
+    --hcp_suffix          Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise. []
+    --logfolder           The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default. []
+    --log                 Whether to keep ("keep") or remove ("remove") the
+                          temporary logs once jobs are completed. ["keep"]
+                          When a comma or pipe ("|") separated list is given,
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations.
+                          The valid locations are:
+
+                          - "study" (for the default:
+                            "<study>/processing/logs/comlogs" location)
+                          - "session" (for "<sessionid>/logs/comlogs")
+                          - "hcp" (for "<hcp_folder>/logs/comlogs")
+                          - "<path>" (for an arbitrary directory)
+
+    In addition a number of *specific* parameters can be used to guide the
+    processing in this step:
+
+    Core HCP temporal ICA parameters
+    --------------------------------
+
+    --hcp_tica_bolds        A comma separated list of fmri run names. []
+    --hcp_tica_outfmriname  Name to use for tICA pipeline outputs. [rfMRI_REST]
+    --hcp_tica_surfregname  The registration string corresponding to the input
+                            files. []
+    --hcp_tica_procstring   File name component representing the preprocessing
+                            already done, e.g. '_Atlas_MSMAll_hp0_clean'.
+                            [<hcp_cifti_tail>_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean]
+    --hcp_tica_outgroupname Name to use for the group output folder. []
+    --hcp_bold_res          Resolution of data. [2]
+    --hcp_tica_timepoints   Output spectra size for sICA individual projection,
+                            RunsXNumTimePoints, like '4800'. []
+    --hcp_tica_num_wishart  How many wisharts to use in icaDim. []
+    --hcp_lowresmesh        Mesh resolution. [32]
+
+    Optional HCP temporal ICA parameters
+    ------------------------------------
+
+    --hcp_tica_mrfix_concat_name        If multi-run FIX was used, you must specify
+                                        the concat name with this option. []
+    --hcp_tica_icamode                  Whether to use parts of a previous tICA run
+                                        (for instance, if this group has too few
+                                        subjects to simply estimate a new tICA).
+                                        Defaults to NEW, all other modes require
+                                        specifying the `hcp_tica_precomputed_*`
+                                        parameters. Value must be one of:
+                                        NEW (estimate a new sICA and a new tICA)
+                                        REUSE_SICA_ONLY (reuse an existing sICA
+                                                       and estimate a new tICA),
+                                        INITIALIZE_TICA (reuse an existing sICA and
+                                                        use an existing tICA to start
+                                                        the estimation),
+                                        REUSE_TICA (reuse an existing sICA and an
+                                                    existing tICA).
+                                        [NEW]
+    --hcp_tica_precomputed_clean_folder Group folder containing an existing tICA
+                                        cleanup to make use of for REUSE or
+                                        INITIALIZE modes. []
+    --hcp_tica_precomputed_fmri_name    The output fMRI name used in the
+                                        previously computed tICA. []
+    --hcp_tica_precomputed_group_name   The group name used during the previously
+                                        computed tICA. []
+    --hcp_tica_extra_output_suffix      Add something extra to most output
+                                        filenames, for collision avoidance. []
+    --hcp_tica_pca_out_dim              Override number of PCA components to
+                                        use for group sICA. []
+    --hcp_tica_pca_internal_dim         Override internal MIGP dimensionality. []
+    --hcp_tica_migp_resume              Resume from a previous interrupted MIGP
+                                        run, if present. [YES]
+    --hcp_tica_sicadim_iters            Number of iterations or mode for estimating
+                                        sICA dimensionality. [100]
+    --hcp_tica_sicadim_override         Use this dimensionality instead of
+                                        icaDim's estimate. []
+    --hcp_low_sica_dims                 The low sICA dimensionalities to use
+                                        for determining weighting for individual
+                                        projection.
+                                        [7@8@9@10@11@12@13@14@15@16@17@18@19@20@21]
+    --hcp_tica_reclean_mode             Whether the data should use
+                                        ReCleanSignal.txt for DVARS. []
+    --hcp_tica_starting_step            What step to start processing at, one of:
+                                        MIGP,
+                                        GroupSICA,
+                                        indProjSICA,
+                                        ConcatGroupSICA,
+                                        ComputeGroupTICA,
+                                        indProjTICA,
+                                        ComputeTICAFeatures,
+                                        ClassifyTICA,
+                                        CleanData.
+                                        []
+    --hcp_tica_stop_after_step          What step to stop processing after,
+                                        same valid values as for
+                                        hcp_tica_starting_step. []
+    --hcp_tica_remove_manual_components Text file containing the component numbers
+                                        to be removed by cleanup, separated by
+                                        spaces, requires either
+                                        --hcp_tica_icamode=REUSE_TICA or
+                                        --hcp_tica_starting_step=CleanData. []
+    --hcp_tica_fix_legacy_bias          Whether the input data used the legacy
+                                        bias correction, YES or NO. []
+    --hcp_tica_parallel_limit           How many subjects to do in parallel
+                                        (local, not cluster-distributed)
+                                        during individual projection. []
+    --hcp_matlab_mode                   Specifies the Matlab version, can be
+                                        interpreted, compiled or octave.
+                                        [compiled]
+
+    OUTPUTS
+    =======
+
+    TODO
+
+    EXAMPLE USE
+    ===========
+
+    TODO
+
+    Example run:
+
+        qunex hcp_temporal_ica \
+            --TODO
+
+    Run with scheduler:
+
+        qunex hcp_temporal_ica \
+            --TODO
+            --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP temporal ICA Pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
+
+    run    = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, "hcp_temporal_ica")
+        doHCPOptionsCheck(options, sinfo, "hcp_temporal_ica")
+        hcp = getHCPPaths(sinfo, options)
+
+        if "hcp" not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo["id"])
+            run = False
+
+        # mandatory parameters
+        # hcp_tica_bolds
+        fmri_names = ""
+        if "hcp_tica_bolds" not in options:
+            r += "\n---> ERROR: hcp_tica_bolds is not provided!"
+            run = False
+        else:
+            fmri_names = options["hcp_tica_bolds"].replace(",", "@")
+
+        # hcp_tica_surfregname
+        surfregname = ""
+        if "hcp_tica_surfregname" not in options:
+            r += "\n---> ERROR: hcp_tica_surfregname is not provided!"
+            run = False
+        else:
+            surfregname = options["hcp_tica_surfregname"]
+
+        # hcp_icafix_highpass
+        icafix_highpass = ""
+        if "hcp_icafix_highpass" not in options:
+            r += "\n---> ERROR: hcp_icafix_highpass is not provided!"
+            run = False
+        else:
+            icafix_highpass = options["hcp_icafix_highpass"]
+
+        # hcp_tica_procstring
+        if "hcp_tica_procstring" in options:
+            proc_string = options["hcp_tica_procstring"]
+        else:
+            proc_string = ""
+            if "hcp_cifti_tail" in options:
+                proc_string = "%s_" % options['hcp_cifti_tail']
+            
+            proc_string "%s%s_hp%s_clean" % (proc_string, surfregname, icafix_highpass)
+
+        # hcp_tica_outgroupname
+        outgroupname = ""
+        if "hcp_tica_outgroupname" not in options:
+            r += "\n---> ERROR: hcp_tica_outgroupname is not provided!"
+            run = False
+        else:
+            outgroupname = options["hcp_tica_outgroupname"]
+
+        # hcp_tica_timepoints
+        timepoints = ""
+        if "hcp_tica_timepoints" not in options:
+            r += "\n---> ERROR: hcp_tica_timepoints is not provided!"
+            run = False
+        else:
+            timepoints = options["hcp_tica_timepoints"]
+
+        # hcp_tica_timepoints
+        num_wishart = ""
+        if "hcp_tica_num_wishart" not in options:
+            r += "\n---> ERROR: hcp_tica_num_wishart is not provided!"
+            run = False
+        else:
+            num_wishart = options["hcp_tica_num_wishart"]
+
+        # build the command
+        if run:
+            comm = '%(script)s \
+                --studydir="%(study_dir)s" \
+                --subject-list="%(subject_list)s" \
+                --fmri-names="%(fmri_names)s" \
+                --output-fmri-name="%(output_fmri_name)s" \
+                --surf-reg-name="%(surf_reg_name)s" \
+                --melodic-high-pass="%(icafix_highpass)s" \
+                --proc-string="%(proc_string)s" \
+                --out-group-name="%(outgroupname)s" \
+                --fmri-resolution="%(fmri_resolution)s" \
+                --subject-expected-timepoints="%(timepoints)s" \
+                --num-wishart="%(num_wishart)s" \
+                --low-res="%(low_res)s"' % {
+                    "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
+                    "study_dir"         : sinfo["hcp"],
+                    "subject_list"      : sinfo["id"],
+                    "fmri_names"        : fmri_names,
+                    "output_fmri_name"  : options["hcp_tica_outfmriname"],
+                    "surf_reg_name"     : surfregname,
+                    "icafix_highpass"   : icafix_highpass,
+                    "proc_string"       : proc_string,
+                    "outgroupname"      : outgroupname,
+                    "fmri_resolution"   : options["hcp_bold_res"],
+                    "timepoints"        : timepoints,
+                    "num_wishart"       : num_wishart,
+                    "low_res"           : options["hcp_lowresmesh"]
+                }
+
+            # -- Optional parameters
+            # hcp_tica_mrfix_concat_name
+            if options["hcp_tica_mrfix_concat_name"] is not None:
+                comm += "                    --mrfix-concat-name=\"%s\"" % options['hcp_tica_mrfix_concat_name']
+
+            # hcp_tica_icamode
+            if options["hcp_tica_icamode"] is not None:
+                comm += "                    --ica-mode=\"%s\"" % options['hcp_tica_icamode']
+
+            # hcp_tica_precomputed_clean_folder
+            if options["hcp_tica_precomputed_clean_folder"] is not None:
+                comm += "                    --precomputed-clean-folder=\"%s\"" % options['hcp_tica_precomputed_clean_folder']
+
+            # hcp_tica_precomputed_fmri_name
+            if options["hcp_tica_precomputed_fmri_name"] is not None:
+                comm += "                    --precomputed-clean-fmri-name=\"%s\"" % options['hcp_tica_precomputed_fmri_name']
+
+            # hcp_tica_precomputed_group_name
+            if options["hcp_tica_precomputed_fmri_name"] is not None:
+                comm += "                    --precomputed-group-name=\"%s\"" % options['hcp_tica_precomputed_group_name']
+
+            # hcp_tica_extra_output_suffix
+            if options["hcp_tica_extra_output_suffix"] is not None:
+                comm += "                    --extra-output-suffix=\"%s\"" % options['hcp_tica_extra_output_suffix']
+
+            # hcp_tica_pca_out_dim
+            if options["hcp_tica_pca_out_dim"] is not None:
+                comm += "                    --pca-out-dim=\"%s\"" % options['hcp_tica_pca_out_dim']
+
+            # hcp_tica_pca_internal_dim
+            if options["hcp_tica_pca_internal_dim"] is not None:
+                comm += "                    --pca-internal-dim=\"%s\"" % options['hcp_tica_pca_internal_dim']
+
+            # hcp_tica_migp_resume
+            if options["hcp_tica_migp_resume"] is not None:
+                comm += "                    --migp-resume=\"%s\"" % options['hcp_tica_migp_resume']
+
+            # hcp_tica_sicadim_iters
+            if options["hcp_tica_sicadim_iters"] is not None:
+                comm += "                    --sicadim-iters=\"%s\"" % options['hcp_tica_sicadim_iters']
+
+            # hcp_tica_sicadim_override
+            if options["hcp_tica_sicadim_override"] is not None:
+                comm += "                    --sicadim-override=\"%s\"" % options['hcp_tica_sicadim_override']
+
+            # hcp_low_sica_dims
+            if options["hcp_low_sica_dims"] is not None:
+                comm += "                    --low-sica-dims=\"%s\"" % options['hcp_low_sica_dims']
+
+            # hcp_tica_reclean_mode
+            if options["hcp_tica_reclean_mode"] is not None:
+                comm += "                    --reclean-mode=\"%s\"" % options['hcp_tica_reclean_mode']
+
+            # hcp_tica_starting_step
+            if options["hcp_tica_starting_step"] is not None:
+                comm += "                    --starting-step=\"%s\"" % options['hcp_tica_starting_step']
+
+            # hcp_tica_stop_after_step
+            if options["hcp_tica_stop_after_step"] is not None:
+                comm += "                    --stop-after-step`=\"%s\"" % options['hcp_tica_stop_after_step']
+
+            # hcp_tica_remove_manual_components
+            if options["hcp_tica_remove_manual_components"] is not None:
+                comm += "                    --manual-components-to-remove=\"%s\"" % options['hcp_tica_remove_manual_components']
+
+            # hcp_tica_fix_legacy_bias
+            if options["hcp_tica_fix_legacy_bias"] is not None:
+                comm += "                    --fix-legacy-bias=\"%s\"" % options['hcp_tica_fix_legacy_bias']
+
+            # hcp_tica_parallel_limit
+            if options["hcp_tica_parallel_limit"] is not None:
+                comm += "                    --parallel-limit=\"%s\"" % options['hcp_tica_parallel_limit']
+
+            # matlab run mode, compiled=0, interpreted=1, octave=2
+            if options['hcp_matlab_mode'] == "compiled":
+                # TODO
+                r += "\n---> ERROR: compiled MATLAB is not supported for temporal ICA!"
+                run = False
+                matlabrunmode = 0
+            elif options['hcp_matlab_mode'] == "interpreted":
+                matlabrunmode = 1
+            elif options['hcp_matlab_mode'] == "octave":
+                matlabrunmode = 2
+            else:
+                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
+                run = False
+
+            # -- Report command
+            if run:
+                r += "\n\n------------------------------------------------------------\n"
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+            # -- Test files
+            # TODO
+            tfile = None
+            full_test = None
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP ASL", r, overwrite=overwrite)
+                if passed is None:
+                    r += "\n---> HCP temporal ICA can be run"
+                    report = "HCP temporal ICA can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session can not be processed."
+            report = "HCP temporal ICA can not be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
+
+    r += "\n\nHCP temporal ICA Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
+
 def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     """
     hcp_dtifit - documentation not yet available.
@@ -7324,7 +7722,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     Based on HCP minimal preprocessing choices, both CIFTI and NIfTI volume
     files can be marked using different tails. E.g. CIFT files are marked with
     an `_Atlas` tail, NIfTI files are marked with `_hp2000_clean` tail after
-    employing ICAFIX procedure. When mapping the data, it is important that
+    employing ICAFix procedure. When mapping the data, it is important that
     the correct files are mapped. The correct tails for NIfTI volume, and
     CIFTI files are specified using the `hcp_nifti_tail` and `hcp_cifti_tail`
     parameters. When the data is mapped into QuNex folder structure the tails
