@@ -432,7 +432,7 @@ arglist = [
            ['hcp_asl_nobandingcorr', None,                                        flag,   "If this option is provided, MT and ST banding corrections won’t be applied."],
 
            ['# --- hcp_temporal_ica options'],
-           ['hcp_tica_bolds', '',                                                 isNone,  "A comma separated list of fmri run names."],
+           ['hcp_tica_bolds', '',                                                 isNone,  "A comma separated list of fmri run names. Set to all session BOLDs by default."],
            ['hcp_tica_outfmriname',        'rfMRI_REST',                          str,     "Name to use for tICA pipeline outputs."],
            ['hcp_tica_surfregname', '',                                           isNone,  "The registration string corresponding to the input files."],
            ['hcp_tica_procstring', '',                                            isNone,  "File name component representing the preprocessing already done, e.g. _Atlas_MSMAll_hp0_clean."],

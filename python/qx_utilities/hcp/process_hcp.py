@@ -7123,7 +7123,8 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
     Core HCP temporal ICA parameters
     --------------------------------
 
-    --hcp_tica_bolds        A comma separated list of fmri run names. []
+    --hcp_tica_bolds        A comma separated list of fmri run names.
+                            Set to all session BOLDs by default.
     --hcp_tica_outfmriname  Name to use for tICA pipeline outputs. [rfMRI_REST]
     --hcp_tica_surfregname  The registration string corresponding to the input
                             files. []
@@ -7247,15 +7248,56 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo["id"])
             run = False
 
-        # mandatory parameters
+        # get sorted bold numbers and bold data
+        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
+        if report['boldskipped']:
+            if options['hcp_filename'] == 'userdefined':
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
+            else:
+                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+
+        # get all bold targets and tags
+        boldtargets = []
+        boldtags = []
+
+        # get bolds and tags
+        for b in bolds:
+            # extract data
+            printbold, _, _, boldinfo = b
+
+            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+                boldtarget = boldinfo['filename']
+                boldtag = boldinfo['task']
+            else:
+                printbold = str(printbold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+                boldtag = boldinfo['task']
+
+            boldtargets.append(boldtarget)
+            boldtags.append(boldtag)
+
         # hcp_tica_bolds
         fmri_names = ""
         if "hcp_tica_bolds" not in options:
-            r += "\n---> ERROR: hcp_tica_bolds is not provided!"
-            run = False
+            fmri_names = boldtargets.replace(",", "@")
         else:
-            fmri_names = options["hcp_tica_bolds"].replace(",", "@")
+            # defined bolds
+            tica_bolds = options["hcp_tica_bolds"].split(",")
+            
+            # check if defined
+            for tb in tica_bolds:
+                # if tag or bold exists, append
+                if tb in boldtargets or tb in boldtags:
+                    if fmri_names == "":
+                        fmri_names = tb
+                    else
+                        fmri_names = fmri_names + "," + tb
+                else:
+                    r += "\n---> ERROR: BOLD or tag %s does not exist!" % tb
+                    run = False
+                    break
 
+        # mandatory parameters
         # hcp_tica_surfregname
         surfregname = ""
         if "hcp_tica_surfregname" not in options:
