@@ -2768,5 +2768,5 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo ""
 
     # -- Execute
-    ${CommandToRun}
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
