@@ -179,7 +179,7 @@ get_options() {
 
     # -- Initialize global output variables
     unset SessionsFolder
-    unset Sessions
+    unset Session
     unset Overwrite
     unset ScriptsFolder
     unset NSamplesMatrixOne
@@ -192,7 +192,7 @@ get_options() {
 
     # -- Parse arguments
     SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
-    CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    CASES=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     Overwrite=`opts_GetOpt "--overwrite" $@`
     ScriptsFolder=`opts_GetOpt "--scriptsfolder" $@`
     MatrixOne=`opts_GetOpt "--omatrix1" $@`
@@ -207,7 +207,7 @@ get_options() {
         echo ""
         exit 1
     fi
-    if [[ -z ${CASES} ]]; then
+    if [[ -z ${CASE} ]]; then
         reho "ERROR: <sessions> not specified"
         echo ""
         exit 1
@@ -258,7 +258,7 @@ get_options() {
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
-    echo "   Sessions: ${CASES}"
+    echo "   Session: ${CASE}"
     echo "   probtrackX GPU scripts Folder: ${ScriptsFolder}"
     echo "   Compute Matrix1: ${MatrixOne}"
     echo "   Compute Matrix3: ${MatrixThree}"
@@ -285,75 +285,73 @@ main() {
     # completion check
     COMPLETIONCHECK=0
 
-    for CASE in $CASES; do
-        # output folder
-        OutFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography";
+    # output folder
+    OutFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography";
 
-        # -- Generate the results and log folders
-        mkdir ${OutFolder}  &> /dev/null
+    # -- Generate the results and log folders
+    mkdir ${OutFolder}  &> /dev/null
 
-        # -- Echo probtrackX log for each case
-        echo ""
-        geho "   --- probtrackX GPU for session $CASE..."
-        echo ""
-        
-        for MNum in $MNumber; do
-            if [[ "$MNum" == "1" ]]; then NSamples="${NSamplesMatrixOne}"; fi
-            if [[ "$MNum" == "3" ]]; then NSamples="${NSamplesMatrixThree}"; fi
-            # -- Check of overwrite flag was set
-            if [[ "$Overwrite" == "yes" ]]; then
-                echo ""
-                reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
-                echo ""
-                rm -f ${OutFolder}/Conn${MNum}.dconn.nii.gz &> /dev/null
-            fi
-            # -- Check for Matrix completion
+    # -- Echo probtrackX log for each case
+    echo ""
+    geho "   --- probtrackX GPU for session $CASE..."
+    echo ""
+    
+    for MNum in $MNumber; do
+        if [[ "$MNum" == "1" ]]; then NSamples="${NSamplesMatrixOne}"; fi
+        if [[ "$MNum" == "3" ]]; then NSamples="${NSamplesMatrixThree}"; fi
+        # -- Check of overwrite flag was set
+        if [[ "$Overwrite" == "yes" ]]; then
             echo ""
-            geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
+            reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
             echo ""
-            # -- Check if the file even exists
-            if [[ -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
-                # -- Set file sizes to check for completion
-                actualfilesize=`wc -c < "$OutFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
-                # -- Then check if Matrix run is complete based on size
-                if [[ $(echo ${actualfilesize} | bc) -ge $(echo ${minimumfilesize} | bc) ]]; then > /dev/null 2>&1
-                    echo ""
-                    cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}"
-                    cyaneho "To re-run set overwrite flag to 'yes'"
-                    echo ""
-                    echo "--------------------------------------------------------------"
-                    echo ""
-                fi
-            else
-                # -- If run is incomplete perform run for Matrix
+            rm -f ${OutFolder}/Conn${MNum}.dconn.nii.gz &> /dev/null
+        fi
+        # -- Check for Matrix completion
+        echo ""
+        geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
+        echo ""
+        # -- Check if the file even exists
+        if [[ -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
+            # -- Set file sizes to check for completion
+            actualfilesize=`wc -c < "$OutFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
+            # -- Then check if Matrix run is complete based on size
+            if [[ $(echo ${actualfilesize} | bc) -ge $(echo ${minimumfilesize} | bc) ]]; then > /dev/null 2>&1
                 echo ""
-                geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
+                cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}"
+                cyaneho "To re-run set overwrite flag to 'yes'"
                 echo ""
-                # -- Command to run
-                DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${NSamples} ${distance_correction} ${store_streamlines_length}"
-                # -- Echo the command
-                echo "Running the following probtrackX GPU command: "
+                echo "--------------------------------------------------------------"
                 echo ""
-                echo "---------------------------"
-                echo ""
-                echo "   ${DWIprobtrackxDenseGPUCommand}"
-                echo ""
-                echo "---------------------------"
-                # -- Eval the command
-                eval "${DWIprobtrackxDenseGPUCommand}"
             fi
+        else
+            # -- If run is incomplete perform run for Matrix
+            echo ""
+            geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
+            echo ""
+            # -- Command to run
+            DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${NSamples} ${distance_correction} ${store_streamlines_length}"
+            # -- Echo the command
+            echo "Running the following probtrackX GPU command: "
+            echo ""
+            echo "---------------------------"
+            echo ""
+            echo "   ${DWIprobtrackxDenseGPUCommand}"
+            echo ""
+            echo "---------------------------"
+            # -- Eval the command
+            eval "${DWIprobtrackxDenseGPUCommand}"
+        fi
 
-            # completion check
-            if [[ ! -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
-                # print error for this case
-                reho "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
-            else
-                # print success for this case
-                geho "dwi_probtracx_dense_gpu for $CASE completed successfully!"
-                # set as success
-                COMPLETIONCHECK=1
-            fi
-        done
+        # completion check
+        if [[ ! -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
+            # print error for this case
+            reho "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
+        else
+            # print success for this case
+            geho "dwi_probtracx_dense_gpu for $CASE completed successfully!"
+            # set as success
+            COMPLETIONCHECK=1
+        fi
     done
 
     # final completion check

@@ -927,7 +927,7 @@ dwi_probtrackx_dense_gpu() {
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \
     --sessionsfolder='${SessionsFolder}' \
-    --sessions='${CASES}' \
+    --session='${CASE}' \
     --scriptsfolder='${ScriptsFolder}' \
     --omatrix1='${MatrixOne}' \
     --omatrix3='${MatrixThree}' \
