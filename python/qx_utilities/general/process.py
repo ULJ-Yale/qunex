@@ -278,7 +278,7 @@ arglist = [
            ['hcp_folderstructure',    'hcpls',                                    str,    "Which version of HCP folder structure to use, initial or hcpls ['hcpls']."],
            ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder."],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE."],
-           ['hcp_pipeline',           '',                                         str,    "path to pipeline base folder."],
+           ['hcp_pipeline',           '',                                         isNone, "Path to the HCP pipeline base folder."],
            ['hcp_suffix',             '',                                         str,    "session id suffix if running HCP preprocessing variants."],
            ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE."],
            ['hcp_printcom',           '',                                         str,    "Print command for the HCP scripts: set to echo to have commands printed and not executed.."],

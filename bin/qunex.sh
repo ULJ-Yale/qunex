@@ -187,6 +187,7 @@ show_all_qunex_commands() {
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
+
     # -- Set platform info
     Platform="Platform Information: `uname -a`"
     # -- Set the time stamp for given job
@@ -199,164 +200,169 @@ bash_call_execute() {
             fi
             gmri create_study ${StudyFolder}
         fi
-        gmri create_study ${StudyFolder}
     fi
-fi
-# -- Check if Matlab command
-unset QuNexMatlabCall
-matlab_functions_check=`find $TOOLS/$QUNEXREPO/matlab/ -name "*.m" | grep -v "archive/"`
-if [[ ! -z `echo $matlab_functions_check | grep "$CommandToRun"` ]]; then
-    QuNexMatlabCall="$CommandToRun"
-    echo ""
-    echo " ==> Note: $QuNexMatlabCall is part of the QuNex MATLAB."
-    echo ""
-fi 
 
-# -- Check if study folder is created
-if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${QuNexMatlabCall} ]]; then 
-    echo ""
-    mageho "WARNING: QuNex study folder specification .qunexstudy in ${StudyFolder} not found."
-    mageho "         Check that ${StudyFolder} is a valid QuNex folder."
-    mageho "         Consider re-generating QuNex hierarchy..."; echo ""
-    # gmri create_study ${StudyFolder}
-fi
-# -- Added checks for study folder generation
-if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
-    # -- Add check in case the sessions folder is distinct from the default name
-    # -- Eventually use the template file to replace hard-coded values
-    QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
-    QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
-    for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
-        if [[ ! -d ${QuNexSessionsFolder} ]]; then
-              echo "QuNex folder ${QuNexSessionsFolder} not found. Generating now..."; echo ""
-              mkdir -p ${QuNexSessionsFolder} &> /dev/null
+    # -- Check if Matlab command
+    unset QuNexMatlabCall
+    matlab_functions_check=`find $TOOLS/$QUNEXREPO/matlab/ -name "*.m" | grep -v "archive/"`
+    if [[ ! -z `echo $matlab_functions_check | grep "$CommandToRun"` ]]; then
+        QuNexMatlabCall="$CommandToRun"
+        echo ""
+        echo " ==> Note: $QuNexMatlabCall is part of the QuNex MATLAB."
+        echo ""
+    fi 
+
+    # -- Check if study folder is created
+    if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${QuNexMatlabCall} ]]; then 
+        echo ""
+        mageho "WARNING: QuNex study folder specification .qunexstudy in ${StudyFolder} not found."
+        mageho "         Check that ${StudyFolder} is a valid QuNex folder."
+        mageho "         Consider re-generating QuNex hierarchy..."; echo ""
+        # gmri create_study ${StudyFolder}
+    fi
+
+    # -- Added checks for study folder generation
+    if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
+        # -- Add check in case the sessions folder is distinct from the default name
+        # -- Eventually use the template file to replace hard-coded values
+        QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
+        QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
+        for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
+            if [[ ! -d ${QuNexSessionsFolder} ]]; then
+                echo "QuNex folder ${QuNexSessionsFolder} not found. Generating now..."; echo ""
+                mkdir -p ${QuNexSessionsFolder} &> /dev/null
+            fi
+        done
+    fi
+
+    # -- If logfolder flag set then set it and set master log
+    if [[ -z ${LogFolder} ]]; then
+        MasterLogFolder="${StudyFolder}/processing/logs"
+    else
+        MasterLogFolder="$LogFolder"
+    fi
+    if [[ ! -d ${MasterLogFolder} ]]; then
+        mkdir ${MasterLogFolder} &> /dev/null
+    fi
+
+    # -- Set and generate runlogs folder
+    MasterRunLogFolder="${MasterLogFolder}/runlogs"
+    if [[ ! -d ${MasterRunLogFolder} ]]; then
+        mkdir ${MasterRunLogFolder} &> /dev/null
+    fi
+
+    # -- Set and generate comlogs folder
+    MasterComlogFolder="${MasterLogFolder}/comlogs"
+    if [[ ! -d ${MasterComlogFolder} ]]; then
+        mkdir ${MasterComlogFolder} &> /dev/null
+    fi
+
+    # -- Set and generate runchecks folder
+    RunChecksFolder="${StudyFolder}/processing/runchecks"
+    if [[ ! -d ${RunChecksFolder} ]]; then
+        mkdir ${RunChecksFolder} &> /dev/null
+    fi
+
+    # -- Specific call for python qx_utilities functions
+    if [[ ${qxutil_command_to_run} ]]; then
+        echo ""
+        cyaneho "--- Full QuNex call for command: ${qxutil_command_to_run}"
+        echo ""
+        cyaneho "gmri ${gmriinput}"
+        echo ""
+        cyaneho "---------------------------------------------------------"
+        echo ""
+        echo ""
+        qxutil_command_exec
+    else
+        # -- Specific call for QuNex bash commands
+        # -- Define specific logs
+        #
+        # -- Runlog
+        # --   Specification: Log-<command name>-<date>_<hour>.<minute>.<microsecond>.log
+        # --   Example:       Log-map_hcp_data-2017-11-11_15.58.1510433930.log
+        Runlog="${MasterRunLogFolder}/Log-${CommandToRun}_${TimeStamp}.log"
+        # -- Comlog
+        # --   Specification:  tmp_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
+        # --   Specification:  error_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
+        # --   Specification:  done_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
+        # --   Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
+        ComlogTmp="${MasterComlogFolder}/tmp_${CommandToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
+        ComRun="${MasterComlogFolder}/Run_${CommandToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
+        ComlogDone="${MasterComlogFolder}/done_${CommandToRun}_${CASE}_${TimeStamp}.log"
+        CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
+        ComlogError="${MasterComlogFolder}/error_${CommandToRun}_${CASE}_${TimeStamp}.log"
+        CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Fail"
+        # -- Batchlog
+        # --   <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
+        echo ""
+        cyaneho "--- Full QuNex call for command: ${CommandToRun}"
+        echo ""
+        cyaneho "${QuNexCallToRun}"
+        echo ""
+        cyaneho "--------------------------------------------------------------"
+        echo ""
+        echo ""
+        # -- Declare commands
+        echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${Runlog}
+        echo "#" >> ${Runlog}
+        echo "${QuNexCallToRun}" >> ${Runlog}
+        echo "#!/bin/bash" >> ${ComRun}
+        echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComRun}
+        echo "#" >> ${ComRun}
+        echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
+        echo "${QuNexCallToRun}" >> ${ComRun}
+        chmod 777 ${ComRun}
+        # -- Check that $ComRun is set properly
+        echo ""; if [ ! -f "${ComRun}" ]; then reho "ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
+        ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
+        echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho "ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
+        # -- Define command to execute
+        echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComlogTmp}
+        echo "#" >> ${ComlogTmp}
+        ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
+        # -- Acceptance tests
+        ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
+        ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
+        # -- Garbage collection
+        ComGarbageCollect="if [[ -f 0 && ! -s 0 ]]; then echo 'delete' >> qunex_garbage0; fi; if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
+        ComGarbageRemove="if [[ -s qunex_garbage0 ]]; then rm 0; rm qunex_garbage0; fi; if [[ -s qunex_garbage1 ]]; then rm 1; rm qunex_garbage1; fi; if [[ -s qunex_garbage2 ]]; then rm 2; rm qunex_garbage2; fi"
+        ComRunGarbage="${ComGarbageCollect}; ${ComGarbageRemove}"
+        # -- Run the commands locally
+        if [[ ${Cluster} == 1 ]]; then
+            # -- Command to perform acceptance test
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_passed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+            # -- Combine final string of commands
+            ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
+            geho "--------------------------------------------------------------"
+            echo ""
+            geho "   Running ${CommandToRun} locally on `hostname`"
+            geho "   Command log:     ${Runlog}  "
+            geho "   Command output: ${ComlogTmp} "
+            echo ""
+            geho "--------------------------------------------------------------"
+            echo ""
+            eval "${ComRunAll}"
         fi
-    done
-fi
-# -- If logfolder flag set then set it and set master log
-if [[ -z ${LogFolder} ]]; then
-    MasterLogFolder="${StudyFolder}/processing/logs"
-else
-    MasterLogFolder="$LogFolder"
-fi
-if [[ ! -d ${MasterLogFolder} ]]; then
-    mkdir ${MasterLogFolder} &> /dev/null
-fi
-# -- Set and generate runlogs folder
-MasterRunLogFolder="${MasterLogFolder}/runlogs"
-if [[ ! -d ${MasterRunLogFolder} ]]; then
-    mkdir ${MasterRunLogFolder} &> /dev/null
-fi
-# -- Set and generate comlogs folder
-MasterComlogFolder="${MasterLogFolder}/comlogs"
-if [[ ! -d ${MasterComlogFolder} ]]; then
-    mkdir ${MasterComlogFolder} &> /dev/null
-fi
-# -- Set and generate runchecks folder
-RunChecksFolder="${StudyFolder}/processing/runchecks"
-if [[ ! -d ${RunChecksFolder} ]]; then
-    mkdir ${RunChecksFolder} &> /dev/null
-fi
-# -- Specific call for python qx_utilities functions
-if [[ ${qxutil_command_to_run} ]]; then
-    echo ""
-    cyaneho "--- Full QuNex call for command: ${qxutil_command_to_run}"
-    echo ""
-    cyaneho "gmri ${gmriinput}"
-    echo ""
-    cyaneho "---------------------------------------------------------"
-    echo ""
-    echo ""
-    qxutil_command_exec
-else
-    # -- Specific call for QuNex bash commands
-    # -- Define specific logs
-    #
-    # -- Runlog
-    # --   Specification: Log-<command name>-<date>_<hour>.<minute>.<microsecond>.log
-    # --   Example:       Log-map_hcp_data-2017-11-11_15.58.1510433930.log
-    Runlog="${MasterRunLogFolder}/Log-${CommandToRun}_${TimeStamp}.log"
-    # -- Comlog
-    # --   Specification:  tmp_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
-    # --   Specification:  error_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
-    # --   Specification:  done_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
-    # --   Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
-    ComlogTmp="${MasterComlogFolder}/tmp_${CommandToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
-    ComRun="${MasterComlogFolder}/Run_${CommandToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
-    ComlogDone="${MasterComlogFolder}/done_${CommandToRun}_${CASE}_${TimeStamp}.log"
-    CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
-    ComlogError="${MasterComlogFolder}/error_${CommandToRun}_${CASE}_${TimeStamp}.log"
-    CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Fail"
-    # -- Batchlog
-    # --   <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
-    echo ""
-    cyaneho "--- Full QuNex call for command: ${CommandToRun}"
-    echo ""
-    cyaneho "${QuNexCallToRun}"
-    echo ""
-    cyaneho "--------------------------------------------------------------"
-    echo ""
-    echo ""
-    # -- Declare commands
-    echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${Runlog}
-    echo "#" >> ${Runlog}
-    echo "${QuNexCallToRun}" >> ${Runlog}
-    echo "#!/bin/bash" >> ${ComRun}
-    echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComRun}
-    echo "#" >> ${ComRun}
-    echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
-    echo "${QuNexCallToRun}" >> ${ComRun}
-    chmod 777 ${ComRun}
-    # -- Check that $ComRun is set properly
-    echo ""; if [ ! -f "${ComRun}" ]; then reho "ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
-    ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
-    echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho "ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
-    # -- Define command to execute
-    echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComlogTmp}
-    echo "#" >> ${ComlogTmp}
-    ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
-    # -- Acceptance tests
-    ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
-    ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
-    # -- Garbage collection
-    ComGarbageCollect="if [[ -f 0 && ! -s 0 ]]; then echo 'delete' >> qunex_garbage0; fi; if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
-    ComGarbageRemove="if [[ -s qunex_garbage0 ]]; then rm 0; rm qunex_garbage0; fi; if [[ -s qunex_garbage1 ]]; then rm 1; rm qunex_garbage1; fi; if [[ -s qunex_garbage2 ]]; then rm 2; rm qunex_garbage2; fi"
-    ComRunGarbage="${ComGarbageCollect}; ${ComGarbageRemove}"
-    # -- Run the commands locally
-    if [[ ${Cluster} == 1 ]]; then
-        # -- Command to perform acceptance test
-        ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_passed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
-        # -- Combine final string of commands
-        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
-        geho "--------------------------------------------------------------"
-        echo ""
-        geho "   Running ${CommandToRun} locally on `hostname`"
-        geho "   Command log:     ${Runlog}  "
-        geho "   Command output: ${ComlogTmp} "
-        echo ""
-        geho "--------------------------------------------------------------"
-        echo ""
-        eval "${ComRunAll}"
+        # -- Run the commands via scheduler
+        if [[ ${Cluster} == 2 ]]; then
+            # -- Command to perform acceptance test
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
+            # -- Combine final string of commands
+            ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
+            cd ${MasterRunLogFolder}
+            gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
+            geho "--------------------------------------------------------------"
+            echo ""
+            geho "   Data successfully submitted to scheduler"
+            geho "   Scheduler details: ${Scheduler}"
+            geho "   Command log: ${Runlog}"
+            geho "   Command output: ${ComlogTmp} "
+            echo ""
+            geho "--------------------------------------------------------------"
+            echo ""
+        fi
     fi
-    # -- Run the commands via scheduler
-    if [[ ${Cluster} == 2 ]]; then
-        # -- Command to perform acceptance test
-        ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
-        # -- Combine final string of commands
-        ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
-        cd ${MasterRunLogFolder}
-        gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
-        geho "--------------------------------------------------------------"
-        echo ""
-        geho "   Data successfully submitted to scheduler"
-        geho "   Scheduler details: ${Scheduler}"
-        geho "   Command log: ${Runlog}"
-        geho "   Command output: ${ComlogTmp} "
-        echo ""
-        geho "--------------------------------------------------------------"
-        echo ""
-    fi
-fi
 
 }
 
