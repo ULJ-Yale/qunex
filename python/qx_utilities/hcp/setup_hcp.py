@@ -28,9 +28,9 @@ import general.exceptions as ge
 import os.path
 import general.core as gc
 
-def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", folderstructure="hcpls", hcp_suffix=""):
+def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
     """
-    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [folderstructure=hcpls] [hcp_suffix=""]``
+    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=standard] [folderstructure=hcpls] [hcp_suffix=""]``
 
     The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
@@ -55,15 +55,12 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                         - clear (remove any existing files and redo hcp 
                           mapping)
 
-    --hcp_filename      How to name the BOLD files once mapped into
-                        the hcp input folder structure. The default
-                        ('automated') will automatically name each
-                        file by their number (e.g. BOLD_1). The
-                        alternative ('userdefined') is to use the
-                        file names, which can be defined by the
-                        user prior to mapping (e.g. rfMRI_REST1_AP).
-                        ['automated']
-    --folderstructure   Which HCP folder structure to use 'hcpya' or 'hcpls'. 
+    --hcp_filename      How to name the bold files in the hcp structure. The 
+                        default is to name them by their bold number 
+                        ('standard') (e.g. BOLD_1), the alternative is to use 
+                        their actual names ('original') (e.g. rfMRI_REST1_AP).
+                        ['standard']
+    --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
                         See below for details. ['hcpls'] 
     --hcp_suffix        Optional suffix to append to session id when creating 
                         session folder within the hcp folder. The final path
@@ -201,12 +198,12 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     nT1w  = 0
     nT2w  = 0
 
-    filename = hcp_filename == 'userdefined'
+    filename = hcp_filename == 'original'
 
-    if folderstructure not in ['hcpya', 'hcpls']:
+    if folderstructure not in ['initial', 'hcpls']:
         raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
 
-    if folderstructure == 'hcpya':
+    if folderstructure == 'initial':
         fctail = '_fncb'
         fmtail = '_strc'
         basef = os.path.join(sourcefolder, targetfolder, inf['id'] + hcp_suffix)

@@ -109,7 +109,7 @@ def getHCPPaths(sinfo, options):
     hcpbase                 = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
 
     d['base']               = hcpbase
-    if options['hcp_folderstructure'] == 'hcpya':
+    if options['hcp_folderstructure'] == 'initial':
         d['source'] = d['base']
     else:
         d['source'] = os.path.join(d['base'], 'unprocessed')
@@ -127,7 +127,7 @@ def getHCPPaths(sinfo, options):
     try:
         T1w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T1w'][0]
         filename = T1w.get('filename', None)
-        if filename and options['hcp_filename'] == "userdefined":
+        if filename and options['hcp_filename'] == "original":
             d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*' + filename + '*.nii.gz')))
         else:
             d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*T1w_MPR*.nii.gz')))
@@ -156,7 +156,7 @@ def getHCPPaths(sinfo, options):
         try:
             T2w = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'T2w'][0]
             filename = T2w.get('filename', None)
-            if filename and options['hcp_filename'] == "userdefined":
+            if filename and options['hcp_filename'] == "original":
                 d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '*' + filename + '*.nii.gz')))
             else:
                 d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_T2w_SPC*.nii.gz')))
@@ -208,10 +208,10 @@ def getHCPPaths(sinfo, options):
 
 
 def doHCPOptionsCheck(options, sinfo, command):
-    if options['hcp_folderstructure'] not in ['hcpya', 'hcpls']:
+    if options['hcp_folderstructure'] not in ['initial', 'hcpls']:
         raise ge.CommandFailed(command, "Unknown HCP folder structure version", "The specified HCP folder structure version is unknown: %s" % (options['hcp_folderstructure']), "Please check the 'hcp_folderstructure' parameter!")
 
-    if options['hcp_folderstructure'] == 'hcpya':
+    if options['hcp_folderstructure'] == 'initial':
         options['fctail'] = '_fncb'
         options['fmtail'] = '_strc'
     else:
@@ -371,27 +371,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 processing functionality is allowed
                                 (LegacyStyleData). In this case running
                                 processing w/o a T2w image.
-    --hcp_folderstructure       If set to 'hcpya' the folder structure used
-                                in the initial HCP Young Adults study is used.
-                                Specifically, the source files are stored in
-                                individual folders within the main 'hcp' folder
-                                in parallel with the working folders and the
-                                'MNINonLinear' folder with results. If set to
-                                'hcpls' the folder structure used in
-                                the HCP Life Span study is used. Specifically,
-                                the source files are all stored within their
-                                individual subfolders located in the joint
-                                'unprocessed' folder in the main 'hcp' folder,
-                                parallel to the working folders and the
-                                'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the BOLD files once mapped into
-                                the hcp input folder structure. The default
-                                ('automated') will automatically name each
-                                file by their number (e.g. BOLD_1). The
-                                alternative ('userdefined') is to use the
-                                file names, which can be defined by the
-                                user prior to mapping (e.g. rfMRI_REST1_AP).
-                                ['automated']
+    --hcp_folderstructure       Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported.
+                                ['hcpls']
+    --hcp_filename              Specifies whether the standard ('standard')
+                                filenames or the specified original names
+                                ('original') are to be used. ['standard']
 
     Specific parameters
     -------------------
@@ -931,27 +916,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 processing functionality is allowed
                                 (LegacyStyleData). In this case running
                                 processing w/o a T2w image.
-    --hcp_folderstructure       If set to 'hcpya' the folder structure used
-                                in the initial HCP Young Adults study is used.
-                                Specifically, the source files are stored in
-                                individual folders within the main 'hcp' folder
-                                in parallel with the working folders and the
-                                'MNINonLinear' folder with results. If set to
-                                'hcpls' the folder structure used in
-                                the HCP Life Span study is used. Specifically,
-                                the source files are all stored within their
-                                individual subfolders located in the joint
-                                'unprocessed' folder in the main 'hcp' folder,
-                                parallel to the working folders and the
-                                'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the BOLD files once mapped into
-                                the hcp input folder structure. The default
-                                ('automated') will automatically name each
-                                file by their number (e.g. BOLD_1). The
-                                alternative ('userdefined') is to use the
-                                file names, which can be defined by the
-                                user prior to mapping (e.g. rfMRI_REST1_AP).
-                                ['automated']
+    --hcp_folderstructure       Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported.
+                                ['hcpls']
+    --hcp_filename              Specifies whether the standard ('standard')
+                                filenames or the specified original names
+                                ('original') are to be used. ['standard']
+
 
     Specific parameters
     -------------------
@@ -1353,27 +1324,12 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
                           - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                           - '<path>' (for an arbitrary directory)
 
-    --hcp_folderstructure       If set to 'hcpya' the folder structure used
-                                in the initial HCP Young Adults study is used.
-                                Specifically, the source files are stored in
-                                individual folders within the main 'hcp' folder
-                                in parallel with the working folders and the
-                                'MNINonLinear' folder with results. If set to
-                                'hcpls' the folder structure used in
-                                the HCP Life Span study is used. Specifically,
-                                the source files are all stored within their
-                                individual subfolders located in the joint
-                                'unprocessed' folder in the main 'hcp' folder,
-                                parallel to the working folders and the
-                                'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the BOLD files once mapped into
-                                the hcp input folder structure. The default
-                                ('automated') will automatically name each
-                                file by their number (e.g. BOLD_1). The
-                                alternative ('userdefined') is to use the
-                                file names, which can be defined by the
-                                user prior to mapping (e.g. rfMRI_REST1_AP).
-                                ['automated']
+    --hcp_folderstructure       Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported.
+                                ['hcpls']
+    --hcp_filename              Specifies whether the standard ('standard')
+                                filenames or the specified original names
+                                ('original') are to be used. ['standard']
 
     Specific parameters
     -------------------
@@ -1691,27 +1647,12 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 processing functionality is allowed
                                 (LegacyStyleData). In this case running
                                 processing w/o a T2w image.
-    --hcp_folderstructure       If set to 'hcpya' the folder structure used
-                                in the initial HCP Young Adults study is used.
-                                Specifically, the source files are stored in
-                                individual folders within the main 'hcp' folder
-                                in parallel with the working folders and the
-                                'MNINonLinear' folder with results. If set to
-                                'hcpls' the folder structure used in
-                                the HCP Life Span study is used. Specifically,
-                                the source files are all stored within their
-                                individual subfolders located in the joint
-                                'unprocessed' folder in the main 'hcp' folder,
-                                parallel to the working folders and the
-                                'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the BOLD files once mapped into
-                                the hcp input folder structure. The default
-                                ('automated') will automatically name each
-                                file by their number (e.g. BOLD_1). The
-                                alternative ('userdefined') is to use the
-                                file names, which can be defined by the
-                                user prior to mapping (e.g. rfMRI_REST1_AP).
-                                ['automated']
+    --hcp_folderstructure       Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported.
+                                ['hcpls']
+    --hcp_filename              Specifies whether the standard ('standard')
+                                filenames or the specified original names
+                                ('original') are to be used. ['standard']
 
     Specific parameters
     -------------------
@@ -2366,28 +2307,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             processing with slice timing correction,
                             external BOLD reference, or without a distortion
                             correction method.
-    --hcp_folderstructure   If set to 'hcpya' the folder structure used
-                            in the initial HCP Young Adults study is used.
-                            Specifically, the source files are stored in
-                            individual folders within the main 'hcp' folder
-                            in parallel with the working folders and the
-                            'MNINonLinear' folder with results. If set to
-                            'hcpls' the folder structure used in
-                            the HCP Life Span study is used. Specifically,
-                            the source files are all stored within their
-                            individual subfolders located in the joint
-                            'unprocessed' folder in the main 'hcp' folder,
-                            parallel to the working folders and the
-                            'MNINonLinear' folder. ['hcpls']
-    --hcp_filename          How to name the BOLD files once mapped into
-                            the hcp input folder structure. The default
-                            ('automated') will automatically name each
-                            file by their number (e.g. BOLD_1). The
-                            alternative ('userdefined') is to use the
-                            file names, which can be defined by the
-                            user prior to mapping (e.g. rfMRI_REST1_AP).
-                            ['automated']
-
+    --hcp_folderstructure   Specifies the version of the folder structure to
+                            use, 'initial' and 'hcpls' are supported.
+                            ['hcpls']
+    --hcp_filename          Specifies whether the standard ('standard')
+                            filenames or the specified original names
+                            ('original') are to be used. ['standard']
 
 
     In addition a number of *specific* parameters can be used to guide the
@@ -2414,15 +2339,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_prefix       The prefix to use when generating BOLD names 
                             (see 'hcp_filename') for BOLD working folders 
                             and results. [BOLD]
-    --hcp_filename          How to name the BOLD files once mapped into
-                            the hcp input folder structure. The default
-                            ('automated') will automatically name each
-                            file by their number (e.g. BOLD_1). The
-                            alternative ('userdefined') is to use the
-                            file names, which can be defined by the
-                            user prior to mapping (e.g. rfMRI_REST1_AP).
-                            ['automated']
-
+    --hcp_filename          Specifies whether BOLD names are to be created
+                            using sequential numbers ('standard') using the
+                            formula `<hcp_bold_prefix>_[N]` (e.g. BOLD_3)
+                            or actual bold names ('original', e.g.
+                            rfMRI_REST1_AP). ['standard']
 
     Image acquisition details
     -------------------------
@@ -2794,7 +2715,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -2808,7 +2729,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         for bold, boldname, boldtask, boldinfo in bolds:
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldsource = boldinfo['filename']
                 boldtarget = boldinfo['filename']
@@ -2989,7 +2910,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for bold image
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 boldroot = boldinfo['filename']
             else:
                 boldroot = boldsource + orient
@@ -3411,27 +3332,11 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
                             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                             - '<path>' (for an arbitrary directory)
 
-    --hcp_folderstructure   If set to 'hcpya' the folder structure used
-                            in the initial HCP Young Adults study is used.
-                            Specifically, the source files are stored in
-                            individual folders within the main 'hcp' folder
-                            in parallel with the working folders and the
-                            'MNINonLinear' folder with results. If set to
-                            'hcpls' the folder structure used in
-                            the HCP Life Span study is used. Specifically,
-                            the source files are all stored within their
-                            individual subfolders located in the joint
-                            'unprocessed' folder in the main 'hcp' folder,
-                            parallel to the working folders and the
-                            'MNINonLinear' folder. ['hcpls']
-    --hcp_filename          How to name the BOLD files once mapped into
-                            the hcp input folder structure. The default
-                            ('automated') will automatically name each
-                            file by their number (e.g. BOLD_1). The
-                            alternative ('userdefined') is to use the
-                            file names, which can be defined by the
-                            user prior to mapping (e.g. rfMRI_REST1_AP).
-                            ['automated']
+    --hcp_folderstructure   Specifies the version of the folder structure to use,
+                            initial' and 'hcpls' are supported. ['hcpls']
+    --hcp_filename          Specifies whether the standard ('standar
+                            filenames or the specified original names
+                            ('original') are to be used. ['standard']
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -3550,7 +3455,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -3617,7 +3522,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     # extract data
     bold, boldname, task, boldinfo = boldData
 
-    if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['filename']
         boldsource = boldinfo['filename']
         boldtarget = boldinfo['filename']
@@ -3741,7 +3646,7 @@ def parseICAFixBolds(options, bolds, r, msmall=False):
         # extract data
         printbold, _, _, boldinfo = b
 
-        if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
             boldtarget = boldinfo['filename']
             boldtag = boldinfo['task']
         else:
@@ -4117,7 +4022,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -4253,7 +4158,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     printbold, _, _, boldinfo = bold
 
-    if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['filename']
         boldtarget = boldinfo['filename']
     else:
@@ -4383,7 +4288,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             # extract data
             printbold, _, _, boldinfo = b
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
@@ -4640,7 +4545,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -4740,7 +4645,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
 
         printbold, _, _, boldinfo = bold
 
-        if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+        if 'filename' in boldinfo and options['hcp_filename'] == 'original':
             printbold  = boldinfo['filename']
             boldtarget = boldinfo['filename']
         else:
@@ -5032,7 +4937,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -5153,7 +5058,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
     # extract data
     printbold, _, _, boldinfo = bold
 
-    if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
         printbold  = boldinfo['filename']
         boldtarget = boldinfo['filename']
     else:
@@ -5306,7 +5211,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
             # extract data
             printbold, _, _, boldinfo = b
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
@@ -5749,7 +5654,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -5857,7 +5762,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             # extract data
             printbold, _, _, boldinfo = b
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
@@ -6018,7 +5923,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             # extract data
             printbold, _, _, boldinfo = b
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
@@ -6309,7 +6214,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
+            if options['hcp_filename'] == 'original':
                 report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
@@ -6399,7 +6304,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             # extract data
             printbold, _, _, boldinfo = b
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 printbold  = boldinfo['filename']
                 boldtarget = boldinfo['filename']
             else:
@@ -6564,7 +6469,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
                 # extract data
                 printbold, _, _, boldinfo = b
 
-                if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+                if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                     printbold  = boldinfo['filename']
                     boldtarget = boldinfo['filename']
                 else:
@@ -7500,7 +7405,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         try:
             # -- get source bold name
 
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 hcp_bold_name = boldinfo['filename']
             elif 'bold' in boldinfo:
                 hcp_bold_name = boldinfo['bold']
@@ -7570,7 +7475,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     if len(skipped) > 0:
         r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n" % (options['bolds'])
         for boldnum, boldname, boldtask, boldinfo in skipped:
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
                 r += "\n ... %s [task: '%s']" % (boldinfo['filename'], boldtask)
             else:
                 r += "\n ... %s [task: '%s']" % (boldname, boldtask)

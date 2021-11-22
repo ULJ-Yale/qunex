@@ -819,9 +819,6 @@ def main(args=None):
     # number of sessions
     n_sessions = None
 
-    # get sessionsids init
-    getsessionids = None
-
     # split sessions via sessionids or split existing sessionids
     if sessions is not None:
         if sessionids is None:
@@ -835,9 +832,10 @@ def main(args=None):
 
     # array for storing session ids
     sessionids_array = []
+    getsessionids = None
 
     # if scheduler is not None then setup parallelism
-    if scheduler is not None and sessions is not None:
+    if scheduler and sessions is not None:
         # if parjobs is None each session is its own job
         if parjobs is None:
             parjobs = 0

@@ -175,9 +175,9 @@ def useOrSkipBOLD(sinfo, options, r=""):
         if len(bskip) > 0:
             r += "\n\nSkipping the following BOLD images:"
             for n, b, t, v in bskip:
-                if 'filename' in v and options.get('hcp_filename', '') == 'userdefined':
+                if 'filename' in v and options.get('hcp_filename', '') == 'original':
                     r += "\n...  %-20s [%-6s %s]" % (v['filename'], b, t)
-                elif 'boldname' in v and options.get('hcp_filename', '') == 'userdefined':
+                elif 'boldname' in v and options.get('hcp_filename', '') == 'original':
                     r += "\n...  %-20s [%-6s %s]" % (v['boldname'], b, t)
                 else:
                     r += "\n...  %-6s [%s]" % (b, t)

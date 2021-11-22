@@ -34,14 +34,10 @@
 #
 #~ND~END~
 
-# -- Check which CUDA version is being run and set where GPU probtrackx binary is # bindir=$FSLDIR/bin
-
-## -- if ProbtrackXGPUBin is not set then set it automatically
-if [[ -z ${ProbtrackXGPUBin} ]]; then
-	bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_${DefaultCUDAVersion}
-else
-	bindir=${ProbtrackXGPUBin}
-fi
+# -- Check which CUDA version is being run and set where GPU probtrackx binary is # bindir=$FSLDIR/bin 
+if [[ `nvcc --version | grep "release"` == *"7.5"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_7.5; fi
+if [[ `nvcc --version | grep "release"` == *"8.0"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_8.0; fi
+if [[ `nvcc --version | grep "release"` == *"9.1"* ]]; then bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_9.1; fi
 
 # -- Define paths
 scriptsdir=$HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts
@@ -119,8 +115,8 @@ echo $ResultsFolder/CIFTI_STRUCTURE_THALAMUS_LEFT >> $ResultsFolder/volseeds
 echo $ResultsFolder/CIFTI_STRUCTURE_THALAMUS_RIGHT >> $ResultsFolder/volseeds
 
 # -- Define Generic Options
-generic_options=" --loopcheck --forcedir --fibthresh=0.01 --cthr=0.2 --sampvox=2 --randfib=1 --nsamples=${Nsamples} --nsteps=2000 --steplength=0.5 $distance_correction_flag $store_streamlines_length_flag"
-o=" --samples=$BedpostxFolder/merged --mask=$DtiMask --meshspace=caret"
+generic_options=" --loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -P ${Nsamples} -S 2000 --steplength=0.5 $distance_correction_flag $store_streamlines_length_flag"
+o=" -s $BedpostxFolder/merged -m $DtiMask --meshspace=caret"
 
 # -- Define Seed
 echo $ResultsFolder/white.L.asc >> $ResultsFolder/Mat1_seeds
@@ -128,7 +124,7 @@ echo $ResultsFolder/white.R.asc >> $ResultsFolder/Mat1_seeds
 cat $ResultsFolder/volseeds >> $ResultsFolder/Mat1_seeds
 Seed="$ResultsFolder/Mat1_seeds"
 StdRef=$FSLDIR/data/standard/MNI152_T1_2mm_brain_mask
-o=" $o --seed=$Seed --seedref=$StdRef"
+o=" $o -x $Seed --seedref=$StdRef"
 o=" $o --xfm=`echo $RegFolder/standard2acpc_dc` --invxfm=`echo $RegFolder/acpc_dc2standard`"
 
 # -- Define Termination and Waypoint Masks
