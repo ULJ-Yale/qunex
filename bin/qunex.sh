@@ -187,15 +187,17 @@ show_all_qunex_commands() {
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
-# -- Set platform info
-Platform="Platform Information: `uname -a`"
-# -- Set the time stamp for given job
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-if [[ ${CommandToRun} == "run_turnkey" ]]; then
-    unset qxutil_command_to_run
-    if [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
-        if [[ ! -d ${WORKDIR} ]]; then 
-            mkdir -p ${WORKDIR} &> /dev/null
+    # -- Set platform info
+    Platform="Platform Information: `uname -a`"
+    # -- Set the time stamp for given job
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    if [[ ${CommandToRun} == "run_turnkey" ]]; then
+        unset qxutil_command_to_run
+        if ( [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] || [[ ${TURNKEY_TYPE} == 'xnat' ]] ) && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
+            if [[ ! -d ${WORKDIR} ]]; then
+                mkdir -p ${WORKDIR} &> /dev/null
+            fi
+            gmri create_study ${StudyFolder}
         fi
         gmri create_study ${StudyFolder}
     fi
