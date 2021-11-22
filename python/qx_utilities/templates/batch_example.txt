@@ -151,15 +151,15 @@
 # # --- general HCP options
 #
 # _hcp_processing_mode       Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData) ['HCPStyleData']
+# _hcp_folderstructure       Which version of HCP folder structure to use, 'initial' or 'hcpls' [hcpls]
 # _hcp_freesurfer_home       Path to FreeSurfer base folder []
 # _hcp_freesurfer_module     Whether to load FreeSurfer as a module on the cluster: YES or NONE []
 # _hcp_Pipeline              Path to pipeline base folder []
-# _hcp_folderstructure       If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically, the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study is used. Specifically, the source files are all stored within their individual subfolders located in the joint 'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder. [`hcpls`]
-# _hcp_filename              How to name the BOLD files once mapped into the hcp input folder structure. The default ('automated') will automatically name each file by their number (e.g. BOLD_1). The alternative ('userdefined') is to use the file names, which can be defined by the user prior to mapping (e.g. rfMRI_REST1_AP). ['automated']
 # _hcp_suffix                Session id suffix if running HCP preprocessing variants []
 # _hcp_t2                    Whether T2 image is present - anything or NONE [t2]
 # _hcp_printcom              Print command for the HCP scripts: set to echo to have commands printed and not executed. []
 # _hcp_bold_prefix           The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results [BOLD_]
+# _hcp_filename              How to name the image files in the hcp structure. The default is to name them by their number ('standard') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('original') (e.g. rfMRI_REST1_AP). ['standard']
 # _hcp_lowresmesh            Usually 32 vertices [32]
 # _hcp_hiresmesh             Usually 164 vertices [164]
 # _hcp_bold_res              Target image resolution 2mm recommended [2]

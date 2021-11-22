@@ -30,8 +30,8 @@ usage() {
  echo "--parcellationfile  Specify the absolute path of the file you want to use for "
  echo "                    parcellation "
  echo "                    (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
- echo "--outname           Specify the suffix output name of the pconn file"
- echo "--lengths           Parcellate lengths matrix (yes/no) [no]"
+ echo "--outname=          Specify the suffix output name of the pconn file"
+ echo "--overwrite         Delete prior run for a given session (yes/no)"
  echo "--waytotal          Use the waytotal normalized version of the DWI dense "
  echo "                    connectome. Default: [none]"
  echo ""
@@ -101,14 +101,15 @@ geho() {
 # ------------------------------------------------------------------------------
 
 if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
-    usage
+	usage
 fi
 
 # ------------------------------------------------------------------------------
 #  -- Parse arguments
 # ------------------------------------------------------------------------------
 
-########################################## INPUTS ##########################################
+########################################## INPUTS ########################################## 
+
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
@@ -116,9 +117,9 @@ fi
     # Session        
     # MatrixVersion     e.g. 1 or 3
     # ParcellationFile  in *.dlabel.nii format
-    # OutName
-
+    # OutName  
 ########################################## OUTPUTS #########################################
+
 # -- Outputs will be *pconn.nii files located here:
 #       DWIOutput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
@@ -134,7 +135,6 @@ unset ParcellationFile
 unset OutName
 unset Overwrite
 unset WayTotal
-unset Lengths
 unset DWIOutFilePconn
 unset DWIOutFilePDconn
 runcmd=""
@@ -178,15 +178,11 @@ while [ ${index} -lt ${numArgs} ]; do
         --waytotal=*)
             WayTotal=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;
-        --lengths=*)
-            Lengths=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;
+            ;;                
         --overwrite=*)
             Overwrite=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;
+            ;;      
         *)
             usage
             reho "ERROR: Unrecognized Option: ${argument}"
@@ -226,11 +222,6 @@ if [ -z ${WayTotal} ]; then
     WayTotal=none
     echo ""
 fi
-if [ -z ${Lengths} ]; then
-    reho "No <parcellate_streamline_lengths> specified. Assuming default [no]"
-    Lengths="no"
-    echo ""
-fi
 if [ -z ${OutName} ]; then
     usage
     reho "ERROR: <name_of_output_pconn_file> not specified>"
@@ -250,7 +241,6 @@ echo "   Session: ${CASE}"
 echo "   MatrixVersion: ${MatrixVersion}"
 echo "   ParcellationFile: ${ParcellationFile}"
 echo "   Waytotal normalization: ${WayTotal}"
-echo "   Streamline Lengths: ${Lengths}"
 echo "   OutName: ${OutName}"
 echo "   Overwrite: ${Overwrite}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
@@ -260,46 +250,36 @@ echo ""
 }
 
 ######################################### DO WORK ##########################################
+
 # gzip $ResultsFolder/${OutFileName} --fast
 # gzip $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
 
 main() {
+
 # -- Get Command Line Options
 get_options $@
 
 # -- Define inputs and output
 echo "--- Establishing paths for all input and output folders:"; echo ""
 
-# -- Define input. If not using the lengths matrix, then check if WayTotal normalization is selected
-if [ "$Lengths" == "yes" ]; then
-    echo "--- Using streamline length dconn file"; echo ""
-    DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_lengths.dconn.nii.gz"
-    DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pconn.nii"
-    DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pdconn.nii"
-    if [ ! "$WayTotal" == "none" ]; then
-        echo "--- ignoring waytotal argument (should be set to none when parcellating the streamline lengths matrix)"; echo ""
-    fi 
-else
-
-    if [ "$WayTotal" == "none" ]; then
-        echo "--- Using dconn file without waytotal normalization"; echo ""
-        DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
-        DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
-    fi
-    if [ "$WayTotal" == "standard" ]; then
-        echo "--- Using waytotal normalized dconn file"; echo ""
-        DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
-        DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pdconn.nii"
-    fi
-    if [ "$WayTotal" == "log" ]; then
-        echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
-        DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
-        DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pdconn.nii"
-    fi
-
+# -- Define input and check if WayTotal normalization is selected
+if [ "$WayTotal" == "none" ]; then
+	echo "--- Using dconn file without waytotal normalization"; echo ""
+	DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
+	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
+fi
+if [ "$WayTotal" == "standard" ]; then
+	echo "--- Using waytotal normalized dconn file"; echo ""
+	DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
+	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pconn.nii"
+	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pdconn.nii"
+fi
+if [ "$WayTotal" == "log" ]; then
+	echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
+	DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
+	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
+	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
 fi
 
 # -- Define output
@@ -309,10 +289,10 @@ echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePc
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-    reho "--- Deleting prior runs for $DiffData..."
-    echo ""
-    rm -f "$DWIOutput"/"$DWIOutFilePDconn" > /dev/null 2>&1
-    rm -f "$DWIOutput"/"$DWIOutFilePconn" > /dev/null 2>&1
+	reho "--- Deleting prior runs for $DiffData..."
+	echo ""
+	rm -f "$DWIOutput"/"$DWIOutFilePDconn" > /dev/null 2>&1
+	rm -f "$DWIOutput"/"$DWIOutFilePconn" > /dev/null 2>&1
 fi
 
 # -- Check if parcellation was completed
@@ -320,34 +300,34 @@ reho "--- Checking if parcellation was completed..."
 echo ""
 
 if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
-    geho "--- Parcellation data found: "
-    echo ""
-    echo "    ${DWIOutput}/${DWIOutFilePconn}"
-    echo ""
-    exit 1
+	geho "--- Parcellation data found: "
+	echo ""
+	echo "    ${DWIOutput}/${DWIOutFilePconn}"
+	echo ""
+	exit 1
 else
-    reho "--- Parcellation data not found."
-    echo ""
-    echo "--- Computing parcellation by COLUMN on $DWIInput..."
-    echo ""
-    # -- First parcellate by COLUMN and save a *pdconn file
-    wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePDconn"
-    echo "--- Computing parcellation by ROW on ${DWIOutput}/${DWIOutFilePDconn} ..."
-    echo ""
-    # -- Next parcellate by ROW and save final *pconn file
-    wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePconn"
-fi
+	reho "--- Parcellation data not found."
+	echo ""
+	echo "--- Computing parcellation by COLUMN on $DWIInput..."
+	echo ""
+	# -- First parcellate by COLUMN and save a *pdconn file
+	wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePDconn"
+	echo "--- Computing parcellation by ROW on ${DWIOutput}/${DWIOutFilePDconn} ..."
+	echo ""
+	# -- Next parcellate by ROW and save final *pconn file
+	wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePconn"
+fi	
 
 # -- Perform completion checks
 reho "--- Checking outputs..."
 echo ""
 if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
-    geho "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
-    echo ""
+	geho "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
+	echo ""
 else
-    reho "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
-    echo ""
-    exit 1
+	reho "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
+	echo ""
+	exit 1
 fi
 
 reho "--- DWI Parcellation successfully completed"

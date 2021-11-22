@@ -6,14 +6,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.91.9 (2021-15-09)
-
-Renamed the `hcp_folderstructure` parameter value from `initial` to `hcpya` to increase clarity. Optimized the entry point script for faster execution of commands.
-
-## 0.91.8 (2021-01-09)
-
-Fixed a bug when running the create_study command through qunex_container. Optimized the environment setup. Fixed run_turnkey behavior when reran on the same study multiple times. Improved CUDA libraries linkup with bedpostx and probtrackx. Removed a bug in probtrackx when using a certain parameter configuration. The dwi_parcellate command is now able to parcellate length matrices as well.
-
 ## 0.91.7 (2021-11-08)
 
 Fixed a bug in hcp_fmri_task_analysis and made the command more robust.

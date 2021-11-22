@@ -14,7 +14,9 @@
 # -------------------------> General HCP settings
 
 _hcp_Pipeline           : ${HCPPIPEDIR}
-_hcp_processing_mode    : LegacyStyleData # For HCP compliant data set to ==> HCPStyleData
+_hcp_folderstructure    : hcpls
+_hcp_filename           : standard
+_hcp_processing_mode    : LegacyStyleData
 
 # ---> Pre FreeSurfer
 

@@ -7,12 +7,14 @@
 #	Modified by Alan Anticevic for LSF, PBS and SLURM compatibility via QuNex code (07/01/2017)
 # Originally developed by University of Oxford
 
-## -- if BedpostXGPUBin is not set then set it automatically
-if [[ -z ${BedpostXGPUBin} ]]; then
-	bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_${DefaultCUDAVersion}/bedpostx_gpu
-else
-	bindir=${BedpostXGPUBin}/bedpostx_gpu
-fi
+## -- set the default binary location
+
+# cuda 9.1 is the default
+bindir=${FSLGPUBinary}/${BedpostXGPUDir}/bedpostx_gpu
+
+#-- set binary location depending on CUDA
+if [[ `nvcc --version | grep "release"` == *"7.5"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_7.5/bedpostx_gpu; fi
+if [[ `nvcc --version | grep "release"` == *"8.0"* ]]; then bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_8.0/bedpostx_gpu; fi
 
 Usage() {
     echo ""
