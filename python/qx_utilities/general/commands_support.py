@@ -235,7 +235,8 @@ deprecated_parameters = {
     'hcp_bold_stcorrdir':      'hcp_bold_slicetimerparams', 
     'hcp_bold_stcorrint':      'hcp_bold_slicetimerparams',
     'hcp_bold_sequencetype': None,
-    'hcp_biascorrect_t1w': None
+    'hcp_biascorrect_t1w': None,
+    'hcp_Pipeline': 'hcp_pipeline'
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

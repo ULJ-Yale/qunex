@@ -1473,7 +1473,7 @@ fi
                 BATCHFILECHECK="fail"
                 exit 1
             else
-                if [[ ! `more ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_Pipeline'` ]]; then
+                if [[ ! `more ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_pipeline'` ]] || [[ ! `more ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_Pipeline'` ]]; then
                     BATCHFILECHECK="fail"
                     echo " ==> ERROR: Scan batch file ${BATCH_PARAMETERS_FILENAME} content not correct in ${RawDataInputPath}!"
                     exit 1
@@ -1777,7 +1777,7 @@ fi
 
         # -- Check if mapping and batch files exist and if content OK
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
-        if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then BATCHFILECHECK="fail"; fi
+        if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_pipeline'` ]] || [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then BATCHFILECHECK="fail"; fi
         if [[ ${DATAFormat} == "HCPLS" ]]; then
             MAPPINGFILECHECK=pass
         else

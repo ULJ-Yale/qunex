@@ -256,6 +256,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             if not os.path.exists(os.path.dirname(v)) and k != 'return':
                 raise CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
+    else:
+         outputs['stdout'] = "~/QuNex_%j.out"
 
     if outputs['both'] is not None:
         outputs['stderr'] = outputs['both']
