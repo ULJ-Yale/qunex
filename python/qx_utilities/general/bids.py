@@ -437,7 +437,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
         elif os.path.isdir(inbox):
 
             # -- figure out, where we are
-            basename = os.path.basename(inbox)            
+            basename = os.path.basename(inbox)
             if 'sub-' in basename:
                 folderType = 'subject'
             elif 'ses-' in basename:
@@ -506,7 +506,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
 
             candidates = []
             for e in sessions:
-                candidates += glob.glob(os.path.join(inbox, e))
+                candidates += glob.glob(os.path.join(inbox, e) + "*")
             for candidate in candidates:
                 if os.path.isfile(candidate):
                     sourceFiles.append(candidate)

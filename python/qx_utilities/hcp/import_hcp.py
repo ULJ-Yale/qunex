@@ -115,7 +115,6 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
     return tfile
 
 
-
 def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None):
     """
     ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>]``
@@ -970,7 +969,8 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
         for fileInfo in folder['folderFiles']:
             if fileInfo['name'] in mapped:
-                continue            
+                continue
+
             mapped.append(fileInfo['name'])
 
             imgn += 1
@@ -993,7 +993,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
 
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
-                    # -29s fol alignment purposes (output generation is slightly different with T1w and T2w)
+                    # -29s for alignment purposes (output generation is slightly different with T1w and T2w)
                     out = "%02d: %-20s: %-29s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']))
                     print(out, end= " ", file=sout)
                     print(out, end= " ", file=sout_hcp)

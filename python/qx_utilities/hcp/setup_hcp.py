@@ -28,9 +28,9 @@ import general.exceptions as ge
 import os.path
 import general.core as gc
 
-def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="standard", folderstructure="hcpls", hcp_suffix=""):
+def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", hcp_folderstructure="hcpls", hcp_suffix=""):
     """
-    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=standard] [folderstructure=hcpls] [hcp_suffix=""]``
+    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""]``
 
     The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
@@ -39,33 +39,35 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     INPUTS
     ======
 
-    --sourcefolder      The base session folder that contains the nifti images 
-                        and session.txt file. [.]
-    --targetfolder      The folder (within the base folder) to which the data is
-                        to be mapped. [hcp]
-    --sourcefile        The name of the source session.txt file. 
-                        [session_hcp.txt]
-    --check             Whether to check if session is marked ready for setting 
-                        up hcp folder [yes].
-    --existing          What to do if the hcp folder already exists. ['add']
-                        Options are:
+    --sourcefolder          The base session folder that contains the nifti images 
+                            and session.txt file. [.]
+    --targetfolder          The folder (within the base folder) to which the data is
+                            to be mapped. [hcp]
+    --sourcefile            The name of the source session.txt file. 
+                            [session_hcp.txt]
+    --check                 Whether to check if session is marked ready for setting 
+                            up hcp folder [yes].
+    --existing              What to do if the hcp folder already exists. ['add']
+                            Options are:
                         
-                        - abort (abort setting up hcp folder)
-                        - add (leave existing files and add new ones)
-                        - clear (remove any existing files and redo hcp 
-                          mapping)
+                            - abort (abort setting up hcp folder)
+                            - add (leave existing files and add new ones)
+                            - clear (remove any existing files and redo hcp 
+                            mapping)
 
-    --hcp_filename      How to name the bold files in the hcp structure. The 
-                        default is to name them by their bold number 
-                        ('standard') (e.g. BOLD_1), the alternative is to use 
-                        their actual names ('original') (e.g. rfMRI_REST1_AP).
-                        ['standard']
-    --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
-                        See below for details. ['hcpls'] 
-    --hcp_suffix        Optional suffix to append to session id when creating 
-                        session folder within the hcp folder. The final path
-                        to HCP session is then:
-                        `<targetfolder>/<session id><hcp_suffix>`. []
+    --hcp_filename          How to name the BOLD files once mapped into
+                            the hcp input folder structure. The default
+                            ('automated') will automatically name each
+                            file by their number (e.g. BOLD_1). The
+                            alternative ('userdefined') is to use the
+                            file names, which can be defined by the
+                            user prior to mapping (e.g. rfMRI_REST1_AP).
+                            ['automated']
+    --hcp_folderstructure   Which HCP folder structure to use 'hcpya' or 'hcpls'.
+    --hcp_suffix            Optional suffix to append to session id when creating 
+                            session folder within the hcp folder. The final path
+                            to HCP session is then:
+                            `<targetfolder>/<session id><hcp_suffix>`. []
 
     USE
     ===
@@ -200,10 +202,10 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
     filename = hcp_filename == 'original'
 
-    if folderstructure not in ['initial', 'hcpls']:
-        raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
+    if hcp_folderstructure not in ['hcpya', 'hcpls']:
+        raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (hcp_folderstructure), "Please check the command!")
 
-    if folderstructure == 'initial':
+    if hcp_folderstructure == 'hcpya':
         fctail = '_fncb'
         fmtail = '_strc'
         basef = os.path.join(sourcefolder, targetfolder, inf['id'] + hcp_suffix)
