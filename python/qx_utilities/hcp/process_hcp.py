@@ -655,8 +655,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             if tufolder and sesettings:
                 try:
-                    sepos = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "*"))[0]
-                    seneg = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "*"))[0]
+                    sepos = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "*.nii.gz"))[0]
+                    seneg = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "*.nii.gz"))[0]
 
                     if all([sepos, seneg]):
                         r += "\n---> Spin-Echo pair of images present. [%s]" % (os.path.basename(tufolder))
