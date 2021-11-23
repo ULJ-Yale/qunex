@@ -251,7 +251,7 @@ deprecated_values = {
         'original': 'userdefined',
         'standard': 'automated'
     },
-    'hcp_folderstructure': {'initial': 'hcpya'}
+    'hcp_folderstructure': {'initial': 'hcpya'},
     'hcp_processing_mode':  {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
     'hcp_filename':         {'name': 'original', 'number': 'standard'}
 }
