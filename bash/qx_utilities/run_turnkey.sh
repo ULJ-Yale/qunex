@@ -65,7 +65,7 @@ QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 # source $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcp_diffusion run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_dtifit run_qc_dwi_dtifit dwi_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_probtrackx_dense_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
+QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcp_diffusion run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_dtifit run_qc_dwi_dtifit dwi_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_probtrackx_dense_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries parcellate_bold parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
 
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 
@@ -573,7 +573,7 @@ VoxelStep=`opts_GetOpt "--vstep" $@`
 ROIInfo=`opts_GetOpt "--roinfo" $@`
 FCCommand=`opts_GetOpt "--options" $@`
 Method=`opts_GetOpt "--method" $@`
-# -- bold_parcellation input flags
+# -- parcellate_bold / bold_parcellation input flags
 InputFile=`opts_GetOpt "--inputfile" $@`
 InputPath=`opts_GetOpt "--inputpath" $@`
 InputDataType=`opts_GetOpt "--inputdatatype" $@`
@@ -1381,7 +1381,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        create_bold_brain_masks|compute_bold_stats|create_stats_report|extract_nuisance_signal|preprocess_bold|preprocess_conc|general_plot_bold_timeseries|bold_parcellation|compute_bold_fc_gbc|compute_bold_fc_seed|run_qc_bold_fc)
+        create_bold_brain_masks|compute_bold_stats|create_stats_report|extract_nuisance_signal|preprocess_bold|preprocess_conc|general_plot_bold_timeseries|parcellate_bold|compute_bold_fc_gbc|compute_bold_fc_seed|run_qc_bold_fc)
             RsyncCommand="rsync -avzH \
             --include='/${SessionsFolderName}' \
             --include='/${SessionsFolderName}/${CASE}' \
@@ -2585,11 +2585,11 @@ fi
         rm ${general_plot_bold_timeseries_ComlogTmp}
     }
     # -- BOLD Parcellation
-    turnkey_bold_parcellation() {
-        FunctionName="bold_parcellation"
+    turnkey_parcellate_bold() {
+        FunctionName="parcellate_bold"
 
         getBoldNumberList
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ bold_parcellation on BOLDS: ${LBOLDRUNS}"; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ parcellate_bold on BOLDS: ${LBOLDRUNS}"; echo ""
 
         if [ -z ${RunParcellations} ]; then
 
@@ -2606,7 +2606,7 @@ fi
                if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                # -- Command
-               RunCommand="${QuNexCommand} bold_parcellation --sessions='${CASE}' \
+               RunCommand="${QuNexCommand} parcellate_bold --sessions='${CASE}' \
                --sessionsfolder='${SessionsFolder}' \
                --inputfile='${InputFileParcellation}' \
                --singleinputfile='${SingleInputFile}' \
@@ -2664,7 +2664,7 @@ fi
                    if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                    if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                    # -- Command
-                   RunCommand="${QuNexCommand} bold_parcellation --sessions='${CASE}' \
+                   RunCommand="${QuNexCommand} parcellate_bold --sessions='${CASE}' \
                    --sessionsfolder='${SessionsFolder}' \
                    --inputfile='${InputFileParcellation}' \
                    --singleinputfile='${SingleInputFile}' \
@@ -2939,7 +2939,7 @@ else
         # done
     #
         # -- Specific sets of functions for logging
-        BashBOLDFunctions="bold_parcellation compute_bold_fc_gbc compute_bold_fc_seed"
+        BashBOLDFunctions="parcellate_bold compute_bold_fc_gbc compute_bold_fc_seed"
         NiUtilsFunctions="setup_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc"
 
         ## deprecated to support parallel processing # -- Check for completion of turnkey function for python qx_utilities
