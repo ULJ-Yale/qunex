@@ -2586,7 +2586,7 @@ fi
     }
     # -- BOLD Parcellation
     turnkey_parcellate_bold() {
-        FunctionName="parcellate_bold"
+        FunctionName="bold_parcellation"
 
         getBoldNumberList
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ parcellate_bold on BOLDS: ${LBOLDRUNS}"; echo ""
