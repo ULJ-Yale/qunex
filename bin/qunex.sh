@@ -17,7 +17,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat bold_parcellation parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -625,7 +625,7 @@ show_usage_parcellate_anat() {
 # -- parcellate_bold - Executes the BOLD Parcellation Script (parcellate_bold.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-bold_parcellation() {
+parcellate_bold() {
     # -- Parse general parameters
     if [[ -z ${SingleInputFile} ]]; then
         BOLDOutput="${SessionsFolder}/${CASE}/${OutPath}"
@@ -1622,7 +1622,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Method=`get_parameters "${setflag}method" $@`
     MemLimit=`get_parameters "${setflag}mem-limit" $@`
 
-    # -- Input flags for bold_parcellation
+    # -- Input flags for parcellate_bold
     InputFile=`get_parameters "${setflag}inputfile" $@`
     InputPath=`get_parameters "${setflag}inputpath" $@`
     InputDataType=`get_parameters "${setflag}inputdatatype" $@`
@@ -2502,7 +2502,7 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$CommandToRun" == "bold_parcellation" ] || [ "$CommandToRun" == "parcellate_bold" ]; then
-    CommandToRun="bold_parcellation"
+    CommandToRun="parcellate_bold"
 
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi

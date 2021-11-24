@@ -573,7 +573,7 @@ VoxelStep=`opts_GetOpt "--vstep" $@`
 ROIInfo=`opts_GetOpt "--roinfo" $@`
 FCCommand=`opts_GetOpt "--options" $@`
 Method=`opts_GetOpt "--method" $@`
-# -- parcellate_bold / bold_parcellation input flags
+# -- parcellate_bold input flags
 InputFile=`opts_GetOpt "--inputfile" $@`
 InputPath=`opts_GetOpt "--inputpath" $@`
 InputDataType=`opts_GetOpt "--inputdatatype" $@`
@@ -2586,7 +2586,7 @@ fi
     }
     # -- BOLD Parcellation
     turnkey_parcellate_bold() {
-        FunctionName="bold_parcellation"
+        FunctionName="parcellate_bold"
 
         getBoldNumberList
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ parcellate_bold on BOLDS: ${LBOLDRUNS}"; echo ""
