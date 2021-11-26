@@ -17,7 +17,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment qxutil_command_exec dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -168,10 +168,6 @@ qunex_passed() {
 # -- Help calls for QuNex Functions
 # ------------------------------------------------------------------------------------------------------
 
-qxutil_command_exec() {
-    gmri ${gmriinput}
-}
-
 show_usage_qxutil() {
     echo ""
     gmri ?${usage_input}
@@ -272,7 +268,7 @@ bash_call_execute() {
         cyaneho "---------------------------------------------------------"
         echo ""
         echo ""
-        qxutil_command_exec
+        eval "gmri ${gmriinput}"
     else
         # -- Specific call for QuNex bash commands
         # -- Define specific logs
