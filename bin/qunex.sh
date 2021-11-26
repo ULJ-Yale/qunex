@@ -169,6 +169,9 @@ qunex_passed() {
 # ------------------------------------------------------------------------------------------------------
 
 qxutil_command_exec() {
+    echo "!!!!!"
+    echo ${gmriinput}
+    exit 0
     gmri ${gmriinput}
 }
 
@@ -1176,16 +1179,16 @@ if [[ $is_gmri_command == 1 ]]; then
         unset gmriinput
 
         for inputarg in "$@"; do
-
-            # flags
+            #  parameters
             if [[ ${inputarg} =~ '=' ]]; then
                 if [[ $inputarg =~ "\"" ]]; then
-                    inputarg=`echo "${inputarg}'" | sed "0,/=/s//=\'/"`
+                    inputarg=${inputarg/=/=\'}\'
                 else
-                    inputarg=`echo "${inputarg}\"" | sed "0,/=/s//=\"/"`
+                    inputarg=${inputarg/=/=\"}\"
                 fi
             fi
 
+            # flags
             if [[ -z $gmriinput ]]; then
                 gmriinput="${inputarg}"
             else
