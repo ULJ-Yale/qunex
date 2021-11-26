@@ -169,7 +169,7 @@ qunex_passed() {
 # ------------------------------------------------------------------------------------------------------
 
 qxutil_command_exec() {
-    eval gmri ${gmriinput}
+    gmri ${gmriinput}
 }
 
 show_usage_qxutil() {
