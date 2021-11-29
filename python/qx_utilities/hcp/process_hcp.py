@@ -7365,7 +7365,7 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
                 --low-res="%(low_res)s"' % {
                     "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
                     "study_dir"         : sinfo["hcp"],
-                    "subject_list"      : sinfo["id"],
+                    "subject_list"      : sinfo["id"] + options["hcp_suffix"],
                     "fmri_names"        : fmri_names,
                     "output_fmri_name"  : options["hcp_tica_outfmriname"],
                     "surf_reg_name"     : surfregname,
