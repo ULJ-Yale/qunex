@@ -6995,7 +6995,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --verbose' % {
                     "script"                : "hcp_asl",
                     "studydir"              : sinfo['hcp'],
-                    "subid"                 : sinfo["id"],
+                    "subid"                 : sinfo['id'] + options['hcp_suffix'],
                     "grads"                 : gdcfile,
                     "struct"                : t1w_file,
                     "sbrain"                : t1w_brain_file,
