@@ -4906,8 +4906,6 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     --parsessions           How many sessions to run in parallel. [1]
     --parelements           How many elements (e.g bolds) to run in
                             parallel. [1]
-    --overwrite             Whether to overwrite existing data (yes)
-                            or not (no). [no]
     --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
     --logfolder             The path to the folder where runlogs and comlogs
@@ -5054,7 +5052,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             if parelements == 1: # serial execution
                 for b in icafixBolds:
                     # process
-                    result = executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, b)
+                    result = executeHCPSingleReApplyFix(sinfo, options, hcp, run, b)
 
                     # merge r
                     r += result['r']
@@ -5072,7 +5070,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
                 # create a multiprocessing Pool
                 processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process
-                f = partial(executeHCPSingleReApplyFix, sinfo, options, overwrite, hcp, run)
+                f = partial(executeHCPSingleReApplyFix, sinfo, options, hcp, run)
                 results = processPoolExecutor.map(f, icafixBolds)
 
                 # merge r and report
@@ -5091,7 +5089,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             if parelements == 1: # serial execution
                 for g in icafixGroups:
                     # process
-                    result = executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, g)
+                    result = executeHCPMultiReApplyFix(sinfo, options, hcp, run, g)
 
                     # merge r
                     r += result['r']
@@ -5109,7 +5107,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
                 # create a multiprocessing Pool
                 processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process
-                f = partial(executeHCPMultiReApplyFix, sinfo, options, overwrite, hcp, run)
+                f = partial(executeHCPMultiReApplyFix, sinfo, options, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
 
                 # merge r and report
@@ -5148,7 +5146,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
+def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
     # extract data
     printbold, _, _, boldinfo = bold
 
@@ -5167,7 +5165,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
         # run HCP hand reclassification
         r += "\n------------------------------------------------------------"
         r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
-        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, True, boldtarget, printbold)
+        result = executeHCPHandReclassification(sinfo, options, hcp, run, True, boldtarget, printbold)
 
         # merge r
         r += result['r']
@@ -5280,7 +5278,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
     return {'r': r, 'report': report}
 
 
-def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
+def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
     # get group data
     groupname = group["name"]
     bolds = group["bolds"]
@@ -5328,7 +5326,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
         # run HCP hand reclassification
         r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
-        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, groupname, groupname)
+        result = executeHCPHandReclassification(sinfo, options, hcp, run, False, groupname, groupname)
 
         # merge r
         r += result['r']
@@ -5441,7 +5439,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
     return {'r': r, 'report': report}
 
 
-def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFix, boldtarget, printbold):
+def executeHCPHandReclassification(sinfo, options, hcp, run, singleFix, boldtarget, printbold):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -5485,7 +5483,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         # -- Run
         if run and boldok:
             if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
+                if os.path.exists(tfile):
                     os.remove(tfile)
 
                 r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP HandReclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
@@ -5497,7 +5495,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP HandReclassification can be run"
                     report['ready'].append(printbold)
