@@ -5940,7 +5940,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], outfmriname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -5949,7 +5949,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + outfmriname, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(printbold)
