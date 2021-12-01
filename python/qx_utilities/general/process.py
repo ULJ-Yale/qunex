@@ -283,7 +283,7 @@ arglist = [
            ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE."],
            ['hcp_printcom',           '',                                         str,    "Print command for the HCP scripts: set to echo to have commands printed and not executed.."],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_filename') for bold working folders and results."],
-           ['hcp_filename',           'automated',                                 str,    "How to name the image files in the hcp structure. The default ('automated') is to name them automatically by their number using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative ('userdefined') is to use their user defined names (e.g. rfMRI_REST1_AP). ['automated']."],
+           ['hcp_filename',           'automated',                                str,    "How to name the image files in the hcp structure. The default ('automated') is to name them automatically by their number using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative ('userdefined') is to use their user defined names (e.g. rfMRI_REST1_AP). ['automated']."],
            ['hcp_lowresmesh',         '32',                                       str,    "Usually 32 vertices."],
            ['hcp_lowresmeshes',       '32',                                       str,    "Usually 32 vertices."],
            ['hcp_hiresmesh',          '164',                                      int,    "Usually 164 vertices."],
