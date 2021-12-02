@@ -208,7 +208,7 @@ def getHCPPaths(sinfo, options):
     return d
 
 
-def doHCPOptionsCheck(options, sinfo, command):
+def doHCPOptionsCheck(options, command):
     if options['hcp_folderstructure'] not in ['hcpya', 'hcpls']:
         raise ge.CommandFailed(command, "Unknown HCP folder structure version", "The specified HCP folder structure version is unknown: %s" % (options['hcp_folderstructure']), "Please check the 'hcp_folderstructure' parameter!")
 
@@ -557,7 +557,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     try:
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, 'hcp_pre_freesurfer')
-        doHCPOptionsCheck(options, sinfo, 'hcp_pre_freesurfer')
+        doHCPOptionsCheck(options, 'hcp_pre_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -1075,7 +1075,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     try:
         pc.doOptionsCheck(options, sinfo, 'hcp_freesurfer')
-        doHCPOptionsCheck(options, sinfo, 'hcp_freesurfer')
+        doHCPOptionsCheck(options, 'hcp_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -1480,7 +1480,7 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             try:
                 pc.doOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
-                doHCPOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
+                doHCPOptionsCheck(options, 'longitudinal_freesurfer')
                 hcp = getHCPPaths(session, options)
                 sessionspaths.append(hcp['FS_folder'])
                 resultspaths.append(hcp['FS_long_results'])
@@ -1777,7 +1777,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     try:
         pc.doOptionsCheck(options, sinfo, 'hcp_post_freesurfer')
-        doHCPOptionsCheck(options, sinfo, 'hcp_post_freesurfer')
+        doHCPOptionsCheck(options, 'hcp_post_freesurfer')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -2131,7 +2131,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
     try:
         pc.doOptionsCheck(options, sinfo, 'hcp_diffusion')
-        doHCPOptionsCheck(options, sinfo, 'hcp_diffusion')
+        doHCPOptionsCheck(options, 'hcp_diffusion')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -2641,7 +2641,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     try:
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, 'hcp_fmri_volume')
-        doHCPOptionsCheck(options, sinfo, 'hcp_fmri_volume')
+        doHCPOptionsCheck(options, 'hcp_fmri_volume')
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
@@ -3518,7 +3518,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         # --- Base settings
 
         pc.doOptionsCheck(options, sinfo, 'hcp_fmri_surface')
-        doHCPOptionsCheck(options, sinfo, 'hcp_fmri_surface')
+        doHCPOptionsCheck(options, 'hcp_fmri_surface')
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
@@ -4111,7 +4111,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     try:
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, 'hcp_icafix')
-        doHCPOptionsCheck(options, sinfo, 'hcp_icafix')
+        doHCPOptionsCheck(options, 'hcp_icafix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -4634,7 +4634,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     try:
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, 'hcp_post_fix')
-        doHCPOptionsCheck(options, sinfo, 'hcp_post_fix')
+        doHCPOptionsCheck(options, 'hcp_post_fix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -5024,7 +5024,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     try:
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, 'hcp_reapply_fix')
-        doHCPOptionsCheck(options, sinfo, 'hcp_reapply_fix')
+        doHCPOptionsCheck(options, 'hcp_reapply_fix')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -5741,7 +5741,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     try:
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, 'hcp_msmall')
-        doHCPOptionsCheck(options, sinfo, 'hcp_msmall')
+        doHCPOptionsCheck(options, 'hcp_msmall')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -6301,7 +6301,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     try:
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, 'hcp_dedrift_and_resample')
-        doHCPOptionsCheck(options, sinfo, 'hcp_dedrift_and_resample')
+        doHCPOptionsCheck(options, 'hcp_dedrift_and_resample')
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
@@ -6917,7 +6917,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
     try:
         pc.doOptionsCheck(options, sinfo, "hcp_asl")
-        doHCPOptionsCheck(options, sinfo, "hcp_asl")
+        doHCPOptionsCheck(options, "hcp_asl")
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
@@ -7071,7 +7071,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
+def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
     """
     ``hcp_temporal_ica [... processing options]``
     ``hcp_tica [... processing options]``
@@ -7233,28 +7233,37 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
     """
 
     r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession ids: %s \n[started on %s]" % (sessionids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP temporal ICA Pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
 
     run    = True
     report = "Error"
 
     try:
-        pc.doOptionsCheck(options, sinfo, "hcp_temporal_ica")
-        doHCPOptionsCheck(options, sinfo, "hcp_temporal_ica")
-        hcp = getHCPPaths(sinfo, options)
+        doHCPOptionsCheck(options, "hcp_temporal_ica")
 
-        if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo["id"])
-            run = False
+        # subject_list
+        subject_list = ""
+
+        for session in sessions:
+            pc.doOptionsCheck(options, session, "hcp_temporal_ica")
+            hcp = getHCPPaths(session, options)
+
+            if "hcp" not in session:
+                r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (session["id"])
+                run = False
+
+            # subject_list
+            if subject_list == "":
+                subject_list = session['id'] + options["hcp_suffix"]
+            else:
+                subject_list = subject_list + "," + session['id'] + options["hcp_suffix"]
+
+        # use first session as the main one
+        sinfo = sessions[0]
 
         # get sorted bold numbers and bold data
-        bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
-        if report['boldskipped']:
-            if options['hcp_filename'] == 'userdefined':
-                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
-            else:
-                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
 
         # get all bold targets and tags
         boldtargets = []
@@ -7278,29 +7287,23 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
 
         # hcp_tica_bolds
         fmri_names = ""
-        if "hcp_tica_bolds" not in options:
-            fmri_names = boldtargets.replace(",", "@")
+        if options["hcp_tica_bolds"] is None:
+            fmri_names = ",".join(boldtargets)
         else:
             # defined bolds
-            tica_bolds = options["hcp_tica_bolds"].split(",")
-            
-            # check if defined
-            for tb in tica_bolds:
-                # if tag or bold exists, append
-                if tb in boldtargets or tb in boldtags:
-                    if fmri_names == "":
-                        fmri_names = tb
-                    else
-                        fmri_names = fmri_names + "," + tb
-                else:
-                    r += "\n---> ERROR: BOLD or tag %s does not exist!" % tb
-                    run = False
-                    break
+            fmri_names = options["hcp_tica_bolds"]
 
         # mandatory parameters
+        out_fmri_name = ""
+        if options["hcp_tica_outfmriname"] is None:
+            r += "\n---> ERROR: hcp_tica_outfmriname is not provided!"
+            run = False
+        else:
+            out_fmri_name = options["hcp_tica_outfmriname"]
+
         # hcp_tica_surfregname
         surfregname = ""
-        if "hcp_tica_surfregname" not in options:
+        if options["hcp_tica_surfregname"] is None:
             r += "\n---> ERROR: hcp_tica_surfregname is not provided!"
             run = False
         else:
@@ -7308,25 +7311,25 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
 
         # hcp_icafix_highpass
         icafix_highpass = ""
-        if "hcp_icafix_highpass" not in options:
+        if options["hcp_icafix_highpass"] is None:
             r += "\n---> ERROR: hcp_icafix_highpass is not provided!"
             run = False
         else:
             icafix_highpass = options["hcp_icafix_highpass"]
 
         # hcp_tica_procstring
-        if "hcp_tica_procstring" in options:
-            proc_string = options["hcp_tica_procstring"]
-        else:
+        if options["hcp_tica_procstring"] is None:
             proc_string = ""
             if "hcp_cifti_tail" in options:
                 proc_string = "%s_" % options['hcp_cifti_tail']
-            
-            proc_string "%s%s_hp%s_clean" % (proc_string, surfregname, icafix_highpass)
+
+            proc_string = "%s%s_hp%s_clean" % (proc_string, surfregname, icafix_highpass)
+        else:
+            proc_string = options["hcp_tica_procstring"]
 
         # hcp_tica_outgroupname
         outgroupname = ""
-        if "hcp_tica_outgroupname" not in options:
+        if options["hcp_tica_outgroupname"] is None:
             r += "\n---> ERROR: hcp_tica_outgroupname is not provided!"
             run = False
         else:
@@ -7334,7 +7337,7 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
 
         # hcp_tica_timepoints
         timepoints = ""
-        if "hcp_tica_timepoints" not in options:
+        if options["hcp_tica_timepoints"] is None:
             r += "\n---> ERROR: hcp_tica_timepoints is not provided!"
             run = False
         else:
@@ -7342,7 +7345,7 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
 
         # hcp_tica_timepoints
         num_wishart = ""
-        if "hcp_tica_num_wishart" not in options:
+        if options["hcp_tica_num_wishart"] is None:
             r += "\n---> ERROR: hcp_tica_num_wishart is not provided!"
             run = False
         else:
@@ -7351,7 +7354,7 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
         # build the command
         if run:
             comm = '%(script)s \
-                --studydir="%(study_dir)s" \
+                --study-folder="%(study_dir)s" \
                 --subject-list="%(subject_list)s" \
                 --fmri-names="%(fmri_names)s" \
                 --output-fmri-name="%(output_fmri_name)s" \
@@ -7365,9 +7368,9 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
                 --low-res="%(low_res)s"' % {
                     "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
                     "study_dir"         : sinfo["hcp"],
-                    "subject_list"      : sinfo["id"] + options["hcp_suffix"],
+                    "subject_list"      : subject_list,
                     "fmri_names"        : fmri_names,
-                    "output_fmri_name"  : options["hcp_tica_outfmriname"],
+                    "output_fmri_name"  : out_fmri_name,
                     "surf_reg_name"     : surfregname,
                     "icafix_highpass"   : icafix_highpass,
                     "proc_string"       : proc_string,
@@ -7453,9 +7456,6 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
             if options['hcp_matlab_mode'] == "compiled":
-                # TODO
-                r += "\n---> ERROR: compiled MATLAB is not supported for temporal ICA!"
-                run = False
                 matlabrunmode = 0
             elif options['hcp_matlab_mode'] == "interpreted":
                 matlabrunmode = 1
@@ -7474,7 +7474,7 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
 
             # -- Test files
             # TODO
-            tfile = None
+            tfile = "none.txt"
             full_test = None
 
         # -- Run
@@ -7483,7 +7483,7 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=sessionids, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
 
             # -- just checking
             else:
@@ -7508,7 +7508,7 @@ def hcp_temporal_ica(sinfo, options, overwrite=False, thread=0):
     r += "\n\nHCP temporal ICA Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
-    return (r, (sinfo["id"], report, failed))
+    return (r, (sessionids, report, failed))
 
 def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     """
@@ -7524,7 +7524,7 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
 
     try:
         pc.doOptionsCheck(options, sinfo, 'hcp_dtifit')
-        doHCPOptionsCheck(options, sinfo, 'hcp_dtifit')
+        doHCPOptionsCheck(options, 'hcp_dtifit')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -7612,7 +7612,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
 
     try:
         pc.doOptionsCheck(options, sinfo, 'hcp_bedpostx')
-        doHCPOptionsCheck(options, sinfo, 'hcp_bedpostx')
+        doHCPOptionsCheck(options, 'hcp_bedpostx')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -8183,7 +8183,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
     try:
         pc.doOptionsCheck(options, sinfo, 'hcp_task_fmri_analysis')
-        doHCPOptionsCheck(options, sinfo, 'hcp_task_fmri_analysis')
+        doHCPOptionsCheck(options, 'hcp_task_fmri_analysis')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:

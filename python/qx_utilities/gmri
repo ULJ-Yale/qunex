@@ -359,20 +359,21 @@ def printHelp(com):
         # -> gmri commands
         for c, _ in gcom.commands.items():
             available_commands.append(c)
-        # -> complex processing commands
+        # -> processing commands
         for l in gp.calist:
             if len(l):
-                # deprecated command abbreviations 
                 available_commands.append(l[1])
         # -> longitudinal processing commands
         for l in gp.lalist:
             if len(l):
-                # deprecated command abbreviations 
+                available_commands.append(l[1])
+        # -> multi-sesssion processing commands
+        for l in gp.malist:
+            if len(l):
                 available_commands.append(l[1])
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
-                # deprecated command abbreviations 
                 available_commands.append(l[1])
         # -> matlab wrapped commands
         for l in gm.functions.keys():

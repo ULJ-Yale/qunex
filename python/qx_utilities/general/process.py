@@ -433,7 +433,7 @@ arglist = [
 
            ['# --- hcp_temporal_ica options'],
            ['hcp_tica_bolds', '',                                                 isNone,  "A comma separated list of fmri run names. Set to all session BOLDs by default."],
-           ['hcp_tica_outfmriname',        'rfMRI_REST',                          str,     "Name to use for tICA pipeline outputs."],
+           ['hcp_tica_outfmriname',  'rfMRI_REST',                                str,     "Name to use for tICA pipeline outputs."],
            ['hcp_tica_surfregname', '',                                           isNone,  "The registration string corresponding to the input files."],
            ['hcp_tica_procstring', '',                                            isNone,  "File name component representing the preprocessing already done, e.g. _Atlas_MSMAll_hp0_clean."],
            ['hcp_tica_outgroupname', '',                                          isNone,  "Name to use for the group output folder."],
@@ -448,15 +448,15 @@ arglist = [
            ['hcp_tica_pca_out_dim', '',                                           isNone,  "Override number of PCA components to use for group sICA."],
            ['hcp_tica_pca_internal_dim', '',                                      isNone,  "Override internal MIGP dimensionality."],
            ['hcp_tica_migp_resume', '',                                           isNone,  "Resume from a previous interrupted MIGP run, if present. Set to NO to disable this behavior."],
-           ['hcp_tica_sicadim_iters',                                             isNone,  "Number of iterations or mode for estimating sICA dimensionality, default 100."],
-           ['hcp_tica_sicadim_override',                                          isNone,  "Use this dimensionality instead of icaDim's estimate., default 100."],
-           ['hcp_low_sica_dims',                                                  isNone,  "The low sICA dimensionalities to use for determining weighting for individual projection."],
-           ['hcp_tica_reclean_mode',                                              isNone,  "Whether the data should use ReCleanSignal.txt for DVARS."],
-           ['hcp_tica_starting_step',                                             isNone,  "What step to start processing at, one of: MIGP, GroupSICA, indProjSICA, ConcatGroupSICA, ComputeGroupTICA, indProjTICA, ComputeTICAFeatures, ClassifyTICA, CleanData."],
-           ['hcp_tica_stop_after_step',                                           isNone,  "What step to stop processing after, same valid values as for hcp_tica_starting_step."],
-           ['hcp_tica_remove_manual_components',                                  isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
-           ['hcp_tica_fix_legacy_bias',                                           isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
-           ['hcp_tica_parallel_limit',                                            isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+           ['hcp_tica_sicadim_iters', '',                                         isNone,  "Number of iterations or mode for estimating sICA dimensionality, default 100."],
+           ['hcp_tica_sicadim_override', '',                                      isNone,  "Use this dimensionality instead of icaDim's estimate., default 100."],
+           ['hcp_low_sica_dims', '',                                              isNone,  "The low sICA dimensionalities to use for determining weighting for individual projection."],
+           ['hcp_tica_reclean_mode', '',                                          isNone,  "Whether the data should use ReCleanSignal.txt for DVARS."],
+           ['hcp_tica_starting_step', '',                                         isNone,  "What step to start processing at, one of: MIGP, GroupSICA, indProjSICA, ConcatGroupSICA, ComputeGroupTICA, indProjTICA, ComputeTICAFeatures, ClassifyTICA, CleanData."],
+           ['hcp_tica_stop_after_step', '',                                       isNone,  "What step to stop processing after, same valid values as for hcp_tica_starting_step."],
+           ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
+           ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
+           ['hcp_tica_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
 
            ['# --- HCP file checking'],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file)."],
@@ -516,6 +516,7 @@ options = {}
 #   Empty lists denote there should be a blank line when printing out a command
 #   list.
 
+# processing commands
 calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,                       "Map HCP preprocessed data to sessions' image folder."],
           [],
           ['gbd',     'get_bold_data',              workflow.get_bold_data,                         "Copy functional data from 4dfp (NIL) processing pipeline."],
@@ -547,7 +548,6 @@ calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,   
           [],
           ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
           ['hpca',    'hcp_asl',                    process_hcp.hcp_asl,                            "Run HCP ASL pipeline."],
-          ['hpc_tica', 'hcp_temporal_ica',          process_hcp.hcp_temporal_ica,                   "Run HCP temporal ICA pipeline."],
           # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
           # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
           [],
@@ -557,11 +557,15 @@ calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,   
           ['fslx',   'dwi_xtract',                  fsl.dwi_xtract,                                 "Run FSL XTRACT command."],
 ]
 
+# longitudinal commands
 lalist = [['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]]
+
+# multi-session commands
+malist = [['hpc_tica', 'hcp_temporal_ica',          process_hcp.hcp_temporal_ica,                   "Run HCP temporal ICA pipeline."]]
 
 salist = [['cbl',     'create_bold_list',           simple.create_bold_list,                        "Create BOLD list"],
           ['ccl',     'create_conc_list',           simple.create_conc_list,                        "Create conc list"],
-          ['lsi',     'list_session_info',          simple.list_session_info,                      "List session info"]
+          ['lsi',     'list_session_info',          simple.list_session_info,                       "List session info"]
 ]
 
 
@@ -583,8 +587,12 @@ for line in lalist:
         # lactions[line[0]] = line[2]
         lactions[line[1]] = line[2]
 
-plactions = pactions.copy()
-plactions.update(lactions)
+mactions = {}
+for line in malist:
+    if len(line) == 4:
+        # deprecated command abbreviations 
+        # sactions[line[0]] = line[2]
+        mactions[line[1]] = line[2]
 
 sactions = {}
 for line in salist:
@@ -593,8 +601,16 @@ for line in salist:
         # sactions[line[0]] = line[2]
         sactions[line[1]] = line[2]
 
-allactions = plactions.copy()
-allactions.update(sactions)
+# processing, longitudinal and multi-session actions
+plactions = {}
+plactions.update(pactions.copy())
+plactions.update(lactions.copy())
+
+# all actions
+allactions = {}
+allactions.update(plactions.copy())
+allactions.update(mactions.copy())
+allactions.update(sactions.copy())
 
 flist = {}
 for line in flaglist:
@@ -615,17 +631,15 @@ def run(command, args):
     # --------------------------------------------------------------------------
     #                                                            Parsing options
 
-    # --- set command
-
+    # set command
     options = {'command_ran': command}
 
-    # --- set up default options
+    # setup default options
     for line in arglist:
         if len(line) == 4:
             options[line[0]] = line[1]
 
-    # --- read options from batch.txt
-
+    # read options from batch.txt
     if 'sessions' in args:
         options['sessions'] = args['sessions']
     if 'sessionids' in args:
@@ -635,7 +649,7 @@ def run(command, args):
 
     sessions, gpref = gc.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
-    # --- check if we are running across subjects rather than sessions
+    # check if we are running across subjects rather than sessions
     if command in lactions:
         subjectList = []
         subjectInfo = {}
@@ -650,12 +664,12 @@ def run(command, args):
             subjectInfo[session['subject']]['sessions'].append(session)
         sessions = [subjectInfo[e] for e in subjectList]
 
-    # --- take parameters from batch file
+    # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, command)
     for (k, v) in batch_args.items():
         options[k] = v
 
-    # --- parse command line options
+    # parse command line options
     for (k, v) in args.items():
         if k in flist:
             if v != True:
@@ -666,7 +680,7 @@ def run(command, args):
         else:
             options[k] = v
 
-    # ---- Recode
+    # recode
     for line in arglist:
         if len(line) == 4:
             try:
@@ -674,12 +688,12 @@ def run(command, args):
             except:
                 raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
 
-    # ---- Take care of variable expansion
+    # take care of variable expansion
     for key in options:
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
-    # ---- Set key parameters
+    # set key parameters
     overwrite    = options['overwrite']
     parsessions  = options['parsessions']
     nprocess     = options['nprocess']
@@ -697,7 +711,7 @@ def run(command, args):
     options['logfolder']  = logfolder
     options['specfolder'] = specfolder
 
-    # -- impute unspecified parameters
+    # impute unspecified parameters
     options = gcs.impute_parameters(options, command)
 
     # --------------------------------------------------------------------------
@@ -711,7 +725,7 @@ def run(command, args):
 
     log   = []
     stati = []
-    sout = "# Generated by QuNex %s on %s\n" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
+    sout = "#\nGenerated by QuNex %s on %s\n" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
     sout += "#\n"
     sout += "=================================================================\n"
     sout += "gmri " + command + " \\\n"
@@ -721,9 +735,15 @@ def run(command, args):
 
     sout += "=================================================================\n"
 
-    # --- check if there are no sessions
+    # no parsessions for longitudinal and multi-session commands
+    if (command in lactions) or (command in mactions):
+        if parsessions > 1:
+            parsessions = 1
+            sout += "\nWARNING: parsessions will be set to 1 because you are running a longitudinal or a multi-session command!\n"
+
+    # check if there are no sessions
     if not sessions:
-        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!"
+        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
         print(sout)
         writelog(sout)
         exit()
@@ -776,6 +796,7 @@ def run(command, args):
         print("---- Running local")
         c = 0
         if parsessions == 1 or options['run'] == 'test':
+            # processing and longitudinal commands
             if command in plactions:
                 pending_actions = plactions[command]
                 for session in sessions:
@@ -796,7 +817,41 @@ def run(command, args):
                         if nprocess and c >= nprocess:
                             break
 
-            if command in sactions:
+            # multi-session commands
+            elif command in mactions:
+                pending_actions = mactions[command]
+
+                # test or processing
+                if options['run'] == 'test':
+                    action = 'testing'
+                else:
+                    action = 'processing'
+
+                # update options and prepare the all sessions string for labeling
+                sessionids = ""
+                for session in sessions:
+                    soptions = updateOptions(session, options)
+
+                    if sessionids == "":
+                        sessionids = session['id']
+                    else:
+                        sessionids = sessionids + "," + session['id']
+
+                # log
+                consoleLog += "\nStarting %s of sessions %s at %s" % (action, sessionids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                print("\nStarting %s of sessions %s at %s" % (action, sessionids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+
+                # process
+                r, status = procResponse(pending_actions(sessions, sessionids, soptions, overwrite, c + 1))
+
+                # write log
+                writelog(r)
+                consoleLog += r
+                print(r)
+                stati.append(status)
+
+            # simple processing commands
+            elif command in sactions:
                 pending_actions = sactions[command]
                 soptions = updateOptions(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
@@ -806,8 +861,8 @@ def run(command, args):
             c = 0
             processPoolExecutor = ProcessPoolExecutor(parsessions)
             futures = []
-            if command in plactions:
-                pending_actions = plactions[command]
+            if command in pactions:
+                pending_actions = pactions[command]
                 for session in sessions:
                     if len(session['id']) > 1:
                         soptions = updateOptions(session, options)
@@ -825,7 +880,7 @@ def run(command, args):
                     consoleLog += result[0]
                     print(result[0])
 
-            if command in sactions:
+            elif command in sactions:
                 pending_actions = sactions[command]
                 soptions = updateOptions(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
@@ -834,8 +889,7 @@ def run(command, args):
         # print(console log)
         # print(consoleLog)
 
-        # --- Create log
-
+        # create log
         f = open(logname, "w")
         # header
         print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=f)
