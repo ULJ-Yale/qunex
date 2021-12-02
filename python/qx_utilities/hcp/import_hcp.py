@@ -970,6 +970,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         for fileInfo in folder['folderFiles']:
             if fileInfo['name'] in mapped:
                 continue
+
             mapped.append(fileInfo['name'])
 
             imgn += 1

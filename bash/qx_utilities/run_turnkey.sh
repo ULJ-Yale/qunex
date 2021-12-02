@@ -65,7 +65,7 @@ QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 # source $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcpd run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_dtifit run_qc_dwi_dtifit dwi_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
+QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcp_diffusion run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_dtifit run_qc_dwi_dtifit dwi_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_probtrackx_dense_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries parcellate_bold parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
 
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 
@@ -96,10 +96,6 @@ usage() {
  echo "                      run."
  echo "--sessionids          Comma separated list of session IDs to select for a run "
  echo "                      via gMRI engine from the batch file."
- echo "--sessionsfoldername  For backwards compatibility set to 'subjects' if running "
- echo "                      on old QuNex studies where sessions were stored inside "
- echo "                      the subjects folder. If not set to 'subjects' then the "
- echo "                      default value, [sessions] will be used."
  echo "--turnkeysteps        Specify specific turnkey steps you wish to run:"
  echo "                      Supported: ${QuNexTurnkeyWorkflow} "
  echo "--turnkeycleanstep    Specify specific turnkey steps you wish to clean up "
@@ -167,7 +163,7 @@ usage() {
  echo "                      general across multiple subjects (e.g. rest). Required."
  echo "--xnatstudyinputpath  The path to the previously generated session data as "
  echo "                      mounted for the container. Default is "
- echo "                      [/input/RESOURCES/qunex_session]"
+ echo "                      [input/RESOURCES/qunex_study]"
  echo ""
  echo "MISCELLANEOUS INPUTS"
  echo "--------------------"
@@ -577,7 +573,7 @@ VoxelStep=`opts_GetOpt "--vstep" $@`
 ROIInfo=`opts_GetOpt "--roinfo" $@`
 FCCommand=`opts_GetOpt "--options" $@`
 Method=`opts_GetOpt "--method" $@`
-# -- bold_parcellation input flags
+# -- parcellate_bold input flags
 InputFile=`opts_GetOpt "--inputfile" $@`
 InputPath=`opts_GetOpt "--inputpath" $@`
 InputDataType=`opts_GetOpt "--inputdatatype" $@`
@@ -759,8 +755,8 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     fi
 
     # -- Obtain temp info on subjects and experiments in the project
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/sessions?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv
+    curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv
+    curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv
 
     # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
     if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
@@ -803,7 +799,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant session variable for QuNex run: ${CASE}"
         echo ""
     else
-        CASE="${XNAT_SUBJECT_LABEL}"
+        CASE="${XNAT_SESSION_LABEL}"
     fi
 fi
 #
@@ -1135,7 +1131,7 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
 fi
 
 echo "   QuNex Project-specific final Batch file path: ${QuNexProcessingDir}"
-echo "   QuNex Study folder: ${StudyFolder}"
+echo "   QuNex Study folder: ${STUDY_PATH}"
 echo "   QuNex Log folder: ${QuNexMasterLogFolder}"
 echo "   QuNex Session-specific working folder: ${QuNexRawInboxDir}"
 echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
@@ -1193,83 +1189,262 @@ bash ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus
 echo ""
 
 # ---- Map the data from input to output when in XNAT workflow
-if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ; then
+if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
     # --- Specify what to map
     firstStep=`echo ${TURNKEY_STEPS} | awk '{print $1;}'`
     echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ Initial data re-map from XNAT with ${firstStep} as starting point ."; echo ""
-    # --- Create a study folder
-    geho " -- Creating study folder structure... "; echo ""
-    ${QuNexCommand} create_study "${StudyFolder}"
+    # --- Study folder created in `qunex.sh`
     geho " -- Mapping existing data into place to support the first turnkey step: ${firstStep}"; echo ""
     # --- Work through the mapping steps
     case ${firstStep} in
-        import_dicom)
-            # --- rsync relevant dependencies if import_dicom is starting point
-            RsyncCommand="rsync -avzH --include='/${SessionsFolderName}' --include='${CASE}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+        create_session_info) # create_session_info setup_hcp create_batch export_hcp
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/nii' \
+            --include='/${SessionsFolderName}/${CASE}/nii/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            echo ""; echo " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        hcp_pre_freesurfer) # hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        create_session_info|setup_hcp)
-            # --- rsync relevant dependencies if create_session_info or setup_hcp is starting point
-            RsyncCommand="rsync -avzH --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+        hcp_freesurfer) # hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            --exclude='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        create_batch)
-            # --- rsync relevant dependencies if create_session_info or setup_hcp is starting point
-            RsyncCommand="rsync -avzH --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='specs/***' --include='/processing' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+        hcp_post_freesurfer) # hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            --exclude='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --exclude='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k' \
+            --exclude='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp_pre_freesurfer)
+        run_qc_t1w|run_qc_t2w|run_qc_myelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/*nii*' --include='T2w/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp_freesurfer)
+        hcp_fmri_volume) # hcp_fmri_volume hcp_fmri_surface run_qc_bold
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Native' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Native/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/ROIs' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/ROIs/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/mri' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/mri/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/surf' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/surf/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        map_hcp_data)
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Native' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Native/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/ROIs' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/ROIs/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/mri' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/mri/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/surf' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/${CASE}/surf/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        create_bold_brain_masks|compute_bold_stats|create_stats_report|extract_nuisance_signal|preprocess_bold|preprocess_conc|general_plot_bold_timeseries|parcellate_bold|compute_bold_fc_gbc|compute_bold_fc_seed|run_qc_bold_fc)
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/images' \
+            --include='/${SessionsFolderName}/${CASE}/images/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        hcp_diffusion|run_qc_dwi|dwi_legacy|run_qc_dwi_legacy|dwi_eddy_qc|run_qc_dwi_eddy|dwi_dtifit|run_qc_dwi_dtifit|dwi_bedpostx_gpu|run_qc_dwi_process|run_qc_dwi_bedpostx)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/Diffusion' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/Diffusion/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/unprocessed/***' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp_post_freesurfer|run_qc_t1w|run_qc_t2w|run_qc_myelin)
+        dwi_pre_tractography|dwi_seed_tractography_dense|dwi_parcellate)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
-            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
-            eval ${RsyncCommand}
-            ;;
-        hcp_fmri_volume)
-            # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/*nii*' --include='T1w/*nii*' --include='BOLD*/*nii*' --include='*fMRI*/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
-            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
-            eval ${RsyncCommand}
-            ;;
-        hcpd|run_qc_dwi|dwi_legacy|run_qc_dwi_legacy|dwi_eddy_qc|run_qc_dwi_eddy|dwi_dtifit|run_qc_dwi_dtifit|dwi_bedpostx_gpu|run_qc_dwi_process|run_qc_dwi_bedpostx)
-            # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
-            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
-            eval ${RsyncCommand}
-            ;;
-         dwi_pre_tractography|dwi_seed_tractography_dense|dwi_parcellate)
-            # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
-            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
-            eval ${RsyncCommand}
-            ;;
-        hcp_fmri_surface|run_qc_bold|run_qc_custom|map_hcp_data)
-            # --- rsync relevant dependencies if and map_hcp_data is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
-            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
-            eval ${RsyncCommand}
-            ;;
-        create_bold_brain_masks|compute_bold_statss|create_stats_report|extract_nuisance_signal|preprocess_bold|preprocess_conc|general_plot_bold_timeseries|bold_parcellation|compute_bold_fc_gbc|compute_bold_fc_seed|run_qc_bold_fc)
-            # --- rsync relevant dependencies if any BOLD fc step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${StudyFolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
     esac
+
+    # -- Fetch latest batch file, mapping file, and qc scene from XNAT HOST
+    echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}""
+    echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}""
+    echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip"
+
+    curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME}
+    curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}" > ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME}
+    curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip
+
     echo ""; cyaneho " ===> RunTurnkey ~~~ DONE: Initial data re-map from XNAT for ${firstStep} done."; echo ""
 fi
 
@@ -1421,17 +1596,17 @@ fi
             echo "" >> ${mapRawData_ComlogTmp}
 
             # -- Transfer data from XNAT HOST
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}""
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}""
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip"
+            echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}""
+            echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}""
+            echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip"
             echo ""
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}"" >> ${mapRawData_ComlogTmp}
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}"" >> ${mapRawData_ComlogTmp}
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
+            echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}"" >> ${mapRawData_ComlogTmp}
+            echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}"" >> ${mapRawData_ComlogTmp}
+            echo "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
 
-            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME}
-            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}" > ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME}
-            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip
+            curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME}
+            curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}" > ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME}
+            curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip
 
             # -- Verify and unzip custom QC scene files
             if [ -f ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip ]; then
@@ -1473,7 +1648,7 @@ fi
                 BATCHFILECHECK="fail"
                 exit 1
             else
-                if [[ ! `more ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_Pipeline'` ]]; then
+                if [[ ! `more ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_pipeline'` ]] && [[ ! `more ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_Pipeline'` ]]; then
                     BATCHFILECHECK="fail"
                     echo " ==> ERROR: Scan batch file ${BATCH_PARAMETERS_FILENAME} content not correct in ${RawDataInputPath}!"
                     exit 1
@@ -1595,15 +1770,15 @@ fi
                    else
                        echo ""
                        geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip
+                       geho "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                       curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip
                    fi
                 else
                     # -- Get the BIDS data in ZIP format via curl
                     echo ""
                     geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip
+                    geho "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                    curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/BIDS/${CASE}.zip
                 fi
                 INTYPE=zip
             else
@@ -1670,17 +1845,17 @@ fi
                    else
                        echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                        geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                       geho "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
                        echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip
+                       curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip
                    fi
                 else
                     # -- Get the BIDS data in ZIP format via curl
                     echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                     geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                    geho "  curl -k -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
                     echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip
+                    curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${SessionsFolder}/inbox/HCPLS/${CASE}.zip
                     INTYPE=zip
                 fi
             else
@@ -1777,7 +1952,7 @@ fi
 
         # -- Check if mapping and batch files exist and if content OK
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
-        if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then BATCHFILECHECK="fail"; fi
+        if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_pipeline'` ]] && [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then BATCHFILECHECK="fail"; fi
         if [[ ${DATAFormat} == "HCPLS" ]]; then
             MAPPINGFILECHECK=pass
         else
@@ -2032,9 +2207,9 @@ fi
         done
     }
     # -- Diffusion HCP (after hcp_pre_freesurfer)
-    turnkey_hcpd() {
+    turnkey_hcp_diffusion() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ HCP Pipelines step - hcp_diffusion."; echo ""
-        ${QuNexCommand} hcpd --sessionsfolder="${SessionsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}"
+        ${QuNexCommand} hcp_diffusion --sessionsfolder="${SessionsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}"
     }
     # -- Diffusion Legacy (after hcp_pre_freesurfer)
     turnkey_dwi_legacy() {
@@ -2058,7 +2233,7 @@ fi
         run_qc_finalize
     }
     # -- dwi_eddy_qc processing steps
-    turnkey_eddy_qc() {
+    turnkey_dwi_eddy_qc() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ dwi_eddy_qc for DWI data."; echo ""
         # -- Defaults if values not set:
         if [ -z "$EddyBase" ]; then EddyBase="eddy_unwarped_images"; fi
@@ -2082,7 +2257,7 @@ fi
     turnkey_run_qc_dwi_eddy() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ run_qc steps for ${Modality} dwi_eddy_qc."; echo ""
-        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="dwi_eddy"
         run_qc_finalize
     }
@@ -2092,7 +2267,7 @@ fi
     # --------------- DWI additional analyses start ------------------------
     #
     # -- dwi_dtifit (after hcpd or dwi_legacy)
-    turnkey_dwi_dtifitt() {
+    turnkey_dwi_dtifit() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ : dwi_dtifit for DWI data."; echo ""
         ${QuNexCommand} dwi_dtifit --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}"
     }
@@ -2103,7 +2278,7 @@ fi
         if [ -z "$Model" ]; then Model="3"; fi
         if [ -z "$Burnin" ]; then Burnin="3000"; fi
         if [ -z "$Rician" ]; then Rician="yes"; fi
-        if [ -z "$Gradnonlin" ]; then Gradnonlin="yes"; fi
+        # if [ -z "$Gradnonlin" ]; then Gradnonlin="yes"; fi
         ${QuNexCommand} dwi_bedpostx_gpu --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}" --gradnonlin="${Gradnonlin}"
     }
     # -- run_qc_dwi_dtifit (after dwi_dtifit)
@@ -2139,7 +2314,7 @@ fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
+        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_ReorderedByNetworks.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
             ${QuNexCommand} dwi_parcellate --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
@@ -2410,11 +2585,11 @@ fi
         rm ${general_plot_bold_timeseries_ComlogTmp}
     }
     # -- BOLD Parcellation
-    turnkey_bold_parcellation() {
-        FunctionName="bold_parcellation"
+    turnkey_parcellate_bold() {
+        FunctionName="parcellate_bold"
 
         getBoldNumberList
-        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ bold_parcellation on BOLDS: ${LBOLDRUNS}"; echo ""
+        echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ parcellate_bold on BOLDS: ${LBOLDRUNS}"; echo ""
 
         if [ -z ${RunParcellations} ]; then
 
@@ -2423,7 +2598,7 @@ fi
                if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
                if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
                # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-               if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
+               if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_ReorderedByNetworks.dlabel.nii"; fi
                if [ -z "$OutName" ]; then OutNameParcelation="BOLD-CAB-NP-v1.0"; else OutNameParcelation="${OutName}"; fi
                if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
                if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
@@ -2431,7 +2606,7 @@ fi
                if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                # -- Command
-               RunCommand="${QuNexCommand} bold_parcellation --sessions='${CASE}' \
+               RunCommand="${QuNexCommand} parcellate_bold --sessions='${CASE}' \
                --sessionsfolder='${SessionsFolder}' \
                --inputfile='${InputFileParcellation}' \
                --singleinputfile='${SingleInputFile}' \
@@ -2461,7 +2636,7 @@ fi
 
             for Parcellation in ${RunParcellations}; do
                 if [ ${Parcellation} == "CANP" ]; then
-                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"
+                    ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/cole_anticevic_net_partition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_ReorderedByNetworks.dlabel.nii"
                     OutNameParcelation="BOLD-CAB-NP-v1.0"
                 elif [ ${Parcellation} == "HCP" ]; then
                     ParcellationFile="${TOOLS}/${QUNEXREPO}/qx_library/data/parcellations/glasser_parcellation/Q1-Q6_RelatedParcellation210.LR.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii"
@@ -2489,7 +2664,7 @@ fi
                    if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                    if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                    # -- Command
-                   RunCommand="${QuNexCommand} bold_parcellation --sessions='${CASE}' \
+                   RunCommand="${QuNexCommand} parcellate_bold --sessions='${CASE}' \
                    --sessionsfolder='${SessionsFolder}' \
                    --inputfile='${InputFileParcellation}' \
                    --singleinputfile='${SingleInputFile}' \
@@ -2764,7 +2939,7 @@ else
         # done
     #
         # -- Specific sets of functions for logging
-        BashBOLDFunctions="bold_parcellation compute_bold_fc_gbc compute_bold_fc_seed"
+        BashBOLDFunctions="parcellate_bold compute_bold_fc_gbc compute_bold_fc_seed"
         NiUtilsFunctions="setup_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc"
 
         ## deprecated to support parallel processing # -- Check for completion of turnkey function for python qx_utilities

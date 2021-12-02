@@ -11,7 +11,6 @@ import os
 import tempfile
 import sys
 import re
-import glob
 import math
 
 
@@ -256,6 +255,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             if not os.path.exists(os.path.dirname(v)) and k != 'return':
                 raise CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
+    else:
+        homedir = os.path.expanduser("~")
+        outputs['stdout'] = homedir + "/qunex_%j.out"
 
     if outputs['both'] is not None:
         outputs['stderr'] = outputs['both']
@@ -351,9 +353,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         sCommand += "#SBATCH --job-name=%s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
+            sCommand += "#SBATCH --output %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
-            sCommand += "#SBATCH -e %s\n" % (outputs['stderr'])
+            sCommand += "#SBATCH --error %s\n" % (outputs['stderr'])
         com = 'sbatch'
 
     # --- run scheduler
@@ -479,7 +481,7 @@ def getSessionIDs(listString, sessionsfolder=None):
         sessionids = getSessionIDsFromBatchFile(listString)
 
     elif re.match(".*\.txt$", listString) or '/' in listString:
-        raise ValueError("ERROR: The specified subject file is not found! [%s]!" % listString)
+        raise ValueError("ERROR: The specified file is not found! [%s]!" % listString)
 
     else:
         sessionids = [e.strip() for e in re.split(' +|,|\|', listString)]
@@ -489,9 +491,7 @@ def getSessionIDs(listString, sessionsfolder=None):
 
 def main(args=None):
     """
-    qunex_container v0.1.0
-
-    qunexContaiiner is a self-standing command that can run QuNex commands 
+    qunex_container is a self-standing command that can run QuNex commands 
     against a Singularity or a Docker QuNex container. To run an QuNex command 
     against a container the basic call is::
 
@@ -528,6 +528,10 @@ def main(args=None):
     --bind          Used for binding external folder for execution via a 
                     singularity container, this is analog to the singularity's 
                     -B flag. ['']
+    --nocleanenv    By default QuNex will use the --cleanevn flag of Singularity
+                    so your local environment setup will not be propagated into
+                    the container. If you want to disable this functionality use
+                    this flag. The flag is not set by default.
     --nv            Required when using CUDA (GPU) inside singularity. If
                     provided then singularity exec --nv option will be used.
     --script        If a script is to be run against the Singularity container
@@ -694,6 +698,7 @@ def main(args=None):
     bash_pre            = None
     bash_post           = None
     bind                = None
+    nocleanenv          = None
     nv                  = None
     script              = None
     parjobs             = None
@@ -727,6 +732,8 @@ def main(args=None):
             k, bash_post = arg.split("=", 1)
         elif "bind=" in arg:
             k, bind = arg.split("=", 1)
+        elif arg == "--nocleanenv":
+            nocleanenv = True
         elif arg == "--nv":
             nv = True
         elif "script=" in arg:
@@ -957,9 +964,13 @@ def main(args=None):
 
                 containerCommand += "singularity exec "
 
+                # no clean env
+                if nocleanenv is None:
+                    containerCommand += "--cleanenv "
+
                 # nv
                 if nv:
-                    containerCommand += "--nv "
+                    containerCommand += " --nv "
 
                 # bind
                 if bind:

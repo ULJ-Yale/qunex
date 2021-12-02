@@ -13,7 +13,7 @@
 
 # -------------------------> General HCP settings
 
-_hcp_Pipeline           : ${HCPPIPEDIR}
+_hcp_pipeline           : ${HCPPIPEDIR}
 
 # ---> PreFreeSurfer
  
