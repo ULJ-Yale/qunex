@@ -7245,6 +7245,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
         # subject_list
         subject_list = ""
 
+        # check sessions
         for session in sessions:
             pc.doOptionsCheck(options, session, "hcp_temporal_ica")
             hcp = getHCPPaths(session, options)
@@ -7265,35 +7266,17 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
         # get sorted bold numbers and bold data
         bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
 
-        # get all bold targets and tags
-        boldtargets = []
-        boldtags = []
-
-        # get bolds and tags
-        for b in bolds:
-            # extract data
-            printbold, _, _, boldinfo = b
-
-            if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
-                boldtarget = boldinfo['filename']
-                boldtag = boldinfo['task']
-            else:
-                printbold = str(printbold)
-                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
-                boldtag = boldinfo['task']
-
-            boldtargets.append(boldtarget)
-            boldtags.append(boldtag)
-
+        # mandatory parameters
         # hcp_tica_bolds
         fmri_names = ""
         if options["hcp_tica_bolds"] is None:
-            fmri_names = ",".join(boldtargets)
+            r += "\n---> ERROR: hcp_tica_bolds is not provided!"
+            run = False
         else:
             # defined bolds
             fmri_names = options["hcp_tica_bolds"]
 
-        # mandatory parameters
+        # hcp_tica_outfmriname
         out_fmri_name = ""
         if options["hcp_tica_outfmriname"] is None:
             r += "\n---> ERROR: hcp_tica_outfmriname is not provided!"
@@ -7351,6 +7334,33 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
         else:
             num_wishart = options["hcp_tica_num_wishart"]
 
+        # study_dir prep
+        study_dir = ""
+
+        # single session
+        if len(sessions) == 1:
+            # get session info
+            study_dir = sessions[0]["hcp"]
+
+        # multi session
+        else:
+            # set study dir
+            study_dir = os.path.join(options["sessionsfolder"], out_fmri_name)
+
+            # create folder
+            if not os.path.exists(study_dir):
+                os.makedirs(study_dir)
+
+            # link sessions
+            for session in sessions:
+                # prepare folders
+                session_name = session["id"] + options["hcp_suffix"]
+                source_dir = os.path.join(session["hcp"], session_name)
+                target_dir = os.path.join(study_dir, session_name)
+
+                # link
+                gc.linkOrCopy(source_dir, target_dir, symlink=True)
+
         # build the command
         if run:
             comm = '%(script)s \
@@ -7367,7 +7377,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                 --num-wishart="%(num_wishart)s" \
                 --low-res="%(low_res)s"' % {
                     "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
-                    "study_dir"         : sinfo["hcp"],
+                    "study_dir"         : study_dir,
                     "subject_list"      : subject_list,
                     "fmri_names"        : fmri_names,
                     "output_fmri_name"  : out_fmri_name,
