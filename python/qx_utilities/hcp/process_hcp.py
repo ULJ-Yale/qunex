@@ -7247,7 +7247,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
 
         # check sessions
         for session in sessions:
-            pc.doOptionsCheck(options, session, "hcp_temporal_ica")
             hcp = getHCPPaths(session, options)
 
             if "hcp" not in session:
@@ -7345,7 +7344,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
         # multi session
         else:
             # set study dir
-            study_dir = os.path.join(options["sessionsfolder"], out_fmri_name)
+            study_dir = os.path.join(options["sessionsfolder"], outgroupname)
 
             # create folder
             if not os.path.exists(study_dir):
@@ -7493,7 +7492,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=sessionids, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
 
             # -- just checking
             else:

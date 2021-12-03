@@ -23,6 +23,7 @@ import re
 
 import general.exceptions as ge
 import general.core as gc
+import general.process as gp
 
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None, parsessions=1, parelements=1):
@@ -527,6 +528,10 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         # if chunks is lower then parjobs tweak parjobs
         if chunks < parjobs:
             parjobs = chunks
+
+        # do not create multiple jobs if running a multi-session command
+        if command in gp.mactions:
+            parjobs = 1
 
         # init queues
         sessionids_array = [""] * parjobs
