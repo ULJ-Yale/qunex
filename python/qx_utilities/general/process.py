@@ -123,10 +123,11 @@ def isNone(s):
     '''
     ``isNone(s)``
 
-    Check if the string is "None", "none" or "NONE" and returns None, otherwise
+    Check if the string is "" and returns None, otherwise
     returns the passed string.
     '''
-    if s in ['None', 'none', 'NONE', '']:
+
+    if s in ['']:
         return None
     else:
         return s
@@ -193,7 +194,7 @@ arglist = [
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
-           ['script',             'None',                                        isNone, 'The script to be executed.'],
+           ['script',             '',                                            isNone, 'The script to be executed.'],
            ['sessionid',          '',                                            str,    "a session id for which to run the command"],
            ['sessionids',         '',                                            str,    "list of | separated session ids for which to run the command"],
 
@@ -207,10 +208,10 @@ arglist = [
            ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
            ['bolds',              'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
            ['boldname',           'bold',                                        str,    "the default name for the bold files"],
-           ['qx_nifti_tail',      'None',                                        isNone, "The tail of the nifti (volume) file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_nifti_tail"],
-           ['qx_cifti_tail',      'None',                                        isNone, "The tail of the cifti file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_cifti_tail"],
-           ['nifti_tail',         'None',                                        isNone, "The tail of the nifti (volume) file to be processed. If not set or set to 'None', it defaults to the value of qx_nifti_tail"],
-           ['cifti_tail',         'None',                                        isNone, "The tail of the cifti file to be processed. If not set or set to 'None', it defaults to the value of qx_cifti_tail"],           
+           ['qx_nifti_tail',      '',                                            isNone, "The tail of the nifti (volume) file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_nifti_tail"],
+           ['qx_cifti_tail',      '',                                            isNone, "The tail of the cifti file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_cifti_tail"],
+           ['nifti_tail',         '',                                            isNone, "The tail of the nifti (volume) file to be processed. If not set or set to 'None', it defaults to the value of qx_nifti_tail"],
+           ['cifti_tail',         '',                                            isNone, "The tail of the cifti file to be processed. If not set or set to 'None', it defaults to the value of qx_cifti_tail"],           
            ['bold_prefix',        '',                                            str,    "an optional prefix to place in front of processing name extensions in the resulting files"],
            ['bold_variant',       '',                                            str,    "The suffix to add to 'images/functional' folders. '' by default"],
            ['img_suffix',         '',                                            str,    "an optional suffix for the images folder, to be used when working with multiple parallel workflows"],
@@ -269,8 +270,8 @@ arglist = [
 
            ['# ---- scheduler options'],
            ['scheduler',             'local',                                     str,    "the scheduler to use (local|PBS|LSF|SLURM) and any additional settings"],
-           ['scheduler_environment', 'None',                                      isNone, "the path to the script setting up the environment to run the commands in"],
-           ['scheduler_workdir',     'None',                                      isNone, "the path to working directory from which to run jobs on the cluster"],
+           ['scheduler_environment', '',                                          isNone, "the path to the script setting up the environment to run the commands in"],
+           ['scheduler_workdir',     '',                                          isNone, "the path to working directory from which to run jobs on the cluster"],
            ['scheduler_sleep',       '1',                                         float,  "time in seconds between submission of individual scheduler jobs"],
 
            ['# --- general HCP options'],
