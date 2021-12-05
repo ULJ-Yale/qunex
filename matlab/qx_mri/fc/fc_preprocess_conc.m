@@ -526,9 +526,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   normalization method 
 %		The method to use for normalization. Options are:
 %
-%       - z   ... compute Z-score
-%       - 01  ... normalize to fixed range 0 to 1
-%       - -11 ... normalize to fixed range -1 to 1
+%       - z    ... compute Z-score
+%       - 01   ... normalize to fixed range 0 to 1
+%       - -11  ... normalize to fixed range -1 to 1
+%       - none ... do bot normalize, use weights as provided in fidl file
 %
 %   Example string::
 %   

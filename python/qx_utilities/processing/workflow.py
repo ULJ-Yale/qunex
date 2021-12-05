@@ -1848,9 +1848,10 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                             events ('across'). [within]
     --normalization_method  The method to use for normalization. Options are:
 
-                            - z  (compute Z-score)
-                            - 01 (normalize to fixed range 0 to 1)
-                            - 11 (normalize to fixed range -1 to 1)
+                            - z    (compute Z-score)
+                            - 01   (normalize to fixed range 0 to 1)
+                            - -11  (normalize to fixed range -1 to 1)
+                            - none (use weights as provided in fidl file)
 
     Example string::
 
@@ -2473,9 +2474,10 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                             events ('across'). [within]
     --normalization_method  The method to use for normalization. Options are:
 
-                            - z  (compute Z-score)
-                            - 01 (normalize to fixed range 0 to 1)
-                            - 11 (normalize to fixed range -1 to 1)
+                            - z    (compute Z-score)
+                            - 01   (normalize to fixed range 0 to 1)
+                            - -11  (normalize to fixed range -1 to 1)
+                            - none (use weights as provided in fidl file)
 
     Example string::
 

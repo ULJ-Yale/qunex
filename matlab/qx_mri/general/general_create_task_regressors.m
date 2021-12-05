@@ -360,10 +360,8 @@ for r = 1:nruns
             
             ts = conv(ts, hrf);
             ts = ts(1:100*nframes);
-            ts = mean(reshape(ts, 100, nframes), 1);
-            if max(ts) > 0
-                ts = ts/max(ts);
-            end
+            ts = ts ./ sum(hrf(hrf>0));
+            ts = mean(reshape(ts, 100, nframes), 1);            
             
             run(r).matrix = [run(r).matrix ts'];
             run(r).regressors = [run(r).regressors, basename];
