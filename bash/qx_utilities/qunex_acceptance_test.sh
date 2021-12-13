@@ -467,7 +467,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     if [[ ! -d ${RunAcceptanceTestDir} ]]; then mkdir -p ${RunAcceptanceTestDir} > /dev/null 2>&1; fi
     
     ## -- Obtain temp info on subjects and experiments in the project
-    XNATTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    XNATTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -m 30 -X GET "${XNAT_HOST_NAME}/data/sessions?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv
     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -m 30 -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv
 
@@ -623,7 +623,7 @@ echo ""
             
             ## -- Setup function to check presence of files on either local file system or on XNAT on 
             UnitTestDataCheck() {
-                SubjectSessionTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+                SubjectSessionTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
                 if [[ ${RUN_TYPE} == "xnat" ]]; then
                        if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData} ); then 
                            Status="PASS"
@@ -819,7 +819,7 @@ echo ""
             XNAT_SESSION_LABEL="${SESSION_LABEL}"
             ## -- Setup relevant acceptance paths for XNAT run
             unset AcceptDirTimeStamp
-            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
             RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_XNAT_${XNAT_SESSION_LABEL}_${AcceptDirTimeStamp}.txt"
             ## -- Open JSESSION to the XNAT Site
             JSESSION=$(curl -k -X POST -u "${XNAT_CREDENTIALS}" "${XNAT_HOST_NAME}/data/JSESSION" )
@@ -839,7 +839,7 @@ echo ""
         else
             ## -- Setup relevant acceptance paths for non-XNAT run
             unset AcceptDirTimeStamp
-            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
             RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_${AcceptDirTimeStamp}.txt"
             echo "" >> ${RunAcceptanceTestOut}
             echo "  QuNex Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}

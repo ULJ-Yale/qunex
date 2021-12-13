@@ -745,7 +745,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     rm -r ${HOME}/xnatlogs &> /dev/null
     mkdir ${HOME}/xnatlogs &> /dev/null
     XNATINFOTMP="${HOME}/xnatlogs"
-    TimeStampCurl=`date +%Y-%m-%d_%H.%M.%10N`
+    TimeStampCurl=`date +%Y-%m-%d_%H.%M.%S.%6N`
 
     if [[ ${CleanupOldFiles} == "yes" ]]; then
         if [ ! -d ${WORKDIR} ]; then
@@ -1533,7 +1533,7 @@ fi
     # -- Get data from original location & organize DICOMs
     turnkey_map_raw_data() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ map_raw_data"; echo ""
-        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
 
         # Perform checks for output QuNex hierarchy
         if [ ! -d ${WORKDIR} ]; then
@@ -2501,7 +2501,7 @@ fi
     # -- Compute general_plot_bold_timeseries ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
     turnkey_general_plot_bold_timeseries() {
         echo ""; cyaneho " ===> RUNNING RunTurnkey step ~~~ general_plot_bold_timeseries QC plotting"; echo ""
-        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
         general_plot_bold_timeseries_Runlog="${QuNexMasterLogFolder}/runlogs/Log-general_plot_bold_timeseries_${TimeStamp}.log"
         general_plot_bold_timeseries_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"; touch ${general_plot_bold_timeseries_ComlogTmp}; chmod 777 ${general_plot_bold_timeseries_ComlogTmp}
         general_plot_bold_timeseries_ComlogError="${QuNexMasterLogFolder}/comlogs/error_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"

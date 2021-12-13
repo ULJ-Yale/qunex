@@ -692,7 +692,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     endlog = None
 
     # timestamp
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     # -- Report command
     # header
@@ -835,7 +835,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     if isinstance(logtags, basestring):
         logtags = [logtags]
 
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname  = [task] + logtags + [thread, logstamp]
     logname  = [e for e in logname if e]
     logname  = "_".join(logname)

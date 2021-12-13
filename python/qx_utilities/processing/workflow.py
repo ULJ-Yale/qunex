@@ -447,7 +447,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
             final_log = final_log + "===> Successful completion of task"
 
     # print to log file
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = "%s_create_bold_brain_masks_%s_%s_%s_%s.log" % (log_prefix, sinfo['id'], boldname, boldnum, logstamp)
 
     # setup log folder

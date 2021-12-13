@@ -186,7 +186,7 @@ bash_call_execute() {
     # -- Set platform info
     Platform="Platform Information: `uname -a`"
     # -- Set the time stamp for given job
-    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
     if [[ ${CommandToRun} == "run_turnkey" ]]; then
         unset qxutil_command_to_run
         if ( [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] || [[ ${TURNKEY_TYPE} == 'xnat' ]] ) && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
