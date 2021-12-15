@@ -1198,7 +1198,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         elements = [("subjectDIR",       hcp['T1w_folder']),
                     ('subject',          sinfo['id'] + options['hcp_suffix']),
                     ('seed',             options['hcp_fs_seed']),
-                    ('no-conf2hires',    options['hcp_fs_no_conf2hires']),
                     ('processing-mode',  options['hcp_processing_mode'])]
 
         # -> add t1, t1brain and t2 only if options['hcp_fs_existing_session'] is FALSE
@@ -1220,11 +1219,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(('extra-reconall-arg', options['hcp_expert_file']))
 
         # --> Pull all together
-
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
-        # --> Add flags
 
-        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_session', '--existing-subject')]:
+        # --> Add flags
+        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_session', '--existing-subject'), ('hcp_fs_no_conf2hires', '--no-conf2hires')]:
             if options[optionName]:
                 comm += " %s" % (flag)
 
