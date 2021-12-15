@@ -1409,6 +1409,8 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/Diffusion' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/Diffusion/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/Diffusion' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/Diffusion/***' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/***' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w' \

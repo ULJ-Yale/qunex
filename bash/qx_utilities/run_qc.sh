@@ -1832,21 +1832,21 @@ main() {
                                 geho "---> QC Stats for FSL EDDY requested. Checking if EDDY QC was completed..."
                                 echo ""
                                 # -- Then check if eddy qc is completed
-                                if [ -f ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
+                                if [ -f ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
                                     geho "    --> EDDY QC outputs found and completed here: "; echo ""
                                         # -- Regenerate the qc_mot_abs if missing
-                                        if [ -f ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt ]; then
-                                            echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt"
+                                        if [ -f ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt ]; then
+                                            echo "        ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt"
                                         else
-                                            echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt not found. Regenerating... "
-                                            more ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
+                                            echo "        ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt not found. Regenerating... "
+                                            more ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
                                         fi
                                     echo ""
-                                    echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
+                                    echo "        ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
                                     echo ""
                                     # -- Run links and printing to reports
-                                    ln ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASEName}.${Modality}.eddy.QC.pdf
-                                    printf "${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt
+                                    ln ${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASEName}.${Modality}.eddy.QC.pdf
+                                    printf "${HCPFolder}/T1w/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt
                                     
                                     geho "---> Completed EDDY QC stats for ${CASEName}"
                                     geho "    Final report can be found here: ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt"; echo ""

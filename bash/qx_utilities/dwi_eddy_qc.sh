@@ -316,7 +316,7 @@ if [ -z ${Overwrite} ]; then
     Overwrite="no"
 fi
 if [ -z ${EddyPath} ]; then
-    EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+    EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/eddy"
     echo $EddyPath
 fi
 if [ -z ${GroupVar} ]; then
