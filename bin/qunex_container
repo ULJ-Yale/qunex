@@ -46,7 +46,7 @@ class CommandFailed(Exception):
         self.report   = (error,) + hints
 
 
-def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, parsessions=1, parelements=1):
+def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, parsessions=1, parelements=1, batchlogsfolder=None):
     '''
     qunex_command scheduler 
 
@@ -246,7 +246,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for key, value in replace:
             command.replace("{{%s}}" % (key), value)
 
-
     # --- parse output
     outputs = {'stdout': None, 'stderr': None, 'both': None, 'return': None}
 
@@ -256,8 +255,16 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 raise CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
     else:
-        homedir = os.path.expanduser("~")
-        outputs['stdout'] = homedir + "/qunex_%j.out"
+        # log name
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+        logname = "/qunex_container_" + timestamp + ".txt"
+
+        # put in batchfolder
+        if batchlogsfolder is not None:
+            outputs['stdout'] = batchlogsfolder + logname
+        else:
+            homedir = os.path.expanduser("~")
+            outputs['stdout'] = homedir + logname
 
     if outputs['both'] is not None:
         outputs['stderr'] = outputs['both']
@@ -489,6 +496,39 @@ def getSessionIDs(listString, sessionsfolder=None):
     return sessionids
 
 
+def get_batchlogs_folder(sessionsfolder):
+    """
+    ``deduceFolders(args)``
+
+    Tries to deduce the location of study specific folders based on the provided
+    arguments. For internal use only.
+    """
+
+    # extract folder
+    f = os.path.abspath(sessionsfolder)
+
+    # basefolder
+    basefolder = None
+
+    # try to find the root
+    while os.path.dirname(f) and os.path.dirname(f) != '/':
+        f = os.path.dirname(f)
+        if os.path.exists(os.path.join(f, '.qunexstudy')):
+            basefolder = f
+            break
+        elif os.path.exists(os.path.join(f, '.mnapstudy')):
+            basefolder = f
+            break
+    
+    # log folder
+    batchlogsfolder = None
+
+    if basefolder is not None:
+        batchlogsfolder = os.path.join(basefolder, 'processing', 'logs', 'batchlogs')
+
+    return batchlogsfolder
+
+
 def main(args=None):
     """
     qunex_container is a self-standing command that can run QuNex commands 
@@ -643,11 +683,11 @@ def main(args=None):
     Redirecting output
     ------------------
 
-    When running a container with a scheduler, the standard output and error
-    will be saved in a folder where the command was run based on each scheduler
-    system defauls. By specifying the `output` parameter the command output can
-    be redirected. The parameter supports three different directives provided by
-    "<key>:<value>" pairs in a pipe separated string:
+    By default, QuNex will try to put scheduler logs into the
+    <study>/processing/logs/batchlogs folder. If not possible QuNex will put them
+    in your home folder. You can also put them in a custom location by specifying
+    the `output` parameter. The parameter supports three different directives
+    provided by "<key>:<value>" pairs in a pipe separated string:
 
     stdout
         specifies a path to a log file that should store standard output of the 
@@ -766,6 +806,11 @@ def main(args=None):
             parinfo = True
         else:
             command += '%s ' % (arg)
+
+    # batchlogs folder
+    batchlogsfolder = None
+    if sessionsfolder is not None:
+        batchlogsfolder = get_batchlogs_folder(sessionsfolder)
 
     if conimage is None:
         if "QUNEXCONIMAGE" in os.environ:
@@ -984,7 +1029,7 @@ def main(args=None):
                 containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
 
             if scheduler:
-                schedule(command=containerCommand, settings=scheduler, output=output, parsessions=parsessions, parelements=parelements)
+                schedule(command=containerCommand, settings=scheduler, output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder)
             else:
                 subprocess.Popen(containerCommand, shell=True)
 
