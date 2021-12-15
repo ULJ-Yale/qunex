@@ -18,7 +18,7 @@ usage() {
   echo ""
   echo "The DWI data is expected to be in the following folder::"
   echo ""
-  echo "  <study_folder>/<case>/hcp/<case>/Diffusion"
+  echo "  <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
   echo ""
   echo "INPUTS"
   echo "======"
