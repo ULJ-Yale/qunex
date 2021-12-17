@@ -84,6 +84,9 @@ def getHCPPaths(sinfo, options):
     # default
     if options['hcp_pipeline'] is None:
         options['hcp_pipeline'] = os.environ['HCPPIPEDIR']
+    else:
+        os.environ['HCPPIPEDIR'] = options['hcp_pipeline']
+
     base                    = options['hcp_pipeline']
 
     d['hcp_base']           = base
