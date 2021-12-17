@@ -467,6 +467,7 @@ def main(args=None):
             else:
                 k = args[n].strip('-')
                 opts[k] = True
+
         runCommand(comm, opts)
 
 

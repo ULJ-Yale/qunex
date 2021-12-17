@@ -81,7 +81,7 @@ def readSessionData(filename, verbose=False):
 
                 # --- read preferences / settings
 
-                if line.startswith('_'):
+                if line.startswith('_') or line.startswith('-') or line.startswith('--'):
                     pkey, pvalue = [e.strip() for e in line.split(':', 1)]
                     if first:
                         gpref[pkey[1:]] = pvalue
