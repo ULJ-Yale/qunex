@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.91.12 (2021-XY-10)
 
-Setup_hcp now also copies over the .json files associated with the mapped scan. XNAT debug for newer version of QuNex. Patched several issues which should improve the general stability of QuNex.
+Setup_hcp now also copies over the .json files associated with the mapped scan. XNAT debug for newer versions of QuNex. Patched several issues which should improve the general stability of QuNex.
 
 ## 0.91.11 (2021-04-10)
 
