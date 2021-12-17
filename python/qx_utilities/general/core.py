@@ -80,8 +80,15 @@ def readSessionData(filename, verbose=False):
                 c += 1
 
                 # --- read preferences / settings
+                if line.startswith('--'):
+                    pkey, pvalue = [e.strip() for e in line.split(':', 1)]
+                    if first:
+                        gpref[pkey[2:]] = pvalue
+                    else:
+                        dic[pkey] = pvalue
+                    continue
 
-                if line.startswith('_') or line.startswith('-') or line.startswith('--'):
+                elif line.startswith('_') or line.startswith('-'):
                     pkey, pvalue = [e.strip() for e in line.split(':', 1)]
                     if first:
                         gpref[pkey[1:]] = pvalue
@@ -90,14 +97,12 @@ def readSessionData(filename, verbose=False):
                     continue
 
                 # --- split line
-
                 line = line.split(':')
                 line = [e.strip() for e in line]
                 if len(line) < 2:
                     continue
 
                 # --- read ima data
-
                 if line[0].isdigit():
                     image = {}
                     image['ima'] = line[0]
@@ -123,7 +128,6 @@ def readSessionData(filename, verbose=False):
 
 
                 # --- read conc data
-
                 elif csearch.match(line[0]):
                     conc = {}
                     conc['cnum'] = line[0]
@@ -144,7 +148,6 @@ def readSessionData(filename, verbose=False):
                     dic[line[0]]  = conc
 
                 # --- read rest of the data
-
                 else:
                     dic[line[0]] = ":".join(line[1:])
 
@@ -159,7 +162,6 @@ def readSessionData(filename, verbose=False):
                     slist.append(dic)
 
             # check paths
-
             for field in ['dicom', 'raw_data', 'data', 'hpc']:
                 if field in dic:
                     if not os.path.exists(dic[field]) and verbose:
