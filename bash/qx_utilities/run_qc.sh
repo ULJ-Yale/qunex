@@ -1242,11 +1242,16 @@ main() {
         fi 
         # -- Check if raw NIFTI QC is requested and run it first
         if [ "$Modality" == "rawNII" ] ; then 
-               unset CompletionCheck
-               slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*
-               if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
-                  CompletionCheck="fail"
-               fi
+            unset CompletionCheck
+            pushd ${SessionsFolder}/${CASE}/nii/
+            slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*
+            popd
+            if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
+                CompletionCheck="fail"
+            else
+                mkdir -p ${OutPath}/${CASE}
+                mv ${SessionsFolder}/${CASE}/nii/slicesdir/* ${OutPath}/${CASE}
+            fi
         else
             # -- Proceed with other QC steps
             
