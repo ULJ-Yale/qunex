@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.91.12 (2021-XY-10)
+## 0.92.0
 
-Setup_hcp now also copies over the .json files associated with the mapped scan. XNAT debug for newer versions of QuNex. Patched several issues which should improve the general stability of QuNex.
+Improved scheduling, HCP ASL support, XNAT support update, rawNII QC should now again work, setup_hcp now also copies over the JSON files associated with the mapped scan, improved the documentation at several location and squashed a number of minor bugs that should improve the overall stability of QuNex.
 
 ## 0.91.11 (2021-04-10)
 
