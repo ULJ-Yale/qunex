@@ -708,7 +708,6 @@ def run(command, args):
 
     options['runlogs']    = runlogfolder
     options['comlogs']    = comlogfolder
-    print(f"!!!!! {comlogfolder}")
     options['logfolder']  = logfolder
     options['specfolder'] = specfolder
 
