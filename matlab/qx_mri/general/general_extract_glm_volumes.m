@@ -12,7 +12,9 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %   INPUTS
 %   ======
 %
-%   --flist       List of files / sessions to process.
+%   --flist       List of files / sessions to process. For each session id 
+%                 in the list, there has to be a `glm:` file listed that 
+%                 is a result of GLM analyses (a 'Bcoeff' file).
 %   --outf        Root file name for the results. If empty, the flist name is 
 %                 used. []
 %   --efects      A cell array of strings or a comma separated list of effects 
@@ -98,6 +100,22 @@ end
 
 sessions = general_read_file_list(flist);
 nsub = length(sessions);
+
+% --------------------------------------------------------------
+%                             check that glm entries are present
+
+if verbose, fprintf('\n---> checking file list'); end
+allok = true;
+for s = 1:nsub
+    if ~isfield(sessions(s), 'glm')
+        fprintf('\n     WARNING: Session id: %s has no glm file specified!', sessions(s).id);
+        allok = false;
+    end
+end
+if ~allok
+    fprintf('\n\nERROR: Some sessions do not have a glm file specified in the file list.\n       Please, check your list file!\n');
+    exit(1);
+end
 
 % --------------------------------------------------------------
 %                                      parse estimates parameter
