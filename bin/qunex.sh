@@ -2138,7 +2138,7 @@ if [ "$CommandToRun" == "dwi_eddy_qc" ]; then
             # -- Check in/out paths
             if [ -z ${EddyPath} ]; then
                 reho "Eddy path not set. Assuming defaults."
-                EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/eddy"
+                EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
             else
                 EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/$EddyPath"
                 echo $EddyPath
