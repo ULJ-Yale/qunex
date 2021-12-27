@@ -66,7 +66,7 @@ usage() {
  echo ""
  echo "DWI data needs to be in the following folder::"
  echo ""
- echo "  <study_folder>/<case>/hcp/<case>/Diffusion"
+ echo "  <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
  echo ""
  echo "BedpostX output data needs to be in the following folder::"
  echo ""

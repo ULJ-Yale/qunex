@@ -557,7 +557,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     
     ## -- Clean prior mapping
     unset TimeStampXNATPath TimeStamp TimeStampXNATPath XNATInfoPath
-    TimeStampXNATPath=`date +%Y-%m-%d_%H.%M.%10N`
+    TimeStampXNATPath=`date +%Y-%m-%d_%H.%M.%S.%6N`
     if [ -z {StudyFolder} ]; then
         XNATInfoPath="${DownloadPath}/XNATInfo_${TimeStampXNATPath}"
     else
@@ -574,7 +574,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
         geho " -- XNAT info folder ${XNATInfoPath} generated. Proceeding..."
         echo ""
     fi
-    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
     
     ## -- Obtain temp info on subjects and experiments in the project
     curl -k -b "JSESSIONID=$JSESSION" -m 30 -X GET "${XNAT_HOST_NAME}/data/sessions?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv
@@ -639,7 +639,7 @@ fi
 if [[ ${RUN_TYPE} == "upload" ]]; then
     
     unset TimeStamp
-    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
 
     echo ""
     ceho "       ********************************************"

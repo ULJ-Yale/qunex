@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.92.0
+
+Improved scheduling, HCP ASL support, XNAT support update, rawNII QC should now again work, setup_hcp now also copies over the JSON files associated with the mapped scan, improved the documentation at several location and squashed a number of minor bugs that should improve the overall stability of QuNex.
+
 ## 0.91.11 (2021-04-10)
 
 File link creation inside QuNex is now more robust and should not crash on certain file systems.

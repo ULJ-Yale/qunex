@@ -81,7 +81,13 @@ def getHCPPaths(sinfo, options):
 
     # ---- HCP Pipeline folders
 
-    base                    = options['hcp_Pipeline']
+    # default
+    if options['hcp_pipeline'] is None:
+        options['hcp_pipeline'] = os.environ['HCPPIPEDIR']
+    else:
+        os.environ['HCPPIPEDIR'] = options['hcp_pipeline']
+
+    base                    = options['hcp_pipeline']
 
     d['hcp_base']           = base
 
@@ -652,8 +658,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             if tufolder and sesettings:
                 try:
-                    sepos = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "*"))[0]
-                    seneg = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "*"))[0]
+                    sepos = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "*.nii.gz"))[0]
+                    seneg = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "*.nii.gz"))[0]
 
                     if all([sepos, seneg]):
                         r += "\n---> Spin-Echo pair of images present. [%s]" % (os.path.basename(tufolder))
@@ -950,6 +956,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 user prior to mapping (e.g. rfMRI_REST1_AP).
                                 ['automated']
 
+
     Specific parameters
     -------------------
 
@@ -1095,7 +1102,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
 
         if t2w == 'NONE' and options['hcp_processing_mode'] == 'HCPStyleData':
-            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, not T2w image was specified!\n            Consider using LegacyStyleData processing mode."
+            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode."
             run = False
 
         # -> check version of FS against previous version of FS
@@ -1194,7 +1201,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         elements = [("subjectDIR",       hcp['T1w_folder']),
                     ('subject',          sinfo['id'] + options['hcp_suffix']),
                     ('seed',             options['hcp_fs_seed']),
-                    ('no-conf2hires',    options['hcp_fs_no_conf2hires']),
                     ('processing-mode',  options['hcp_processing_mode'])]
 
         # -> add t1, t1brain and t2 only if options['hcp_fs_existing_session'] is FALSE
@@ -1216,11 +1222,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(('extra-reconall-arg', options['hcp_expert_file']))
 
         # --> Pull all together
-
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
-        # --> Add flags
 
-        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_session', '--existing-subject')]:
+        # --> Add flags
+        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_session', '--existing-subject'), ('hcp_fs_no_conf2hires', '--no-conf2hires')]:
             if options[optionName]:
                 comm += " %s" % (flag)
 
@@ -1350,27 +1355,27 @@ def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
                           - 'hcp' (for `<hcp_folder>/logs/comlogs`)
                           - '<path>' (for an arbitrary directory)
 
-    --hcp_folderstructure       If set to 'hcpya' the folder structure used
-                                in the initial HCP Young Adults study is used.
-                                Specifically, the source files are stored in
-                                individual folders within the main 'hcp' folder
-                                in parallel with the working folders and the
-                                'MNINonLinear' folder with results. If set to
-                                'hcpls' the folder structure used in
-                                the HCP Life Span study is used. Specifically,
-                                the source files are all stored within their
-                                individual subfolders located in the joint
-                                'unprocessed' folder in the main 'hcp' folder,
-                                parallel to the working folders and the
-                                'MNINonLinear' folder. ['hcpls']
-    --hcp_filename              How to name the BOLD files once mapped into
-                                the hcp input folder structure. The default
-                                ('automated') will automatically name each
-                                file by their number (e.g. BOLD_1). The
-                                alternative ('userdefined') is to use the
-                                file names, which can be defined by the
-                                user prior to mapping (e.g. rfMRI_REST1_AP).
-                                ['automated']
+    --hcp_folderstructure If set to 'hcpya' the folder structure used
+                          in the initial HCP Young Adults study is used.
+                          Specifically, the source files are stored in
+                          individual folders within the main 'hcp' folder
+                          in parallel with the working folders and the
+                          'MNINonLinear' folder with results. If set to
+                          'hcpls' the folder structure used in
+                          the HCP Life Span study is used. Specifically,
+                          the source files are all stored within their
+                          individual subfolders located in the joint
+                          'unprocessed' folder in the main 'hcp' folder,
+                          parallel to the working folders and the
+                          'MNINonLinear' folder. ['hcpls']
+    --hcp_filename        How to name the BOLD files once mapped into
+                          the hcp input folder structure. The default
+                          ('automated') will automatically name each
+                          file by their number (e.g. BOLD_1). The
+                          alternative ('userdefined') is to use the
+                          file names, which can be defined by the
+                          user prior to mapping (e.g. rfMRI_REST1_AP).
+                          ['automated']
 
     Specific parameters
     -------------------
@@ -2386,7 +2391,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             ['automated']
 
 
-
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
 
@@ -2419,7 +2423,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             file names, which can be defined by the
                             user prior to mapping (e.g. rfMRI_REST1_AP).
                             ['automated']
-
 
     Image acquisition details
     -------------------------
@@ -4904,8 +4907,6 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     --parsessions           How many sessions to run in parallel. [1]
     --parelements           How many elements (e.g bolds) to run in
                             parallel. [1]
-    --overwrite             Whether to overwrite existing data (yes)
-                            or not (no). [no]
     --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
     --logfolder             The path to the folder where runlogs and comlogs
@@ -5052,7 +5053,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             if parelements == 1: # serial execution
                 for b in icafixBolds:
                     # process
-                    result = executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, b)
+                    result = executeHCPSingleReApplyFix(sinfo, options, hcp, run, b)
 
                     # merge r
                     r += result['r']
@@ -5070,7 +5071,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
                 # create a multiprocessing Pool
                 processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process
-                f = partial(executeHCPSingleReApplyFix, sinfo, options, overwrite, hcp, run)
+                f = partial(executeHCPSingleReApplyFix, sinfo, options, hcp, run)
                 results = processPoolExecutor.map(f, icafixBolds)
 
                 # merge r and report
@@ -5089,7 +5090,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             if parelements == 1: # serial execution
                 for g in icafixGroups:
                     # process
-                    result = executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, g)
+                    result = executeHCPMultiReApplyFix(sinfo, options, hcp, run, g)
 
                     # merge r
                     r += result['r']
@@ -5107,7 +5108,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
                 # create a multiprocessing Pool
                 processPoolExecutor = ProcessPoolExecutor(parelements)
                 # process
-                f = partial(executeHCPMultiReApplyFix, sinfo, options, overwrite, hcp, run)
+                f = partial(executeHCPMultiReApplyFix, sinfo, options, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
 
                 # merge r and report
@@ -5146,7 +5147,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
+def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
     # extract data
     printbold, _, _, boldinfo = bold
 
@@ -5165,7 +5166,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
         # run HCP hand reclassification
         r += "\n------------------------------------------------------------"
         r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
-        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, True, boldtarget, printbold)
+        result = executeHCPHandReclassification(sinfo, options, hcp, run, True, boldtarget, printbold)
 
         # merge r
         r += result['r']
@@ -5278,7 +5279,7 @@ def executeHCPSingleReApplyFix(sinfo, options, overwrite, hcp, run, bold):
     return {'r': r, 'report': report}
 
 
-def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
+def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
     # get group data
     groupname = group["name"]
     bolds = group["bolds"]
@@ -5326,7 +5327,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
 
         # run HCP hand reclassification
         r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
-        result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, groupname, groupname)
+        result = executeHCPHandReclassification(sinfo, options, hcp, run, False, groupname, groupname)
 
         # merge r
         r += result['r']
@@ -5439,7 +5440,7 @@ def executeHCPMultiReApplyFix(sinfo, options, overwrite, hcp, run, group):
     return {'r': r, 'report': report}
 
 
-def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFix, boldtarget, printbold):
+def executeHCPHandReclassification(sinfo, options, hcp, run, singleFix, boldtarget, printbold):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -5483,7 +5484,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
         # -- Run
         if run and boldok:
             if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
+                if os.path.exists(tfile):
                     os.remove(tfile)
 
                 r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP HandReclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
@@ -5495,7 +5496,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP HandReclassification ' + boldtarget, r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP HandReclassification can be run"
                     report['ready'].append(printbold)
@@ -5940,7 +5941,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], outfmriname], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -5949,7 +5950,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + boldtarget, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + outfmriname, r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(printbold)
@@ -6993,7 +6994,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --verbose' % {
                     "script"                : "hcp_asl",
                     "studydir"              : sinfo['hcp'],
-                    "subid"                 : sinfo["id"],
+                    "subid"                 : sinfo['id'] + options['hcp_suffix'],
                     "grads"                 : gdcfile,
                     "struct"                : t1w_file,
                     "sbrain"                : t1w_brain_file,
@@ -7531,7 +7532,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(os.path.join(hcp_bold_path, 'Movement_Regressors.txt')):
                         mdata = [line.strip().split() for line in open(os.path.join(hcp_bold_path, 'Movement_Regressors.txt'))]
                         mfile = open(f['bold_mov'], 'w')
-                        print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=mfile)
+                        print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=mfile)
                         print("#", file=mfile)
                         print("#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)", file=mfile)
                         c = 0

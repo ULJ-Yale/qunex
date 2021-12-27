@@ -55,7 +55,7 @@ usage() {
  echo "preprocessing and completed diffusion processing. DWI data is expected to"
  echo "be in the following folder:"
  echo ""
- echo " <study_folder>/<case>/hcp/<case>/Diffusion"
+ echo " <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
  echo ""
  echo "INPUTS"
  echo "======"

@@ -123,7 +123,7 @@ fi
 
 # -- Setup new logfile, move old to outdated_logs
 mkdir $SyncLogFolder  &> /dev/null
-now=`date +%Y-%m-%d_%H.%M.%10N`
+now=`date +%Y-%m-%d_%H.%M.%S.%6N`
 TimeStamp=${now}
 
 # -- Report options

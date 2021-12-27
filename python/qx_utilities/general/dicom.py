@@ -1770,11 +1770,12 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                           process, and it can include glob patterns. [""]
     
     --masterinbox         The master inbox folder with packages to process. By 
-                          default masterinbox is in base study folder: 
+                          default masterinbox is in sessions folder: 
                           <sessionsfolder>/inbox/MR. If the packages are
-                          elsewhere the location can be specified here. If set 
+                          elsewhere, the location can be specified here. If set 
                           to "none", the data is assumed to already exist in the
-                          individual sessions folders.
+                          individual sessions' inbox folder: 
+                          <studyfolder>/<sessionsfolder>/<session id>/inbox.
                           [<sessionsfolder>/inbox/MR]
     
     --check               The type of check to perform when packages or session  

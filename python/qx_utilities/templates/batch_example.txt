@@ -153,7 +153,7 @@
 # _hcp_processing_mode       Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData) ['HCPStyleData']
 # _hcp_freesurfer_home       Path to FreeSurfer base folder []
 # _hcp_freesurfer_module     Whether to load FreeSurfer as a module on the cluster: YES or NONE []
-# _hcp_Pipeline              Path to pipeline base folder []
+# _hcp_pipeline              Path to pipeline base folder []
 # _hcp_folderstructure       If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically, the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study is used. Specifically, the source files are all stored within their individual subfolders located in the joint 'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder. [`hcpls`]
 # _hcp_filename              How to name the BOLD files once mapped into the hcp input folder structure. The default ('automated') will automatically name each file by their number (e.g. BOLD_1). The alternative ('userdefined') is to use the file names, which can be defined by the user prior to mapping (e.g. rfMRI_REST1_AP). ['automated']
 # _hcp_suffix                Session id suffix if running HCP preprocessing variants []

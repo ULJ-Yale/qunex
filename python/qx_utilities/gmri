@@ -268,7 +268,7 @@ def runCommand(command, args):
                 if not os.path.isdir(runListFolder):
                     os.makedirs(runListFolder)
 
-                logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+                logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
                 logname = os.path.join(runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
                 gs.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
@@ -467,6 +467,7 @@ def main(args=None):
             else:
                 k = args[n].strip('-')
                 opts[k] = True
+
         runCommand(comm, opts)
 
 

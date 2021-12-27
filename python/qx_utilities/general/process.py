@@ -123,10 +123,11 @@ def isNone(s):
     '''
     ``isNone(s)``
 
-    Check if the string is "None", "none" or "NONE" and returns None, otherwise
+    Check if the string is "" and returns None, otherwise
     returns the passed string.
     '''
-    if s in ['None', 'none', 'NONE', '']:
+
+    if s in ['']:
         return None
     else:
         return s
@@ -193,7 +194,7 @@ arglist = [
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
-           ['script',             'None',                                        isNone, 'The script to be executed.'],
+           ['script',             '',                                            isNone, 'The script to be executed.'],
            ['sessionid',          '',                                            str,    "a session id for which to run the command"],
            ['sessionids',         '',                                            str,    "list of | separated session ids for which to run the command"],
 
@@ -207,10 +208,10 @@ arglist = [
            ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
            ['bolds',              'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
            ['boldname',           'bold',                                        str,    "the default name for the bold files"],
-           ['qx_nifti_tail',      'None',                                        isNone, "The tail of the nifti (volume) file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_nifti_tail"],
-           ['qx_cifti_tail',      'None',                                        isNone, "The tail of the cifti file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_cifti_tail"],
-           ['nifti_tail',         'None',                                        isNone, "The tail of the nifti (volume) file to be processed. If not set or set to 'None', it defaults to the value of qx_nifti_tail"],
-           ['cifti_tail',         'None',                                        isNone, "The tail of the cifti file to be processed. If not set or set to 'None', it defaults to the value of qx_cifti_tail"],           
+           ['qx_nifti_tail',      '',                                            isNone, "The tail of the nifti (volume) file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_nifti_tail"],
+           ['qx_cifti_tail',      '',                                            isNone, "The tail of the cifti file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_cifti_tail"],
+           ['nifti_tail',         '',                                            isNone, "The tail of the nifti (volume) file to be processed. If not set or set to 'None', it defaults to the value of qx_nifti_tail"],
+           ['cifti_tail',         '',                                            isNone, "The tail of the cifti file to be processed. If not set or set to 'None', it defaults to the value of qx_cifti_tail"],           
            ['bold_prefix',        '',                                            str,    "an optional prefix to place in front of processing name extensions in the resulting files"],
            ['bold_variant',       '',                                            str,    "The suffix to add to 'images/functional' folders. '' by default"],
            ['img_suffix',         '',                                            str,    "an optional suffix for the images folder, to be used when working with multiple parallel workflows"],
@@ -269,8 +270,8 @@ arglist = [
 
            ['# ---- scheduler options'],
            ['scheduler',             'local',                                     str,    "the scheduler to use (local|PBS|LSF|SLURM) and any additional settings"],
-           ['scheduler_environment', 'None',                                      isNone, "the path to the script setting up the environment to run the commands in"],
-           ['scheduler_workdir',     'None',                                      isNone, "the path to working directory from which to run jobs on the cluster"],
+           ['scheduler_environment', '',                                          isNone, "the path to the script setting up the environment to run the commands in"],
+           ['scheduler_workdir',     '',                                          isNone, "the path to working directory from which to run jobs on the cluster"],
            ['scheduler_sleep',       '1',                                         float,  "time in seconds between submission of individual scheduler jobs"],
 
            ['# --- general HCP options'],
@@ -278,12 +279,12 @@ arglist = [
            ['hcp_folderstructure',    'hcpls',                                    str,    "If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically, the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study is used. Specifically, the source files are all stored within their individual subfolders located in the joint 'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder. ['hcpls']"],
            ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder."],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE."],
-           ['hcp_Pipeline',           '',                                         str,    "path to pipeline base folder."],
+           ['hcp_pipeline',           '',                                         isNone, "Path to the HCP pipeline base folder."],
            ['hcp_suffix',             '',                                         str,    "session id suffix if running HCP preprocessing variants."],
            ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE."],
            ['hcp_printcom',           '',                                         str,    "Print command for the HCP scripts: set to echo to have commands printed and not executed.."],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_filename') for bold working folders and results."],
-           ['hcp_filename',           'automated',                                 str,    "How to name the image files in the hcp structure. The default ('automated') is to name them automatically by their number using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative ('userdefined') is to use their user defined names (e.g. rfMRI_REST1_AP). ['automated']."],
+           ['hcp_filename',           'automated',                                str,    "How to name the image files in the hcp structure. The default ('automated') is to name them automatically by their number using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative ('userdefined') is to use their user defined names (e.g. rfMRI_REST1_AP). ['automated']."],
            ['hcp_lowresmesh',         '32',                                       str,    "Usually 32 vertices."],
            ['hcp_lowresmeshes',       '32',                                       str,    "Usually 32 vertices."],
            ['hcp_hiresmesh',          '164',                                      int,    "Usually 164 vertices."],
@@ -679,12 +680,12 @@ def run(command, args):
     for cfolder in [runlogfolder, comlogfolder]:
         if not os.path.exists(cfolder):
             os.makedirs(cfolder)
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = os.path.join(runlogfolder, "Log-%s-%s.log") % (command, logstamp)
 
     log   = []
     stati = []
-    sout = "# Generated by QuNex %s on %s\n" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s"))
+    sout = "# Generated by QuNex %s on %s\n" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f"))
     sout += "#\n"
     sout += "=================================================================\n"
     sout += "gmri " + command + " \\\n"
@@ -811,7 +812,7 @@ def run(command, args):
 
         f = open(logname, "w")
         # header
-        print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=f)
+        print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=f)
         print("#", file=f)
         print("\n\n============================= LOG ================================\n", file=f)
         for e in log:

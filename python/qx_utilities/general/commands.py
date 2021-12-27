@@ -15,7 +15,7 @@ Definition of commands used in gmri along with their parameters.
 from general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities, meltmovfidl, commands_support
 
 # pipeline imports
-from hcp import import_hcp, setup_hcp, process_hcp, export_hcp
+from hcp import import_hcp, setup_hcp, export_hcp
 from nhp import import_nhp
 
 # all command mappings
@@ -37,7 +37,7 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'reslice'               : {'com': nifti.reslice,                  'args': ('inf', 'slices', 'outf')},
             'slice_image'           : {'com': img.slice_image,                'args': ('sourcefile', 'targetfile', 'frames')},
             'nifti24dfp'            : {'com': nifti.nifti24dfp,               'args': ('inf', 'outf')},
-            'setup_hcp'             : {'com': setup_hcp.setup_hcp,            'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'hcp_filename', 'folderstructure', 'hcp_suffix')},
+            'setup_hcp'             : {'com': setup_hcp.setup_hcp,            'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'hcp_filename', 'hcp_folderstructure', 'hcp_suffix')},
             'create_session_info'   : {'com': utilities.create_session_info,  'args': ('sessions', 'pipelines', 'sessionsfolder', 'sourcefile', 'targetfile', 'mapping', 'filter', 'overwrite')},
             'printniftihdr'         : {'com': img.printniftihdr,              'args': ('filename', )},
             'modniftihdr'           : {'com': qximg.modniftihdr,              'args': ('filename', 's')},
