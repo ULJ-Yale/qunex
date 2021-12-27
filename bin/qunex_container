@@ -257,7 +257,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             outputs[k] = v
     else:
         # log name
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
         logname = "/qunex_container_" + timestamp + ".txt"
 
         # put in batchfolder

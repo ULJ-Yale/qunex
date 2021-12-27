@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.92.1
+
+Fixed a bug with time stamps in qunex_container.
+
 ## 0.92.0
 
 Improved scheduling, HCP ASL support, XNAT support update, rawNII QC should now again work, setup_hcp now also copies over the JSON files associated with the mapped scan, improved the documentation at several location and squashed a number of minor bugs that should improve the overall stability of QuNex.
