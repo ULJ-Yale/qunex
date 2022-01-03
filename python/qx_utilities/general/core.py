@@ -910,7 +910,7 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
                         return (status and True, "%s%s%s already mapped" % (r, prefix, name))
                 else:
                     os.remove(target)
-            linkOrCopy(source, target)
+            fl.link(source, target)
             if r is None:
                 return status and True
             else:
