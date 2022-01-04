@@ -17,13 +17,13 @@ import subprocess
 import math
 import os
 import os.path
-import datetime
 import time
 import re
 
 import general.exceptions as ge
 import general.core as gc
 
+from datetime import datetime
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None, parsessions=1, parelements=1):
     """
@@ -491,7 +491,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
         if test == "run":
             scheduler = settings.split(',')[0].strip()
-            exectime  = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+            exectime  = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
             result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash, parsessions=parsessions, parelements=parelements)
             jobs.append((jobid, command))
@@ -573,7 +573,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                 # ---- set sheduler settings
                 settings['jobnum'] = str(i)
                 sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
-                exectime = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+                exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
                 logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, i, exectime))
 
                 jobname = "%s_#%02d" % (command, i)

@@ -33,7 +33,6 @@ import sys
 import re
 import glob
 import shutil
-import datetime
 import subprocess
 import zipfile
 import tarfile
@@ -46,6 +45,8 @@ import general.img as gi
 import general.nifti as gn
 import general.qximg as qxi
 import general.exceptions as ge
+
+from datetime import datetime
 
 try:
     import pydicom.filereader as dfr
@@ -251,10 +252,10 @@ def readDICOMInfo(filename):
     # --- datetime
 
     try:
-        info['datetime'] = datetime.datetime.strptime(str(int(float(d.StudyDate + d.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+        info['datetime'] = datetime.strptime(str(int(float(d.StudyDate + d.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
     except:
         try:
-            info['datetime'] = datetime.datetime.strptime(str(int(float(d.StudyDate + d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            info['datetime'] = datetime.strptime(str(int(float(d.StudyDate + d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
         except:
             info['datetime'] = ""
 
@@ -321,10 +322,10 @@ def readDICOMBase(filename):
 
 def getDicomTime(info):
     try:
-        time = datetime.datetime.strptime(str(int(float(info.StudyDate + info.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+        time = datetime.strptime(str(int(float(info.StudyDate + info.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
     except:
         try:
-            time = datetime.datetime.strptime(str(int(float(info.StudyDate + info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            time = datetime.strptime(str(int(float(info.StudyDate + info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
         except:
             time = ""
     return time
@@ -618,10 +619,10 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
                 seriesDescription = "None"
 
         try:
-            time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+            time = datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
         except:
             try:
-                time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+                time = datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
             except:
                 time = ""
 

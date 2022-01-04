@@ -9,8 +9,8 @@ import os
 import os.path
 import sys
 import copy
-import datetime
 
+from datetime import datetime
 from general import scheduler as gs
 from general import utilities as gu
 from general import process as gp
@@ -268,7 +268,7 @@ def runCommand(command, args):
                 if not os.path.isdir(runListFolder):
                     os.makedirs(runListFolder)
 
-                logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+                logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
                 logname = os.path.join(runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
                 gs.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
