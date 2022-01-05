@@ -593,6 +593,13 @@ MATLABPATH=$HCPDIRMATLAB:$MATLABPATH
 export MATLABPATH
 export PATH
 
+# -- Setup HCP Pipelines global matlab path relevant for temporal ICA
+NETS_SPECTRA=${HCPDIRMATLAB}/nets_spectra
+MATLABPATH=$NETS_SPECTRA:$MATLABPATH
+ICA_DIM=${HCPDIRMATLAB}/icaDim
+MATLABPATH=$ICA_DIM:$MATLABPATH
+export MATLABPATH
+
 # -- ciftirw
 if [[ -z ${FSL_FIX_CIFTIRW} ]]; then FSL_FIX_CIFTIRW=${HCPPIPEDIR}/global/matlab; export FSL_FIX_CIFTIRW; fi
 if [[ -z ${HCPCIFTIRWDIR} ]]; then HCPCIFTIRWDIR=${HCPPIPEDIR}/global/matlab/cifti-matlab; export HCPCIFTIRWDIR; fi
