@@ -319,8 +319,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     ::
 
         qunex dwi_xtract \
-          --sessionsfolder="/data/example_study/sessions" \
-          --sessions="OP110" \
+          --sessionsfolder="/data/macaque_study/sessions" \
+          --sessions="/data/example_study/processing/batch.txt" \
           --species="human" \
           --overwrite=yes
 
@@ -360,7 +360,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_dir = os.path.join(nhp_dir, "dMRI.bedpostX")
             output_dir = os.path.join(nhp_dir, "xtract")
         else:
-            hcp_dir = os.path.join(sinfo["hcp"], sinfo["id"] + options["hcp_suffix"])
+            hcp_dir = os.path.join(options["sessionsfolder"], session, "hcp")
+            # if sessions is a folder
+            if os.path.isfile(options["sessions"]):
+                hcp_dir = os.path.join(sinfo["hcp"], sinfo["id"] + options["hcp_suffix"])
             xfms_dir = os.path.join(hcp_dir, "MNINonLinear", "xfms") 
             t1w_dir = os.path.join(hcp_dir, "T1w")
             bedpostx_dir = os.path.join(t1w_dir, "Diffusion.bedpostX")
