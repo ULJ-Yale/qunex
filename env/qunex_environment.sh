@@ -586,7 +586,7 @@ MATLABROOT=`cd $MATLABBIN; cd ..; pwd`
 export MATLABROOT
 
 # -- Setup HCP Pipelines global matlab path relevant for FIX ICA
-HCPDIRMATLAB=${HCPPIPEDIR}/global/matlab/
+HCPDIRMATLAB=${HCPPIPEDIR}/global/matlab
 export HCPDIRMATLAB
 PATH=${HCPDIRMATLAB}:${PATH}
 MATLABPATH=$HCPDIRMATLAB:$MATLABPATH
