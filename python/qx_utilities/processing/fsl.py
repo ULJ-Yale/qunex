@@ -428,7 +428,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         if "xtract_resolution" in options:
             comm = comm + " -res %s" % options["xtract_resolution"]
 
-        # xtract_stdwarp
+        # xtract_ptx_options
         if "xtract_ptx_options" in options:
             comm = comm + " -ptx_options %s" % options["xtract_ptx_options"]
         elif species=="MACAQUE":
