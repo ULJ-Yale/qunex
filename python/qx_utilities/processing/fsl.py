@@ -463,6 +463,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                 # execute
                 r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL XTRACT", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
 
+                r += "\n---> Processing details can be found in %s" % (os.path.join(output_dir, "logs"))
+
                 if failed:
                     r += "\n---> FSL XTRACT processing for session %s failed" % session
                     report = (sinfo['id'], "FSL XTRACT failed", 1)
