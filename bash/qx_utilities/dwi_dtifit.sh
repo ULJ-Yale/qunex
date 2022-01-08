@@ -28,9 +28,9 @@ usage() {
   echo "--overwrite        Delete prior run for a given session (yes / no)"
   echo "--species          dtifit currently supports processing of human and macaque
                            data. If processing macaques set this parameter to macaque."
-  echo "--mask             Bet binary mask file [T1w/diffusion/nodif_brain_mask]."
-  echo "--bvecs            b vectors file [T1w/diffusion/bvecs]."
-  echo "--bvals            b values file [T1w/diffusion/bvals]."
+  echo "--mask             Bet binary mask file [T1w/Diffusion/nodif_brain_mask]."
+  echo "--bvecs            b vectors file [T1w/Diffusion/bvecs]."
+  echo "--bvals            b values file [T1w/Diffusion/bvals]."
   echo "--cni              Input confound regressors [not set by default]."
   echo "--sse              Output sum of squared errors [not set by default]."
   echo "--wls              Fit the tensor with weighted least squares
