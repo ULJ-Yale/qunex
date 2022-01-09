@@ -704,6 +704,8 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
     if "=" not in run:
         comm = ' '.join(run.split())
+    elif (" --" in run or "\n--" in run) and (" -" in run or "\n-" in run): 
+        comm = run.replace(" -", " \ \n    -")
     elif " --" in run or "\n--" in run:
         comm = run.replace(" ", "").replace("--", " \ \n    --")
     elif " -" in run or "\n-" in run:
