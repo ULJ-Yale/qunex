@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.92.2
+
+Fixed a bug in the fsl_xtract command that prevented users from running it. Corrected some typos in inline documentation.
+
 ## 0.92.1
 
 Fixed a bug with time stamps in qunex_container.
