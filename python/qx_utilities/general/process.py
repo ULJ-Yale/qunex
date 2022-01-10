@@ -436,7 +436,7 @@ arglist = [
            ['hcp_tica_outfmriname',  'rfMRI_REST',                                str,     "Name to use for tICA pipeline outputs."],
            ['hcp_tica_surfregname', '',                                           isNone,  "The registration string corresponding to the input files."],
            ['hcp_tica_procstring', '',                                            isNone,  "File name component representing the preprocessing already done, e.g. _Atlas_MSMAll_hp0_clean."],
-           ['hcp_tica_outgroupname', '',                                          isNone,  "Name to use for the group output folder."],
+           ['hcp_outgroupname', '',                                               isNone,  "Name to use for the group output folder."],
            ['hcp_tica_timepoints', '',                                            isNone,  "Output spectra size for sICA individual projection, RunsXNumTimePoints, like '4800'."],
            ['hcp_tica_num_wishart', '',                                           isNone,  "How many wisharts to use in icaDim."],
            ['hcp_tica_mrfix_concat_name', '',                                     isNone,  "If multi-run FIX was used, you must specify the concat name with this option."],
@@ -457,6 +457,19 @@ arglist = [
            ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
            ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
            ['hcp_tica_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+
+           ['# --- hcp_make_average_dataset options'],
+           ['hcp_surface_atlas_dir',        '',                                                             isNone,  "Path to the location of the standard surfaces."],
+           ['hcp_grayordinates_dir',        '',                                                             isNone,  "Path to the location of the standard grayorinates space."],
+           ['hcp_free_surfer_labels',       '',                                                             isNone,  "Path to the location of the FreeSurfer look up table file."],
+           ['hcp_pregradient_smoothing',    '1',                                                            int,     "Sigma of the pregradient smoothing."],
+           ['hcp_mad_regname',              'MSMAll',                                                       str,     "Name of the registration."],
+           ['hcp_mad_videen_maps',          'corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC',    str,     "Maps you want to use for the videen palette."],
+           ['hcp_mad_greyscale_maps',       'sulc,curvature',                                               str,     "Maps you want to use for the greyscale palette."],
+           ['hcp_mad_distortion_maps',      'SphericalDistortion,ArealDistortion,EdgeDistortion',           str,     "Distortion maps."],
+           ['hcp_mad_gradient_maps',        'MyelinMap_BC,SmoothedMyelinMap_BC,corrThickness',              str,     "Maps you want to compute the gradietn on."],
+           ['hcp_mad_std_maps',             'sulc@curvature,corrThickness,thickness,MyelinMap_BC',          str,     "Maps you want to compute the standard deviation on."],
+           ['hcp_mad_multi_maps',           'NONE',                                                         str,     "Maps with more than one map (column) that cannot be merged and must be averaged."],
 
            ['# --- HCP file checking'],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file)."],
@@ -517,55 +530,62 @@ options = {}
 #   list.
 
 # processing commands
-calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,                       "Map HCP preprocessed data to sessions' image folder."],
-          [],
-          ['gbd',     'get_bold_data',              workflow.get_bold_data,                         "Copy functional data from 4dfp (NIL) processing pipeline."],
-          ['bbm',     'create_bold_brain_masks',    workflow.create_bold_brain_masks,               "Create brain masks for BOLD runs."],
-          [],
-          ['seg',     'run_basic_segmentation',     fs.runBasicStructuralSegmentation,              "Run basic structural image segmentation."],
-          ['gfs',     'get_fs_data',                fs.checkForFreeSurferData,                      "Copy existing FreeSurfer data to sessions' image folder."],
-          ['fss',     'run_subcortical_fs',         fs.runFreeSurferSubcorticalSegmentation,        "Run subcortical freesurfer segmentation."],
-          ['fsf',     'run_full_fs',                fs.runFreeSurferFullSegmentation,               "Run full freesurfer segmentation"],
-          [],
-          ['cbs',     'compute_bold_stats',         workflow.compute_bold_stats,                    "Compute BOLD movement and signal statistics."],
-          ['csr',     'create_stats_report',        workflow.create_stats_report,                   "Create BOLD movement statistic reports and plots."],
-          ['ens',     'extract_nuisance_signal',    workflow.extract_nuisance_signal,               "Extract nuisance signal from BOLD images."],
-          [],
-          ['bpp',     'preprocess_bold',            workflow.preprocess_bold,                       "Preprocess BOLD images (using old Matlab code)."],
-          ['cpp',     'preprocess_conc',            workflow.preprocess_conc,                       "Preprocess conc bundle of BOLD images (using old Matlab code)."],
-          [],
-          ['hcp1',    'hcp_pre_freesurfer',         process_hcp.hcp_pre_freesurfer,                 "Run HCP PreFS pipeline."],
-          ['hcp2',    'hcp_freesurfer',             process_hcp.hcp_freesurfer,                     "Run HCP FS pipeline."],
-          ['hcp3',    'hcp_post_freesurfer',        process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
-          ['hcp4',    'hcp_fmri_volume',            process_hcp.hcp_fmri_volume,                    "Run HCP fMRI Volume pipeline."],
-          ['hcp5',    'hcp_fmri_surface',           process_hcp.hcp_fmri_surface,                   "Run HCP fMRI Surface pipeline."],
-          ['hcp6',    'hcp_icafix',                 process_hcp.hcp_icafix,                         "Run HCP ICAFix pipeline."],
-          ['hcp7',    'hcp_post_fix',               process_hcp.hcp_post_fix,                       "Run HCP PostFix pipeline."],
-          ['hcp8',    'hcp_reapply_fix',            process_hcp.hcp_reapply_fix,                    "Run HCP ReApplyFix pipeline."],
-          ['hcp9',    'hcp_msmall',                 process_hcp.hcp_msmall,                         "Run HCP MSMAll pipeline."],
-          ['hcp10',   'hcp_dedrift_and_resample',   process_hcp.hcp_dedrift_and_resample,           "Run HCP DeDriftAndResample pipeline."],
-          ['hcp11',   'hcp_task_fmri_analysis',     process_hcp.hcp_task_fmri_analysis,             "Run HCP TaskfMRIanalysis pipeline."],
-          [],
-          ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
-          ['hpca',    'hcp_asl',                    process_hcp.hcp_asl,                            "Run HCP ASL pipeline."],
-          # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
-          # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
-          [],
-          ['rsc',     'run_shell_script',           simple.run_shell_script,                        "Runs the specified script."],
-          [],
-          ['f99',    'dwi_f99',                     fsl.dwi_f99,                                    "Run FSL F99 command."],
-          ['fslx',   'dwi_xtract',                  fsl.dwi_xtract,                                 "Run FSL XTRACT command."],
+calist = [
+    ['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,                       "Map HCP preprocessed data to sessions' image folder."],
+    [],
+    ['gbd',     'get_bold_data',              workflow.get_bold_data,                         "Copy functional data from 4dfp (NIL) processing pipeline."],
+    ['bbm',     'create_bold_brain_masks',    workflow.create_bold_brain_masks,               "Create brain masks for BOLD runs."],
+    [],
+    ['seg',     'run_basic_segmentation',     fs.runBasicStructuralSegmentation,              "Run basic structural image segmentation."],
+    ['gfs',     'get_fs_data',                fs.checkForFreeSurferData,                      "Copy existing FreeSurfer data to sessions' image folder."],
+    ['fss',     'run_subcortical_fs',         fs.runFreeSurferSubcorticalSegmentation,        "Run subcortical freesurfer segmentation."],
+    ['fsf',     'run_full_fs',                fs.runFreeSurferFullSegmentation,               "Run full freesurfer segmentation"],
+    [],
+    ['cbs',     'compute_bold_stats',         workflow.compute_bold_stats,                    "Compute BOLD movement and signal statistics."],
+    ['csr',     'create_stats_report',        workflow.create_stats_report,                   "Create BOLD movement statistic reports and plots."],
+    ['ens',     'extract_nuisance_signal',    workflow.extract_nuisance_signal,               "Extract nuisance signal from BOLD images."],
+    [],
+    ['bpp',     'preprocess_bold',            workflow.preprocess_bold,                       "Preprocess BOLD images (using old Matlab code)."],
+    ['cpp',     'preprocess_conc',            workflow.preprocess_conc,                       "Preprocess conc bundle of BOLD images (using old Matlab code)."],
+    [],
+    ['hcp1',    'hcp_pre_freesurfer',         process_hcp.hcp_pre_freesurfer,                 "Run HCP PreFS pipeline."],
+    ['hcp2',    'hcp_freesurfer',             process_hcp.hcp_freesurfer,                     "Run HCP FS pipeline."],
+    ['hcp3',    'hcp_post_freesurfer',        process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
+    ['hcp4',    'hcp_fmri_volume',            process_hcp.hcp_fmri_volume,                    "Run HCP fMRI Volume pipeline."],
+    ['hcp5',    'hcp_fmri_surface',           process_hcp.hcp_fmri_surface,                   "Run HCP fMRI Surface pipeline."],
+    ['hcp6',    'hcp_icafix',                 process_hcp.hcp_icafix,                         "Run HCP ICAFix pipeline."],
+    ['hcp7',    'hcp_post_fix',               process_hcp.hcp_post_fix,                       "Run HCP PostFix pipeline."],
+    ['hcp8',    'hcp_reapply_fix',            process_hcp.hcp_reapply_fix,                    "Run HCP ReApplyFix pipeline."],
+    ['hcp9',    'hcp_msmall',                 process_hcp.hcp_msmall,                         "Run HCP MSMAll pipeline."],
+    ['hcp10',   'hcp_dedrift_and_resample',   process_hcp.hcp_dedrift_and_resample,           "Run HCP DeDriftAndResample pipeline."],
+    ['hcp11',   'hcp_task_fmri_analysis',     process_hcp.hcp_task_fmri_analysis,             "Run HCP TaskfMRIanalysis pipeline."],
+    [],
+    ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
+    ['hpca',    'hcp_asl',                    process_hcp.hcp_asl,                            "Run HCP ASL pipeline."],
+    # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
+    # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
+    [],
+    ['rsc',     'run_shell_script',           simple.run_shell_script,                        "Runs the specified script."],
+    [],
+    ['f99',    'dwi_f99',                     fsl.dwi_f99,                                    "Run FSL F99 command."],
+    ['fslx',   'dwi_xtract',                  fsl.dwi_xtract,                                 "Run FSL XTRACT command."],
 ]
 
 # longitudinal commands
-lalist = [['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]]
+lalist = [
+    ['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]
+]
 
 # multi-session commands
-malist = [['hpc_tica', 'hcp_temporal_ica',          process_hcp.hcp_temporal_ica,                   "Run HCP temporal ICA pipeline."]]
+malist = [
+    ['hpc_tica',    'hcp_temporal_ica',         process_hcp.hcp_temporal_ica,           "Run HCP temporal ICA pipeline."],
+    ['hcp_mad',     'hcp_make_average_dataset', process_hcp.hcp_make_average_dataset,   "Run HCP make average dataset pipeline."],
+]
 
-salist = [['cbl',     'create_bold_list',           simple.create_bold_list,                        "Create BOLD list"],
-          ['ccl',     'create_conc_list',           simple.create_conc_list,                        "Create conc list"],
-          ['lsi',     'list_session_info',          simple.list_session_info,                       "List session info"]
+salist = [
+    ['cbl',     'create_bold_list',           simple.create_bold_list,                        "Create BOLD list"],
+    ['ccl',     'create_conc_list',           simple.create_conc_list,                        "Create conc list"],
+    ['lsi',     'list_session_info',          simple.list_session_info,                       "List session info"]
 ]
 
 

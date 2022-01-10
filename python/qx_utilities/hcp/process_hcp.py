@@ -24,6 +24,7 @@ consists of functions:
 --hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
 --hcp_asl                   Runs HCP ASL pipeline.
 --hcp_temporal_ica          Runs HCP temporal ICA pipeline.
+--hcp_make_average_dataset  Runs HCP make average dataset pipeline.
 --hcp_dtifit                Runs DTI Fit.
 --hcp_bedpostx              Runs Bedpost X.
 --hcp_task_fmri_analysis    Runs HCP TaskfMRIanalysis.
@@ -7076,13 +7077,13 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
     ``hcp_temporal_ica [... processing options]``
     ``hcp_tica [... processing options]``
 
-    Runs the HCP ASL Pipeline.
+    Runs the HCP temporal ICA pipeline.
 
     REQUIREMENTS
     ============
 
-    The code expects the HCP minimal preprocessing pipeline and HCP ICAFix to
-    be executed.
+    The code expects the HCP minimal preprocessing pipeline, HCP ICAFix,
+    HCP MSMAll and HCP make average dataset to be executed.
 
     INPUTS
     ======
@@ -7097,7 +7098,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                           [batch.txt]
     --sessionsfolder      The path to the study/sessions folder, where the
                           imaging data is supposed to go. [.]
-    --parsessions         How many sessions to run in parallel. [1]
     --overwrite           Whether to overwrite existing data (yes) or not (no).
                           [no]
     --hcp_suffix          Specifies a suffix to the session id if multiple
@@ -7131,7 +7131,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
     --hcp_tica_procstring   File name component representing the preprocessing
                             already done, e.g. '_Atlas_MSMAll_hp0_clean'.
                             [<hcp_cifti_tail>_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean]
-    --hcp_tica_outgroupname Name to use for the group output folder. []
+    --hcp_outgroupname      Name to use for the group output folder. []
     --hcp_bold_res          Resolution of data. [2]
     --hcp_tica_timepoints   Output spectra size for sICA individual projection,
                             RunsXNumTimePoints, like '4800'. []
@@ -7309,13 +7309,13 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
         else:
             proc_string = options["hcp_tica_procstring"]
 
-        # hcp_tica_outgroupname
+        # hcp_outgroupname
         outgroupname = ""
-        if options["hcp_tica_outgroupname"] is None:
-            r += "\n---> ERROR: hcp_tica_outgroupname is not provided!"
+        if options["hcp_outgroupname"] is None:
+            r += "\n---> ERROR: hcp_outgroupname is not provided!"
             run = False
         else:
-            outgroupname = options["hcp_tica_outgroupname"]
+            outgroupname = options["hcp_outgroupname"]
 
         # hcp_tica_timepoints
         timepoints = ""
@@ -7474,6 +7474,12 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
                 run = False
 
+            # check for make average dataset outputs
+            mad_file = os.path.join(study_dir, outgroupname, "MNINonLinear", "fsaverage_LR32k", outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii")
+            if not os.path.exists(mad_file):
+                r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
+                run = False
+
             # -- Report command
             if run:
                 r += "\n\n------------------------------------------------------------\n"
@@ -7496,7 +7502,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP ASL", r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP temporal ICA", r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP temporal ICA can be run"
                     report = "HCP temporal ICA can be run"
@@ -7515,6 +7521,272 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
         failed = 1
 
     r += "\n\nHCP temporal ICA Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, (sessionids, report, failed))
+
+def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thread=0):
+    """
+    ``hcp_make_average_dataset [... processing options]``
+    ``hcp_mad [... processing options]``
+
+    Runs the HCP make average dataset pipeline.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the HCP minimal preprocessing pipeline to be executed.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions            The batch.txt file with all the sessions information.
+                          [batch.txt]
+    --sessionsfolder      The path to the study/sessions folder, where the
+                          imaging data is supposed to go. [.]
+    --overwrite           Whether to overwrite existing data (yes) or not (no).
+                          [no]
+    --hcp_suffix          Specifies a suffix to the session id if multiple
+                          variants are run, empty otherwise. []
+    --logfolder           The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default. []
+    --log                 Whether to keep ("keep") or remove ("remove") the
+                          temporary logs once jobs are completed. ["keep"]
+                          When a comma or pipe ("|") separated list is given,
+                          the log will be created at the first provided location
+                          and then linked or copied to other locations.
+                          The valid locations are:
+
+                          - "study" (for the default:
+                            "<study>/processing/logs/comlogs" location)
+                          - "session" (for "<sessionid>/logs/comlogs")
+                          - "hcp" (for "<hcp_folder>/logs/comlogs")
+                          - "<path>" (for an arbitrary directory)
+
+    In addition a number of *specific* parameters can be used to guide the
+    processing in this step:
+
+    HCP make average dataset parameters
+    -----------------------------------
+
+    --hcp_surface_atlas_dir         Path to the location of the standard
+                                    surfaces.
+                                    [${HCPPIPEDIR}/global/templates/standard_mesh_atlases].
+    --hcp_grayordinates_dir         Path to the location of the standard
+                                    grayorinates space.
+                                    [${HCPPIPEDIR}/global/templates/91282_Greyordinates]
+    --hcp_hiresmesh                 High resolution mesh node count. [164]
+    --hcp_lowresmeshes              Low resolution meshes node count. To
+                                    provide more values separate them with
+                                    commas. [32]
+    --hcp_free_surfer_labels        Path to the location of the FreeSurfer look
+                                    up table file.
+                                    [${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt]
+    --hcp_pregradient_smoothing     Sigma of the pregradient smoothing. [1]
+    --hcp_mad_regname               Name of the registration. [MSMAll]
+    --hcp_mad_videen_maps           Maps you want to use for the videen palette.
+                                    [corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC]
+    --hcp_mad_greyscale_maps        Maps you want to use for the greyscale palette.
+                                    [sulc,curvature]
+    --hcp_mad_distortion_maps       Distortion maps.
+                                    [SphericalDistortion,ArealDistortion,EdgeDistortion]
+    --hcp_mad_gradient_maps         Maps you want to compute the gradietn on.
+                                    [MyelinMap_BC,SmoothedMyelinMap_BC,corrThickness]
+    --hcp_mad_std_maps              Maps you want to compute the standard
+                                    deviation on.
+                                    [sulc@curvature,corrThickness,thickness,MyelinMap_BC]
+    --hcp_mad_multi_maps            Maps with more than one map (column) that
+                                    cannot be merged and must be averaged. [NONE]
+
+    OUTPUTS
+    =======
+
+    TODO
+
+    EXAMPLE USE
+    ===========
+
+    TODO
+
+    Example run:
+
+        qunex hcp_make_average_dataset \
+            --TODO
+
+    Run with scheduler:
+
+        qunex hcp_make_average_dataset \
+            --TODO
+            --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession ids: %s \n[started on %s]" % (sessionids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP make average dataset pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
+
+    run    = True
+    report = "Error"
+
+    try:
+        doHCPOptionsCheck(options, "hcp_make_average_dataset")
+
+        # subject_list
+        subject_list = ""
+
+        # check sessions
+        for session in sessions:
+            hcp = getHCPPaths(session, options)
+
+            if "hcp" not in session:
+                r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (session["id"])
+                run = False
+
+            # subject_list
+            if subject_list == "":
+                subject_list = session['id'] + options["hcp_suffix"]
+            else:
+                subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
+
+        # mandatory parameters
+        # study_dir prep
+        study_dir = ""
+
+        # single session
+        if len(sessions) == 1:
+            # get session info
+            study_dir = sessions[0]["hcp"]
+
+        # multi session
+        else:
+            # set study dir
+            study_dir = os.path.join(options["sessionsfolder"], outgroupname)
+
+            # create folder
+            if not os.path.exists(study_dir):
+                os.makedirs(study_dir)
+
+            # link sessions
+            for session in sessions:
+                # prepare folders
+                session_name = session["id"] + options["hcp_suffix"]
+                source_dir = os.path.join(session["hcp"], session_name)
+                target_dir = os.path.join(study_dir, session_name)
+
+                # link
+                gc.linkOrCopy(source_dir, target_dir, symlink=True)
+
+        # hcp_outgroupname
+        outgroupname = ""
+        if options["hcp_outgroupname"] is None:
+            r += "\n---> ERROR: hcp_outgroupname is not provided!"
+            run = False
+        else:
+            outgroupname = options["hcp_outgroupname"]
+
+        # hcp_surface_atlas_dir
+        surface_atlas = ""
+        if options["hcp_surface_atlas_dir"] is None:
+            surface_atlas = os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases')
+        else:
+            surface_atlas = options["hcp_surface_atlas_dir"]
+
+        # hcp_grayordinates_dir
+        grayordinates = ""
+        if options["hcp_grayordinates_dir"] is None:
+            grayordinates = os.path.join(hcp['hcp_Templates'], '91282_Greyordinates')
+        else:
+            grayordinates = options["hcp_grayordinates_dir"]
+
+        # hcp_free_surfer_labels
+        freesurferlabels = ""
+        if options["hcp_free_surfer_labels"] is None:
+            freesurferlabels = os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt')
+        else:
+            freesurferlabels = options["hcp_free_surfer_labels"]
+
+        # build the command
+        if run:
+            comm = '%(script)s \
+                --study-folder="%(study_dir)s" \
+                --subject-list="%(subject_list)s" \
+                --group-average-name="%(group_average_name)s" \
+                --surface-atlas-dir="%(surface_atlas)s" \
+                --grayordinates-space-dir="%(grayordinates)s" \
+                --high-res-mesh="%(highresmesh)s" \
+                --low-res-meshes="%(lowresmeshes)s" \
+                --freesurfer-labels="%(freesurferlabels)s" \
+                --sigma="%(sigma)s" \
+                --reg-name="%(regname)s" \
+                --videen-maps="%(videenmaps)s" \
+                --greyscale-maps="%(greyscalemaps)s" \
+                --distortion-maps="%(distortionmaps)s" \
+                --gradient-maps="%(gradientmaps)s" \
+                --std-maps="%(stdmaps)s" \
+                --multi-maps="%(multimaps)s"' % {
+                    "script"                : os.path.join(hcp["hcp_base"], "Supplemental", "MakeAverageDataset", "MakeAverageDataset.sh"),
+                    "study_dir"             : study_dir,
+                    "subject_list"          : subject_list,
+                    "group_average_name"    : outgroupname,
+                    "surface_atlas"         : surface_atlas,
+                    "grayordinates"         : grayordinates,
+                    "highresmesh"           : options['hcp_hiresmesh'],
+                    "lowresmeshes"          : options['hcp_lowresmeshes'].replace(",", "@"),
+                    "freesurferlabels"      : freesurferlabels,
+                    "sigma"                 : options['hcp_pregradient_smoothing'],
+                    "regname"               : options['hcp_mad_regname'],
+                    "videenmaps"            : options['hcp_mad_videen_maps'].replace(",", "@"),
+                    "greyscalemaps"         : options['hcp_mad_greyscale_maps'].replace(",", "@"),
+                    "distortionmaps"        : options['hcp_mad_distortion_maps'].replace(",", "@"),
+                    "gradientmaps"          : options['hcp_mad_gradient_maps'].replace(",", "@"),
+                    "stdmaps"               : options['hcp_mad_std_maps'].replace(",", "@"),
+                    "multimaps"             : options['hcp_mad_multi_maps'].replace(",", "@")
+                }
+
+            # -- Report command
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
+            r += comm.replace("                --", "\n    --")
+            r += "\n------------------------------------------------------------\n"
+
+            # -- Test files
+            # TODO
+            tfile = "none.txt"
+            full_test = None
+
+            # -- Run
+            if options["run"] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+
+                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP make average dataset", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP make average dataset", r, overwrite=overwrite)
+                if passed is None:
+                    r += "\n---> HCP make average dataset can be run"
+                    report = "HCP make average dataset can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session can not be processed."
+            report = "HCP make average dataset can not be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
+
+    r += "\n\nHCP make average dataset preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     # print r
     return (r, (sessionids, report, failed))
