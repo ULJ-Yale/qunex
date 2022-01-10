@@ -7341,6 +7341,14 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
             # get session info
             study_dir = sessions[0]["hcp"]
 
+            # set stopping step
+            if options["hcp_tica_stop_after_step"] is None:
+                r += "\n---> WARNING: running hcp_temporal_ica over a single session, hcp_tica_stop_after_step will be set to indProjTICA!"
+                options["hcp_tica_stop_after_step"] = "indProjTICA"
+            elif options["hcp_tica_stop_after_step"] not in ["MIGP", "GroupSICA", "indProjSICA", "ConcatGroupSICA", "ComputeGroupTICA", "indProjTICA"]:
+                r += "\n---> WARNING: running hcp_temporal_ica over a single session, the stopping step needs to be before ComputeTICAFeatures!"
+                run = False
+
         # multi session
         else:
             # set study dir
@@ -7495,10 +7503,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(None, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
 
             # -- just checking
             else:
@@ -7654,13 +7659,21 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thr
                 subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
 
         # mandatory parameters
+        # hcp_outgroupname
+        outgroupname = ""
+        if options["hcp_outgroupname"] is None:
+            r += "\n---> ERROR: hcp_outgroupname is not provided!"
+            run = False
+        else:
+            outgroupname = options["hcp_outgroupname"]
+
         # study_dir prep
         study_dir = ""
 
         # single session
         if len(sessions) == 1:
-            # get session info
-            study_dir = sessions[0]["hcp"]
+            r += "\n---> ERROR: hcp_make_average_dataset needs to be ran across several sessions!"
+            run = False
 
         # multi session
         else:
@@ -7680,14 +7693,6 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thr
 
                 # link
                 gc.linkOrCopy(source_dir, target_dir, symlink=True)
-
-        # hcp_outgroupname
-        outgroupname = ""
-        if options["hcp_outgroupname"] is None:
-            r += "\n---> ERROR: hcp_outgroupname is not provided!"
-            run = False
-        else:
-            outgroupname = options["hcp_outgroupname"]
 
         # hcp_surface_atlas_dir
         surface_atlas = ""
@@ -7755,8 +7760,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thr
             r += "\n------------------------------------------------------------\n"
 
             # -- Test files
-            # TODO
-            tfile = "none.txt"
+            tfile = os.path.join(study_dir, outgroupname, "MNINonLinear", outgroupname + "_AllT1w_restore.nii.gz")
             full_test = None
 
             # -- Run
