@@ -603,6 +603,17 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         passed = 'done'
         failed = 0
 
+        # check log contents for errors
+        log = open(logFile, 'r')
+        lines = log.readlines()
+        
+        for line in lines:
+            if "Error" in line or "ERROR" in line:
+                report = "%s not finished" % (command)
+                passed = None
+                failed = 1
+                break
+
     else:
         if verbose and tfile is not None:
             r += "\n---> %s test file missing:\n     %s" % (command, tfile)
@@ -719,7 +730,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     # add an empty line for log purposes
     printComm += "\n"
 
-    if overwrite or not os.path.exists(checkfile):
+    if overwrite or checkfile is None or not os.path.exists(checkfile):
         r += '\n\n%s' % (description)
 
         # --- set up parameters
@@ -778,7 +789,6 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
 
         # --- check results
-
         if ret:
             r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (description, ret)
             r += comm

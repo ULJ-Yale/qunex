@@ -7206,6 +7206,10 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
     --hcp_tica_parallel_limit           How many subjects to do in parallel
                                         (local, not cluster-distributed)
                                         during individual projection. []
+    --hcp_tica_config_out               Generate config file for rerunning with
+                                        similar settings, or for reusing these
+                                        results for future cleaning. Not set
+                                        by default.
     --hcp_matlab_mode                   Specifies the Matlab version, can be
                                         interpreted, compiled or octave.
                                         [compiled]
@@ -7257,7 +7261,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
             if subject_list == "":
                 subject_list = session['id'] + options["hcp_suffix"]
             else:
-                subject_list = subject_list + "," + session['id'] + options["hcp_suffix"]
+                subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
 
         # use first session as the main one
         sinfo = sessions[0]
@@ -7273,7 +7277,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
             run = False
         else:
             # defined bolds
-            fmri_names = options["hcp_tica_bolds"]
+            fmri_names = options["hcp_tica_bolds"].replace(",", "@")
 
         # hcp_tica_outfmriname
         out_fmri_name = ""
@@ -7342,12 +7346,12 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
             study_dir = sessions[0]["hcp"]
 
             # set stopping step
-            if options["hcp_tica_stop_after_step"] is None:
-                r += "\n---> WARNING: running hcp_temporal_ica over a single session, hcp_tica_stop_after_step will be set to indProjTICA!"
-                options["hcp_tica_stop_after_step"] = "indProjTICA"
-            elif options["hcp_tica_stop_after_step"] not in ["MIGP", "GroupSICA", "indProjSICA", "ConcatGroupSICA", "ComputeGroupTICA", "indProjTICA"]:
-                r += "\n---> WARNING: running hcp_temporal_ica over a single session, the stopping step needs to be before ComputeTICAFeatures!"
-                run = False
+            #if options["hcp_tica_stop_after_step"] is None:
+            #   r += "\n---> WARNING: running hcp_temporal_ica over a single session, hcp_tica_stop_after_step will be set to indProjTICA!"
+            #    options["hcp_tica_stop_after_step"] = "indProjTICA"
+            #elif options["hcp_tica_stop_after_step"] not in ["MIGP", "GroupSICA", "indProjSICA", "ConcatGroupSICA", "ComputeGroupTICA", "indProjTICA"]:
+            #    r += "\n---> WARNING: running hcp_temporal_ica over a single session, the stopping step needs to be before ComputeTICAFeatures!"
+            #    run = False
 
         # multi session
         else:
@@ -7368,6 +7372,17 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                 # link
                 gc.linkOrCopy(source_dir, target_dir, symlink=True)
 
+            # check for make average dataset outputs
+            mad_file = os.path.join(study_dir, outgroupname, "MNINonLinear", "fsaverage_LR32k", outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii")
+            if not os.path.exists(mad_file):
+                r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
+                run = False
+
+        # create folder if it does not exist
+        out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+
         # build the command
         if run:
             comm = '%(script)s \
@@ -7376,7 +7391,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                 --fmri-names="%(fmri_names)s" \
                 --output-fmri-name="%(output_fmri_name)s" \
                 --surf-reg-name="%(surf_reg_name)s" \
-                --melodic-high-pass="%(icafix_highpass)s" \
+                --fix-high-pass="%(icafix_highpass)s" \
                 --proc-string="%(proc_string)s" \
                 --out-group-name="%(outgroupname)s" \
                 --fmri-resolution="%(fmri_resolution)s" \
@@ -7457,7 +7472,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
 
             # hcp_tica_stop_after_step
             if options["hcp_tica_stop_after_step"] is not None:
-                comm += "                    --stop-after-step`=\"%s\"" % options['hcp_tica_stop_after_step']
+                comm += "                    --stop-after-step=\"%s\"" % options['hcp_tica_stop_after_step']
 
             # hcp_tica_remove_manual_components
             if options["hcp_tica_remove_manual_components"] is not None:
@@ -7471,6 +7486,10 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
             if options["hcp_tica_parallel_limit"] is not None:
                 comm += "                    --parallel-limit=\"%s\"" % options['hcp_tica_parallel_limit']
 
+            # hcp_tica_config_out
+            if options["hcp_tica_config_out"]:
+                comm += "                    --config-out"
+
             # matlab run mode, compiled=0, interpreted=1, octave=2
             if options['hcp_matlab_mode'] == "compiled":
                 matlabrunmode = 0
@@ -7480,12 +7499,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                 matlabrunmode = 2
             else:
                 r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-                run = False
-
-            # check for make average dataset outputs
-            mad_file = os.path.join(study_dir, outgroupname, "MNINonLinear", "fsaverage_LR32k", outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii")
-            if not os.path.exists(mad_file):
-                r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
                 run = False
 
             # -- Report command

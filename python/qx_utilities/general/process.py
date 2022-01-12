@@ -457,6 +457,8 @@ arglist = [
            ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
            ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
            ['hcp_tica_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+           ['hcp_tica_config_out', None,                                          flag,    "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
+
 
            ['# --- hcp_make_average_dataset options'],
            ['hcp_surface_atlas_dir',        '',                                                             isNone,  "Path to the location of the standard surfaces."],
@@ -501,8 +503,9 @@ flaglist = [
     ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',         True, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
     ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',  True, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
     ['hcp_asl_use_t1',           'hcp_asl_use_t1',        True, 'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
-    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', True, 'If this option is provided, MT and ST banding corrections won’t be applied.'],
+    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', True, 'If this option is provided, MT and ST banding corrections will not be applied.'],
     ['hcp_task_vba',             'hcp_task_vba',          True, "VBA YES/NO."],
+    ['hcp_tica_config_out',      'hcp_tica_config_out',   False, "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."]
 ]
 
 
