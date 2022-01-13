@@ -7772,16 +7772,9 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thr
             r += comm.replace("                --", "\n    --")
             r += "\n------------------------------------------------------------\n"
 
-            # -- Test files
-            tfile = os.path.join(study_dir, outgroupname, "MNINonLinear", outgroupname + "_AllT1w_restore.nii.gz")
-            full_test = None
-
             # -- Run
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP make average dataset", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(None, comm, "Running HCP make average dataset", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=None, shell=True, r=r)
 
             # -- just checking
             else:

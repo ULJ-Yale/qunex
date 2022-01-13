@@ -755,26 +755,23 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
                 raise ExternalFailed(r)
 
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
-
         # --- report
         print("You can follow command's progress in:")
         print(tmplogfile)
         print("------------------------------------------------------------")
 
-        # --- open log file
-        nf = open(tmplogfile, 'a')
-        if not os.path.exists(tmplogfile):
-            r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
-            raise ExternalFailed(r)
-
         # --- run command
         try:
+            # append mode
+            nf = open(tmplogfile, 'a')
+
+            # --- open log file
+            if not os.path.exists(tmplogfile):
+                r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
+                raise ExternalFailed(r)
+
             # add command call to start of the log
             print(printComm, file=nf)
-
-            # close and switch to append mode
-            nf.close()
-            nf = open(tmplogfile, 'a')
 
             if shell:
                 ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
@@ -795,14 +792,13 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
-        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf, verbose=verbose)
+        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=tmplogfile, verbose=verbose)
 
         if status is None:
             r += "\n\nTry running the command directly for more detailed error information:\n"
             r += comm
 
         # --- End
-
         if status and status == 'done':
             print("\n\n===> Successful completion of task\n", file=nf)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
