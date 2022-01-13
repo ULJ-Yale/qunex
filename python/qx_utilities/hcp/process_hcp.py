@@ -5555,7 +5555,7 @@ def parseMSMAllBolds(options, bolds, r):
     return (singleRun, icafixGroup, parsOK, r)
 
 
-def hcp_msmall(sinfo, options, overwrite=False, thread=0):
+def hcp_msmall(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_msmall [... processing options]``
 
@@ -5585,8 +5585,6 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     --sessionsfolder        The path to the study/sessions folder, where the
                             imaging  data is supposed to go. [.]
     --parsessions           How many sessions to run in parallel. [1]
-    --overwrite             Whether to overwrite existing data (yes)
-                            or not (no). [no]
     --hcp_suffix            Specifies a suffix to the session id if multiple
                             variants are run, empty otherwise. []
     --logfolder             The path to the folder where runlogs and comlogs
@@ -5665,15 +5663,6 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
 
     The results of this step will be generated and populated in the
     MNINonLinear folder inside the same sessions's root hcp folder.
-
-    The final clean file can be found in::
-
-        MNINonLinear/Results/<outfmriname>/
-        <outfmriname>_<hcp_cifti_tail>_hp<hcp_highpass>_clean_vn.dtseries.nii
-
-    where highpass is the used value for the highpass filter. The default
-    highpass value is 0 for multi-run HCP ICAFix and 2000 for single-run HCP
-    ICAFix. The default cifti tail (<hcp_cifti_tail>) is Atlas.
 
     USE
     ===
@@ -5762,11 +5751,11 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
         # single-run
         if singleRun:
             # process
-            result = executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, msmallGroup)
+            result = executeHCPSingleMSMAll(sinfo, options, hcp, run, msmallGroup)
         # multi-run
         else:
             # process
-            result = executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, msmallGroup)
+            result = executeHCPMultiMSMAll(sinfo, options, hcp, run, msmallGroup)
 
         # merge r
         r += result['r']
@@ -5785,10 +5774,10 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
             if report['incomplete'] == [] and report['failed'] == [] and report['not ready'] == []:
                 # single-run
                 if singleRun:
-                    result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, msmallGroup)
+                    result = executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, msmallGroup)
                 # multi-run
                 else:
-                    result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, [msmallGroup])
+                    result = executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, [msmallGroup])
 
                 r += result['r']
                 report = result['report']
@@ -5818,7 +5807,7 @@ def hcp_msmall(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
+def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -5932,17 +5921,10 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
-        fullTest = None
-
         # -- Run
         if run and boldsok:
             if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], outfmriname], fullTest=fullTest, shell=True, r=r)
+                r, _, _, failed = pc.runExternalForFile(None, comm, 'Running HCP MSMAll', overwrite=True, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], outfmriname], fullTest=None, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -5951,7 +5933,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + outfmriname, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(None, None, 'HCP MSMAll ' + outfmriname, r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(printbold)
@@ -5982,7 +5964,7 @@ def executeHCPSingleMSMAll(sinfo, options, overwrite, hcp, run, group):
     return {'r': r, 'report': report}
 
 
-def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
+def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -6104,17 +6086,10 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', outfmriname, "%s%s_vn.dtseries.nii" % (outfmriname, fmriprocstring))
-        fullTest = None
-
         # -- Run
         if run and boldok:
             if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP MSMAll', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running HCP MSMAll', overwrite=True, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=None, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(groupname)
@@ -6123,7 +6098,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP MSMAll ' + groupname, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(None, None, 'HCP MSMAll ' + groupname, r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP MSMAll can be run"
                     report['ready'].append(groupname)
@@ -6154,7 +6129,7 @@ def executeHCPMultiMSMAll(sinfo, options, overwrite, hcp, run, group):
     return {'r': r, 'report': report}
 
 
-def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
+def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_dedrift_and_resample [... processing options]``
 
@@ -6184,8 +6159,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     --sessionsfolder    The path to the study/sessions folder, where the
                         imaging  data is supposed to go. [.]
     --parsessions       How many sessions to run in parallel. [1]
-    --overwrite         Whether to overwrite existing data (yes)
-                        or not (no). [no]
     --hcp_suffix        Specifies a suffix to the session id if multiple
                         variants are run, empty otherwise. []
     --logfolder         The path to the folder where runlogs and comlogs
@@ -6269,7 +6242,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     The results of this step will be populated in the MNINonLinear folder inside
     the same sessions's root hcp folder.
 
-
     EXAMPLE USE
     ===========
 
@@ -6323,11 +6295,11 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
         # single-run
         if singleRun:
             # process
-            result = executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, dedriftGroups[0])
+            result = executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, dedriftGroups[0])
         # multi-run
         else:
             # process
-            result = executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, dedriftGroups)
+            result = executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, dedriftGroups)
 
         # merge r
         r += result['r']
@@ -6366,7 +6338,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, group):
+def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -6481,15 +6453,10 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test file (currently check only last bold)
-        lastbold = boldtargets.split("@")[-1]
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', lastbold, "%s%s_%s.dtseries.nii" % (lastbold, options['hcp_cifti_tail'], options['hcp_resample_concatregname']))
-        fullTest = None
-
         # -- Run
         if run and boldsok:
             if options['run'] == "run":
-                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running HCP DeDriftAndResample', overwrite=True, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], regname], fullTest=None, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(regname)
@@ -6498,7 +6465,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(None, None, 'HCP DeDriftAndResample', r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(regname)
@@ -6529,7 +6496,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, overwrite, hcp, run, grou
     return {'r': r, 'report': report}
 
 
-def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, groups):
+def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
     # prepare return variables
     r = ""
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -6735,17 +6702,10 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test file
-        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', groupname, "%s%s_%s_hp%s_clean.dtseries.nii" % (groupname, options['hcp_cifti_tail'], options['hcp_resample_concatregname'], highpass))
-        fullTest = None
-
         # -- Run
         if run and runok:
             if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP DeDriftAndResample', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running HCP DeDriftAndResample', overwrite=True, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_dedrift_and_resample", logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=None, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(grouptargets)
@@ -6754,7 +6714,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, overwrite, hcp, run, group
 
             # -- just checking
             else:
-                passed, _, r, failed = pc.checkRun(tfile, fullTest, 'HCP DeDriftAndResample', r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(None, None, 'HCP DeDriftAndResample', r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP DeDriftAndResample can be run"
                     report['ready'].append(grouptargets)
@@ -7072,7 +7032,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
+def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     """
     ``hcp_temporal_ica [... processing options]``
     ``hcp_tica [... processing options]``
@@ -7098,8 +7058,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                           [batch.txt]
     --sessionsfolder      The path to the study/sessions folder, where the
                           imaging data is supposed to go. [.]
-    --overwrite           Whether to overwrite existing data (yes) or not (no).
-                          [no]
     --hcp_suffix          Specifies a suffix to the session id if multiple
                           variants are run, empty otherwise. []
     --logfolder           The path to the folder where runlogs and comlogs
@@ -7508,19 +7466,14 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
 
-            # -- Test files
-            # TODO
-            tfile = "none.txt"
-            full_test = None
-
         # -- Run
         if run:
             if options["run"] == "run":
-                r, endlog, report, failed  = pc.runExternalForFile(None, comm, "Running HCP temporal ICA", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(None, comm, "Running HCP temporal ICA", overwrite=True, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=None, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP temporal ICA", r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(None, None, "HCP temporal ICA", r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP temporal ICA can be run"
                     report = "HCP temporal ICA can be run"
@@ -7543,7 +7496,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=False, thread=0):
     # print r
     return (r, (sessionids, report, failed))
 
-def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thread=0):
+
+def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thread=0):
     """
     ``hcp_make_average_dataset [... processing options]``
     ``hcp_mad [... processing options]``
@@ -7568,8 +7522,6 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thr
                           [batch.txt]
     --sessionsfolder      The path to the study/sessions folder, where the
                           imaging data is supposed to go. [.]
-    --overwrite           Whether to overwrite existing data (yes) or not (no).
-                          [no]
     --hcp_suffix          Specifies a suffix to the session id if multiple
                           variants are run, empty otherwise. []
     --logfolder           The path to the folder where runlogs and comlogs
@@ -7774,11 +7726,11 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=False, thr
 
             # -- Run
             if options["run"] == "run":
-                r, endlog, report, failed  = pc.runExternalForFile(None, comm, "Running HCP make average dataset", overwrite=overwrite, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=None, shell=True, r=r)
+                r, endlog, report, failed  = pc.runExternalForFile(None, comm, "Running HCP make average dataset", overwrite=True, thread=outgroupname, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=None, shell=True, r=r)
 
             # -- just checking
             else:
-                passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP make average dataset", r, overwrite=overwrite)
+                passed, report, r, failed = pc.checkRun(None, None, "HCP make average dataset", r, overwrite=True)
                 if passed is None:
                     r += "\n---> HCP make average dataset can be run"
                     report = "HCP make average dataset can be run"
