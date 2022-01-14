@@ -2109,7 +2109,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         qunex hcp_diffusion \
           --sessionsfolder="<path_to_study_folder>/sessions" \
-          --sessions="$<path_to_study_folder>/processing/batch.txt" \
+          --sessions="<path_to_study_folder>/processing/batch.txt" \
           --overwrite="yes" \
           --bash="module load CUDA/9.1.85" \
           --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
@@ -6857,13 +6857,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     Example run:
 
         qunex hcp_asl \
-            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessionsfolder="<path_to_study_folder>/sessions" \
             --sessions="<path_to_study_folder>/processing/batch.txt"
 
     Run with scheduler, while bumbing up the number of used cores:
 
         qunex hcp_asl \
-            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessionsfolder="<path_to_study_folder>/sessions" \
             --sessions="<path_to_study_folder>/processing/batch.txt"
             --hcp_asl_cores="8" \
             --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
@@ -7187,7 +7187,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     Example run:
 
         qunex hcp_temporal_ica \
-            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessionsfolder="<path_to_study_folder>/sessions" \
             --sessions="<path_to_study_folder>/processing/batch.txt"
             --hcp_tica_bolds="fMRI_CONCAT_ALL" \
             --hcp_tica_outfmriname="fMRI_CONCAT_ALL" \
@@ -7586,7 +7586,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
     Example run:
 
         qunex hcp_make_average_dataset \
-            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessionsfolder="<path_to_study_folder>/sessions" \
             --sessions="<path_to_study_folder>/processing/batch.txt"
             --hcp_outgroupname="hcp_group"
 
