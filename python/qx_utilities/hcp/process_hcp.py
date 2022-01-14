@@ -7175,23 +7175,30 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     OUTPUTS
     =======
 
-    TODO
+    If ran on a single session the results of this step can be found in the
+    same sessions's root hcp folder.
+
+    If ran on multiple sessions then a group folder is created inside the
+    QuNex's session folder.
 
     EXAMPLE USE
     ===========
 
-    TODO
-
     Example run:
 
         qunex hcp_temporal_ica \
-            --TODO
+            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessions="<path_to_study_folder>/processing/batch.txt"
+            --hcp_tica_bolds="fMRI_CONCAT_ALL" \
+            --hcp_tica_outfmriname="fMRI_CONCAT_ALL" \
+            --hcp_tica_mrfix_concat_name="fMRI_CONCAT_ALL" \
+            --hcp_tica_surfregname="MSMAll" \
+            --hcp_icafix_highpass="0" \
+            --hcp_outgroupname="hcp_group" \
+            --hcp_tica_timepoints="<value can be found in hcp_post_fix logs>" \
+            --hcp_tica_num_wishart="6" \
+            --hcp_matlab_mode="interpreted"
 
-    Run with scheduler:
-
-        qunex hcp_temporal_ica \
-            --TODO
-            --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
     """
 
     r = "\n------------------------------------------------------------"
@@ -7571,23 +7578,18 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
     OUTPUTS
     =======
 
-    TODO
+    A group folder with outputs is created inside the QuNex's session folder.
 
     EXAMPLE USE
     ===========
 
-    TODO
-
     Example run:
 
         qunex hcp_make_average_dataset \
-            --TODO
+            --sessionsfolder="$<path_to_study_folder>/sessions" \
+            --sessions="<path_to_study_folder>/processing/batch.txt"
+            --hcp_outgroupname="hcp_group"
 
-    Run with scheduler:
-
-        qunex hcp_make_average_dataset \
-            --TODO
-            --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
     """
 
     r = "\n------------------------------------------------------------"
