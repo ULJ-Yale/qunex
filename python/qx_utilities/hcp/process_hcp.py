@@ -7567,7 +7567,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
                                     [sulc,curvature]
     --hcp_mad_distortion_maps       Distortion maps.
                                     [SphericalDistortion,ArealDistortion,EdgeDistortion]
-    --hcp_mad_gradient_maps         Maps you want to compute the gradietn on.
+    --hcp_mad_gradient_maps         Maps you want to compute the gradient on.
                                     [MyelinMap_BC,SmoothedMyelinMap_BC,corrThickness]
     --hcp_mad_std_maps              Maps you want to compute the standard
                                     deviation on.
