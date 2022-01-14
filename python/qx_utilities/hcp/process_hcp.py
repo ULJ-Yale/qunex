@@ -1181,7 +1181,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         #         lresults = os.path.join(hcp['FS_long_template'], 'label', 'rh.entorhinal_exvivo.label')
         #         if not os.path.exists(lresults):
         #             r += "\n     ... ERROR: Longitudinal template not present! [%s]" % (lresults)
-        #             r += "\n                Please chesk the results of longitudinal_freesurfer command!"
+        #             r += "\n                Please check the results of longitudinal_freesurfer command!"
         #             r += "\n                Please check your data and settings!" % (lresults)
         #             run = False
         #         else:
@@ -7303,14 +7303,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             # get session info
             study_dir = sessions[0]["hcp"]
 
-            # set stopping step
-            #if options["hcp_tica_stop_after_step"] is None:
-            #   r += "\n---> WARNING: running hcp_temporal_ica over a single session, hcp_tica_stop_after_step will be set to indProjTICA!"
-            #    options["hcp_tica_stop_after_step"] = "indProjTICA"
-            #elif options["hcp_tica_stop_after_step"] not in ["MIGP", "GroupSICA", "indProjSICA", "ConcatGroupSICA", "ComputeGroupTICA", "indProjTICA"]:
-            #    r += "\n---> WARNING: running hcp_temporal_ica over a single session, the stopping step needs to be before ComputeTICAFeatures!"
-            #    run = False
-
         # multi session
         else:
             # set study dir
@@ -7336,6 +7328,17 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
                 run = False
 
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        if options['hcp_matlab_mode'] == "compiled":
+            matlabrunmode = 0
+        elif options['hcp_matlab_mode'] == "interpreted":
+            matlabrunmode = 1
+        elif options['hcp_matlab_mode'] == "octave":
+            matlabrunmode = 2
+        else:
+            r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
+            run = False
+
         # create folder if it does not exist
         out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
         if not os.path.exists(out_dir):
@@ -7355,7 +7358,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 --fmri-resolution="%(fmri_resolution)s" \
                 --subject-expected-timepoints="%(timepoints)s" \
                 --num-wishart="%(num_wishart)s" \
-                --low-res="%(low_res)s"' % {
+                --low-res="%(low_res)s" \
+                --matlab-run-mode="%(matlabrunmode)s"' % {
                     "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
                     "study_dir"         : study_dir,
                     "subject_list"      : subject_list,
@@ -7368,7 +7372,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     "fmri_resolution"   : options["hcp_bold_res"],
                     "timepoints"        : timepoints,
                     "num_wishart"       : num_wishart,
-                    "low_res"           : options["hcp_lowresmesh"]
+                    "low_res"           : options["hcp_lowresmesh"],
+                    "matlabrunmode"     : matlabrunmode
                 }
 
             # -- Optional parameters
@@ -7446,18 +7451,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             # hcp_tica_config_out
             if options["hcp_tica_config_out"]:
-                comm += "                    --config-out"
-
-            # matlab run mode, compiled=0, interpreted=1, octave=2
-            if options['hcp_matlab_mode'] == "compiled":
-                matlabrunmode = 0
-            elif options['hcp_matlab_mode'] == "interpreted":
-                matlabrunmode = 1
-            elif options['hcp_matlab_mode'] == "octave":
-                matlabrunmode = 2
-            else:
-                r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-                run = False
+                comm += "                    --config-out"          
 
             # -- Report command
             if run:

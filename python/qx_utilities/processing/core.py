@@ -623,6 +623,36 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
 
     return passed, report, r, failed
 
+def closeLog(logfile, logname, logfolders, status, remove, r):
+
+    # -- close the log
+    if logfile:
+        logfile.close()
+
+    # -- do we delete it
+    if status == 'done' and remove:
+        os.remove(logname)
+        return None, r
+
+    # -- rename it
+    sfolder, sname = os.path.split(logname)
+    tname = re.sub("^tmp", status, sname)
+    tfile = os.path.join(sfolder, tname)
+    shutil.move(logname, tfile)
+    r += '\n---> logfile: %s' % (tfile)
+
+    # -- do we have multiple logfolders?
+    for logfolder in logfolders:
+        nfile = os.path.join(logfolder, tname)
+        if not os.path.exists(logfolder):
+            os.makedirs(logfolder)
+        try:
+            gc.linkOrCopy(tfile, nfile)
+            r += '\n---> logfile: %s' % (nfile)
+        except:
+            r += '\n---> WARNING: could not map logfile to: %s' % (nfile)
+
+    return tfile, r
 
 
 def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
@@ -668,37 +698,6 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
                     incomplete based on the test files.
     --failed        0 for ok, 1 or more for failed or incomplete runs.
     """
-
-    def closeLog(logfile, logname, logfolders, status, remove, r):
-
-        # -- close the log
-        if logfile:
-            logfile.close()
-
-        # -- do we delete it
-        if status == 'done' and remove:
-            os.remove(logname)
-            return None, r
-
-        # -- rename it
-        sfolder, sname = os.path.split(logname)
-        tname = re.sub("^tmp", status, sname)
-        tfile = os.path.join(sfolder, tname)
-        shutil.move(logname, tfile)
-        r += '\n---> logfile: %s' % (tfile)
-
-        # -- do we have multiple logfolders?
-        for logfolder in logfolders:
-            nfile = os.path.join(logfolder, tname)
-            if not os.path.exists(logfolder):
-                os.makedirs(logfolder)
-            try:
-                gc.linkOrCopy(tfile, nfile)
-                r += '\n---> logfile: %s' % (nfile)
-            except:
-                r += '\n---> WARNING: could not map logfile to: %s' % (nfile)
-
-        return tfile, r
 
     endlog = None
 
@@ -772,6 +771,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
             # add command call to start of the log
             print(printComm, file=nf)
+            nf.flush()
 
             if shell:
                 ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
