@@ -7086,6 +7086,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     --hcp_tica_outfmriname  Name to use for tICA pipeline outputs. [rfMRI_REST]
     --hcp_tica_surfregname  The registration string corresponding to the input
                             files. []
+    --hcp_icafix_highpass   Value for the highpass filter used in the ICAFix
+                            pipeline. []
     --hcp_tica_procstring   File name component representing the preprocessing
                             already done, e.g. '_Atlas_MSMAll_hp0_clean'.
                             [<hcp_cifti_tail>_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean]
@@ -7164,7 +7166,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     --hcp_tica_parallel_limit           How many subjects to do in parallel
                                         (local, not cluster-distributed)
                                         during individual projection. []
-    --hcp_tica_config_out               Generate config file for rerunning with
+    --hcp_tica_config_out               A flag that determines whether to
+                                        generate config file for rerunning with
                                         similar settings, or for reusing these
                                         results for future cleaning. Not set
                                         by default.
