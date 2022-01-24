@@ -313,7 +313,7 @@ arglist = [
            ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution (in mm) of the structural images templates to use in the prefs step."],
            ['hcp_sephaseneg',         '',                                         str,    "spin echo field map volume with a negative phase encoding direction: (AP, PA, LR, RL) ['']."],
            ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) ['']."],
-           ['hcp_bold_smoothFWHM',    '',                                         isNone, "Whether slices were acquired in an interleaved fashion (odd or even) or not (empty)."],
+           ['hcp_bold_smoothFWHM',    '2',                                         int,   "The size of the smoothing kernel (in mm)."],
 
            ['# --- hcp_freesurfer options'],
            ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
