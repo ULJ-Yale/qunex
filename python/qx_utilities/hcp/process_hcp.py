@@ -1994,6 +1994,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                             coefficients, alternatively a string describing
                             multiple options (see below), or "NONE", if not
                             used [NONE].
+    --hcp_bold_topupconfig  A full path to the topup configuration file to use.
+                            [$HCPPIPEDIR/global/config/b02b0.cnf].
 
     Eddy post processing parameters
     -------------------------------
@@ -2046,6 +2048,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                             container. []
     --hcp_dwi_nogpu         If specified, use the non-GPU-enabled version
                             of eddy. The flag is not set by default.
+    --hcp_dwi_even_slices   If set will ensure the input images to FSL's topup
+                            and eddy have an even number of slices by removing
+                            one slice if necessary. This behaviour used to be
+                            the default, but is now optional, because discarding
+                            a slice is incompatible with using slice-to-volume
+                            correction in FSL's eddy.
+                            The flag is not set by default.
+
 
     Gradient Coefficient File Specification:
     ----------------------------------------
@@ -2249,6 +2259,12 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
+
+            if options['hcp_bold_topupconfig'] != '':
+                comm += "                --topup-config-file=" + options['hcp_bold_topupconfig']
+
+            if options['hcp_dwi_even_slices']:
+                comm += "                --ensure-even-slices"
 
             if options['hcp_dwi_nogpu']:
                 comm += "                --no-gpu"
