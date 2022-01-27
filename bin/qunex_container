@@ -893,10 +893,14 @@ def main(args=None):
             while getsessionids:
                 parjobs += 1
 
-                sessionids_chunk = [getsessionids.pop(0) for e in range(parsessions)]
+                if len(getsessionids) > parsessions:
+                    sessionids_chunk = [getsessionids.pop(0) for e in range(parsessions)]
+                else:
+                    sessionids_chunk = [getsessionids.pop(0) for e in range(len(getsessionids))]
+
                 sessionids_array.append(','.join(sessionids_chunk))
 
-        # else split jobs into chunkse
+        # else split jobs into chunks
         else:
             # how big are chunks of sessions
             chunks = int(math.ceil(n_sessions / float(parsessions)))
