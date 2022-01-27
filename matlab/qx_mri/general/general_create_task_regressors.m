@@ -25,7 +25,11 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %                       - 'gamma' (assumed response)
 %                       - 'u' (unassumed response)
 %                       - 'block' (block response)
-%
+%               normalize
+%                   - run - normalize hrf based regressors to amplitude 1 within 
+%                           each run separately -- old behavior
+%                   - uni - normalize hrf based regressors universaly to hrf 
+%                           area-under-the curve = 1 - n -- new behavior
 %               length
 %                  - number of frames to model (for unasumed response)
 %                  - length of event in s (for assumed response - if empty, 
@@ -79,13 +83,64 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   for each bold file separately. It returns the information in a data
 %   structure.
 %
+%   The input model can be specified as a struct variable (as described above)
+%   or using a well structured string. The string should provide a pipe 
+%   separated list of regressor descriptions for each event:
+%
+%   - assumed regressors: "<fidl code>:<hrf>[-run|-uni][:<length in s>]"
+%     Example 1: "encoding:SPM-uni:5" – model encoding using SPM HRF with 
+%     5 second duration, normalize the regressor universaly (see below).
+%     If length is not provided, the duration specified in the fidl file
+%     will be used.
+%     Example 2: "response:boynton-run" – model response using Boynton
+%     HRF function, take the duration from the fidl file. Normalize the
+%     regressor amplitude to value 1 within each run separately.
+%
+%   - unassumed regressors: "<fidl code>:<length in frames>"
+%     Example 1: "congruent:8" - model congruent trials using separate
+%     regressors across 8 frames following the event start.
+%
+%   - each regressor info can follow with ">" and a weight descriptor in a form
+%     "<name of the resulting regressor>[:<behavioral column to use from fidl 
+%     file (1-based)>[:<normalization span>[:<normalization method>]]]"
+%     Example 1: "delay:SPM-uni>delay_precision:2:within:z" – scale the assumed
+%     regressor for each trial by the values provided in the second extra column
+%     in the fidl file. Before applying the scaling, normalize the values from 
+%     the second column to z-scores taking into account only the values that 
+%     pertain to delay trials.
+%     Example 2: "emotional:11>emotional_rt:3:across:-11" – scale the 11 
+%     unassumed regressors for each trial by values provided in the third extra
+%     column in the fidl file. Before applying the scaling, normalize the values
+%     to span -1 to 1 across all the values in the fidl file column.
+%
+%   Assumed HRF regressors normalization
+%   hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
+%   how to normalize the regressor. 
+%   
+%   In case of `<hrf function>-uni`, e.g. 
+%   'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
+%   the area under the curve equal to 1. This ensures uniform and universal, 
+%   scaling of the resulting regressor across all event lengths. In addition,
+%   the scaling is not impacted by weights (e.g. behavioral coregressors), which
+%   in turn ensures that the weights are not scaled.
+%
+%   In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
+%   resulting regressor is normalized to amplitude of 1 within each bold run 
+%   separately. This can result in different scaling of regressors with different 
+%   durations, and of the same regressor across different runs. Scaling in this 
+%   case is performed after the signal is weighted, so in effect the scaling of  
+%   weights (e.g. behavioral regressors), can differ across bold runs.
+%
+%   The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
+%   be assumed (the default might change).
+%
 %   EXAMPLE USE
 %   ===========
 %
 %   ::
 %
 %       model = general_create_task_regressors('OP354-flanker.fidl', ...
-%       'OP354-flanker.conc', 'taskblock:boynton|congruent:7|incongruent:7', ...
+%       'OP354-flanker.conc', 'taskblock:boynton-uni|congruent:7|incongruent:7', ...
 %       'ignore');
 %
 %   NOTES
@@ -133,6 +188,10 @@ nregressors = length(model.regressor);
 for m = 1:nregressors
     if isempty(model.regressor(m).code)
         model.regressor(m).code = find(ismember(tevents.events, model.regressor(m).event)) - 1;
+    end
+    % -- check normalize and set it to default if not set
+    if ~isfield(model.regressor(m), 'normalize') || isempty(model.regressor(m).normalize)
+        model.regressor(m).normalize = 'run';
     end
     % if ~any(strcmp(tevents.events,model.regressor(m).name))
     %     switch lower(check)
@@ -360,9 +419,20 @@ for r = 1:nruns
             
             ts = conv(ts, hrf);
             ts = ts(1:100*nframes);
-            ts = ts ./ sum(hrf(hrf>0));
+
+            % -- normalize universaly with HRF area-under-the-curve = 1
+            if strcmp(model.regressor(m).normalize, 'uni')
+                ts = ts ./ sum(hrf(hrf>0));
+            end
+
             ts = mean(reshape(ts, 100, nframes), 1);            
-            
+
+            % -- normalize per run to max amplitude = 1
+            if strcmp(model.regressor(m).normalize, 'run')
+                if max(ts) > 0
+                    ts = ts/max(ts);
+                end
+            end
             run(r).matrix = [run(r).matrix ts'];
             run(r).regressors = [run(r).regressors, basename];
             
@@ -422,7 +492,7 @@ model.fidl   = tevents;
 %
 %   - description
 %     - pipe separated list of regressor information for each event
-%       assumed: <fidl code>:<hrf>[:<length in s>] --- length assumed empty if not provided
+%       assumed: <fidl code>:<hrf>[-run|-uni][:<length in s>] --- length is assumed empty if not provided
 %       unassumed: <fidl code>:<length in frames>
 %     - each regressor info can follow with ">" and a weight descriptor in a form
 %       <name of the resulting regressor>[:<behavioral column to use from fidl file (1-based)>[:<normalization span>[:<normalization method>]]]
@@ -434,6 +504,9 @@ model.fidl   = tevents;
 %       -> 'SPM' (assumed response)
 %       -> 'u' (unassumed response)
 %       -> 'block' (block response)
+%     - normalize
+%       -> run (normalize hrf based regressors to amplitude 1 within each run separately -- old behavior)
+%       -> uni (normalize hrf based regressors universaly to hrf area-under-the curve = 1 - n -- new behavior)
 %     - length
 %       - number of frames to model (for unasumed response)
 %       - length of event in s (for assumed response - if empty, duration is taken from event file)
@@ -443,6 +516,27 @@ model.fidl   = tevents;
 %       - column
 %       - normalize (within vs. across)
 %       - method    (z, 01, -11, none)
+%
+%   Assumed HRF regressors normalization
+%   hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
+%   how to normalize the regressor. 
+%   
+%   In case of `<hrf function>-uni`, e.g. 
+%   'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
+%   the area under the curve equal to 1. This ensures uniform and universal, 
+%   scaling of the resulting regressor across all event lengths. In addition,
+%   the scaling is not impacted by weights (e.g. behavioral coregressors), which
+%   in turn ensures that the weights are not scaled.
+%
+%   In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
+%   resulting regressor is normalized to amplitude of 1 within each bold run 
+%   separately. This can result in different scaling of regressors with different 
+%   durations, and of the same regressor across different runs. Scaling in this 
+%   case is performed after the signal is weighted, so in effect the scaling of  
+%   weights (e.g. behavioral regressors), can differ across bold runs.
+%
+%   The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
+%   be assumed (the default might change).
 
 
 function [model] = parseModels(s)
@@ -481,7 +575,21 @@ for n = 1:length(a)
         regressor(n).hrf_type = 'u';
         regressor(n).length = str2num(b{2});
     end
-    
+
+    % --- normalization type
+
+    if ~isempty(strfind(regressor(n).hrf_type, '-u'))
+        regressor(n).normalize = 'uni';
+    elseif ~isempty(strfind(regressor(n).hrf_type, '-r'))
+        regressor(n).normalize = 'run';
+    else
+        regressor(n).normalize = 'run';
+    end
+
+    if ~isempty(strfind(regressor(n).hrf_type, '-'))
+        regressor(n).hrf_type = regressor(n).hrf_type(1:strfind(regressor(n).hrf_type, '-')-1);
+    end
+
     % --- do we have a third field ?
     
     if length(b) >= 3
