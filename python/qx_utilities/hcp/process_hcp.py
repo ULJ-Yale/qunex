@@ -7163,7 +7163,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                                         --hcp_tica_starting_step=CleanData. []
     --hcp_tica_fix_legacy_bias          Whether the input data used the legacy
                                         bias correction, YES or NO. []
-    --hcp_tica_parallel_limit           How many subjects to do in parallel
+    --hcp_parallel_limit                How many subjects to do in parallel
                                         (local, not cluster-distributed)
                                         during individual projection. []
     --hcp_tica_config_out               A flag that determines whether to
@@ -7455,9 +7455,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             if options["hcp_tica_fix_legacy_bias"] is not None:
                 comm += "                    --fix-legacy-bias=\"%s\"" % options['hcp_tica_fix_legacy_bias']
 
-            # hcp_tica_parallel_limit
-            if options["hcp_tica_parallel_limit"] is not None:
-                comm += "                    --parallel-limit=\"%s\"" % options['hcp_tica_parallel_limit']
+            # hcp_parallel_limit
+            if options["hcp_parallel_limit"] is not None:
+                comm += "                    --parallel-limit=\"%s\"" % options['hcp_parallel_limit']
 
             # hcp_tica_config_out
             if options["hcp_tica_config_out"]:

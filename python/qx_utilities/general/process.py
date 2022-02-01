@@ -456,7 +456,7 @@ arglist = [
            ['hcp_tica_stop_after_step', '',                                       isNone,  "What step to stop processing after, same valid values as for hcp_tica_starting_step."],
            ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
            ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
-           ['hcp_tica_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+           ['hcp_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
            ['hcp_tica_config_out', None,                                          flag,    "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
 
 
