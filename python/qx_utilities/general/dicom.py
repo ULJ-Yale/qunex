@@ -827,9 +827,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     return
 
 
-def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', options=""):
+def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', add_image_type=0, add_json_info=""):
     """
-    ``dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [options=""]``
+    ``dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [add_image_type=0] [add_json_info=""]``
 
     Converts MR images from DICOM and PAR/REC files to NIfTI format.
 
@@ -868,19 +868,15 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                        - dcm2nii
                        - dicm2nii
 
-    --options           A pipe separated string that lists additional options as
-                        a "<key1>:<value1>|<key2>:<value2>" pairs to be used
-                        when processing dicom or PAR/REC files. Currently it
-                        supports:
+    --add_image_type   Adds image type information to the sequence name 
+                       (Siemens scanners). The value should specify how many of
+                       image type labels from the end of the image type list to
+                       add. [0]
 
-                        - addImageType (Adds image type information to the
-                          sequence name (Siemens scanners). The value should 
-                          specify how many of the last image type labels to add.
-                          [0])
-                        - addJSONInfo (What sequence information to extract from
-                          JSON sidecar files and add to session.txt file.
-                          Specify a comma separated list of fields or 'all'.
-                          See list in session.txt file description below. [])
+    --add_json_info    What sequence information to extract from
+                       JSON sidecar files and add to session.txt file.
+                       Specify a comma separated list of fields or 'all'.
+                       See list in session.txt file description below. []
 
     OUTPUTS
     =======
@@ -1041,26 +1037,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
 
-    # check options
-
-    optionstr = options
-    options = {'addImageType': '0', 'addJSONInfo': []}
-
-    if optionstr:
-        try:
-            for k, v in [e.split(':') for e in optionstr.split('|')]:
-                k, v = k.strip(), v.strip()
-                if k in options and type(options[k]) is list:
-                    options[k] = [e.strip() for e in v.split(',')]
-                else:
-                    options[k] = v
-        except:
-            raise ge.CommandError('dicom2niix', "Misspecified options string", "The options string is not valid! [%s]" % (optionstr), "Please check command instructions!")
-
     try:
-        options['addImageType'] = int(options['addImageType'])
+        add_image_type = int(add_image_type)
     except:
-        raise ge.CommandError('dicom2niix', "Misspecified addImageType option", "The addImageType option value could not be converted to integer! [%s]" % (options['addImageType']), "Please check command instructions!")
+        raise ge.CommandError('dicom2niix', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
+    
+    if ',' in add_json_info:
+        add_json_info = [field.strip() for field in add_json_info.split(',')]
 
     # check tool setting
 
@@ -1171,8 +1154,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 print("===> WARNING: Could not read dicom file! Skipping folder %s" % (folder))
                 continue
 
-        if options['addImageType'] > 0:
-            retain = min(len(info['ImageType']), options['addImageType'])
+        if add_image_type > 0:
+            retain = min(len(info['ImageType']), add_image_type)
             if retain > 0:
                 imageType = " ".join(info['ImageType'][-retain:])
                 if len(imageType) > 0:
@@ -1365,15 +1348,15 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                             os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
                             jsonsrc = tfname.replace('.nii.gz', '.json')
 
-                            if 'RepetitionTime' in jinf and ('TR' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
+                            if 'RepetitionTime' in jinf and ('TR' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": TR(%s)" % (str(jinf['RepetitionTime']))
-                            if 'PhaseEncodingDirection' in jinf and ('PEDirection' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
+                            if 'PhaseEncodingDirection' in jinf and ('PEDirection' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": PEDirection(%-2s)" % (jinf['PhaseEncodingDirection'])    
-                            if 'EffectiveEchoSpacing' in jinf and ('EchoSpacing' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
+                            if 'EffectiveEchoSpacing' in jinf and ('EchoSpacing' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": EchoSpacing(%s)" % (str(jinf['EffectiveEchoSpacing']))
-                            if 'DwellTime' in jinf and ('DwellTime' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
+                            if 'DwellTime' in jinf and ('DwellTime' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": DwellTime(%s)" % (str(jinf['DwellTime']))
-                            if 'ReadoutDirection' in jinf and ('ReadoutDirection' in options['addJSONInfo'] or 'all' in options['addJSONInfo']):
+                            if 'ReadoutDirection' in jinf and ('ReadoutDirection' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": ReadoutDirection(%-2s)" % (jinf['ReadoutDirection'])
                         except:
                             print("     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc), file=r)
@@ -1746,9 +1729,9 @@ def split_dicom(folder=None):
     return
 
 
-def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
+def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
     """
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]``
 
     Automatically processes packets with individual sessions's DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -1833,21 +1816,15 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                           `archive` parameter is only valid for compressed 
                           packages.
     
-    --options             A pipe separated string that lists additional options 
-                          as a 
-                          "<key1>:<value1>|<key2>:<value2>" pairs to be used 
-                          when processing dicom or PAR/REC files. Currently it 
-                          supports:
+    --add_image_type      Adds image type information to the sequence name 
+                          (Siemens scanners). The value should specify how many 
+                          of image type labels from the end of the image type 
+                          list to add. [0]
 
-                          - addImageType (Adds image type information to the 
-                            sequence name (Siemens scanners). The value should 
-                            specify how many of the last image type labels to 
-                            add. [0])
-                          - addJSONInfo (What sequence information to extract
-                            from JSON sidecar files and add to session.txt file.
-                            Specify a comma separated list of fields or 'all'.
-                            See list in session.txt file description of 
-                            dicom2niix inline help. [])
+    --add_json_info       What sequence information to extract from
+                          JSON sidecar files and add to session.txt file.
+                          Specify a comma separated list of fields or 'all'.
+                          See list in session.txt file description below. []
 
     --unzip               Whether to unzip individual DICOM files that are
                           gzipped. Valid options are 'yes', 'no', and 'ask'.
@@ -2156,6 +2133,11 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
         nameformat = r"(?P<subject_id>.*)"
 
     igz = re.compile(r'.*\.gz')
+    
+    try:
+        add_image_type = int(add_image_type)
+    except:
+        raise ge.CommandError('import_dicom', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
 
     if sessions:
         sessions = re.split(', *', sessions)
@@ -2544,7 +2526,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             # ===> run dicom to nii
 
             print
-            dicom2niix(folder=sfolder, clean='no', unzip=unzip, gzip=gzip, sessionid=session['sessionid'], tool=tool, parelements=parelements, options=options, verbose=True)
+            dicom2niix(folder=sfolder, clean='no', unzip=unzip, gzip=gzip, sessionid=session['sessionid'], tool=tool, parelements=parelements, add_image_type=add_image_type, add_json_info=add_json_info, verbose=True)
 
             # ===> archive
 
