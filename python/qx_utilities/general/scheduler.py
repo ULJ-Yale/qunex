@@ -22,6 +22,7 @@ import re
 
 import general.exceptions as ge
 import general.core as gc
+import general.process as gp
 
 from datetime import datetime
 
@@ -527,6 +528,10 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         # if chunks is lower then parjobs tweak parjobs
         if chunks < parjobs:
             parjobs = chunks
+
+        # do not create multiple jobs if running a multi-session command
+        if command in gp.mactions:
+            parjobs = 1
 
         # init queues
         sessionids_array = [""] * parjobs

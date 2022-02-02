@@ -200,12 +200,15 @@ bash_call_execute() {
     # -- Check if Matlab command
     unset QuNexMatlabCall
     matlab_functions_check=`find $TOOLS/$QUNEXREPO/matlab/ -name "*.m" | grep -v "archive/"`
-    if [[ ! -z `echo $matlab_functions_check | grep "$CommandToRun"` ]]; then
-        QuNexMatlabCall="$CommandToRun"
-        echo ""
-        echo " ==> Note: $QuNexMatlabCall is part of the QuNex MATLAB."
-        echo ""
-    fi 
+
+    if [[ ! -z $CommandToRun ]]; then
+        if [[ ! -z `echo $matlab_functions_check | grep "$CommandToRun"` ]]; then
+            QuNexMatlabCall="$CommandToRun"
+            echo ""
+            echo " ==> Note: $QuNexMatlabCall is part of the QuNex MATLAB."
+            echo ""
+        fi
+    fi
 
     # -- Check if study folder is created
     if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${QuNexMatlabCall} ]]; then 
@@ -1286,7 +1289,6 @@ unset SESSION_LABELS
 
 # -- Check if first parameter is missing flags and parse it as CommandToRun
 if [ -z `echo "$1" | grep '-'` ]; then
-    CommandToRun="$1"
     # -- Check if single or double flags are set
     doubleflagparameter=`echo $2 | cut -c1-2`
     singleflagparameter=`echo $2 | cut -c1`

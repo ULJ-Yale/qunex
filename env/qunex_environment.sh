@@ -586,16 +586,23 @@ MATLABROOT=`cd $MATLABBIN; cd ..; pwd`
 export MATLABROOT
 
 # -- Setup HCP Pipelines global matlab path relevant for FIX ICA
-HCPDIRMATLAB=${HCPPIPEDIR}/global/matlab/
+HCPDIRMATLAB=${HCPPIPEDIR}/global/matlab
 export HCPDIRMATLAB
 PATH=${HCPDIRMATLAB}:${PATH}
 MATLABPATH=$HCPDIRMATLAB:$MATLABPATH
 export MATLABPATH
 export PATH
 
+# -- Setup HCP Pipelines global matlab path relevant for temporal ICA
+NETS_SPECTRA=${HCPDIRMATLAB}/nets_spectra
+MATLABPATH=$NETS_SPECTRA:$MATLABPATH
+ICA_DIM=${HCPDIRMATLAB}/icaDim
+MATLABPATH=$ICA_DIM:$MATLABPATH
+export MATLABPATH
+
 # -- ciftirw
 if [[ -z ${FSL_FIX_CIFTIRW} ]]; then FSL_FIX_CIFTIRW=${HCPPIPEDIR}/global/matlab; export FSL_FIX_CIFTIRW; fi
-if [[ -z ${HCPCIFTIRWDIR} ]]; then HCPCIFTIRWDIR=${HCPPIPEDIR}/global/matlab; export HCPCIFTIRWDIR; fi
+if [[ -z ${HCPCIFTIRWDIR} ]]; then HCPCIFTIRWDIR=${HCPPIPEDIR}/global/matlab/cifti-matlab; export HCPCIFTIRWDIR; fi
 
 # if in container set compiled matlab and CUDA path
 if [[ -e /opt/.container ]]; then
