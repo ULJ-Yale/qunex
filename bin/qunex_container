@@ -899,7 +899,7 @@ def main(args=None):
             for i in range(0, len(getsessionids), parsessions):
                 sessionids_array.append(','.join(getsessionids[i:i + parsessions]))
 
-            # number of parallel jobs
+            # calculate the number of parallel jobs
             parjobs = len(sessionids_array)
 
         # else split jobs into chunks
