@@ -895,16 +895,13 @@ def main(args=None):
         if parjobs is None:
             parjobs = 0
 
-            # append to array
-            while getsessionids:
-                parjobs += 1
+            # split to chunks
+            sessionids_array = []
+            for i in range(0, len(getsessionids), parsessions):
+                sessionids_array.append(','.join(getsessionids[i:i + parsessions]))
 
-                if len(getsessionids) > parsessions:
-                    sessionids_chunk = [getsessionids.pop(0) for e in range(parsessions)]
-                else:
-                    sessionids_chunk = [getsessionids.pop(0) for e in range(len(getsessionids))]
-
-                sessionids_array.append(','.join(sessionids_chunk))
+            # number of parallel jobs
+            parjobs = len(sessionids_array)
 
         # else split jobs into chunks
         else:
