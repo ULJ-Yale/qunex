@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.0
+
+Fixed a backwards compatibility issue with hcp_fmri_volume. Optimized qunex_container. Implemented support for HCP temporal ICA fix.
+
 ## 0.92.2
 
 Fixed a bug in the fsl_xtract command that prevented users from running it. Corrected some typos in inline documentation.
