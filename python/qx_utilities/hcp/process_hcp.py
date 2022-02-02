@@ -3010,18 +3010,21 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             else:
                 boldroot = boldsource + orient
 
-            boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
-            r, boldok = pc.checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
+            boldimgs = []
+            boldimgs.append(os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot)))
+            if options['hcp_folderstructure'] == 'hcpya':
+                boldimgs.append(os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s%s_%s.nii.gz" % (sinfo['id'], options['fctail'], boldroot)))
+
+            r, boldok, boldimg = pc.checkForFiles(r, boldimgs, "\n     ... bold image present", "\n     ... ERROR: bold image missing, searched for %s!" % (boldimgs), status=boldok)
 
             # --- check for ref image
-
             if options['hcp_bold_sbref'].lower() == 'use':
                 refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
                 r, boldok = pc.checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
             else:
                 r += "\n     ... reference image not used"
 
-            # ---> Check the mask used
+            # --- check the mask used
             if options['hcp_bold_mask']:
                 if options['hcp_bold_mask'] != 'T1_fMRI_FOV' and options['hcp_processing_mode'] == 'HCPStyleData':
                     r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, %s was specified as bold mask to use!\n            Consider either using 'T1_fMRI_FOV' for the bold mask or LegacyStyleData processing mode."

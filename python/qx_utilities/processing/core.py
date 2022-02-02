@@ -897,6 +897,33 @@ def checkForFile2(r, checkfile, ok, bad, status=True):
         return r, False
 
 
+def checkForFiles(r, checkfiles, ok, bad, all=False, status=True):
+    """
+    checkForFiles - checks if any of the files in the checkfiles list exists
+
+    If all parameter is set to True, returns True only if all files exist,
+    if all parameter is False it returns the first found file.
+    """
+
+    for f in checkfiles:
+        if os.path.exists(f):
+            if not all:
+                r += ok
+                return r, status, f
+        else:
+            if all:
+                r += bad
+                return r, False, ""
+
+    if not all:
+        r += bad
+        return r, False, ""
+
+    # if we are here all files exist and all is set
+    r += ok
+    return r, status, ""
+
+
 def action(action, run):
     '''
     action(action, run)
