@@ -883,8 +883,14 @@ def main(args=None):
     # array for storing session ids
     sessionids_array = []
 
-    # if scheduler is not None then setup parallelism
-    if scheduler is not None and sessions is not None:
+    # do not run in parallel multi_session/longitudinal commands
+    multi_session_command = False
+    multi_commands = ["longitudinal_freesurfer", "longitudinalFS", "hcp_temporal_ica", "hcp_make_average_dataset"]
+    if any(c in command for c in multi_commands):
+        multi_session_command = True
+
+    # if scheduler is not None or we have a multi_session_command then setup parallelism
+    if scheduler is not None and sessions is not None and not multi_session_command:
         # if parjobs is None each session is its own job
         if parjobs is None:
             parjobs = 0
