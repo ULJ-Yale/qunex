@@ -27,9 +27,9 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %                       - 'block' (block response)
 %               normalize
 %                   - run - normalize hrf based regressors to amplitude 1 within 
-%                           each run separately -- old behavior
+%                           each run separately (old behavior)
 %                   - uni - normalize hrf based regressors universaly to hrf 
-%                           area-under-the curve = 1 - n -- new behavior
+%                           area-under-the curve = 1 - n (new behavior)
 %               length
 %                  - number of frames to model (for unasumed response)
 %                  - length of event in s (for assumed response - if empty, 
@@ -84,15 +84,15 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   structure.
 %
 %   The input model can be specified as a struct variable (as described above)
-%   or using a well structured string. The string should provide a pipe 
+%   or using a specificaly structured string. The string should provide a pipe 
 %   separated list of regressor descriptions for each event:
 %
 %   - assumed regressors: "<fidl code>:<hrf>[-run|-uni][:<length in s>]"
-%     Example 1: "encoding:SPM-uni:5" – model encoding using SPM HRF with 
+%     Example 1: "encoding:SPM-uni:5" - model encoding using SPM HRF with 
 %     5 second duration, normalize the regressor universaly (see below).
-%     If length is not provided, the duration specified in the fidl file
+%     If the length is not provided, the duration specified in the fidl file
 %     will be used.
-%     Example 2: "response:boynton-run" – model response using Boynton
+%     Example 2: "response:boynton-run" - model response using Boynton
 %     HRF function, take the duration from the fidl file. Normalize the
 %     regressor amplitude to value 1 within each run separately.
 %
@@ -103,12 +103,12 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   - each regressor info can follow with ">" and a weight descriptor in a form
 %     "<name of the resulting regressor>[:<behavioral column to use from fidl 
 %     file (1-based)>[:<normalization span>[:<normalization method>]]]"
-%     Example 1: "delay:SPM-uni>delay_precision:2:within:z" – scale the assumed
+%     Example 1: "delay:SPM-uni>delay_precision:2:within:z" - scale the assumed
 %     regressor for each trial by the values provided in the second extra column
 %     in the fidl file. Before applying the scaling, normalize the values from 
 %     the second column to z-scores taking into account only the values that 
 %     pertain to delay trials.
-%     Example 2: "emotional:11>emotional_rt:3:across:-11" – scale the 11 
+%     Example 2: "emotional:11>emotional_rt:3:across:-11" - scale the 11 
 %     unassumed regressors for each trial by values provided in the third extra
 %     column in the fidl file. Before applying the scaling, normalize the values
 %     to span -1 to 1 across all the values in the fidl file column.
@@ -425,7 +425,7 @@ for r = 1:nruns
                 ts = ts ./ sum(hrf(hrf>0));
             end
 
-            ts = mean(reshape(ts, 100, nframes), 1);            
+            ts = mean(reshape(ts, 100, nframes), 1);
 
             % -- normalize per run to max amplitude = 1
             if strcmp(model.regressor(m).normalize, 'run')
