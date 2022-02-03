@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.1
+
+The preprocess_bold and preprocess_conc commands now allow user to normalize the assumed regressors within each run or to normalize the area under the curve of the hrf function and this way ensure universal normalization.
+
 ## 0.93.0
 
 Fixed a backwards compatibility issue with hcp_fmri_volume. Optimized qunex_container. Implemented support for HCP temporal ICA fix.
