@@ -1813,10 +1813,11 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     ~~~~~~~~~~~~~~~~
     ::
 
-        <fidl code>:<hrf>[:<length>]
+        <fidl code>:<hrf>[-run|-uni][:<length>]
 
     Where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
-    response function to use, and <length> is an optional parameter, with its
+    response function to use, '-run' and '-uni' specify how the regressor should
+    be normalized, and <length> is an optional parameter, with its
     value dependent on the model used. The allowed <hrf> are:
 
     - boynton (uses the Boynton HRF)
@@ -1829,6 +1830,27 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     the same as in previous section: the number of frames to model. For 'block'
     length should be two numbers separated by a colon (e.g. 2:9) that specify
     the start and end offset (from the event onset) to model as a block.
+
+    Assumed HRF regressors normalization
+    hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
+    how to normalize the regressor. 
+    
+    In case of `<hrf function>-uni`, e.g. 
+    'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
+    the area under the curve equal to 1. This ensures uniform and universal, 
+    scaling of the resulting regressor across all event lengths. In addition,
+    the scaling is not impacted by weights (e.g. behavioral coregressors), which
+    in turn ensures that the weights are not scaled.
+ 
+    In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
+    resulting regressor is normalized to amplitude of 1 within each bold run 
+    separately. This can result in different scaling of regressors with different 
+    durations, and of the same regressor across different runs. Scaling in this 
+    case is performed after the signal is weighted, so in effect the scaling of 
+    weights (e.g. behavioral regressors), can differ across bold runs.
+ 
+    The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
+    be assumed (the default might change).
 
     Naming And Behavioral Regressors
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1848,9 +1870,10 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                             events ('across'). [within]
     --normalization_method  The method to use for normalization. Options are:
 
-                            - z  (compute Z-score)
-                            - 01 (normalize to fixed range 0 to 1)
-                            - 11 (normalize to fixed range -1 to 1)
+                            - z    (compute Z-score)
+                            - 01   (normalize to fixed range 0 to 1)
+                            - -11  (normalize to fixed range -1 to 1)
+                            - none (use weights as provided in fidl file)
 
     Example string::
 
@@ -2438,10 +2461,11 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     ~~~~~~~~~~~~~~~~
     ::
 
-        <fidl code>:<hrf>[:<length>]
+        <fidl code>:<hrf>[-run|-uni][:<length>]
 
     Where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
-    response function to use, and <length> is an optional parameter, with its
+    response function to use, '-run' and '-uni' specify how the regressor should
+    be normalized, and <length> is an optional parameter, with its
     value dependent on the model used. The allowed <hrf> are:
 
     - boynton (uses the Boynton HRF)
@@ -2454,6 +2478,27 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     the same as in previous section: the number of frames to model. For 'block'
     length should be two numbers separated by a colon (e.g. 2:9) that specify
     the start and end offset (from the event onset) to model as a block.
+
+    Assumed HRF regressors normalization
+    hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
+    how to normalize the regressor. 
+    
+    In case of `<hrf function>-uni`, e.g. 
+    'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
+    the area under the curve equal to 1. This ensures uniform and universal, 
+    scaling of the resulting regressor across all event lengths. In addition,
+    the scaling is not impacted by weights (e.g. behavioral coregressors), which
+    in turn ensures that the weights are not scaled.
+ 
+    In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
+    resulting regressor is normalized to amplitude of 1 within each bold run 
+    separately. This can result in different scaling of regressors with different 
+    durations, and of the same regressor across different runs. Scaling in this 
+    case is performed after the signal is weighted, so in effect the scaling of 
+    weights (e.g. behavioral regressors), can differ across bold runs.
+ 
+    The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
+    be assumed (the default might change).
 
     Naming And Behavioral Regressors
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2473,9 +2518,10 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                             events ('across'). [within]
     --normalization_method  The method to use for normalization. Options are:
 
-                            - z  (compute Z-score)
-                            - 01 (normalize to fixed range 0 to 1)
-                            - 11 (normalize to fixed range -1 to 1)
+                            - z    (compute Z-score)
+                            - 01   (normalize to fixed range 0 to 1)
+                            - -11  (normalize to fixed range -1 to 1)
+                            - none (use weights as provided in fidl file)
 
     Example string::
 
