@@ -60,7 +60,7 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'map2hcp'               : {'com': fourdfp.map2hcp,                'args': ('volume', 'method')},
             'mask_map'              : {'com': palm.mask_map,                  'args': ('image', 'masks', 'output', 'minv', 'maxv', 'join')},
             'join_maps'             : {'com': palm.join_maps,                 'args': ('images', 'output', 'names', 'originals')},
-            'run_palm'              : {'com': palm.run_palm,                  'args': ('image', 'design', 'args', 'root', 'surface', 'mask', 'parelements', 'overwrite', 'cleanup')},
+            'run_palm'              : {'com': palm.run_palm,                  'args': ('image', 'design', 'palm_args', 'root', 'surface', 'mask', 'parelements', 'overwrite', 'cleanup')},
             'create_ws_palm_design' : {'com': palm.create_ws_palm_design,     'args': ('factors', 'nsubjects', 'root')},
             'schedule'              : {'com': scheduler.schedule,             'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'get_dicom_fields'      : {'com': dicomdeid.get_dicom_fields,     'args': ('folder', 'targetfile', 'limit')},

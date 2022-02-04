@@ -35,9 +35,9 @@ from functools import reduce
 import general.exceptions as ge
 import general.core as gc
 
-def run_palm(image, design=None, args=None, root=None, surface='no', mask=None, parelements=None, overwrite='no', cleanup='yes'):
+def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=None, parelements=None, overwrite='no', cleanup='yes'):
     """
-    ``run_palm image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [surface=no] [mask=<mask file>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]``
+    ``run_palm image=<image file(s)> [design=<design string>] [palm_args=<arguments string>] [root=<root name for the output>] [surface=no] [mask=<mask file>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]``
 
     Runs second level analysis using PALM permutation resampling.
 
@@ -128,7 +128,7 @@ def run_palm(image, design=None, args=None, root=None, surface='no', mask=None, 
     - designs/transient_fmain.csv  (f-contrasts file)
 
 
-    --args: Additional arguments to PALM
+    --palm_args: Additional arguments to PALM
     ------------------------------------
 
     Additional arguments to palm can be specified using the arguments string.
@@ -179,7 +179,7 @@ def run_palm(image, design=None, args=None, root=None, surface='no', mask=None, 
     All three values need to be provided when the parameter is specified, for
     example::
 
-        args="T2HEC:2:0.5:26|T3DHEC:4:1:6"
+        palm_args="T2HEC:2:0.5:26|T3DHEC:4:1:6"
 
     If these two parameters are not specified, the default values specified by
     PALM are used, specifically, H=2, E=1, C=26 for 2D analysis and H=2, E=0.5
@@ -190,7 +190,7 @@ def run_palm(image, design=None, args=None, root=None, surface='no', mask=None, 
 
     ::
 
-        args="n:500|accel:tail|T|fonly"
+        palm_args="n:500|accel:tail|T|fonly"
 
     In this case PALM would run 500 permutations and the p-values would be
     estimated by a help of the tail estimation acceleration method, TFCE
@@ -240,7 +240,7 @@ def run_palm(image, design=None, args=None, root=None, surface='no', mask=None, 
 
     ::
     
-        qunex run_palm design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
+        qunex run_palm design="name:sustained|t:taov" palm_args="n:500|accel:tail|T|fonly" \\
              root=sustained_aov
     """
 
@@ -288,9 +288,9 @@ def run_palm(image, design=None, args=None, root=None, surface='no', mask=None, 
 
     arguments = {'n': ['100'], 'zstat': None}
 
-    if args is not None:
-        args = [e.strip() for e in args.split('|')]
-        for a in args:
+    if palm_args is not None:
+        palm_args = [e.strip() for e in palm_args.split('|')]
+        for a in palm_args:
             a = [e.strip() for e in a.split(':')]
             if len(a) == 1:
                 arguments[a[0]] = None
