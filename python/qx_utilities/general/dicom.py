@@ -1038,7 +1038,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     imgf = os.path.join(folder, 'nii')
 
     try:
-        add_image_type = int(add_image_type)
+        if add_image_type == None or add_image_type == '':
+            add_image_type = 0
+        else:
+            add_image_type = int(add_image_type)
     except:
         raise ge.CommandError('dicom2niix', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
     
@@ -2135,7 +2138,10 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
     igz = re.compile(r'.*\.gz')
     
     try:
-        add_image_type = int(add_image_type)
+        if add_image_type == None or add_image_type == '':
+            add_image_type = 0
+        else:
+            add_image_type = int(add_image_type)
     except:
         raise ge.CommandError('import_dicom', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
 
