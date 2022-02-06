@@ -907,33 +907,20 @@ def main(args=None):
             # how big are chunks of sessions
             chunks = int(math.ceil(n_sessions / float(parsessions)))
 
-            chunk_size = int(math.ceil(n_sessions / float(chunks)))
-
             # if chunks is lower then parjobs tweak parjobs
             if chunks < parjobs:
                 parjobs = chunks
 
             # init queues
-            sessionids_array = [""] * parjobs
+            sessionids_arrays = [[] for _ in range(parjobs)]
 
             # divide sessions among jobs
-            job = 0
-            start = 0
-            for i in range(chunks):
-                # get job index
-                job = i % parjobs
-
-                if start < n_sessions:
-                    # get chunk
-                    sessionids_chunk = getsessionids[start:start+chunk_size]
-                    # add comma if not empty
-                    if sessionids_array[job] != "":
-                        sessionids_array[job] = sessionids_array[job] + ","
-                    # append chunk
-                    sessionids_array[job] = sessionids_array[job] + ",".join(sessionids_chunk)
-                
-                # increase start index
-                start = start + chunk_size
+            for idx, sessionid in enumerate(getsessionids):
+                job_id = idx % parjobs
+                sessionids_arrays[job_id].append(sessionid)
+            
+            for s in sessionids_arrays:
+                sessionids_array.append(",".join(s))
 
     else:
         # do not run in parallel
