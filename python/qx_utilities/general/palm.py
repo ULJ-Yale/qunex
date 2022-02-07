@@ -417,7 +417,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
 
         # --> replace the default masks with custom masks if provided
 
-        if "mask" is not None:
+        if mask is not None:
 
             # --- does mask exist
 
