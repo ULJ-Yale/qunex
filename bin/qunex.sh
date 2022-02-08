@@ -1289,6 +1289,7 @@ unset SESSION_LABELS
 
 # -- Check if first parameter is missing flags and parse it as CommandToRun
 if [ -z `echo "$1" | grep '-'` ]; then
+    CommandToRun="$1"
     # -- Check if single or double flags are set
     doubleflagparameter=`echo $2 | cut -c1-2`
     singleflagparameter=`echo $2 | cut -c1`
