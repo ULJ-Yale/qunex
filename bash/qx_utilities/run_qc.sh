@@ -64,15 +64,12 @@ usage() {
  echo "                       <sessions_folder> if scene is 'general'."
  echo "--datafile             Required ==> Specify input data file name if scene is "
  echo "                       'general'."
- echo "--sessionsbatchfile    Absolute path to local batch file with pre-configured "
- echo "                       processing parameters. " 
+ echo "--batchfile            Absolute path to local batch file with pre-configured "
+ echo "                       processing parameters." 
  echo ""
  echo "                       Note: It can be used in combination with --sessions to "
  echo "                       select only specific cases to work on from the batch "
- echo "                       file." 
- echo ""
- echo "                       Note: If --sessions is omitted in favor of "
- echo "                       --sessionsbatchfile OR if batch file is provided as "
+ echo "                       file. If --sessions is omitted OR provided as "
  echo "                       input for --sessions flag, then all cases from the batch "
  echo "                       file are processed."
  echo "--overwrite            Delete prior QC run: yes/no [no]"
@@ -111,12 +108,6 @@ usage() {
  echo "--suffix               Allows user to specify unique suffix or to parse a time "
  echo "                       stamp from QuNex bash wrapper."
  echo "                       Default is [<session_id>_<timestamp>]"
- echo "--batchfile            Batch file with pre-configured BOLD tags for quick "
- echo "                       filtering of BOLD runs." 
- echo ""
- echo "                       Note: This file needs to be created *manually* prior to "
- echo "                       starting function and absolute path provided in the "
- echo "                       function."
  echo ""
  echo "DWI INPUTS"
  echo "----------"
@@ -420,6 +411,11 @@ fi
 if [ -z "${BOLDS}" ]; then
     BOLDS=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
 fi
+# set to all if not specified
+if [ -z "${BOLDS}" ]; then
+    BOLDS="all"
+fi
+
 BOLDRUNS="${BOLDS}"
 BOLDDATA="${BOLDS}"
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
@@ -436,9 +432,9 @@ Suffix=`opts_GetOpt "--suffix" $@`
 SceneZip=`opts_GetOpt "--scenezip" $@`
 
 # -- Parse batch file input
-SessionBatchFile=`opts_GetOpt "--sessionsbatchfile" $@`
+SessionBatchFile=`opts_GetOpt "--batchfile" $@`
 if [ -z "${SessionBatchFile}" ]; then
-    SessionBatchFile=`opts_GetOpt "--batchfile" $@`
+    SessionBatchFile=`opts_GetOpt "--sessionsbatchfile" $@`
 fi
 
 # -- Check general required parameters
@@ -555,14 +551,6 @@ if [ "$Modality" = "DWI" ]; then
 fi
 # -- BOLD modality-specific settings:
 if [ "$Modality" = "BOLD" ]; then
-    # - Check if BOLDS parameter is empty:
-    if [ -z "$BOLDS" ]; then 
-        echo ""
-        echo "Note: BOLD input list not specified. Relying ${SessAcqInfoFile} individual information files."
-        BOLDS="${SessAcqInfoFile}"
-        echo ""
-    fi
-    
     if [ -z "$BOLDfc" ]; then
         # -- Set BOLD prefix correctly
         if [ -z "$BOLDPrefix" ]; then 
@@ -1232,6 +1220,16 @@ main() {
            if [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
                SessAcqInfoFile="subject_hcp.txt"
            fi
+        fi
+
+        # - If BOLDS parameter is empty then use session acquisition file
+        if [ "$Modality" = "BOLD" ]; then
+            if [ -z "$BOLDS" ]; then 
+                echo ""
+                echo "Note: BOLD input list not specified. Relying ${SessAcqInfoFile} individual information files."
+                BOLDS="${SessAcqInfoFile}"
+                echo ""
+            fi
         fi
 
         CASEName="${CASE}${HCPSuffix}"
