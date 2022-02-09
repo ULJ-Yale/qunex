@@ -607,6 +607,11 @@ if [ "${DATAFormat}" == 'BIDS' ]; then BIDSFormat="yes"; else BIDSFormat="no"; f
 
 AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
 
+# =-=-=-=-=-= import_dicom OPTIONS =-=-=-=-=-=
+#
+AddImageType=`opts_GetOpt "--add_image_type" $@`
+AddJsonInfo=`opts_GetOpt "--add_json_info" $@`
+
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 #
 # -- compute_bold_fc input flags
@@ -2062,7 +2067,7 @@ fi
             cyaneho " ===> RUNNING RunTurnkey step ~~~ import_dicom"
             echo ""
 
-            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"
