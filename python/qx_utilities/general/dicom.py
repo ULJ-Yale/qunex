@@ -47,6 +47,7 @@ import general.qximg as qxi
 import general.exceptions as ge
 
 from datetime import datetime
+from gzip import GzipFile
 
 try:
     import pydicom.filereader as dfr
@@ -2135,7 +2136,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
     if nameformat is None:
         nameformat = r"(?P<subject_id>.*)"
 
-    igz = re.compile(r'.*\.gz')
+    igz = re.compile(r'^.*\.gz$')
     
     try:
         if add_image_type == None or add_image_type == '':
@@ -2443,30 +2444,23 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                             fnum += 1
 
                             print("...  extracting:", sf.filename, sf.file_size)
-
-                            fdata = z.read(sf)
-
-                            # --- do we have par / rec / log
-
-                            if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                                tfile = os.path.basename(sf.filename)
-                                for ext in ['rec', 'par']:
-                                    if tfile.split('.')[-1] == ext:
-                                        tfile = tfile[:-3] + ext.upper()
-                            else:
-                                if igz.match(sf.filename):
-                                    gzname = os.path.join(ifolder, str(dnum), str(fnum) + ".gz")
-                                    fout = open(gzname, 'wb')
-                                    fout.write(fdata)
-                                    fout.close()
-                                    fin = gzip.open(gzname, 'rb')
-                                    fdata = fin.read()
-                                    fin.close()
-                                    os.remove(gzname)
-                                tfile = str(fnum)
-                            fout = open(os.path.join(ifolder, str(dnum), tfile), 'wb')
-                            fout.write(fdata)
-                            fout.close()
+                           
+                            with z.open(sf) as fobj:
+                                # --- do we have par / rec / log
+                                if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
+                                    tfile = os.path.basename(sf.filename)
+                                    for ext in ['rec', 'par']:
+                                        if tfile.split('.')[-1] == ext:
+                                            tfile = tfile[:-3] + ext.upper()
+                                else:
+                                    tfile = str(fnum)
+                                
+                                with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
+                                    if igz.match(sf.filename):
+                                        with GzipFile(fileobj=fobj) as gz_fobj:
+                                            shutil.copyfileobj(gz_fobj, fout)
+                                    else:
+                                        shutil.copyfileobj(fobj, fout)
 
                     z.close()
                     print("     -> done!")
@@ -2488,30 +2482,22 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
                             print("...  extracting:", tarinfo.name, tarinfo.size)
 
-                            fdata = tar.extractfile(tarinfo)
-
-                            # --- do we have par / rec / log
-
-                            if tarinfo.name.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                                tfile = os.path.basename(tarinfo.name)
-                                for ext in ['rec', 'par']:
-                                    if tfile.split('.')[-1] == ext:
-                                        tfile = tfile[:-3] + ext.upper()
-                            else:
-                                if igz.match(tarinfo.name):
-                                    gzname = os.path.join(ifolder, str(dnum), str(fnum) + ".gz")
-                                    fout = open(gzname, 'wb')
-                                    fout.write(fdata)
-                                    fout.close()
-                                    fin = gzip.open(gzname, 'rb')
-                                    fdata = fin.read()
-                                    fin.close()
-                                    os.remove(gzname)
-                                tfile = str(fnum)
-
-                            fout = open(os.path.join(ifolder, str(dnum), tfile), 'wb')
-                            fout.write(fdata.read())
-                            fout.close()
+                            with tar.extractfile(tarinfo) as fobj:
+                                # --- do we have par / rec / log
+                                if tarinfo.name.split('.')[-1].lower() in ['par', 'rec', 'log']:
+                                    tfile = os.path.basename(tarinfo.name)
+                                    for ext in ['rec', 'par']:
+                                        if tfile.split('.')[-1] == ext:
+                                            tfile = tfile[:-3] + ext.upper()
+                                else:
+                                    tfile = str(fnum)
+                                
+                                with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
+                                    if igz.match(sf.filename):
+                                        with GzipFile(fileobj=fobj) as gz_fobj:
+                                            shutil.copyfileobj(gz_fobj, fout)
+                                    else:
+                                        shutil.copyfileobj(fobj, fout)
 
                     tar.close()
                     print("     -> done!")
