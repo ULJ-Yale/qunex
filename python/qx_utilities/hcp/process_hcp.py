@@ -847,8 +847,22 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         if run:
             if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
+                if overwrite:
+                    if os.path.exists(tfile):
+                        os.remove(tfile)
+
+                    # additional cleanup for stability purposes
+                    image = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')
+                    if os.path.exists(image)
+                        os.remove(image)
+
+                    brain = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz') 
+                    if os.path.exists(brain)
+                        os.remove(brain)
+
+                    bias = os.path.join(hcp['T1w_folder'], 'BiasField_acpc_dc.nii.gz')
+                    if os.path.exists(bias)
+                        os.remove(bias)
 
                 r, endlog, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP PreFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
