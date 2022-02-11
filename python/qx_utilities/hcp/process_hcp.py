@@ -851,7 +851,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(tfile):
                         os.remove(tfile)
 
-                    # additional cleanup for stability purposes
+                    # additional cleanup for stability and compatibility purposes
                     image = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')
                     if os.path.exists(image):
                         os.remove(image)
