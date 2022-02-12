@@ -303,9 +303,9 @@ def readDICOMBase(filename):
     # try partial read
     try:
         if '.gz' in filename:
-            f = gz.open(filename, 'r')
+            f = gz.open(filename, 'rb')
         else:
-            f = open(filename, 'r')
+            f = open(filename, 'rb')
         d = dfr.read_partial(f, stop_when=_at_frame)
         f.close()
         return d
@@ -318,6 +318,9 @@ def readDICOMBase(filename):
         except:
             # print(" ===> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename))
             return None
+    finally:
+        if f is not None and not f.closed:
+            f.close()
 
 
 def getDicomTime(info):
