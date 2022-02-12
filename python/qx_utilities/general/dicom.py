@@ -470,7 +470,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     Before running, the command check for presence of existing NIfTI files. The
     behavior when finding them is defined by clean parameter. If set to 'ask',
     it will ask interactively, what to do. If set to 'yes' it will remove any
-    existing files and proceede. If set to 'no' it will leave them and abort.
+    existing files and proceed. If set to 'no' it will leave them and abort.
 
     Before running, the command also checks whether DICOM files might be
     gzipped. If that is the case, the response depends on the setting of the
@@ -849,9 +849,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                        (yes), leave them be and abort (no) or ask interactively 
                        (ask). [ask]
 
-    --gzip             After the dicom files were processed whether to gzip them
-                       (yes), leave them ungzipped (no) or ask interactively
-                       (ask). [ask]
+    --gzip             Whether to gzip individual DICOM files after they were
+                       processed ('file'), gzip a DICOM sequence or acquisition 
+                       as an tar.gz archive ('folder'), or leave them ungzipped 
+                       ('no'). Valid options are 'folder', 'file', 'no', 'ask'. 
+                       ['ask']
 
     --sessionid        The id code to use for this session. If not provided, the
                        session id is extracted from dicom files.
@@ -1016,7 +1018,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     ::
 
-        qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes parelements=3
+        qunex dicom2nii folder=. clean=yes unzip=yes gzip=folder parelements=3
     
     
     Multiple sessions example::
@@ -1073,7 +1075,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             print("\nWARNING: The following files already exist:")
             for p in prior:
                 print(p)
-            clean = input("\nDo you want to delete the existing NIfTI files? [no] > ")
+            clean = input("Do you want to delete the existing NIfTI files? [no] > ")
         if clean == "yes":
             print("\nDeleting preexisting files:")
             for p in prior:
@@ -1085,19 +1087,17 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     # gzipped files
 
-    gzipped = glob.glob(os.path.join(dmcf, "*", "*.dcm.gz"))
-    if len(gzipped) > 0:
+    zipped_file = glob.glob(os.path.join(dmcf, "*", "*.dcm.gz"))
+    zipped_folder = glob.glob(os.path.join(dmcf, "*.tar.gz"))
+    if len(zipped_file) > 0 or len(zipped_folder) > 0:
         if unzip == 'ask':
             print("\nWARNING: DICOM files have been compressed using gzip.")
             unzip = input("\nDo you want to unzip the existing files? [no] > ")
         if unzip == "yes":
             if verbose:
                 print("\nUnzipping files (this might take a while)")
-            calls = []
-            gpath = os.path.join(os.path.abspath(dmcf), "*", "*.dcm.gz")
-            gpath = gpath.replace(" ", "\\ ")
-            calls.append({'name': 'gunzip: ' + dmcf, 'args': 'gunzip %s' % (gpath), 'sout': None, 'shell': True})
-            gc.runExternalParallel(calls, cores=parelements, prepend="---> ")
+            print(dmcf)
+            _unzip_dicom(dmcf, parelements)
         else:
             raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
@@ -1414,17 +1414,141 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     # gzip files
 
     if gzip == 'ask':
-        print("\nTo save space, original DICOM files can be compressed.")
-        gzip = input("\nDo you want to gzip DICOM files? [no] > ")
-    if gzip == "yes":
+        print("\nTo save space and file count, original DICOM files can be compressed and archived")
+        while gzip not in ['folder', 'file', 'no']:
+            gzip = input("\nDo you want to gzip DICOM files? [folder/file/no] > ")
+            gzip = gzip.strip()
+    if gzip == 'file' or gzip == 'folder':
         if verbose:
-            print("\nCompressing dicom files in folders:")
+            print("\nCompressing dicom with option {}:".format(gzip))
         calls = []
         for folder in folders:
-            calls.append({'name': 'gzip: ' + folder, 'args': ['gzip'] + glob.glob(os.path.join(os.path.abspath(folder), "*.dcm")) + glob.glob(os.path.join(os.path.abspath(folder), "*.REC")), 'sout': None})
-        gc.runExternalParallel(calls, cores=parelements, prepend="---> ")
+            calls.append({
+                "name": "_zip_dicom",
+                "function": _zip_dicom,
+                "args": {"dicom_folder": folder, "gzip": gzip},
+                "logfile": None
+            })
+        gc.runInParallel(calls, cores=parelements, prepend="---> ")
 
     return
+
+
+def _zip_dicom(dicom_folder, gzip):
+    if not os.path.exists(dicom_folder):
+        raise ge.CommandFailed('_zip_dicom', '')
+    if not os.path.isdir(dicom_folder):
+        raise ge.CommandFailed('_zip_dicom', '')
+
+    dicom_dir, dicom_num = os.path.split(dicom_folder)
+    if gzip == 'folder':
+
+        dicom_folder_zip = os.path.join(dicom_dir, '{}.tar.gz'.format(dicom_num))
+        dicom_folder_zip_tmp = os.path.join(dicom_dir, '.{}.tar.gz'.format(dicom_num))
+
+        if os.path.exists(dicom_folder_zip):
+            os.remove(dicom_folder_zip)
+        if os.path.exists(dicom_folder_zip_tmp):
+            os.remove(dicom_folder_zip_tmp)
+
+        p = subprocess.run(['tar', 'czf', dicom_folder_zip_tmp, os.path.basename(dicom_folder)], cwd=os.path.dirname(dicom_folder))
+
+        if p.returncode != 0:
+            raise ge.CommandFailed("_zip_dicom", '')
+        
+        os.rename(dicom_folder_zip_tmp, dicom_folder_zip)
+        shutil.rmtree(dicom_folder)
+
+    elif gzip == 'file':
+        p = subprocess.run(['gzip', '-r', dicom_folder])
+
+        if p.returncode != 0:
+            raise ge.CommandFailed("_zip_dicom", '')
+
+def _get_zip_file_content_iterator(packet_name):
+    def zip_gen():
+        try:
+            z = zipfile.ZipFile(packet_name, 'r')
+            fobj = None
+            for f in z.infolist():
+                fobj = z.open(f, "rb")
+                yield f, fobj
+                fobj.close()
+        except:
+            e = sys.exc_info()[0]
+            raise ge.CommandFailed("_get_zip_file_content_iterator", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (packet_name, e), "Please check your data!")
+        finally:
+            if z is not None:
+                z.close()
+            if fobj is not None:
+                fobj.close()
+
+    def tar_gen():
+        try:
+            tar = tarfile.open(packet_name, 'r')
+            fobj = None
+            for tarinfo in tar:
+                if tarinfo.isfile():
+                    fobj = tar.extractfile(tarinfo)
+                    yield tarinfo.name, fobj
+                    fobj.close()
+        except:
+            pass
+        finally:
+            if tar is not None:
+                tar.close()
+            if fobj is not None:
+                fobj.close()
+    
+    if not os.path.exists(packet_name):
+        raise ge.CommandFailed('_get_zip_file_content_iterator', "Packet does not exist {}".format(packet_name))
+
+    if packet_name.endswith('zip'):
+        return zip_gen()
+    elif re.search(r"\.tar$|\.tar\.gz$|\.tar\.bz2$|\.tarz$|\.tar\.bzip2$|\.tgz$", packet_name):
+        return tar_gen()
+    else:
+        raise ge.CommandFailed('_get_zip_file_content_iterator', "Unknown packet type")
+
+def _unzip_dicom_folder(dicom_packet, dicom_folder):
+    if not os.path.exists(dicom_folder):
+        os.mkdir(dicom_folder)
+    
+    for fpath, fobj in _get_zip_file_content_iterator(dicom_packet):
+        extract_path = os.path.join(dicom_folder, os.path.basename(fpath))
+        with open(extract_path, "wb") as f:
+            if fpath.endswith(".gz"):
+                with gz.GzipFile(fileobj=fobj) as gzobj:
+                    shutil.copyfileobj(gzobj, f)
+            else:
+                shutil.copyfileobj(fobj, f)
+
+
+def _unzip_dicom_file(dicom_folder):
+    p = subprocess.run(["gunzip", "-r", dicom_folder])
+    if p.returncode != 0:
+        ge.CommandError("_unzip_dicom_file")
+
+
+def _unzip_dicom(dicom_root_folder, parelements):
+    calls = []
+    for i in os.listdir(dicom_root_folder):
+        fullpath = os.path.join(dicom_root_folder, i)
+        if os.path.isfile(fullpath):
+            match_result = re.match(r"^(?P<dcm_name>\d+)(\.zip|\.tar|\.tar\.gz|\.tar\.bz2|\.tar\.xz|\.tarz|\.tar\.bzip2|\.tgz)$", i)
+            if match_result:
+                dcm_name = match_result.group("dcm_name")
+                print(dcm_name)
+                if not dcm_name.isdigit():
+                    continue
+                _unzip_dicom_folder(fullpath,  os.path.join(dicom_root_folder, dcm_name))
+
+    for i in os.listdir(dicom_root_folder):
+        fullpath = os.path.join(dicom_root_folder, i)
+        if os.path.isdir(fullpath):
+            glob_iter = glob.iglob(os.path.join(fullpath, "*.gz"))
+            if next(glob_iter, None):
+                _unzip_dicom_file(fullpath)
 
 
 def sort_dicom(folder=".", **kwargs):
@@ -1510,29 +1634,17 @@ def sort_dicom(folder=".", **kwargs):
         inbox = os.path.join(folder, 'inbox')
         if not os.path.exists(inbox):
             raise ge.CommandFailed("sort_dicom", "Inbox folder not found", "Please check your paths! [%s]" % (os.path.abspath(inbox)), "Aborting")
-        files = glob.glob(os.path.join(inbox, "*"))
-        if len(files):
-            files = []
-            for droot, _, dfiles in os.walk(inbox):
-                for dfile in dfiles:
-                    files.append(os.path.join(droot, dfile))
-            print("---> Processing %d files from %s" % (len(files), inbox))
-        else:
-            raise ge.CommandFailed("sort_dicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
+        files_iter = glob.iglob(os.path.join(inbox, "**", "*"))
+        # if len(files):
+        #     files = []
+        #     for droot, _, dfiles in os.walk(inbox):
+        #         for dfile in dfiles:
+        #             files.append(os.path.join(droot, dfile))
+        #     print("---> Processing %d files from %s" % (len(files), inbox))
+        # else:
+        #     raise ge.CommandFailed("sort_dicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
 
     info = None
-    for dcm in files:
-        ext = dcm.split('.')[-1]
-        if ext.lower() == 'par':
-            info = readPARInfo(dcm)
-        else:
-            try:
-                info = readDICOMInfo(dcm)
-            except:
-                pass                
-        if info and info['sessionid']:
-                print("---> Sorting dicoms for %s scanned on %s" % (info['sessionid'], info['datetime']))
-                break
 
     if not os.path.exists(dcmf):
         os.makedirs(dcmf)
@@ -1542,7 +1654,9 @@ def sort_dicom(folder=".", **kwargs):
 
     dcmn = 0
 
-    for dcm in files:
+    show_session_info = True
+
+    for dcm in files_iter:
         ext = dcm.split('.')[-1]
 
         if os.path.basename(dcm)[0:4] in ["XX_0", "PS_0"]:
@@ -1563,6 +1677,11 @@ def sort_dicom(folder=".", **kwargs):
                 info = readDICOMInfo(dcm)                
             except:
                 continue
+        
+        if show_session_info:
+            if info and info['sessionid']:
+                print("---> Sorting dicoms for %s scanned on %s" % (info['sessionid'], info['datetime']))
+                show_session_info = False
 
         if info['seriesNumber'] is None:
             print("---> Skipping file", dcm)
@@ -1608,6 +1727,8 @@ def sort_dicom(folder=".", **kwargs):
 
             tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (cleanName(info['sessionid']), sqid, sop, dext))
             doFile(dcm, tgf)
+    
+    print("---> Processed %d dicom files from %s" % (dcmn, inbox))
 
     print("---> Done")
     return 
@@ -1735,9 +1856,9 @@ def split_dicom(folder=None):
     return
 
 
-def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
+def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='folder', verbose='yes', overwrite='no'):
     """
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [overwrite="no"] [verbose=yes]``
 
     Automatically processes packets with individual sessions's DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -1836,9 +1957,11 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                           gzipped. Valid options are 'yes', 'no', and 'ask'.
                           ['yes']
 
-    --gzip                Whether to gzip individual DICOM files after they were
-                          processed. Valid options are 'yes', 'no', 'ask'.
-                          ['yes']
+    --gzip                Whether to gzip individual DICOM files after they 
+                          were processed ('file'), gzip a DICOM sequence or 
+                          acquisition as an tar.gz archive ('folder'), or 
+                          leave them ungzipped ('no'). Valid options are 
+                          'folder', 'file', 'no', 'ask'. ['folder']
 
     --overwrite           Whether to remove existing data in the dicom and nii 
                           folders. ['no']
