@@ -36,7 +36,7 @@ import shutil
 import subprocess
 import zipfile
 import tarfile
-import gzip
+import gzip as gz
 import csv
 import json
 
@@ -47,7 +47,6 @@ import general.qximg as qxi
 import general.exceptions as ge
 
 from datetime import datetime
-from gzip import GzipFile
 
 try:
     import pydicom.filereader as dfr
@@ -304,7 +303,7 @@ def readDICOMBase(filename):
     # try partial read
     try:
         if '.gz' in filename:
-            f = gzip.open(filename, 'r')
+            f = gz.open(filename, 'r')
         else:
             f = open(filename, 'r')
         d = dfr.read_partial(f, stop_when=_at_frame)
@@ -2457,7 +2456,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                                 
                                 with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
                                     if igz.match(sf.filename):
-                                        with GzipFile(fileobj=fobj) as gz_fobj:
+                                        with gz.GzipFile(fileobj=fobj) as gz_fobj:
                                             shutil.copyfileobj(gz_fobj, fout)
                                     else:
                                         shutil.copyfileobj(fobj, fout)
@@ -2494,7 +2493,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                                 
                                 with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
                                     if igz.match(sf.filename):
-                                        with GzipFile(fileobj=fobj) as gz_fobj:
+                                        with gz.GzipFile(fileobj=fobj) as gz_fobj:
                                             shutil.copyfileobj(gz_fobj, fout)
                                     else:
                                         shutil.copyfileobj(fobj, fout)
