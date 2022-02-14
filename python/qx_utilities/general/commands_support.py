@@ -253,8 +253,6 @@ deprecated_values = {
         'standard': 'automated'
     },
     'hcp_folderstructure': {'initial': 'hcpya'},
-    'hcp_processing_mode':  {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
-    'hcp_filename':         {'name': 'original', 'number': 'standard'}
 }
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 
