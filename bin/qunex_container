@@ -883,51 +883,44 @@ def main(args=None):
     # array for storing session ids
     sessionids_array = []
 
-    # if scheduler is not None then setup parallelism
-    if scheduler is not None and sessions is not None:
+    # do not run in parallel multi_session/longitudinal commands
+    multi_session_command = False
+    multi_commands = ["longitudinal_freesurfer", "longitudinalFS", "hcp_temporal_ica", "hcp_make_average_dataset"]
+    if any(c in command for c in multi_commands):
+        multi_session_command = True
+
+    # if scheduler is not None or we have a multi_session_command then setup parallelism
+    if scheduler is not None and sessions is not None and not multi_session_command:
         # if parjobs is None each session is its own job
         if parjobs is None:
             parjobs = 0
 
-            # append to array
-            while getsessionids:
-                parjobs += 1
+            # split to chunks
+            for i in range(0, len(getsessionids), parsessions):
+                sessionids_array.append(','.join(getsessionids[i:i + parsessions]))
 
-                sessionids_chunk = [getsessionids.pop(0) for e in range(parsessions)]
-                sessionids_array.append(','.join(sessionids_chunk))
+            # calculate the number of parallel jobs
+            parjobs = len(sessionids_array)
 
-        # else split jobs into chunkse
+        # else split jobs into chunks
         else:
             # how big are chunks of sessions
             chunks = int(math.ceil(n_sessions / float(parsessions)))
-
-            chunk_size = int(math.ceil(n_sessions / float(chunks)))
 
             # if chunks is lower then parjobs tweak parjobs
             if chunks < parjobs:
                 parjobs = chunks
 
             # init queues
-            sessionids_array = [""] * parjobs
+            sessionids_arrays = [[] for _ in range(parjobs)]
 
             # divide sessions among jobs
-            job = 0
-            start = 0
-            for i in range(chunks):
-                # get job index
-                job = i % parjobs
-
-                if start < n_sessions:
-                    # get chunk
-                    sessionids_chunk = getsessionids[start:start+chunk_size]
-                    # add comma if not empty
-                    if sessionids_array[job] != "":
-                        sessionids_array[job] = sessionids_array[job] + ","
-                    # append chunk
-                    sessionids_array[job] = sessionids_array[job] + ",".join(sessionids_chunk)
-                
-                # increase start index
-                start = start + chunk_size
+            for idx, sessionid in enumerate(getsessionids):
+                job_id = idx % parjobs
+                sessionids_arrays[job_id].append(sessionid)
+            
+            for s in sessionids_arrays:
+                sessionids_array.append(",".join(s))
 
     else:
         # do not run in parallel

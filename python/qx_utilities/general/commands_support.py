@@ -236,7 +236,8 @@ deprecated_parameters = {
     'hcp_bold_stcorrint':      'hcp_bold_slicetimerparams',
     'hcp_bold_sequencetype': None,
     'hcp_biascorrect_t1w': None,
-    'hcp_Pipeline': 'hcp_pipeline'
+    'hcp_Pipeline': 'hcp_pipeline',
+    'args': 'palm_args'
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
@@ -252,8 +253,6 @@ deprecated_values = {
         'standard': 'automated'
     },
     'hcp_folderstructure': {'initial': 'hcpya'},
-    'hcp_processing_mode':  {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
-    'hcp_filename':         {'name': 'original', 'number': 'standard'}
 }
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 

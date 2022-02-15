@@ -185,7 +185,6 @@
 # _hcp_prefs_template_res    The resolution (in mm) of the structural images templates to use in the prefs step [0.7]
 # _hcp_sephaseneg            Spin echo field map volume with a negative phase encoding direction: LR, RL, NONE [NONE]
 # _hcp_sephasepos            Spin echo field map volume with a positive phase encoding direction: LR, RL, NONE [NONE]
-# _hcp_bold_smoothFWHM       Whether slices were acquired in an interleaved fashion (odd or even) or not (empty) [2]
 #
 # # --- hcp_freesurfer options
 # _hcp_fs_seed               Recon-all seed value. If not specified, none will be used. HCP Pipelines specific! []
@@ -223,6 +222,9 @@
 # _hcp_bold_topupconfig      A full path to the topup configuration file to use. Set to '' if the default is to be used or of TOPUP distortion correction is not used.
 # _hcp_bold_preregistertool  What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt [epi_reg]
 # _hcp_bold_dof              Degrees of freedom for EPI-T1 FLIRT. Empty to use HCP default []
+#
+# # --- hcp_fmri_surface options
+# _hcp_bold_smoothFWHM       The size of the smoothing kernel (in mm) [2]
 #
 # # --- hcp_diffusion options
 # _hcp_dwi_echospacing       Echo Spacing or Dwelltime of DWI images [image specific]

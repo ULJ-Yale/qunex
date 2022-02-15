@@ -120,6 +120,8 @@ hcp_pre_freesurfer                      Runs HCP PreFreeSurfer pipeline.
 hcp_reapply_fix                         Runs HCP ReApplyFix pipeline.
 hcp_asl                                 Runs HCP ASL pipeline.
 hcp_task_fmri_analysis                  Runs HCP fMRI task analysis pipeline.
+hcp_temporal_ica                        Runs HCP temporal ICA pipeline.
+hcp_make_average_dataset                Runs HCP make average dataset pipeline.
 import_bids                             Maps a BIDS dataset to the QuNex Suite file structure.
 import_dicom                            Processes sessions's DICOM or PAR/REC files and generates NIfTI files.
 import_hcp                              Maps HCPLS data to the QuNex Suite file structure. 
@@ -358,20 +360,21 @@ def printHelp(com):
         # -> gmri commands
         for c, _ in gcom.commands.items():
             available_commands.append(c)
-        # -> complex processing commands
+        # -> processing commands
         for l in gp.calist:
             if len(l):
-                # deprecated command abbreviations 
                 available_commands.append(l[1])
         # -> longitudinal processing commands
         for l in gp.lalist:
             if len(l):
-                # deprecated command abbreviations 
+                available_commands.append(l[1])
+        # -> multi-sesssion processing commands
+        for l in gp.malist:
+            if len(l):
                 available_commands.append(l[1])
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
-                # deprecated command abbreviations 
                 available_commands.append(l[1])
         # -> matlab wrapped commands
         for l in gm.functions.keys():

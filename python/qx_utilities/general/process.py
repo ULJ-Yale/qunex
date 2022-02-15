@@ -294,7 +294,6 @@ arglist = [
            ['hcp_fs_longitudinal',    '',                                         str,    "Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO]."],
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
            ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' folder. '' by default."],
-           ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
            ['hcp_nifti_tail',          '',                                        str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
 
            ['# --- hcp_pre_freesurfer options'],
@@ -313,7 +312,7 @@ arglist = [
            ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution (in mm) of the structural images templates to use in the prefs step."],
            ['hcp_sephaseneg',         '',                                         str,    "spin echo field map volume with a negative phase encoding direction: (AP, PA, LR, RL) ['']."],
            ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) ['']."],
-           ['hcp_bold_smoothFWHM',    '',                                         isNone, "Whether slices were acquired in an interleaved fashion (odd or even) or not (empty)."],
+           ['hcp_bold_smoothFWHM',    '2',                                         int,   "The size of the smoothing kernel (in mm)."],
 
            ['# --- hcp_freesurfer options'],
            ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
@@ -367,6 +366,7 @@ arglist = [
            ['hcp_dwi_cudaversion',    '',                                         isNone, "If using the GPU-enabled version of eddy, then this option can be used to specify which eddy_cuda binary version to use. If X.Y is specified, then FSLDIR/bin/eddy_cudaX.Y will be used. Note that CUDA 9.1 is installed in the container."],
            ['hcp_dwi_nogpu',          None,                                       flag, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
            ['hcp_dwi_selectbestb0',   None,                                       flag, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+           ['hcp_dwi_even_slices',    None,                                       flag, "If set will ensure the input images to FSL's topup and eddy have an even number of slices by removing one slice if necessary. This behaviour used to be the default, but is now optional, because discarding a slice is incompatible with using slice-to-volume correction in FSL's eddy."],
 
            ['# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options'],
            ['hcp_icafix_bolds',       '',                                         isNone, "A string specifying a list of bolds for ICAFix. Also used later in PostFix, ReApplyFix, MSMAll and DeDriftAndResample. Defaults to ''."],
@@ -433,6 +433,48 @@ arglist = [
            ['hcp_asl_use_t1', None,                                               flag,   "If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl."],
            ['hcp_asl_nobandingcorr', None,                                        flag,   "If this option is provided, MT and ST banding corrections won’t be applied."],
 
+           ['# --- hcp_temporal_ica options'],
+           ['hcp_tica_bolds', '',                                                 isNone,  "A comma separated list of fmri run names. Set to all session BOLDs by default."],
+           ['hcp_tica_outfmriname',  'rfMRI_REST',                                str,     "Name to use for tICA pipeline outputs."],
+           ['hcp_tica_surfregname', '',                                           isNone,  "The registration string corresponding to the input files."],
+           ['hcp_tica_procstring', '',                                            isNone,  "File name component representing the preprocessing already done, e.g. _Atlas_MSMAll_hp0_clean."],
+           ['hcp_outgroupname', '',                                               isNone,  "Name to use for the group output folder."],
+           ['hcp_tica_timepoints', '',                                            isNone,  "Output spectra size for sICA individual projection, RunsXNumTimePoints, like '4800'."],
+           ['hcp_tica_num_wishart', '',                                           isNone,  "How many wisharts to use in icaDim."],
+           ['hcp_tica_mrfix_concat_name', '',                                     isNone,  "If multi-run FIX was used, you must specify the concat name with this option."],
+           ['hcp_tica_icamode', '',                                               isNone,  "Whether to use parts of a previous tICA run"],
+           ['hcp_tica_precomputed_clean_folder', '',                              isNone,  "Group folder containing an existing tICA cleanup to make use of for REUSE or INITIALIZE modes."],
+           ['hcp_tica_precomputed_fmri_name', '',                                 isNone,  "The output fMRI name used in the previously computed tICA."],
+           ['hcp_tica_precomputed_group_name', '',                                isNone,  "The group name used during the previously computed tICA."],
+           ['hcp_tica_extra_output_suffix', '',                                   isNone,  "Add something extra to most output filenames, for collision avoidance."],
+           ['hcp_tica_pca_out_dim', '',                                           isNone,  "Override number of PCA components to use for group sICA."],
+           ['hcp_tica_pca_internal_dim', '',                                      isNone,  "Override internal MIGP dimensionality."],
+           ['hcp_tica_migp_resume', '',                                           isNone,  "Resume from a previous interrupted MIGP run, if present. Set to NO to disable this behavior."],
+           ['hcp_tica_sicadim_iters', '',                                         isNone,  "Number of iterations or mode for estimating sICA dimensionality, default 100."],
+           ['hcp_tica_sicadim_override', '',                                      isNone,  "Use this dimensionality instead of icaDim's estimate., default 100."],
+           ['hcp_low_sica_dims', '',                                              isNone,  "The low sICA dimensionalities to use for determining weighting for individual projection."],
+           ['hcp_tica_reclean_mode', '',                                          isNone,  "Whether the data should use ReCleanSignal.txt for DVARS."],
+           ['hcp_tica_starting_step', '',                                         isNone,  "What step to start processing at, one of: MIGP, GroupSICA, indProjSICA, ConcatGroupSICA, ComputeGroupTICA, indProjTICA, ComputeTICAFeatures, ClassifyTICA, CleanData."],
+           ['hcp_tica_stop_after_step', '',                                       isNone,  "What step to stop processing after, same valid values as for hcp_tica_starting_step."],
+           ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
+           ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
+           ['hcp_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+           ['hcp_tica_config_out', None,                                          flag,    "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
+
+
+           ['# --- hcp_make_average_dataset options'],
+           ['hcp_surface_atlas_dir',        '',                                                             isNone,  "Path to the location of the standard surfaces."],
+           ['hcp_grayordinates_dir',        '',                                                             isNone,  "Path to the location of the standard grayorinates space."],
+           ['hcp_free_surfer_labels',       '',                                                             isNone,  "Path to the location of the FreeSurfer look up table file."],
+           ['hcp_pregradient_smoothing',    '1',                                                            int,     "Sigma of the pregradient smoothing."],
+           ['hcp_mad_regname',              'MSMAll',                                                       str,     "Name of the registration."],
+           ['hcp_mad_videen_maps',          'corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC',    str,     "Maps you want to use for the videen palette."],
+           ['hcp_mad_greyscale_maps',       'sulc,curvature',                                               str,     "Maps you want to use for the greyscale palette."],
+           ['hcp_mad_distortion_maps',      'SphericalDistortion,ArealDistortion,EdgeDistortion',           str,     "Distortion maps."],
+           ['hcp_mad_gradient_maps',        'MyelinMap_BC,SmoothedMyelinMap_BC,corrThickness',              str,     "Maps you want to compute the gradietn on."],
+           ['hcp_mad_std_maps',             'sulc@curvature,corrThickness,thickness,MyelinMap_BC',          str,     "Maps you want to compute the standard deviation on."],
+           ['hcp_mad_multi_maps',           'NONE',                                                         str,     "Maps with more than one map (column) that cannot be merged and must be averaged."],
+
            ['# --- HCP file checking'],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file)."],
            ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file)."],
@@ -463,8 +505,9 @@ flaglist = [
     ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',         True, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
     ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',  True, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
     ['hcp_asl_use_t1',           'hcp_asl_use_t1',        True, 'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
-    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', True, 'If this option is provided, MT and ST banding corrections won’t be applied.'],
+    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', True, 'If this option is provided, MT and ST banding corrections will not be applied.'],
     ['hcp_task_vba',             'hcp_task_vba',          True, "VBA YES/NO."],
+    ['hcp_tica_config_out',      'hcp_tica_config_out',   False, "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."]
 ]
 
 
@@ -491,51 +534,63 @@ options = {}
 #   Empty lists denote there should be a blank line when printing out a command
 #   list.
 
-calist = [['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,                       "Map HCP preprocessed data to sessions' image folder."],
-          [],
-          ['gbd',     'get_bold_data',              workflow.get_bold_data,                         "Copy functional data from 4dfp (NIL) processing pipeline."],
-          ['bbm',     'create_bold_brain_masks',    workflow.create_bold_brain_masks,               "Create brain masks for BOLD runs."],
-          [],
-          ['seg',     'run_basic_segmentation',     fs.runBasicStructuralSegmentation,              "Run basic structural image segmentation."],
-          ['gfs',     'get_fs_data',                fs.checkForFreeSurferData,                      "Copy existing FreeSurfer data to sessions' image folder."],
-          ['fss',     'run_subcortical_fs',         fs.runFreeSurferSubcorticalSegmentation,        "Run subcortical freesurfer segmentation."],
-          ['fsf',     'run_full_fs',                fs.runFreeSurferFullSegmentation,               "Run full freesurfer segmentation"],
-          [],
-          ['cbs',     'compute_bold_stats',         workflow.compute_bold_stats,                    "Compute BOLD movement and signal statistics."],
-          ['csr',     'create_stats_report',        workflow.create_stats_report,                   "Create BOLD movement statistic reports and plots."],
-          ['ens',     'extract_nuisance_signal',    workflow.extract_nuisance_signal,               "Extract nuisance signal from BOLD images."],
-          [],
-          ['bpp',     'preprocess_bold',            workflow.preprocess_bold,                       "Preprocess BOLD images (using old Matlab code)."],
-          ['cpp',     'preprocess_conc',            workflow.preprocess_conc,                       "Preprocess conc bundle of BOLD images (using old Matlab code)."],
-          [],
-          ['hcp1',    'hcp_pre_freesurfer',         process_hcp.hcp_pre_freesurfer,                 "Run HCP PreFS pipeline."],
-          ['hcp2',    'hcp_freesurfer',             process_hcp.hcp_freesurfer,                     "Run HCP FS pipeline."],
-          ['hcp3',    'hcp_post_freesurfer',        process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
-          ['hcp4',    'hcp_fmri_volume',            process_hcp.hcp_fmri_volume,                    "Run HCP fMRI Volume pipeline."],
-          ['hcp5',    'hcp_fmri_surface',           process_hcp.hcp_fmri_surface,                   "Run HCP fMRI Surface pipeline."],
-          ['hcp6',    'hcp_icafix',                 process_hcp.hcp_icafix,                         "Run HCP ICAFix pipeline."],
-          ['hcp7',    'hcp_post_fix',               process_hcp.hcp_post_fix,                       "Run HCP PostFix pipeline."],
-          ['hcp8',    'hcp_reapply_fix',            process_hcp.hcp_reapply_fix,                    "Run HCP ReApplyFix pipeline."],
-          ['hcp9',    'hcp_msmall',                 process_hcp.hcp_msmall,                         "Run HCP MSMAll pipeline."],
-          ['hcp10',   'hcp_dedrift_and_resample',   process_hcp.hcp_dedrift_and_resample,           "Run HCP DeDriftAndResample pipeline."],
-          ['hcp11',   'hcp_task_fmri_analysis',     process_hcp.hcp_task_fmri_analysis,             "Run HCP TaskfMRIanalysis pipeline."],
-          [],
-          ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
-          ['hpca',    'hcp_asl',                    process_hcp.hcp_asl,                            "Run HCP ASL pipeline."],
-          # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
-          # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
-          [],
-          ['rsc',     'run_shell_script',           simple.run_shell_script,                        "Runs the specified script."],
-          [],
-          ['f99',    'dwi_f99',                     fsl.dwi_f99,                                    "Run FSL F99 command."],
-          ['fslx',   'dwi_xtract',                  fsl.dwi_xtract,                                 "Run FSL XTRACT command."],
+# processing commands
+calist = [
+    ['mhd',     'map_hcp_data',               process_hcp.map_hcp_data,                       "Map HCP preprocessed data to sessions' image folder."],
+    [],
+    ['gbd',     'get_bold_data',              workflow.get_bold_data,                         "Copy functional data from 4dfp (NIL) processing pipeline."],
+    ['bbm',     'create_bold_brain_masks',    workflow.create_bold_brain_masks,               "Create brain masks for BOLD runs."],
+    [],
+    ['seg',     'run_basic_segmentation',     fs.runBasicStructuralSegmentation,              "Run basic structural image segmentation."],
+    ['gfs',     'get_fs_data',                fs.checkForFreeSurferData,                      "Copy existing FreeSurfer data to sessions' image folder."],
+    ['fss',     'run_subcortical_fs',         fs.runFreeSurferSubcorticalSegmentation,        "Run subcortical freesurfer segmentation."],
+    ['fsf',     'run_full_fs',                fs.runFreeSurferFullSegmentation,               "Run full freesurfer segmentation"],
+    [],
+    ['cbs',     'compute_bold_stats',         workflow.compute_bold_stats,                    "Compute BOLD movement and signal statistics."],
+    ['csr',     'create_stats_report',        workflow.create_stats_report,                   "Create BOLD movement statistic reports and plots."],
+    ['ens',     'extract_nuisance_signal',    workflow.extract_nuisance_signal,               "Extract nuisance signal from BOLD images."],
+    [],
+    ['bpp',     'preprocess_bold',            workflow.preprocess_bold,                       "Preprocess BOLD images (using old Matlab code)."],
+    ['cpp',     'preprocess_conc',            workflow.preprocess_conc,                       "Preprocess conc bundle of BOLD images (using old Matlab code)."],
+    [],
+    ['hcp1',    'hcp_pre_freesurfer',         process_hcp.hcp_pre_freesurfer,                 "Run HCP PreFS pipeline."],
+    ['hcp2',    'hcp_freesurfer',             process_hcp.hcp_freesurfer,                     "Run HCP FS pipeline."],
+    ['hcp3',    'hcp_post_freesurfer',        process_hcp.hcp_post_freesurfer,                "Run HCP PostFS pipeline."],
+    ['hcp4',    'hcp_fmri_volume',            process_hcp.hcp_fmri_volume,                    "Run HCP fMRI Volume pipeline."],
+    ['hcp5',    'hcp_fmri_surface',           process_hcp.hcp_fmri_surface,                   "Run HCP fMRI Surface pipeline."],
+    ['hcp6',    'hcp_icafix',                 process_hcp.hcp_icafix,                         "Run HCP ICAFix pipeline."],
+    ['hcp7',    'hcp_post_fix',               process_hcp.hcp_post_fix,                       "Run HCP PostFix pipeline."],
+    ['hcp8',    'hcp_reapply_fix',            process_hcp.hcp_reapply_fix,                    "Run HCP ReApplyFix pipeline."],
+    ['hcp9',    'hcp_msmall',                 process_hcp.hcp_msmall,                         "Run HCP MSMAll pipeline."],
+    ['hcp10',   'hcp_dedrift_and_resample',   process_hcp.hcp_dedrift_and_resample,           "Run HCP DeDriftAndResample pipeline."],
+    ['hcp11',   'hcp_task_fmri_analysis',     process_hcp.hcp_task_fmri_analysis,             "Run HCP TaskfMRIanalysis pipeline."],
+    [],
+    ['hcpd',    'hcp_diffusion',              process_hcp.hcp_diffusion,                      "Run HCP DWI pipeline."],
+    ['hpca',    'hcp_asl',                    process_hcp.hcp_asl,                            "Run HCP ASL pipeline."],
+    # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
+    # ['hcpdb',   'hcp_bedpostx',               process_hcp.hcp_bedpostx,                       "Run FSL Bedpostx GPU."],
+    [],
+    ['rsc',     'run_shell_script',           simple.run_shell_script,                        "Runs the specified script."],
+    [],
+    ['f99',    'dwi_f99',                     fsl.dwi_f99,                                    "Run FSL F99 command."],
+    ['fslx',   'dwi_xtract',                  fsl.dwi_xtract,                                 "Run FSL XTRACT command."],
 ]
 
-lalist = [['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]]
+# longitudinal commands
+lalist = [
+    ['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]
+]
 
-salist = [['cbl',     'create_bold_list',           simple.create_bold_list,                        "Create BOLD list"],
-          ['ccl',     'create_conc_list',           simple.create_conc_list,                        "Create conc list"],
-          ['lsi',     'list_session_info',          simple.list_session_info,                      "List session info"]
+# multi-session commands
+malist = [
+    ['hpc_tica',    'hcp_temporal_ica',         process_hcp.hcp_temporal_ica,           "Run HCP temporal ICA pipeline."],
+    ['hcp_mad',     'hcp_make_average_dataset', process_hcp.hcp_make_average_dataset,   "Run HCP make average dataset pipeline."],
+]
+
+salist = [
+    ['cbl',     'create_bold_list',           simple.create_bold_list,                        "Create BOLD list"],
+    ['ccl',     'create_conc_list',           simple.create_conc_list,                        "Create conc list"],
+    ['lsi',     'list_session_info',          simple.list_session_info,                       "List session info"]
 ]
 
 
@@ -557,8 +612,12 @@ for line in lalist:
         # lactions[line[0]] = line[2]
         lactions[line[1]] = line[2]
 
-plactions = pactions.copy()
-plactions.update(lactions)
+mactions = {}
+for line in malist:
+    if len(line) == 4:
+        # deprecated command abbreviations 
+        # sactions[line[0]] = line[2]
+        mactions[line[1]] = line[2]
 
 sactions = {}
 for line in salist:
@@ -567,8 +626,16 @@ for line in salist:
         # sactions[line[0]] = line[2]
         sactions[line[1]] = line[2]
 
-allactions = plactions.copy()
-allactions.update(sactions)
+# processing, longitudinal and multi-session actions
+plactions = {}
+plactions.update(pactions.copy())
+plactions.update(lactions.copy())
+
+# all actions
+allactions = {}
+allactions.update(plactions.copy())
+allactions.update(mactions.copy())
+allactions.update(sactions.copy())
 
 flist = {}
 for line in flaglist:
@@ -589,17 +656,15 @@ def run(command, args):
     # --------------------------------------------------------------------------
     #                                                            Parsing options
 
-    # --- set command
-
+    # set command
     options = {'command_ran': command}
 
-    # --- set up default options
+    # setup default options
     for line in arglist:
         if len(line) == 4:
             options[line[0]] = line[1]
 
-    # --- read options from batch.txt
-
+    # read options from batch.txt
     if 'sessions' in args:
         options['sessions'] = args['sessions']
     if 'sessionids' in args:
@@ -609,7 +674,7 @@ def run(command, args):
 
     sessions, gpref = gc.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
-    # --- check if we are running across subjects rather than sessions
+    # check if we are running across subjects rather than sessions
     if command in lactions:
         subjectList = []
         subjectInfo = {}
@@ -624,12 +689,12 @@ def run(command, args):
             subjectInfo[session['subject']]['sessions'].append(session)
         sessions = [subjectInfo[e] for e in subjectList]
 
-    # --- take parameters from batch file
+    # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, command)
     for (k, v) in batch_args.items():
         options[k] = v
 
-    # --- parse command line options
+    # parse command line options
     for (k, v) in args.items():
         if k in flist:
             if v != True:
@@ -640,7 +705,7 @@ def run(command, args):
         else:
             options[k] = v
 
-    # ---- Recode
+    # recode
     for line in arglist:
         if len(line) == 4:
             try:
@@ -648,12 +713,12 @@ def run(command, args):
             except:
                 raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
 
-    # ---- Take care of variable expansion
+    # take care of variable expansion
     for key in options:
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
-    # ---- Set key parameters
+    # set key parameters
     overwrite    = options['overwrite']
     parsessions  = options['parsessions']
     nprocess     = options['nprocess']
@@ -671,7 +736,7 @@ def run(command, args):
     options['logfolder']  = logfolder
     options['specfolder'] = specfolder
 
-    # -- impute unspecified parameters
+    # impute unspecified parameters
     options = gcs.impute_parameters(options, command)
 
     # --------------------------------------------------------------------------
@@ -685,7 +750,7 @@ def run(command, args):
 
     log   = []
     stati = []
-    sout = "# Generated by QuNex %s on %s\n" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f"))
+    sout = "\n# Generated by QuNex %s on %s\n" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f"))
     sout += "#\n"
     sout += "=================================================================\n"
     sout += "gmri " + command + " \\\n"
@@ -695,9 +760,15 @@ def run(command, args):
 
     sout += "=================================================================\n"
 
-    # --- check if there are no sessions
+    # no parsessions for longitudinal and multi-session commands
+    if (command in lactions) or (command in mactions):
+        if parsessions > 1:
+            parsessions = 1
+            sout += "\nWARNING: parsessions will be set to 1 because you are running a longitudinal or a multi-session command!\n"
+
+    # check if there are no sessions
     if not sessions:
-        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!"
+        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
         print(sout)
         writelog(sout)
         exit()
@@ -750,6 +821,7 @@ def run(command, args):
         print("---- Running local")
         c = 0
         if parsessions == 1 or options['run'] == 'test':
+            # processing and longitudinal commands
             if command in plactions:
                 pending_actions = plactions[command]
                 for session in sessions:
@@ -770,7 +842,41 @@ def run(command, args):
                         if nprocess and c >= nprocess:
                             break
 
-            if command in sactions:
+            # multi-session commands
+            elif command in mactions:
+                pending_actions = mactions[command]
+
+                # test or processing
+                if options['run'] == 'test':
+                    action = 'testing'
+                else:
+                    action = 'processing'
+
+                # update options and prepare the all sessions string for labeling
+                sessionids = ""
+                for session in sessions:
+                    soptions = updateOptions(session, options)
+
+                    if sessionids == "":
+                        sessionids = session['id']
+                    else:
+                        sessionids = sessionids + "," + session['id']
+
+                # log
+                consoleLog += "\nStarting %s of sessions %s at %s" % (action, sessionids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                print("\nStarting %s of sessions %s at %s" % (action, sessionids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+
+                # process
+                r, status = procResponse(pending_actions(sessions, sessionids, soptions, overwrite, c + 1))
+
+                # write log
+                writelog(r)
+                consoleLog += r
+                print(r)
+                stati.append(status)
+
+            # simple processing commands
+            elif command in sactions:
                 pending_actions = sactions[command]
                 soptions = updateOptions(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
@@ -780,8 +886,8 @@ def run(command, args):
             c = 0
             processPoolExecutor = ProcessPoolExecutor(parsessions)
             futures = []
-            if command in plactions:
-                pending_actions = plactions[command]
+            if command in pactions:
+                pending_actions = pactions[command]
                 for session in sessions:
                     if len(session['id']) > 1:
                         soptions = updateOptions(session, options)
@@ -799,7 +905,7 @@ def run(command, args):
                     consoleLog += result[0]
                     print(result[0])
 
-            if command in sactions:
+            elif command in sactions:
                 pending_actions = sactions[command]
                 soptions = updateOptions(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
@@ -808,8 +914,7 @@ def run(command, args):
         # print(console log)
         # print(consoleLog)
 
-        # --- Create log
-
+        # create log
         f = open(logname, "w")
         # header
         print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=f)

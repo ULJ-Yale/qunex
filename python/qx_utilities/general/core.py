@@ -890,7 +890,7 @@ def pcslist(s):
     return s
 
 
-def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
+def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None, symlink=False):
     """
     linkOrCopy - documentation not yet available.
     """
@@ -910,11 +910,18 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
                         return (status and True, "%s%s%s already mapped" % (r, prefix, name))
                 else:
                     os.remove(target)
-            fl.link(source, target)
+
+            # link
+            if not symlink:
+                os.link(source, target)
+            else:
+                os.symlink(source, target)
+
             if r is None:
                 return status and True
             else:
                 return (status and True, "%s%s%s mapped" % (r, prefix, name))
+
         except:
             try:
                 shutil.copy2(source, target)
