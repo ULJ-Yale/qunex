@@ -856,7 +856,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(image):
                         os.remove(image)
 
-                    brain = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz') 
+                    brain = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')
                     if os.path.exists(brain):
                         os.remove(brain)
 
