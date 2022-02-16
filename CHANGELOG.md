@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.2
+
+Fixed a bug in backwards compatibility of import functions.
+
+
 ## 0.93.1
 
 The preprocess_bold and preprocess_conc commands now allow user to normalize the assumed regressors within each run or to normalize the area under the curve of the hrf function and this way ensure universal normalization. Increased the consistency of parameter passing across commands.
