@@ -599,7 +599,11 @@ HCPFilename=`opts_GetOpt "--hcp_filename" $@`
 
 # backwards compatibility and default value
 if [ -z "$HCPFilename" ]; then HCPFilename=`opts_GetOpt "--hcpfilename" $@`; fi
-if [ -z "$HCPFilename" ]; then HCPFilename="standard"; fi
+if [ -z "$HCPFilename" ]; then HCPFilename="automated"; fi
+if [ "${HCPFilename}" == 'name' ]; then HCPFilename="userdefined"; fi
+if [ "${HCPFilename}" == 'number' ]; then HCPFilename="automated"; fi
+if [ "${HCPFilename}" == 'original' ]; then HCPFilename="userdefined"; fi
+if [ "${HCPFilename}" == 'standard' ]; then HCPFilename="automated"; fi
 
 if [ -z "$DATAFormat" ]; then DATAFormat=DICOM; fi
 if [ "${BIDSFormat}" == 'yes' ]; then DATAFormat="BIDS"; fi
@@ -1035,7 +1039,7 @@ getBoldList() {
 
         # set output type
         unset BOLDnameOutput
-        if [[ ! -z ${HCPFilename} ]] && [[ ${HCPFilename} == "original" ]]; then
+        if [[ ! -z ${HCPFilename} ]] && [[ ${HCPFilename} == "userdefined" ]]; then
             BOLDnameOutput="name";
         else
             HCPFilename="standard"

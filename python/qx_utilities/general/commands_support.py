@@ -252,7 +252,7 @@ deprecated_values = {
         'original': 'userdefined',
         'standard': 'automated'
     },
-    'hcp_folderstructure': {'initial': 'hcpya'},
+    'hcp_folderstructure': {'initial': 'hcpya'}
 }
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 

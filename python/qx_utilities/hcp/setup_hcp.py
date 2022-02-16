@@ -200,7 +200,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     nT1w  = 0
     nT2w  = 0
 
-    filename = hcp_filename == 'original'
+    filename = hcp_filename == 'userdefined'
 
     if hcp_folderstructure not in ['hcpya', 'hcpls']:
         raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (hcp_folderstructure), "Please check the command!")
