@@ -26,6 +26,7 @@ import types
 import traceback
 import gzip
 from datetime import datetime
+from concurrent.futures import ProcessPoolExecutor
 
 import general.filelock as fl
 import general.exceptions as ge
@@ -430,6 +431,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
 results = []
 lock    = multiprocessing.Lock()
 
+
 def record(response):
     """
     ``record(response)``
@@ -454,6 +456,15 @@ def record(response):
             print("%s%s failed%s" % (prepend, name, see))
         else:
             print("%s%s finished successfully%s" % (prepend, name, see))
+
+
+def record_future(future):
+    if future.exception() is not None:
+        print("Unhandled exception")
+        print(future.exception())
+    else:
+        record(future.result())
+
 
 # Logger class that prints both to stdour and to console
 class Logger(object):
@@ -654,15 +665,12 @@ def runInParallel(calls, cores=None, prepend=""):
         except:
             cores = 1
 
-    pool    = multiprocessing.Pool(processes=cores)
     results = []
-
-    for call in calls:
-        pool.apply_async(runWithLog, (call['function'], call['args'], call['logfile'], call['name'], prepend), callback=record)
-
-    pool.close()
-    pool.join()
-
+    with ProcessPoolExecutor(max_workers= cores) as executor:
+        for call in calls:
+            future = executor.submit(runWithLog, call['function'], call['args'], call['logfile'], call['name'], prepend)
+            future.add_done_callback(record_future)
+        
     return results
 
 

@@ -34,11 +34,13 @@ import re
 import glob
 import shutil
 import subprocess
+import traceback
 import zipfile
 import tarfile
 import gzip as gz
 import csv
 import json
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import general.core as gc
 import general.img as gi
@@ -384,9 +386,11 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     --unzip            If the dicom files are gziped whether to unzip them 
                        (yes), leave them be and abort (no) or ask interactively
                        (ask). [ask]
-    --gzip             After the dicom files were processed whether to gzip them 
-                       (yes), leave them ungzipped (no) or ask interactively
-                       (ask). [ask]
+    --gzip             Whether to gzip individual DICOM files after they were
+                       processed ('file'), gzip a DICOM sequence or acquisition 
+                       as an tar.gz archive ('folder'), or leave them ungzipped 
+                       ('no'). Valid options are 'folder', 'file', 'no', 'ask'. 
+                       ['ask']
     --verbose          Whether to be report on the progress (True) or not
                        (False). [True]
     --parelements      How many parallel processes to run dcm2nii conversion 
@@ -527,6 +531,12 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
 
+    # parse parelements
+    try:
+        parelements = int(parelements)
+    except:
+        parelements = 1
+
     # check if dicom folder existis
 
     if not os.path.exists(dmcf):
@@ -551,16 +561,16 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     # gzipped files
 
-    gzipped = glob.glob(os.path.join(dmcf, "*", "*.dcm.gz"))
-    if len(gzipped) > 0:
+    zipped_file = glob.glob(os.path.join(dmcf, "*", "*.dcm.gz"))
+    zipped_folder = glob.glob(os.path.join(dmcf, "*.tar.gz"))
+    if len(zipped_file) > 0 or len(zipped_folder) > 0:
         if unzip == 'ask':
             print("\nWARNING: DICOM files have been compressed using gzip.")
             unzip = input("\nDo you want to unzip the existing files? [no] > ")
         if unzip == "yes":
             if verbose:
                 print("\nUnzipping files (this might take a while)")
-            for g in gzipped:
-                subprocess.call("gunzip " + g, shell=True)  # , stdout=null, stderr=null)
+            _unzip_dicom(dmcf, parelements)
         else:
             raise ge.CommandFailed("dicom2nii", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
@@ -817,17 +827,39 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     # gzip files
 
     if gzip == 'ask':
-        print("\nTo save space, original DICOM files can be compressed.")
-        gzip = input("\nDo you want to gzip DICOM files? [no] > ")
-    if gzip == "yes":
+        print("\nTo save space and file count, original DICOM files can be compressed and archived")
+        while gzip not in ['folder', 'file', 'no']:
+            gzip = input("\nDo you want to gzip DICOM files? [folder/file/no] > ")
+            gzip = gzip.strip()
+    if gzip == 'file' or gzip == 'folder':
         if verbose:
-            print("\nCompressing dicom files in folders:")
-        for folder in folders:
-            if verbose:
-                print("--->", folder)
-            subprocess.call("gzip " + os.path.join(folder, "*.dcm"), shell=True, stdout=null, stderr=null)
+            print("\nCompressing dicom with option {}:".format(gzip))
+        
+        with ProcessPoolExecutor(parelements) as executor:
+            pending_futures = []
+            for folder in folders:
+                future = executor.submit(_zip_dicom, gzip, folder)
+                print("submit unzip dicom folder: {}".format(folder))
+                pending_futures.append(future)
 
-    return
+            exceptions = []
+            for future in as_completed(pending_futures):
+                if future.exception() is not None:
+                    # Unhandled 
+                    e = future.exception()
+                    print("Unhandled exception")
+                    print(traceback.format_exc())
+                    exceptions.append(e)
+                    continue
+                r = future.result()
+                if r["status"] == "ok": 
+                    print("gzipped {}".format(r["args"]["dicom_folder"]))
+                else:
+                    print("gzip failed {}".format(r["args"]["dicom_folder"]))
+                    print(r["traceback"])
+                    exceptions.append(r["exception"])
+            if len(exceptions) > 0:
+                raise ge.CommandError("_unzip_dicom")
 
 
 def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', add_image_type=0, add_json_info=""):
@@ -1049,7 +1081,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             add_image_type = int(add_image_type)
     except:
         raise ge.CommandError('dicom2niix', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
-    
+    # parse parelements
+    try:
+        parelements = int(parelements)
+    except:
+        parelements = 1
+
     if ',' in add_json_info:
         add_json_info = [field.strip() for field in add_json_info.split(',')]
 
@@ -1096,7 +1133,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         if unzip == "yes":
             if verbose:
                 print("\nUnzipping files (this might take a while)")
-            print(dmcf)
             _unzip_dicom(dmcf, parelements)
         else:
             raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
@@ -1421,49 +1457,73 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     if gzip == 'file' or gzip == 'folder':
         if verbose:
             print("\nCompressing dicom with option {}:".format(gzip))
-        calls = []
-        for folder in folders:
-            calls.append({
-                "name": "_zip_dicom",
-                "function": _zip_dicom,
-                "args": {"dicom_folder": folder, "gzip": gzip},
-                "logfile": None
-            })
-        gc.runInParallel(calls, cores=parelements, prepend="---> ")
-
-    return
-
-
-def _zip_dicom(dicom_folder, gzip):
-    if not os.path.exists(dicom_folder):
-        raise ge.CommandFailed('_zip_dicom', '')
-    if not os.path.isdir(dicom_folder):
-        raise ge.CommandFailed('_zip_dicom', '')
-
-    dicom_dir, dicom_num = os.path.split(dicom_folder)
-    if gzip == 'folder':
-
-        dicom_folder_zip = os.path.join(dicom_dir, '{}.tar.gz'.format(dicom_num))
-        dicom_folder_zip_tmp = os.path.join(dicom_dir, '.{}.tar.gz'.format(dicom_num))
-
-        if os.path.exists(dicom_folder_zip):
-            os.remove(dicom_folder_zip)
-        if os.path.exists(dicom_folder_zip_tmp):
-            os.remove(dicom_folder_zip_tmp)
-
-        p = subprocess.run(['tar', 'czf', dicom_folder_zip_tmp, os.path.basename(dicom_folder)], cwd=os.path.dirname(dicom_folder))
-
-        if p.returncode != 0:
-            raise ge.CommandFailed("_zip_dicom", '')
         
-        os.rename(dicom_folder_zip_tmp, dicom_folder_zip)
-        shutil.rmtree(dicom_folder)
+        with ProcessPoolExecutor(parelements) as executor:
+            pending_futures = []
+            for folder in folders:
+                future = executor.submit(_zip_dicom, gzip, folder)
+                print("submit unzip dicom folder: {}".format(folder))
+                pending_futures.append(future)
 
-    elif gzip == 'file':
-        p = subprocess.run(['gzip', '-r', dicom_folder])
+            exceptions = []
+            for future in as_completed(pending_futures):
+                if future.exception() is not None:
+                    # Unhandled 
+                    e = future.exception()
+                    print("Unhandled exception")
+                    print(traceback.format_exc())
+                    exceptions.append(e)
+                    continue
+                r = future.result()
+                if r["status"] == "ok": 
+                    print("gzipped {}".format(r["args"]["dicom_folder"]))
+                else:
+                    print("gzip failed {}".format(r["args"]["dicom_folder"]))
+                    print(r["traceback"])
+                    exceptions.append(r["exception"])
+            if len(exceptions) > 0:
+                raise ge.CommandError("_unzip_dicom")
 
-        if p.returncode != 0:
-            raise ge.CommandFailed("_zip_dicom", '')
+
+def _zip_dicom(gzip, dicom_folder):
+    r = {"args": {"gzip": gzip, "dicom_folder": dicom_folder}}
+    try: 
+        if not os.path.exists(dicom_folder):
+            raise ge.CommandFailed('_zip_dicom', '')
+        if not os.path.isdir(dicom_folder):
+            raise ge.CommandFailed('_zip_dicom', '')
+
+        dicom_dir, dicom_num = os.path.split(dicom_folder)
+        if gzip == 'folder':
+
+            dicom_folder_zip = os.path.join(dicom_dir, '{}.tar.gz'.format(dicom_num))
+            dicom_folder_zip_tmp = os.path.join(dicom_dir, '.{}.tar.gz'.format(dicom_num))
+
+            if os.path.exists(dicom_folder_zip):
+                os.remove(dicom_folder_zip)
+            if os.path.exists(dicom_folder_zip_tmp):
+                os.remove(dicom_folder_zip_tmp)
+
+            p = subprocess.run(['tar', 'czf', dicom_folder_zip_tmp, os.path.basename(dicom_folder)], cwd=os.path.dirname(dicom_folder))
+
+            if p.returncode != 0:
+                raise ge.CommandFailed("_zip_dicom", '')
+            
+            os.rename(dicom_folder_zip_tmp, dicom_folder_zip)
+            shutil.rmtree(dicom_folder)
+
+        elif gzip == 'file':
+            p = subprocess.run(['gzip', '-r', dicom_folder])
+
+            if p.returncode != 0:
+                raise ge.CommandFailed("_zip_dicom", '')
+        r["status"] = "ok" 
+    except Exception as e:
+        r["status"] = "error"
+        r["exception"] = e
+        r["traceback"] = traceback.format_exc()
+    return r
+        
 
 def _get_zip_file_content_iterator(packet_name):
     def zip_gen():
@@ -1510,45 +1570,107 @@ def _get_zip_file_content_iterator(packet_name):
     else:
         raise ge.CommandFailed('_get_zip_file_content_iterator', "Unknown packet type")
 
+
 def _unzip_dicom_folder(dicom_packet, dicom_folder):
-    if not os.path.exists(dicom_folder):
-        os.mkdir(dicom_folder)
-    
-    for fpath, fobj in _get_zip_file_content_iterator(dicom_packet):
-        extract_path = os.path.join(dicom_folder, os.path.basename(fpath))
-        with open(extract_path, "wb") as f:
+    r = {"args": {"dicom_packet": dicom_packet, "dicom_folder": dicom_folder}}
+    try: 
+        if not os.path.exists(dicom_folder):
+            os.mkdir(dicom_folder)
+
+        for fpath, fobj in _get_zip_file_content_iterator(dicom_packet):
+            extract_path = os.path.join(dicom_folder, os.path.basename(fpath))
             if fpath.endswith(".gz"):
-                with gz.GzipFile(fileobj=fobj) as gzobj:
-                    shutil.copyfileobj(gzobj, f)
-            else:
-                shutil.copyfileobj(fobj, f)
+                extract_path, _ = extract_path.rsplit(".", 1)
+            with open(extract_path, "wb") as f:
+                if fpath.endswith(".gz"):
+                    with gz.GzipFile(fileobj=fobj) as gzobj:
+                        shutil.copyfileobj(gzobj, f)
+                else:
+                    shutil.copyfileobj(fobj, f)
+
+        r["status"] = "ok"
+    except Exception as e:
+        r["status"] = "error"
+        r["exception"] = e
+        r["traceback"] = traceback.format_exc()
+    return r
 
 
 def _unzip_dicom_file(dicom_folder):
-    p = subprocess.run(["gunzip", "-r", dicom_folder])
-    if p.returncode != 0:
-        ge.CommandError("_unzip_dicom_file")
+    r = {"args": {"dicom_folder": dicom_folder}}
+    try:
+        p = subprocess.run(["gunzip", "-r", dicom_folder])
+        if p.returncode != 0:
+            raise ge.CommandError("_unzip_dicom_file")
+        r["status"] = "ok"
+    except Exception as e:
+        r["status"] = "error"
+        r["exception"] = e
+        r["traceback"] = traceback.format_exc()
+    return r
 
 
 def _unzip_dicom(dicom_root_folder, parelements):
-    calls = []
-    for i in os.listdir(dicom_root_folder):
-        fullpath = os.path.join(dicom_root_folder, i)
-        if os.path.isfile(fullpath):
-            match_result = re.match(r"^(?P<dcm_name>\d+)(\.zip|\.tar|\.tar\.gz|\.tar\.bz2|\.tar\.xz|\.tarz|\.tar\.bzip2|\.tgz)$", i)
-            if match_result:
-                dcm_name = match_result.group("dcm_name")
-                print(dcm_name)
-                if not dcm_name.isdigit():
-                    continue
-                _unzip_dicom_folder(fullpath,  os.path.join(dicom_root_folder, dcm_name))
+    with ProcessPoolExecutor(parelements) as executor:
+        pending_futures = []
+        for i in os.listdir(dicom_root_folder):
+            fullpath = os.path.join(dicom_root_folder, i)
+            if os.path.isfile(fullpath):
+                match_result = re.match(r"^(?P<dcm_name>\d+)(\.zip|\.tar|\.tar\.gz|\.tar\.bz2|\.tar\.xz|\.tarz|\.tar\.bzip2|\.tgz)$", i)
+                if match_result:
+                    dcm_name = match_result.group("dcm_name")
+                    print("submit unzip dicom folder: {}".format(dcm_name))
+                    if not dcm_name.isdigit():
+                        continue
+                    future = executor.submit(_unzip_dicom_folder, fullpath,  os.path.join(dicom_root_folder, dcm_name))
+                    pending_futures.append(future)
+        exceptions = []
+        for future in as_completed(pending_futures):
+            if future.exception() is not None:
+                # Unhandled 
+                e = future.exception()
+                print("Unhandled exception")
+                print(traceback.format_exc())
+                exceptions.append(e)
+                continue
+            r = future.result()
+            if r["status"] == "ok": 
+                print("unzipped {} -> {}".format(r["args"]["dicom_packet"], r["args"]["dicom_folder"]))
+            else:
+                print("unzip failed {} -> {}".format(r["args"]["dicom_packet"], r["args"]["dicom_folder"]))
+                print(r["traceback"])
+                exceptions.append(r["exception"])
+        if len(exceptions) > 0:
+            raise ge.CommandError("_unzip_dicom")
+        
+        pending_futures.clear()
+        for i in os.listdir(dicom_root_folder):
+            fullpath = os.path.join(dicom_root_folder, i)
+            if os.path.isdir(fullpath):
+                glob_iter = glob.iglob(os.path.join(fullpath, "*.gz"))
+                if next(glob_iter, None):
+                    future = executor.submit(_unzip_dicom_file, fullpath)
+                    pending_futures.append(future)
 
-    for i in os.listdir(dicom_root_folder):
-        fullpath = os.path.join(dicom_root_folder, i)
-        if os.path.isdir(fullpath):
-            glob_iter = glob.iglob(os.path.join(fullpath, "*.gz"))
-            if next(glob_iter, None):
-                _unzip_dicom_file(fullpath)
+        exceptions.clear()
+        for future in as_completed(pending_futures):
+            if future.exception() is not None:
+                # Unhandled 
+                e = future.exception()
+                print("Unhandled exception")
+                print(traceback.format_exc())
+                exceptions.append(e)
+                continue
+            r = future.result()
+            if r["status"] == "ok": 
+                print("extract gzipped dicoms {}".format(r["args"]["dicom_folder"]))
+            else:
+                print("extract gzipped dicoms failed {}".format(r["args"]["dicom_folder"]))
+                print(r["traceback"])
+                exceptions.append(r["exception"])
+        if len(exceptions) > 0:
+            raise ge.CommandError("_unzip_dicom")
+        
 
 
 def sort_dicom(folder=".", **kwargs):
@@ -1634,7 +1756,8 @@ def sort_dicom(folder=".", **kwargs):
         inbox = os.path.join(folder, 'inbox')
         if not os.path.exists(inbox):
             raise ge.CommandFailed("sort_dicom", "Inbox folder not found", "Please check your paths! [%s]" % (os.path.abspath(inbox)), "Aborting")
-        files_iter = glob.iglob(os.path.join(inbox, "**", "*"))
+        files_iter = glob.iglob(os.path.join(inbox, "**", "*"), recursive=True)
+
         # if len(files):
         #     files = []
         #     for droot, _, dfiles in os.walk(inbox):
@@ -1657,6 +1780,9 @@ def sort_dicom(folder=".", **kwargs):
     show_session_info = True
 
     for dcm in files_iter:
+        if os.path.isdir(dcm):
+            continue
+
         ext = dcm.split('.')[-1]
 
         if os.path.basename(dcm)[0:4] in ["XX_0", "PS_0"]:
