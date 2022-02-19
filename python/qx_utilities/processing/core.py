@@ -701,13 +701,13 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     # external command info
     printComm += "------------------------------------------------------------\n"
     printComm += "Running external command via QuNex:\n"
-    if " --" in run or "\n--" in run:
-        comm = run.replace(" ", "").replace("--", " \ \n    --")
-    elif " -" in run or "\n-" in run:
-        comm = run.replace(" ", "").replace("-", " \ \n    -")
-    else:
-        comm = ' '.join(run.split())
-    comm += "\n"
+    # if " --" in run or "\n--" in run:
+    #     comm = run.replace("--", " \ \n    --") # .replace(" ", "")
+    # elif " -" in run or "\n-" in run:
+    #     comm = run.replace("-", " \ \n    -")  # .replace(" ", "")
+    # else:
+    #     comm = ' '.join(run.split())
+    comm = run + "\n"
     printComm += comm
     if checkfile is not None and checkfile != "":
         printComm += "\nTest file: \n%s\n" % checkfile
