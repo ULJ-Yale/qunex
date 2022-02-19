@@ -39,6 +39,7 @@ else:
 functions = {
     'general_parcellated2dense':       [('inimg', 'string'), ('outimg', 'string'), ('verbose', 'bool'), ('missingvalues', 'string')],
     'general_extract_glm_volumes':     [('flist', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('saveoption', 'string'), ('values', 'string'), ('verbose', 'bool'), ('txtf', 'string')],
+    'general_glm_predict':             [('flist', 'string'), ('effects', 'string'), ('targetf', 'string'), ('options', 'string')],
     'general_compute_bold_list_stats': [('flist', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'general_compute_bold_stats':      [('img', 'string'), ('mask', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'general_compute_group_bold_stats': [('flist', 'string'), ('tfile', 'string'), ('stats', 'string'), ('inmask', 'string'), ('ignore', 'string')],
