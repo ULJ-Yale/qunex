@@ -49,7 +49,7 @@ functions = {
     'general_plot_bold_timeseries':    [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('sessionid', 'string'), ('verbose', 'bool')],
     'general_plot_bold_timeseries_list': [('flist', 'string'), ('elements', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('fformat', 'string'), ('verbose', 'bool')],
     'general_qa_concfile':             [('file', 'string'), ('do', 'string'), ('target', 'string')],
-    'general_image_conjunction':       [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string')],
+    'general_image_conjunction':       [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string'), ('psign', 'string')],
     'general_image_overlap':           [('af', 'string'), ('bf', 'string'), ('tf', 'string'), ('v', 'numeric')],
     'fc_compute_ab_corr':              [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('verbose', 'bool')],
     'fc_compute_ab_corr_kca':          [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('nc', 'numeric'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('dmeasure', 'string'), ('nrep', 'numeric'), ('verbose', 'bool')],
