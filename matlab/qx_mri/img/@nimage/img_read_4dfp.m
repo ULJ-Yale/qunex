@@ -44,11 +44,13 @@ else
     root = strrep(root, '.ifh', '');
 
     img.rootfilename = root;
+    img.rootfilenames = {root};
 
     img.hdr4dfp = img.img_read_ifh([root '.4dfp.ifh']);
 
     img.imageformat = '4dfp';
     img.filename = [root '.4dfp.img'];
+    img.filenames = {img.filename};
     img.TR = [];
 
     x = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [1]'}))));
