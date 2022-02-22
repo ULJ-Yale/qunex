@@ -2744,7 +2744,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                                     tfile = str(fnum)
                                 
                                 with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
-                                    if igz.match(sf.filename):
+                                    if igz.match(tarinfo.name):
                                         with gz.GzipFile(fileobj=fobj) as gz_fobj:
                                             shutil.copyfileobj(gz_fobj, fout)
                                     else:
