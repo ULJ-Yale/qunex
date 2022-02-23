@@ -68,7 +68,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     Example settings strings::
 
-        "SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+        "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
         "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=anticevic"
 
     Optional parameters
@@ -202,7 +202,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     - partition        (The partition (queue) to use.)
     - nodes            (Total number of nodes to run on.)
-    - ntasks           (Number of tasks.)
     - cpus-per-task    (Number of cores per task.)
     - time             (Maximum wall time DD-HH:MM:SS.)
     - constraint       (Specific node architecture.)
@@ -222,13 +221,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     ::
 
         qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
 
     ::
 
         qunex schedule command="bet {{in}} {{out}}" \\
                        replace="in:t1.nii.gz|out:brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
                        workdir="/studies/WM/sessions/AP23791/images/structural"
     """
 
@@ -252,9 +251,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         jobnum    = setDict.pop('jobnum', "")
     except:
         raise ge.CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
-
-    if scheduler not in ['PBS', 'LSF', 'SLURM']:
-        raise ge.CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", settings)
 
     # --- compile command to pass
     if command is None:
@@ -313,7 +309,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
         # set default nodes
         if ("nodes" not in setDict.keys()):
-            sCommand += "#PBS -l nodes=%s:ppn=%s\n" % (parsessions + 1, parelements)
+            sCommand += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
 
         # job name
         if (comname != ""):
@@ -343,7 +339,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
         # set default cores
         if ("cores" not in setDict.keys()):
-            sCommand += "#BSUB -n %s\n" % ((parsessions + 1) * parelements)
+            sCommand += "#BSUB -n %s\n" % (parsessions  * parelements)
 
         # jobname
         if (comname != ""):
@@ -369,11 +365,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
-        # set default ntasks and cpus-per-task
-        if ("ntasks" not in setDict.keys() and "n" not in setDict.keys()):
-            sCommand += "#SBATCH --ntasks=%s\n" % (parsessions + 1)
+        # set default cpus-per-task
         if ("cpus-per-task" not in setDict.keys() and "c" not in setDict.keys()):
-            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parelements)
+            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):
@@ -456,20 +450,29 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     gc.printAndLog("===> Running scheduler for command %s" % (command), file=flog)
 
     # ---- setup scheduler options
-    settings    = args['scheduler']
-    workdir     = args.get('scheduler_workdir', None)
+    settings = args['scheduler']
+    settings_list = [e.strip() for e in settings.split(",")]
+    scheduler = settings_list.pop(0)
+    workdir = args.get('scheduler_workdir', None)
     environment = args.get('scheduler_environment', None)
-    sleeptime   = args.get('scheduler_sleep', 0)
-    parjobs     = args.get('parjobs', None)
+    sleeptime = args.get('scheduler_sleep', 0)
+
+    parjobs = args.get('parjobs', None)
     if parjobs is not None:
         parjobs = int(parjobs)
+    
     parelements = args.get('parelements', 1)
     if parelements is not None:
         parelements = int(parelements)
-    test        = args.get('run', 'run')
+
+    test = args.get('run', 'run')
+
+    # check scheduler
+    if scheduler not in ['PBS', 'LSF', 'SLURM']:
+        raise ge.CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", settings)
 
     # ---- setup bash (commands to run inside compute node before the QuNex command)
-    bash  = args.get('bash', None)
+    bash = args.get('bash', None)
 
     # --- set logfolder
     if logfolder is None:
@@ -491,7 +494,6 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         gc.printAndLog(cBase, file=flog)
 
         if test == "run":
-            scheduler = settings.split(',')[0].strip()
             exectime  = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
             result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash, parsessions=parsessions, parelements=parelements)
@@ -499,19 +501,37 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
 
     # ---- if session list is present
     else:
-        settingsList  = settings.split(',')
-        scheduler = settingsList.pop(0).strip()
         settings = {}
 
+        # TODO set slurm array as default with SLURM
+        # slurm array
+        slurm_array = False
+
         # split settings
-        for s in settingsList:
+        for s in settings_list:
             # parameters with values
             if "=" in s:
                 sSplit = s.split("=", 1)
                 settings[sSplit[0].strip()] = sSplit[1].strip()
+
+                # SLURM job array?
+                if scheduler == "SLURM" and sSplit[0].strip() == "array":
+                    slurm_array = True
+                    parjobs = 1
             # flags
             else:
-                settings[s.strip()] = "QX_FLAG"
+                # SLURM job array?
+                if scheduler == "SLURM" and s.strip() == "array":
+                    slurm_array = True
+
+                    if parjobs is None:
+                        settings[s.strip()] = "0-%s" % (len(sessions) - 1)
+                    else:
+                        settings[s.strip()] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
+                    parjobs = 1
+                    
+                else:
+                    settings[s.strip()] = "QX_FLAG"
 
         settings['jobname'] = settings.get('jobname', command)
 

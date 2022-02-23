@@ -273,6 +273,13 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
         sessionids = re.split(' +|,|\|', sessionids)
         slist = [e for e in slist if e['id'] in sessionids]
 
+        # are we inside a SLURM job array?
+        if os.environ['SLURM_ARRAY_JOB_ID'] is not None:
+            # get session for this job
+            slurm_array_ix = os.environ['SLURM_ARRAY_TASK_ID']
+            slist = [slist[int(slurm_array_ix)]]
+
+
     if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
