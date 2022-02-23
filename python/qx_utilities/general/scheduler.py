@@ -67,7 +67,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     Example settings strings::
 
-        "SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+        "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
         "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=anticevic"
 
     Optional parameters
@@ -201,7 +201,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     - partition        (The partition (queue) to use.)
     - nodes            (Total number of nodes to run on.)
-    - ntasks           (Number of tasks.)
     - cpus-per-task    (Number of cores per task.)
     - time             (Maximum wall time DD-HH:MM:SS.)
     - constraint       (Specific node architecture.)
@@ -221,13 +220,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     ::
 
         qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
 
     ::
 
         qunex schedule command="bet {{in}} {{out}}" \\
                        replace="in:t1.nii.gz|out:brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
                        workdir="/studies/WM/sessions/AP23791/images/structural"
     """
 
@@ -312,7 +311,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
         # set default nodes
         if ("nodes" not in setDict.keys()):
-            sCommand += "#PBS -l nodes=%s:ppn=%s\n" % (parsessions + 1, parelements)
+            sCommand += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
 
         # job name
         if (comname != ""):
@@ -342,7 +341,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
         # set default cores
         if ("cores" not in setDict.keys()):
-            sCommand += "#BSUB -n %s\n" % ((parsessions + 1) * parelements)
+            sCommand += "#BSUB -n %s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):
@@ -368,11 +367,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
-        # set default ntasks and cpus-per-task
-        if ("ntasks" not in setDict.keys() and "n" not in setDict.keys()):
-            sCommand += "#SBATCH --ntasks=%s\n" % (parsessions + 1)
+        # set default cpus-per-task
         if ("cpus-per-task" not in setDict.keys() and "c" not in setDict.keys()):
-            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parelements)
+            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):
