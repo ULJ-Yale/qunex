@@ -1538,10 +1538,10 @@ def _get_zip_file_content_iterator(packet_name):
             e = sys.exc_info()[0]
             raise ge.CommandFailed("_get_zip_file_content_iterator", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (packet_name, e), "Please check your data!")
         finally:
-            if z is not None:
-                z.close()
             if fobj is not None:
                 fobj.close()
+            if z is not None:
+                z.close()
 
     def tar_gen():
         try:
@@ -1555,10 +1555,10 @@ def _get_zip_file_content_iterator(packet_name):
         except:
             pass
         finally:
-            if tar is not None:
-                tar.close()
             if fobj is not None:
                 fobj.close()
+            if tar is not None:
+                tar.close()
     
     if not os.path.exists(packet_name):
         raise ge.CommandFailed('_get_zip_file_content_iterator', "Packet does not exist {}".format(packet_name))
