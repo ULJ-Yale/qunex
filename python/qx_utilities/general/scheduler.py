@@ -503,37 +503,46 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     else:
         settings = {}
 
-        # TODO set slurm array as default with SLURM
         # slurm array
-        slurm_array = False
+        slurm_array = None
 
         # split settings
         for s in settings_list:
             # parameters with values
             if "=" in s:
                 sSplit = s.split("=", 1)
-                settings[sSplit[0].strip()] = sSplit[1].strip()
 
                 # SLURM job array?
-                if scheduler == "SLURM" and sSplit[0].strip() == "array":
+                if scheduler == "SLURM" and sSplit[0].strip() == "noarray":
+                    slurm_array = False
+                elif scheduler == "SLURM" and sSplit[0].strip() == "array":
                     slurm_array = True
-                    parjobs = 1
+                    settings[sSplit[0].strip()] = sSplit[1].strip()
+                else:
+                    settings[sSplit[0].strip()] = sSplit[1].strip()
+
             # flags
             else:
                 # SLURM job array?
-                if scheduler == "SLURM" and s.strip() == "array":
-                    slurm_array = True
-
-                    if parjobs is None:
-                        settings[s.strip()] = "0-%s" % (len(sessions) - 1)
-                    else:
-                        settings[s.strip()] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
-                    parjobs = 1
-                    
+                if scheduler == "SLURM" and s.strip() == "noarray":
+                    slurm_array = False
                 else:
                     settings[s.strip()] = "QX_FLAG"
 
         settings['jobname'] = settings.get('jobname', command)
+
+        # slurm_array is None at this point - array was not set, noarray was not provided
+        # --> set defaults
+        if scheduler == "SLURM" and slurm_array is None:
+            slurm_array = True
+            if parjobs is None:
+                settings["array"] = "0-%s" % (len(sessions) - 1)
+            else:
+                settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
+
+        # if job array we have a single job
+        if slurm_array:
+            parjobs = 1
 
         # split sessions
         # how big are chunks of sessions
@@ -586,8 +595,11 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         print("    Maximum elements run in parallel for a session: %s." % parelements)
         print("    Up to %s processes will be utilized for a job.\n" % (parelements * parsessions))
 
-        for i in range(0, parjobs):
-            print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
+        if slurm_array:
+            print("    Using SLURM job array over sessions: %s" % sessionids_array[0])
+        else:
+            for i in range(0, parjobs):
+                print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
 
         if test == "run":
             for i in range(parjobs):
@@ -599,7 +611,12 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                 settings['jobnum'] = str(i)
                 sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
                 exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-                logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, i, exectime))
+
+                # set different output format for slurm_array
+                if not slurm_array:
+                    logfile = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, i, exectime))
+                else:
+                    logfile = os.path.join(logfolder, "%s_%s_job%%a.%s.log" % (scheduler, command, exectime))
 
                 jobname = "%s_#%02d" % (command, i)
 
