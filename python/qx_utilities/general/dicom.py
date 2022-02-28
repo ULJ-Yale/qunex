@@ -1531,8 +1531,10 @@ def _get_zip_file_content_iterator(packet_name):
             z = zipfile.ZipFile(packet_name, 'r')
             fobj = None
             for f in z.infolist():
+                if f.is_dir():
+                    continue
                 fobj = z.open(f, "rb")
-                yield f, fobj
+                yield f.filename, fobj
                 fobj.close()
         except:
             e = sys.exc_info()[0]
