@@ -839,7 +839,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
             pending_futures = []
             for folder in folders:
                 future = executor.submit(_zip_dicom, gzip, folder)
-                print("submit unzip dicom folder: {}".format(folder))
+                print("submit archive dicom: {}".format(folder))
                 pending_futures.append(future)
 
             exceptions = []
@@ -853,13 +853,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
                     continue
                 r = future.result()
                 if r["status"] == "ok": 
-                    print("gzipped {}".format(r["args"]["dicom_folder"]))
+                    print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("gzip failed {}".format(r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
-                raise ge.CommandError("_unzip_dicom")
+                raise ge.CommandError("dicom2nii",  "Unable to archive one or more acquisitions")
 
 
 def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', add_image_type=0, add_json_info=""):
@@ -1462,7 +1462,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             pending_futures = []
             for folder in folders:
                 future = executor.submit(_zip_dicom, gzip, folder)
-                print("submit unzip dicom folder: {}".format(folder))
+                print("submit archive dicom: {}".format(folder))
                 pending_futures.append(future)
 
             exceptions = []
@@ -1476,22 +1476,22 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     continue
                 r = future.result()
                 if r["status"] == "ok": 
-                    print("gzipped {}".format(r["args"]["dicom_folder"]))
+                    print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("gzip failed {}".format(r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
-                raise ge.CommandError("_unzip_dicom")
+                raise ge.CommandError("dicom2nii", "Unable to archive one or more acquisitions")
 
 
 def _zip_dicom(gzip, dicom_folder):
     r = {"args": {"gzip": gzip, "dicom_folder": dicom_folder}}
     try: 
         if not os.path.exists(dicom_folder):
-            raise ge.CommandFailed('_zip_dicom', '')
+            raise ge.CommandFailed('_zip_dicom', 'Unable to find acquisition folder %s' % (dicom_folder))
         if not os.path.isdir(dicom_folder):
-            raise ge.CommandFailed('_zip_dicom', '')
+            raise ge.CommandFailed('_zip_dicom', '%s is not a folder' % (dicom_folder))
 
         dicom_dir, dicom_num = os.path.split(dicom_folder)
         if gzip == 'folder':
@@ -1507,7 +1507,7 @@ def _zip_dicom(gzip, dicom_folder):
             p = subprocess.run(['tar', 'czf', dicom_folder_zip_tmp, os.path.basename(dicom_folder)], cwd=os.path.dirname(dicom_folder))
 
             if p.returncode != 0:
-                raise ge.CommandFailed("_zip_dicom", '')
+                raise ge.CommandFailed("_zip_dicom", 'Unable to archive: tar exit code: %d' % (p.returncode) )
             
             os.rename(dicom_folder_zip_tmp, dicom_folder_zip)
             shutil.rmtree(dicom_folder)
@@ -1516,7 +1516,7 @@ def _zip_dicom(gzip, dicom_folder):
             p = subprocess.run(['gzip', '-r', dicom_folder])
 
             if p.returncode != 0:
-                raise ge.CommandFailed("_zip_dicom", '')
+                raise ge.CommandFailed("_zip_dicom", 'Unable to archive: gzip exit code: %d' % (p.returncode) )
         r["status"] = "ok" 
     except Exception as e:
         r["status"] = "error"
@@ -1603,7 +1603,7 @@ def _unzip_dicom_file(dicom_folder):
     try:
         p = subprocess.run(["gunzip", "-r", dicom_folder])
         if p.returncode != 0:
-            raise ge.CommandError("_unzip_dicom_file")
+            raise ge.CommandError("_unzip_dicom_file", "Unable to unzip dicomfiles: gunzip exit code: %d" % p.returncode)
         r["status"] = "ok"
     except Exception as e:
         r["status"] = "error"
@@ -1643,7 +1643,7 @@ def _unzip_dicom(dicom_root_folder, parelements):
                 print(r["traceback"])
                 exceptions.append(r["exception"])
         if len(exceptions) > 0:
-            raise ge.CommandError("_unzip_dicom")
+            raise ge.CommandError("_unzip_dicom", "Unable to unzip one or more acquisition folders")
         
         pending_futures.clear()
         for i in os.listdir(dicom_root_folder):
@@ -1671,7 +1671,7 @@ def _unzip_dicom(dicom_root_folder, parelements):
                 print(r["traceback"])
                 exceptions.append(r["exception"])
         if len(exceptions) > 0:
-            raise ge.CommandError("_unzip_dicom")
+            raise ge.CommandError("_unzip_dicom", "Unable to unzip one or more files")
         
 
 
