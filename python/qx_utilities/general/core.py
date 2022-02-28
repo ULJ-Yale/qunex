@@ -368,7 +368,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
     """
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
@@ -436,7 +436,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
 
 results = []
-lock    = multiprocessing.Lock()
+lock = multiprocessing.Lock()
 
 
 def record(response):
@@ -665,7 +665,7 @@ def runInParallel(calls, cores=None, prepend=""):
     global results
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
@@ -673,7 +673,7 @@ def runInParallel(calls, cores=None, prepend=""):
             cores = 1
 
     results = []
-    with ProcessPoolExecutor(max_workers= cores) as executor:
+    with ProcessPoolExecutor(max_workers=cores) as executor:
         for call in calls:
             future = executor.submit(runWithLog, call['function'], call['args'], call['logfile'], call['name'], prepend)
             future.add_done_callback(record_future)
