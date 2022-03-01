@@ -25,6 +25,7 @@ import sys
 import types
 import traceback
 import gzip
+import math
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 
@@ -274,13 +275,6 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
         sessionids = re.split(' +|,|\|', sessionids)
         slist = [e for e in slist if e['id'] in sessionids]
 
-        # are we inside a SLURM job array?
-        if os.environ['SLURM_ARRAY_JOB_ID'] is not None:
-            # get session for this job
-            slurm_array_ix = os.environ['SLURM_ARRAY_TASK_ID']
-            slist = [slist[int(slurm_array_ix)]]
-
-
     if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
@@ -292,6 +286,24 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
 
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
+
+    # are we inside a SLURM job array?
+    if 'SLURM_ARRAY_TASK_ID' in os.environ:
+        # get ID for this job
+        slurm_array_ix = int(os.environ['SLURM_ARRAY_TASK_ID'])
+
+        # get size of job array
+        slurm_array_size = int(os.environ['SLURM_ARRAY_TASK_MAX']) + 1
+
+        # number of sessions
+        n_sessions = len(slist)
+
+        # chunk size
+        chunk_size = math.ceil(n_sessions / slurm_array_size)
+
+        # get the chunk
+        start_ix = slurm_array_ix * chunk_size
+        slist = slist[start_ix:(start_ix + chunk_size)]
 
     return slist, gpref
 
