@@ -57,3 +57,9 @@ for n = 2:nfiles
     nimg = nimage(char(files{n}), dtype, frames, verbose);
 	img = [img nimg];
 end
+
+% -- store conc name
+
+img.rootconcname = regexprep(file, '\.conc', '');
+[p, n, e]        = fileparts(file);
+img.concname     = [n e];
