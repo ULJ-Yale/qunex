@@ -712,22 +712,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     printComm += "------------------------------------------------------------\n"
     printComm += "Running external command via QuNex:\n\n"
 
-    # beautify command printout
-    if "=" not in run:
-        comm = ' '.join(run.split())
-    elif (" --" in run or "\n--" in run) and (" -" in run or "\n-" in run): 
-        comm = run.replace(" -", " \ \n    -")
-    elif " --" in run or "\n--" in run:
-        comm = run.replace(" ", "").replace("--", " \ \n    --")
-    elif " -" in run or "\n-" in run:
-        comm = run.replace(" ", "").replace("-", " \ \n    -")
-    else:
-        comm = ' '.join(run.split())
-     
-    # line delimeters spaces cleanup
-    comm = re.sub(r' +\\', r' \\', comm)
-
-    comm += "\n"
+    comm += run + "\n"
 
     printComm += comm
     if checkfile is not None and checkfile != "":
