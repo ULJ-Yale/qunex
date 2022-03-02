@@ -295,15 +295,8 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
         # get size of job array
         slurm_array_size = int(os.environ['SLURM_ARRAY_TASK_MAX']) + 1
 
-        # number of sessions
-        n_sessions = len(slist)
-
-        # chunk size
-        chunk_size = math.ceil(n_sessions / slurm_array_size)
-
         # get the chunk
-        start_ix = slurm_array_ix * chunk_size
-        slist = slist[start_ix:(start_ix + chunk_size)]
+        slist = slist[slurm_array_ix::slurm_array_size]
 
     return slist, gpref
 
