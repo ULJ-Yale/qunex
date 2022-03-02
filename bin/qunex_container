@@ -880,8 +880,8 @@ def main(args=None):
     if used_scheduler not in ['PBS', 'LSF', 'SLURM']:
         raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler)
 
-    # are we using SLURM array
-    slurm_array = None
+    # are we using SLURM array, not by default
+    slurm_array = False
 
     scheduler_params = {}
 
@@ -891,30 +891,21 @@ def main(args=None):
             sSplit = s.split("=", 1)
 
             # SLURM job array?
-            if scheduler == "SLURM" and sSplit[0].strip() == "noarray":
-                slurm_array = False
-            elif scheduler == "SLURM" and sSplit[0].strip() == "array":
+            if scheduler == "SLURM" and sSplit[0].strip() == "array":
                 slurm_array = True
-                settings[sSplit[0].strip()] = sSplit[1].strip()
-            else:
-                settings[sSplit[0].strip()] = sSplit[1].strip()
-
+           
+            settings[sSplit[0].strip()] = sSplit[1].strip()
         # flags
         else:
             # SLURM job array?
-            if scheduler == "SLURM" and s.strip() == "noarray":
-                slurm_array = False
+            if scheduler == "SLURM" and s.strip() == "array":
+                slurm_array = True
+                if parjobs is None:
+                    settings["array"] = "0-%s" % (len(sessions) - 1)
+                else:
+                    settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
             else:
                 scheduler_params[s.strip()] = "QX_FLAG"
-
-    # slurm_array is None at this point - array was not set, noarray was not provided
-    # --> set defaults
-    if scheduler == "SLURM" and slurm_array is None:
-        slurm_array = True
-        if parjobs is None:
-            settings["array"] = "0-%s" % (len(sessions) - 1)
-        else:
-            settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
 
     # if job array we have a single job
     if slurm_array:

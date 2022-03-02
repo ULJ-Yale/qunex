@@ -504,7 +504,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         settings = {}
 
         # slurm array
-        slurm_array = None
+        slurm_array = False
 
         # split settings
         for s in settings_list:
@@ -513,32 +513,23 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                 sSplit = s.split("=", 1)
 
                 # SLURM job array?
-                if scheduler == "SLURM" and sSplit[0].strip() == "noarray":
-                    slurm_array = False
-                elif scheduler == "SLURM" and sSplit[0].strip() == "array":
+                if scheduler == "SLURM" and sSplit[0].strip() == "array":
                     slurm_array = True
-                    settings[sSplit[0].strip()] = sSplit[1].strip()
-                else:
-                    settings[sSplit[0].strip()] = sSplit[1].strip()
-
+            
+                settings[sSplit[0].strip()] = sSplit[1].strip()
             # flags
             else:
                 # SLURM job array?
-                if scheduler == "SLURM" and s.strip() == "noarray":
-                    slurm_array = False
+                if scheduler == "SLURM" and s.strip() == "array":
+                    slurm_array = True
+                    if parjobs is None:
+                        settings["array"] = "0-%s" % (len(sessions) - 1)
+                    else:
+                        settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
                 else:
-                    settings[s.strip()] = "QX_FLAG"
+                    scheduler_params[s.strip()] = "QX_FLAG"
 
         settings['jobname'] = settings.get('jobname', command)
-
-        # slurm_array is None at this point - array was not set, noarray was not provided
-        # --> set defaults
-        if scheduler == "SLURM" and slurm_array is None:
-            slurm_array = True
-            if parjobs is None:
-                settings["array"] = "0-%s" % (len(sessions) - 1)
-            else:
-                settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
 
         # if job array we have a single job
         if slurm_array:
