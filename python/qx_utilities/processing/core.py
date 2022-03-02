@@ -712,7 +712,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     printComm += "------------------------------------------------------------\n"
     printComm += "Running external command via QuNex:\n\n"
 
-    comm += run + "\n"
+    comm = run + "\n"
 
     printComm += comm
     if checkfile is not None and checkfile != "":
