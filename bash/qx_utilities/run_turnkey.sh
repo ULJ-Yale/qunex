@@ -797,6 +797,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_USER_NAME} ]]; then reho "ERROR: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_PASSWORD} ]]; then reho "ERROR: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${WORKDIR}/${XNAT_PROJECT_ID}; fi
+    if [[ -z ${StudyFolder} ]]; then StudyFolder=${STUDY_PATH}; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "ERROR: --xnatsubjectid or --xnatsubjectlabel flags are missing. Please specify either subject id or subject label and re-run."; echo ''; exit 1; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ ! -z ${XNAT_SUBJECT_LABEL} ]]; then mageho " --> Note: --xnatsubjectid is not set. Using --xnatsubjectlabel to query XNAT."; echo ''; fi
     if [[ ! -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then mageho " --> Note: --xnatsubjectlabel is not set. Using --xnatsubjectid to query XNAT."; echo ''; fi
@@ -1754,10 +1755,12 @@ fi
             geho " -- Linking DICOMs into ${QuNexRawInboxDir}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             # -- Find and link DICOMs for XNAT run
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-                echo "  find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${QuNexRawInboxDir}/ ';'"
-                find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${QuNexRawInboxDir}/ ';' &> /dev/null
-                DicomInputCount=`find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
-                DicomMappedCount=`ls ${QuNexRawInboxDir}/* | wc | awk '{print $1}'`
+                # TODO: disable verbose output
+                RsyncCommand='rsync -azH --exclude "*.xml" --exclude "*.gif" ${RawDataInputPath}/ ${QuNexRawInboxDir}'
+                echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+                eval ${RsyncCommand}
+                DicomInputCount=`find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
+                DicomMappedCount=`find ${QuNexRawInboxDir} -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
                 if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
             fi
             # -- Find and link DICOMs for non-XNAT run
@@ -1797,8 +1800,10 @@ fi
                     else
                         CaseInputFile="${RawDataInputPath}"
                     fi
-                    echo "  find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -exec cp '{}' ${QuNexRawInboxDir}/ ';'"
-                    find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec cp '{}' ${QuNexRawInboxDir}/ ';' &> /dev/null
+                    # TODO: disable verbose output
+                    RsyncCommand='rsync -azH --exclude "*.xml" --exclude "*.gif" --exclude "*.sh" --exclude "*.txt" --exclude ".*" ${CaseInputFile}/ ${QuNexRawInboxDir}'
+                    echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+                    eval ${RsyncCommand}
                     DicomInputCount=`find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" | wc | awk '{print $1}'`
                     DicomMappedCount=`find ${QuNexRawInboxDir} -type f -not -name ".*" | wc | awk '{print $1}'`
                     # DicomMappedCount=`ls ${QuNexRawInboxDir}/* | wc | awk '{print $1}'`
@@ -2070,8 +2075,9 @@ fi
             echo ""
             cyaneho " ===> RUNNING RunTurnkey step ~~~ import_dicom"
             echo ""
+           [] 
 
-            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='folder' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"

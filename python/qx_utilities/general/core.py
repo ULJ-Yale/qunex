@@ -25,7 +25,9 @@ import sys
 import types
 import traceback
 import gzip
+import math
 from datetime import datetime
+from concurrent.futures import ProcessPoolExecutor
 
 import general.filelock as fl
 import general.exceptions as ge
@@ -285,6 +287,17 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
 
+    # are we inside a SLURM job array?
+    if 'SLURM_ARRAY_TASK_ID' in os.environ:
+        # get ID for this job
+        slurm_array_ix = int(os.environ['SLURM_ARRAY_TASK_ID'])
+
+        # get size of job array
+        slurm_array_size = int(os.environ['SLURM_ARRAY_TASK_MAX']) + 1
+
+        # get the chunk
+        slist = slist[slurm_array_ix::slurm_array_size]
+
     return slist, gpref
 
 
@@ -360,7 +373,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
     """
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
@@ -428,7 +441,8 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
 
 results = []
-lock    = multiprocessing.Lock()
+lock = multiprocessing.Lock()
+
 
 def record(response):
     """
@@ -454,6 +468,15 @@ def record(response):
             print("%s%s failed%s" % (prepend, name, see))
         else:
             print("%s%s finished successfully%s" % (prepend, name, see))
+
+
+def record_future(future):
+    if future.exception() is not None:
+        print("Unhandled exception")
+        print(future.exception())
+    else:
+        record(future.result())
+
 
 # Logger class that prints both to stdour and to console
 class Logger(object):
@@ -647,22 +670,19 @@ def runInParallel(calls, cores=None, prepend=""):
     global results
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
         except:
             cores = 1
 
-    pool    = multiprocessing.Pool(processes=cores)
     results = []
-
-    for call in calls:
-        pool.apply_async(runWithLog, (call['function'], call['args'], call['logfile'], call['name'], prepend), callback=record)
-
-    pool.close()
-    pool.join()
-
+    with ProcessPoolExecutor(max_workers=cores) as executor:
+        for call in calls:
+            future = executor.submit(runWithLog, call['function'], call['args'], call['logfile'], call['name'], prepend)
+            future.add_done_callback(record_future)
+        
     return results
 
 
