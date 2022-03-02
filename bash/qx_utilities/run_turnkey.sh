@@ -1755,7 +1755,6 @@ fi
             geho " -- Linking DICOMs into ${QuNexRawInboxDir}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             # -- Find and link DICOMs for XNAT run
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-                # TODO: disable verbose output
                 RsyncCommand='rsync -azH --exclude "*.xml" --exclude "*.gif" ${RawDataInputPath}/ ${QuNexRawInboxDir}'
                 echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
                 eval ${RsyncCommand}
@@ -1800,7 +1799,6 @@ fi
                     else
                         CaseInputFile="${RawDataInputPath}"
                     fi
-                    # TODO: disable verbose output
                     RsyncCommand='rsync -azH --exclude "*.xml" --exclude "*.gif" --exclude "*.sh" --exclude "*.txt" --exclude ".*" ${CaseInputFile}/ ${QuNexRawInboxDir}'
                     echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
                     eval ${RsyncCommand}
