@@ -196,8 +196,8 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
     if command is not None and script is not None:
         raise CommandError("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
 
-    if settings is None:
-        raise CommandError("schedule", "Missing parameter", "Settings need to be provided to run scheduler!")
+    if scheduler_params is None:
+        raise CommandError("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
 
     # --- parse settings
     try:
@@ -874,10 +874,10 @@ def main(args=None):
         multi_session_command = True
 
     scheduler_params_list = [e.strip() for e in scheduler.split(",")]
-    used_scheduler = scheduler_params_list.pop(0)
+    scheduler = scheduler_params_list.pop(0)
 
     # check scheduler
-    if used_scheduler not in ['PBS', 'LSF', 'SLURM']:
+    if scheduler not in ['PBS', 'LSF', 'SLURM']:
         raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler)
 
     # are we using SLURM array, not by default
@@ -894,16 +894,19 @@ def main(args=None):
             if scheduler == "SLURM" and sSplit[0].strip() == "array":
                 slurm_array = True
            
-            settings[sSplit[0].strip()] = sSplit[1].strip()
+            scheduler_params[sSplit[0].strip()] = sSplit[1].strip()
         # flags
         else:
             # SLURM job array?
             if scheduler == "SLURM" and s.strip() == "array":
+                n_jobs = 1
+                if n_sessions is not None:
+                    n_jobs = n_sessions - 1
                 slurm_array = True
                 if parjobs is None:
-                    settings["array"] = "0-%s" % (len(sessions) - 1)
+                    scheduler_params["array"] = "0-%s" % (n_jobs)
                 else:
-                    settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
+                    scheduler_params["array"] = "0-%s%%%s" % (n_jobs, parjobs)
             else:
                 scheduler_params[s.strip()] = "QX_FLAG"
 
@@ -1049,7 +1052,7 @@ def main(args=None):
                 containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
 
             if scheduler:
-                schedule(command=containerCommand, scheduler=scheduler, scheduler_params=scheduler_params, output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
+                schedule(command=containerCommand, scheduler=scheduler, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
             else:
                 subprocess.Popen(containerCommand, shell=True)
 
