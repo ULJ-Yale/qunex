@@ -245,14 +245,16 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
         if not slurm_array:
             logname = "/qunex_container_" + timestamp + ".txt"
         else:
-            logname = "/qunex_container_%%a_" + timestamp + ".txt"
+            logname = "/qunex_container_job%a_" + timestamp + ".txt"
 
         # put in batchfolder
         if batchlogsfolder is not None:
             outputs['stdout'] = batchlogsfolder + logname
+            outputs['stderr'] = batchlogsfolder + logname
         else:
             homedir = os.path.expanduser("~")
             outputs['stdout'] = homedir + logname
+            outputs['stderr'] = homedir + logname
 
     if outputs['both'] is not None:
         outputs['stderr'] = outputs['both']
@@ -346,9 +348,9 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
         sCommand += "#SBATCH --job-name=%s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sCommand += "#SBATCH --output %s\n" % (outputs['stdout'])
+            sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
-            sCommand += "#SBATCH --error %s\n" % (outputs['stderr'])
+            sCommand += "#SBATCH -e %s\n" % (outputs['stderr'])
         com = 'sbatch'
 
     # --- run scheduler
