@@ -8,7 +8,6 @@
 from __future__ import print_function, division
 import subprocess
 import os
-import tempfile
 import sys
 import re
 import math
@@ -999,9 +998,14 @@ def main(args=None):
                     scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
 
             # setup script
-            fid, scriptPath = tempfile.mkstemp(dir=homedir)
-            scriptName = os.path.basename(scriptPath)
-            f = os.fdopen(fid, 'w')
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+            # prepare the schedule file
+            if batchlogsfolder is not None:
+                scriptPath = os.path.join(batchlogsfolder, f'qunex_container_command_{timestamp}.scheduler')
+            else:
+                scriptPath = os.path.join(homedir, f'qunex_container_command_{timestamp}.scheduler')
+
+            f = open(scriptPath, "w")
 
             for k, v in envars:
                 print("export con_%s=\"%s\"" % (k, v), file=f)
@@ -1027,9 +1031,10 @@ def main(args=None):
             containerCommand = ""
             if bash_pre:
                 containerCommand += bash_pre + ";"
-
+            
+            f.close()
+            
             if singularity:
-                print("rm " + scriptPath, file=f)
                 f.close()
 
                 containerCommand += "singularity exec "
@@ -1037,6 +1042,15 @@ def main(args=None):
                 # no clean env
                 if nocleanenv is None:
                     containerCommand += "--cleanenv "
+                    if slurm_array:
+                        # the params we need are SLURM_ARRAY_TASK_ID and SLURM_ARRAY_TASK_MAX
+                        # we do not need SLURM_JOB_ID, SLURM_ARRAY_JOB_ID, SLURM_ARRAY_TASK_COUNT, SLURM_ARRAY_TASK_MAX for now
+                        slurm_array_params = ['SLURM_ARRAY_TASK_ID', 'SLURM_ARRAY_TASK_MAX']
+                        # pass variables into the Singularity container
+                        containerCommand += '--env '
+                        containerCommand += ','.join(['%s=${%s}' % (p, p) for p in slurm_array_params])
+                        # replace trailing comma with space
+                        containerCommand += ' '
 
                 # nv
                 if nv:
@@ -1048,9 +1062,6 @@ def main(args=None):
 
                 containerCommand +=  "%s bash %s" % (conimage, scriptPath)
             else:
-                print("rm " + os.path.join(homedir, scriptName), file=f)
-                f.close()
-
                 containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
 
             if scheduler:
