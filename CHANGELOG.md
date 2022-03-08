@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.4
+
+The default normalization for assumed HRF modelling has changed from 'run', which normalizes assumed regressors to amplitude 1 within each run separately, to 'uni', which normalizes regressors universally to HRF area-under-the-curve = 1.
+
 ## 0.93.3
 
 Improved several aspects of parallelism inside QuNex, added SLURM job array support. Added additional information to several command's documentation. You can now generate predicted timeseries and residual timeseries for arbitrary set of regressors used in the GLM analyses.
