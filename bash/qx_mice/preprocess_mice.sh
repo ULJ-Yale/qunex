@@ -33,7 +33,7 @@ usage() {
 # ------------------------------------------------------------------------------
 # -- set folders
 # ------------------------------------------------------------------------------
-export mice_templates="${QUNEXLIBRARYETC}/mice_pipelines/"
+export mice_templates="${QUNEXLIBRARYETC}/mice_pipelines"
 
 
 # ------------------------------------------------------------------------------
@@ -113,22 +113,20 @@ geho " --> Starting MELODIC"
 
 melodic_output=${work_dir}/melodic_output
 ica_dir=${melodic_output}.ica
-data_dir=${work_dir}/TODO
+data_dir=${work_dir}
 
-for i in 'rsfMRI_Standard_900.fsf'; do
-    sed -e 's@OUTPUT@'$melodic_output'@g' \
+# copy fsf file
+cp ${mice_templates}/rsfMRI_Standard_900.fsf ${work_dir}
+
+for i in "${work_dir}/rsfMRI_Standard_900.fsf"; do
+    sed -e 's@OUTPUT@'${melodic_output}'@g' \
     -e 's@ANATFILE@'${melodic_anatfile}'@g' \
     -e 's@DATA@'$data_dir'@g' <$i> ${work_dir}/rsfMRI_ds.fsf
 done
 
-geho " --> MELODIC completed"
-
-
-# ------------------------------------------------------------------------------
-# -- FEAT
-# ------------------------------------------------------------------------------
-geho " --> Modelling with FEAT"
 feat ${work_dir}/rsfMRI_ds.fsf
+
+geho " --> MELODIC completed"
 
 
 # ------------------------------------------------------------------------------
