@@ -31,12 +31,6 @@ usage() {
 
 
 # ------------------------------------------------------------------------------
-# -- set folders
-# ------------------------------------------------------------------------------
-export MICE_TEMPLATES="${QUNEXLIBRARYETC}/mice_pipelines/"
-
-
-# ------------------------------------------------------------------------------
 # -- Parse arguments
 # ------------------------------------------------------------------------------
 opts_GetOpt() {
@@ -58,7 +52,7 @@ orientation_correction=`opts_GetOpt "--orientation_correction" $@`
 despike=`opts_GetOpt "--despike" $@`
 
 # check required parameters
-if [[ -z "$work_dir" ]]; then reho "ERROR: Work directory not set!"; exit 1; fi
+if [[ -z "$work_dir" ]]; then reho "ERROR: Work directory is not set!"; exit 1; fi
 if [[ -z "$session" ]]; then reho "ERROR: Session missing!"; exit 1; fi
 
 # list parameters
@@ -140,8 +134,6 @@ if [ -n "$despike" ]; then
     rm ${work_dir}/lsf.*
     rm ${work_dir}/*_m.nii.gz
 fi
-
-geho " --> Despiking"
 
 
 # ------------------------------------------------------------------------------
