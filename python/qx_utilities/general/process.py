@@ -29,10 +29,10 @@ import general.exceptions as ge
 import general.commands_support as gcs
 from processing import fs, fsl, simple, workflow
 
-
 # pipelines imports
 from hcp import process_hcp
 
+import qx_mice.setup_mice
 
 # =======================================================================
 #                                                                 GLOBALS
@@ -202,7 +202,7 @@ arglist = [
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
            ['fast',               '-t 1 -n 3 --nopve',                           str,    "options to be passed to FAST in brain segmentation"],
            ['betboldmask',        '-R -m',                                       str,    "options to be passed to BET when creating bold brain masks"],
-           ['TR',                 '2.5',                                         float,  "TR of the bold data"],
+           ['tr',                 '2.5',                                         float,  "TR of the bold data"],
            ['omit',               '5',                                           int,    "how many frames to omit at the start of each bold run"],
            ['bold_actions',       'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
            ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
@@ -458,7 +458,7 @@ arglist = [
            ['hcp_tica_stop_after_step', '',                                       isNone,  "What step to stop processing after, same valid values as for hcp_tica_starting_step."],
            ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
            ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
-           ['hcp_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+           ['hcp_parallel_limit', '',                                             isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
            ['hcp_tica_config_out', None,                                          flag,    "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
 
 
@@ -487,6 +487,11 @@ arglist = [
            ['# --- Processing options'],
            ['run',                    'run',                                      str,    "Run type: run - do the task, test - perform checks."],
            ['log',                    'keep',                                     str,    "Whether to remove ('remove') the temporary logs once jobs are completed, keep them in the study level processing/logs/comlogs folder ('keep' or 'study') in the hcp folder ('hcp') or in a <session id>/logs/comlogs folder ('sessions'). Multiple options can be specified separated by '|'."],
+
+           ['# --- mice pipelines'],
+           ['increase_voxel_size',        '', isNone,  "The factor by which to increase voxel size."],
+           ['no_orienatation_correction', '', flag,    "Provide this to disable orientation correction."],
+           ['no_despike',                 '', flag,    "Provide this to disable despiking."],
 ]
 
 
@@ -501,13 +506,15 @@ arglist = [
 #   4/ short description
 
 flaglist = [
-    ['test',                     'run',                   'test', 'Run a test only.'],
-    ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',         True, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
-    ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',  True, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
-    ['hcp_asl_use_t1',           'hcp_asl_use_t1',        True, 'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
-    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr', True, 'If this option is provided, MT and ST banding corrections will not be applied.'],
-    ['hcp_task_vba',             'hcp_task_vba',          True, "VBA YES/NO."],
-    ['hcp_tica_config_out',      'hcp_tica_config_out',   False, "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."]
+    ['test',                     'run',                          'test', 'Run a test only.'],
+    ['hcp_dwi_nogpu',            'hcp_dwi_nogpu',                True,   'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
+    ['hcp_dwi_selectbestb0',     'hcp_dwi_selectbestb0',         True,   "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
+    ['hcp_asl_use_t1',           'hcp_asl_use_t1',               True,   'If specified, the T1 estimates from the satrecov model fit will be used in perfusion estimation in oxford_asl.'],
+    ['hcp_asl_nobandingcorr',    'hcp_asl_nobandingcorr',        True,   'If this option is provided, MT and ST banding corrections will not be applied.'],
+    ['hcp_task_vba',             'hcp_task_vba',                 True,   "VBA YES/NO."],
+    ['hcp_tica_config_out',      'hcp_tica_config_out',          False,   "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
+    ['no_orienatation_correction', 'no_orienatation_correction', True,   "Provide this to disable orientation correction."],
+    ['no_despike',                 'no_despike',                 True,   "Provide this to disable despiking."]
 ]
 
 
@@ -574,6 +581,8 @@ calist = [
     [],
     ['f99',    'dwi_f99',                     fsl.dwi_f99,                                    "Run FSL F99 command."],
     ['fslx',   'dwi_xtract',                  fsl.dwi_xtract,                                 "Run FSL XTRACT command."],
+    [],
+    ['smice',  'setup_mice',                  qx_mice.setup_mice.setup_mice,                  "Runs the command to prepare a QuNex study for mice preprocessing."],
 ]
 
 # longitudinal commands

@@ -22,15 +22,6 @@ geho() {
 
 
 # ------------------------------------------------------------------------------
-# -- general help usage function
-# ------------------------------------------------------------------------------
-
-usage() {
- echo "TODO"
-}
-
-
-# ------------------------------------------------------------------------------
 # -- Parse arguments
 # ------------------------------------------------------------------------------
 opts_GetOpt() {
@@ -46,10 +37,10 @@ done
 
 work_dir=`opts_GetOpt "--work_dir" $@`
 session=`opts_GetOpt "--session" $@`
-voxel_increase=`opts_GetOpt "--increase_voxel_size" $@`
 tr=`opts_GetOpt "--tr" $@`
-orientation_correction=`opts_GetOpt "--orientation_correction" $@`
-despike=`opts_GetOpt "--despike" $@`
+voxel_increase=`opts_GetOpt "--increase_voxel_size" $@`
+no_orientation_correction=`opts_GetOpt "--no_orientation_correction" $@`
+no_despike=`opts_GetOpt "--no_despike" $@`
 
 # check required parameters
 if [[ -z "$work_dir" ]]; then reho "ERROR: Work directory is not set!"; exit 1; fi
@@ -60,11 +51,27 @@ echo ""
 echo " --> Executing setup_mice:"
 echo "       Work directory: ${work_dir}"
 echo "       Session: ${session}"
-echo "       Increase voxel size by: ${voxel_increase}"
 echo "       TR: ${tr}"
-echo "       Orientation correction: ${orientation_correction}"
-echo "       Despike: ${despike}"
-echo ""
+
+# flags
+if [[ -n "$voxel_increase" ]]; then 
+    echo "       Increase voxel size: no"
+else
+    echo "       Increase voxel size by: ${voxel_increase}"
+fi
+
+if [[ -z "$no_orientation_correction" ]]; then 
+    echo "       Orientation correction: yes"
+else
+    echo "       Orientation correction: no"
+fi
+
+if [[ -z "$no_despike" ]]; then 
+    echo "       Despike: yes"
+else
+    echo "       Despike: no"
+fi
+
 
 # ------------------------------------------------------------------------------
 # -- prep
@@ -110,7 +117,7 @@ fslmerge -tr ${work_dir}/${session}.nii.gz ${work_dir}/${session}.nii.gz ${tr}
 # ------------------------------------------------------------------------------
 # -- orientation correction (should user be able to flip x, y, z?)
 # ------------------------------------------------------------------------------
-if [ -n "$orientation_correction" ]; then
+if [ -z "$no_orientation_correction" ]; then
     geho " --> Correcting orientation"
 
     fslswapdim ${work_dir}/${session}.nii.gz -x y z ${work_dir}/${session}.nii.gz 
@@ -122,7 +129,7 @@ fi
 # ------------------------------------------------------------------------------
 # -- AFNI despike
 # ------------------------------------------------------------------------------
-if [ -n "$despike" ]; then
+if [ -z "$no_despike" ]; then
     geho " --> Despiking"
 
     3dDespike -NEW -nomask -prefix ${session}_ds ${work_dir}/${session}.nii.gz

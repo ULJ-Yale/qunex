@@ -237,7 +237,8 @@ deprecated_parameters = {
     'hcp_bold_sequencetype': None,
     'hcp_biascorrect_t1w': None,
     'hcp_Pipeline': 'hcp_pipeline',
-    'args': 'palm_args'
+    'args': 'palm_args',
+    'TR': 'tr'
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

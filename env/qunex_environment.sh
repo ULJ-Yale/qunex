@@ -396,6 +396,9 @@ PATH=$PATH:/bin
 #PATH=$TOOLS/MeshNet:$PATH
 export PATH
 
+# -- add qx python to PYTHONPATH
+export PYTHONPATH=$QUNEXPATH/python
+
 # -- FSL probtrackx2_gpu command path
 FSLGPUDIR=${FSLDIR}/bin
 PATH=${FSLGPUDIR}:${PATH}
