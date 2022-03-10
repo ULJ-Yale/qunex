@@ -167,6 +167,14 @@ flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${wo
 geho " --> Applying bandpass"
 3dBandpass -despike -prefix ${work_dir}/filtered_func_data_clean_BP 0.01 0.25 ${work_dir}/PREPROC_EPI_nodemean/filtered_func_data_clean_EPI.nii.gz
 
+
+# ------------------------------------------------------------------------------
+# -- Registration to Allen space
+# ------------------------------------------------------------------------------
+geho " --> Registering to Allen space bandpass"
+WarpTimeSeriesImageMultiTransform 4 ${work_dir}/filtered_func_data_clean_BP.nii.gz filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt
+
+
 # ------------------------------------------------------------------------------
 # -- wrap up
 # ------------------------------------------------------------------------------
