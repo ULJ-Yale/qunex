@@ -223,7 +223,7 @@ bash_call_execute() {
     if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
         # -- Add check in case the sessions folder is distinct from the default name
         # -- Eventually use the template file to replace hard-coded values
-        QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
+        QuNexSessionsSubFolders=`cat $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
         QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
         for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
             if [[ ! -d ${QuNexSessionsFolder} ]]; then
@@ -1756,7 +1756,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo ""
         echo "Using $SessionBatchFile for input."
         echo ""
-        CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
+        CASES=`cat ${SessionBatchFile} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
     fi
 
     # -- Get species flag for NHP pipelines

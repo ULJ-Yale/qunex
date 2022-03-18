@@ -772,7 +772,7 @@ if [ ${Calculation} != "dense" ]; then
     echo ""
     echo "--- Functional connectivity inputs:"
     echo ""
-    more ${FinalInput}
+    cat ${FinalInput}
     echo ""
     # -- Echo outputs
     echo "Seed functional connectivity will be saved here for each specified ROI:"
