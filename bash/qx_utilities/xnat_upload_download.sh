@@ -352,8 +352,8 @@ if [ -f ${HOME}/${XNAT_CREDENTIAL_FILE} ]; then
     echo ""
     ceho " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} found. Performing credential checks... "
     echo ""
-    XNAT_USER_NAME=`more ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f1`
-    XNAT_PASSWORD=`more ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f2`
+    XNAT_USER_NAME=`cat ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f1`
+    XNAT_PASSWORD=`cat ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f2`
     if [[ ! -z ${XNAT_USER_NAME} ]] && [[ ! -z ${XNAT_PASSWORD} ]]; then
         echo ""
         ceho " -- XNAT credentials generated in ${HOME}/${XNAT_CREDENTIAL_FILE} " 
@@ -442,9 +442,9 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     XNATDownloadFunction() {
     
             # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
-            XNAT_SUBJECT_ID=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`
-            XNAT_SUBJECT_LABEL=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`
-            XNAT_ACCSESSION_ID=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`
+            XNAT_SUBJECT_ID=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`
+            XNAT_SUBJECT_LABEL=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`
+            XNAT_ACCSESSION_ID=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`
         
             # -- Report error if variables remain undefined
             if [[ -z ${XNAT_SUBJECT_ID} ]] || [[ -z ${XNAT_SUBJECT_LABEL} ]] || [[ -z ${XNAT_ACCSESSION_ID} ]] || [[ -z ${XNAT_SESSION_LABEL} ]]; then 
