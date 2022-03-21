@@ -367,6 +367,7 @@ arglist = [
            ['hcp_dwi_nogpu',          None,                                       flag, 'If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.'],
            ['hcp_dwi_selectbestb0',   None,                                       flag, "If set selects the best b0 for each phase encoding direction to pass on to topup rather than the default behaviour of using equally spaced b0's throughout the scan. The best b0  is identified as the least distorted (i.e., most similar to the average b0 after registration). The flag is not set by default."],
            ['hcp_dwi_even_slices',    None,                                       flag, "If set will ensure the input images to FSL's topup and eddy have an even number of slices by removing one slice if necessary. This behaviour used to be the default, but is now optional, because discarding a slice is incompatible with using slice-to-volume correction in FSL's eddy."],
+           ['hcp_dwi_topupconfig',   '',                                         str,   "A full path to the topup configuration file to use. Set to '' if the default is to be used or of TOPUP distortion correction is not used."],
 
            ['# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options'],
            ['hcp_icafix_bolds',       '',                                         isNone, "A string specifying a list of bolds for ICAFix. Also used later in PostFix, ReApplyFix, MSMAll and DeDriftAndResample. Defaults to ''."],

@@ -2010,7 +2010,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                             coefficients, alternatively a string describing
                             multiple options (see below), or "NONE", if not
                             used [NONE].
-    --hcp_bold_topupconfig  A full path to the topup configuration file to use.
+    --hcp_dwi_topupconfig   A full path to the topup configuration file to use.
                             [$HCPPIPEDIR/global/config/b02b0.cnf].
 
     Eddy post processing parameters
@@ -2276,8 +2276,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if options['hcp_bold_topupconfig'] != '':
-                comm += "                --topup-config-file=" + options['hcp_bold_topupconfig']
+            if options['hcp_dwi_topupconfig'] != '':
+                comm += "                --topup-config-file=" + options['hcp_dwi_topupconfig']
 
             if options['hcp_dwi_even_slices']:
                 comm += "                --ensure-even-slices"
