@@ -6,12 +6,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-``setup_mice.py``
+``process_mice.py``
 
-This file holds code for preparing a study for QuNex mice pipelines. It
+This file holds code for processing mice MRI data with QuNex mice pipelines. It
 consists of functions:
 
-- setup_mice    Runs the command to prepare a study for QuNex mice pipelines.
+- preprocess_mice   Runs the QuNex mice preprocessing pipeline.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -34,17 +34,21 @@ import qx_utilities.processing.core as pc
 
 from datetime import datetime
 
-def setup_mice(sinfo, options, overwrite=False, thread=0):
+def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     """
-    ``setup_mice [... processing options]``
-    ``smice [... processing options]``
+    ``preprocess_mice [... processing options]``
+    ``premice [... processing options]``
 
     Runs the command to prepare a QuNex study for mice preprocessing.
 
     REQUIREMENTS
     ============
 
-    Succesfull import of mice data.
+    Succesfull preparation of mice data for preprocessing:
+        - data import,
+        - setup_mice,
+        - create_session_info,
+        - create_batch.
 
     INPUTS
     ======
@@ -107,7 +111,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex setup_mice \
+        qunex preprocess_mice \
           --sessionsfolder="/data/mice_study/sessions" \
           --sessions="/data/mice_study/processsing/batch.txt" \
           --parsessions=2
@@ -119,18 +123,18 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s setup_mice [%s] ..." % (pc.action("Running", options["run"]), session)
+    r += "\n%s preprocess_mice [%s] ..." % (pc.action("Running", options["run"]), session)
 
     # status variables
     run = True
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "setup_mice")
+        pc.doOptionsCheck(options, sinfo, "preprocess_mice")
         
         # script location
         qx_dir = os.environ["QUNEXPATH"]
-        setup_mice_script = "bash " + os.path.join(qx_dir, "bash", "qx_mice", "setup_mice.sh")
+        preprocess_mice_script = "bash " + os.path.join(qx_dir, "bash", "qx_mice", "preprocess_mice.sh")
 
         # work dir
         # TODO FIX
@@ -140,28 +144,34 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
         comm = '%(script)s \
                 --work_dir="%(work_dir)s" \
                 --session="%(session)s" \
-                --tr="%(tr)s"' % {
-                "script"   : setup_mice_script,
+                --fix_threshold="%(fix_threshold)s" \
+                --mice_highpass="%(mice_highpass)s" \
+                --mice_lowpass="%(mice_lowpass)s"' % {
+                "script"   : preprocess_mice_script,
                 "work_dir" : work_dir,
-                "session"  : sinfo["id"],
-                "tr"       : options["tr"]}
+                "fix_threshold" : options["fix_threshold"],
+                "mice_highpass" : options["mice_highpass"],
+                "mice_lowpass"  : options["mice_lowpass"]}
 
         # optional parameters
-        # voxel_increase
-        if "voxel_increase" in options:
-            comm += "                --voxel_increase=" + options['voxel_increase']
+        if options["melodic_anatfile"]:
+            comm += "                --melodic_anatfile=" + options["melodic_anatfile"]
+        
+        if options["fix_rdata"]:
+            comm += "                --fix_rdata=" + options["fix_rdata"]
 
-        # no_orienatation_correction
-        if options['no_orienatation_correction']:
-            comm += "                --no_orienatation_correction"
+        if options["flirt_ref"]:
+            comm += "                --flirt_ref=" + options["flirt_ref"]
 
-        # no_despike
-        if options['no_despike']:
-            comm += "                --no_despike"
-       
+        if options['fix_no_motion_cleanup']:
+            comm += "                --fix_no_motion_cleanup"
+
+        if options['fix_aggressive_cleanup']:
+            comm += "                --fix_aggressive_cleanup"
+
         # report command
         r += "\n\n------------------------------------------------------------\n"
-        r += "Running setup_mice command via QuNex:\n\n"
+        r += "Running preprocess_mice command via QuNex:\n\n"
         r += comm.replace("                ", "")
         r += "\n------------------------------------------------------------\n"
 
@@ -171,34 +181,34 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(None, comm, "Running setup_mice", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(None, comm, "Running preprocess_mice", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
 
                 if failed:
-                    r += "\n---> setup_mice processing for session %s failed" % session
-                    report = (sinfo['id'], "setup_mice failed", 1)
+                    r += "\n---> preprocess_mice processing for session %s failed" % session
+                    report = (sinfo['id'], "preprocess_mice failed", 1)
                 else:
-                    r += "\n---> setup_mice processing for session %s completed" % session
-                    report = (sinfo['id'], "setup_mice completed", 0)
+                    r += "\n---> preprocess_mice processing for session %s completed" % session
+                    report = (sinfo['id'], "preprocess_mice completed", 0)
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(target_file, None, "setup_mice " + session, r, overwrite=overwrite)
+                passed, _, r, failed = pc.checkRun(target_file, None, "preprocess_mice " + session, r, overwrite=overwrite)
 
                 if passed is None:
-                    r += "\n---> setup_mice can be run"
-                    report = (sinfo['id'], "setup_mice ready", 0)
+                    r += "\n---> preprocess_mice can be run"
+                    report = (sinfo['id'], "preprocess_mice ready", 0)
                 else:
-                    r += "\n---> setup_mice processing for session %s would be skipped" % session
-                    report = (sinfo['id'], "setup_mice would be skipped", 1)
+                    r += "\n---> preprocess_mice processing for session %s would be skipped" % session
+                    report = (sinfo['id'], "preprocess_mice would be skipped", 1)
 
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
         r += str(errormessage)
-        report = (sinfo['id'], "setup_mice failed", 1)
+        report = (sinfo['id'], "preprocess_mice failed", 1)
 
     except:
         r += "\n --- Failed during processing of session %s with error:\n %s\n" % (session, traceback.format_exc())
-        report = (sinfo['id'], "setup_mice failed", 1)
+        report = (sinfo['id'], "preprocess_mice failed", 1)
 
     return (r, report)

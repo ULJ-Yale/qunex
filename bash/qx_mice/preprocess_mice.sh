@@ -6,6 +6,7 @@
 
 # Authors: Jure Demsar, Jie Lisa Ji and Valerio Zerbi
 
+
 # ------------------------------------------------------------------------------
 #  setup color outputs
 # ------------------------------------------------------------------------------
@@ -18,15 +19,6 @@ reho() {
 green="\033[32m"
 geho() {
     echo -e "$green$1 \033[0m"
-}
-
-
-# ------------------------------------------------------------------------------
-# -- general help usage function
-# ------------------------------------------------------------------------------
-
-usage() {
- echo "TODO"
 }
 
 
@@ -57,23 +49,24 @@ fix_rdata=`opts_GetOpt "--fix_rdata" $@`
 fix_threshold=`opts_GetOpt "--fix_threshold" $@`
 fix_no_motion_cleanup=`opts_GetOpt "--fix_no_motion_cleanup" $@`
 fix_aggressive_cleanup=`opts_GetOpt "--fix_aggressive_cleanup" $@`
-highpass=`opts_GetOpt "--highpass" $@`
+highpass=`opts_GetOpt "--mice_highpass" $@`
+lowpass=`opts_GetOpt "--mice_lowpass" $@`
 flirt_ref=`opts_GetOpt "--flirt_ref" $@`
-band_ftop=`opts_GetOpt "--band_ftop" $@`
+
 
 # check required parameters
 if [[ -z "$work_dir" ]]; then reho "ERROR: Work directory is not set!"; exit 1; fi
 if [[ -z "$session" ]]; then reho "ERROR: Session missing!"; exit 1; fi
 
 # default values
-if [[ -z "$melodic_anatfile" ]]; then melodic_anatfile=${mice_templates}/EPI_template_template.nii.gz; fi
+if [[ -z "$melodic_anatfile" ]]; then melodic_anatfile=${mice_templates}/EPI_template.nii.gz; fi
 if [[ -z "$fix_rdata" ]]; then fix_rdata=${mice_templates}/zerbi_2015_neuroimage.RData; fi
 if [[ -z "$fix_threshold" ]]; then fix_threshold=20; fi
-if [[ -z "$highpass" ]]; then highpass=100; fi
-# calculate band_fbot
-band_fbot=$(bc <<< "scale=2;$highpass/10000")
-if [[ -z "$flirt_ref" ]]; then flirt_ref=${mice_templates}/EPI_template_template.nii.gz; fi
-if [[ -z "$band_ftop" ]]; then band_ftop=0.25; fi
+if [[ -z "$highpass" ]]; then highpass=0.01; fi
+# calculate fix_highpass
+fix_highpass=$(bc <<< "scale=2;$highpass * 10000")
+if [[ -z "$flirt_ref" ]]; then flirt_ref=${mice_templates}/EPI_template.nii.gz; fi
+if [[ -z "$lowpass" ]]; then lowpass=0.25; fi
 
 
 # list parameters
@@ -84,8 +77,8 @@ echo "       Session: ${session}"
 echo "       FIX RData file: ${fix_rdata}"
 echo "       FIX threshold: ${fix_threshold}"
 echo "       Highpass: ${highpass}"
+echo "       Lowpass: ${lowpass}"
 echo "       FLIRT reference: ${flirt_ref}"
-echo "       Bandpass top limit: ${band_ftop}"
 
 # flags
 motion_cleanup=" -m"
@@ -134,7 +127,7 @@ geho " --> MELODIC completed"
 # ------------------------------------------------------------------------------
 geho " --> Running FIX"
 export FSL_FIX_MATLAB_MODE=1
-fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${highpass} ${aggressive_cleanup}
+fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass} ${aggressive_cleanup}
 
 
 # ------------------------------------------------------------------------------
@@ -165,13 +158,13 @@ flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${wo
 # -- bandpass
 # ------------------------------------------------------------------------------
 geho " --> Applying bandpass"
-3dBandpass -despike -prefix ${work_dir}/filtered_func_data_clean_BP 0.01 0.25 ${work_dir}/PREPROC_EPI_nodemean/filtered_func_data_clean_EPI.nii.gz
+3dBandpass -despike -prefix ${work_dir}/filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/PREPROC_EPI_nodemean/filtered_func_data_clean_EPI.nii.gz
 
 
 # ------------------------------------------------------------------------------
 # -- Registration to Allen space
 # ------------------------------------------------------------------------------
-geho " --> Registering to Allen space bandpass"
+geho " --> Registering to Allen space"
 WarpTimeSeriesImageMultiTransform 4 ${work_dir}/filtered_func_data_clean_BP.nii.gz filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt
 
 
