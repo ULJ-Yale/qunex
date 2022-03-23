@@ -8516,7 +8516,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
             # confound
             if options['hcp_task_confound'] is not None:
-                comm += "                --confound==\"%s\"" % options['hcp_task_confound']
+                comm += "                --confound=\"%s\"" % options['hcp_task_confound']
 
             # origsmoothingFWHM
             if options['hcp_bold_smoothFWHM'] != "2":
