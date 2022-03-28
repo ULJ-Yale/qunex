@@ -1550,6 +1550,12 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
 
+    # -- SLURM JOB ARRAY FILTERING
+    if [[ -n ${SLURM_ARRAY_TASK_ID} ]]; then
+        SESSIONS=`gmri get_sessions_for_slurm_array --sessions=${SESSIONS} --sessionids=${SESSIONIDS}`
+        SESSIONIDS=''
+    fi
+
     # -- General operational flags
     Overwrite=`get_parameters "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
     PRINTCOM=`get_parameters "${setflag}printcom" $@`    # Option for printing the entire command

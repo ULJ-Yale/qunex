@@ -1964,6 +1964,31 @@ def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number'
     print("BOLDS:%s" % (",".join(boldlist)))
 
 
+def get_sessions_for_slurm_array(sessions, sessionids):
+    """
+    get_sessions_for_slurm_array \\
+      --sessions=<a list of sessions, or path to the batch file)
+
+    Returns the subset of sessions that will be processed 
+
+    INPUTS
+    ======
+
+    --sessions      A list of sessions or path to the batch file.
+    --sessionids    A subset of sessions to filter out.
+    """
+
+    # get sessions
+    slist, _ = gc.getSessionList(sessions, sessionids=sessionids)
+
+    # print
+    sarray = []
+    for s in slist:
+        sarray.append(s['id'])
+
+    print(','.join(sarray))
+
+
 def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="behavior.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
     ``gather_behavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``

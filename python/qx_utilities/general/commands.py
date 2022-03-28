@@ -66,5 +66,6 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'get_dicom_fields'      : {'com': dicomdeid.get_dicom_fields,     'args': ('folder', 'targetfile', 'limit')},
             'change_dicom_files'    : {'com': dicomdeid.change_dicom_files,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')},
             'run_list'              : {'com': utilities.run_list,             'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')},
-            'import_nhp'            : {'com': import_nhp.import_nhp,         'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'nameformat')},
+            'import_nhp'            : {'com': import_nhp.import_nhp,          'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'nameformat')},
+            'get_sessions_for_slurm_array' : {'com': utilities.get_sessions_for_slurm_array, 'args': ('sessions')}, 
             }
