@@ -195,6 +195,31 @@ def useOrSkipBOLD(sinfo, options, r=""):
 
     return bolds, bskip, len(bskip), r
 
+def _filter_bolds(bolds, bolds_filter):
+    '''
+    An internal function for filtering a list of bolds.
+
+    A list of bolds is filter according to the filter parameter.
+    '''
+
+    # prepare filter
+    filters = [e.strip() for e in re.split(" +|\||, *", bolds_filter)]
+
+    # used bolds storage
+    used_bolds = []
+
+    for b in bolds:
+        # extract bold info
+        _, _, _, boldinfo = b
+
+        # check filters
+        for f in filters:
+            if f == boldinfo['ima'] or f == boldinfo['name'] or f == boldinfo['task']:
+                used_bolds.append(b)
+                break
+
+    return used_bolds
+
 
 def doOptionsCheck(options, sinfo, command):
 

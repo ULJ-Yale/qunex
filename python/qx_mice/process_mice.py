@@ -27,12 +27,14 @@ directly.
 Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
 All rights reserved.
 """
+
 import os
 
 import qx_utilities as qxu
 import qx_utilities.processing.core as pc
 
 from datetime import datetime
+
 
 def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     """
@@ -46,7 +48,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
 
     Succesfull preparation of mice data for preprocessing:
         - data import,
-        - setup_mice,
+        - preprocess_mice,
         - create_session_info,
         - create_batch.
 
@@ -63,7 +65,12 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
                         [batch.txt]
     --sessionsfolder    The path to the study/sessions folder, where the
                         imaging data is supposed to go. [.]
+    --bolds             Which bold images to process. You can select bolds
+                        through their number, name or task (e.g. rest), you
+                        can chain multiple conditions together by providing a
+                        comma separated list.
     --parsessions       How many sessions to run in parallel. [1]
+    --parelements       How many elements (e.g bolds) to run in parallel. [1]
     --logfolder         The path to the folder where runlogs and comlogs
                         are to be stored, if other than default. []
     --log               Whether to keep ("keep") or remove ("remove") the
@@ -82,29 +89,33 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     Specific parameters
     -------------------
 
-    --tr                            TR of the bold data. [2.5]
-    --increase_voxel_size           The factor by which to increase voxel size.
-    --no_orienatation_correction    Whether to disable orientation correction.
-    --no_despike                    Whether to disable despiking.
+    --melodic_anatfile          Path to the melodic anat file, without the
+                                extension, e.g. without .nii.gz.
+                                [qx_library/etc/mice_pipelines/EPI_braine]
+    --fix_rdata                 Path to the RData file used by fix.
+                                [qx_library/etc/mice_pipelines/zerbi_2015_neuroimage.RData]
+    --fix_threshold             Fix ICA treshold. [2].
+    --fix_no_motion_cleanup     A flag for disabling cleanup of motion confounds.
+                                [Disabled by default]
+    --fix_aggressive_cleanup    A flag for performing aggressive cleanup.
+                                [Disabled by default]
+    --mice_highpass             The value of the highpass filter. [0.01]
+    --mice_lowpass              The value of the lowpass filter. [0.25]
+    --flirt_ref                 Path to the template file.
+                                [qx_library/etc/mice_pipelines/EPI_template.nii.gz]
 
     OUTPUTS
     =======
 
-    TODO
-
-    The results of this step will be present in the dMRI/NHP/F99reg folder
+    The results of this step will be present in the nii folder
     in the sessions's root::
 
         study
         └─ sessions
            ├─ session1
-           |  └─ dMRI
-           |    └─ NHP
-           |      └─ F99reg
+           |  └─ nii
            └─ session2
-              └─ dMRI
-                └─ NHP
-                  └─ F99reg
+           |  └─ nii
 
     EXAMPLE USE
     ===========
@@ -113,42 +124,115 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
 
         qunex preprocess_mice \
           --sessionsfolder="/data/mice_study/sessions" \
-          --sessions="/data/mice_study/processsing/batch.txt" \
-          --parsessions=2
+          --sessions="/data/mice_study/processsing/batch.txt"
 
     """
 
     # get session id
-    session = sinfo["id"]
+    session = sinfo['id']
 
-    r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s preprocess_mice [%s] ..." % (pc.action("Running", options["run"]), session)
+    r = '\n------------------------------------------------------------'
+    r += f'\nSession id: {sinfo["id"]} \n[started on {datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")}]'
+    r += f'\n{pc.action("Running", options["run"])} preprocess_mice {session} ...'
 
-    # status variables
-    run = True
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}  
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "preprocess_mice")
+        pc.doOptionsCheck(options, sinfo, 'preprocess_mice')
         
-        # script location
-        qx_dir = os.environ["QUNEXPATH"]
-        preprocess_mice_script = "bash " + os.path.join(qx_dir, "bash", "qx_mice", "preprocess_mice.sh")
+        # get bolds
+        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
 
-        # work dir
-        # TODO FIX
-        work_dir = os.path.join(options["sessionsfolder"], sinfo["id"])
+        # filter bolds
+        if (options['bolds'] != 'all'):
+            bolds = pc._filter_bolds(bolds, options['bolds'])
 
+        # report
+        parelements = max(1, min(options['parelements'], len(bolds)))
+        r += f'\n{pc.action("Running", options["run"])} {parelements} BOLD images in parallel'
+
+        if parelements == 1: # serial execution
+            for b in bolds:
+                # process
+                result = _execute_preprocess_mice(sinfo, options, overwrite, b)
+
+                # merge r
+                r += result['r']
+
+                # merge report
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['failed']     += tempReport['failed']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']
+
+        else: # parallel execution
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(_execute_preprocess_mice, sinfo, options, overwrite)
+            results = processPoolExecutor.map(f, bolds)
+
+            # merge r and report
+            for result in results:
+                r                    += result['r']
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['failed']     += tempReport['failed']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']
+
+        rep = []
+        for k in ['done', 'failed', 'ready', 'not ready', ]:
+            if len(report[k]) > 0:
+                rep.append(f'{", ".join(report[k])} {k}')
+
+        report = (sinfo['id'], 'preprocess_mice: bolds ' + '; '.join(rep), len(report['failed'] + report['not ready']))
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = f'\n --- Failed during processing of session {session} with error:\n'
+        r += str(errormessage)
+        report = (sinfo['id'], 'preprocess_mice failed', 1)
+
+    except:
+        r += f'n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n'
+        report = (sinfo['id'], 'preprocess_mice failed', 1)
+
+    return (r, report)
+
+
+def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    # script location
+    qx_dir = os.environ['QUNEXPATH']
+    preprocess_mice_script = 'bash ' + os.path.join(qx_dir, 'bash', 'qx_mice', 'preprocess_mice.sh')
+
+    # work dir
+    work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'nii')
+
+    # extract bold filename
+    _, _, _, boldinfo = bold_data
+    boldname  = boldinfo['ima'] + '_ds'
+
+    # --- check for bold image
+    boldimg = os.path.join(work_dir, f'{boldname}.nii.gz')
+    r, boldok = pc.checkForFile2(r, boldimg, '\n     ... preprocess_mice bold image present', '\n     ... ERROR: preprocess_mice bold image missing!')
+
+    if boldok:
         # set up the command
         comm = '%(script)s \
                 --work_dir="%(work_dir)s" \
-                --session="%(session)s" \
+                --bold="%(bold)s" \
                 --fix_threshold="%(fix_threshold)s" \
                 --mice_highpass="%(mice_highpass)s" \
                 --mice_lowpass="%(mice_lowpass)s"' % {
                 "script"   : preprocess_mice_script,
                 "work_dir" : work_dir,
+                "bold"     : boldname,
                 "fix_threshold" : options["fix_threshold"],
                 "mice_highpass" : options["mice_highpass"],
                 "mice_lowpass"  : options["mice_lowpass"]}
@@ -168,47 +252,37 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
 
         if options['fix_aggressive_cleanup']:
             comm += "                --fix_aggressive_cleanup"
-
+        
         # report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running preprocess_mice command via QuNex:\n\n"
-        r += comm.replace("                ", "")
-        r += "\n------------------------------------------------------------\n"
+        r += '\n\n------------------------------------------------------------\n'
+        r += 'Running preprocess_mice command via QuNex:\n\n'
+        r += comm.replace('                ', '')
+        r += '\n------------------------------------------------------------\n'
 
         # run
-        if run:
-            # run
-            if options["run"] == "run":
+        if options['run'] == 'run':
+            # execute
+            r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running preprocess_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
 
-                # execute
-                r, endlog, _, failed = pc.runExternalForFile(None, comm, "Running preprocess_mice", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
-
-                if failed:
-                    r += "\n---> preprocess_mice processing for session %s failed" % session
-                    report = (sinfo['id'], "preprocess_mice failed", 1)
-                else:
-                    r += "\n---> preprocess_mice processing for session %s completed" % session
-                    report = (sinfo['id'], "preprocess_mice completed", 0)
-
-            # just checking
+            if failed:
+                r += f'\n---> preprocess_mice processing for BOLD {boldname} failed'
+                report['failed'].append(boldname)
             else:
-                passed, _, r, failed = pc.checkRun(target_file, None, "preprocess_mice " + session, r, overwrite=overwrite)
+                r += f'\n---> preprocess_mice processing for BOLD {boldname} completed'
+                report['done'].append(boldname)
 
-                if passed is None:
-                    r += "\n---> preprocess_mice can be run"
-                    report = (sinfo['id'], "preprocess_mice ready", 0)
-                else:
-                    r += "\n---> preprocess_mice processing for session %s would be skipped" % session
-                    report = (sinfo['id'], "preprocess_mice would be skipped", 1)
+        else:
+            r += f'\n---> BOLD {boldname} is ready for preprocess_mice command'
+            report['ready'].append(boldname)
 
+    else:
+        # run
+        if options['run'] == 'run':
+            r += f'\n---> preprocess_mice processing for BOLD {boldname} failed'
+            report['failed'].append(boldname)
+        # just checking
+        else:
+            r += f'\n---> BOLD {boldname} is not ready for preprocess_mice command'
+            report['not ready'].append(boldname)
 
-    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
-        r += str(errormessage)
-        report = (sinfo['id'], "preprocess_mice failed", 1)
-
-    except:
-        r += "\n --- Failed during processing of session %s with error:\n %s\n" % (session, traceback.format_exc())
-        report = (sinfo['id'], "preprocess_mice failed", 1)
-
-    return (r, report)
+    return {'r': r, 'report': report}

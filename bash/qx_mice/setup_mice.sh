@@ -36,67 +36,68 @@ done
 }
 
 work_dir=`opts_GetOpt "--work_dir" $@`
-session=`opts_GetOpt "--session" $@`
+bold=`opts_GetOpt "--bold" $@`
 tr=`opts_GetOpt "--tr" $@`
-voxel_increase=`opts_GetOpt "--increase_voxel_size" $@`
+voxel_increase=`opts_GetOpt "--voxel_increase" $@`
 no_orientation_correction=`opts_GetOpt "--no_orientation_correction" $@`
-no_despike=`opts_GetOpt "--no_despike" $@`
 
 # check required parameters
-if [[ -z "$work_dir" ]]; then reho "ERROR: Work directory is not set!"; exit 1; fi
-if [[ -z "$session" ]]; then reho "ERROR: Session missing!"; exit 1; fi
+if [[ -z $work_dir ]]; then reho "ERROR: Work directory is not set!"; exit 1; fi
+if [[ -z $bold ]]; then reho "ERROR: BOLD missing!"; exit 1; fi
 
 # list parameters
 echo ""
 echo " --> Executing setup_mice:"
 echo "       Work directory: ${work_dir}"
-echo "       Session: ${session}"
+echo "       BOLD: ${bold}"
 echo "       TR: ${tr}"
 
 # flags
-if [[ -n "$voxel_increase" ]]; then 
+if [[ -z ${voxel_increase} ]]; then 
     echo "       Increase voxel size: no"
 else
     echo "       Increase voxel size by: ${voxel_increase}"
 fi
 
-if [[ -z "$no_orientation_correction" ]]; then 
+if [[ -z $no_orientation_correction ]]; then 
     echo "       Orientation correction: yes"
 else
     echo "       Orientation correction: no"
-fi
-
-if [[ -z "$no_despike" ]]; then 
-    echo "       Despike: yes"
-else
-    echo "       Despike: no"
 fi
 
 
 # ------------------------------------------------------------------------------
 # -- prep
 # ------------------------------------------------------------------------------
+# go to work dir
+pushd ${work_dir}
+
 # create backup dir
-if [[ ! -d ${work_dir}/backup ]]; then
-    mkdir ${work_dir}/backup
+if [[ ! -d backup ]]; then
+    mkdir backup
 fi
+
+# backup the original nii files
+cp ${bold}.nii.gz backup/${bold}.nii.gz
 
 
 # ------------------------------------------------------------------------------
 # -- increase voxel size
 # ------------------------------------------------------------------------------
-if [[ -n "$voxel_increase" ]]; then
+if [[ -n $voxel_increase ]]; then
     geho " --> Increasing voxel size"
 
-    # backup the original hdr file
-    if [[ ! -f ${work_dir}/backup/${session}.hdr ]]; then
-        cp ${work_dir}/${session}.hdr ${work_dir}/backup/${session}.hdr
+    # remove tmp.m
+    if [[ -f voxel_increase_${bold}.m ]]; then
+        rm voxel_increase_${bold}.m
     fi
 
-    rm ${work_dir}/tmp.m
-    echo $"change_voxel_dimensions('${work_dir}/${session}', 10);exit;">>tmp.m
-    matlab -nodisplay -nosplash -nojvm -r tmp
-    rm ${work_dir}/tmp.m
+    3dcalc -a ${bold}.nii.gz -expr 'a' -prefix ${bold}.hdr
+    echo $"change_voxel_dimensions('${bold}', 10);exit;">>voxel_increase_${bold}.m
+    matlab -nodisplay -nosplash -nojvm -r voxel_increase_${bold}
+
+    rm ${bold}.nii.gz
+    fslchfiletype NIFTI_GZ ${bold}.img
 fi
 
 
@@ -105,42 +106,38 @@ fi
 # ------------------------------------------------------------------------------
 geho " --> Verifying TR"
 
-# backup the original nii.gz file
-if [[ ! -f ${work_dir}/backup/${session}.nii.gz ]]; then
-    cp ${work_dir}/${session}.nii.gz ${work_dir}/backup/${session}.nii.gz
-fi
-
 # check
-fslmerge -tr ${work_dir}/${session}.nii.gz ${work_dir}/${session}.nii.gz ${tr}
+fslmerge -tr ${bold}.nii.gz ${bold}.nii.gz ${tr}
 
 
 # ------------------------------------------------------------------------------
 # -- orientation correction (should user be able to flip x, y, z?)
 # ------------------------------------------------------------------------------
-if [ -z "$no_orientation_correction" ]; then
+if [ -z $no_orientation_correction ]; then
     geho " --> Correcting orientation"
 
-    fslswapdim ${work_dir}/${session}.nii.gz -x y z ${work_dir}/${session}.nii.gz 
-    fslorient -deleteorient ${work_dir}/${session}.nii.gz
-    3drefit -orient RAI ${work_dir}/${session}.nii.gz
+    fslswapdim ${bold}.nii.gz -x y z ${bold}.nii.gz 
+    fslorient -deleteorient ${bold}.nii.gz
+    3drefit -orient RAI ${bold}.nii.gz
 fi
 
 
 # ------------------------------------------------------------------------------
 # -- AFNI despike
 # ------------------------------------------------------------------------------
-if [ -z "$no_despike" ]; then
-    geho " --> Despiking"
+geho " --> Despiking"
 
-    3dDespike -NEW -nomask -prefix ${session}_ds ${work_dir}/${session}.nii.gz
-    3dAFNItoNIFTI -prefix ${session}_ds.nii.gz ${session}_ds+orig.BRIK
-
-    # remove unnecessary files
-    rm ${work_dir}/*.BRIK
-    rm ${work_dir}/*.HEAD
-    rm ${work_dir}/lsf.*
-    rm ${work_dir}/*_m.nii.gz
+if [[ -f ${bold}_ds.nii.gz ]]; then
+    rm ${bold}_ds.nii.gz
 fi
+if [[ -f ${bold}_ds+orig.HEAD ]]; then
+    rm ${bold}_ds+orig.HEAD
+fi
+if [[ -f ${bold}_ds+orig.BRIK ]]; then
+    rm ${bold}_ds+orig.BRIK
+fi
+3dDespike -NEW -nomask -prefix ${bold}_ds ${bold}.nii.gz
+3dAFNItoNIFTI -prefix ${bold}_ds.nii.gz ${bold}_ds+orig.BRIK
 
 
 # ------------------------------------------------------------------------------
@@ -151,3 +148,6 @@ echo ""
 geho "------------------------- Successful completion of work --------------------------------"
 echo ""
 exit 0
+
+# back to starting dir
+popd

@@ -43,7 +43,7 @@ done
 }
 
 work_dir=`opts_GetOpt "--work_dir" $@`
-session=`opts_GetOpt "--session" $@`
+bold=`opts_GetOpt "--bold" $@`
 melodic_anatfile=`opts_GetOpt "--melodic_anatfile" $@`
 fix_rdata=`opts_GetOpt "--fix_rdata" $@`
 fix_threshold=`opts_GetOpt "--fix_threshold" $@`
@@ -55,25 +55,25 @@ flirt_ref=`opts_GetOpt "--flirt_ref" $@`
 
 
 # check required parameters
-if [[ -z "$work_dir" ]]; then reho "ERROR: Work directory is not set!"; exit 1; fi
-if [[ -z "$session" ]]; then reho "ERROR: Session missing!"; exit 1; fi
+if [[ -z $work_dir ]]; then reho "ERROR: Work directory is not set!"; exit 1; fi
+if [[ -z $bold ]]; then reho "ERROR: BOLD missing!"; exit 1; fi
 
 # default values
-if [[ -z "$melodic_anatfile" ]]; then melodic_anatfile=${mice_templates}/EPI_template.nii.gz; fi
-if [[ -z "$fix_rdata" ]]; then fix_rdata=${mice_templates}/zerbi_2015_neuroimage.RData; fi
-if [[ -z "$fix_threshold" ]]; then fix_threshold=20; fi
-if [[ -z "$highpass" ]]; then highpass=0.01; fi
+if [[ -z $melodic_anatfile ]]; then melodic_anatfile="${mice_templates}/EPI_brain"; fi
+if [[ -z $fix_rdata ]]; then fix_rdata="${mice_templates}/zerbi_2015_neuroimage.RData"; fi
+if [[ -z $fix_threshold ]]; then fix_threshold=20; fi
+if [[ -z $highpass ]]; then highpass=0.01; fi
 # calculate fix_highpass
 fix_highpass=$(bc <<< "scale=2;$highpass * 10000")
-if [[ -z "$flirt_ref" ]]; then flirt_ref=${mice_templates}/EPI_template.nii.gz; fi
-if [[ -z "$lowpass" ]]; then lowpass=0.25; fi
+if [[ -z $flirt_ref ]]; then flirt_ref="${mice_templates}/EPI_template.nii.gz"; fi
+if [[ -z $lowpass ]]; then lowpass=0.25; fi
 
 
 # list parameters
 echo ""
 echo " --> Executing setup_mice:"
 echo "       Work directory: ${work_dir}"
-echo "       Session: ${session}"
+echo "       BOLD: ${bold}"
 echo "       FIX RData file: ${fix_rdata}"
 echo "       FIX threshold: ${fix_threshold}"
 echo "       Highpass: ${highpass}"
@@ -82,7 +82,7 @@ echo "       FLIRT reference: ${flirt_ref}"
 
 # flags
 motion_cleanup=" -m"
-if [[ -n "$fix_no_motion_cleanup" ]]; then 
+if [[ -n $fix_no_motion_cleanup ]]; then 
     motion_cleanup="";
     echo "       Motion cleanup: no"
 else
@@ -90,7 +90,7 @@ else
 fi
 
 aggressive_cleanup=""
-if [[ -n "$fix_aggressive_cleanup" ]]; then
+if [[ -n $fix_aggressive_cleanup ]]; then
     aggressive_cleanup="-A";
     echo "       Aggressive cleanup: yes"
 else
@@ -104,20 +104,25 @@ echo ""
 # ------------------------------------------------------------------------------
 geho " --> Starting MELODIC"
 
-melodic_output=${work_dir}/melodic_output
-ica_dir=${melodic_output}.ica
-data_dir=${work_dir}
+# set variables
+melodic_output="${work_dir}/melodic_output_${bold}"
+ica_dir="${melodic_output}.ica"
 
-# copy fsf file
+# remove the previous dir if it exists
+if [ -d ${melodic_output} ]; then rm -rf ${melodic_output}; fi
+
+# copy the fsf file
 cp ${mice_templates}/rsfMRI_Standard_900.fsf ${work_dir}
 
+# inject varibale values into the fsf file
 for i in "${work_dir}/rsfMRI_Standard_900.fsf"; do
     sed -e 's@OUTPUT@'${melodic_output}'@g' \
     -e 's@ANATFILE@'${melodic_anatfile}'@g' \
-    -e 's@DATA@'$data_dir'@g' <$i> ${work_dir}/rsfMRI_ds.fsf
+    -e 's@DATA@'${work_dir}/${bold}'@g' <$i> ${work_dir}/${bold}.fsf
 done
 
-feat ${work_dir}/rsfMRI_ds.fsf
+# feat
+feat ${work_dir}/${bold}.fsf
 
 geho " --> MELODIC completed"
 

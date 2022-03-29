@@ -394,8 +394,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     --verbose          Whether to be report on the progress (True) or not
                        (False). [True]
     --parelements      How many parallel processes to run dcm2nii conversion 
-                       with. The number is one by default, if specified as 
-                       'all', all available resources are utilized.
+                       with. [1]
 
     OUTPUTS
     =======
@@ -681,9 +680,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         niiid = str(niinum)
         calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
         files.append([niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices])
-        # subprocess.call(call, shell=True, stdout=null, stderr=null)
 
-    #done = core.runExternalParallel(calls, cores=parelements, prepend=' ... ')
+    done = gc.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
     for niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices in files:
 
@@ -894,8 +892,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                        (False). [True]
 
     --parelements      How many parallel processes to run dcm2nii conversion
-                       with. The number is one by defaults, if specified as
-                       'all', all available resources are utilized.
+                       with. [1]
 
     --tool             What tool to use for the conversion [auto]. It can be
                        one of:
@@ -1268,7 +1265,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     subprocess.call("matlab -nodisplay -r \"setpref('dicm2nii_gui_para', 'save_patientName', true); setpref('dicm2nii_gui_para', 'save_json', true); setpref('dicm2nii_gui_para', 'use_parfor', true); setpref('dicm2nii_gui_para', 'use_seriesUID', true); setpref('dicm2nii_gui_para', 'lefthand', true); setpref('dicm2nii_gui_para', 'scale_16bit', false); exit\" ", shell=True, stdout=null, stderr=null)
                     print('     done!')
                     setdi = False
-                calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, general_report_crash(ME); exit(1), end; exit" % (folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})                
+                calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, general_report_crash(ME); exit(1), end; exit" % (folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})
             else:
                 print('---> Using dcm2niix for conversion as Matlab is not available! [%s: %s]' % (niiid, info['seriesDescription']))
                 if par:

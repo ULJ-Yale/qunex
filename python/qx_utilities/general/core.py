@@ -390,7 +390,10 @@ def runExternalParallel(calls, cores=None, prepend=''):
             if calls:
                 call = calls.pop(0)
                 if call['sout']:
-                    sout = open(call['sout'], 'a', 1)
+                    if os.path.exists(call['sout']):
+                        sout = open(call['sout'], 'a', 1)
+                    else:
+                        sout = open(call['sout'], 'w', 1)
                 else:
                     sout = open(os.devnull, 'w')
 

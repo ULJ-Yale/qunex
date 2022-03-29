@@ -33,7 +33,7 @@ from processing import fs, fsl, simple, workflow
 from hcp import process_hcp
 
 import qx_mice.setup_mice
-import qx_mice.preprocess_mice
+import qx_mice.process_mice
 
 # =======================================================================
 #                                                                 GLOBALS
@@ -207,7 +207,7 @@ arglist = [
             ['omit',               '5',                                           int,    "how many frames to omit at the start of each bold run"],
             ['bold_actions',       'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
             ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
-            ['bolds',              'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
+            ['bolds',              'all',                                         str,    "which bolds to process (can be multiple joined with , or | )"],
             ['boldname',           'bold',                                        str,    "the default name for the bold files"],
             ['qx_nifti_tail',      '',                                            isNone, "The tail of the nifti (volume) file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_nifti_tail"],
             ['qx_cifti_tail',      '',                                            isNone, "The tail of the cifti file assigned when mapping data to QuNex images/functional folder. If not set or set to 'None', it defaults to the value of hcp_cifti_tail"],

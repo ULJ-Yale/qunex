@@ -148,6 +148,8 @@ stats_p2z                               Converts p to Z values considering one o
 stats_ttest_dependent                   Computes t-test of differences between two dependent groups.
 stats_ttest_independent                 Computes t-test of differences between two independent groups.
 stats_ttest_zero                        Computes t-test against zero and saves specified results.
+import_nhp                              Maps NHP data to the QuNex Suite file structure.
+bruker_to_dicom                         Converts bruker data into the dicom format.
 '''
 
 def runCommand(command, args):

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+# SPDX-FileCopyrightText: 2022 QuNex development team <https://qunex.yale.edu/>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""
+'''
 ``setup_mice.py``
 
 This file holds code for preparing a study for QuNex mice pipelines. It
@@ -21,12 +21,13 @@ from the command line using `qunex` command. Help is available through:
 
 There are additional support functions that are not to be used
 directly.
-"""
+'''
 
-"""
+'''
 Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
 All rights reserved.
-"""
+'''
+
 import os
 
 import qx_utilities as qxu
@@ -34,8 +35,11 @@ import qx_utilities.processing.core as pc
 
 from datetime import datetime
 
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+
 def setup_mice(sinfo, options, overwrite=False, thread=0):
-    """
+    '''
     ``setup_mice [... processing options]``
     ``smice [... processing options]``
 
@@ -59,48 +63,49 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
                         [batch.txt]
     --sessionsfolder    The path to the study/sessions folder, where the
                         imaging data is supposed to go. [.]
+    --bolds             Which bold images to process. You can select bolds
+                        through their number, name or task (e.g. rest), you
+                        can chain multiple conditions together by providing a
+                        comma separated list.
     --parsessions       How many sessions to run in parallel. [1]
+    --parelements       How many elements (e.g bolds) to run in parallel. [1]
     --logfolder         The path to the folder where runlogs and comlogs
                         are to be stored, if other than default. []
-    --log               Whether to keep ("keep") or remove ("remove") the
-                        temporary logs once jobs are completed. ["keep"]
-                        When a comma or pipe ("|") separated list is given, 
+    --log               Whether to keep ('keep') or remove ('remove') the
+                        temporary logs once jobs are completed. ['keep']
+                        When a comma or pipe ('|') separated list is given, 
                         the log will be created at the first provided 
                         location and then linked or copied to other 
                         locations. The valid locations are:
                         
-                        - "study" (for the default: 
+                        - 'study' (for the default: 
                           `<study>/processing/logs/comlogs` location)
-                        - "session" (for `<sessionid>/logs/comlogs`)
-                        - "hcp" (for `<hcp_folder>/logs/comlogs`)
-                        - "<path>" (for an arbitrary directory)
+                        - 'session' (for `<sessionid>/logs/comlogs`)
+                        - 'hcp' (for `<hcp_folder>/logs/comlogs`)
+                        - '<path>' (for an arbitrary directory)
 
     Specific parameters
     -------------------
 
     --tr                            TR of the bold data. [2.5]
-    --increase_voxel_size           The factor by which to increase voxel size.
+    --voxel_increase                The factor by which to increase voxel size.
+                                    If not provided QuNex will not increase the
+                                    voxel size. []
     --no_orienatation_correction    Whether to disable orientation correction.
-    --no_despike                    Whether to disable despiking.
+                                    [Not set by default].
 
     OUTPUTS
     =======
 
-    TODO
-
-    The results of this step will be present in the dMRI/NHP/F99reg folder
+    The results of this step will be present in the nii folder
     in the sessions's root::
 
         study
         └─ sessions
            ├─ session1
-           |  └─ dMRI
-           |    └─ NHP
-           |      └─ F99reg
+           |  └─ nii
            └─ session2
-              └─ dMRI
-                └─ NHP
-                  └─ F99reg
+           |  └─ nii
 
     EXAMPLE USE
     ===========
@@ -108,97 +113,162 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
     ::
 
         qunex setup_mice \
-          --sessionsfolder="/data/mice_study/sessions" \
-          --sessions="/data/mice_study/processsing/batch.txt" \
-          --parsessions=2
+          --sessionsfolder='/data/mice_study/sessions' \
+          --sessions='/data/mice_study/processsing/batch.txt'
 
-    """
+       qunex setup_mice \
+          --sessionsfolder='/data/mice_study/sessions' \
+          --sessions='/data/mice_study/processsing/batch.txt'
+          --sessionids='joe01' \
+          --bolds='bold1' \
+          --tr='1'
+
+    '''
 
     # get session id
-    session = sinfo["id"]
+    session = sinfo['id']
 
-    r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s setup_mice [%s] ..." % (pc.action("Running", options["run"]), session)
+    r = '\n------------------------------------------------------------'
+    r += f'\nSession id: {sinfo["id"]} \n[started on {datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")}]'
+    r += f'\n{pc.action("Running", options["run"])} setup_mice {session} ...'
 
-    # status variables
-    run = True
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}  
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "setup_mice")
+        pc.doOptionsCheck(options, sinfo, 'setup_mice')
         
-        # script location
-        qx_dir = os.environ["QUNEXPATH"]
-        setup_mice_script = "bash " + os.path.join(qx_dir, "bash", "qx_mice", "setup_mice.sh")
+        # get bolds
+        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
 
-        # work dir
-        # TODO FIX
-        work_dir = os.path.join(options["sessionsfolder"], sinfo["id"])
+        # filter bolds
+        if (options['bolds'] != 'all'):
+            bolds = pc._filter_bolds(bolds, options['bolds'])
 
+        # report
+        parelements = max(1, min(options['parelements'], len(bolds)))
+        r += f'\n{pc.action("Running", options["run"])} {parelements} BOLD images in parallel'
+
+        if parelements == 1: # serial execution
+            for b in bolds:
+                # process
+                result = _execute_setup_mice(sinfo, options, overwrite, b)
+
+                # merge r
+                r += result['r']
+
+                # merge report
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['failed']     += tempReport['failed']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']
+
+        else: # parallel execution
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(_execute_setup_mice, sinfo, options, overwrite)
+            results = processPoolExecutor.map(f, bolds)
+
+            # merge r and report
+            for result in results:
+                r                    += result['r']
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['failed']     += tempReport['failed']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']
+
+        rep = []
+        for k in ['done', 'failed', 'ready', 'not ready', ]:
+            if len(report[k]) > 0:
+                rep.append(f'{", ".join(report[k])} {k}')
+
+        report = (sinfo['id'], 'setup_mice: bolds ' + '; '.join(rep), len(report['failed'] + report['not ready']))
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = f'\n --- Failed during processing of session {session} with error:\n'
+        r += str(errormessage)
+        report = (sinfo['id'], 'setup_mice failed', 1)
+
+    except:
+        r += f'n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n'
+        report = (sinfo['id'], 'setup_mice failed', 1)
+
+    return (r, report)
+
+
+def _execute_setup_mice(sinfo, options, overwrite, bold_data):
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    # script location
+    qx_dir = os.environ['QUNEXPATH']
+    setup_mice_script = 'bash ' + os.path.join(qx_dir, 'bash', 'qx_mice', 'setup_mice.sh')
+
+    # work dir
+    work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'nii')
+
+    # extract bold filename
+    _, _, _, boldinfo = bold_data
+    boldname  = boldinfo['ima']
+
+    # --- check for bold image
+    boldimg = os.path.join(work_dir, f'{boldname}.nii.gz')
+    r, boldok = pc.checkForFile2(r, boldimg, '\n     ... setup_mice bold image present', '\n     ... ERROR: setup_mice bold image missing!')
+
+    if boldok:
         # set up the command
         comm = '%(script)s \
                 --work_dir="%(work_dir)s" \
-                --session="%(session)s" \
+                --bold="%(bold)s" \
                 --tr="%(tr)s"' % {
                 "script"   : setup_mice_script,
                 "work_dir" : work_dir,
-                "session"  : sinfo["id"],
+                "bold"     : boldname,
                 "tr"       : options["tr"]}
 
         # optional parameters
         # voxel_increase
-        if "voxel_increase" in options:
-            comm += "                --voxel_increase=" + options['voxel_increase']
+        if 'voxel_increase' in options:
+            comm += '                --voxel_increase=' + options['voxel_increase']
 
         # no_orienatation_correction
         if options['no_orienatation_correction']:
-            comm += "                --no_orienatation_correction"
+            comm += '                --no_orienatation_correction'
 
-        # no_despike
-        if options['no_despike']:
-            comm += "                --no_despike"
-       
         # report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running setup_mice command via QuNex:\n\n"
-        r += comm.replace("                ", "")
-        r += "\n------------------------------------------------------------\n"
+        r += '\n\n------------------------------------------------------------\n'
+        r += 'Running setup_mice command via QuNex:\n\n'
+        r += comm.replace('                ', '')
+        r += '\n------------------------------------------------------------\n'
 
         # run
-        if run:
-            # run
-            if options["run"] == "run":
+        if options['run'] == 'run':
+            # execute
+            r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running setup_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
 
-                # execute
-                r, endlog, _, failed = pc.runExternalForFile(None, comm, "Running setup_mice", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
-
-                if failed:
-                    r += "\n---> setup_mice processing for session %s failed" % session
-                    report = (sinfo['id'], "setup_mice failed", 1)
-                else:
-                    r += "\n---> setup_mice processing for session %s completed" % session
-                    report = (sinfo['id'], "setup_mice completed", 0)
-
-            # just checking
+            if failed:
+                r += f'\n---> setup_mice processing for BOLD {boldname} failed'
+                report['failed'].append(boldname)
             else:
-                passed, _, r, failed = pc.checkRun(target_file, None, "setup_mice " + session, r, overwrite=overwrite)
+                r += f'\n---> setup_mice processing for BOLD {boldname} completed'
+                report['done'].append(boldname)
 
-                if passed is None:
-                    r += "\n---> setup_mice can be run"
-                    report = (sinfo['id'], "setup_mice ready", 0)
-                else:
-                    r += "\n---> setup_mice processing for session %s would be skipped" % session
-                    report = (sinfo['id'], "setup_mice would be skipped", 1)
+        else:
+            r += f'\n---> BOLD {boldname} is ready for setup_mice command'
+            report['ready'].append(boldname)
 
+    else:
+        # run
+        if options['run'] == 'run':
+            r += f'\n---> setup_mice processing for BOLD {boldname} failed'
+            report['failed'].append(boldname)
+        # just checking
+        else:
+            r += f'\n---> BOLD {boldname} is not ready for setup_mice command'
+            report['not ready'].append(boldname)
 
-    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = "\n\n\n --- Failed during processing of session %s with error:\n" % (session)
-        r += str(errormessage)
-        report = (sinfo['id'], "setup_mice failed", 1)
-
-    except:
-        r += "\n --- Failed during processing of session %s with error:\n %s\n" % (session, traceback.format_exc())
-        report = (sinfo['id'], "setup_mice failed", 1)
-
-    return (r, report)
+    return {'r': r, 'report': report}
