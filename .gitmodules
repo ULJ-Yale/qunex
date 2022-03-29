@@ -4,4 +4,4 @@
 
 [submodule "library"]
 	path = qx_library
-	url = git@bitbucket.org:oriadev/library.git
+	url = ../library.git
