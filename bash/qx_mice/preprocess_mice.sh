@@ -119,12 +119,12 @@ cp ${mice_templates}/rsfMRI_Standard_900.fsf ${work_dir}
 for i in "${work_dir}/rsfMRI_Standard_900.fsf"; do
     sed -e 's@OUTPUT@'${melodic_output}'@g' \
     -e 's@ANATFILE@'${melodic_anatfile}'@g' \
-    -e 's@DATA@'${work_dir}/${bold}'@g' <$i> ${work_dir}/${bold}.fsf
+    -e 's@DATA@'${work_dir}/${bold}_ds'@g' <$i> ${work_dir}/${bold}_ds.fsf
 done
 
 # feat
-echo " ... Running feat ${work_dir}/${bold}.fsf"
-feat ${work_dir}/${bold}.fsf
+echo " ... Running feat ${work_dir}/${bold}_ds.fsf"
+feat ${work_dir}/${bold}_ds.fsf
 
 geho " --> MELODIC completed"
 

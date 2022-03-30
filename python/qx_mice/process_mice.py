@@ -239,7 +239,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
                     --mice_lowpass="%(mice_lowpass)s"' % {
                     "script"   : preprocess_mice_script,
                     "work_dir" : work_dir,
-                    "bold"     : boldname + "_DS",
+                    "bold"     : boldname,
                     "fix_threshold" : options["fix_threshold"],
                     "mice_highpass" : options["mice_highpass"],
                     "mice_lowpass"  : options["mice_lowpass"]}
