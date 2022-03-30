@@ -30,7 +30,6 @@ All rights reserved.
 
 import os
 
-import qx_utilities as qxu
 import qx_utilities.processing.core as pc
 
 from datetime import datetime
@@ -71,6 +70,8 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
                         comma separated list.
     --parsessions       How many sessions to run in parallel. [1]
     --parelements       How many elements (e.g bolds) to run in parallel. [1]
+    --overwrite         Whether to overwrite target files that already exist
+                        (yes) or not (no). [no]
     --logfolder         The path to the folder where runlogs and comlogs
                         are to be stored, if other than default. []
     --log               Whether to keep ("keep") or remove ("remove") the
@@ -212,77 +213,86 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
     preprocess_mice_script = 'bash ' + os.path.join(qx_dir, 'bash', 'qx_mice', 'preprocess_mice.sh')
 
     # work dir
-    work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'nii')
+    work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'mice')
 
     # extract bold filename
     _, _, _, boldinfo = bold_data
-    boldname  = boldinfo['ima'] + '_ds'
+    boldname  = boldinfo['name']
 
     # --- check for bold image
-    boldimg = os.path.join(work_dir, f'{boldname}.nii.gz')
+    boldimg = os.path.join(work_dir, f'{boldname}_DS.nii.gz')
     r, boldok = pc.checkForFile2(r, boldimg, '\n     ... preprocess_mice bold image present', '\n     ... ERROR: preprocess_mice bold image missing!')
 
-    if boldok:
-        # set up the command
-        comm = '%(script)s \
-                --work_dir="%(work_dir)s" \
-                --bold="%(bold)s" \
-                --fix_threshold="%(fix_threshold)s" \
-                --mice_highpass="%(mice_highpass)s" \
-                --mice_lowpass="%(mice_lowpass)s"' % {
-                "script"   : preprocess_mice_script,
-                "work_dir" : work_dir,
-                "bold"     : boldname,
-                "fix_threshold" : options["fix_threshold"],
-                "mice_highpass" : options["mice_highpass"],
-                "mice_lowpass"  : options["mice_lowpass"]}
+    # overwrite and file exists
+    test_file = os.path.join(work_dir, f'{boldname}_filtered_func_data_clean_BP_ABI.nii.gz')
+    if (not overwrite and os.file.exists(test_file)):
+        r += f' ... overwrite is disable and output [{test_file}] already exists, skipping this bold.\n'
+        report['done'].append(boldname)
+    else:
+        if boldok:
+            # set up the command
+            comm = '%(script)s \
+                    --work_dir="%(work_dir)s" \
+                    --bold="%(bold)s" \
+                    --fix_threshold="%(fix_threshold)s" \
+                    --mice_highpass="%(mice_highpass)s" \
+                    --mice_lowpass="%(mice_lowpass)s"' % {
+                    "script"   : preprocess_mice_script,
+                    "work_dir" : work_dir,
+                    "bold"     : boldname + "_DS",
+                    "fix_threshold" : options["fix_threshold"],
+                    "mice_highpass" : options["mice_highpass"],
+                    "mice_lowpass"  : options["mice_lowpass"]}
 
-        # optional parameters
-        if options["melodic_anatfile"]:
-            comm += "                --melodic_anatfile=" + options["melodic_anatfile"]
-        
-        if options["fix_rdata"]:
-            comm += "                --fix_rdata=" + options["fix_rdata"]
+            # optional parameters
+            if options["melodic_anatfile"]:
+                comm += "                --melodic_anatfile=" + options["melodic_anatfile"]
+            
+            if options["fix_rdata"]:
+                comm += "                --fix_rdata=" + options["fix_rdata"]
 
-        if options["flirt_ref"]:
-            comm += "                --flirt_ref=" + options["flirt_ref"]
+            if options["flirt_ref"]:
+                comm += "                --flirt_ref=" + options["flirt_ref"]
 
-        if options['fix_no_motion_cleanup']:
-            comm += "                --fix_no_motion_cleanup"
+            if options['fix_no_motion_cleanup']:
+                comm += "                --fix_no_motion_cleanup"
 
-        if options['fix_aggressive_cleanup']:
-            comm += "                --fix_aggressive_cleanup"
-        
-        # report command
-        r += '\n\n------------------------------------------------------------\n'
-        r += 'Running preprocess_mice command via QuNex:\n\n'
-        r += comm.replace('                ', '')
-        r += '\n------------------------------------------------------------\n'
+            if options['fix_aggressive_cleanup']:
+                comm += "                --fix_aggressive_cleanup"
+            
+            # report command
+            r += '\n\n------------------------------------------------------------\n'
+            r += 'Running preprocess_mice bash script through QuNex:\n\n'
+            r += comm.replace('                ', '')
+            r += '\n------------------------------------------------------------\n'
 
-        # run
-        if options['run'] == 'run':
-            # execute
-            r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running preprocess_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
+            # run
+            if options['run'] == 'run':
+                if overwrite and os.path.exists(test_file):
+                    os.remove(test_file)
 
-            if failed:
+                # execute
+                r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running preprocess_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
+
+                if failed:
+                    r += f'\n---> preprocess_mice processing for BOLD {boldname} failed'
+                    report['failed'].append(boldname)
+                else:
+                    r += f'\n---> preprocess_mice processing for BOLD {boldname} completed'
+                    report['done'].append(boldname)
+
+            else:
+                r += f'\n---> BOLD {boldname} is ready for preprocess_mice command'
+                report['ready'].append(boldname)
+
+        else:
+            # run
+            if options['run'] == 'run':
                 r += f'\n---> preprocess_mice processing for BOLD {boldname} failed'
                 report['failed'].append(boldname)
+            # just checking
             else:
-                r += f'\n---> preprocess_mice processing for BOLD {boldname} completed'
-                report['done'].append(boldname)
+                r += f'\n---> BOLD {boldname} is not ready for preprocess_mice command'
+                report['not ready'].append(boldname)
 
-        else:
-            r += f'\n---> BOLD {boldname} is ready for preprocess_mice command'
-            report['ready'].append(boldname)
-
-    else:
-        # run
-        if options['run'] == 'run':
-            r += f'\n---> preprocess_mice processing for BOLD {boldname} failed'
-            report['failed'].append(boldname)
-        # just checking
-        else:
-            r += f'\n---> BOLD {boldname} is not ready for preprocess_mice command'
-            report['not ready'].append(boldname)
-
-    return {'r': r, 'report': report}
+        return {'r': r, 'report': report}

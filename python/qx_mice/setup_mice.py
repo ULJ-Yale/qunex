@@ -30,8 +30,8 @@ All rights reserved.
 
 import os
 
-import qx_utilities as qxu
 import qx_utilities.processing.core as pc
+import qx_utilities.general.core as gc
 
 from datetime import datetime
 
@@ -69,6 +69,8 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
                         comma separated list.
     --parsessions       How many sessions to run in parallel. [1]
     --parelements       How many elements (e.g bolds) to run in parallel. [1]
+    --overwrite         Whether to overwrite target files that already exist
+                        (yes) or not (no). [no]
     --logfolder         The path to the folder where runlogs and comlogs
                         are to be stored, if other than default. []
     --log               Whether to keep ('keep') or remove ('remove') the
@@ -201,7 +203,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
 
 def _execute_setup_mice(sinfo, options, overwrite, bold_data):
     # prepare return variables
-    r = ""
+    r = ''
     report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
 
     # script location
@@ -209,66 +211,89 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
     setup_mice_script = 'bash ' + os.path.join(qx_dir, 'bash', 'qx_mice', 'setup_mice.sh')
 
     # work dir
-    work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'nii')
+    nifti_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'nii')
+    work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'mice')
+
+    # create mice dir if it does not exist
+    if not os.path.exists(work_dir):
+        os.makedirs(work_dir)
 
     # extract bold filename
     _, _, _, boldinfo = bold_data
-    boldname  = boldinfo['ima']
+    boldima  = boldinfo['ima']
+    boldname = boldinfo['name']
 
     # --- check for bold image
-    boldimg = os.path.join(work_dir, f'{boldname}.nii.gz')
-    r, boldok = pc.checkForFile2(r, boldimg, '\n     ... setup_mice bold image present', '\n     ... ERROR: setup_mice bold image missing!')
+    source_bold = os.path.join(nifti_dir, f'{boldima}.nii.gz')
+    r, boldok = pc.checkForFile2(r, source_bold, '\n     ... setup_mice bold image present', '\n     ... ERROR: setup_mice bold image missing!')
 
-    if boldok:
-        # set up the command
-        comm = '%(script)s \
-                --work_dir="%(work_dir)s" \
-                --bold="%(bold)s" \
-                --tr="%(tr)s"' % {
-                "script"   : setup_mice_script,
-                "work_dir" : work_dir,
-                "bold"     : boldname,
-                "tr"       : options["tr"]}
+    # map the image
+    target_bold = os.path.join(work_dir, f'{boldname}.nii.gz')
+    r += f'\n---> mapping the bold image to session\'s mice pipelines (mice) folder\n'
 
-        # optional parameters
-        # voxel_increase
-        if 'voxel_increase' in options:
-            comm += '                --voxel_increase=' + options['voxel_increase']
+    # overwrite and file exists
+    if (not overwrite and os.file.exists(target_bold)):
+        r += f' ... overwrite is disable and target bold [{target_bold}] already exists, skipping this bold.\n'
+        report['done'].append(boldname)
+    else:
+        # map
+        r += f' ... mapping {source_bold} => {target_bold}.\n'
+        gc.linkOrCopy(source_bold, target_bold)
 
-        # no_orienatation_correction
-        if options['no_orienatation_correction']:
-            comm += '                --no_orienatation_correction'
+        if boldok:
+            # set up the command
+            comm = '%(script)s \
+                    --work_dir="%(work_dir)s" \
+                    --bold="%(bold)s" \
+                    --tr="%(tr)s"' % {
+                    "script"   : setup_mice_script,
+                    "work_dir" : work_dir,
+                    "bold"     : boldname,
+                    "tr"       : options["tr"]}
 
-        # report command
-        r += '\n\n------------------------------------------------------------\n'
-        r += 'Running setup_mice command via QuNex:\n\n'
-        r += comm.replace('                ', '')
-        r += '\n------------------------------------------------------------\n'
+            # optional parameters
+            # voxel_increase
+            if 'voxel_increase' in options:
+                comm += '                --voxel_increase=' + options['voxel_increase']
 
-        # run
-        if options['run'] == 'run':
-            # execute
-            r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running setup_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
+            # no_orienatation_correction
+            if options['no_orienatation_correction']:
+                comm += '                --no_orienatation_correction'
 
-            if failed:
+            # report command
+            r += '\n\n------------------------------------------------------------\n'
+            r += 'Running setup_mice bash script through QuNex:\n\n'
+            r += comm.replace('                ', '')
+            r += '\n------------------------------------------------------------\n'
+
+            # run
+            if options['run'] == 'run':
+                test_file = os.path.join(work_dir, f'{boldname}_DS.nii.gz')
+                if overwrite and os.path.exists(test_file):
+                    os.remove(test_file)
+
+                # execute
+                r, endlog, _, failed = pc.runExternalForFile(test_file, comm, 'Running setup_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
+
+                if failed:
+                    r += f'\n---> setup_mice processing for BOLD {boldname} failed'
+                    report['failed'].append(boldname)
+                else:
+                    r += f'\n---> setup_mice processing for BOLD {boldname} completed'
+                    report['done'].append(boldname)
+
+            else:
+                r += f'\n---> BOLD {boldname} is ready for setup_mice command'
+                report['ready'].append(boldname)
+
+        else:
+            # run
+            if options['run'] == 'run':
                 r += f'\n---> setup_mice processing for BOLD {boldname} failed'
                 report['failed'].append(boldname)
+            # just checking
             else:
-                r += f'\n---> setup_mice processing for BOLD {boldname} completed'
-                report['done'].append(boldname)
-
-        else:
-            r += f'\n---> BOLD {boldname} is ready for setup_mice command'
-            report['ready'].append(boldname)
-
-    else:
-        # run
-        if options['run'] == 'run':
-            r += f'\n---> setup_mice processing for BOLD {boldname} failed'
-            report['failed'].append(boldname)
-        # just checking
-        else:
-            r += f'\n---> BOLD {boldname} is not ready for setup_mice command'
-            report['not ready'].append(boldname)
+                r += f'\n---> BOLD {boldname} is not ready for setup_mice command'
+                report['not ready'].append(boldname)
 
     return {'r': r, 'report': report}

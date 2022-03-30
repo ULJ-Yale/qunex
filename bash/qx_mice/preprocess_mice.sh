@@ -71,7 +71,7 @@ if [[ -z $lowpass ]]; then lowpass=0.25; fi
 
 # list parameters
 echo ""
-echo " --> Executing setup_mice:"
+echo " --> Executing preprocess_mice:"
 echo "       Work directory: ${work_dir}"
 echo "       BOLD: ${bold}"
 echo "       FIX RData file: ${fix_rdata}"
@@ -102,14 +102,15 @@ echo ""
 # ------------------------------------------------------------------------------
 # -- MELODIC
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Starting MELODIC"
 
 # set variables
-melodic_output="${work_dir}/melodic_output_${bold}"
+melodic_output="${work_dir}/${bold}_melodic_output"
 ica_dir="${melodic_output}.ica"
 
 # remove the previous dir if it exists
-if [ -d ${melodic_output} ]; then rm -rf ${melodic_output}; fi
+if [ -d ${ica_dir} ]; then rm -rf ${ica_dir}; fi
 
 # copy the fsf file
 cp ${mice_templates}/rsfMRI_Standard_900.fsf ${work_dir}
@@ -122,6 +123,7 @@ for i in "${work_dir}/rsfMRI_Standard_900.fsf"; do
 done
 
 # feat
+echo " ... Running feat ${work_dir}/${bold}.fsf"
 feat ${work_dir}/${bold}.fsf
 
 geho " --> MELODIC completed"
@@ -130,14 +132,17 @@ geho " --> MELODIC completed"
 # ------------------------------------------------------------------------------
 # -- FIX the data
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Running FIX"
 export FSL_FIX_MATLAB_MODE=1
+echo " ... Running fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass} ${aggressive_cleanup}"
 fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass} ${aggressive_cleanup}
 
 
 # ------------------------------------------------------------------------------
 # -- QC
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Copying registrations to the QC folder"
 
 # create QC dir
@@ -146,36 +151,56 @@ if [[ ! -d ${work_dir}/QC ]]; then
 fi
 
 # copy the registration
-cp ${melodic_output}.feat/reg/example_func2standard.png ${work_dir}/QC/example_func2standard.png
-
+cp ${ica_dir}/reg/example_func2highres.png ${work_dir}/QC/${bold}_example_func2highres.png
 geho " --> You can check the registrations in ${work_dir}/QC"
 
 
 # ------------------------------------------------------------------------------
 # -- apply registrations
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Applying registrations"
-ica_dir=${}
-flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/filtered_func_data_clean_EPI.nii.gz -init reg/example_func2highres.mat -applyxfm
+echo " ... Running flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm"
+flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm
 
 
 # ------------------------------------------------------------------------------
 # -- bandpass
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Applying bandpass"
-3dBandpass -despike -prefix ${work_dir}/filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/PREPROC_EPI_nodemean/filtered_func_data_clean_EPI.nii.gz
+if [[ -f ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK ]]; then
+    rm ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK
+fi
+if [[ -f ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.HEAD ]]; then
+    rm ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.HEAD
+fi
+echo " ... Running 3dBandpass -despike -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz"
+3dBandpass -despike -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz
+
+
+# ------------------------------------------------------------------------------
+# -- transform to nifti
+# ------------------------------------------------------------------------------
+echo ""
+geho " --> Transforming to nifti"
+echo " ... Running 3dAFNItoNIFTI -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK"
+3dAFNItoNIFTI -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK
 
 
 # ------------------------------------------------------------------------------
 # -- Registration to Allen space
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Registering to Allen space"
-WarpTimeSeriesImageMultiTransform 4 ${work_dir}/filtered_func_data_clean_BP.nii.gz filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt
+echo " ... Running WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt"
+WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt
 
 
 # ------------------------------------------------------------------------------
 # -- wrap up
 # ------------------------------------------------------------------------------
+echo ""
 reho "--> preprocess_mice successfully completed"
 echo ""
 geho "------------------------- Successful completion of work --------------------------------"

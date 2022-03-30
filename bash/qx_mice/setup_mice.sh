@@ -72,19 +72,14 @@ fi
 # go to work dir
 pushd ${work_dir}
 
-# create backup dir
-if [[ ! -d backup ]]; then
-    mkdir backup
-fi
-
-# backup the original nii files
-cp ${bold}.nii.gz backup/${bold}.nii.gz
-
+# create a copy, leave the original
+cp ${bold}.nii.gz ${bold}_SM.nii.gz
 
 # ------------------------------------------------------------------------------
 # -- increase voxel size
 # ------------------------------------------------------------------------------
 if [[ -n $voxel_increase ]]; then
+    echo ""
     geho " --> Increasing voxel size"
 
     # remove tmp.m
@@ -92,22 +87,30 @@ if [[ -n $voxel_increase ]]; then
         rm voxel_increase_${bold}.m
     fi
 
-    3dcalc -a ${bold}.nii.gz -expr 'a' -prefix ${bold}.hdr
-    echo $"change_voxel_dimensions('${bold}', 10);exit;">>voxel_increase_${bold}.m
-    matlab -nodisplay -nosplash -nojvm -r voxel_increase_${bold}
+    echo " ... Running 3dcalc -a ${bold}_SM.nii.gz -expr 'a' -prefix ${bold}_SM.hdr"
+    3dcalc -a ${bold}_SM.nii.gz -expr 'a' -prefix ${bold}_SM.hdr
 
-    rm ${bold}.nii.gz
-    fslchfiletype NIFTI_GZ ${bold}.img
+    echo " ... Changing the voxel dimensions"
+    echo $"change_voxel_dimensions('${bold}_SM', 10);exit;">>voxel_increase_${bold}_SM.m
+    matlab -nodisplay -nosplash -nojvm -r voxel_increase_${bold}_SM
+
+    echo " ... Appending the _SM suffix to the image"
+    mv ${bold}.img ${bold}_SM.img
+
+    echo " ... fslchfiletype NIFTI_GZ ${bold}_SM.img"
+    fslchfiletype NIFTI_GZ ${bold}_SM.img
 fi
 
 
 # ------------------------------------------------------------------------------
 # -- check if TR is correct
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Verifying TR"
 
 # check
-fslmerge -tr ${bold}.nii.gz ${bold}.nii.gz ${tr}
+echo " ... Running fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}"
+fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}
 
 
 # ------------------------------------------------------------------------------
@@ -116,33 +119,41 @@ fslmerge -tr ${bold}.nii.gz ${bold}.nii.gz ${tr}
 if [ -z $no_orientation_correction ]; then
     geho " --> Correcting orientation"
 
-    fslswapdim ${bold}.nii.gz -x y z ${bold}.nii.gz 
-    fslorient -deleteorient ${bold}.nii.gz
-    3drefit -orient RAI ${bold}.nii.gz
+    echo " ... Running fslswapdim ${bold}_SM.nii.gz -x y z ${bold}_SM.nii.gz"
+    fslswapdim ${bold}_SM.nii.gz -x y z ${bold}_SM.nii.gz 
+    echo " ... Running fslorient -deleteorient ${bold}_SM.nii.gz"
+    fslorient -deleteorient ${bold}_SM.nii.gz
+    echo " ... Running 3drefit -orient RAI ${bold}_SM.nii.gz"
+    3drefit -orient RAI ${bold}_SM.nii.gz
 fi
 
 
 # ------------------------------------------------------------------------------
 # -- AFNI despike
 # ------------------------------------------------------------------------------
+echo ""
 geho " --> Despiking"
 
-if [[ -f ${bold}_ds.nii.gz ]]; then
-    rm ${bold}_ds.nii.gz
+if [[ -f ${bold}_DS.nii.gz ]]; then
+    rm ${bold}_DS.nii.gz
 fi
-if [[ -f ${bold}_ds+orig.HEAD ]]; then
-    rm ${bold}_ds+orig.HEAD
+if [[ -f ${bold}_DS+orig.HEAD ]]; then
+    rm ${bold}_DS+orig.HEAD
 fi
-if [[ -f ${bold}_ds+orig.BRIK ]]; then
-    rm ${bold}_ds+orig.BRIK
+if [[ -f ${bold}_DS+orig.BRIK ]]; then
+    rm ${bold}_DS+orig.BRIK
 fi
-3dDespike -NEW -nomask -prefix ${bold}_ds ${bold}.nii.gz
-3dAFNItoNIFTI -prefix ${bold}_ds.nii.gz ${bold}_ds+orig.BRIK
+
+echo " ... Running 3dDespike -NEW -nomask -prefix ${bold}_DS ${bold}_SM.nii.gz"
+3dDespike -NEW -nomask -prefix ${bold}_DS ${bold}_SM.nii.gz
+echo " ... Running 3dAFNItoNIFTI -prefix ${bold}_DS.nii.gz ${bold}_DS+orig.BRIK"
+3dAFNItoNIFTI -prefix ${bold}_DS.nii.gz ${bold}_DS+orig.BRIK
 
 
 # ------------------------------------------------------------------------------
 # -- wrap up
 # ------------------------------------------------------------------------------
+echo ""
 reho "--> setup_mice successfully completed"
 echo ""
 geho "------------------------- Successful completion of work --------------------------------"
