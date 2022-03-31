@@ -119,12 +119,12 @@ cp ${mice_templates}/rsfMRI_Standard_900.fsf ${work_dir}
 for i in "${work_dir}/rsfMRI_Standard_900.fsf"; do
     sed -e 's@OUTPUT@'${melodic_output}'@g' \
     -e 's@ANATFILE@'${melodic_anatfile}'@g' \
-    -e 's@DATA@'${work_dir}/${bold}_ds'@g' <$i> ${work_dir}/${bold}_ds.fsf
+    -e 's@DATA@'${work_dir}/${bold}_DS'@g' <$i> ${work_dir}/${bold}_DS.fsf
 done
 
 # feat
-echo " ... Running feat ${work_dir}/${bold}_ds.fsf"
-feat ${work_dir}/${bold}_ds.fsf
+echo " ... Running feat ${work_dir}/${bold}_DS.fsf"
+feat ${work_dir}/${bold}_DS.fsf
 
 geho " --> MELODIC completed"
 
@@ -175,8 +175,8 @@ fi
 if [[ -f ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.HEAD ]]; then
     rm ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.HEAD
 fi
-echo " ... Running 3dBandpass -despike -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz"
-3dBandpass -despike -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz
+echo " ... Running 3dBandpass -despike -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz"
+3dBandpass -despike -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP ${highpass} ${lowpass} ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz
 
 
 # ------------------------------------------------------------------------------

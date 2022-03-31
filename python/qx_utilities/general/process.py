@@ -594,6 +594,7 @@ calist = [
     [],
     ['smice',   'setup_mice',               qx_mice.setup_mice.setup_mice,              "Runs the command to prepare a QuNex study for mice preprocessing."],
     ['premice', 'preprocess_mice',          qx_mice.process_mice.preprocess_mice,       "Runs the QuNex mice preprocessing pipeline."],
+    ['mmd',     'map_mice_data',            qx_mice.process_mice.map_mice_data,         "Maps mice pipeline data to sessions' image folder."],
 ]
 
 # longitudinal commands

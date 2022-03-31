@@ -95,7 +95,7 @@ INPUTS
 --sessions            Sessions to run locally on the file system if not an XNAT 
                       run.
 --sessionids          Comma separated list of session IDs to select for a run 
-                      via gMRI engine from the batch file.
+                      from the batch file.
 --turnkeysteps        Specify specific turnkey steps you wish to run:
                       Supported:  
 --turnkeycleanstep    Specify specific turnkey steps you wish to clean up 

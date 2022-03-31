@@ -55,7 +55,8 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # hcp_dtifit    Run FSL DTI fit.
 # hcp_bedpostx  Run FSL Bedpostx GPU.
 
-all_qunex_commands = r'''check_fidl                              Prints figures showing fidl events and their duration.
+all_qunex_commands = r'''bruker_to_dicom                         Converts bruker data into the dicom format.
+check_fidl                              Prints figures showing fidl events and their duration.
 compute_bold_stats                      Compute BOLD movement and signal statistics.
 create_batch                            Creates a joint batch file from source files in all session folders.
 create_bold_brain_masks                 Create brain masks for BOLD runs.
@@ -75,6 +76,7 @@ dwi_pre_tractography                    Generates space for dense whole-brain co
 dwi_probtrackx_dense_gpu                Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.
 dwi_seed_tractography_dense             Reduces dense tractography data using a seed structure.
 dwi_parcellate                          Parcellates dense tractography data.
+export_hcp                              Maps HCP style data out of QuNex Suite file strucutre.
 extract_nuisance_signal                 Extracts nuisance signal from BOLD images.
 extract_roi                             Extracts data from pre-specified ROIs in CIFTI or NIFTI.
 fc_compute_ab_corr                      Computes the correlation of each source mask voxel with each target mask voxel.
@@ -125,21 +127,25 @@ hcp_temporal_ica                        Runs HCP temporal ICA pipeline.
 hcp_make_average_dataset                Runs HCP make average dataset pipeline.
 import_bids                             Maps a BIDS dataset to the QuNex Suite file structure.
 import_dicom                            Processes sessions's DICOM or PAR/REC files and generates NIfTI files.
-import_hcp                              Maps HCPLS data to the QuNex Suite file structure. 
+import_hcp                              Maps HCPLS data to the QuNex Suite file structure.
+import_nhp                              Maps NHP data to the QuNex Suite file structure.
 join_fidl                               Combines all the fidl files matching root based on the information in conc file.
 join_fidl_folder                        Joins all the fidl files that match the name of each conc file in the concfolder.
 list_dicom                              Inspects a folder for dicom files and prints a detailed reports of the results.
 map_bids2nii                            Maps BIDS data to the QuNex folder structure.
 map_hcp_data                            Maps HCP preprocessed data to sessions' image folder.
+map_mice_data                           Maps mice pipeline data to sessions' image folder.
 map_hcpls2nii                           Maps HCPLS data to the QuNex folder structure.
 parcellate_anat                         Parcellate T1w and T2w derived measures (e.g. myelin or thickness).
 parcellate_bold                         Parcellate BOLD data and generate pconn files.
 preprocess_bold                         Preprocesses single BOLD images.
 preprocess_conc                         Preprocesses conc bundles of BOLD images.
+preprocess_mice                         Mice preprocessing pipeline.
 run_palm                                Runs second level analysis using PALM permutation resampling.
 run_qc                                  Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.
 run_turnkey                             Exectues turnkey QuNex workflow compatible with XNAT Docker engine.
 setup_hcp                               Maps images from the sessions's nii folder to HCP minimal preprocessing structure.
+setup_mice                              Prepares mice data for the mice pipelines.
 sort_dicom                              Sorts DICOM files.
 split_dicom                             Sorts out DICOM images from different sessions.
 split_fidl                              Splits a multi-bold fidl file into run specific bold files.
@@ -148,8 +154,6 @@ stats_p2z                               Converts p to Z values considering one o
 stats_ttest_dependent                   Computes t-test of differences between two dependent groups.
 stats_ttest_independent                 Computes t-test of differences between two independent groups.
 stats_ttest_zero                        Computes t-test against zero and saves specified results.
-import_nhp                              Maps NHP data to the QuNex Suite file structure.
-bruker_to_dicom                         Converts bruker data into the dicom format.
 '''
 
 def runCommand(command, args):

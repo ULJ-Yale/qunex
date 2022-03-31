@@ -30,6 +30,7 @@ All rights reserved.
 
 import os
 
+import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
 
 from datetime import datetime
@@ -38,7 +39,6 @@ from datetime import datetime
 def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     """
     ``preprocess_mice [... processing options]``
-    ``premice [... processing options]``
 
     Runs the command to prepare a QuNex study for mice preprocessing.
 
@@ -114,9 +114,9 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         study
         └─ sessions
            ├─ session1
-           |  └─ nii
+           |  └─ mice
            └─ session2
-           |  └─ nii
+              └─ mice
 
     EXAMPLE USE
     ===========
@@ -185,7 +185,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
                 report['not ready']  += tempReport['not ready']
 
         rep = []
-        for k in ['done', 'failed', 'ready', 'not ready', ]:
+        for k in ['done', 'failed', 'ready', 'not ready']:
             if len(report[k]) > 0:
                 rep.append(f'{", ".join(report[k])} {k}')
 
@@ -225,7 +225,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
 
     # overwrite and file exists
     test_file = os.path.join(work_dir, f'{boldname}_filtered_func_data_clean_BP_ABI.nii.gz')
-    if (not overwrite and os.file.exists(test_file)):
+    if (not overwrite and os.path.exists(test_file)):
         r += f' ... overwrite is disable and output [{test_file}] already exists, skipping this bold.\n'
         report['done'].append(boldname)
     else:
@@ -296,3 +296,268 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
                 report['not ready'].append(boldname)
 
         return {'r': r, 'report': report}
+
+
+def map_mice_data(sinfo, options, overwrite=False, thread=0):
+    """
+    ``map_mice_data [... processing options]``
+
+    Runs the command to prepare a QuNex study for mice preprocessing.
+
+    REQUIREMENTS
+    ============
+
+    Preprocessed mica data.
+
+    INPUTS
+    ======
+
+    General parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --sessions          The batch.txt file with all the sessions information.
+                        [batch.txt]
+    --sessionsfolder    The path to the study/sessions folder, where the
+                        imaging data is supposed to go. [.]
+    --sessionsids       Comma separated list of session IDs to select for
+                        processing.
+    --bolds             Which bold images to process. You can select bolds
+                        through their number, name or task (e.g. rest), you
+                        can chain multiple conditions together by providing a
+                        comma separated list.
+    --parsessions       How many sessions to run in parallel. [1]
+    --overwrite         Whether to overwrite target files that already exist
+                        (yes) or not (no). [no]
+    --logfolder         The path to the folder where runlogs and comlogs
+                        are to be stored, if other than default. []
+    --log               Whether to keep ("keep") or remove ("remove") the
+                        temporary logs once jobs are completed. ["keep"]
+                        When a comma or pipe ("|") separated list is given, 
+                        the log will be created at the first provided 
+                        location and then linked or copied to other 
+                        locations. The valid locations are:
+                        
+                        - "study" (for the default: 
+                          `<study>/processing/logs/comlogs` location)
+                        - "session" (for `<sessionid>/logs/comlogs`)
+                        - "hcp" (for `<hcp_folder>/logs/comlogs`)
+                        - "<path>" (for an arbitrary directory)
+
+    OUTPUTS
+    =======
+
+    The results of this step will be present in the functional folder
+    in the sessions's root::
+
+        study
+        └─ sessions
+           ├─ session1
+           |  └─ functional
+           └─ session2
+              └─ functional
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        qunex map_mice_data \
+          --sessionsfolder="/data/mice_study/sessions" \
+          --sessions="/data/mice_study/processsing/batch.txt"
+
+    """
+
+    # get session id
+    session = sinfo['id']
+
+    r = '\n------------------------------------------------------------'
+    r += f'\nSession id: {sinfo["id"]} \n[started on {datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")}]'
+    r += f'\n{pc.action("Running", options["run"])} map_mice_data {session} ...'
+
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    try:
+        # check base settings
+        pc.doOptionsCheck(options, sinfo, 'map_mice_data')
+        
+        # get bolds
+        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
+
+        # filter bolds
+        if (options['bolds'] != 'all'):
+            bolds = pc._filter_bolds(bolds, options['bolds'])
+
+        # dirs
+        source_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'mice')
+        func_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'functional')
+        if not os.path.exists(func_dir):
+            os.makedirs(func_dir)
+
+        for b in bolds:
+            # extract boldname
+            _, _, _, boldinfo = b
+            boldname = boldinfo['name']
+
+            r += f'\n---> Mapping {boldname}'
+
+            # files
+            # original
+            bold_original = boldname + '.nii.gz'
+            source_original = os.path.join(source_dir, bold_original)
+            target_original = os.path.join(func_dir, bold_original)
+
+            # despiked
+            bold_ds = boldname + '_DS.nii.gz'
+            source_ds = os.path.join(source_dir, bold_ds)
+            target_ds = os.path.join(func_dir, bold_ds)
+
+            # bandpass
+            bold_bp = boldname + '_filtered_func_data_clean_BP.nii.gz'
+            source_bp = os.path.join(source_dir, bold_bp)
+            target_bp = os.path.join(func_dir, bold_bp)
+
+            # EPI
+            bold_epi = boldname + '_filtered_func_data_clean_BP_EPI.nii.gz'
+            source_epi = os.path.join(source_dir, bold_epi)
+            target_epi = os.path.join(func_dir, bold_epi)
+
+            # ABI
+            bold_abi = boldname + '_filtered_func_data_clean_BP_ABI.nii.gz'
+            source_abi = os.path.join(source_dir, bold_abi)
+            target_abi = os.path.join(func_dir, bold_abi)
+
+            # running or testing
+            if options['run'] == 'run':
+                # original
+                r += f'\n ... mapping {bold_original}'
+                if os.path.exists(source_original):
+                    if os.path.exists(target_original) and not overwrite:
+                        f'\n ... {bold_original} already exists and overwrite is set to no, skipping this file'
+                    else:
+                        gc.linkOrCopy(source_original, target_original)
+                    report['done'].append(bold_original)
+                else:
+                    r += f'\n ... ERROR: {bold_original} does not exist, rerun the preprocess_mice step'
+                    report['failed'].append(bold_original)
+
+                # despiked
+                r += f'\n ... mapping {bold_ds}'
+                if os.path.exists(source_ds):
+                    if os.path.exists(target_ds) and not overwrite:
+                        f'\n ... {bold_ds} already exists and overwrite is set to no, skipping this file'
+                    else:
+                        gc.linkOrCopy(source_ds, target_ds)
+                    report['done'].append(bold_ds)
+                else:
+                    r += f'\n ... ERROR: {bold_ds} does not exist, rerun the preprocess_mice step'
+                    report['failed'].append(bold_ds)
+
+                # bandpass
+                r += f'\n ... mapping {bold_bp}'
+                if os.path.exists(source_bp):
+                    if os.path.exists(target_bp) and not overwrite:
+                        f'\n ... {bold_bp} already exists and overwrite is set to no, skipping this file'
+                    else:
+                        gc.linkOrCopy(source_bp, target_bp)
+                    report['done'].append(bold_bp)
+                else:
+                    r += f'\n ... ERROR: {bold_bp} does not exist, rerun the preprocess_mice step'
+                    report['failed'].append(bold_bp)
+
+                # EPI
+                r += f'\n ... mapping {bold_epi}'
+                if os.path.exists(source_epi):
+                    if os.path.exists(target_epi) and not overwrite:
+                        f'\n ... {bold_epi} already exists and overwrite is set to no, skipping this file'
+                    else:
+                        gc.linkOrCopy(source_epi, target_epi)
+                    report['done'].append(bold_epi)
+                else:
+                    r += f'\n ... ERROR: {bold_epi} does not exist, rerun the preprocess_mice step'
+                    report['failed'].append(bold_epi)
+
+                # ABI
+                r += f'\n ... mapping {bold_abi}'
+                if os.path.exists(source_abi):
+                    if os.path.exists(target_abi) and not overwrite:
+                        f'\n ... {bold_abi} already exists and overwrite is set to no, skipping this file'
+                    else:
+                        gc.linkOrCopy(source_abi, target_abi)
+                    report['done'].append(bold_abi)
+                else:
+                    r += f'\n ... ERROR: {bold_abi} does not exist, rerun the preprocess_mice step'
+                    report['failed'].append(bold_abi)
+
+            else:
+                # original
+                r += f'\n ... checking {bold_original}'
+                if os.path.exists(source_original):
+                    if os.path.exists(target_original) and not overwrite:
+                        f'\n ... {bold_original} already exists and overwrite is set to no, this file would be skipped'
+                    report['ready'].append(bold_original)
+                else:
+                    r += f'\n ... WARNING: {bold_original} does not exist, rerun the preprocess_mice step'
+                    report['not ready'].append(bold_original)
+
+                # despiked
+                r += f'\n ... checking {bold_ds}'
+                if os.path.exists(source_ds):
+                    if os.path.exists(target_ds) and not overwrite:
+                        f'\n ... {bold_ds} already exists and overwrite is set to no, this file would be skipped'
+                    report['ready'].append(bold_ds)
+                else:
+                    r += f'\n ... WARNING: {bold_ds} does not exist, rerun the preprocess_mice step'
+                    report['not ready'].append(bold_ds)
+
+                # bandpass
+                r += f'\n ... checking {bold_bp}'
+                if os.path.exists(source_bp):
+                    if os.path.exists(target_bp) and not overwrite:
+                        f'\n ... {bold_bp} already exists and overwrite is set to no, this file would be skipped'
+                    report['ready'].append(bold_bp)
+                else:
+                    r += f'\n ... WARNING: {bold_bp} does not exist, rerun the preprocess_mice step'
+                    report['not ready'].append(bold_bp)
+
+                # EPI
+                r += f'\n ... checking {bold_epi}'
+                if os.path.exists(source_epi):
+                    if os.path.exists(target_epi) and not overwrite:
+                        f'\n ... {bold_epi} already exists and overwrite is set to no, this file would be skipped'
+                    report['ready'].append(bold_epi)
+                else:
+                    r += f'\n ... WARNING: {bold_epi} does not exist, rerun the preprocess_mice step'
+                    report['not ready'].append(bold_epi)
+
+                # ABI
+                r += f'\n ... checking {bold_abi}'
+                if os.path.exists(source_abi):
+                    if os.path.exists(target_abi) and not overwrite:
+                        f'\n ... {bold_abi} already exists and overwrite is set to no, skipping this file'
+                    report['ready'].append(bold_abi)
+                else:
+                    r += f'\n ... WARNING: {bold_abi} does not exist, rerun the preprocess_mice step'
+                    report['not ready'].append(bold_abi)
+
+            r += '\n'
+
+        rep = []
+        for k in ['done', 'failed', 'ready', 'not ready']:
+            if len(report[k]) > 0:
+                rep.append(f'{", ".join(report[k])} {k}')
+
+        report = (sinfo['id'], 'preprocess_mice: bolds ' + '; '.join(rep), len(report['failed'] + report['not ready']))
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = f'\n --- Failed during processing of session {session} with error:\n'
+        r += str(errormessage)
+        report = (sinfo['id'], 'map_mice_data failed', 1)
+
+    except:
+        r += f'n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n'
+        report = (sinfo['id'], 'map_mice_data failed', 1)
+
+    return (r, report)

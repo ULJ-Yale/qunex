@@ -30,8 +30,8 @@ All rights reserved.
 
 import os
 
-import qx_utilities.processing.core as pc
 import qx_utilities.general.core as gc
+import qx_utilities.processing.core as pc
 
 from datetime import datetime
 
@@ -41,7 +41,6 @@ from functools import partial
 def setup_mice(sinfo, options, overwrite=False, thread=0):
     '''
     ``setup_mice [... processing options]``
-    ``smice [... processing options]``
 
     Runs the command to prepare a QuNex study for mice preprocessing.
 
@@ -99,15 +98,15 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
     OUTPUTS
     =======
 
-    The results of this step will be present in the nii folder
+    The results of this step will be present in the mice folder
     in the sessions's root::
 
         study
         └─ sessions
            ├─ session1
-           |  └─ nii
+           |  └─ mice
            └─ session2
-           |  └─ nii
+              └─ mice
 
     EXAMPLE USE
     ===========
@@ -183,7 +182,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
                 report['not ready']  += tempReport['not ready']
 
         rep = []
-        for k in ['done', 'failed', 'ready', 'not ready', ]:
+        for k in ['done', 'failed', 'ready', 'not ready']:
             if len(report[k]) > 0:
                 rep.append(f'{", ".join(report[k])} {k}')
 
