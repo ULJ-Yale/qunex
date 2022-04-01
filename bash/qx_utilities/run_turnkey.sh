@@ -615,6 +615,7 @@ AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; Ac
 #
 AddImageType=`opts_GetOpt "--add_image_type" $@`
 AddJsonInfo=`opts_GetOpt "--add_json_info" $@`
+Gzip=`opts_GetOpt "--gzip" $@`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 #
@@ -2073,9 +2074,15 @@ fi
             echo ""
             cyaneho " ===> RUNNING RunTurnkey step ~~~ import_dicom"
             echo ""
-           [] 
+            if [[ -z ${Gzip} ]]; then
+                if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+                    Gzip="no"
+                else
+                    Gzip="folder"
+                fi
+            fi
 
-            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='folder' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='${Gzip}' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"
