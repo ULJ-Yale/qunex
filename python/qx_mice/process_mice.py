@@ -409,16 +409,6 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             source_original = os.path.join(source_dir, bold_original)
             target_original = os.path.join(func_dir, bold_original)
 
-            # despiked
-            bold_ds = boldname + '_DS.nii.gz'
-            source_ds = os.path.join(source_dir, bold_ds)
-            target_ds = os.path.join(func_dir, bold_ds)
-
-            # bandpass
-            bold_bp = boldname + '_filtered_func_data_clean_BP.nii.gz'
-            source_bp = os.path.join(source_dir, bold_bp)
-            target_bp = os.path.join(func_dir, bold_bp)
-
             # EPI
             bold_epi = boldname + '_filtered_func_data_clean_BP_EPI.nii.gz'
             source_epi = os.path.join(source_dir, bold_epi)
@@ -442,30 +432,6 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 else:
                     r += f'\n ... ERROR: {bold_original} does not exist, rerun the preprocess_mice step'
                     report['failed'].append(bold_original)
-
-                # despiked
-                r += f'\n ... mapping {bold_ds}'
-                if os.path.exists(source_ds):
-                    if os.path.exists(target_ds) and not overwrite:
-                        f'\n ... {bold_ds} already exists and overwrite is set to no, skipping this file'
-                    else:
-                        gc.linkOrCopy(source_ds, target_ds)
-                    report['done'].append(bold_ds)
-                else:
-                    r += f'\n ... ERROR: {bold_ds} does not exist, rerun the preprocess_mice step'
-                    report['failed'].append(bold_ds)
-
-                # bandpass
-                r += f'\n ... mapping {bold_bp}'
-                if os.path.exists(source_bp):
-                    if os.path.exists(target_bp) and not overwrite:
-                        f'\n ... {bold_bp} already exists and overwrite is set to no, skipping this file'
-                    else:
-                        gc.linkOrCopy(source_bp, target_bp)
-                    report['done'].append(bold_bp)
-                else:
-                    r += f'\n ... ERROR: {bold_bp} does not exist, rerun the preprocess_mice step'
-                    report['failed'].append(bold_bp)
 
                 # EPI
                 r += f'\n ... mapping {bold_epi}'
@@ -501,26 +467,6 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 else:
                     r += f'\n ... WARNING: {bold_original} does not exist, rerun the preprocess_mice step'
                     report['not ready'].append(bold_original)
-
-                # despiked
-                r += f'\n ... checking {bold_ds}'
-                if os.path.exists(source_ds):
-                    if os.path.exists(target_ds) and not overwrite:
-                        f'\n ... {bold_ds} already exists and overwrite is set to no, this file would be skipped'
-                    report['ready'].append(bold_ds)
-                else:
-                    r += f'\n ... WARNING: {bold_ds} does not exist, rerun the preprocess_mice step'
-                    report['not ready'].append(bold_ds)
-
-                # bandpass
-                r += f'\n ... checking {bold_bp}'
-                if os.path.exists(source_bp):
-                    if os.path.exists(target_bp) and not overwrite:
-                        f'\n ... {bold_bp} already exists and overwrite is set to no, this file would be skipped'
-                    report['ready'].append(bold_bp)
-                else:
-                    r += f'\n ... WARNING: {bold_bp} does not exist, rerun the preprocess_mice step'
-                    report['not ready'].append(bold_bp)
 
                 # EPI
                 r += f'\n ... checking {bold_epi}'
