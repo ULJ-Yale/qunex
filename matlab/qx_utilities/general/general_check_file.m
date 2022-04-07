@@ -50,7 +50,7 @@ function [ok] = general_check_file(filename, description, v, prepend)
 % SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4 || isempty(prepend), prepend = '... '; end
-if nargin < 3 || isempty(v), v = 'error stop'; end
+if nargin < 3 || isempty(v), v = 'errorstop'; end
 if nargin < 2 || isempty(description), description = 'a file'; end
 
 if ~exist(filename, 'file')
