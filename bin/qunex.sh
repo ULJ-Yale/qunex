@@ -983,7 +983,7 @@ run_qc() {
     --boldfcpath='${BOLDfcPath}' \
     --suffix='${Suffix}' \
     --hcp_suffix='${HCPSuffix}' \
-    --batchfile='${SessionBatchFile}' "
+    --batchfile='${BATCH_FILE}' "
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1471,9 +1471,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     OVERWRITE_PROJECT=`get_parameters "${setflag}overwriteproject" $@`
     OVERWRITE_PROJECT_FORCE=`get_parameters "${setflag}overwriteprojectforce" $@`
     OVERWRITE_PROJECT_XNAT=`get_parameters "${setflag}overwriteprojectxnat" $@`
-    BATCH_PARAMETERS_FILENAME=`get_parameters "${setflag}batchfile" $@`
     LOCAL_BATCH_FILE=`get_parameters "${setflag}local_batchfile" $@`
-    SessionBatchFile=`get_parameters "${setflag}batchfile" $@`
+    BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`get_parameters "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`get_parameters "${setflag}xnataccsessionid" $@`
     XNAT_SESSION_LABELS=`get_parameters "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
@@ -1548,12 +1547,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
             CASES="$SESSION_LABELS"   
             SESSIONIDS="$SESSION_LABELS"
         fi
-    fi
-
-    # -- SLURM JOB ARRAY FILTERING
-    if [[ -n ${SLURM_ARRAY_TASK_ID} ]]; then
-        SESSIONS=`gmri get_sessions_for_slurm_array --sessions=${SESSIONS} --sessionids=${SESSIONIDS}`
-        SESSIONIDS=''
     fi
 
     # -- General operational flags
@@ -1758,11 +1751,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
-        SessionBatchFile="$CASES"
+        BATCH_FILE="$CASES"
         echo ""
-        echo "Using $SessionBatchFile for input."
+        echo "Using $BATCH_FILE for input."
         echo ""
-        CASES=`cat ${SessionBatchFile} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
     fi
 
     # -- Get species flag for NHP pipelines
@@ -2048,12 +2041,12 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     fi
 
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
-        if [[ ! -z ${SessionBatchFile} ]]; then
-            if [[ ! -f ${SessionBatchFile} ]]; then
+        if [[ ! -z ${BATCH_FILE} ]]; then
+            if [[ ! -f ${BATCH_FILE} ]]; then
                 reho "ERROR: Requested BOLD modality with a batch file. Batch file not found."
                 exit 1
             else
-                echo "   Session batch file requested: ${SessionBatchFile}"
+                echo "   Session batch file requested: ${BATCH_FILE}"
                 BOLDSBATCH="${BOLDRUNS}"
             fi
         fi
