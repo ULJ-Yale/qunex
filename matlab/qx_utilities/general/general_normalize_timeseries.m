@@ -5,16 +5,13 @@ function [ts] = general_normalize_timeseries(ts)
 %   This function normalizes timeseries to range 1, mean 0.
 %   It works along columns.
 %
-%   INPUT
-%   =====
+%   Parameters:
+%       --ts (timeseries):
+%           Timeseries (time x regions/voxels).
 %
-%	--ts 	timeseries (time x regions/voxels)
-%
-%	OUTPUT
-%	======
-%
-%	ts
-%		normalized timeseries matrix
+%   Returns:
+%       ts
+%           Normalized timeseries matrix.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

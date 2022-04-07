@@ -1,6 +1,6 @@
-function [] = general_report_crash(ME);
+function [] = general_report_crash(ME)
 
-%``function [] = general_report_crash(ME)``;
+%``function [] = general_report_crash(ME)``
 %
 %   Function for reporting of errors found in the code.
 %

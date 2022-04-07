@@ -4,37 +4,29 @@ function [data, hdr, meta] = general_read_table(instr)
 %
 %   A general function for reading whitespace separated data tables.
 %
-%   INPUT
-%   =====
-%   
-%   -- instr     Either a path to file or a multiline string to parse.
+%   Parameters:
+%       --instr (char):
+%           Either a path to file or a multiline string to parse.
 %
-%   OUTPUTS
-%   =======
+%   Returns:
+%       data
+%           A data matrix with file contents.
+%       hdr
+%           Cell array of strings with column names.
+%       meta
+%           A structure with metadata specified in the string.
 %
-%   data
-%       A data matrix with file contents.
-%   hdr
-%       Cell array of strings with column names.
-%   meta
-%       A structure with metadata specified in the string
+%   Notes:
+%       The function is used to read a text file or convert a text string
+%       into a data matrix. All the # commented lines are excluded from
+%       reading the data. Comment lines in the form of '# key: value' are
+%       added to the meta structure that has fields with key names and
+%       values ascribed to them. The last commented line that is not a
+%       '# key: value' line is considered a white-character separated
+%       header.
 %
-%   USE
-%   ===
-%
-%   The function is used to read a text file or convert a text string into a
-%   data matrix. All the # commented lines are excluded from reading the data.
-%   Comment lines in the form of '# key: value' are added to the meta structure
-%   that has fields with key names and values ascribed to them. The last
-%   commented line that is not a '# key: value' line is considered a
-%   white-character separated header.
-%
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       [data, hdr, meta] = general_read_table('movement.dat');
+%   Example:
+%       >>> [data, hdr, meta] = general_read_table('movement.dat');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
