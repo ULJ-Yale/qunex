@@ -402,4 +402,4 @@ extra_parameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler'
 #                                                SKIP LOGGING FOR THESE COMMANDS
 #
 
-logskip_commands = ["batch_tag2namekey", "check_deprecated_commands", "get_sessions_for_slurm_array"]
+logskip_commands = ["batch_tag2namekey", "check_deprecated_commands"]
