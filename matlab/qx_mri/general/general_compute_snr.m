@@ -41,6 +41,9 @@ if nargin < 6
                 fmask = false;
                 if nargin < 2
                     imask = false;
+                    if nargin < 1
+                      error('ERROR: Please specify filename of the image!');
+                    end
                 end
             end
         end
