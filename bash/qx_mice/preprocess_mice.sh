@@ -98,7 +98,7 @@ ica_dir="${melodic_output}.ica"
 if [ -d ${ica_dir} ]; then rm -rf ${ica_dir}; fi
 
 # copy the fsf file
-cp ${mice_templates}/${bold}_rsfMRI_Standard_900.fsf ${work_dir}
+cp ${mice_templates}/rsfMRI_Standard_900.fsf ${work_dir}/${bold}_rsfMRI_Standard_900.fsf
 
 # inject varibale values into the fsf file
 for i in "${work_dir}/${bold}_rsfMRI_Standard_900.fsf"; do
@@ -145,8 +145,8 @@ echo " --> You can check the registrations in ${work_dir}/QC"
 # ------------------------------------------------------------------------------
 echo ""
 echo " --> Applying registrations"
-echo " ... Running flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm"
-flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm
+echo " ... Running flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm"
+flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm
 
 
 # ------------------------------------------------------------------------------
