@@ -27,7 +27,7 @@ if nargin < 4
     if nargin < 3
         target = [];
         if nargin < 2
-            mask = [];
+            fmask = [];
         end
     end
 end
