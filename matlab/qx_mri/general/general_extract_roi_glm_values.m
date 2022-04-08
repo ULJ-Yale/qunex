@@ -2,7 +2,7 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 
 %``function [] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)`
 %
-%	Extracts per ROI estimates of specified effects from a volume or cifti GLM
+%    Extracts per ROI estimates of specified effects from a volume or cifti GLM
 %   files as specified in the file list.
 %
 %   INPUTS
@@ -20,7 +20,7 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %                 and baseline are exported. []
 %   --frames      List of frames to extract from all effects. All if empty or 
 %                 not specified. []
-%   --values 	  In what form to extract the estimates. Possibilities are raw 
+%   --values       In what form to extract the estimates. Possibilities are raw
 %                 beta values ('raw') or percent signal change ('psc') values. 
 %                 ['raw']
 %   --tformat     A comma separated string specifying in what format the data is 
@@ -36,7 +36,7 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %                   the ROI are reported, as well as the number of effective 
 %                   voxels within the ROI.
 %
-%	--verbose		Whether to report on progress or not. [not]
+%    --verbose        Whether to report on progress or not. [not]
 %
 %   OUTPUT
 %   ======

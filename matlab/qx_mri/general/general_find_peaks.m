@@ -10,7 +10,7 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %   ======
 %
 %   --fin         input image
-%	--fout        output image
+%    --fout        output image
 %   --mins        [minimal size, minimal area] of the resulting ROI  [0, 0]
 %   --maxs        [maximum size, maximum area] of the resulting ROI  [inf, inf]
 %   --val         whether to find positive, negative or both peaks ('n', 'p', 

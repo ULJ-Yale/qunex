@@ -1,14 +1,14 @@
 function [] = stats_anova_2way_repeated(dfile, a, b, output, verbose)
 
 %``function [] = stats_anova_2way_repeated(dfile, a, b, output, verbose)``
-%	
+%
 %   Computes ANOVA with two repeated measures factors with a and b levels and
 %   saves specified results.
 %
 %   INPUTS
 %   ======
-%	
-%	dfile     the data file to work on - either a single image or a conc file
+%
+%    dfile     the data file to work on - either a single image or a conc file
 %             The images have to be organized as a series of volumes with 
 %             session, factor A, factor B in the order of faster to slowest 
 %             varying variable. The data has to be fully balanced with no
@@ -52,15 +52,15 @@ root = strrep(root, '.conc', '');
 
 
 % ======================================================
-% 	----> read file
+%     ----> read file
 
 if verbose, fprintf('--------------------------\nComputing 2-Way Repeated Measures anova with factors A (%d levels) and B (%d levels)\n ... reading data (%s) ', a, b, dfile), end
 img = nimage(dfile);
-img.data = img.image2D;		
+img.data = img.image2D;
 
 
 % ======================================================
-% 	----> compute ANOVA
+%     ----> compute ANOVA
 
 if verbose, fprintf('\n ... computing\n --- '), end
 [p F Z M SE] = img.img_anova_2way_repeated(a, b, verbose);
@@ -68,7 +68,7 @@ if verbose, fprintf(' --- \n'), end
 
 
 % ======================================================
-% 	----> save results
+%     ----> save results
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)

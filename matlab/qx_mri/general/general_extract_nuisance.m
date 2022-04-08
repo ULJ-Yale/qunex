@@ -2,7 +2,7 @@ function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, nt
 
 %``function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)``
 %
-%	Extracts the specified nuisances and saves it into .nuisance file.
+%    Extracts the specified nuisances and saves it into .nuisance file.
 %
 %   INPUTS
 %   ======
@@ -10,7 +10,7 @@ function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, nt
 %   --img         nimage or a path to a bold file to process
 %   --fsimg       nimage, a path to a freesurfer segmentation or '1b' for 
 %                 extraction based on first frame
-%	--bmimg       nimage, a path to brain mask for this specific bold or [] for 
+%    --bmimg       nimage, a path to brain mask for this specific bold or [] for
 %                 image thresholding []
 %   --target      folder to save results into, default: where bold image is, 
 %                 'none': do not save in external file 
@@ -23,7 +23,7 @@ function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, nt
 %                 regress out when additionally provided a list of ROI, those 
 %                 will not be masked by bold brain mask (e.g. 
 %                 'nroi.names|eyes,scull')
-%	--verbose     to report on progress or not [not]
+%    --verbose     to report on progress or not [not]
 %
 %   OUTPUTS
 %   =======

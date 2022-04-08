@@ -1,15 +1,15 @@
 function [] = img_save_concfile(file, files)
 
 %``function [] = img_save_concfile(file, files)``
-%	
-%	Saves a conc file.
+%
+%    Saves a conc file.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%	 --file    	path to conc file
-%	 --files   	list of image files
-%	
+%     --file        path to conc file
+%     --files       list of image files
+%
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
@@ -23,6 +23,6 @@ end
 
 fprintf(fout, 'number_of_files: %d\n', length(files));
 for n = 1:length(files)
-	fprintf(fout, '    file:%s\n', files{n});
+    fprintf(fout, '    file:%s\n', files{n});
 end
 fclose(fout);

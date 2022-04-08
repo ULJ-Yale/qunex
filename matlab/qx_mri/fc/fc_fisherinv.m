@@ -2,18 +2,18 @@ function [r] = fc_fisherinv(fz)
 
 %``function [r] = fc_fisherinv(fz)`
 %
-%	Converts Fisher z values to pearson correlations.
+%    Converts Fisher z values to pearson correlations.
 %
-%	INPUT
-%	=====
+%    INPUT
+%    =====
 %
-%	--fz 	Fisher z values
+%    --fz     Fisher z values
 %
-%	OUTPUT
-%	======
+%    OUTPUT
+%    ======
 %
-%	r 	
-%		Pearson correlations
+%    r
+%        Pearson correlations
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

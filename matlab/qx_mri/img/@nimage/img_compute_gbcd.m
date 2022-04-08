@@ -2,13 +2,13 @@ function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes,
 
 %``function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)``
 %
-%	Computes GBC averages for each specified ROI for n bands defined as distance 
+%    Computes GBC averages for each specified ROI for n bands defined as distance
 %   from ROI.
 %
 %   INPUTS
 %   ======
 %
-%	--obj         image
+%    --obj         image
 %   --command     string describing GBC to compute (pipe separated)
 %
 %                 mFz:t

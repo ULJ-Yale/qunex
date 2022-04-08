@@ -2,7 +2,7 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 
 %``function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)``
 %
-%	Segments the voxels in smask based on their connectivity with tmask ROI.
+%    Segments the voxels in smask based on their connectivity with tmask ROI.
 %   Uses WTA to select the region the voxel is most correlated with.
 %
 %   INPUTS
@@ -17,7 +17,7 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 %   --options   Whether to use 'raw', 'absolute' or 'partial' correlations ['raw'].
 %   --verbose   Whether to report the progress 'full', 'script', 'none' ['none'].
 %
-%	RESULTS
+%    RESULTS
 %   =======
 %
 %   <root>_corr_roi 
@@ -142,24 +142,24 @@ for s = 1:nsessions
 
     %   --- reading in image files
     if script, tic, end
-	if script, fprintf('\n------\nProcessing %s', session(s).id), end
-	if script, fprintf('\n... reading file(s) '), end
+    if script, fprintf('\n------\nProcessing %s', session(s).id), end
+    if script, fprintf('\n... reading file(s) '), end
 
     roif = nimage(session(s).roi);
-	tROI = nimage.img_read_roi(tmask, roif);
-	sROI = nimage.img_read_roi(smask, roif);
+    tROI = nimage.img_read_roi(tmask, roif);
+    sROI = nimage.img_read_roi(smask, roif);
 
-	nfiles = length(session(s).files);
+    nfiles = length(session(s).files);
 
-	img = nimage(session(s).files{1});
-	if mask, img = img.sliceframes(mask); end
-	if script, fprintf('1'), end
-	if nfiles > 1
-    	for n = 2:nfiles
-    	    new = nimage(session(s).files{n});
-    	    if mask, new = new.sliceframes(mask); end
-    	    img = [img new];
-    	    if script, fprintf(', %d', n), end
+    img = nimage(session(s).files{1});
+    if mask, img = img.sliceframes(mask); end
+    if script, fprintf('1'), end
+    if nfiles > 1
+        for n = 2:nfiles
+            new = nimage(session(s).files{n});
+            if mask, new = new.sliceframes(mask); end
+            img = [img new];
+            if script, fprintf(', %d', n), end
         end
     end
 

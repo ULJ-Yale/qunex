@@ -2,7 +2,7 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 
 %``function [r, doIt] = general_qa_concfile(file, doIt, target)``
 %
-%	Computes the specified statistics on images specified in the conc file and
+%    Computes the specified statistics on images specified in the conc file and
 %   saves them to the target file.
 %
 %   INPUTS
@@ -30,7 +30,7 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 %   named <target>.<stat>.<relevant extension>. If no target is specified no
 %   files will be saved.
 %
-%	EXAMPLE USE
+%    EXAMPLE USE
 %   ===========
 %
 %   ::

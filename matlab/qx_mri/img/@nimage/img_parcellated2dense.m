@@ -2,7 +2,7 @@ function [img] = img_parcellated2dense(img, verbose, defineMissing)
 
 %``function [img] = img_parcellated2dense(img, verbose)``
 %
-%	Expands a parcelated image to a dense image
+%    Expands a parcelated image to a dense image
 %
 %   INPUTS
 %   ======

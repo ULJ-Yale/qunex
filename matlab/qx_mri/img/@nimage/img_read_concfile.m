@@ -2,7 +2,7 @@ function [files, boldnum, sfolder] = img_read_concfile(file)
 
 %``function [files, boldnum, sfolder] = img_read_concfile(file)``
 %
-%	Reads a .conc file and returns a list of files.
+%    Reads a .conc file and returns a list of files.
 %
 %   INPUT
 %   =====
@@ -29,7 +29,7 @@ function [files, boldnum, sfolder] = img_read_concfile(file)
 %   EXAMPLE USE
 %   ===========
 %
-%	::
+%    ::
 %
 %       files = nimage.img_read_concfile('OP236-WM.conc');
 %
@@ -62,16 +62,16 @@ if isempty(files)
     end
     s = fgetl(fin);
 
-    files 	= {};
+    files     = {};
     c = 0;
     while feof(fin) == 0
-    	s = fgetl(fin);
-    	if findstr(s, 'file:')
+        s = fgetl(fin);
+        if findstr(s, 'file:')
             c = c + 1;
-    		[f] = strread(s, '%s');
-    		f = strtrim(strrep(f{1}, 'file:', ''));
-    		files{c} = f;
-    	end
+            [f] = strread(s, '%s');
+            f = strtrim(strrep(f{1}, 'file:', ''));
+            files{c} = f;
+        end
     end
 
     fclose(fin);

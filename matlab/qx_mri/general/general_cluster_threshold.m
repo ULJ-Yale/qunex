@@ -5,15 +5,15 @@ function [] = general_cluster_threshold(fname, tname, csize, t)
 %   Thresholding using cluster size for volume images.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%   --fname 	A path to a Z image.
-%   --tname 	The name for the new, thresholded image.
-%   --csize 	Minimal cluster size threshold.
-%   --t     	Z magnitude threshold (allways does positive and negative). [3]
+%   --fname     A path to a Z image.
+%   --tname     The name for the new, thresholded image.
+%   --csize     Minimal cluster size threshold.
+%   --t         Z magnitude threshold (allways does positive and negative). [3]
 %
 %   USE
-%	===
+%    ===
 %
 %   The functions first applies the specified Z threshold zeroing all voxels
 %   between -t and +t. It then identifies all contiguous clusters of voxels
@@ -23,11 +23,11 @@ function [] = general_cluster_threshold(fname, tname, csize, t)
 %   least csize voxels remain.
 %
 %   EXAMPLE USE
-%	===========
+%    ===========
 %
-%	::
+%    ::
 %
-%   	general_cluster_threshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
+%       general_cluster_threshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -2,19 +2,19 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 
 %``function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``
 %
-%	Extracts and saves region timeseries defined by provided roiinfo file
+%    Extracts and saves region timeseries defined by provided roiinfo file
 %
 %   INPUTS
 %   ======
 %
-%	--flist     A .list file, or a well strucutured string (see general_read_file_list).
-%	--roiinfo   A .names ROI definition file.
+%    --flist     A .list file, or a well strucutured string (see general_read_file_list).
+%    --roiinfo   A .names ROI definition file.
 %   --inmask    Per run mask information, number of frames to skip or a vector 
 %               of frames to keep (1) and reject (0), or a string describing 
 %               which events to extract timeseries for and the frame offset at 
 %               start and end in format: 
 %               ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
-%	--targetf	The name for the file to save timeseries in.
+%    --targetf    The name for the file to save timeseries in.
 %   --options   A string defining which outputs to create ['m']:
 %
 %               - t - create a tab delimited text file,

@@ -2,12 +2,12 @@ function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, r
 
 %``function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)``
 %
-%	Computes whole brain GBC based on the specified mask and command string.
+%    Computes whole brain GBC based on the specified mask and command string.
 %
 %   INPUTS
 %   ======
 %
-%	--obj       nimage object.
+%    --obj       nimage object.
 %   --command   Pipe separated string describing GBC to compute.
 %
 %               mFz:t
@@ -231,8 +231,8 @@ for n = 1:nsteps+1
     if verbose
         crange = [num2str(fstart) ':' num2str(fend)];
         % for c = 1:slen, fprintf('\b'), end
-	    fprintf('\n     ... %14s', crange);
-	    slen = length(crange);
+        fprintf('\n     ... %14s', crange);
+        slen = length(crange);
     end
 
     if time, fprintf(' r'); tic; end

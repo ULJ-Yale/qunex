@@ -1,11 +1,11 @@
 function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 
 %``function [tp] = simulate_extract_event_timepoints(ts, eventlist, timepoints)``
-%	
+%
 %   Function that extract specified timepoints from each event.
 %
 %   INPUTS
-%	======
+%    ======
 %
 %   --TR            TR of the timeseries
 %   --ts            timeseries
@@ -13,10 +13,10 @@ function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 %   --timepoints    timepoints within each event to extract values for
 %
 %   OUTPUT
-%	======
+%    ======
 %
 %   tp
-%		matrix of extracted timepoints
+%        matrix of extracted timepoints
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -5,9 +5,9 @@ function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 %   INPUTS
 %   ======
 %
-%	Computes t-test against zero and saves specified results.
+%    Computes t-test against zero and saves specified results.
 %
-%	--dfile     the data file to work on - either a single image or a conc file
+%    --dfile     the data file to work on - either a single image or a conc file
 %   --output    the type of results to save ['metpz']
 %
 %               - m ... mean value for each voxel
@@ -48,7 +48,7 @@ root = strrep(root, '.gz', '');
 root = strrep(root, '.conc', '');
 
 % ======================================================
-% 	----> read file
+%     ----> read file
 
 if verbose, fprintf('--------------------------\nComputing t-test against zero\n ... reading data (%s) ', dfile), end
 img = nimage(dfile);
@@ -60,7 +60,7 @@ end
 
 
 % ======================================================
-% 	----> compute t-test
+%     ----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
 [p Z M SE t] = img.img_ttest_zero(verbose);
@@ -68,7 +68,7 @@ if verbose, fprintf(' --- \n'), end
 
 
 % ======================================================
-% 	----> save results
+%     ----> save results
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)

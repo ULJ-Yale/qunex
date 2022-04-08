@@ -7,7 +7,7 @@ function [img] = img_read_glm(img, fname, dtype, verbose)
 %   INPUTS
 %   ======
 %
-%	img         mrimage object
+%    img         mrimage object
 %   fname       filename (a .glm file)
 %   dtype       number format to use ['single']
 %   verbose     whether to be talkative [false]
@@ -24,8 +24,8 @@ function [img] = img_read_glm(img, fname, dtype, verbose)
 
 if nargin < 4
     verbose = [];
-   	if nargin < 3
-   	    dtype = [];
+       if nargin < 3
+           dtype = [];
     end
 end
 

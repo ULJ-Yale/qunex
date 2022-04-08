@@ -2,7 +2,7 @@ function [ifh] = img_read_ifh(img, file)
 
 %``function [ifh] = img_read_ifh(img, file)``
 %
-%	Reads .ifh header from a 4dfp file
+%    Reads .ifh header from a 4dfp file
 %
 %   INPUTS
 %   ======
@@ -63,13 +63,13 @@ if fin == -1
 else
     c = 1;
     while feof(fin) == 0
-    	s = fgetl(fin);
-    	[key, value] = strtok(s, ':=');
-    	value = strtrim(strrep(value, ':=', ''));
-    	key = strtrim(key);
-    	ifh.key{c} = key;
-    	ifh.value{c} = value;
-    	c = c + 1;
+        s = fgetl(fin);
+        [key, value] = strtok(s, ':=');
+        value = strtrim(strrep(value, ':=', ''));
+        key = strtrim(key);
+        ifh.key{c} = key;
+        ifh.value{c} = value;
+        c = c + 1;
     end
     fclose(fin);
 end

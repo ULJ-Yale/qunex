@@ -2,12 +2,12 @@ function [p Z M SE t] = img_ttest_zero(obj, verbose)
 
 %``function [p Z M SE t] = img_ttest_zero(obj, verbose)``
 %
-%	Computes t-test against zero across all the volumes in the image.
+%    Computes t-test against zero across all the volumes in the image.
 %
 %   INPUTS
 %   ======
 %
-%	--obj       the images to work on
+%    --obj       the images to work on
 %   --verbose   should it talk a lot [false]
 %
 %   OUTPUTS

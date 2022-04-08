@@ -1,30 +1,30 @@
 function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, target, slice, fname)
 
 %``function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, target, slice, fname)``
-%	
+%
 %   Computes SNR for the given image.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%   --filename	the filename of the image
-%	--imask		mask that defines voxels to compute snr over 
-%	--fmask		which frames to use / skip
-%	--target	target folder for the figure
-%   --slice		vector of the two dimensions that define a slice
-%	--fname		the name to use when saving file
+%   --filename    the filename of the image
+%    --imask        mask that defines voxels to compute snr over
+%    --fmask        which frames to use / skip
+%    --target    target folder for the figure
+%   --slice        vector of the two dimensions that define a slice
+%    --fname        the name to use when saving file
 %
-%	OUTPUTS
+%    OUTPUTS
 %   =======
 %
-%	snr
-%		mean slice snr
+%    snr
+%        mean slice snr
 %
-%	sd
-%		std of mean whole brain volume signal over the run
+%    sd
+%        std of mean whole brain volume signal over the run
 %
-%	slicesnr
-%		array of snr values for each slice
+%    slicesnr
+%        array of snr values for each slice
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -32,23 +32,23 @@ function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, targe
 % SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 6
-	fname = [];
-	if nargin < 5
-		slice = [];
-		if nargin < 4
-			target = '';
-			if nargin < 3
-				fmask = false;
-				if nargin < 2
-					imask = false;
-				end
-			end
-		end
-	end
-end		
+    fname = [];
+    if nargin < 5
+        slice = [];
+        if nargin < 4
+            target = '';
+            if nargin < 3
+                fmask = false;
+                if nargin < 2
+                    imask = false;
+                end
+            end
+        end
+    end
+end
 
 if isempty(fname)
-	fname = filename;
+    fname = filename;
 end
 
 %  ---- loading data
@@ -60,17 +60,17 @@ img.data = img.image2D;
 %  ---- masking
 
 if fmask
-	img = img.sliceframes(fmask);
+    img = img.sliceframes(fmask);
 end
 
 if imask
-	mask = nimage(imask);
-	mask.data = mask.image4D > 0;
+    mask = nimage(imask);
+    mask.data = mask.image4D > 0;
 else
-	tm = zeros(img.frames,1);
-	tm(1) = 1;
-	mask = img.sliceframes(tm);
-	mask.data = mask.image4D > 500;
+    tm = zeros(img.frames,1);
+    tm(1) = 1;
+    mask = img.sliceframes(tm);
+    mask.data = mask.image4D > 500;
 end
 
 nslices = img.dim(3);
@@ -79,13 +79,13 @@ smask = mask;
 smask.data(:,:,:) = 0;
 
 for n = 1:nslices
-	tmask = smask;
-	tmask.data(:,:,n) = 1;
-	tmask.data = tmask.data & mask.data;
-	tmask = tmask.image2D;
-	m(n,:) = mean(img.data(tmask,:),1);
+    tmask = smask;
+    tmask.data(:,:,n) = 1;
+    tmask.data = tmask.data & mask.data;
+    tmask = tmask.image2D;
+    m(n,:) = mean(img.data(tmask,:),1);
 end
-	
+
 sd = std(m,0,2);
 m = mean(m,2);
 snr = m./sd;

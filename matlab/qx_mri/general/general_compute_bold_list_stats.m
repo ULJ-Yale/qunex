@@ -2,7 +2,7 @@ function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbo
 
 %``function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)``
 %
-%	Computes BOLD run per frame statistics and scrubbing information for a list 
+%    Computes BOLD run per frame statistics and scrubbing information for a list
 %   of sessions.
 %
 %   INPUTS
@@ -23,7 +23,7 @@ function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbo
 %
 %   --scrub     A string specifying whether and how to compute scrubbing
 %               information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' []
-%	--verbose	Whether to report on progress or not [false].
+%    --verbose    Whether to report on progress or not [false].
 %
 %   USE
 %   ===
@@ -75,7 +75,7 @@ for s = 1:nsessions
     end
 
     nfiles = length(session(s).files);
-	for n = 1:nfiles
+    for n = 1:nfiles
         general_compute_bold_stats(session(s).files{n}, mask, target, store, scrub, verbose);
 
     end

@@ -1,29 +1,29 @@
 function [B, res rvar, Xdof] = simulate_compute_glm(y, X)
 
 %``function [B, res rvar, Xdof] = simulate_compute_glm(y, X)``
-%	
+%
 %   Funtion for task structure removal.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%   --ts 	timeseries (timepoints x voxels)
-%   --X		regressor
+%   --ts     timeseries (timepoints x voxels)
+%   --X        regressor
 %
 %   OUTPUTS
-%	=======
+%    =======
 %
 %   B
-%		beta coefficients
+%        beta coefficients
 %
 %   res
-%		residual data
+%        residual data
 %
 %   rvar
-%		residual variance
+%        residual variance
 %
 %   Xdof
-%		model degrees of freedom
+%        model degrees of freedom
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

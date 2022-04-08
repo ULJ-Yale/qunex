@@ -1,21 +1,21 @@
 function [y] = changeform(x, d)
 
-%	``function [a] = changeform(b, d)``
-%	
+%    ``function [a] = changeform(b, d)``
+%
 %   Function that converts vector to matrix or the other way arround depending 
 %   on input.
 %
 %   INPUTS
-%	======
+%    ======
 %
 %   --x     input vector or matrix
 %   --d     optional value for diagonal (default 1)
 %
 %   OUTPUT
-%	======
+%    ======
 %
 %   y
-%		output vector or matrix
+%        output vector or matrix
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

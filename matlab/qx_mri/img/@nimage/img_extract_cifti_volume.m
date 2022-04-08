@@ -6,22 +6,22 @@ function [vol_img] = img_extract_cifti_volume(img, data_format)
 %   usage of the existing methods for volume model analysis.
 %
 %   INPUTS
-%	======
-%	
-%	--img	
-%	--data_format  - '2D' for NIfTY data format in 2D (default)
+%    ======
+%
+%    --img
+%    --data_format  - '2D' for NIfTY data format in 2D (default)
 %                  - '4D' for NIfTY data foramt in 4D
 %
 %   OUTPUT
-%	======
+%    ======
 %
 %   vol_img
-%		nimage in a NIfTI format.
+%        nimage in a NIfTI format.
 %
 %   EXAMPLE USE
-%	===========
+%    ===========
 %
-%	::
+%    ::
 %
 %       vol_img = img.img_extract_cifti_volume();
 %

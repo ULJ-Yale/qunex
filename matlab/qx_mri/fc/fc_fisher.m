@@ -2,19 +2,19 @@ function [Fz] = fc_fisher(r)
 
 %``function [Fz] = fc_fisher(r)``
 %
-%	Converts Pearson correlations to Fisher z values. As a pre-pass, to avoid
-%	infinite Fisher z values, it multiplies all correlations with 0.9999999.
+%    Converts Pearson correlations to Fisher z values. As a pre-pass, to avoid
+%    infinite Fisher z values, it multiplies all correlations with 0.9999999.
 %
-%	INPUT
-%	=====
+%    INPUT
+%    =====
 %
-%	--f 		Pearson's correlation coefficients.
+%    --f         Pearson's correlation coefficients.
 %
-%	OUTPUT
-%	======
-%	
-%	Fz
-%		Fisher Z values
+%    OUTPUT
+%    ======
+%
+%    Fz
+%        Fisher Z values
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

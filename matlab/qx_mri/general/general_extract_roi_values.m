@@ -2,14 +2,14 @@ function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, 
 
 %``function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
 %
-%	Extracts desired statistics from provided files for each ROI.
+%    Extracts desired statistics from provided files for each ROI.
 %
 %   INPUTS
 %   ======
 %
 %   --roif      ROI file, either a names file or a mask file.
 %   --mfs       Comma separated list of files to extract values from.
-%	--sefs      Optional list of comma separate files that hold SE for value 
+%    --sefs      Optional list of comma separate files that hold SE for value
 %               files.
 %   --vnames    Optional comma separated list of value names to use for each of 
 %               the files.
@@ -30,7 +30,7 @@ function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, 
 %               - max     ... mamimum value across ROI
 %               - peak    ... peak value in the ROI (largest absolute value)
 %
-%	--verbose   To report on progress or not. [false]
+%    --verbose   To report on progress or not. [false]
 %
 %   OUTPUT
 %   ======

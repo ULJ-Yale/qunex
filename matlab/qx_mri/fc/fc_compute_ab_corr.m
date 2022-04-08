@@ -2,7 +2,7 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 
 %``function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)`
 %
-%	Computes the correlation of each source mask voxel with each target mask 
+%    Computes the correlation of each source mask voxel with each target mask
 %   voxel.
 %
 %   INPUTS
@@ -23,10 +23,10 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %
 %   --verbose    Whether to report the progress full, script, none. ['none']
 %
-%	RESULTS
+%    RESULTS
 %   =======
 %
-%	The resulting files are:
+%    The resulting files are:
 %
 %   - group:
 %
@@ -147,8 +147,8 @@ for s = 1:nsessions
 
     %   --- reading in image files
     if script, tic, end
-	if script, fprintf('\n------\nProcessing %s', session(s).id), end
-	if script, fprintf('\n... reading file(s) '), end
+    if script, fprintf('\n------\nProcessing %s', session(s).id), end
+    if script, fprintf('\n... reading file(s) '), end
 
     % --- check if we need to load the session region file
 
@@ -159,25 +159,25 @@ for s = 1:nsessions
     end
 
     if tROIload
-	    tROI = nimage.img_read_roi(tmask, roif);
+        tROI = nimage.img_read_roi(tmask, roif);
     end
     if sROIload
-	    sROI = nimage.img_read_roi(smask, roif);
+        sROI = nimage.img_read_roi(smask, roif);
     end
 
     % --- load bold data
 
-	nfiles = length(session(s).files);
+    nfiles = length(session(s).files);
 
-	img = nimage(session(s).files{1});
-	if mask, img = img.sliceframes(mask); end
-	if script, fprintf('1'), end
-	if nfiles > 1
-    	for n = 2:nfiles
-    	    new = nimage(session(s).files{n});
-    	    if mask, new = new.sliceframes(mask); end
-    	    img = [img new];
-    	    if script, fprintf(', %d', n), end
+    img = nimage(session(s).files{1});
+    if mask, img = img.sliceframes(mask); end
+    if script, fprintf('1'), end
+    if nfiles > 1
+        for n = 2:nfiles
+            new = nimage(session(s).files{n});
+            if mask, new = new.sliceframes(mask); end
+            img = [img new];
+            if script, fprintf(', %d', n), end
         end
     end
     if script, fprintf('\n'), end

@@ -2,16 +2,16 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 
 %``function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exclude, verbose)``
 %
-%	Computes t-test of differences between two independent groups.
+%    Computes t-test of differences between two independent groups.
 %
 %   INPUTS
 %   ======
 %
-%	--filea     either a single image or a conc file with data of the group to 
+%    --filea     either a single image or a conc file with data of the group to
 %               compare to
-%	--fileb     either a single image or a conc file with data of the group to 
+%    --fileb     either a single image or a conc file with data of the group to
 %               compare with
-%	--target    the base filename (and path) to be used when saving the results
+%    --target    the base filename (and path) to be used when saving the results
 %   --output    the type of results to save ['medtpz']
 % 
 %               m
@@ -64,7 +64,7 @@ root = strrep(root, '.gz', '');
 root = strrep(root, '.conc', '');
 
 % ======================================================
-% 	----> read file
+%     ----> read file
 
 if verbose, fprintf('--------------------------\nComputing independent t-test\n ... reading data (%s and %s) ', filea, fileb), end
 A = nimage(filea);
@@ -77,7 +77,7 @@ end
 
 
 % ======================================================
-% 	----> compute t-test
+%     ----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
 [p Z M D SE t] = A.img_ttest_independent(B, vartype, verbose);
@@ -85,7 +85,7 @@ if verbose, fprintf(' --- \n'), end
 
 
 % ======================================================
-% 	----> save results
+%     ----> save results
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)

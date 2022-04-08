@@ -2,18 +2,18 @@ function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weig
 
 %``function stats = img_extract_roi_stats(obj, roi, rcodes, selection, frames, weight, criterium)``
 %
-%	Computes satistics for each of the specified ROI for each of the frames.
+%    Computes satistics for each of the specified ROI for each of the frames.
 %   Uses specified method of selecting voxels within ROI.
 %
 %   INPUTS
 %   ======
 %
-%	--obj         current image
+%    --obj         current image
 %   --roi         roi image file
 %   --rcodes      roi values to use [all but 0]
 %   --selection   selection method name [all]
 %
-%	              - 'all'        ... compute stats across all ROI voxels
+%                  - 'all'        ... compute stats across all ROI voxels
 %                 - 'threshold'  ... average of all voxels above threshold
 %                 - 'maxn'       ... average of highest n voxels
 %                 - 'weighted'   ... weighted average across ROI voxels

@@ -8,7 +8,7 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %   INPUTS
 %   ======
 %
-%	--flist   	 conc-like style list of session image files or conc files:
+%    --flist        conc-like style list of session image files or conc files:
 %
 %                - session id:<session_id>
 %                - roi:<path to the individual's ROI file>
@@ -42,11 +42,11 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %   --rcodes     codes of regions from roi file to compute GBC for (all if not 
 %                provided or left empty)
 %   --nbands     number of distance bands to compute GBC for
-%	--mask		 an array mask defining which frames to use (1) and which not (0)
-%	--verbose	 report what is going on
+%    --mask         an array mask defining which frames to use (1) and which not (0)
+%    --verbose     report what is going on
 %   --target     array of ROI codes that define target ROI [default: FreeSurfer 
 %                scortex codes]
-%	--targetf	 target folder for results
+%    --targetf     target folder for results
 %   --rsmooth    radius for smoothing (no smoothing if empty)
 %   --rdilate    radius for dilating mask (no dilation if empty)
 %   --ignore     the column in `*_scrub.txt` file that matches bold file to be 
@@ -141,7 +141,7 @@ if isempty(ignore)
     ignore = 'usevec';
 end
 if isempty(target)
-	target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
+    target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
 end
 
 commands = regexp(command, '\|', 'split');
@@ -168,26 +168,26 @@ for s = 1:nsessions
 
     %   --- reading in image files
     tic;
-	fprintf('\n ... processing %s', session(s).id);
-	fprintf('\n     ... reading image file(s) ');
+    fprintf('\n ... processing %s', session(s).id);
+    fprintf('\n     ... reading image file(s) ');
 
-	y = [];
+    y = [];
 
-	nfiles = length(session(s).files);
+    nfiles = length(session(s).files);
 
-	img = nimage(session(s).files{1});
+    img = nimage(session(s).files{1});
 
     fprintf('1');
-	if ~isempty(mask),   img = img.sliceframes(mask); end
+    if ~isempty(mask),   img = img.sliceframes(mask); end
     if ~isempty(ignore), img = img.img_scrub(ignore); end
 
-	if nfiles > 1
-    	for n = 2:nfiles
-    	    new = nimage(session(s).files{n});
+    if nfiles > 1
+        for n = 2:nfiles
+            new = nimage(session(s).files{n});
             fprintf(', %d', n);
-    	    if ~isempty(mask),   new = new.sliceframes(mask); end
+            if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = new.img_scrub(ignore); end
-    	    img = [img new];
+            img = [img new];
         end
     end
 
