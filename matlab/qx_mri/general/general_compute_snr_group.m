@@ -53,7 +53,7 @@ for s = 1:nsessions
 
     nfiles = length(session(s).files);
     for n = 1:nfiles
-        [snr(c) sd(c)] = g_compute_snr(session(s).files{n}, [], fmask, target, [], [session(s).id '_file_' num2str(n)]);
+        [snr(c) sd(c)] = general_compute_snr(session(s).files{n}, [], fmask, target, [], [session(s).id '_file_' num2str(n)]);
         fprintf(fout, '%s\t%.3f\t%.3f\n', session(s).files{n}, snr(c), sd(c));
         c = c +1;
     end
