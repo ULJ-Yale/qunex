@@ -23,7 +23,7 @@ function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 3
+if nargin < 4
     error('ERROR: Not enough parameters to extract event timepoints!');
 end
 
