@@ -72,11 +72,11 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 6, verbose = false; end
-if nargin < 5, scrub   = [];    end
-if nargin < 4, store   = [];    end
-if nargin < 3, target  = [];    end
-if nargin < 2, mask    = [];    end
+if nargin < 6, verbose = false;  end
+if nargin < 5, scrub   = 'none'; end
+if nargin < 4, store   = [];     end
+if nargin < 3, target  = [];     end
+if nargin < 2, mask    = [];     end
 
 brainthreshold = 300;
 minbrainvoxels = 20000;
