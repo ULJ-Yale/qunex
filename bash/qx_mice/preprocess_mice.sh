@@ -179,18 +179,18 @@ echo " ... Running 3dAFNItoNIFTI -prefix ${work_dir}/${bold}_filtered_func_data_
 echo ""
 echo " --> Registering to Allen space"
 echo " ... Running WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt"
-WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt
+WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt
 
 
 # ------------------------------------------------------------------------------
 # -- wrap up
 # ------------------------------------------------------------------------------
 echo " --> Removing intermediate files"
-rm ${bold}_rsfMRI_Standard_900.fsf
-rm ${bold}_DS.fsf
-rm ${bold}*_BP+orig.BRIK
-rm ${bold}*_BP+orig.HEAD
-rm ${bold}*_BP.nii.gz
+rm ${work_dir}/${bold}_rsfMRI_Standard_900.fsf
+rm ${work_dir}/${bold}_DS.fsf
+rm ${work_dir}/${bold}*_BP+orig.BRIK
+rm ${work_dir}/${bold}*_BP+orig.HEAD
+rm ${work_dir}/${bold}*_BP.nii.gz
 echo ""
 echo " --> preprocess_mice successfully completed"
 echo ""
