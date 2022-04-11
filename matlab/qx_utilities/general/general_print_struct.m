@@ -7,7 +7,7 @@ function [] = general_print_struct(info, ftitle)
 %   Parameters:
 %       --info (struct):
 %           A structure to print.
-%       --ftitle (char, optional, default ''):
+%       --ftitle (str, default ''):
 %           A title to print above the report.
 %
 

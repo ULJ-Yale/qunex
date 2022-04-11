@@ -1,20 +1,18 @@
-function [ts] = simulate_trim_pad(ts,l)
+function [ts] = simulate_trim_pad(ts, l)
 
-%``function [ts] = simulate_trim_pad(ts,l)``
+%``function [ts] = simulate_trim_pad(ts, l)``
+%    
+%   Function that trims or pads timeseries to specified length.
 %
-%   Function that trimms or pads timeseries to specified length.
+%   Parameters:
+%       --ts (timeseries):
+%           Timeseries (timepoints x voxels).
+%       --l (int):
+%           Desired length.
 %
-%   INPUTS
-%    ======
-%
-%   --ts    timeseries (timepoints x voxels)
-%   --l      desired length
-%
-%   OUTPUT
-%    ======
-%
-%   ts
-%        trimmed / padded timeseries
+%   Returns:
+%       ts
+%           Trimmed / padded timeseries.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

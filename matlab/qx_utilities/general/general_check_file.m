@@ -5,11 +5,11 @@ function [ok] = general_check_file(filename, description, v, prepend)
 %   Checks for existence of a file and prints error notices specified in v.
 %
 %   Parameters:
-%       --filename (char):
+%       --filename (str):
 %           The path to the file to check for.
-%       --description (char, optional, default 'a file'):
+%       --description (str, default 'a file'):
 %           The description for a file.
-%       --v (char, optional, default 'error stop'):
+%       --v (str, default 'errorstop'):
 %           What should be reported:
 %
 %           'nothing'
@@ -24,7 +24,7 @@ function [ok] = general_check_file(filename, description, v, prepend)
 %               report both missing and found files and stop execution
 %               on error.
 %
-%       --prepend (char, optional, default '… '):
+%       --prepend (str, default '… '):
 %           String to prepend before the reported line.
 %
 %   Returns:

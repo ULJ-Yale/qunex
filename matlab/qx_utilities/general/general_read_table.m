@@ -5,7 +5,7 @@ function [data, hdr, meta] = general_read_table(instr)
 %   A general function for reading whitespace separated data tables.
 %
 %   Parameters:
-%       --instr (char):
+%       --instr (str):
 %           Either a path to file or a multiline string to parse.
 %
 %   Returns:

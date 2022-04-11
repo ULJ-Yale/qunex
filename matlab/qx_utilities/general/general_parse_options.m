@@ -8,16 +8,16 @@ function [options] = general_parse_options(options, s, default)
 %       --options (struct):
 %           A starting structure to work with - everything will be added to 
 %           it / changed in it.
-%       --s (char):
+%       --s (str):
 %           A 'key:value|key:value' string that defines what values to be 
 %           injected into the structure.
-%       --default (char, optional, default ''):
+%       --default (str, default ''):
 %           An optional 'key:value|key:value' string with the default
 %           values to be used.
 %
 %   Returns:
 %       options
-%           a structure with the embedded values
+%           A structure with the embedded values.
 %
 %   Notes:
 %       Use the function for easy creation and modification of structures
