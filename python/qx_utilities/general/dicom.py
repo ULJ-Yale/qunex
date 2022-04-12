@@ -62,6 +62,32 @@ else:
     mcommand = os.environ['QUNEXMCOMMAND']
 
 
+dcm_info_list = (('sessionid', str, "NA"), ('seriesNumber', int, 0), ('seriesDescription', str, "NA"), ('TR', float, 0.), ('TE', float, 0.), ('frames', int, 0), ('directions', int, 0), ('volumes', int, 0), ('slices', int, 0), ('datetime', str, ""), ('ImageType', str, ""), ('fileid', str, ""))
+
+class vdict(dict):
+    """
+    An extension of a dictionary class. Upon initialization it creates fields
+    with the names and default values as specified in the __keys__, which 
+    should be a list of key_name, key_func, and key_default triplets.
+    
+    Upon initialization, keys with the provided names and defaults values are
+    created. When calling `validate` method, any missing keys are generated 
+    with the default values, and all the keys are transformed according to 
+    the provided functions in the key_func.
+    """
+    def __init__(self, *args, **kw):
+        self.__keys__ = kw.pop('__keys__', ())
+        super(vdict, self).__init__(*args, **kw)        
+        self.validate()
+    def validate(self):
+        for key_name, key_func, key_default in self.__keys__:
+            try:
+                self[key_name] = key_func(self.get(key_name, key_default))
+            except ValueError as e:
+                e.args += (f"Validation of the dictionary failed! The value '{self[key_name]}' for {key_name} is invalid!")
+                raise
+                
+
 def cleanName(string):
     """
     ``cleanName(string)``
@@ -120,7 +146,9 @@ def readPARInfo(filename):
     if not os.path.exists(filename):
         raise ValueError('PAR file %s does not exist!' % (filename))
 
-    info = {}
+    # -- set up info
+    info = vdict(__keys__=dcm_info_list)
+
     with open(filename, 'r') as f:
         for line in f:
             if len(line) > 1 and line[0] == '.':
@@ -128,18 +156,21 @@ def readPARInfo(filename):
                 k, v = [e.strip() for e in line.split(':  ')]
                 info[k] = v
 
-    info['sessionid']          = info['Patient name']
-    info['seriesNumber']       = int(info['Acquisition nr']) * 100 + int(info['Reconstruction nr'])
-    info['seriesDescription']  = info['Protocol name'].replace("WIP ", "")
-    info['TR']                 = float(info['Repetition time [msec]'])
+    info['sessionid']          = info.get('Patient name', info['sessionid'])
+    info['seriesNumber']       = int(info.get('Acquisition nr', 0) * 100 + int(info.get('Reconstruction nr', 0)))
+    info['seriesDescription']  = info.get('Protocol name', info['seriesDescription']).replace("WIP ", "")
+    info['TR']                 = float(info.get('Repetition time [msec]', info['TR']))
+    info['TR']                 = float(info.get('Repetition time [ms]', info['TR']))
     info['TE']                 = 0.
-    info['frames']             = int(info['Max. number of dynamics'])
-    info['directions']         = int(info['Max. number of gradient orients']) - 1
+    info['frames']             = int(info.get('Max. number of dynamics', info['frames']))
+    info['directions']         = int(info.get('Max. number of gradient orients', 1)) - 1
     info['volumes']            = max(info['frames'], info['directions'])
-    info['slices']             = int(info['Max. number of slices/locations'])
-    info['datetime']           = info['Examination date/time']
+    info['slices']             = int(info.get('Max. number of slices/locations', info['slices']))
+    info['datetime']           = info.get('Examination date/time', info['datetime'])
     info['ImageType']          = [""]
     info['fileid']             = os.path.basename(filename)[:-4].replace('.', '_').replace('-', '_')
+
+    info.validate()
 
     return info
 
@@ -179,7 +210,7 @@ def readDICOMInfo(filename):
 
     d = readDICOMBase(filename)
 
-    info = {}
+    info = vdict(__keys__=dcm_info_list)
 
     info['sessionid']  = getID(d)
 
