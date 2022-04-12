@@ -2170,17 +2170,29 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             r += "\n---> hcp_dwi_phasepos is currently set to %s." % options['hcp_dwi_phasepos']
 
         # --- set up data
-        if options['hcp_dwi_phasepos'] == "PA":
-            direction = [('pos', 'PA'), ('neg', 'AP')]
+        if options['hcp_dwi_phasepos'] == 'PA':
+            direction = {
+                'pos': 'PA',
+                'neg': 'AP'
+            }
             pe_dir = 2
-        elif options['hcp_dwi_phasepos'] == "AP":
-            direction = [('pos', 'AP'), ('neg', 'PA')]
+        elif options['hcp_dwi_phasepos'] == 'AP':
+            direction = {
+                'pos': 'AP',
+                'neg': 'PA'
+            }
             pe_dir = 2
-        elif options['hcp_dwi_phasepos'] == "LR":
-            direction = [('pos', 'LR'), ('neg', 'RL')]
+        elif options['hcp_dwi_phasepos'] == 'LR':
+            direction = {
+                'pos': 'LR',
+                'neg': 'RL'
+            }
             pe_dir = 1
-        elif options['hcp_dwi_phasepos'] == "RL":
-            direction = [('pos', 'RL'), ('neg', 'LR')]
+        elif options['hcp_dwi_phasepos'] == 'RL':
+            direction = {
+                'pos': 'RL',
+                'neg': 'LR'
+            }
             pe_dir = 1
         else:
             r += "\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]" % options['hcp_dwi_phasepos']
@@ -2195,23 +2207,48 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # get dwi files
             dwi_data = dict()
-            for ddir, dext in direction:
+            for ddir, dext in direction.items():
                 dwi_files = glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
 
                 # sort by temporal order as specified in batch
                 for dwi in sorted(dwis):
                     for dwi_file in dwi_files:
                         if dwis[dwi] in dwi_file:
-                            if ddir in dwi_data:
-                                dwi_data[ddir] = dwi_data[ddir] + "@" + dwi_file
-                            else:
-                                dwi_data[ddir] = dwi_file
-                            break
+                            dwi_dict = {
+                                'dir': ddir,
+                                'ext': dext,
+                                'file': dwi_file
+                            }
+                            dwi_data[dwis[dwi]] = dwi_dict
+
+                            # add matching pair if it does not exist
+                            opposite_dir = 'pos'
+                            if ddir == 'pos':
+                                opposite_dir = 'neg'
+                            opposite_exp = direction[opposite_dir]
+
+                            dwi_matching = dwis[dwi].replace(dext, opposite_exp)
+
+                            if dwi_matching not in dwi_data:
+                                dwi_dict = {
+                                    'dir': opposite_dir,
+                                    'ext': opposite_exp,
+                                    'file': 'EMPTY'
+                                }
+                                dwi_data[dwi_matching] = dwi_dict
+
+            # prepare pos and neg files
+            dwi_files = dict()
+            for _, dwi in dwi_data.items():
+                if dwi['dir'] in dwi_files:
+                    dwi_files[dwi['dir']] = dwi_files[dwi['dir']] + "@" + dwi['file']
+                else:
+                    dwi_files[dwi['dir']] = dwi['file']
 
             for ddir in ['pos', 'neg']:
-                dfiles = dwi_data[ddir].split("@")
+                dfiles = dwi_files[ddir].split("@")
 
-                if dfiles and dfiles != ['']:
+                if dfiles and dfiles != [''] and dfiles != 'EMPTY':
                     r += "\n---> The following %s direction files were found:" % (ddir)
                     for dfile in dfiles:
                         r += "\n     %s" % (os.path.basename(dfile))
