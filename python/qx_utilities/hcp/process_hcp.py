@@ -2517,7 +2517,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_doslicetime          Whether to do slice timing correction TRUE
                                     or FALSE. []
     --hcp_bold_slicetimerparams     A comma or pipe separated string of
-                                    parameters for FSL slicetimer.
+                                    parameters for FSL slicetimer. The 
+                                    parameters have to be specified exactly as
+                                    they should be passed to fsl slicetimer, 
+                                    e.g., '--odd' and not only 'odd'.
     --hcp_bold_stcorrdir            (*) The direction of slice acquisition
                                     ('up' or 'down'. [up]
     --hcp_bold_stcorrint            (*) Whether slices were acquired in an
