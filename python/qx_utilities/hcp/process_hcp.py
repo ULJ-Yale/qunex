@@ -2284,8 +2284,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --combine-data-flag="%(combinedataflag)s" \
                 --printcom="%(printcom)s"' % {
                     'script'            : os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
-                    'pos_data'          : dwi_data['pos'],
-                    'neg_data'          : dwi_data['neg'],
+                    'pos_data'          : dwi_files['pos'],
+                    'neg_data'          : dwi_files['neg'],
                     'path'              : sinfo['hcp'],
                     'subject'           : sinfo['id'] + options['hcp_suffix'],
                     'echospacing'       : echospacing,
