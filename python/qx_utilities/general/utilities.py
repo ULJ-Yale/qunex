@@ -586,7 +586,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 print("# Parameter file: %s\n#" % (paramfile), file=jfile)
                 with open(paramfile) as f:
                     for line in f:
-                        print(line, end=" ", file=jfile)
+                        jfile.write(line)
             else:
                 print("---> parameter files does not exist, skipping [%s]." % (paramfile))
 
@@ -622,7 +622,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 print("\n---", file=jfile)
                 with open(file) as f:
                     for line in f:
-                        print(line, end=" ", file=jfile)
+                        jfile.write(line)
 
         # --- close file
         jfile.close()

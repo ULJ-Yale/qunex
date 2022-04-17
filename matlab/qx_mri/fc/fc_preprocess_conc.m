@@ -487,10 +487,11 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %
 %   **Assumed Modelling**
 %
-%   `<fidl code>:<hrf>[:<length>]
+%   `<fidl code>:<hrf>[-<normalize>][:<length>]
 %   	where <fidl code> is the same as above, <hrf> is the type of the 
-%		hemodynamic response function to use, and <length> is an optional 
-%		parameter, with its value dependent on the model used. The allowed <hrf> 
+%		hemodynamic response function to use, and <normalize> and <length> are
+%       optional parameters, with their values dependent on the model used. The 
+%       allowed <hrf> 
 %		are:
 %
 %   	- boynton ... uses the Boynton HRF
@@ -498,11 +499,21 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   	- u       ... unassumed (see above)
 %   	- block   ... block response
 %
-%   For the first two, the <length> parameter is optional and would override the
-%   event duration information provided in the fidl file. For 'u' the length is
-%   the same as in previous section: the number of frames to model. For 'block'
-%   length should be two numbers separated by a colon (e.g. 2:9) that specify
-%   the start and end offset (from the event onset) to model as a block.
+%   For the first two, <normalize> can be either 'run' or 'uni'. 'run' (e.g., 
+%   'SPM-run', or abbreviated 'SPM-r') specifies that the assumed regressor 
+%   should be scaled to amplitude of 1 within each BOLD run, and 'uni' (e.g. 
+%   'SPM-uni' or abbreviated 'SPM-u') specifies that the regresor should be 
+%   universaly scaled to HRF area-under-the-curve = 1. If no <normalize> 
+%   parameter is specified, 'uni' is assumed by default. The default behavior 
+%   has changed with QuNex version 0.93.4, which can result in different 
+%   assumed HRF regressor scaling and the resulting GLM beta estimates.
+%   
+%   Parameter <length> is also optional in case of 'SPM' and 'boynton' assumed 
+%   HRF modelling, and it overrides the event duration information provided in 
+%   the fidl file. For 'u' the length is the same as in previous section: the 
+%   number of frames to model. For 'block' length should be two numbers 
+%   separated by a colon (e.g. 2:9) that specify the start and end offset (from 
+%   the event onset) to model as a block.
 %
 %   **Naming And Behavioral Regressors**
 %

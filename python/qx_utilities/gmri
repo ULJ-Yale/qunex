@@ -101,6 +101,7 @@ general_extract_glm_volumes             Extracts and saves the GLM estimates of 
 general_extract_roi_glm_values          Extracts per ROI estimates of specified effects from a volume or cifti GLM files.
 general_extract_roi_values              Extracts desired statistics from provided files for each ROI.
 general_find_peaks                      Performs smoothing and defines ROIs from peaks.
+general_glm_predict                     Computes predicted and residual signal based on GLM.
 general_image_conjunction               Reads image file, computes conjunction using g_conjunction and saves results.
 general_image_overlap                   Prints the overlap of two images, one in red, another in green.
 general_parcellated2dense               Expands the parcelated file to a dense file.

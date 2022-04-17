@@ -6,10 +6,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.5
+
+Improved flexibility of GLM analyses. Processing of Philips PAR files is now more robust. Fixed a bug with the `hcp_task_confound` parameter. You can now process DWIs that do not have a matching pos/neg pair with `hcp_diffusion`. Improved stability, scheduling and documentation of the suite.
+
+## 0.93.4
+
+The default normalization for assumed HRF modelling has changed from 'run', which normalizes assumed regressors to amplitude 1 within each run separately, to 'uni', which normalizes regressors universally to HRF area-under-the-curve = 1.
+
+## 0.93.3
+
+Improved several aspects of parallelism inside QuNex, added SLURM job array support. Added additional information to several command's documentation. You can now generate predicted timeseries and residual timeseries for arbitrary set of regressors used in the GLM analyses.
+
 ## 0.93.2
 
 Fixed a bug in backwards compatibility of import functions.
-
 
 ## 0.93.1
 

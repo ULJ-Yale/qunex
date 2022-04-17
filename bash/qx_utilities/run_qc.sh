@@ -69,9 +69,12 @@ usage() {
  echo ""
  echo "                       Note: It can be used in combination with --sessions to "
  echo "                       select only specific cases to work on from the batch "
- echo "                       file. If --sessions is omitted OR provided as "
- echo "                       input for --sessions flag, then all cases from the batch "
+ echo "                       file. If --sessions is omitted, then all cases from the batch "
  echo "                       file are processed."
+ echo "                       It can also used in combination with --bolddata to select"
+ echo "                       only specific BOLD runs to work on from the batch file. If "
+ echo "                       --bolddata is omitted (see below), all BOLD runs in the "
+ echo "                       batch file will be processed."
  echo "--overwrite            Delete prior QC run: yes/no [no]"
  echo "--hcp_suffix           Allows user to specify session id suffix if running HCP "
  echo "                       preprocessing variants []."
@@ -148,10 +151,11 @@ usage() {
  echo "                    with --bolds or --boldruns to allow more redundancy in "
  echo "                    specification."
  echo ""
- echo "                    Note: If unspecified empty the QC script will by default "
- echo "                    look into "
- echo "                    /<path_to_study_sessions_folder>/<session_id>/session_hcp.txt "
- echo "                    and identify all BOLDs to process"
+ echo "                    Note: If --bolddata is unspecified, a batch file must be  "
+ echo "                    provided in --batchfile or an error will be reported. If "
+ echo "                    --bolddata is empty and --batchfile is provided, by default "
+ echo "                    QuNex will use the information in the batch file to identify "
+ echo "                    all BOLDS to process."
  echo ""
  echo "BOLD FC INPUTS"
  echo "--------------"
@@ -260,7 +264,7 @@ usage() {
  echo " --dwipath='<path_for_dwi_data>' \ "
  echo " --overwrite='yes'"
  echo ""
- echo " # -- BOLD QC"
+ echo " # -- BOLD QC (for a specific BOLD run)"
  echo " qunex run_qc \ "
  echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
  echo " --sessions='<comma_separated_list_of_cases>' \ "
@@ -268,6 +272,17 @@ usage() {
  echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
  echo " --modality='BOLD' \ "
  echo " --bolddata='1' \ "
+ echo " --boldsuffix='Atlas' \ "
+ echo " --overwrite='yes'"
+ echo ""
+ echo " # -- BOLD QC (search for all available BOLD runs)"
+ echo " qunex run_qc \ "
+ echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
+ echo " --sessions='<comma_separated_list_of_cases>' \ "
+ echo " --batchfile='<path_to_batch_file>' \ "
+ echo " --outpath='<path_for_output_file> \ "
+ echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
+ echo " --modality='BOLD' \ "
  echo " --boldsuffix='Atlas' \ "
  echo " --overwrite='yes'"
  echo ""
@@ -448,7 +463,7 @@ if [[ ${CASES} == *.txt ]]; then
     echo ""
     echo "---> Using $SessionBatchFile for input."
     echo ""
-    CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
+    CASES=`cat ${SessionBatchFile} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
 fi
 if [ -z ${SessionsFolder} ]; then
     usage
@@ -1842,7 +1857,7 @@ main() {
                                             echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt"
                                         else
                                             echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt not found. Regenerating... "
-                                            more ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
+                                            cat ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
                                         fi
                                     echo ""
                                     echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"

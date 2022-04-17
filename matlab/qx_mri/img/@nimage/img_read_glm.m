@@ -51,6 +51,7 @@ end
 
 img = processHeader(img, fin);
 img.filename = fname;
+img.filenames = {fname};
 
 % [img.data, count] = fread(fin, img.voxels * img.frames, ['float32=>' dtype]);
 [img.data, count] = fread(fin, inf, ['float32=>' dtype]);

@@ -29,7 +29,7 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %                   - run - normalize hrf based regressors to amplitude 1 within 
 %                           each run separately (old behavior)
 %                   - uni - normalize hrf based regressors universaly to hrf 
-%                           area-under-the curve = 1 - n (new behavior)
+%                           area-under-the-curve = 1 (new behavior)
 %               length
 %                  - number of frames to model (for unasumed response)
 %                  - length of event in s (for assumed response - if empty, 
@@ -131,8 +131,8 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   case is performed after the signal is weighted, so in effect the scaling of  
 %   weights (e.g. behavioral regressors), can differ across bold runs.
 %
-%   The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
-%   be assumed (the default might change).
+%   The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
+%   be assumed.
 %
 %   EXAMPLE USE
 %   ===========
@@ -146,8 +146,9 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   NOTES
 %   =====
 %
-%   Assumed response regressors get normalized to 1 only within each run, not
-%   across runs.
+%   Assumed response regressors now get normalized to HRF area-under-the-curve = 1
+%   by default. This results in different assumed HRF regressor scaling and 
+%   resulting GLM beta estimates as of QuNex version 0.93.4.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -191,7 +192,7 @@ for m = 1:nregressors
     end
     % -- check normalize and set it to default if not set
     if ~isfield(model.regressor(m), 'normalize') || isempty(model.regressor(m).normalize)
-        model.regressor(m).normalize = 'run';
+        model.regressor(m).normalize = 'uni';
     end
     % if ~any(strcmp(tevents.events,model.regressor(m).name))
     %     switch lower(check)
@@ -535,8 +536,10 @@ model.fidl   = tevents;
 %   case is performed after the signal is weighted, so in effect the scaling of  
 %   weights (e.g. behavioral regressors), can differ across bold runs.
 %
-%   The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
-%   be assumed (the default might change).
+%   The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
+%   be assumed. The default has changed from the original '-run', which will 
+%   result in different default assumed HRF regressor scaling and resulting GLM 
+%   beta estimates as of QuNex version 0.93.4.
 
 
 function [model] = parseModels(s)
@@ -583,7 +586,7 @@ for n = 1:length(a)
     elseif ~isempty(strfind(regressor(n).hrf_type, '-r'))
         regressor(n).normalize = 'run';
     else
-        regressor(n).normalize = 'run';
+        regressor(n).normalize = 'uni';
     end
 
     if ~isempty(strfind(regressor(n).hrf_type, '-'))

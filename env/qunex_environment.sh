@@ -257,7 +257,8 @@ if [[ -z ${FSL_FIXDIR} ]]; then FSL_FIXDIR="${TOOLS}/fsl/fix"; fi
 if [[ -z ${FREESURFERDIR} ]]; then FREESURFERDIR="${TOOLS}/freesurfer/freesurfer-6.0"; export FREESURFERDIR; fi
 if [[ -z ${FreeSurferSchedulerDIR} ]]; then FreeSurferSchedulerDIR="${TOOLS}/freesurfer/FreeSurferScheduler"; export FreeSurferSchedulerDIR; fi
 if [[ -z ${HCPWBDIR} ]]; then HCPWBDIR="${TOOLS}/workbench/workbench"; export HCPWBDIR; fi
-if [[ -z ${AFNIDIR} ]]; then AFNIDIR="${TOOLS}/afni/afni"; export AFNIDIR; fi
+if [[ -z ${AFNIDIR} ]]; then AFNIDIR="${TOOLS}/AFNI/AFNI"; export AFNIDIR; fi
+if [[ -z ${ANTSDIR} ]]; then ANTSDIR="${TOOLS}/ANTs/ANTs/bin"; export ANTSDIR; fi
 if [[ -z ${DCMNIIDIR} ]]; then DCMNIIDIR="${TOOLS}/dcm2niix/dcm2niix"; export DCMNIIDIR; fi
 if [[ -z ${DICMNIIDIR} ]]; then DICMNIIDIR="${TOOLS}/dicm2nii/dicm2nii"; export DICMNIIDIR; fi
 if [[ -z ${OCTAVEDIR} ]]; then OCTAVEDIR="${TOOLS}/octave/octave"; export OCTAVEDIR; fi
@@ -454,6 +455,10 @@ export AFNIDIR PATH
 #MATLABPATH=$AFNIDIR:$MATLABPATH
 #export MATLABPATH
 
+# -- ANTS path
+PATH=${ANTSDIR}:${PATH}
+export ANTSDIR PATH
+
 # -- dcm2niix path
 DCMNIIBINDIR=${DCMNIIDIR}/build/bin
 PATH=${DCMNIIDIR}:${DCMNIIBINDIR}:${PATH}
@@ -603,6 +608,8 @@ export MATLABPATH
 # -- ciftirw
 if [[ -z ${FSL_FIX_CIFTIRW} ]]; then FSL_FIX_CIFTIRW=${HCPPIPEDIR}/global/matlab; export FSL_FIX_CIFTIRW; fi
 if [[ -z ${HCPCIFTIRWDIR} ]]; then HCPCIFTIRWDIR=${HCPPIPEDIR}/global/matlab/cifti-matlab; export HCPCIFTIRWDIR; fi
+MATLABPATH=$FSL_FIX_CIFTIRW:$HCPCIFTIRWDIR:$MATLABPATH
+export MATLABPATH
 
 # if in container set compiled matlab and CUDA path
 if [[ -e /opt/.container ]]; then

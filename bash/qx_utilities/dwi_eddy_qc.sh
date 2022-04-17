@@ -419,7 +419,7 @@ else
 		echo ""
 		eval $EddyCommand
 		echo ""
-		more ${EddyQCOut}/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${EddyQCOut}/${CASE}_qc_mot_abs.txt
+		cat ${EddyQCOut}/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${EddyQCOut}/${CASE}_qc_mot_abs.txt
 	fi
 	echo ""
 	# -- Check if group run was selected

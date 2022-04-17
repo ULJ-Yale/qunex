@@ -223,7 +223,7 @@ bash_call_execute() {
     if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
         # -- Add check in case the sessions folder is distinct from the default name
         # -- Eventually use the template file to replace hard-coded values
-        QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
+        QuNexSessionsSubFolders=`cat $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
         QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
         for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
             if [[ ! -d ${QuNexSessionsFolder} ]]; then
@@ -983,7 +983,7 @@ run_qc() {
     --boldfcpath='${BOLDfcPath}' \
     --suffix='${Suffix}' \
     --hcp_suffix='${HCPSuffix}' \
-    --batchfile='${SessionBatchFile}' "
+    --batchfile='${BATCH_FILE}' "
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1471,9 +1471,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     OVERWRITE_PROJECT=`get_parameters "${setflag}overwriteproject" $@`
     OVERWRITE_PROJECT_FORCE=`get_parameters "${setflag}overwriteprojectforce" $@`
     OVERWRITE_PROJECT_XNAT=`get_parameters "${setflag}overwriteprojectxnat" $@`
-    BATCH_PARAMETERS_FILENAME=`get_parameters "${setflag}batchfile" $@`
     LOCAL_BATCH_FILE=`get_parameters "${setflag}local_batchfile" $@`
-    SessionBatchFile=`get_parameters "${setflag}batchfile" $@`
+    BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`get_parameters "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`get_parameters "${setflag}xnataccsessionid" $@`
     XNAT_SESSION_LABELS=`get_parameters "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
@@ -1752,11 +1751,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
-        SessionBatchFile="$CASES"
+        BATCH_FILE="$CASES"
         echo ""
-        echo "Using $SessionBatchFile for input."
+        echo "Using $BATCH_FILE for input."
         echo ""
-        CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
+        CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
     fi
 
     # -- Get species flag for NHP pipelines
@@ -2042,12 +2041,12 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     fi
 
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
-        if [[ ! -z ${SessionBatchFile} ]]; then
-            if [[ ! -f ${SessionBatchFile} ]]; then
+        if [[ ! -z ${BATCH_FILE} ]]; then
+            if [[ ! -f ${BATCH_FILE} ]]; then
                 reho "ERROR: Requested BOLD modality with a batch file. Batch file not found."
                 exit 1
             else
-                echo "   Session batch file requested: ${SessionBatchFile}"
+                echo "   Session batch file requested: ${BATCH_FILE}"
                 BOLDSBATCH="${BOLDRUNS}"
             fi
         fi

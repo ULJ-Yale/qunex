@@ -615,6 +615,7 @@ AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; Ac
 #
 AddImageType=`opts_GetOpt "--add_image_type" $@`
 AddJsonInfo=`opts_GetOpt "--add_json_info" $@`
+Gzip=`opts_GetOpt "--gzip" $@`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 #
@@ -797,6 +798,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_USER_NAME} ]]; then reho "ERROR: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_PASSWORD} ]]; then reho "ERROR: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${WORKDIR}/${XNAT_PROJECT_ID}; fi
+    if [[ -z ${StudyFolder} ]]; then StudyFolder=${STUDY_PATH}; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "ERROR: --xnatsubjectid or --xnatsubjectlabel flags are missing. Please specify either subject id or subject label and re-run."; echo ''; exit 1; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ ! -z ${XNAT_SUBJECT_LABEL} ]]; then mageho " --> Note: --xnatsubjectid is not set. Using --xnatsubjectlabel to query XNAT."; echo ''; fi
     if [[ ! -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then mageho " --> Note: --xnatsubjectlabel is not set. Using --xnatsubjectid to query XNAT."; echo ''; fi
@@ -823,11 +825,11 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv
 
     # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
-    if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
-    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SUBJECT_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`; fi
+    if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SUBJECT_LABEL=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`; fi
     # -- Re-obtain the label from the database just in case it was mis-specified
-    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SESSION_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`; fi
-    if [[ -z ${XNAT_ACCSESSION_ID} ]]; then XNAT_ACCSESSION_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SESSION_LABEL=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`; fi
+    if [[ -z ${XNAT_ACCSESSION_ID} ]]; then XNAT_ACCSESSION_ID=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`; fi
 
     # -- Clean up temp curl call info
     rm -r ${HOME}/xnatInfoTmp &> /dev/null
@@ -1719,7 +1721,7 @@ fi
                 MAPPINGFILECHECK="fail"
                 exit 1
             else
-                if [[ ! `more ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} | grep '=>'` ]]; then
+                if [[ ! `cat ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} | grep '=>'` ]]; then
                     echo " ==> ERROR: Scan mapping file ${SCAN_MAPPING_FILENAME_PATH} not found in ${RawDataInputPath}!"
                     MAPPINGFILECHECK="fail"
                     exit 1
@@ -1754,10 +1756,11 @@ fi
             geho " -- Linking DICOMs into ${QuNexRawInboxDir}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             # -- Find and link DICOMs for XNAT run
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-                echo "  find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${QuNexRawInboxDir}/ ';'"
-                find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${QuNexRawInboxDir}/ ';' &> /dev/null
-                DicomInputCount=`find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
-                DicomMappedCount=`ls ${QuNexRawInboxDir}/* | wc | awk '{print $1}'`
+                RsyncCommand='rsync -azH --exclude "*.xml" --exclude "*.gif" ${RawDataInputPath}/ ${QuNexRawInboxDir}'
+                echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+                eval ${RsyncCommand}
+                DicomInputCount=`find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
+                DicomMappedCount=`find ${QuNexRawInboxDir} -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
                 if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
             fi
             # -- Find and link DICOMs for non-XNAT run
@@ -1797,8 +1800,9 @@ fi
                     else
                         CaseInputFile="${RawDataInputPath}"
                     fi
-                    echo "  find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -exec cp '{}' ${QuNexRawInboxDir}/ ';'"
-                    find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec cp '{}' ${QuNexRawInboxDir}/ ';' &> /dev/null
+                    RsyncCommand='rsync -azH --exclude "*.xml" --exclude "*.gif" --exclude "*.sh" --exclude "*.txt" --exclude ".*" ${CaseInputFile}/ ${QuNexRawInboxDir}'
+                    echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+                    eval ${RsyncCommand}
                     DicomInputCount=`find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" | wc | awk '{print $1}'`
                     DicomMappedCount=`find ${QuNexRawInboxDir} -type f -not -name ".*" | wc | awk '{print $1}'`
                     # DicomMappedCount=`ls ${QuNexRawInboxDir}/* | wc | awk '{print $1}'`
@@ -1869,7 +1873,7 @@ fi
 
             # -- Run BIDS completion checks on mapped data
             if [ -f ${SessionsFolder}/${CASE}/bids/bids2nii.log ]; then
-                 FILESEXPECTED=`more ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
+                 FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
             else
                  FILECHECK="fail"
             fi
@@ -1989,7 +1993,7 @@ fi
 
             # -- Run HCPLS completion checks on mapped data
             if [ -f ${SessionsFolder}/${CASE}/hcpls/hcpls2nii.log ]; then
-                FILESEXPECTED=`more ${SessionsFolder}/${CASE}/hcpls/hcpls2nii.log | grep "=>" | wc -l 2> /dev/null`
+                FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/hcpls/hcpls2nii.log | grep "=>" | wc -l 2> /dev/null`
             else
                 FILECHECK="fail"
             fi
@@ -2016,7 +2020,7 @@ fi
             MAPPINGFILECHECK=pass
         else
             if [[ -f ${SpecsMappingFile} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
-            if [[ -z `more ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
+            if [[ -z `cat ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
         fi
 
         # -- Declare checks
@@ -2070,8 +2074,15 @@ fi
             echo ""
             cyaneho " ===> RUNNING RunTurnkey step ~~~ import_dicom"
             echo ""
+            if [[ -z ${Gzip} ]]; then
+                if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+                    Gzip="no"
+                else
+                    Gzip="folder"
+                fi
+            fi
 
-            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='${Gzip}' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"
