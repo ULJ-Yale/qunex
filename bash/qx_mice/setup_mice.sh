@@ -106,8 +106,8 @@ fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}
 if [ -z $no_orientation_correction ]; then
     echo " --> Correcting orientation"
 
-    echo " ... Running fslswapdim ${bold}_SM.nii.gz -x y z ${bold}_SM.nii.gz"
-    fslswapdim ${bold}_SM.nii.gz -x y z ${bold}_SM.nii.gz 
+    echo " ... Running fslswapdim ${bold}_SM.nii.gz -x -y z ${bold}_SM.nii.gz"
+    fslswapdim ${bold}_SM.nii.gz -x -y z ${bold}_SM.nii.gz 
     echo " ... Running fslorient -deleteorient ${bold}_SM.nii.gz"
     fslorient -deleteorient ${bold}_SM.nii.gz
     echo " ... Running 3drefit -orient RAI ${bold}_SM.nii.gz"

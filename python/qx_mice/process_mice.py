@@ -392,7 +392,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
 
         # dirs
         source_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'mice')
-        func_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'functional')
+        func_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'images', 'functional')
         if not os.path.exists(func_dir):
             os.makedirs(func_dir)
 
