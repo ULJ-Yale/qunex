@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.6
+
+Fixed a bug in the `qunex_container` script that prevented it from running without using a scheduler.
+
 ## 0.93.5
 
 Improved flexibility of GLM analyses. Processing of Philips PAR files is now more robust. Fixed a bug with the `hcp_task_confound` parameter. You can now process DWIs that do not have a matching pos/neg pair with `hcp_diffusion`. Improved stability, scheduling and documentation of the suite.
