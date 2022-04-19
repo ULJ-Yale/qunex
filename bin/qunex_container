@@ -1046,7 +1046,7 @@ def main(args=None):
                 containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
 
             if scheduler:
-                schedule(command=containerCommand, scheduler=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
+                schedule(command=containerCommand, scheduler_name=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
             else:
                 subprocess.Popen(containerCommand, shell=True)
 
