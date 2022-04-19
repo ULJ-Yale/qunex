@@ -47,7 +47,7 @@ class CommandFailed(Exception):
         self.report   = (error,) + hints
 
 
-def schedule(command=None, script=None, scheduler=None, scheduler_params=None, replace=None, workdir=None, environment=None, output=None, parsessions=1, parelements=1, batchlogsfolder=None, slurm_array=False):
+def schedule(command=None, script=None, scheduler_name=None, scheduler_params=None, replace=None, workdir=None, environment=None, output=None, parsessions=1, parelements=1, batchlogsfolder=None, slurm_array=False):
     '''
     qunex_command scheduler 
 
@@ -59,27 +59,6 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
 
     INPUTS
     ======
-
-    Required parameter
-    ------------------
-
-    --scheduler  A string specifying the scheduler to be used and the additional
-                 settings for it.
-
-    `scheduler` string should be a comma separated list of parameters. The first
-    parameter has to be the scheduler name (PBS, LSF, SLURM), the rest of the
-    parameters are key-value pairs that are to be passed as settings to the
-    scheduler. Additional parameters common to all the schedulers can be
-    specified:
-
-    - jobname  ... the name of the job to run
-    - comname  ... the name of the command the job runs
-    - jobnum   ... the number of the job being run
-
-    Example settings strings:
-
-    "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
-    "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=anticevic"
 
     Optional parameter
     ------------------
@@ -262,7 +241,7 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
     # --- build scheduler commands
     sCommand = ""
 
-    if scheduler == "PBS":
+    if scheduler_name == "PBS":
         for k, v in scheduler_params.items():
             if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
                 sCommand += "#PBS -l %s=%s\n" % (k, v)
@@ -296,7 +275,7 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
             sCommand += "#PBS -j oe\n"
         com = 'qsub'
 
-    elif scheduler == "LSF":
+    elif scheduler_name == "LSF":
         sCommand += "#BSUB -o %s-%s_#%s_%%J\n" % (jobname, comname, jobnum)
         for k, v in [('queue', '#BSUB -q %s\n'), ('mem', "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n"), ('walltime', '#BSUB -W %s\n'), ('cores', '#BSUB -n %s\n')]:
             if k in scheduler_params:
@@ -325,7 +304,7 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
             sCommand += "#BSUB -e %s\n" % (outputs['stderr'])
         com = 'bsub'
 
-    elif scheduler == "SLURM":
+    elif scheduler_name == "SLURM":
         sCommand += "#!/bin/sh\n"
         for key, value in scheduler_params.items():
             if key in ('J', 'job-name') and jobname == 'schedule':
@@ -352,7 +331,7 @@ def schedule(command=None, script=None, scheduler=None, scheduler_params=None, r
             sCommand += "#SBATCH -e %s\n" % (outputs['stderr'])
         com = 'sbatch'
 
-    # --- run scheduler
+    # --- run the scheduler
     print("\nSubmitting:\n------------------------------")
     print(sCommand)
     print(command + "\n")
@@ -874,46 +853,48 @@ def main(args=None):
     if any(c in command for c in multi_commands):
         multi_session_command = True
 
-    scheduler_params_list = [e.strip() for e in scheduler.split(",")]
-    scheduler = scheduler_params_list.pop(0)
-
-    # check scheduler
-    if scheduler not in ['PBS', 'LSF', 'SLURM']:
-        raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler)
-
     # are we using SLURM array, not by default
     slurm_array = False
 
-    scheduler_params = {}
+    # init scheduler params
+    if scheduler is not None:
+        scheduler_params_list = [e.strip() for e in scheduler.split(",")]
+        scheduler_name = scheduler_params_list.pop(0)
 
-    for s in scheduler_params_list:
-        # parameters with values
-        if "=" in s:
-            sSplit = s.split("=", 1)
+        # check scheduler
+        if scheduler_name not in ['PBS', 'LSF', 'SLURM']:
+            raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
 
-            # SLURM job array?
-            if scheduler == "SLURM" and sSplit[0].strip() == "array":
-                slurm_array = True
-           
-            scheduler_params[sSplit[0].strip()] = sSplit[1].strip()
-        # flags
-        else:
-            # SLURM job array?
-            if scheduler == "SLURM" and s.strip() == "array":
-                n_jobs = 1
-                if n_sessions is not None:
-                    n_jobs = n_sessions - 1
-                slurm_array = True
-                if parjobs is None:
-                    scheduler_params["array"] = "0-%s" % (n_jobs)
-                else:
-                    scheduler_params["array"] = "0-%s%%%s" % (n_jobs, parjobs)
+        # parse scheduler parameters
+        scheduler_params = {}
+        for s in scheduler_params_list:
+            # parameters with values
+            if "=" in s:
+                sSplit = s.split("=", 1)
+
+                # SLURM job array?
+                if scheduler_name == "SLURM" and sSplit[0].strip() == "array":
+                    slurm_array = True
+            
+                scheduler_params[sSplit[0].strip()] = sSplit[1].strip()
+            # flags
             else:
-                scheduler_params[s.strip()] = "QX_FLAG"
+                # SLURM job array?
+                if scheduler_name == "SLURM" and s.strip() == "array":
+                    n_jobs = 1
+                    if n_sessions is not None:
+                        n_jobs = n_sessions - 1
+                    slurm_array = True
+                    if parjobs is None:
+                        scheduler_params["array"] = "0-%s" % (n_jobs)
+                    else:
+                        scheduler_params["array"] = "0-%s%%%s" % (n_jobs, parjobs)
+                else:
+                    scheduler_params[s.strip()] = "QX_FLAG"
 
-    # if job array we have a single job
-    if slurm_array:
-        parjobs = 1
+        # if job array we have a single job
+        if slurm_array:
+            parjobs = 1
 
     # if scheduler is not None or we have a multi_session_command then setup parallelism
     if scheduler is not None and sessions is not None and not multi_session_command:
@@ -1065,7 +1046,7 @@ def main(args=None):
                 containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
 
             if scheduler:
-                schedule(command=containerCommand, scheduler=scheduler, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
+                schedule(command=containerCommand, scheduler=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
             else:
                 subprocess.Popen(containerCommand, shell=True)
 
