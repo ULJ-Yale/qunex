@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.7
+
+Fixed writing and reading whitespaces to/from sequence specific infomration.
+
 ## 0.93.6
 
 Fixed a bug in the `qunex_container` script that prevented it from running without using a scheduler.
