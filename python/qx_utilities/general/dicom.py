@@ -1424,13 +1424,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                             if 'RepetitionTime' in jinf and ('TR' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": TR(%s)" % (str(jinf['RepetitionTime']))
                             if 'PhaseEncodingDirection' in jinf and ('PEDirection' in add_json_info or 'all' in add_json_info):
-                                jsoninfo += ": PEDirection(%-2s)" % (jinf['PhaseEncodingDirection'])    
+                                jsoninfo += ": PEDirection(%s)" % (jinf['PhaseEncodingDirection'].strip())    
                             if 'EffectiveEchoSpacing' in jinf and ('EchoSpacing' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": EchoSpacing(%s)" % (str(jinf['EffectiveEchoSpacing']))
                             if 'DwellTime' in jinf and ('DwellTime' in add_json_info or 'all' in add_json_info):
                                 jsoninfo += ": DwellTime(%s)" % (str(jinf['DwellTime']))
                             if 'ReadoutDirection' in jinf and ('ReadoutDirection' in add_json_info or 'all' in add_json_info):
-                                jsoninfo += ": ReadoutDirection(%-2s)" % (jinf['ReadoutDirection'])
+                                jsoninfo += ": ReadoutDirection(%s)" % (jinf['ReadoutDirection'].strip())
                         except:
                             print("     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc), file=r)
                             if verbose:
