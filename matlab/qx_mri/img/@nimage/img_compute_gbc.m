@@ -461,7 +461,7 @@ end
 %       - nvox : the number of voxels in the mask (necessary to compute bands for prange)
 %
 %   Output
-%       - out  : vector of structure with fieldsČ
+%       - out  : vector of structure with fields
 %                - command      ... type of GBC to run
 %                - parameter    ... threshold or limits to be used
 %                - volumes      ... how many volumes the results will span

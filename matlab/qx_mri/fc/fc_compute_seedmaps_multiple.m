@@ -2,71 +2,72 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 
 %``function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)``
 %
-%    Computes seed based correlations maps for individuals as well as group maps.
+%   Computes seed based correlations maps for individuals as well as group maps.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A .list file of session information, or a well strucutured
+%           string (see general_read_file_list).
+%       --roinfo (str)
+%           An ROI file.
+%       --inmask (matrix | string, default []):
+%           Either an array mask defining which frames to use (1) and which
+%           not (0) or an event string specifying the events and frames to
+%           extract.
+%       --options (str, default []):
+%           A string defining which session files to save:
 %
-%    --flist       A .list file of session information, or a well strucutured
-%               string (see general_read_file_list).
-%    --roinfo    An ROI file.
-%    --inmask    Either an array mask defining which frames to use (1) and which
-%               not (0) or an event string specifying the events and frames to 
-%               extract [0]
-%    --options    A string defining which session files to save ['']:
+%           - r   - save map of correlations
+%           - f   - save map of Fisher z values
+%           - cv  - save map of covariances
+%           - z   - save map of Z scores
+%           - []  - no files are saved.
 %
-%                - r   - save map of correlations
-%               - f   - save map of Fisher z values
-%                - cv  - save map of covariances
-%                - z   - save map of Z scores
+%       --targetf (str, default '.'):
+%           The folder to save images in.
+%       --method (str, default 'mean'):
+%           Method for extracting timeseries - 'mean' or 'pca'.
+%       --ignore (str, default 'no'):
+%           Do we omit frames to be ignored:
 %
-%    --targetf    The folder to save images in ['.'].
-%   --method    Method for extracting timeseries - 'mean' or 'pca' ['mean'].
-%   --ignore    Do we omit frames to be ignored ['no']
+%           - no    - do not ignore any additional frames
+%           - event - ignore frames as marked in .fidl file
+%           - other - the column in ∗_scrub.txt file that matches bold file to be
+%             used for ignore mask.
 %
-%               - no:    do not ignore any additional frames
-%               - event: ignore frames as marked in .fidl file
-%               - other: the column in *_scrub.txt file that matches bold file 
-%               to be used for ignore mask
+%       --cv (bool, default false):
+%           Whether covariances should be computed instead of correlations.
 %
-%   --cv          Whether covariances should be computed instead of correlations.
+%   Notes:
+%       Resulting files:
+%           Function saves the following group files:
 %
-%   RESULTS
-%   =======
+%           _group_Fz
+%               average Fz over all the sessions
 %
-%   It saves group files:
+%           _group_r
+%               average Fz converted back to Pearson r
 %
-%   _group_Fz
-%       average Fz over all the sessions
+%           _group_Z
+%               p values converted to Z scores based on t-test testing if Fz
+%               over session differ significantly from 0 (two-tailed)
 %
-%   _group_r   
-%       average Fz converted back to Pearson r
+%           _all_Fz
+%               Fz values of all the participants
 %
-%   _group_Z   
-%       p values converted to Z scores based on t-test testing if Fz over session differ significantly from 0 (two-tailed)
+%           _group_cov
+%               average covariance
 %
-%   _all_Fz    
-%       Fz values of all the participants
+%           _all_cov
+%               covariances of all the participants.
 %
-%   _group_cov 
-%       average covariance
+%       Use:
+%           The function computes seedmaps for the specified ROI and saves group
+%           results as well as any specified individual results.
 %
-%   _all_cov
-%       covariances of all the participants
-%
-%   USE
-%   ===
-%
-%   The function computes seedmaps for the specified ROI and saves group results
-%   as well as any specified individual results.
-%
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', 'mean', ...
-%       'udvarsme', false);
+%   Examples:
+%       >>> fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', ...
+%               'mean', 'udvarsme', false);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

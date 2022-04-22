@@ -1,33 +1,30 @@
 function [] = general_cluster_threshold(fname, tname, csize, t)
 
-%``function [] = general_cluster_threshold(fname, tname, csize, t)`
+%``function [] = general_cluster_threshold(fname, tname, csize, t)``
 %
 %   Thresholding using cluster size for volume images.
 %
-%   INPUTS
-%    ======
+%   Parameters:
+%       --fname (str):
+%           A path to a Z image.
+%       --tname (str, default fname):
+%           The name for the new, thresholded image. If none provided, the
+%           specified fname is used instead.
+%       --csize (int):
+%           Minimal cluster size threshold.
+%       --t (int, default 3):
+%           Z magnitude threshold (always does positive and negative).
 %
-%   --fname     A path to a Z image.
-%   --tname     The name for the new, thresholded image.
-%   --csize     Minimal cluster size threshold.
-%   --t         Z magnitude threshold (allways does positive and negative). [3]
+%   Notes:
+%       The functions first applies the specified Z threshold zeroing all
+%       voxels between -t and +t. It then identifies all contiguous clusters
+%       of voxels with non-zero values, voxels that share at least an edge
+%       (neighboorhood 18). Next, it identifies all clusters smaller than
+%       csize and zeros them so that only voxels with Z magnitude more than
+%       t, that are part of clusters of at least csize voxels remain.
 %
-%   USE
-%    ===
-%
-%   The functions first applies the specified Z threshold zeroing all voxels
-%   between -t and +t. It then identifies all contiguous clusters of voxels
-%   with non-zero values, voxels that share at least an edge (neighboorhood 18).
-%   Next, it identifies all clusters smaller than csize and zeros them so that
-%   only voxels with Z magnitude more than t, that are part of clusters of at
-%   least csize voxels remain.
-%
-%   EXAMPLE USE
-%    ===========
-%
-%    ::
-%
-%       general_cluster_threshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
+%   Examples:
+%       >>> general_cluster_threshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

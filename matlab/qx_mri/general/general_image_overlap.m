@@ -2,32 +2,28 @@ function [] = general_image_overlap(af, bf, tf, v)
 
 %``function [] = general_image_overlap(af, bf, tf, v)``
 %
-%    Function that prints the overlap of two images, one in red, another in
-%    green.
+%   Function that prints the overlap of two images, one in red, another in
+%   green.
 %
-%    INPUTS
-%    ======
+%   Parameters:
+%       --af (nimage | str):
+%           Either a nimage object or the path to the first image file.
+%       --bf (nimage | str):
+%           Either a nimage object or the path to the second image file.
+%       --tf (str):
+%           The path to the file to save the overlap to.
+%       --v (int, default 3):
+%           Which slice to show (1, 2 or 3).
 %
-%    --af     Either a nimage object or the path to the first image file.
-%    --bf     Either a nimage object or the path to the second image file.
-%    --tf     The path to the file to save the overlap to.
-%    --v      Which slice to show (1, 2, 3) [3]
+%   Notes:
+%       The function saves a picture that shows the overlap of two images, the
+%       data from the first file is shown in red, from the second in green. The
+%       images are normalized to values from 0 to 1, where 0.5 is the mean, and
+%       0 and 1 are the -/+ 3 standard deviations from the mean. In the
+%       resulting image the overlap will be yellow.
 %
-%    USE
-%    ===
-%
-%    The function saves a picture that shows the overlap of two images, the
-%    data from the first file is shown in red, from the second in green. The
-%    images are normalized to values from 0 to 1, where 0.5 is the mean, and 0
-%    and 1 are the -/+ 3 standard deviations from the mean. In the resulting
-%    image the overlap will be yellow.
-%
-%    EXAMPLE USE
-%    ===========
-%
-%    ::
-%
-%        general_image_overlap(imga, imgb, 'atlas_subject_overlap.png');
+%   Examples:
+%       >>> general_image_overlap(imga, imgb, 'atlas_subject_overlap.png');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

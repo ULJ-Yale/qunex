@@ -5,69 +5,66 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %   Segments the voxels in smask based on their connectivity pattern with tmask 
 %   voxels. Uses k-means to group voxels in smask.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A file list with information on sessions bold runs and segmentation
+%           files, or a well strucutured string (see general_read_file_list).
+%       --smask (str):
+%           Path to .names file for source mask definition.
+%       --tmask (str):
+%           Path to .names file for target mask roi definition.
+%       --nc (cell array):
+%           List of the number(s) of clusters to compute k-means on.
+%       --mask (int | logical | vector, default 0):
+%           Either number of frames to omit or a mask of frames to use.
+%       --root (str, default 'flist'):
+%           The root of the filename where results are to be saved.
+%       --options (str, default 'g'):
+%           A string with:
 %
-%   --flist       A file list with information on sessions bold runs and 
-%                 segmentation files, or a well strucutured string (see 
-%                 general_read_file_list).
-%   --smask       .names file for source mask definition.
-%   --tmask       .names file for target mask roi definition.
-%   --nc          List of the number(s) of clusters to compute k-means on.
-%   --mask        Either number of frames to omit or a mask of frames to use [0].
-%   --root        The root of the filename where results are to be saved [flist].
-%   --options     A string with ['g']:
+%           - 'g' - save results based on group average correlations
+%           - 'i' - save individual sessions' results.
 %
-%                 - g - save results based on group average correlations
-%                 - i - save individual sessions' results
+%       --dmeasure (str, default 'correlation'):
+%           Distance measure to used.
+%       --nrep (int, defaut 10):
+%           Number of replications to run.
+%       --verbose (str, default 'none'):
+%           How to report the progress: 'full', 'script' or 'none'.
 %
-%   --dmeasure    Distance measure to used ['correlation'].
-%   --nrep        Number of replications to run [10].
-%   --verbose     whether to report the progress full, script, none [none]
+%   Notes:
+%       Use the function to cluster source voxels (specified by smask) based on
+%       their correlation pattern with target voxels (specified by tmask). The
+%       clustering is computed using k-means for the number of clusters
+%       specified in the nc parameter. If more than one value is specfied, a
+%       solution will be computed for each value.
 %
-%    RESULTS
-%   =======
+%       Correlations are computed using the img_compute_ab_correlation gmri
+%       method. Clustering is computed using kmeans function with dmeasure as
+%       distance measure, and taking the best of nrep replications.
 %
-%   The resulting files are:
+%       Resulting files:
+%           If group correlations are selected, the resulting files are:
 %
-%   - group:
+%           - <root>_group_k[N]
+%               Group based cluster assignments for k=N.
 %
-%       <root>_group_k[N]
-%           Group based cluster assignments for k=N.
+%           - <root>_group_k[N]_cent
+%               Group based centroids for k=N.
 %
-%       <root>_group_k[N]_cent
-%           Group based centroids for k=N.
+%           If individual correlations are selected, the resulting files are:
 %
-%   - individual:
+%           - <root>_<session id>_group_k[N]
+%               Individual's cluster assignments for k=N.
 %
-%       <root>_<session id>_group_k[N]
-%           Individual's cluster assignments for k=N.
+%           - <root>_<session id>_group_k[N]_cent
+%               Individual's centroids for k=N.
 %
-%       <root>_<session id>_group_k[N]_cent
-%           Individual's centroids for k=N.
+%           If root is not specified, it is taken to be the root of the flist.
 %
-%   If root is not specified, it is taken to be the root of the flist.
-%
-%   USE
-%   ===
-%
-%   Use the function to cluster source voxels (specified by smask) based on their
-%   correlation pattern with target voxels (specified by tmask). The clustering
-%   is computed using k-means for the number of clusters specified in the nc
-%   parameter. If more than one value is specfied, a solution will be computed
-%   for each value.
-%
-%   Correlations are computed using the img_compute_ab_correlation gmri method. 
-%   Clustering is computed using kmeans function with dmeasure as distance 
-%   measure, and taking the best of nrep replications.
-%
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', [3:9], ...
-%                              0, 'Th-PFC', 'g', 'correlations', 15);
+%   Examples:
+%       >>> fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', ...
+%               [3:9], 0, 'Th-PFC', 'g', 'correlations', 15);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -4,86 +4,88 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %
 %   Extracts trial timeseries for each of the specified ROI.
 %
-%   INPUT
-%   =====
+%   Parameters:
+%       --flist (str):
+%           File list with information on .conc, .fidl, and individual roi
+%           (segmentation) files, or a well strucutured string (see
+%           general_read_file_list).
+%       --roif (str):
+%           Region "names" file that specifies the ROI to extract trial
+%           timeseries for.
+%       --targetf (str):
+%           The target matlab file with results.
+%       --tevents (cell array):
+%           The indeces of the events for which to extract timeseries, can be a
+%           cell array of combinations of event indeces.
+%       --frames (vector):
+%           Limits of frames to include in the extracted timeseries.
+%       --scrubvar (str, default []):
+%           Critera to use for scrubbing data - scrub based on:
 %
-%    --flist       File list with information on .conc, .fidl, and individual
-%                 roi (segmentation) files, or a well strucutured string (see
-%                 general_read_file_list).
-%    --roif           Region "names" file that specifies the ROI to extract trial
-%                 timeseries for.
-%   --targetf     The target matlab file with results.
-%    --tevents     The indeces of the events for which to extract timeseries,
-%                 can be a cell array of combinations of event indeces.
-%    --frames      Limits of frames to include in the extracted timeseries.
-%   --scrubvar    Critera to use for scrubbing data - scrub based on:
+%           - [] do not scrub
+%           - 'mov'      - overall movement displacement
+%           - 'dvars'    - frame-to-frame variability
+%           - 'dvarsme'  - median normalized dvars
+%           - 'idvars'   - mov AND dvars
+%           - 'idvarsme' - mov AND dvarsme
+%           - 'udvars'   - mov OR dvars
+%           - 'udvarsme' - mov OR dvarsme.
 %
-%                   - [] do not scrub
-%                   - 'mov'      - overall movement displacement
-%                   - 'dvars'    - frame-to-frame variability
-%                   - 'dvarsme'  - median normalized dvars
-%                   - 'idvars'   - mov AND dvars
-%                   - 'idvarsme' - mov AND dvarsme
-%                   - 'udvars'   - mov OR dvars
-%                   - 'udvarsme' - mov OR dvarsme
-%
-%   OUTPUTS
-%   =======
-%
-%   data(n)
-%       A structure with extracted trial timeseries for each session:
+%   Returns:
+%       data(n)
+%           A structure with extracted trial timeseries for each session:
 %       
-%       .session
-%           Subject id
+%           - .session
+%               Subject id.
 %
-%       .set(n)
-%           Extracted datasets for the session.
+%           - .set(n)
+%               Extracted datasets for the session.
 %           
-%           .fevents.event  
-%               a list of events processed
-%           .fevents.frame  
-%               start frames of the events processed
-%           .fevents.events 
-%               list of event names included
-%           .nevents        
-%               number of events processed
-%           .frames         
-%               a list of frames processed
-%           .timeseries     
-%               a 3D matrix with the dimensions:
-%                   - number of events (trials)
-%                   - number of frames extracted for each trial
-%                   - number of regions to extract data from
-%           .scrub
-%               a matrix of scrub markers (nevents x n event frames)
-%           .baseline
-%               a matrix of baseline data for each ROI for each run (nrun x nroi)
-%           .eventbaseline
-%               a matrix of baseline for each event (trial) for each ROI (nevents x nroi)
-%           .run            
-%               a record of which run each event (trial) comes from
+%               - .fevents.event
+%                   A list of events processed.
+%               - .fevents.frame
+%                   Start frames of the events processed.
+%               - .fevents.events
+%                   List of event names included.
+%               - .nevents
+%                   Number of events processed.
+%               - .frames
+%                   A list of frames processed.
+%               - .timeseries
+%                   A 3D matrix with the dimensions:
+%                       - number of events (trials)
+%                       - number of frames extracted for each trial
+%                       - number of regions to extract data from.
+%               - .scrub
+%                   A matrix of scrub markers (nevents x n event frames).
+%               - .baseline
+%                   A matrix of baseline data for each ROI for each run (nrun x
+%                   nroi).
+%               - .eventbaseline
+%                   A matrix of baseline for each event (trial) for each ROI
+%                   (nevents x nroi).
+%               - .run
+%                   A record of which run each event (trial) comes from.
 %
-%   USE
-%   ===
+%   Notes:
+%       The function is used to extract per trial data from each session for the
+%       specified events. The data is returned in a data structure described
+%       above, as well as saved to a matlab data file.
 %
-%   The function is used to extract per trial data from each session for the
-%   specified events. The data is returned in a data structure described above,
-%   as well as saved to a matlab data file.
+%   Examples:
+%       The call below would extract three sets of timeseries for:
 %
-%   EXAMPLE USE
-%   ===========
+%       a) event coded as 0,
+%       b) events coded as 1 or 2 and
+%       c) events coded as 3 and 4 in the fidl file.
 %
-%   ::
+%       For each matching event in the fidl file, it would extract for each of
+%       the regions specified in the ccroi.names frames 2, 3, and 4. It would
+%       save the results in a file 'ccroits.mat'. At extraction it would ignore
+%       all frames that were marked bad using the 'udvarsme' criterion.
 %
-%       fc_extract_trial_timeseries_masked('scz+con.list', 'ccroi.names', ...
-%       'ccroits', {[0], [1 2], [3 4]}, [2 4], 'udvarsme');
-%
-%   The above call would extract three sets of timeseries for a) event coded as
-%   0, b) events coded as 1 or 2 and c) events coded as 3 and 4 in the fidl
-%   file. For each matching event in the fidl file, it would extract for each of
-%   the regions specified in the ccroi.names frames 2, 3, and 4. It would save
-%   the results in a file 'ccroits.mat'. At extraction it would ignore all
-%   frames that were marked bad using the 'udvarsme' criterion.
+%       >>> fc_extract_trial_timeseries_masked('scz+con.list', ...
+%               'ccroi.names', 'ccroits', {[0], [1 2], [3 4]}, [2 4], 'udvarsme');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

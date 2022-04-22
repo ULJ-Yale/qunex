@@ -2,29 +2,30 @@ function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, targe
 
 %``function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, target, slice, fname)``
 %
-%   Computes SNR for the given image.
+%   Computes Signal-to-noise ratio for the given image.
 %
-%   INPUTS
-%    ======
+%   Parameters:
+%       --filename (str):
+%           The filename of the image.
+%       --imask (str | matrix | cell array | nimage | bool, default false):
+%           Mask that defines voxels to compute snr over.
+%       --fmask (int | vector | bool, default false):
+%           Which frames to use / skip.
+%       --target (str, default '')
+%           Path to target folder for the figure.
+%       --slice (vector, default []):
+%           Vector of the two dimensions that define a slice.
+%       --fname (str, default filename):
+%           The name to use when saving file. The filename parameter is used if
+%           fname is not given.
 %
-%   --filename    the filename of the image
-%    --imask        mask that defines voxels to compute snr over
-%    --fmask        which frames to use / skip
-%    --target    target folder for the figure
-%   --slice        vector of the two dimensions that define a slice
-%    --fname        the name to use when saving file
-%
-%    OUTPUTS
-%   =======
-%
-%    snr
-%        mean slice snr
-%
-%    sd
-%        std of mean whole brain volume signal over the run
-%
-%    slicesnr
-%        array of snr values for each slice
+%   Returns:
+%       snr
+%           Mean slice snr.
+%       sd
+%           Std of mean whole brain volume signal over the run.
+%       slicesnr
+%           Array of snr values for each slice.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

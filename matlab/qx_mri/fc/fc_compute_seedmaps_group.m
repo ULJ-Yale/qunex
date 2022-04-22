@@ -4,230 +4,263 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %
 %   Computes seed based correlations maps for individuals as well as group maps.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A .list file listing the sessions and their files for which to
+%           compute seedmaps, or a well strucutured string (see
+%           general_read_file_list).
+%       --roiinfo (str):
+%           A names file for the ROI seeds.
+%       --frames (matrix | int | str, default []):
+%           The definition of which frames to use, it can be one of:
 %
-%   --flist     A .list file listing the sessions and their files for which to 
-%               compute seedmaps, or a well strucutured string 
-%               (see general_read_file_list).
-%   --roiinfo   A names file for the ROI seeds.
-%   --frames    The definition of which frames to use, it can be one of:
+%           - a numeric array mask defining which frames to use (1) and
+%             which not (0)
 %
-%               - a numeric array mask defining which frames to use (1) and 
-%                 which not (0) 
-%               - a single number, specifying the number of frames to skip at 
-%                 start
-%               - a string describing which events to extract timeseries for, 
-%                 and the frame offset from the start and end of the event in 
-%                 format: ('title1:event1,event2:2:2|title2:event3,event4:1:2') 
+%           - a single number, specifying the number of frames to skip at
+%             start
 %
-%                 []
+%           - a string describing which events to extract timeseries for,
+%             and the frame offset from the start and end of the event in
+%             format: ('title1:event1,event2:2:2|title2:event3,event4:1:2')
 %
-%   --targetf   The folder to save images in ['.'].
-%   --options   A string specifying additional analysis options formated as pipe 
-%               separated pairs of colon separated key, value pairs: 
+%       --targetf (str, default '.'):
+%           The folder to save images in.
+%       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|saveindname=no|itargetf=sfolder|verbose=false'):
+%           A string specifying additional analysis options formated as pipe
+%           separated pairs of colon separated key, value pairs::
+%
 %               "<key>:<value>|<key>:<value>"
 %
-%               It takes the following keys and values:
+%           It takes the following keys and values:
 %
-%               roimethod
-%                   what method to use to compute ROI signal, 'mean' or 'pca' 
-%                   ['mean']
+%           - roimethod
+%               What method to use to compute ROI signal:
 %
-%               eventdata
-%                   what data to use from the event:
+%               - mean
+%               - median
+%               - pca.
 %
-%                   all      
-%                       use all identified frames of all events
-%                   mean     
-%                       use the mean across frames of each identified event
-%                   min      
-%                       use the minimum value across frames of each identified 
-%                       event
-%                   max      
-%                       use the maximum value across frames of each identified 
-%                       event
-%                   median   
-%                       use the median value across frames of each identified 
-%                       event
-%                   
-%                   ['all']
+%               Defaults to 'mean'.
 %
-%               ignore
-%                   a comma separated list of information to identify frames to 
-%                   ignore, options are:
-%                   use      
-%                       ignore frames as marked in the use field of the bold file
-%                   fidl     
-%                       ignore frames as marked in .fidl file
-%                   <column> 
-%                       the column name in *_scrub.txt file that matches bold file 
-%                       to be used for ignore mask
-%                      
-%                   ['use,fidl']
+%           - eventdata
+%               What data to use from each event:
 %
-%               badevents
-%                   what to do with events that have frames marked as bad,
-%                   options are:
+%               - all
+%                   use all identified frames of all events
+%               - mean
+%                   use the mean across frames of each identified event
+%               - min
+%                   use the minimum value across frames of each identified event
+%               - max
+%                   use the maximum value across frames of each identified event
+%               - median
+%                   use the median value across frames of each identified event.
 %
-%                   use      
-%                       use any frames that are not marked as bad
-%                   <number> 
-%                       use the frames that are not marked as bad if at least 
-%                       <number> ok frames exist
-%                   ignore   
-%                       if any frame is marked as bad, ignore the full event
+%               Defaults to 'all'.
 %
-%                   ['use']
+%           - ignore
+%               A comma separated list of information to identify frames to
+%               ignore, options are:
 %
-%               fcmeasure
-%                   which functional connectivity measure to compute, the options
-%                   are:
+%               - use
+%                   ignore frames as marked in the use field of the bold file
+%               - fidl
+%                   ignore frames as marked in .fidl file (only available
+%                   with event extraction)
+%               - <column>
+%                   the column name in ∗_scrub.txt file that matches bold file
+%                   to be used for ignore mask.
 %
-%                   - r  ... pearson's r value
-%                   - cv ... covariance estimate
-%                   
-%                   ['r']
+%               Defaults to 'use,fidl'.
 %
-%               savegroup
-%                   a comma separated list of files to save, options are:
+%           - badevents
+%               What to do with events that have frames marked as bad, options
+%               are:
 %
-%                   - groupr   ... mean group Pearson correlation coefficients (converted from Fz)
-%                   - groupfz  ... mean group Fisher Z values
-%                   - groupz   ... Z converted p values testing difference from 0
-%                   - groupp   ... p values testing difference from 0
-%                   - allfz    ... Fz values from all the sessions
-%                   - groupcv  ... mean group covariance
-%                   - allcv    ... covvariance values from all the participants
-%                   - all      ... save all the relevant group level results
-%                   - none     ... do not save any group level results
+%               - use
+%                   use any frames that are not marked as bad
+%               - <number>
+%                   use the frames that are not marked as bad if at least
+%                   <number> ok frames exist
+%               - ignore
+%                   if any frame is marked as bad, ignore the full event.
 %
-%                   ['all']
+%               Defaults to 'use'.
 %
-%               saveind
-%                   a comma separted list of individual session / session files to save:
-%                   r        
-%                       save Pearson correlation coefficients (r only) separately 
-%                       for each roi
-%                   fz       
-%                       save Fisher Z values (r only) separately for each roi
-%                   z        
-%                       save Z statistic (r only) separately for each roi
-%                   p        
-%                       save p value (r only) separately for each roi
-%                   cv       
-%                       save covariances (cv only) separately for each roi
-%                   allbyroi 
-%                       save all relevant values by roi
-%                   jr       
-%                       save Pearson correlation coefficients (r only) in a 
-%                       single file for all roi
-%                   jfz      
-%                       save Fisher Z values (r only) in a single file for all roi
-%                   jz       
-%                       save Z statistic (r only) in a single file for all roi
-%                   jp       
-%                       save p value (r only) in a single file for all roi
-%                   jcv      
-%                       save covariances (cv only) in a single file for all roi
-%                   alljoint 
-%                       save all relevant values in a joint file
-%                   none     
-%                       do not save any individual level results
+%           - fcmeasure
+%               Which functional connectivity measure to compute, the options
+%               are:
 %
-%                   ['none']
+%               - r
+%                   Pearson's r value
+%               - cv
+%                   covariance estimate.
 %
-%               saveindname
-%                   whether to add the name of the session or subject to the 
-%                   individual output file, yes or no ['no']
+%               Defaults to 'r'.
 %
-%               itargetf
-%                   where to save the individual data:
+%           - savegroup
+%               A comma separated list of files to save, options are:
 %
-%                   - gfolder  ... in the group target folder
-%                   - sfolder  ... in the individual session folder
+%               - groupr
+%                   mean group Pearson correlation coefficients (converted from
+%                   Fz)
+%               - groupfz
+%                   mean group Fisher Z values
+%               - groupz
+%                   Z converted p values testing difference from 0
+%               - groupp
+%                   p values testing difference from 0
+%               - allfz
+%                   Fz values from all the sessions
+%               - groupcv
+%                   mean group covariance
+%               - allcv
+%                   covvariance values from all the participants
+%               - all
+%                   save all the relevant group level results
+%               - none
+%                   do not save any group level results.
 %
-%                   ['gfolder']
+%               Defaults to 'all'.
 %
-%               verbose
-%                   whether to be verbose 'true' or not 'false', when running the 
-%                   analysis ['false']
-%                   
+%           - saveind
+%               A comma separted list of individual session / subject files
+%               to save:
 %
-%   RESULTS
-%   =======
+%               - r
+%                   save Pearson correlation coefficients (r only) separately
+%                   for each roi
+%               - fz
+%                   save Fisher Z values (r only) separately for each roi
+%               - z
+%                   save Z statistic (r only) separately for each roi
+%               - p
+%                   save p value (r only) separately for each roi
+%               - cv
+%                   save covariances (cv only) separately for each roi
+%               - allbyroi
+%                   save all relevant values by roi
+%               - jr
+%                   save Pearson correlation coefficients (r only) in a single
+%                   file for all roi
+%               - jfz
+%                   save Fisher Z values (r only) in a single file for all roi
+%               - jz
+%                   save Z statistic (r only) in a single file for all roi
+%               - jp
+%                   save p value (r only) in a single file for all roi
+%               - jcv
+%                   save covariances (cv only) in a single file for all roi
+%               - alljoint
+%                   save all relevant values in a joint file
+%               - none
+%                   do not save any individual level results
 %
-%   Based on specification it saves group files:
+%               Default is 'none'. Any invalid options will be ignored without
+%               a warning.
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_r`
-%       Mean group Pearson correlations (converted from Fz).
+%           - saveindname
+%               whether to add the name of the session or subject to the
+%               individual output file:
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_Fz`
-%       Mean group Fisher Z values.
+%               - yes
+%               - no.
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_Z`
-%       Z converted p values testing difference from 0.
+%               Defaults to 'no'.
 %
-%   `<targetf>/<root>[_<title>]_<roi>_all_Fz`
-%       Fisher Z values for all participants.
+%           - itargetf
+%               Where to save the individual data:
 %
-%   `<targetf>/<root>[_<title>]_<roi>_group_cov`
-%       Mean group covariance.
+%               - gfolder
+%                   in the group target folder
+%               - sfolder
+%                   in the individual session folder.
 %
-%   `<targetf>/<root>[_<title>]_<roi>_all_cov`
-%       Covariances for all participants.
+%               Defaults to 'gfolder'.
 %
-%   `<roi>` is the name of the ROI for which the seed map was computed for.
-%   `<root>` is the root name of the flist.
-%   `<title>` is the title of the extraction event(s), if event string was specified.
+%           - verbose
+%               Whether to be verbose when running the analysis:
 %
-%   USE
-%   ===
+%               - true
+%               - false.
 %
-%   The function computes seed maps for the specified ROI. If an event string is
-%   provided, it uses each session's .fidl file to extract only the specified
-%   event related frames. The string format is::
+%               Defaults to 'false'.
 %
-%       <title>:<eventlist>:<frame offset1>:<frame offset2>
+%   Notes:
+%       Resulting files:
+%           Based on specification it saves group files:
 %
-%   and multiple extractions can be specified by separating them using the pipe
-%   '|' separator. Specifically, for each extraction, all the events listed in
-%   a comma-separated eventlist will be considered (e.g. 'task1,task2') and for
-%   each event all the frames starting from event start + offset1 to event end
-%   + offset2 will be extracted and concatenated into a single timeseries. Do
-%   note that the extracted frames depend on the length of the event specified
-%   in the .fidl file!
+%           `<targetf>/<root>[_<title>]_<roi>_group_r`
+%               Mean group Pearson correlations (converted from Fz).
 %
-%   EXAMPLE USE
-%   ===========
-% 
-%   To compute resting state seed maps using first eigenvariate of each ROI::
+%           `<targetf>/<root>[_<title>]_<roi>_group_Fz`
+%               Mean group Fisher Z values.
 %
-%       fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
-%                           'roimethod:pca|ignore:udvarsme');
+%           `<targetf>/<root>[_<title>]_<roi>_group_Z`
+%               Z converted p values testing difference from 0.
 %
-%   To compute resting state seed maps using mean of each region and covariances
-%   instead of correlation::
+%           `<targetf>/<root>[_<title>]_<roi>_all_Fz`
+%               Fisher Z values for all participants.
 %
-%       fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
-%                           'roimethod:mean|igmore:udvarsme|fcmeasure:cv');
+%           `<targetf>/<root>[_<title>]_<roi>_group_cov`
+%               Mean group covariance.
 %
-%   To compute seed maps for third and fourth frame of incongruent and congruent
-%   trials (listed as inc and con events in fidl files with duration 1) using
-%   mean of each region and exclude only frames marked for exclusion in fidl
-%   files:
+%           `<targetf>/<root>[_<title>]_<roi>_all_cov`
+%               Covariances for all participants.
 %
-%       fc_compute_seedmaps('scz.list', 'CCNet.names', ...
-%                           'incongruent:inc:2,3|congruent:con:2,3', 'seed-maps', ...
-%                           'roimethod:mean|ignore:event');
+%           Definitions:
 %
-%   To compute seed maps across all the tasks blocks, starting with the third
-%   frame into the block and taking one additional frame after the end of the
-%   block, use::
+%           - `<roi>` is the name of the ROI for which the seed map was computed
+%             for.
+%           - `<root>` is the root name of the flist.
+%           - `<title>` is the title of the extraction event(s), if event string
+%             was specified.
 %
-%       fc_compute_seedmaps('scz.list', 'CCNet.names', ...
-%                           'task:easyblock,hardblock:2,1', 'seed-maps', ...
-%                           'roimethod:mean|ignore:event');
+%       Use:
+%           The function computes seed maps for the specified ROI. If an event
+%           string is provided, it uses each session's .fidl file to extract
+%           only the specified event related frames. The string format is::
+%
+%               <title>:<eventlist>:<frame offset1>:<frame offset2>
+%
+%           and multiple extractions can be specified by separating them using
+%           the pipe '|' separator. Specifically, for each extraction, all the
+%           events listed in a comma-separated eventlist will be considered
+%           (e.g. 'task1,task2') and for each event all the frames starting from
+%           event start + offset1 to event end + offset2 will be extracted and
+%           concatenated into a single timeseries. Do note that the extracted
+%           frames depend on the length of the event specified in the .fidl
+%           file!
+%
+%   Examples:
+%       To compute resting state seed maps using first eigenvariate of each ROI:
+%
+%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
+%               'roimethod:pca|ignore:udvarsme');
+%
+%       To compute resting state seed maps using mean of each region and
+%       covariances instead of correlation:
+%
+%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
+%               'roimethod:mean|igmore:udvarsme|fcmeasure:cv');
+%
+%       To compute seed maps for third and fourth frame of incongruent and
+%       congruent trials (listed as inc and con events in fidl files with
+%       duration 1) using mean of each region and exclude only frames marked for
+%       exclusion in fidl files:
+%
+%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', ...
+%               'incongruent:inc:2,3|congruent:con:2,3', 'seed-maps', ...
+%               'roimethod:mean|ignore:event');
+%
+%       To compute seed maps across all the tasks blocks, starting with the
+%       third frame into the block and taking one additional frame after the end
+%       of the block, use:
+%
+%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', ...
+%               'task:easyblock,hardblock:2,1', 'seed-maps', ...
+%               'roimethod:mean|ignore:event');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

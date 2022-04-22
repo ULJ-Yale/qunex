@@ -2,54 +2,51 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 
 %``function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)``
 %
-%    Segments the voxels in smask based on their connectivity with tmask ROI.
+%   Segments the voxels in smask based on their connectivity with tmask ROI.
 %   Uses WTA to select the region the voxel is most correlated with.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A .list file information on sessions bold runs and segmentation
+%           files.
+%       --smask (str):
+%           A .names file for source mask definition.
+%       --tmask (str):
+%           A .names file for target mask roi definition
+%       --mask (int | logical | vector, default []):
+%           Either number of frames to omit or a mask of frames to use.
+%       --root (str, default ''):
+%           The root of the filename where results are to be saved. If no root
+%           is specified, the root of the flist is used.
+%       --options (str, default 'raw'):
+%           Whether to use 'raw', 'absolute' or 'partial' correlations.
+%       --verbose (str, default 'none'):
+%           Whether to report the progress 'full', 'script', 'none'.
 %
-%   --flist     A .list file information on sessions bold runs and segmentation 
-%               files.
-%   --smask     .names file for source mask definition
-%   --tmask     .names file for target mask roi definition
-%   --mask      Either number of frames to omit or a mask of frames to use [0].
-%   --root      The root of the filename where results are to be saved [''].
-%   --options   Whether to use 'raw', 'absolute' or 'partial' correlations ['raw'].
-%   --verbose   Whether to report the progress 'full', 'script', 'none' ['none'].
+%   Notes:
+%       Resulting files:
+%           - <root>_corr_roi
+%               Correlations of each session with the target roi.
 %
-%    RESULTS
-%   =======
+%           - <root>_segs
+%               Segmentations for each session.
 %
-%   <root>_corr_roi 
-%       correlations of each session with the target roi
+%           - <root>_scorr
+%               Final segmentation and probabilities of segmentation for each
+%               target ROI across the group.
 %
-%   <root>_segs     
-%       segmentations for each session
+%           - <root>_gseg
+%               Final segmentation based on group mean correlations.
 %
-%   <root>_scorr    
-%       final segmentation and probabilities of segmentation for each target ROI 
-%       across the group
+%       Use:
+%           Use the function to segment voxels specified in smask roi file based
+%           on the correlation with ROI specifed in the tmask file. Each voxel
+%           is assigned the code of the target ROI it most correlates with. For
+%           more information see img_fcmri_segment() nimage method.
 %
-%   <root>_gseg     
-%       final segmentation based on group mean correlations
-%
-%   USE
-%   ===
-%
-%   Use the function to segment voxels specified in smask roi file based on the
-%   correlation with ROI specifed in the tmask file. Each voxel is assigned the
-%   code of the target ROI it most correlates with. For more information see
-%   img_fcmri_segment() nimage method.
-%
-%   If no root is specified, the root of the flist is used.
-%
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       fc_segment_mri('con.list', 'thalamus.names', 'yeo7.names', 0, ...
-%       'Th-yeo-seg', 'partial', 'script');
+%   Examples:
+%       >>> fc_segment_mri('con.list', 'thalamus.names', 'yeo7.names', 0, ...
+%               'Th-yeo-seg', 'partial', 'script');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -2,192 +2,201 @@ function [] = general_plot_bold_timeseries(images, elements, masks, filename, sk
 
 %``function [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)``
 %
-%   Creates and saves a plot of BOLD timeseries
+%   Creates and saves a plot of BOLD timeseries.
 %
-%    INPUTS
-%    ======
+%   Parameters:
+%       --images (str | cell array):
+%           Input image(s) as gmri images or paths.
+%       --elements (struct | str):
+%           Plot element specifications.
+%       --masks (str | matrix | cell array | nimage, default []):
+%           One or multiple masks to use for extracting BOLD data.
+%       --filename (str, default 'BoldTSPlot.pdf'):
+%           Filename to save the plot to.
+%       --skip (int, default 0):
+%           How many frames to skip at the start of the bold run.
+%       --sessionid (str, default []):
+%           Session code to display on the page.
+%       --verbose (bool, default false):
+%           Whether to be talkative.
 %
-%   --images          input image(s) as gmri images or paths
-%   --elements        plot element specifications
-%   --masks           one or multiple masks to use for extracting BOLD data
-%   --filename        filename to save the plot to
-%   --skip            how many frames to skip at the stat of the bold run
-%   --sessionid       session code
-%   --verbose         whether to be talkative
+%   Notes:
+%       The function is used to create a plot of BOLD timeseries for quality
+%       control inspection. Specifically, it allows plotting of bold statistics
+%       as well as a "watershed" type plots, where intensities of voxels over
+%       time are plotted as shades of grey or in another color map. The function
+%       can plot a configurable number of elements from multiple BOLD images,
+%       which allows visual inspection of preprocessing effects.
 %
-%   USE
-%    ===
+%       Parameter details:
+%           Please note that the parameters are not described in the order taken
+%           by the function.
 %
-%   The function is used to create a plot of BOLD timeseries for quality control
-%   inspection. Specifically, it allows plotting of bold statistics as well as a
-%   "watershed" type plots, where intensities of voxels over time are plotted as
-%   shades of grey or in another color map. The function can plot a configurable
-%   number of elements from multiple BOLD images, which allows visual inspection
-%   of preprocessing effects.
-%
-%   PARAMETERS
-%    ==========
-%   
-%   Please note that the parameters are not described in the order taken by the
-%   function.
-%
-%   images
-%       Images can be either a semicolon separated list of bold files to be
-%       used, or an array of nimage objects. The order in which the files are
-%       specified is the order in which they should be referenced in the
-%       elements specification.
+%           images
+%               Can be either a semicolon separated list of bold files to be
+%               used, or an array of nimage objects. The order in which the
+%               files are specified is the order in which they should be
+%               referenced in the elements specification.
 % 
-%       Example images parameter::
+%               Example images parameter::
 %
-%            'bold1.nii.gz;bold1_s_hpss_res.nii.gz'
+%                    'bold1.nii.gz;bold1_s_hpss_res.nii.gz'
 %
-%       Do note that each image in the semicolon separated list can be a conc
-%       file or a set of files separated with the pipe | character. In the
-%       following example::
+%               Do note that each image in the semicolon separated list can be a
+%               conc file or a set of files separated with the pipe | character.
+%               In the following example::
 %
-%           'bold1.nii.gz|bold2.nii.gz;bold1_s_hpss.nii.gz|bold2_s_hpss.nii.gz'
+%                   'bold1.nii.gz|bold2.nii.gz;bold1_s_hpss.nii.gz|bold2_s_hpss.nii.gz'
 %
-%       The first two files would be concatenated to image 1 and the second pair
-%        to image 2. This allows easy plotting of conatenated bolds.
+%               The first two files would be concatenated to image 1 and the
+%               second pair to image 2. This allows easy plotting of conatenated
+%               bolds.
 %
-%       Inputs for which signal or statistics from ventricles and white matter
-%        is to be plotted need to be NIfTI file, as CIFTI files only contain gray
-%        matter signal data. It is though possible to combine plotting of data
-%        from NIfTI and CIFTI files. E.g. to plot unprocessed data from a NIfTI
-%        file and processed data from CIFTI file.
+%               Inputs for which signal or statistics from ventricles and white
+%               matter is to be plotted need to be NIfTI file, as CIFTI files
+%               only contain gray matter signal data. It is though possible to
+%               combine plotting of data from NIfTI and CIFTI files. E.g. to
+%               plot unprocessed data from a NIfTI file and processed data from
+%               CIFTI file.
 %
-%   masks
-%       masks again can be either a single iamge or a set of images passed
-%       either as nimage objects or as paths. If more than one mask is to be
-%       used, again a semicolumn separated list of paths can be provided. The
-%       masks are used to define the part of the image to display. They can be
-%       an ROI mask or a segmentation image.
+%           masks
+%               Again, can be either a single iamge or a set of images passed
+%               either as nimage objects or as paths. If more than one mask is
+%               to be used, again a semicolumn separated list of paths can be
+%               provided. The masks are used to define the part of the image to
+%               display. They can be an ROI mask or a segmentation image.
 %
-%   elements
-%          elements can be either a structure that specifies, which elements the
-%       plot should have or a string that can be parsed into a structure using
-%       general_parse_options function. Each element can have the following fields:
+%           elements
+%               Can be either a structure that specifies, which elements the
+%               plot should have or a string that can be parsed into a structure
+%               using general_parse_options function. Each element can have the
+%               following fields:
 % 
-%           name
+%               - name
+%                   The name or title of the element to draw. There are four
+%                   standard names that can be used to simplify the latter
+%                   definition of the mask, these are:
 %
-%               The name or title of the element to draw. There are four
-%               standard names that can be used to simplify the latter
-%               definition of the mask, these are:
+%                   - V  - ventricles
+%                   - WM - white matter
+%                   - GM - gray matter
+%                   - WB - whole brain
+%                   - any other name can be used if desired. []
 %
-%                - V  - ventricles
-%                - WM - white matter
-%                - GM - gray matter
-%                - WB - whole brain
-%                - any other name can be used if desired. []
+%               - type
+%                   Defines what will be drawn, it can be 'signal' for
+%                   actual signal values or 'stats' for plot of summary
+%                   statistics across voxels. [signal]
 %
-%           type
-%               Defines what will be drawn, it can be 'signal' for actual signal
-%               values or 'stats' for plot of summary statistics across voxels.
-%               [signal]
+%               - imageindex
+%                   Defines, which of the image files specified by the
+%                   `images` parameter the data to plot should be based on.
+%                   It should be an integer value starting with 1 for the
+%                   first image specified. If the images parameter is
+%                   specified as: 'bold1.nii.gz;bold3.nii.gz;bold7.nii.gz',
+%                   specifying `imageindex` as 2 would set the plot to be
+%                   based on 'bold3.nii.gz'. [1]
 %
-%           imageindex
-%               Defines, which of the image files specified by the `images`
-%               parameter the data to plot should be based on. It should be an
-%               integer value starting with 1 for the first image specified. If
-%               the images parameter is specified as:
-%               'bold1.nii.gz;bold3.nii.gz;bold7.nii.gz', specifying
-%               `imageindex` as 2 would set the plot to be based on
-%               'bold3.nii.gz'. [1]
+%               - maskindex
+%                   Defines, which of the mask images specified using `masks`
+%                   parameter should be used to select only a specific part
+%                   of the image to draw. It should be an integer value, an
+%                   index starting with 1. If a mask is not specified, then
+%                   all the nonzero voxels across the image will be plotted.
+%                   Do take care to use a mask of the same image type and
+%                   dimensions. If they do not match, an error will be
+%                   reported. []
 %
-%           maskindex
-%               Defines, which of the mask images specified using `masks`
-%               parameter should be used to select only a specific part of the
-%               image to draw. It should be an integer value, an index starting
-%               with 1. If a mask is not specified, then all the nonzero voxels
-%               across the image will be plotted. Do take care to use a mask of
-%               the same image type and dimensions. If they do not match, an
-%               error will be reported. []
+%               - ROI
+%                   An array of values that will be matched against the
+%                   mask. Only those voxels that match ROI values in the
+%                   mask will be plotted. E.g. if in a mask PFC is marked
+%                   with 1, thalamus with 2, and cerebellum with 3, then
+%                   ROI=[1] would plot only PFC voxels, and ROI=[2 3] would
+%                   plot thalamus and cerebellum voxels. If one of the
+%                   standard names is specified for the name field (V, WM,
+%                   GM, WB) and ROI is not specified, then the mask will be
+%                   assumed to be a FreeSurfer aseg or aseg+aparc file and
+%                   the correct ROI values will be automatically used. []
 %
-%           ROI
-%               An array of values that will be matched against the mask. Only
-%               those voxels that match ROI values in the mask will be plotted.
-%               E.g. if in a mask PFC is marked with 1, thalamus with 2, and
-%               cerebellum with 3, then ROI=[1] would plot only PFC voxels, and
-%               ROI=[2 3] would plot thalamus and cerebellum voxels. If one of
-%               the standard names is specified for the name field (V, WM, GM,
-%               WB) and ROI is not specified, then the mask will be assumed to
-%               be a FreeSurfer aseg or aseg+aparc file and the correct ROI
-%               values will be automatically used. []
+%               - size
+%                   The vertical size of the element. For standard names it
+%                   can be left empty, otherwise it provides a relative size
+%                   information, the actual size will be computed for all
+%                   elements to fit a page. []
 %
-%           size
-%               The vertical size of the element. For standard names it can be
-%               left empty, otherwise it provides a relative size information,
-%               the actual size will be computed for all elements to fit a page.
-%               []
+%               - use
+%                   Whether frames use information should be taken into
+%                   account. If set to 1 frames marked as bad in a bold file
+%                   will be masked and their intensity will not be shown. If
+%                   set to 0, then all frames will be plotted. Do take into
+%                   that voxel intensity values are mapped onto a
+%                   image to show the whole range of values from
+%                   lowest to highest, so if bad frames are plotted they can
+%                   significantly change the mapping. [0]
 %
-%           use
-%               Whether frames use information should be taken into account. If
-%               set to 1 frames marked as bad in a bold file will be masked and
-%               their intensity will not be shown. If set to 0, then all frames
-%               will be plotted. Do take into account that voxel intensity
-%               values are mapped onto a grayscale image to show the whole range
-%               of values from lowest to highest, so if bad frames are plotted
-%               they can significantly change the mapping. [0]
+%               - scale
+%                   Which element should intensity scaling be based on. If
+%                   set to 0, the scaling will be based on the minimal and
+%                   maximal value of data in this element, otherwise it
+%                   should be an integer value specifying the index of the
+%                   relevant element. Setting elements to the same scale
+%                   allows direct comparison between them. This field is
+%                   only relevant for image type elements. [0]
 %
-%           scale
-%               Which element should intensity scaling be based on. If set to 0,
-%               the scaling will be based on the minimal and maximal value of
-%               data in this element, otherwise it should be a an integer value
-%               specifying the index of the relevant element. Setting elements
-%               to the same scale allows direct comparison between them. This
-%               field is only relevant for image type elements. [0]
+%               - colormap
+%                   What color map is to be used for the plot. Options are
+%                   gray, darkgray, jet, or hsv. [gray]
 %
-%           colormap
-%               What color map is to be used for the plot. Options are gray,
-%               darkgray, jet, or hsv. [gray]
+%               - stats
+%                   This field is a structure with fields that provide
+%                   additional information for stats type plots. It should
+%                   define the following fields:
 %
-%           stats
-%               This field is a structure with fields that provide additional
-%               information for stats type plots. It should define the following
-%               fields:
+%                   - plotdata
+%                       A string that specifies, what statistic is plotted.
+%                       Valid values are [fd]:
 %
-%                  plotdata
-%                    A string that specifies, what statistic is plotted. Valid
-%                    values are [fd]:
+%                       - fd - display frame displacement information
+%                       - dvars - display dvars values
+%                       - dvarsm - display image mean intensity normalised dvars
+%                         values
+%                       - dvarsme - display timeseries median normalised dvarsm
+%                         values
+%                       - V - mean ventricle signal
+%                       - WM - mean white matter signal
+%                       - GM - mean gray matter signal
+%                       - WB - mean whole brain signal
+%                       - GO - mean signal across the whole image
+%                       - scrub - whether the frame is to be used or scrubbed.
 %
-%                      - fd - display frame displacement information
-%                      - dvars - display dvars values
-%                      - dvarsm - display image mean intensity normalised dvars values
-%                      - dvarsme - display timeseries median normalised dvarsm values
-%                      - V - mean ventricle signal
-%                      - WM - mean white matter signal
-%                      - GM - mean gray matter signal
-%                      - WB - mean whole brain signal
-%                      - GO - mean signal across the whole image
-%                      - scrub - whether the frame is to be used or scrubbed
+%                   - imageindex
+%                       The index of the image the statistics refers to. [1]
 %
-%                  imageindex
-%                    The index of the image the statistics refers to. [1]
+%                   - maskindex
+%                       The index of the mask that holds aseg or aseg+aparc
+%                       image when mean signal statistic is to be displayed. [1]
+%                       Do note that if stats is structure array, multiple
+%                       statistics will be plotted in the same element/graph.
 %
-%                 maskindex
-%                   The index of the mask that holds aseg or aseg+aparc image
-%                   when mean signal statistic is to be displayed. [1] Do note
-%                   that if stats is structure array, multiple statistics will
-%                   be plotted in the same element/graph.
+%           An example string specification::
 %
-%          An example string specification::
+%               'type=stats|stats>plotdata=fd,img=1>plotdata=dvarsme,imageindex=1;
+%               type=signal|name=V|imageindex=1|maskindex=1;
+%               type=signal|name=WM|imageindex=1|maskindex=1;
+%               type=signal|name=GM|imageindex=1|maskindex=1;
+%               type=signal|name=GM|imageindex=2|maskindex=1|use=1'
 %
-%           'type=stats|stats>plotdata=fd,img=1>plotdata=dvarsme,imageindex=1;
-%            type=signal|name=V|imageindex=1|maskindex=1;
-%            type=signal|name=WM|imageindex=1|maskindex=1;
-%            type=signal|name=GM|imageindex=1|maskindex=1;
-%            type=signal|name=GM|imageindex=2|maskindex=1|use=1'
-%
-%       If the first image is raw bold, the second image fully preprocessed
-%       bold, and the mask an aseg or aseg+aparc image, this specification would
-%       show frame displacement and dvarsme information plotted in the same
-%       element, plots of ventricle, white matter, and gray matter signal in the
-%       raw image, and the gray matter signal from the preprocessed image with
-%       bad frames masked out. All images would be scaled to their individual
-%       range of signal values.
+%           If the first image is raw bold, the second image fully preprocessed
+%           bold, and the mask an aseg or aseg+aparc image, this specification
+%           would show frame displacement and dvarsme information plotted in the
+%           same element, plots of ventricle, white matter, and gray matter
+%           signal in the raw image, and the gray matter signal from the
+%           preprocessed image with bad frames masked out. All images would be
+%           scaled to their individual range of signal values.
 %
 %   skip
-%       skip provides information on how many frames from the start of the image
+%       Provides information on how many frames from the start of the image
 %       to ignore. This is relevant for legacy data that does not use prescans
 %       and the signal is not yet stable. It is set to 0 by default. The skipped
 %       frames are masked.
@@ -200,20 +209,18 @@ function [] = general_plot_bold_timeseries(images, elements, masks, filename, sk
 %
 %   verbose
 %       Whether to print out the information about the progress of the plotting.
-%        [false]
+%       [false]
 %
-%   EXAMPLE USE
-%    ===========
+%   Examples:
+%       Inside MATLAB:
 %
-%     Inside MATLAB::
-%
-%       general_plot_bold_timeseries('bold1.nii.gz;bold1_s_hpss_res.nii.gz', ...
+%       >>> general_plot_bold_timeseries('bold1.nii.gz;bold1_s_hpss_res.nii.gz', ...
 %        'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', ...
 %        'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
 %
-%   Via QuNex from terminal::
-% 
-%       qunex general_plot_bold_timeseries \
+%       Via QuNex from terminal:
+%
+%       >>> qunex general_plot_bold_timeseries \
 %            --images="<Path_to_Study>/sessions/AP1937/images/functional/bold1.nii.gz" \
 %           --elements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1" \
 %           --masks="<Path_to_Study>/sessions/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \

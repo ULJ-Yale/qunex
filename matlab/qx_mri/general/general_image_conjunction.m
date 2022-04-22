@@ -2,65 +2,69 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, ps
 
 %``function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, psign)``
 %
-%    INPUTS
-%    ======
+%   Reads image file, computes conjunction using general_conjunction and
+%   saves results. Accepts image of significance estimates and computes
+%   conjunction for 1 <= u <= n. Results at each step are thresholded using
+%   FDR q.
 %
-%    Reads image file, computes conjunction using general_conjunction and
-%    saves results. Accepts image of significance estimates and computes
-%    conjunction for 1 <= u <= n. Results at each step are thresholded using FDR
-%    q. Based on Heller et al. (2017). NeuroImage 37, 1178–1185.
-%    (https://doi.org/10.1016/j.neuroimage.2007.05.051).
+%   Based on Heller et al. (2017). NeuroImage 37, 1178–1185.
+%   (https://doi.org/10.1016/j.neuroimage.2007.05.051).
 %
-%    --imgf         input file, a z-score image file of concatenated individual files
-%    --maskf        optional mask image
+%   Parameters:
+%       --imgf (str):
+%           Input file, a z-score image file of concatenated individual files.
+%       --maskf (str, default 'nonzero'):
+%           Optional mask image
 %
-%                - missing or empty -> takes all non-zero voxels
-%                - nonzero -> takes all non-zero voxels
-%                - all -> takes all voxels
+%           - missing or empty ... takes all non-zero voxels
+%           - 'nonzero'        ... takes all non-zero voxels
+%           - 'all'            ... takes all voxels.
 %
-%    --method    method of calculating conjunction p ['Fisher']
+%       --method (str, default 'Fisher'):
+%           Method of calculating conjunction p:
 %
-%                 - 'Simes'      ... pooling dependent p-values (eq. 5)
-%                 - 'Stouffer' ... pooling independent p-values (eq. 6)
-%                 - 'Fisher'     ... pooling independent p-values (eq. 7)
+%           - 'Simes'    ... pooling dependent p-values (eq. 5)
+%           - 'Stouffer' ... pooling independent p-values (eq. 6)
+%           - 'Fisher'   ... pooling independent p-values (eq. 7).
 %
-%    --effects     the effect of interest ['all']
+%       --effects (str, default 'all'):
+%           The effect of interest:
 %
-%                - 'pos'    ... positive effect only (one tailed test)
-%                - 'neg'    ... negative effect only (one tailed test)
-%                - 'all'    ... both effects (two tailed test)
+%           - 'pos'    ... positive effect only (one tailed test)
+%           - 'neg'    ... negative effect only (one tailed test)
+%           - 'all'    ... both effects (two tailed test).
 %
-%    --q            the FDR q value at which to threshold    [default: 0.05]
-%    --data        the values in image
+%       --q (float, default 0.05)
+%           The FDR q value at which to threshold.
+%       --data (str, default 'z'):
+%           The values in image
 %
-%                - 'z' ... z-values [default]
-%                - 'p' ... p-values
+%           - 'z' ... z-values
+%           - 'p' ... p-values.
 %
-%    --psign        in case of two-tailed test for p-values input, an image
-%                that includes signs for the effect direction if p-values
-%                are not signed. It can be signed z-scores image.
+%       --psign (str | matrix | cell array | nimage, default []):
+%           In case of two-tailed test for p-values input, an image that
+%           includes signs for the effect direction if p-values are not signed.
+%           It can be signed z-scores image.
 %
-%    For the rest of arguments see g_conjunction.m
+%   Notes:
+%       For the rest of arguments see general_conjunction.m
 %
-%    RESULTS
-%    =======
+%       Resulting files:
+%           '_Conj_p'
+%               Conjunction results, p-values for u = 1 to u = n.
 %
-%    Saves
+%           '_Conj_z'
+%               Conjunction results, z-scores for u = 1 to u = n.
 %
-%    '_Conj_p'
-%        conjunction results, p-values for u = 1 to u = n
+%           '_Conj_FDR_p_<q>'
+%               p-values thresholded with FDR.
 %
-%    '_Conj_z'
-%        conjunction results, z-scores for u = 1 to u = n
+%           '_Conj_FDR_z_<q>'
+%               Z-scores thresholded with FDR.
 %
-%    '_Conj_FDR_p_<q>'
-%        p-values thresholded with FDR
-%
-%    '_Conj_FDR_z_<q>'
-%        z-scores thresholded with FDR
-%
-%    '_Conj_FDR_c_<q>'
-%        image of frequency of passing threshold
+%           '_Conj_FDR_c_<q>'
+%               Image of frequency of passing threshold.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

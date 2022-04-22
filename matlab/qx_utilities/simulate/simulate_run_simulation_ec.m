@@ -16,7 +16,7 @@ function [cors, sim] = simulate_run_simulation_ec(r, models, timepoints, nruns, 
 %           How many simulations to run.
 %       --k (int, default 6):
 %           Division coefficient for corr timeseries.
-%       --md (double, default 0.01):
+%       --md (float, default 0.01):
 %           Maximal allowed difference between desired and actual 
 %           correlation.
 %

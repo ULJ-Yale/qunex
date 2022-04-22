@@ -1,21 +1,25 @@
 function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 
-%    ``function [snr, sd] = general_compute_snr_group(flist, fmask, target, verbose)``
+%``function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)``
 %
 %   Computes SNR and SD for the whole group.
 %
-%    INPUTS
-%    ======
+%   Parameters:
+%       --flist (str):
+%           String or file path to conc-like style list of session
+%           image files or conc files:
 %
-%    --flist     conc-like style list of session image files or conc files:
+%           - session id:<session_id>
+%           - roi:<path to the individual's ROI file>
+%           - file:<path to bold files - one per line>.
 %
-%               - session id:<session_id>
-%               - roi:<path to the individual's ROI file>
-%               - file:<path to bold files - one per line>
-%
-%   --target     file to save results into
-%    --fmask        an array mask defining which frames to use (1) and which not (0)
-%    --verbose    to report on progress or not [not]
+%       --target (str, default []):
+%           Name of folder to save results into.
+%       --fmask (int | vector | bool, default []):
+%           A scalar, vector or logical mask defining which frames to use (1)
+%           and which not (0).
+%       --verbose (bool, default false):
+%           Whether to report on progress or not.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -5,9 +5,9 @@ function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model,
 %   Function for generation of simulated BOLD timeseries.
 %
 %   Parameters:
-%       --TR (double):
+%       --TR (float):
 %           TR of the simulated timecourse in seconds.
-%       --eventlist (matrix|cell array):
+%       --eventlist (matrix | cell array):
 %           Matrix or cell array of matrices with columns:
 %
 %           - start time in seconds
