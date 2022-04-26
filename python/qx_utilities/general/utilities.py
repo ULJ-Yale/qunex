@@ -75,7 +75,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
     """
     manage_study studyfolder=None action="create"
 
-    A helper function called by create_study and checkStudy that does the
+    A helper function called by create_study and check_study that does the
     actual checking of the study folder and generating missing content.
     
     PARAMETERS
@@ -370,10 +370,10 @@ def create_study(studyfolder=None, folders=None):
 
     manage_study(studyfolder=studyfolder, action="create", folders=folders, verbose=True)
 
-# TODO: not in snake case
-def checkStudy(startfolder=".", folders=None):
+
+def check_study(startfolder=".", folders=None):
     """
-    ``checkStudy startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
+    ``check_study startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
 
     The function looks for the path to the study folder in the hierarchy 
     starting from the provided startfolder. If found it checks that all the
@@ -628,7 +628,6 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
 
     if missing:
         raise ge.CommandFailed("create_batch", "Not all sessions specified added to the batch file!", "%s was missing for %d session(s)!" % (sfile, missing), "Please check your data!")
-
 
 
 def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
@@ -1025,7 +1024,6 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
         print(line, file=lfile)
 
     lfile.close()
-
 
 
 def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
@@ -1696,17 +1694,17 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
                 if line.startswith('#') or line.startswith('---') or line.strip() == "":
                     continue
                 elif line.startswith('list'):
-                    listName = stripQuotes(line.split(':')[1].strip())
+                    listName = strip_quotes(line.split(':')[1].strip())
                     runList['lists'][listName] = {'parameters': runList['parameters'].copy(), 'commands': [], 'removed_parameters': []}
                     parameters = runList['lists'][listName]['parameters']
                     removedParameters = runList['lists'][listName]['removed_parameters']
                 elif line.startswith('command'):
-                    commandName = stripQuotes(line.split(':')[1].strip())
+                    commandName = strip_quotes(line.split(':')[1].strip())
                     parameters = runList['lists'][listName]['parameters'].copy()
                     removedParameters = list(runList['lists'][listName]['removed_parameters'])
                     runList['lists'][listName]['commands'].append({'name': commandName, 'parameters': parameters, 'removed_parameters': removedParameters})
                 elif ':' in line:
-                    parameter, value = [stripQuotes(e.strip()) for e in line.split(":", 1)]
+                    parameter, value = [strip_quotes(e.strip()) for e in line.split(":", 1)]
                     # is value something we should inject
                     if "{" in value and "}" in value:
                         value = value.strip("{").strip("}")
@@ -1860,8 +1858,8 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
 
     log.close()
 
-# TODO: not in snake case
-def stripQuotes(string):
+
+def strip_quotes(string):
     """
     A helper function for removing leading and trailing quotes in a string. 
     """
@@ -2285,8 +2283,6 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
         raise ge.CommandNull("gather_behavior", "No files processed", "No valid data was found!")                
 
 
-
-
 def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefiles="session.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
     """
     ``pull_sequence_names [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
@@ -2593,6 +2589,8 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
         raise ge.CommandNull("pull_sequence_names", "No files processed", "No valid data was found!")                
 
 # prepare variables for data export
+
+
 def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
     if os.path.exists(sessionsfolder):
         sessionsfolder = os.path.abspath(sessionsfolder)
