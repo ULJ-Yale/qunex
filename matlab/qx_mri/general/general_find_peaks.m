@@ -70,9 +70,9 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           `$HCPATLAS`).
 %
 %       --projection (str, default 'type꞉ midthickness'):
-%           Type of surface component projection ('midthickness', 'inflated', ...)
-%           or a string containing the path to the surface files (.surf.gii) for
-%           both, left and right cortex separated by a pipe:
+%           Type of surface component projection ('midthickness', 'inflated',
+%           ...) or a string containing the path to the surface files
+%           (.surf.gii) for both, left and right cortex separated by a pipe:
 %
 %           - for a default projection: 'type: midthickness'
 %           - for a specific projection:
@@ -133,26 +133,25 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %                 (applies to volume structures only)
 %               - 'limitvol:0'... growth of regions is not limited.
 %
-%       --verbose (int, default false):
+%       --verbose (int | bool, default false):
 %           Whether to be verbose:
 %
 %           - 1     ... on the first level
 %           - 2     ... on all the sub-levels
 %           - false ... don't be verbose.
 %
+%   Output files:
+%       The script saves the resulting ROI file under the specified filename.
+%
 %   Notes:
-%       Resulting files:
-%           The script saves the resulting ROI file under the specified filename.
+%       The function is a wrapper to the `nimage.img_find_peaks` method and
+%       is used to read the image file of interest, save the resulting ROI
+%       file and report the peak statistics (if requested). Please see the
+%       method documentation for algorithm and specifics about the
+%       parameters.
 %
-%       Use:
-%           The function is a wrapper to the `nimage.img_find_peaks` method and
-%           is used to read the image file of interest, save the resulting ROI
-%           file and report the peak statistics (if requested). Please see the
-%           method documentation for algorithm and specifics about the
-%           parameters.
-%
-%           The function also allows presmoothing, the presmooth parameter
-%           specifying the amount of gaussian smoothing in voxels.
+%       The function also allows presmoothing, the presmooth parameter
+%       specifying the amount of gaussian smoothing in voxels.
 %
 %   Examples:
 %       CIFTI-2 images:

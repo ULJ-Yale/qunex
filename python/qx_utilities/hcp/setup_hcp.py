@@ -33,162 +33,161 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""]``
 
     The command maps images from the sessions's nii folder into a folder
-    structure that conforms to the naming conventions used in the HCP
-    minimal preprocessing workflow.
+    structure that conforms to the naming conventions used in the HCP minimal
+    preprocessing workflow.
 
-    INPUTS
-    ======
+    Parameters:
+        --sourcefolder (str, default '.'):
+            The base session folder that contains the nifti images and
+            session.txt file.
+        --targetfolder (str, default 'hcp'):
+            The folder (within the base folder) to which the data is to be
+            mapped.
+        --sourcefile (str, default 'session_hcp.txt'):
+            The name of the source session.txt file.
+        --check (str, default 'yes'):
+            Whether to check if session is marked ready for setting up hcp
+            folder.
+        --existing (str, default 'add'):
+            What to do if the hcp folder already exists.
+            Options are:
 
-    --sourcefolder          The base session folder that contains the nifti images 
-                            and session.txt file. [.]
-    --targetfolder          The folder (within the base folder) to which the data is
-                            to be mapped. [hcp]
-    --sourcefile            The name of the source session.txt file. 
-                            [session_hcp.txt]
-    --check                 Whether to check if session is marked ready for setting 
-                            up hcp folder [yes].
-    --existing              What to do if the hcp folder already exists. ['add']
-                            Options are:
-                        
-                            - abort (abort setting up hcp folder)
-                            - add (leave existing files and add new ones)
-                            - clear (remove any existing files and redo hcp 
-                            mapping)
+            - 'abort' ... abort setting up hcp folder
+            - 'add' ... leave existing files and add new ones
+            - 'clear' ... remove any existing files and redo hcp mapping.
 
-    --hcp_filename          How to name the BOLD files once mapped into
-                            the hcp input folder structure. The default
-                            ('automated') will automatically name each
-                            file by their number (e.g. BOLD_1). The
-                            alternative ('userdefined') is to use the
-                            file names, which can be defined by the
-                            user prior to mapping (e.g. rfMRI_REST1_AP).
-                            ['automated']
-    --hcp_folderstructure   Which HCP folder structure to use 'hcpya' or 'hcpls'.
-    --hcp_suffix            Optional suffix to append to session id when creating 
-                            session folder within the hcp folder. The final path
-                            to HCP session is then:
-                            `<targetfolder>/<session id><hcp_suffix>`. []
+        --hcp_filename (str, default 'automated'):
+            How to name the BOLD files once mapped into the hcp input folder
+            structure. The default ('automated') will automatically name each
+            file by their number (e.g. BOLD_1). The alternative ('userdefined')
+            is to use the file names, which can be defined by the user prior to
+            mapping (e.g. rfMRI_REST1_AP).
+        --hcp_folderstructure (str, default 'hcpls'):
+            Which HCP folder structure to use 'hcpya' or 'hcpls'.
+        --hcp_suffix (str, default ''):
+            Optional suffix to append to session id when creating session folder
+            within the hcp folder. The final path to HCP session is then:
+            `<targetfolder>/<session id><hcp_suffix>`.
 
-    USE
-    ===
+    Notes:
+        The command maps images from the sessions's nii folder into a folder
+        structure that conforms to the naming conventions used in the HCP
+        minimal preprocessing workflow. For the mapping to be correct, the
+        command expects the source session.txt file (sourcefile) to hold the
+        relevant information on images. To save space, the images are not
+        copied into the new folder structure but rather hard-links are created
+        if possible.
 
-    The command maps images from the sessions's nii folder into a folder
-    structure that conforms to the naming conventions used in the HCP
-    minimal preprocessing workflow. For the mapping to be correct, the
-    command expects the source session.txt file (sourcefile) to hold the relevant
-    information on images. To save space, the images are not copied into the new
-    folder structure but rather hard-links are created if possible.
+        Image definition:
+            For the mapping to work, each MR to be mapped has to be marked with the
+            appropriate image type in the source.txt file. The following file types
+            are recognized and will be mapped correctly:
 
-    Image definition
-    ----------------
+            --T1w
+                T1 weighted high resolution structural image
+            --T2w
+                T2 weighted high resolution structural image
+            --FM-GE
+                Gradient echo field map image used for distortion correction
+            --FM-Magnitude
+                Field mapping magnitude image used for distortion correction
+            --FM-Phase
+                Field mapping phase image used for distortion correction
+            --boldref[N]
+                Reference image for the following BOLD image
+            --bold[N]
+                BOLD image
+            --SE-FM-AP
+                Spin-echo fieldmap image recorded using the A-to-P phase
+                encoding direction
+            --SE-FM-PA
+                Spin-echo fieldmap image recorded using the P-to-A phase
+                encoding direction
+            --SE-FM-LR
+                Spin-echo fieldmap image recorded using the L-to-R phase
+                encoding direction
+            --SE-FM-RL
+                Spin-echo fieldmap image recorded using the R-to-L phase
+                encoding direction
+            --DWI
+                Diffusion weighted image.
 
-    For the mapping to work, each MR to be mapped has to be marked with the
-    appropriate image type in the source.txt file. The following file types
-    are recognized and will be mapped correctly:
+            In addition to these parameters, it is also possible to optionally
+            specify, which spin-echo image to use for distortion correction, by
+            adding `:se(<number of se image>)` to the line, as well as phase
+            encoding direction by adding `:phenc(<direction>)` to the line. In
+            case of spin-echo images themselves, the number denotes the number
+            of the image itself.
 
-    --T1w                 T1 weighted high resolution structural image
-    --T2w                 T2 weighted high resolution structural image
-    --FM-GE               Gradient echo field map image used for distortion
-                          correction
-    --FM-Magnitude        Field mapping magnitude image used for distortion
-                          correction
-    --FM-Phase            Field mapping phase image used for distortion
-                          correction
-    --boldref[N]          Reference image for the following BOLD image
-    --bold[N]             BOLD image
-    --SE-FM-AP            Spin-echo fieldmap image recorded using the A-to-P
-                          phase encoding direction
-    --SE-FM-PA            Spin-echo fieldmap image recorded using the P-to-A
-                          phase encoding direction
-    --SE-FM-LR            Spin-echo fieldmap image recorded using the L-to-R
-                          phase encoding direction
-    --SE-FM-RL            Spin-echo fieldmap image recorded using the R-to-L
-                          phase encoding direction
-    --DWI                 Diffusion weighted image
+            If this information is not provided the spin-echo image to use
+            will be deduced based on the order of images, and phase encoding
+            direction will be taken as default from the relevant HCP processing
+            parameters (e.g `--hcp_bold_unwarpdir='y'`).
 
-    
-    In addition to these parameters, it is also possible to optionally specify, 
-    which spin-echo image to use for distortion correction, by adding 
-    `:se(<number of se image>)` to the line, as well as phase encoding
-    direction by adding `:phenc(<direction>)` to the line. In case of 
-    spin-echo images themselves, the number denotes the number of the
-    image itself.
-    
-    If these information are not provided the spin-echo image to use will be
-    deduced based on the order of images, and phase encoding direction 
-    will be taken as default from the relevant HCP processing parameters
-    (e.g `--hcp_bold_unwarpdir='y'`). 
+            Do note that if you provide `se` information for the spin-echo
+            image, you have to also provide it for all the images that are to
+            use the spin-echo pair and vice-versa. If not, the matching
+            algorithm will have incomplete information and might fail.
 
-    Do note that if you provide `se` information for the spin-echo image,
-    you have to also provide it for all the images that are to use the
-    spin-echo pair and vice-versa. If not, the matching algorithm will have
-    incomplete information and might fail.
+            Example definition::
 
-
-    Example definition::
-
-        hcpready: true
-        01:                 :Survey
-        02: T1w             :T1w 0.7mm N1             : se(1)
-        03: T2w             :T2w 0.7mm N1             : se(1)
-        04:                 :Survey
-        05: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(1)
-        06: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(1)
-        07: bold1:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
-        08: bold2:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
-        09: bold3:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)    
-        10: bold4:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
-        11: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(2)
-        12: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(2)
-        13: bold5:WM        :BOLD 3mm 48 2.5s         : se(2) :phenc(AP)
-        14: bold6:WM        :BOLD 3mm 48 2.5s         : se(2) :phenc(AP)
-        15: bold7:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(AP)
-        16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(PA)
-
-
-    HCP folder structure version
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    `version` parameter determines the HCP folder structure to use:
-
-    --'v1'      Unprocessed data is parallel to processed data, functional data
-                folders have '_fncb' suffix and field map data folders have
-                '_strc' tail.
-    --'v2'      Unprocessed data is a subfolder in the HCP session folder, 
-                functional data folders and field map data folders do not have 
-                the '_fncb' and '_strc' extensions, respectively.
+                hcpready: true
+                01:                 :Survey
+                02: T1w             :T1w 0.7mm N1             : se(1)
+                03: T2w             :T2w 0.7mm N1             : se(1)
+                04:                 :Survey
+                05: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(1)
+                06: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(1)
+                07: bold1:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
+                08: bold2:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
+                09: bold3:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
+                10: bold4:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
+                11: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(2)
+                12: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(2)
+                13: bold5:WM        :BOLD 3mm 48 2.5s         : se(2) :phenc(AP)
+                14: bold6:WM        :BOLD 3mm 48 2.5s         : se(2) :phenc(AP)
+                15: bold7:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(AP)
+                16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(PA)
 
 
-    Multiple sessions and scheduling
-    --------------------------------
+            HCP folder structure version:
+                `version` parameter determines the HCP folder structure to use:
 
-    The command can be run for multiple sessions by specifying `sessions` and
-    optionally `sessionsfolder` and `parsessions` parameters. In this case the
-    command will be run for each of the specified sessions in the sessionsfolder
-    (current directory by default). Optional `filter` and `sessionids` 
-    parameters can be used to filter sessions or limit them to just specified id
-    codes. (for more information see online documentation). `sourcefolder` will 
-    be filled in automatically as each sessions's folder. Commands will run in 
-    parallel, where the degree of parallelism is determined by `parsessions` 
-    (1 by default).
+                --'v1'
+                    Unprocessed data is parallel to processed data, functional
+                    data folders have '_fncb' suffix and field map data folders
+                    have '_strc' tail.
+                --'v2'
+                    Unprocessed data is a subfolder in the HCP session folder,
+                    functional data folders and field map data folders do not
+                    have the '_fncb' and '_strc' extensions, respectively.
 
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `qunex ?schedule` for more information). If set in
-    combination with `sessions` parameter, sessions will be processed over
-    multiple nodes, `parsessions` parameter specifying how many sessions to
-    run per node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
+        Multiple sessions and scheduling:
+            The command can be run for multiple sessions by specifying
+            `sessions` and optionally `sessionsfolder` and `parsessions`
+            parameters. In this case the command will be run for each of the
+            specified sessions in the sessionsfolder (current directory by
+            default). Optional `filter` and `sessionids` parameters can be used
+            to filter sessions or limit them to just specified id codes. (for
+            more information see online documentation). `sourcefolder` will be
+            filled in automatically as each sessions's folder. Commands will
+            run in parallel, where the degree of parallelism is determined by
+            `parsessions` (1 by default).
 
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
+            If `scheduler` parameter is set, the command will be run using the
+            specified scheduler settings (see `qunex ?schedule` for more
+            information). If set in combination with `sessions` parameter,
+            sessions will be processed over multiple nodes, `parsessions`
+            parameter specifying how many sessions to run per node. Optional
+            `scheduler_environment`, `scheduler_workdir`, `scheduler_sleep`,
+            and `nprocess` parameters can be set.
 
-    EXAMPLE USE
-    ===========
-    
-    ::
+            Set optional `logfolder` parameter to specify where the processing
+            logs should be stored. Otherwise the processor will make best
+            guess, where the logs should go.
 
-        qunex setup_hcp sourcefolder=OP316 sourcefile=session.txt
+    Examples:
+        >>> qunex setup_hcp sourcefolder=OP316 sourcefile=session.txt
     """
 
     print("Running setup_hcp\n================")

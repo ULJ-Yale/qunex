@@ -31,27 +31,27 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %       --verbose (str, default 'none'):
 %           How to report the progress: 'full', 'script' or 'none'.
 %
+%   Output files:
+%       If group correlations are selected, the resulting files are:
+%
+%       - <root>_group_ABCor_Fz
+%           Mean Fisher Z value across participants.
+%
+%       - <root>_group_ABCor_r
+%           Mean Pearson r (converted from Fz) value across participants.
+%
+%       If individual correlations are selected, the resulting files are:
+%
+%       - <root>_<session id>_ABCor
+%           Pearson r correlations for the individual.
+%
+%       If root is not specified, it is taken to be the root of the flist.
+%
 %   Notes:
 %       Use the function to compute individual and/or group correlations of each
 %       smask voxel with each tmask voxel. tmask voxels are spread across the
 %       volume and smask voxels are spread across the volumes. For more details
 %       see `img_compute_ab_correlation` - nimage method.
-%
-%       Resulting files:
-%           If group correlations are selected, the resulting files are:
-%
-%           - <root>_group_ABCor_Fz
-%               Mean Fisher Z value across participants.
-%
-%           - <root>_group_ABCor_r
-%               Mean Pearson r (converted from Fz) value across participants.
-%
-%           If individual correlations are selected, the resulting files are:
-%
-%           - <root>_<session id>_ABCor
-%               Pearson r correlations for the individual.
-%
-%           If root is not specified, it is taken to be the root of the flist.
 %
 %   Examples:
 %       >>> fc_compute_ab_corr('scz.list', 'PFC.names', 'ACC.names', 5, ...

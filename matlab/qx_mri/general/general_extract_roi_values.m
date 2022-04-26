@@ -21,16 +21,16 @@ function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, 
 %       --stats (str, default 'rsize, rmean, mean'):
 %           A comma separated list of the statistics to save:
 %
-%           - rsize   ... size of ROI in voxels
-%           - rmean   ... location of the geometric mean of the ROI
-%           - rpeak   ... location of the peak value of the ROI
-%           - rmin    ... location of the minimum value in the ROI
-%           - rmax    ... location of the maxumal value in the ROI
-%           - mean    ... mean of values across ROI
-%           - median  ... median value across ROI
-%           - min     ... minimum value across ROI
-%           - max     ... mamimum value across ROI
-%           - peak    ... peak value in the ROI (largest absolute value).
+%           - 'rsize'   ... size of ROI in voxels
+%           - 'rmean'   ... location of the geometric mean of the ROI
+%           - 'rpeak'   ... location of the peak value of the ROI
+%           - 'rmin'    ... location of the minimum value in the ROI
+%           - 'rmax'    ... location of the maxumal value in the ROI
+%           - 'mean'    ... mean of values across ROI
+%           - 'median'  ... median value across ROI
+%           - 'min'     ... minimum value across ROI
+%           - 'max'     ... mamimum value across ROI
+%           - 'peak'    ... peak value in the ROI (largest absolute value).
 %
 %       --verbose (bool, default false):
 %           To report on progress or not.

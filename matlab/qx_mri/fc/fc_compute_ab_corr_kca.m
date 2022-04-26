@@ -32,6 +32,25 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %       --verbose (str, default 'none'):
 %           How to report the progress: 'full', 'script' or 'none'.
 %
+%   Output files:
+%       If group correlations are selected, the resulting files are:
+%
+%       - <root>_group_k[N]
+%           Group based cluster assignments for k=N.
+%
+%       - <root>_group_k[N]_cent
+%           Group based centroids for k=N.
+%
+%       If individual correlations are selected, the resulting files are:
+%
+%       - <root>_<session id>_group_k[N]
+%           Individual's cluster assignments for k=N.
+%
+%       - <root>_<session id>_group_k[N]_cent
+%           Individual's centroids for k=N.
+%
+%       If root is not specified, it is taken to be the root of the flist.
+%
 %   Notes:
 %       Use the function to cluster source voxels (specified by smask) based on
 %       their correlation pattern with target voxels (specified by tmask). The
@@ -42,25 +61,6 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %       Correlations are computed using the img_compute_ab_correlation gmri
 %       method. Clustering is computed using kmeans function with dmeasure as
 %       distance measure, and taking the best of nrep replications.
-%
-%       Resulting files:
-%           If group correlations are selected, the resulting files are:
-%
-%           - <root>_group_k[N]
-%               Group based cluster assignments for k=N.
-%
-%           - <root>_group_k[N]_cent
-%               Group based centroids for k=N.
-%
-%           If individual correlations are selected, the resulting files are:
-%
-%           - <root>_<session id>_group_k[N]
-%               Individual's cluster assignments for k=N.
-%
-%           - <root>_<session id>_group_k[N]_cent
-%               Individual's centroids for k=N.
-%
-%           If root is not specified, it is taken to be the root of the flist.
 %
 %   Examples:
 %       >>> fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', ...

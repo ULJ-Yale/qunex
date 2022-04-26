@@ -47,24 +47,24 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, ps
 %           includes signs for the effect direction if p-values are not signed.
 %           It can be signed z-scores image.
 %
+%   Output files:
+%       '_Conj_p'
+%           Conjunction results, p-values for u = 1 to u = n.
+%
+%       '_Conj_z'
+%           Conjunction results, z-scores for u = 1 to u = n.
+%
+%       '_Conj_FDR_p_<q>'
+%           p-values thresholded with FDR.
+%
+%       '_Conj_FDR_z_<q>'
+%           Z-scores thresholded with FDR.
+%
+%       '_Conj_FDR_c_<q>'
+%           Image of frequency of passing threshold.
+%
 %   Notes:
 %       For the rest of arguments see general_conjunction.m
-%
-%       Resulting files:
-%           '_Conj_p'
-%               Conjunction results, p-values for u = 1 to u = n.
-%
-%           '_Conj_z'
-%               Conjunction results, z-scores for u = 1 to u = n.
-%
-%           '_Conj_FDR_p_<q>'
-%               p-values thresholded with FDR.
-%
-%           '_Conj_FDR_z_<q>'
-%               Z-scores thresholded with FDR.
-%
-%           '_Conj_FDR_c_<q>'
-%               Image of frequency of passing threshold.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

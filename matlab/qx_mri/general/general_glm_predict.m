@@ -99,21 +99,21 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %               Whether to be very detailed 'high' or not 'low', when reporting
 %               progress ['high']
 %
+%   Output files:
+%       If `indtargetf` is set to 'gfolder', all the resulting files will be
+%       saved in the same folder, specified by `targetf` parameter. If
+%       `indtargetf` is set to 'sfolder', then the results will be saved in
+%       the subject specific sessions subfolders within the sessions folder
+%       specified by the `targetf` parameter. If the files are in a variant
+%       functional folder, then the 'bold_variant' option has to be
+%       specified. In this case the location where the files will be saved
+%       is specified by::
+%
+%           <targetf>/<session id>/images/functional<bold_variant>
+%
 %   Notes:
 %       The functions computes predicted timeseries and (if requested) residual
 %       after removal of the predicted signal, and saves the results.
-%
-%       Resulting files:
-%           If `indtargetf` is set to 'gfolder', all the resulting files will be
-%           saved in the same folder, specified by `targetf` parameter. If
-%           `indtargetf` is set to 'sfolder', then the results will be saved in
-%           the subject specific sessions subfolders within the sessions folder
-%           specified by the `targetf` parameter. If the files are in a variant
-%           functional folder, then the 'bold_variant' option has to be
-%           specified. In this case the location where the files will be saved
-%           is specified by::
-%
-%               <targetf>/<session id>/images/functional<bold_variant>
 %
 
 if nargin < 4 || isempty(options), options = '';  end

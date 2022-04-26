@@ -376,151 +376,146 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     Converts MR images from DICOM to NIfTI format.
 
-    INPUTS
-    ======
+    Parameters:
+        --folder (str, default '.'):
+            The base session folder with the dicom subfolder that holds session
+            numbered folders with dicom files.
+        --clean (str, default 'ask'):
+            Whether to remove preexisting NIfTI files ('yes'), leave them and
+            abort ('no') or ask interactively ('ask').
+        --unzip (str, default 'ask'):
+            If the dicom files are gziped whether to unzip them  ('yes'), leave
+            them be and abort ('no') or ask interactively ('ask').
+        --gzip (str, default 'ask'):
+            Whether to gzip individual DICOM files after they were processed
+            ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
+            ('folder'), or leave them ungzipped ('no'). Valid options are
+            'folder', 'file', 'no', 'ask'.
+        --verbose (bool, default True):
+             Whether to be report on the progress (True) or not (False).
+        --parelements (int | str, default 1):
+              How many parallel processes to run dcm2nii conversion with. The
+              number is 1 by default, if specified as 'all', all available
+              resources are utilized.
 
-    --folder           The base session folder with the dicom subfolder that 
-                       holds session numbered folders with dicom files. [.]
-    --clean            Whether to remove preexisting NIfTI files (yes), leave
-                       them and abort (no) or ask interactively (ask). [ask]
-    --unzip            If the dicom files are gziped whether to unzip them 
-                       (yes), leave them be and abort (no) or ask interactively
-                       (ask). [ask]
-    --gzip             Whether to gzip individual DICOM files after they were
-                       processed ('file'), gzip a DICOM sequence or acquisition 
-                       as an tar.gz archive ('folder'), or leave them ungzipped 
-                       ('no'). Valid options are 'folder', 'file', 'no', 'ask'. 
-                       ['ask']
-    --verbose          Whether to be report on the progress (True) or not
-                       (False). [True]
-    --parelements      How many parallel processes to run dcm2nii conversion 
-                       with. The number is one by default, if specified as 
-                       'all', all available resources are utilized.
+    Output files:
+        After running, the command will place all the generated NIfTI files
+        into the nii subfolder, named with sequential image number. It will
+        also generate two additional files: a session.txt file and a
+        DICOM-Report.txt file.
 
-    OUTPUTS
-    =======
+        session.txt file:
+            The session.txt will be placed in the session base folder. It
+            will contain the information about the session id, subject id,
+            location of folders and a list of created NIfTI images with
+            their description.
 
-    After running, the command will place all the generated NIfTI files into the
-    nii subfolder, named with sequential image number. It will also generate two
-    additional files: a session.txt file and a DICOM-Report.txt file.
+            An example session.txt file would be::
 
-    session.txt file
-    ----------------
+                id: OP169
+                subject: OP169
+                dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
+                raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
+                data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
+                hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
+                01: Survey
+                02: T1w 0.7mm N1
+                03: T2w 0.7mm N1
+                04: Survey
+                05: C-BOLD 3mm 48 2.5s FS-P
+                06: C-BOLD 3mm 48 2.5s FS-A
+                07: BOLD 3mm 48 2.5s
+                08: BOLD 3mm 48 2.5s
+                09: BOLD 3mm 48 2.5s
+                10: BOLD 3mm 48 2.5s
+                11: BOLD 3mm 48 2.5s
+                12: BOLD 3mm 48 2.5s
+                13: RSBOLD 3mm 48 2.5s
+                14: RSBOLD 3mm 48 2.5s
 
-    The session.txt will be placed in the session base folder. It will contain
-    the information about the session id, subject id, location of folders and a
-    list of created NIfTI images with their description.
+            For each of the listed images there will be a corresponding
+            NIfTI file in the nii subfolder (e.g. 7.nii.gz for the first
+            BOLD sequence), if a NIfTI file could be generated (Survey
+            images for instance don't convert). The generated session.txt
+            files form the basis for the following HCP and other processing
+            steps.
 
-    An example session.txt file would be::
+        DICOM-Report.txt file:
+            The DICOM-Report.txt file will be created and placed in the
+            sessions' dicom subfolder. The file will list the images it
+            found, the information about their original sequence number and
+            the resulting NIfTI file number, the name of the sequence, the
+            number of frames, TR and TE values, subject id, time of
+            acquisition, information and warnings about any additional
+            processing it had to perform (e.g. recenter structural images,
+            switch f and z dimensions, reslice due to premature end of
+            recording, etc.). In some cases some of the information (number
+            of frames, TE, TR) might not be reported if that information was
+            not present or couldn't be found in the DICOM file.
 
-        id: OP169
-        subject: OP169
-        dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
-        raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
-        data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
-        hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
-        01: Survey
-        02: T1w 0.7mm N1
-        03: T2w 0.7mm N1
-        04: Survey
-        05: C-BOLD 3mm 48 2.5s FS-P
-        06: C-BOLD 3mm 48 2.5s FS-A
-        07: BOLD 3mm 48 2.5s
-        08: BOLD 3mm 48 2.5s
-        09: BOLD 3mm 48 2.5s
-        10: BOLD 3mm 48 2.5s
-        11: BOLD 3mm 48 2.5s
-        12: BOLD 3mm 48 2.5s
-        13: RSBOLD 3mm 48 2.5s
-        14: RSBOLD 3mm 48 2.5s
+        dcm2nii log files:
+            For each image conversion attempt a dcm2nii_[N].log file will be
+            created that holds the output of the dcm2nii command that was
+            run to convert the DICOM files to a NIfTI image.
 
-    For each of the listed images there will be a corresponding NIfTI file in
-    the nii subfolder (e.g. 7.nii.gz for the first BOLD sequence), if a NIfTI
-    file could be generated (Survey images for instance don't convert). The
-    generated session.txt files form the basis for the following HCP and other
-    processing steps.
+    Notes:
+        The command is used to convert MR images from DICOM to NIfTI format.
+        It searches for images within the dicom subfolder within the
+        provided session folder (folder). It expects to find each image
+        within a separate subfolder. It then converts the images to NIfTI
+        format and places them in the nii folder within the session folder.
+        To reduce the space use it can then gzip the dicom files (gzip). To
+        speed the process up, it can run multiple dcm2nii processes in
+        parallel (parelements).
 
-    DICOM-Report.txt file
-    ---------------------
+        Before running, the command check for presence of existing NIfTI
+        files. The behavior when finding them is defined by clean parameter.
+        If set to 'ask', it will interactively ask what to do. If set to
+        'yes' it will remove any existing files and proceed. If set to 'no'
+        it will leave them and abort.
 
-    The DICOM-Report.txt file will be created and placed in the sessions's dicom
-    subfolder. The file will list the images it found, the information about
-    their original sequence number and the resulting NIfTI file number, the name
-    of the sequence, the number of frames, TR and TE values, subject id, time of
-    acquisition, information and warnings about any additional processing it had
-    to perform (e.g. recenter structural images, switch f and z dimensions,
-    reslice due to premature end of recording, etc.). In some cases some of the
-    information (number of frames, TE, TR) might not be reported if that
-    information was not present or couldn't be found in the DICOM file.
+        Before running, the command also checks whether DICOM files might be
+        gzipped. If that is the case, the response depends on the setting of
+        the unzip parameter. If set to 'yes' it will automatically gunzip
+        them and continue. If set to 'no', it will leave them be and abort.
+        If set to 'ask', it will interactively ask what to do.
 
-    dcm2nii log files
-    -----------------
+        Multiple sessions and scheduling:
+            The command can be run for multiple sessions by specifying
+            `sessions` and optionally `sessionsfolder` and `parelements`
+            parameters. In this case the command will be run for each of the
+            specified sessions in the sessionsfolder (current directory by
+            default). Optional `filter` and `sessionids` parameters can be
+            used to filter sessions or limit them to just specified id
+            codes. (for more information see online documentation).
+            `sessionsfolder` will be filled in automatically as each
+            sessions's folder. Commands will run in parallel by utilizing
+            the specified number of parelements (1 by default).
 
-    For each image conversion attempt a dcm2nii_[N].log file will be created
-    that holds the output of the dcm2nii command that was run to convert the
-    DICOM files to a NIfTI image.
+            If `scheduler` parameter is set, the command will be run using
+            the specified scheduler settings (see `qunex ?schedule` for more
+            information). If set in combination with `sessions` parameter,
+            sessions will be processed over multiple nodes, `core` parameter
+            specifying how many sessions to run per node. Optional
+            `scheduler_environment`, `scheduler_workdir`, `scheduler_sleep`,
+            and `nprocess` parameters can be set.
 
-    USE
-    ===
+            Set optional `logfolder` parameter to specify where the
+            processing logs should be stored. Otherwise the processor will
+            make best guess, where the logs should go.
 
-    The command is used to convert MR images from DICOM to NIfTI format. It
-    searches for images within the dicom subfolder within the provided
-    session folder (folder). It expects to find each image within a separate
-    subfolder. It then converts the images to NIfTI format and places them
-    in the nii folder within the session folder. To reduce the space use it
-    can then gzip the dicom files (gzip). To speed the process up, it can
-    run multiple dcm2nii processes in parallel (parelements).
+    Examples:
+        >>> qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes parelements=3
 
-    Before running, the command check for presence of existing NIfTI files. The
-    behavior when finding them is defined by clean parameter. If set to 'ask',
-    it will ask interactively, what to do. If set to 'yes' it will remove any
-    existing files and proceed. If set to 'no' it will leave them and abort.
+        Multiple sessions example::
 
-    Before running, the command also checks whether DICOM files might be
-    gzipped. If that is the case, the response depends on the setting of the
-    unzip parameter. If set to 'yes' it will automatically gunzip them and
-    continue. If set to 'no', it will leave them be and abort. If set to 'ask',
-    it will ask interactively, what to do.
-
-    Multiple sessions and scheduling
-    --------------------------------
-
-    The command can be run for multiple sessions by specifying `sessions` and
-    optionally `sessionsfolder` and `parelements` parameters. In this case the
-    command will be run for each of the specified sessions in the sessionsfolder
-    (current directory by default). Optional `filter` and `sessionids`
-    parameters can be used to filter sessions or limit them to just specified id
-    codes. (for more information see online documentation). `sessionsfolder` 
-    will be filled in automatically as each sessions's folder. Commands will run
-    in parallel by utilizing the specified number of parelements (1 by default).
-
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `qunex ?schedule` for more information). If set in
-    combination with `sessions` parameter, sessions will be processed over
-    multiple nodes, `core` parameter specifying how many sessions to run per
-    node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
-
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
-
-    EXAMPLE USE
-    ===========
-    
-    ::
-
-        qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes parelements=3
-
-    Multiple sessions example::
-
-        qunex dicom2nii \\
-          --sessionsfolder="/data/my_study/sessions" \\
-          --sessions="OP*" \\
-          --clean=yes \\
-          --unzip=yes \\
-          --gzip=no \\
-          --parelements=3
+            qunex dicom2nii \\
+              --sessionsfolder="/data/my_study/sessions" \\
+              --sessions="OP*" \\
+              --clean=yes \\
+              --unzip=yes \\
+              --gzip=no \\
+              --parelements=3
     """
 
     print("Running dicom2nii\n=================")
@@ -868,194 +863,185 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     Converts MR images from DICOM and PAR/REC files to NIfTI format.
 
-    INPUTS
-    ======
+    Parameters:
+        --folder (str, default '.'):
+            The base session folder with the dicom subfolder that holds session
+            numbered folders with dicom files.
+        --clean (str, default 'ask'):
+            Whether to remove preexisting NIfTI files ('yes'), leave them and
+            abort ('no') or ask interactively ('ask').
+        --unzip (str, default 'ask'):
+            If the dicom files are gziped whether to unzip them ('yes'), leave
+            them be and abort ('no') or ask interactively ('ask').
+        --gzip (str, default 'ask'):
+            Whether to gzip individual DICOM files after they were processed
+            ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
+            ('folder'), or leave them ungzipped ('no'). Valid options are
+            'folder', 'file', 'no', 'ask'.
+        --sessionid (str, default extracted from dicom files):
+            The id code to use for this session. If not provided, the session id
+            is extracted from dicom files.
+        --verbose (bool, default True):
+            Whether to be report on the progress (True) or not (False).
+        --parelements (int | str, default 1):
+            How many parallel processes to run dcm2nii conversion with. The
+            number is one by defaults, if specified as 'all', all available
+            resources are utilized.
+        --tool (str, default 'auto'):
+            What tool to use for the conversion. It can be one of:
 
-    --folder           The base session folder with the dicom subfolder that
-                       holds session numbered folders with dicom files. [.]
+            - 'auto' (determine best tool based on heuristics)
+            - 'dcm2niix'
+            - 'dcm2nii'
+            - 'dicm2nii'.
 
-    --clean            Whether to remove preexisting NIfTI files (yes), leave
-                       them and abort (no) or ask interactively (ask). [ask]
+        --add_image_type (int, default 0):
+            Adds image type information to the sequence name (Siemens scanners).
+            The value should specify how many of image type labels from the end
+            of the image type list to add.
+        --add_json_info (str, default ''):
+            What sequence information to extract from JSON sidecar files and add
+            to session.txt file. Specify a comma separated list of fields or
+            'all'. See list in session.txt file description below.
 
-    --unzip            If the dicom files are gziped whether to unzip them
-                       (yes), leave them be and abort (no) or ask interactively 
-                       (ask). [ask]
+    Output files:
+        After running, the command will place all the generated NIfTI files
+        into the nii subfolder, named with sequential image number. It will
+        also generate two additional files: a session.txt file and a
+        DICOM-Report.txt file.
 
-    --gzip             Whether to gzip individual DICOM files after they were
-                       processed ('file'), gzip a DICOM sequence or acquisition 
-                       as an tar.gz archive ('folder'), or leave them ungzipped 
-                       ('no'). Valid options are 'folder', 'file', 'no', 'ask'. 
-                       ['ask']
+        session.txt file:
+            The session.txt will be placed in the session base folder. It
+            will contain the information about the session id, subject id,
+            location of folders and a list of created NIfTI images with
+            their description.
 
-    --sessionid        The id code to use for this session. If not provided, the
-                       session id is extracted from dicom files.
+            Subject id will be extracted from the session id assuming the
+            session id formula: `<subject id>_<session id>`. If there is no
+            underscore in the session id, the subject id is assumed to
+            equal session id.
 
-    --verbose          Whether to be report on the progress (True) or not
-                       (False). [True]
+            An example session.txt file would be::
 
-    --parelements      How many parallel processes to run dcm2nii conversion
-                       with. The number is one by defaults, if specified as
-                       'all', all available resources are utilized.
+                id: OP169_baseline
+                subject: OP169
+                dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
+                raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
+                data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
+                hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
+                01: Survey
+                02: T1w 0.7mm N1
+                03: T2w 0.7mm N1
+                04: Survey
+                05: C-BOLD 3mm 48 2.5s FS-P
+                06: C-BOLD 3mm 48 2.5s FS-A
+                07: BOLD 3mm 48 2.5s
+                08: BOLD 3mm 48 2.5s
+                09: BOLD 3mm 48 2.5s
+                10: BOLD 3mm 48 2.5s
+                11: BOLD 3mm 48 2.5s
+                12: BOLD 3mm 48 2.5s
+                13: RSBOLD 3mm 48 2.5s
+                14: RSBOLD 3mm 48 2.5s
 
-    --tool             What tool to use for the conversion [auto]. It can be
-                       one of:
+            For each of the listed images there will be a corresponding
+            NIfTI file in the nii subfolder (e.g. 7.nii.gz for the first
+            BOLD sequence), if a NIfTI file could be generated (Survey
+            images for instance don't convert). The generated session.txt
+            files form the basis for the following HCP and other processing
+            steps.
 
-                       - auto (determine best tool based on heuristics)
-                       - dcm2niix
-                       - dcm2nii
-                       - dicm2nii
+            The following information can be extracted from sidecar JSON
+            files and added to the sequence information in session.txt
+            file::
 
-    --add_image_type   Adds image type information to the sequence name 
-                       (Siemens scanners). The value should specify how many of
-                       image type labels from the end of the image type list to
-                       add. [0]
+                :<fieldname>:       <JSON key>
+                :TR:                RepetitionTime
+                :PEDirection:       PhaseEncodingDirection
+                :EchoSpacing:       EffectiveEchoSpacing
+                :DwellTime:         DwellTime
+                :ReadoutDirection:  ReadoutDirection
 
-    --add_json_info    What sequence information to extract from
-                       JSON sidecar files and add to session.txt file.
-                       Specify a comma separated list of fields or 'all'.
-                       See list in session.txt file description below. []
+        DICOM-Report.txt file:
+            The DICOM-Report.txt file will be created and placed in the
+            session's dicom subfolder. The file will list the images it
+            found, the information about their original sequence number and
+            the resulting NIfTI file number, the name of the sequence, the
+            number of frames, TR and TE values, session id, time of
+            acquisition, information and warnings about any additional
+            processing it had to perform (e.g. recenter structural images,
+            switch f and z dimensions, reslice due to premature end of
+            recording, etc.). In some cases some of the information (number
+            of frames, TE, TR) might not be reported if that information
+            was not present or couldn't be found in the DICOM file.
 
-    OUTPUTS
-    =======
+        log files:
+            For each image conversion attempt a dcm2nii_[N] (or
+            dicm2nii_[N].log) file will be created that holds the output of
+            the command that was run to convert the DICOM or PAR/REC files
+            to a NIfTI image.
 
-    After running, the command will place all the generated NIfTI files into the
-    nii subfolder, named with sequential image number. It will also generate two
-    additional files: a session.txt file and a DICOM-Report.txt file.
+    Notes:
+        The command is used to convert MR images from DICOM and PAR/REC
+        files to NIfTI format. It searches for images within the a dicom
+        subfolder within the provided session folder (folder). It expects
+        to find each image within a separate subfolder. It then converts
+        the found images to NIfTI format and places them in the nii folder
+        within the session folder. To reduce the space used it can then
+        gzip the dicom or .REC files (gzip). The tool to be used for the
+        conversion can be specified explicitly or determined automatically.
+        It can be one of 'dcm2niix', 'dcm2nii', 'dicm2nii' or 'auto'. If
+        set to 'auto', for dicom files the conversion is done using
+        dcm2niix, and for PAR/REC files, dicm2nii is used if QuNex is set
+        to use Matlab, otherwise also PAR/REC files are converted using
+        dcm2niix. If set explicitly, the command will try to use the tool
+        specified. To speed the process up, the command can run it can run
+        multiple conversion processes in parallel. The number of processes
+        to run in parallel is specified using the parelements parameter.
 
-    session.txt file
-    ----------------
+        Before running, the command check for presence of existing NIfTI
+        files. The behavior when finding them is defined by clean
+        parameter. If set to 'ask', it will ask interactively, what to do.
+        If set to 'yes' it will remove any existing files and proceede. If
+        set to 'no' it will leave them and abort.
 
-    The session.txt will be placed in the session base folder. It will contain
-    the information about the session id, subject id, location of folders and a 
-    list of created NIfTI images with their description.
+        Before running, the command also checks whether DICOM or .REC files
+        might be gzipped. If that is the case, the response depends on the
+        setting of the unzip parameter. If set to 'yes' it will
+        automatically gunzip them and continue. If set to 'no', it will
+        leave them be and abort. If set to 'ask', it will ask
+        interactively, what to do.
 
-    Subject id will be extracted from the session id assuming the session id
-    formula: `<subject id>_<session id>`. If there is no underscore in the 
-    session id, the subject id is assumed to equal session id.
-    
-    An example session.txt file would be::
+        Multiple sessions and scheduling:
+            The command can be run for multiple sessions by specifying
+            `sessions` and optionally `sessionsfolder` and `parelements`
+            parameters. In this case the command will be run for each of
+            the specified sessions in the sessionsfolder (current directory
+            by default). Optional `filter` and `sessionids` parameters can
+            be used to filter sessions or limit them to just specified id
+            codes. (for more information see online documentation).
+            `sfolder` will be filled in automatically as each sessions's
+            folder. Commands will run in parallel by utilizing the
+            specified number of parelements (1 by default).
 
-        id: OP169_baseline
-        subject: OP169
-        dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
-        raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
-        data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
-        hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
-        01: Survey
-        02: T1w 0.7mm N1
-        03: T2w 0.7mm N1
-        04: Survey
-        05: C-BOLD 3mm 48 2.5s FS-P
-        06: C-BOLD 3mm 48 2.5s FS-A
-        07: BOLD 3mm 48 2.5s
-        08: BOLD 3mm 48 2.5s
-        09: BOLD 3mm 48 2.5s
-        10: BOLD 3mm 48 2.5s
-        11: BOLD 3mm 48 2.5s
-        12: BOLD 3mm 48 2.5s
-        13: RSBOLD 3mm 48 2.5s
-        14: RSBOLD 3mm 48 2.5s
+            If `scheduler` parameter is set, the command will be run using
+            the specified scheduler settings (see `qunex ?schedule` for
+            more information). If set in combination with `sessions`
+            parameter, sessions will be processed over multiple nodes,
+            `core` parameter specifying how many sessions to run per node.
+            Optional `scheduler_environment`, `scheduler_workdir`,
+            `scheduler_sleep`, and `nprocess` parameters can be set.
 
-    For each of the listed images there will be a corresponding NIfTI file in
-    the nii subfolder (e.g. 7.nii.gz for the first BOLD sequence), if a NIfTI
-    file could be generated (Survey images for instance don't convert). The
-    generated session.txt files form the basis for the following HCP and other
-    processing steps.
+            Set optional `logfolder` parameter to specify where the
+            processing logs should be stored. Otherwise the processor will
+            make best guess, where the logs should go.
 
-    The following information can be extracted from sidecar JSON files and added
-    to the sequence information in session.txt file::
-    
-        :<fieldname>:       <JSON key>
-        :TR:                RepetitionTime
-        :PEDirection:       PhaseEncodingDirection
-        :EchoSpacing:       EffectiveEchoSpacing
-        :DwellTime:         DwellTime
-        :ReadoutDirection:  ReadoutDirection
-
-    DICOM-Report.txt file
-    ---------------------
-
-    The DICOM-Report.txt file will be created and placed in the session's dicom
-    subfolder. The file will list the images it found, the information about
-    their original sequence number and the resulting NIfTI file number, the name
-    of the sequence, the number of frames, TR and TE values, session id, time of
-    acquisition, information and warnings about any additional processing it had
-    to perform (e.g. recenter structural images, switch f and z dimensions,
-    reslice due to premature end of recording, etc.). In some cases some of the
-    information (number of frames, TE, TR) might not be reported if that
-    information was not present or couldn't be found in the DICOM file.
-
-    log files
-    ---------
-
-    For each image conversion attempt a dcm2nii_[N] (or dicm2nii_[N].log) file
-    will be created that holds the output of the command that was run to convert 
-    the DICOM or PAR/REC files to a NIfTI image.
-
-    USE
-    ===
-
-    The command is used to convert MR images from DICOM and PAR/REC files to
-    NIfTI format. It searches for images within the a dicom subfolder within the
-    provided session folder (folder). It expects to find each image within a
-    separate subfolder. It then converts the found images to NIfTI format and
-    places them in the nii folder within the session folder. To reduce the space
-    used it can then gzip the dicom or .REC files (gzip). The tool to be used 
-    for the conversion can be specified explicitly or determined automatically.
-    It can be one of 'dcm2niix', 'dcm2nii', 'dicm2nii' or 'auto'. If set to 
-    'auto', for dicom files the conversion is done using dcm2niix, and for 
-    PAR/REC files, dicm2nii is used if QuNex is set to use Matlab, otherwise 
-    also PAR/REC files are converted using dcm2niix. If set explicitly, the 
-    command will try to use the tool specified. To speed the process up, the 
-    command can run it can run multiple conversion processes in parallel. The 
-    number of processes to run in parallel is specified using the parelements
-    parameter.
-
-    Before running, the command check for presence of existing NIfTI files. The
-    behavior when finding them is defined by clean parameter. If set to 'ask',
-    it will ask interactively, what to do. If set to 'yes' it will remove any
-    existing files and proceede. If set to 'no' it will leave them and abort.
-
-    Before running, the command also checks whether DICOM or .REC files might be
-    gzipped. If that is the case, the response depends on the setting of the
-    unzip parameter. If set to 'yes' it will automatically gunzip them and
-    continue. If set to 'no', it will leave them be and abort. If set to 'ask',
-    it will ask interactively, what to do.
-
-    Multiple sessions and scheduling
-    --------------------------------
-
-    The command can be run for multiple sessions by specifying `sessions` and
-    optionally `sessionsfolder` and `parelements` parameters. In this case the
-    command will be run for each of the specified sessions in the sessionsfolder
-    (current directory by default). Optional `filter` and `sessionids` parameters
-    can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each sessions's folder. Commands will run in parallel by
-    utilizing the specified number of parelements (1 by default).
-
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `qunex ?schedule` for more information). If set in
-    combination with `sessions` parameter, sessions will be processed over
-    multiple nodes, `core` parameter specifying how many sessions to run per
-    node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
-
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
-
-    EXAMPLE USE
-    ===========
-
-    ::
-
-        qunex dicom2nii folder=. clean=yes unzip=yes gzip=folder parelements=3
+    Examples:
+        >>> qunex dicom2nii folder=. clean=yes unzip=yes gzip=folder parelements=3
     
     
-    Multiple sessions example::
-
-        qunex dicom2niix \\
+    Multiple sessions example:
+        >>> qunex dicom2niix \\
           --sessionsfolder="/data/my_study/sessions" \\
           --sessions="OP*" \\
           --clean=yes \\
@@ -1725,59 +1711,62 @@ def sort_dicom(folder=".", **kwargs):
 
     Sorts DICOM files.
 
-    INPUTS
-    ======
+    Paramters:
+        --folder (str, default '.'):
+            The base session folder that contains the inbox subfolder with the
+            unsorted DICOM files.
+        --copy (str, default 'move'):
+            Should we 'copy' or 'move'.
+        --outdir (str, default detailed below):
+            Optional directory where the sorted files are to be saved. Defaults
+            to `folder` parameter if not set.
+        --files (str, default detailed below):
+            List of files to sort. Defaults to files in `folder`.
 
-    --folder      The base session folder that contains the inbox subfolder with
-                  the unsorted DICOM files.
+    Notes:
+        The command looks for the inbox subfolder in the specified session
+        folder (folder) and checks for presence of DICOM or PAR/REC files in
+        the inbox folder and its subfolders. It inspects the found files,
+        creates a dicom folder and for each image a numbered subfolder. It then
+        moves the found DICOM or PAR/REC files in the correct subfolders to
+        prepare them for dicom2nii(x) processing. In the process it checks that
+        PAR/REC extensions are uppercase and changes them if necessary. If log
+        files are found, they are placed in a separate `log` subfolder.
 
-    USE
-    ===
+        Multiple sessions and scheduling:
+            The command can be run for multiple sessions by specifying
+            `sessions` and optionally `sessionsfolder` and `parelements`
+            parameters. In this case the command will be run for each of the
+            specified sessions in the sessionsfolder (current directory by
+            default). Optional `filter` and `sessionids` parameters can be used
+            to filter sessions or limit them to just specified id codes. (for
+            more information see online documentation). `sfolder` will be
+            filled in automatically as each sessions's folder. Commands will
+            run in parallel by utilizing the specified number of parelements (1
+            by default).
 
-    The command looks for the inbox subfolder in the specified session folder
-    (folder) and checks for presence of DICOM or PAR/REC files in the inbox
-    folder and its subfolders. It inspects the found files, creates a dicom
-    folder and for each image a numbered subfolder. It then moves the found
-    DICOM or PAR/REC files in the correct subfolders to prepare them for
-    dicom2nii(x) processing. In the process it checks that PAR/REC extensions
-    are uppercase and changes them if necessary. If log files are found, they
-    are placed in a separate `log` subfolder.
+            If `scheduler` parameter is set, the command will be run using the
+            specified scheduler settings (see `qunex ?schedule` for more
+            information). If set in combination with `sessions` parameter,
+            sessions will be processed over multiple nodes, `core` parameter
+            specifying how many sessions to run per node. Optional
+            `scheduler_environment`, `scheduler_workdir`, `scheduler_sleep`,
+            and `nprocess` parameters can be set.
 
-    Multiple sessions and scheduling
-    --------------------------------
+            Set optional `logfolder` parameter to specify where the processing
+            logs should be stored. Otherwise the processor will make best
+            guess, where the logs should go.
 
-    The command can be run for multiple sessions by specifying `sessions` and
-    optionally `sessionsfolder` and `parelements` parameters. In this case the
-    command will be run for each of the specified sessions in the sessionsfolder
-    (current directory by default). Optional `filter` and `sessionids`
-    parameters can be used to filter sessions or limit them to just specified id
-    codes. (for more information see online documentation). `sfolder` will be 
-    filled in automatically as each sessions's folder. Commands will run in 
-    parallel by utilizing the specified number of parelements (1 by default).
+    Examples:
+        Single sessions example:
 
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `qunex ?schedule` for more information). If set in
-    combination with `sessions` parameter, sessions will be processed over
-    multiple nodes, `core` parameter specifying how many sessions to run per
-    node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
+        >>> qunex sort_dicom folder=OP667
 
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
+        Multiple sessions example:
 
-    EXAMPLE USE
-    ===========
-    
-    ::
-        
-        qunex sort_dicom folder=OP667
-
-    Multiple sessions example::
-
-        qunex sort_dicom \\
-          --sessionsfolders="/data/my_study/sessions" \\
-          --sessions="OP*"
+        >>> qunex sort_dicom \\
+                  --sessionsfolders="/data/my_study/sessions" \\
+                  --sessions="OP*"
     """
 
     # --- should we copy or move
@@ -1909,35 +1898,27 @@ def list_dicom(folder=None):
     """
     ``list_dicom [folder=inbox]``
 
-    Inspects a folder for dicom files and prints a detailed reports of the
+    Inspects a folder for dicom files and prints a detailed report of the
     results.
 
-    INPUTS
-    ======
+    Parameters:
+        --folder (str, default 'inbox'):
+            The folder to be inspected for the presence of the DICOM files.
 
-    --folder      The folder to be inspected for the presence of the DICOM 
-                  files. [inbox]
+    Notes:
+        The command inspects the folder (`folder`) for dicom files and prints a
+        detailed report of the results. Specifically, for each dicom file it
+        finds in the specified folder and its subfolders it will print:
 
-    USE
-    ===
+        - location of the file
+        - session id recorded in the dicom file
+        - sequence number and name
+        - date and time of acquisition.
 
-    The command inspects the folder (`folder`) for dicom files and prints a
-    detailed report of the results. Specifically, for each dicom file it finds
-    in the specified folder and its subfolders it will print:
+        Importantly, it can work with both regular and gzipped DICOM files.
 
-    - location of the file
-    - session id recorded in the dicom file
-    - sequence number and name
-    - date and time of acquisition
-
-    Importantly, it can work with both regular and gzipped DICOM files.
-
-    EXAMPLE USE
-    ===========
-    
-    ::
-
-        qunex list_dicom folder=OP269/dicom
+    Examples:
+        >>> qunex list_dicom folder=OP269/dicom
     """
 
     if folder is None:
@@ -1972,28 +1953,21 @@ def split_dicom(folder=None):
 
     Sorts out DICOM images from different sessions.
 
-    INPUTS
-    ======
+    Parameters:
+        --folder (str, default 'inbox'):
+            The folder that contains the DICOM files to be sorted out.
 
-    --folder      The folder that contains the DICOM files to be sorted out.
+    Notes:
+        The command is used when DICOM images from different sessions are mixed
+        in the same folder and need to be sorted out. Specifically, the command
+        inspects the specified folder (`folder`) and its subfolders for the
+        presence of DICOM files. For each DICOM file it finds, it checks, what
+        session id the file belongs to. In the specified folder it then creates
+        a subfolder for each of the found sessions and moves all the DICOM
+        files in the right sessions's subfolder.
 
-    USE
-    ===
-
-    The command is used when DICOM images from different sessions are mixed in
-    the same folder and need to be sorted out. Specifically, the command
-    inspects the specified folder (`folder`) and its subfolders for the presence
-    of DICOM files. For each DICOM file it finds, it checks, what session id the
-    file belongs to. In the specified folder it then creates a subfolder for
-    each of the found sessions and moves all the DICOM files in the right
-    sessions's subfolder.
-
-    EXAMPLE USE
-    ===========
-    
-    ::
-
-        qunex split_dicom folder=dicommess
+    Examples:
+        >>> qunex split_dicom folder=dicommess
     """
 
     if folder is None:
@@ -2030,379 +2004,376 @@ def split_dicom(folder=None):
 
 def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='folder', verbose='yes', overwrite='no'):
     """
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [overwrite="no"] [verbose=yes]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
 
     Automatically processes packets with individual sessions's DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
 
-    INPUTS
-    ======
+    Parameters:
+        --sessionsfolder (str, default '.'):
+            The base study sessions folder (e.g. WM44/sessions) where the inbox
+            and individual session folders are. If not specified, the current
+            working folder will be taken as the location of the sessionsfolder.
+        --sessions (str, default ''):
+            A comma delimited string that lists the sessions to process. If
+            master inbox folder is used, the parameter is optional and it can
+            include regex patterns. In this case only those sessions identified
+            by the pattern that also match with any of the patterns in the
+            sessions list will be processed. If `masterinbox` is set to none,
+            the list specifies the session folders to process, and it can
+            include glob patterns.
+        --masterinbox (str, default <sessionsfolder>/inbox/MR):
+            The master inbox folder with packages to process. By default
+            masterinbox is in sessions folder: <sessionsfolder>/inbox/MR. If
+            the packages are elsewhere, the location can be specified here. If
+            set to "none", the data is assumed to already exist in the
+            individual sessions' inbox folder:
+            <studyfolder>/<sessionsfolder>/<session id>/inbox.
+        --check (str, default 'yes'):
+            The type of check to perform when packages or session folders are
+            identified. The possible values are:
 
-    --sessionsfolder      The base study sessions folder (e.g. WM44/sessions) 
-                          where the inbox and individual session folders are. 
-                          If not specified, the current working folder will be 
-                          taken as the location of the sessionsfolder. [.]
-    
-    --sessions            A comma delimited string that lists the sessions to 
-                          process. If master inbox folder is used, the parameter 
-                          is optional and it can include regex patterns. In this 
-                          case only those sessions identified by the pattern
-                          that also match with any of the patterns in the 
-                          sessions list will be processed. If `masterinbox` is 
-                          set to none, the list specifies the session folders to
-                          process, and it can include glob patterns. [""]
-    
-    --masterinbox         The master inbox folder with packages to process. By 
-                          default masterinbox is in sessions folder: 
-                          <sessionsfolder>/inbox/MR. If the packages are
-                          elsewhere, the location can be specified here. If set 
-                          to "none", the data is assumed to already exist in the
-                          individual sessions' inbox folder: 
-                          <studyfolder>/<sessionsfolder>/<session id>/inbox.
-                          [<sessionsfolder>/inbox/MR]
-    
-    --check               The type of check to perform when packages or session  
-                          folders are identified. [yes] The possible values are:
+            - 'yes' ... ask for interactive confirmation to proceed
+            - 'no'  ... report and continue w/o additional checks
+            - 'any' ... continue if any packages are ready to process report error
+              otherwise.
 
-                          - yes (ask for interactive confirmation to proceed)
-                          - no (report and continue w/o additional checks)
-                          - any (continue if any packages are ready to process
-                            report error otherwise)
+        --pattern (str, default '(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)'):
+            The regex pattern to use to find the packages and to extract the
+            session id.
+        --nameformat (str, default '(?P<subject_id>.*)'):
+            The regex pattern to use to extract subject id and (optionally) the
+            session name from the session or packet name.
+        --tool (str, default 'auto'):
+            What tool to use for the conversion. It can be one of:
 
-    --pattern             The regex pattern to use to find the packages and 
-                          to extract the session id.
-                          ["(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"]
+            - 'auto' (determine best tool based on heuristics)
+            - 'dcm2niix'
+            - 'dcm2nii'
+            - 'dicm2nii'.
 
-    --nameformat          The regex pattern to use to extract subject id and 
-                          (optionally) the session name from the session or
-                          packet name. ["(?P<subject_id>.*)"]
+        --parelements (int, default 1):
+            The number of parallel processes to use when running converting
+            DICOM images to NIfTI files. If specified as 'all', all avaliable
+            resources will be utilized.
+        --logfile (str, default ''):
+            A string specifying the location of the log file and the columns in
+            which packetname, subject id and session name information are
+            stored. The string should specify: ``"path:<path to the log file>|
+            packetname:<name of the packet extracted by the
+            pattern>|subjectid:<the column with subjectid
+            information>[|sessionid:<the column with sesion id
+            information>]"``.
+        --archive (str, default 'move'):
+            What to do with a processed package. Options are:
 
-    --tool                What tool to use for the conversion [auto]. It can be 
-                          one of:
+            - 'move'   ... move the package to the default archive folder
+            - 'copy'   ... copy the package to the default archive folder
+            - 'leave'  ... keep the package in the session or master inbox
+              folder
+            - 'delete' ... delete the package after it has been processed.
 
-                          - auto (determine best tool based on heuristics)
-                          - dcm2niix
-                          - dcm2nii
-                          - dicm2nii
+            In case of processing data from a sessions folder, the
+            `archive` parameter is only valid for compressed
+            packages.
+        --add_image_type (int, default 0):
+            Adds image type information to the sequence name (Siemens scanners).
+            The value should specify how many of image type labels from the end
+            of the image type list to add.
+        --add_json_info (str, default ''):
+            What sequence information to extract from JSON sidecar files and add
+            to session.txt file. Specify a comma separated list of fields or
+            'all'. See list in session.txt file description below.
+        --unzip (str, default 'yes'):
+            Whether to unzip individual DICOM files that are gzipped. Valid
+            options are 'yes', 'no', and 'ask'.
+        --gzip (str, default 'folder'):
+            Whether to gzip individual DICOM files after they were processed
+            ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
+            ('folder'), or leave them ungzipped ('no'). Valid options are
+            'folder', 'file', 'no', 'ask'.
+        --verbose (str, default 'yes'):
+            Whether to provide detailed report also of packets that could not be
+            identified and/or are not matched with log file.
+        --overwrite (str, default 'no'):
+            Whether to remove existing data in the dicom and nii folders.
 
-    --parelements         The number of parallel processes to use when running 
-                          converting DICOM images to NIfTI files. If specified
-                          as 'all', all avaliable resources will be utilized.
-                          [1]
+    Notes:
+        Use:
+            The command is used to automatically process packets with individual
+            sessions's DICOM or PAR/REC files all the way to, and including,
+            generation of NIfTI files. Packet can be either a zip file, a tar
+            archive or a folder that contains DICOM or PAR/REC files.
 
-    --logfile             A string specifying the location of the log file and
-                          the columns in which packetname, subject id and
-                          session name information are stored. The string should
-                          specify: ``"path:<path to the log file>|
-                          packetname:<name of the packet extracted by the 
-                          pattern>|subjectid:<the column with subjectid 
-                          information>[|sessionid:<the column with sesion id 
-                          information>]"``. [""]
+            The command can import packets either from a dedicated masterinbox
+            folder and create the necessary session folders within
+            `--sessionsfolder`, or it can process the data already present in
+            the session specific folders.
 
-    --archive             What to do with a processed package ['move']. Options 
-                          are:
+            The next sections will describe the two use cases in more detail.
 
-                          - move (move the package to the default archive 
-                            folder)
-                          - copy (copy the package to the default archive 
-                            folder)
-                          - leave (keep the package in the session or master 
-                            inbox folder)
-                          - delete (delete the package after it has been 
-                            processed)
-                      
-                          In case of processing data from a sessions folder, the
-                          `archive` parameter is only valid for compressed 
-                          packages.
-    
-    --add_image_type      Adds image type information to the sequence name 
-                          (Siemens scanners). The value should specify how many 
-                          of image type labels from the end of the image type 
-                          list to add. [0]
+            Processing data from a dedicated masterinbox folder:
+                This is the default operation. In this case the `--masterinbox`
+                parameter has to provide a path to the folder with the incoming
+                packets (`<sessionsfolder>/inbox/MR` by default). The session
+                id is identified by the use of the `--pattern` parameter, and
+                optionally the `--logfile` parameter. The packages processed
+                can be optionally further filtered by the `--sessions`
+                parameter, so that only the packages that match both with the
+                `--pattern` and `--sessions` list are processed.
 
-    --add_json_info       What sequence information to extract from
-                          JSON sidecar files and add to session.txt file.
-                          Specify a comma separated list of fields or 'all'.
-                          See list in session.txt file description below. []
+                The command first looks into the provided master inbox folder
+                (`--masterinbox`; by default `<sessionsfolder>/inbox/MR`) and
+                finds any packets that match the specified regex pattern
+                (`--pattern`). The `--pattern` has to be prepared so that it
+                returns a named group 'packet_name'.
+                The default pattern is::
 
-    --unzip               Whether to unzip individual DICOM files that are
-                          gzipped. Valid options are 'yes', 'no', and 'ask'.
-                          ['yes']
+                    "(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
 
-    --gzip                Whether to gzip individual DICOM files after they 
-                          were processed ('file'), gzip a DICOM sequence or 
-                          acquisition as an tar.gz archive ('folder'), or 
-                          leave them ungzipped ('no'). Valid options are 
-                          'folder', 'file', 'no', 'ask'. ['folder']
+                which will identify the initial part of the packet file- or
+                foldername, (w/o any extension that identifies a compressed
+                package) as the packet name.
+                Specifically::
 
-    --overwrite           Whether to remove existing data in the dicom and nii 
-                          folders. ['no']
+                    OP386
+                    OP386.zip
+                    OP386.tar.gz
 
-    --verbose             Whether to provide detailed report also of packets
-                          that could not be identified and/or are not matched 
-                          with log file. ['yes']
+                will all be identified as packet names 'OP386'.
 
-    USE
-    ===
+                Once all the packets have been found, if the `--sessions`
+                parameter is specified, only those packets for which the
+                identified packet name matches any of the sessions specified in
+                the `--sessions` parameter will be further processed. The
+                entries in the `--sessions` list can be regular expressions, in
+                which case all the packet names that match any of the
+                expressions will be processed.
 
-    The command is used to automatically process packets with individual
-    sessions's DICOM or PAR/REC files all the way to, and including, generation
-    of NIfTI files. Packet can be either a zip file, a tar archive or a folder 
-    that contains DICOM or PAR/REC files.
+                Next, the extracted packet name will be processed to extract
+                subject id and (optionally) session name. The extraction is
+                specified by the `--nameformat` parameter. Specifically, the
+                parameter should be a regular expression that returns a named
+                group `subject_id` and (optionally) a named group
+                `session_name`. This information will be used to identify the
+                subject the data belongs to and (optionally) the specific
+                session within which the data were acquired. The default
+                expression is::
 
-    The command can import packets either from a dedicated masterinbox folder 
-    and create the necessary session folders within `--sessionsfolder`, or it 
-    can process the data already present in the session specific folders. 
+                    "(?P<subject_id>.*)"
 
-    The next sections will describe the two use cases in more detail.
+                which will return the session id as the subject id, assuming
+                that only a single session was recorded. The following
+                pattern::
 
-    Processing data from a dedicated masterinbox folder
-    ---------------------------------------------------
+                    "(?P<subject_id>.*?)_(?P<session_name>.*)"
 
-    This is the default operation. In this case the `--masterinbox` parameter 
-    has to provide a path to the folder with the incoming packets 
-    (`<sessionsfolder>/inbox/MR` by default). The session id is identified by 
-    the use of the `--pattern` parameter, and optionally the `--logfile` 
-    parameter. The packages processed can be optionally further filtered by the 
-    `--sessions` parameter, so that only the packages that match both with the 
-    `--pattern` and `--sessions` list are processed.
+                Would take the section of the string before the first underscore
+                as the subject id and the rest of the string as the session
+                name. I.e.::
 
-    The command first looks into the provided master inbox folder 
-    (`--masterinbox`; by default `<sessionsfolder>/inbox/MR`) and finds any 
-    packets that match the specified regex pattern (`--pattern`). The 
-    `--pattern` has to be prepared so that it returns a named group 'packet_name'. 
-    The default pattern is::
+                    OP386_MR_1
 
-        "(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
+                would be parsed to::
 
-    which will identify the initial part of the packet file- or foldername, (w/o 
-    any extension that identifies a compressed package) as the packet name. 
-    Specifically::
+                    subject_id: OP386
+                    session_name: MR_1
 
-        OP386
-        OP386.zip
-        OP386.tar.gz
+                The command then lists all the sessions to process along with
+                the extracted subject ids and session names. If the check
+                parameter is set to 'yes', the command will ask whether to
+                process the listed packets, if it is set to 'no', it will just
+                start processing them, if it is set to `any`, it will start
+                processing them but return an explicit error if no packets are
+                found.
 
-    will all be identified as packet names 'OP386'.
+                For each packet found, the command will generate a new session
+                folder. The name of the folder will take the form
+                `<subject_id>_<session_name>`. If no session name is extracted
+                then the name of the folder will be simply `<subject_id>`.
 
-    Once all the packets have been found, if the `--sessions` parameter is 
-    specified, only those packets for which the identified packet name matches 
-    any of the sessions specified in the `--sessions` parameter will 
-    be further processed. The entries in the `--sessions` list can be regular
-    expressions, in which case all the packet names that match any of the 
-    expressions will be processed.
+                Alternatively, a path to a log file can be provided with the
+                information on which columns provide the following information:
 
-    Next, the extracted packet name will be processed to extract subject id and 
-    (optionally) session name. The extraction is specified by the 
-    `--nameformat` parameter. Specifically, the parameter should be a 
-    regular expression that returns a named group `subject_id` and (optionally)
-    a named group `session_name`. This information will be used to identify the
-    subject the data belongs to and (optionally) the specific session within 
-    which the data were acquired. The default expression is::
+                - packet_name (the extracted name of the packet)
+                - subject_id (subject id of the packet)
+                - session_name (session id of the packet)
 
-        "(?P<subject_id>.*)"
+                At least `packet_name` and `subject_id` have to be provided. If
+                `session_name` is omitted, the command assumes there is only
+                one session per subject.
 
-    which will return the session id as the subject id, assuming that only a 
-    single session was recorded. The following pattern::
+                The command will then copy, unzip or untar all the files in the
+                packet into an inbox folder created within the session folder.
+                Once all the files are extracted or copied, depending on the
+                archive parameter, the packet is then either moved or copied to
+                the `study/sessions/archive/MR` folder, left as is, or deleted.
+                If the archive folder does not yet exist, it is created.
 
-        "(?P<subject_id>.*?)_(?P<session_name>.*)"
+                If a session folder with an inbox folder already exists, if the
+                overwrite parameter is set to yes, it will delete the contents
+                of the dicom and nii folders and redo the import process. If
+                the overwrite parameter is set to no, then the packet will not
+                be processed so that existing data is not changed. In this case
+                either set the overwrite parameter to yes, or remove or rename
+                the exisiting folder(s) and rerun the command to process those
+                packet(s) as well.
 
-    Would take the section of the string before the first underscore as the
-    subject id and the rest of the string as the session name. I.e.::
+            Processing data from a session folder:
+                If the `--masterinbox` parameter is set to "none", then the
+                command assumes that the incoming data has already been saved
+                to each session folder within the `--sessionsfolder`. In this
+                case, the command will look into all folders that match the
+                list provided in the `--sessions` parameter and process the
+                data in that folder. Each entry in the list can be a glob
+                pattern matching with multitiple session folders.
 
-        OP386_MR_1
+                To correctly identify the subject id and session name,
+                `--nameformat` parameter will be used. Specifically, the
+                parameter should be a regular expression that returns a named
+                group `subject_id` and (optionally) a named group
+                `session_name`. This information will be used to identify the
+                subject the data belongs to and (optionally) the specific
+                session within which the data were acquired. The default
+                expression is::
 
-    would be parsed to::
+                    "(?P<subject_id>.*)"
 
-        subject_id: OP386
-        session_name: MR_1    
+                which will return the session id as the subject id, assuming
+                that only a single session was recorded. The following
+                pattern::
 
-    The command then lists all the sessions to process along with the extracted 
-    subject ids and session names. If the check parameter is set to 
-    'yes', the command will ask whether to process the listed packets, if it is 
-    set to 'no', it will just start processing them, if it is set to `any`, it 
-    will start processing them but return an explicit error if no packets are 
-    found. 
+                    "(?P<subject_id>.*?)_(?P<session_name>.*)"
 
-    For each packet found, the command will generate a new session folder. The
-    name of the folder will take the form `<subject_id>_<session_name>`. If no
-    session name is extracted then the name of the folder will be simply 
-    `<subject_id>`. 
+                Would take the section of the string before the first underscore
+                as the subject id and the rest of the string as the session
+                name. I.e.::
 
-    Alternatively, a path to a log file can be provided with the information on
-    which columns provide the following information:
+                    OP386_MR_1
 
-    - packet_name (the extracted name of the packet)
-    - subject_id (subject id of the packet)
-    - session_name (session id of the packet)
+                would be parsed to::
 
-    At least `packet_name` and `subject_id` have to be provided. If
-    `session_name` is omitted, the command assumes there is only one session per
-    subject. 
+                    subject_id: OP386
+                    session_name: MR_1
 
-    The command will then copy, unzip or untar all the files in the packet 
-    into an inbox folder created within the session folder. Once all the files 
-    are extracted or copied, depending on the archive parameter, the packet is 
-    then either moved or copied to the `study/sessions/archive/MR` folder, left
-    as is, or deleted. If the archive folder does not yet exist, it is created.
+                The folders found are expected to have the data stored in the
+                inbox folder either as individual files or as a compressed
+                package. If the latter is the case, the files will be extracted
+                to the inbox folder. If any results—e.g. files in `dicom` or
+                `nii` folders—already exists, if the overwrite parameter is set
+                to no (the default) then the processing of the folder will be
+                skipped. If the overwrite parmeter is set to yes, the existing
+                data in dicom and nii folders will be removed and the
+                processing will be redone.
 
-    If a session folder with an inbox folder already exists, if the overwrite 
-    parameter is set to yes, it will delete the contents of the dicom and nii
-    folders and redo the import process. If the overwrite parameter is set to
-    no, then the packet will not be processed so that existing data is not 
-    changed. In this case either set the overwrite parameter to yes, or remove 
-    or rename the exisiting folder(s) and rerun the command to process 
-    those packet(s) as well. 
+            Further processing:
+                After the files have been copied or extracted to the inbox
+                folder, a `sort_dicom` command is run on that folder and all
+                the DICOM or PAR/REC files are sorted and moved to the dicom
+                folder. After that is done, a conversion command is run to
+                convert the DICOM images or PAR/REC files to the NIfTI format
+                and move them to the nii folder. The specific tool to do the
+                conversion can be specified explicitly using the `--tool`
+                parameter or left for the command to decide if set to 'auto' or
+                let to default. The DICOM or PAR/REC files are preserved and
+                gzipped to save space. To speed up the conversion, the
+                parelements parameter is passed to the `dicom2niix` command.
+                `session.txt` and `DICOM-Report.txt` files are created as well.
+                Please, check the help for `sort_dicom` and `dicom2niix`
+                commands for the specifics.
 
-    Processing data from a session folder
-    -------------------------------------
+    Examples:
+        First the examples for processing packages from `masterinbox` folder.
 
-    If the `--masterinbox` parameter is set to "none", then the command assumes 
-    that the incoming data has already been saved to each session folder within 
-    the `--sessionsfolder`. In this case, the command will look into all folders 
-    that match the list provided in the `--sessions` parameter and process the 
-    data in that folder. Each entry in the list can be a glob pattern matching 
-    with multitiple session folders.
+        In the first example, we are assuming that the packages we want to
+        process are in the default folder
+        (`<path_to_studyfolder>/sessions/inbox/MR`), the file or folder names
+        contain only the packet names to be used, and the subject id is equal
+        to the packet name. All packets found are to be processed, after the
+        user gives a go-ahead to an interactive prompt:
 
-    To correctly identify the subject id and session name, `--nameformat` 
-    parameter will be used. Specifically, the parameter should be a regular 
-    expression that returns a named group `subject_id` and (optionally)
-    a named group `session_name`. This information will be used to identify the
-    subject the data belongs to and (optionally) the specific session within 
-    which the data were acquired. The default expression is::
+        >>> qunex import_dicom \\
+                  --sessionsfolder="<path_to_studyfolder>/sessions"
 
-        "(?P<subject_id>.*)"
+        If the processing should continue automatically if packages to process
+        were found, then the command should be:
 
-    which will return the session id as the subject id, assuming that only a 
-    single session was recorded. The following pattern::
+        >>> qunex import_dicom \\
+                  --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                  --check="any"
 
-        "(?P<subject_id>.*?)_(?P<session_name>.*)"
+        If only package names starting with 'AP' or 'HQ' are to be processed
+        then the `sessions` parameter has to be added:
 
-    Would take the section of the string before the first underscore as the
-    subject id and the rest of the string as the session name. I.e.::
+        >>> qunex import_dicom \\
+                  --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                  --sessions="AP.*,HQ.*" \\
+                  --check="any"
 
-        OP386_MR_1
+        If the packages are named e.g. 'Yale-AP4983.zip' with the extension
+        optional, then to extract the packet name and map it directly to
+        subject id, the following `pattern` parameter needs to be added:
 
-    would be parsed to::
+        >>> qunex import_dicom \\
+                  --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                  --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                  --sessions="AP.*,HQ.*" \\
+                  --check="any"
 
-        subject_id: OP386
-        session_name: MR_1
+        If the session name can also be extracted and the files are in the
+        format e.g. 'Yale-AP4876_Baseline.zip', then a `nameformat` parameter
+        needs to be added:
 
-    The folders found are expected to have the data stored in the inbox folder
-    either as individual files or as a compressed package. If the latter is the
-    case, the files will be extracted to the inbox folder. If any results—e.g.
-    files in `dicom` or `nii` folders—already exists, if the overwrite parameter
-    is set to no (the default) then the processing of the folder will be
-    skipped. If the overwrite parmeter is set to yes, the existing data in dicom
-    and nii folders will be removed and the processing will be redone.
+        >>> qunex import_dicom \\
+                  --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                  --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                  --sessions="AP.*,HQ.*" \\
+                  --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \\
+                  --check="any"
 
-    Further processing
-    ------------------
+        In this case, 'AP4876_Baseline' will be first extracted as a packet name
+        and then parsed into 'AP4876' subject id and 'Baseline' session name.
 
-    After the files have been copied or extracted to the inbox folder, a
-    `sort_dicom` command is run on that folder and all the DICOM or PAR/REC files
-    are sorted and moved to the dicom folder. After that is done, a conversion
-    command is run to convert the DICOM images or PAR/REC files to the NIfTI
-    format and move them to the nii folder. The specific tool to do the 
-    conversion can be specified explicitly using the `--tool` parameter or left 
-    for the command to decide if set to 'auto' or let to default. The DICOM or 
-    PAR/REC files are preserved and gzipped to save space. To speed up the 
-    conversion, the parelements parameter is passed to the `dicom2niix` command. 
-    `session.txt` and `DICOM-Report.txt` files are created as well. Please, 
-    check the help for `sort_dicom` and `dicom2niix` commands for the specifics.
+        If the files are named e.g. 'Yale-AP4983.zip' and a log file exists in
+        which the AP* or HQ* are mapped to a corresponding subject id and
+        session names, then the command is changed to:
 
-    EXAMPLE USE
-    ===========
+        >>> qunex import_dicom \\
+                  --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                  --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                  --sessions="AP.*,HQ.*" \\
+                  --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \\
+                  --check="any"
 
-    First the examples for processing packages from `masterinbox` folder.
+        For the examples of processing data already present in the individual
+        session id folder, let's assume that we have the following files
+        present, with no other files in the sessions folders:
 
-    In the first example, we are assuming that the packages we want to process 
-    are in the default folder (`<path_to_studyfolder>/sessions/inbox/MR`), 
-    the file or folder names contain only the packet names to be used, and the 
-    subject id is equal to the packet name. All packets found are to be
-    processed, after the user gives a go-ahead to an interactive prompt::
-    
-        qunex import_dicom \
-            --sessionsfolder="<path_to_studyfolder>/sessions"
-    
-    If the processing should continue automatically if packages to process were 
-    found, then the command should be::
-    
-        qunex import_dicom \
-            --sessionsfolder="<path_to_studyfolder>/sessions" \
-            --check="any"
-    
-    If only package names starting with 'AP' or 'HQ' are to be processed then 
-    the `sessions` parameter has to be added::
-    
-        qunex import_dicom \
-            --sessionsfolder="<path_to_studyfolder>/sessions" \
-            --sessions="AP.*,HQ.*" \
-            --check="any"
-    
-    If the packages are named e.g. 'Yale-AP4983.zip' with the extension
-    optional, then to extract the packet name and map it directly to subject id,
-    the following `pattern` parameter needs to be added::
-    
-        qunex import_dicom \
-            --sessionsfolder="<path_to_studyfolder>/sessions" \
-            --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
-            --sessions="AP.*,HQ.*" \
-            --check="any"
-    
-    If the session name can also be extracted and the files are in the format
-    e.g. 'Yale-AP4876_Baseline.zip', then a `nameformat` parameter needs to be 
-    added::
-    
-        qunex import_dicom \
-            --sessionsfolder="<path_to_studyfolder>/sessions" \
-            --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
-            --sessions="AP.*,HQ.*" \
-            --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \
-            --check="any"
-    
-    In this case, 'AP4876_Baseline' will be first extracted as a packet name and 
-    then parsed into 'AP4876' subject id and 'Baseline' session name.
-    
-    If the files are named e.g. 'Yale-AP4983.zip' and a log file exists in which 
-    the AP* or HQ* are mapped to a corresponding subject id and session names, 
-    then the command is changed to::
-    
-        qunex import_dicom \
-            --sessionsfolder="<path_to_studyfolder>/sessions" \
-            --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
-            --sessions="AP.*,HQ.*" \
-            --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \
-            --check="any"
+            /studies/myStudy/sessions/S001_baseline/inbox/AYXQ.tar.gz
+            /studies/myStudy/sessions/S001_incentive/inbox/TWGS.tar.gz
+            /studies/myStudy/sessions/S002_baseline/inbox/OHTZ.zip
+            /studies/myStudy/sessions/S002_incentive/inbox/QRTD.zip
 
-    For the examples of processing data already present in the individual 
-    session id folder, let's assume that we have the following files present, 
-    with no other files in the sessions folders::
-    
-        /studies/myStudy/sessions/S001_baseline/inbox/AYXQ.tar.gz
-        /studies/myStudy/sessions/S001_incentive/inbox/TWGS.tar.gz
-        /studies/myStudy/sessions/S002_baseline/inbox/OHTZ.zip
-        /studies/myStudy/sessions/S002_incentive/inbox/QRTD.zip
-    
-    Then these are a set of possible commands::
-    
-        qunex import_dicom \
-            --sessionsfolder="/studies/myStudy/sessions" \
-            --masterinbox="none" \
-            --sessions="S*" 
-    
-    In the above case all the folders will be processed, the packages will be
-    extracted and (by default) moved to `/studies/myStudy/sessions/archive/MR`::
-    
-        qunex import_dicom \
-            --sessionsfolder="/studies/myStudy/sessions" \
-            --masterinbox="none" \
-            --sessions="*baseline" \
-            --archive="delete"
-    
-    In the above case only the `S001_baseline` and `S002_baseline` sessions will
-    be processed and the respective compressed packages will be deleted after
-    the successful processing.
+        Then these are a set of possible commands:
+
+        >>> qunex import_dicom \\
+                  --sessionsfolder="/studies/myStudy/sessions" \\
+                  --masterinbox="none" \\
+                  --sessions="S*"
+
+        In the above case all the folders will be processed, the packages will
+        be extracted and (by default) moved to
+        `/studies/myStudy/sessions/archive/MR`:
+
+        >>> qunex import_dicom \\
+                  --sessionsfolder="/studies/myStudy/sessions" \\
+                  --masterinbox="none" \\
+                  --sessions="*baseline" \\
+                  --archive="delete"
+
+        In the above case only the `S001_baseline` and `S002_baseline` sessions
+        will be processed and the respective compressed packages will be
+        deleted after the successful processing.
     """
 
     print("Running import_dicom\n====================")

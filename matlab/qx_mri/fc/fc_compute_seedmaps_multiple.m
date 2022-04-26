@@ -38,32 +38,31 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %       --cv (bool, default false):
 %           Whether covariances should be computed instead of correlations.
 %
+%   Output files:
+%       Function saves the following group files:
+%
+%       _group_Fz
+%           average Fz over all the sessions
+%
+%       _group_r
+%           average Fz converted back to Pearson r
+%
+%       _group_Z
+%           p values converted to Z scores based on t-test testing if Fz
+%           over session differ significantly from 0 (two-tailed)
+%
+%       _all_Fz
+%           Fz values of all the participants
+%
+%       _group_cov
+%           average covariance
+%
+%       _all_cov
+%           covariances of all the participants.
+%
 %   Notes:
-%       Resulting files:
-%           Function saves the following group files:
-%
-%           _group_Fz
-%               average Fz over all the sessions
-%
-%           _group_r
-%               average Fz converted back to Pearson r
-%
-%           _group_Z
-%               p values converted to Z scores based on t-test testing if Fz
-%               over session differ significantly from 0 (two-tailed)
-%
-%           _all_Fz
-%               Fz values of all the participants
-%
-%           _group_cov
-%               average covariance
-%
-%           _all_cov
-%               covariances of all the participants.
-%
-%       Use:
-%           The function computes seedmaps for the specified ROI and saves group
-%           results as well as any specified individual results.
+%       The function computes seedmaps for the specified ROI and saves group
+%       results as well as any specified individual results.
 %
 %   Examples:
 %       >>> fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', ...

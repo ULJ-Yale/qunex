@@ -10,11 +10,11 @@ function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 %       --output (str, default 'metpz'):
 %           The type of results to save:
 %
-%           - m ... mean value for each voxel
-%           - e ... standard error for each voxel
-%           - t ... t-value for each voxel
-%           - p ... p-value for each voxel
-%           - z ... Z-score for each voxel.
+%           - 'm' ... mean value for each voxel
+%           - 'e' ... standard error for each voxel
+%           - 't' ... t-value for each voxel
+%           - 'p' ... p-value for each voxel
+%           - 'z' ... Z-score for each voxel.
 %
 %       --exclude (int, default []):
 %           Values to be excluded from computation.

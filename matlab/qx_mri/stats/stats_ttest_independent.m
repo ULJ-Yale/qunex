@@ -16,16 +16,16 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 %       --output (str, default 'medtpz'):
 %           The type of results to save:
 % 
-%           - m ... mean values for each voxel of both groups (A and B)
-%           - e ... standard errors for each voxel of both groups (A and B)
-%           - d ... the A - B difference of means of the two groups
-%           - t ... t-value for each voxel
-%           - p ... p-value for each voxel
-%           - z ... Z-score for each voxel.
+%           - 'm' ... mean values for each voxel of both groups (A and B)
+%           - 'e' ... standard errors for each voxel of both groups (A and B)
+%           - 'd' ... the A - B difference of means of the two groups
+%           - 't' ... t-value for each voxel
+%           - 'p' ... p-value for each voxel
+%           - 'z' ... Z-score for each voxel.
 % 
 %       --vartype (str, default 'equal'):
-%           String specifying whether the variances of the two groups are
-%           equal ('equal') or not ('unequal').
+%           String specifying whether the variances of the two groups are equal
+%           ('equal') or not ('unequal').
 %       --exclude (vector, default []):
 %           Values to be excluded from computation.
 %       --verbose (bool, default false):

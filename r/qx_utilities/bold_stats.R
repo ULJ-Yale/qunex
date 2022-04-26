@@ -1,34 +1,60 @@
 #!/usr/bin/env Rscript
-#
+
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+
+#   ``bold_stats``
 #
+#   Plots movement data, creates movement reports and information for data
+#   scrubbing.
 #
-#   Plots movement data, creates movement reports and information for data scrubbing
+#   Parameters:
+#       --folder, -f (str, default '.'):
+#           The folder to look for .dat data.
+#       --mreport, -mr (str, default 'none'):
+#           The file to write movement report to.
+#       --preport, -pr (str, default 'none'):
+#           The file to write movement report after scrubbing to.
+#       --sreport, -sr (str, default 'none'):
+#           The file to write scrubbing report to.
+#       --session, -s (str, default 'none'):
+#           Session id to use in plots and reports.
+#       --dvars, -d (numeric, default 3):
+#           Threshold to use for computing dvars rejections.
+#       --dvarsme, -e (numeric, default 1.5):
+#           Threshold to use for computing dvarsme rejections.
+#       --movement, -m (numeric, default 0.5):
+#           Threshold to use for computing frame-to-frame movement rejections.
+#       --radius, -rd (numeric, default 50):
+#           Radius (in mm) from center of head to cortex to estimate rotation
+#           size.
+#       --tr (numeric, default 2.5):
+#           TR to be used when generating .fidl files.
+#       --fidl (str, default 'none'):
+#           Whether to output and what to base fild on ('fd', 'dvars',
+#           'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme', 'none').
+#       --plotr (str, default 'mov_report'):
+#           Root name of the plot file, 'none' to omit plotting.
+#       --post (str, default 'none'):
+#           Whether to create report of scrubbing effect and what to base it on
+#           ('fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars',
+#           'idvarsme', 'none').
+#       --bolds (str, default ''):
+#           Vertical line | separated list of bold indeces for which to do the
+#           stat report.
+#       --pref (str, default ''):
+#           Prefix for the reports.
+#       --verbose, -v (bool, default TRUE):
+#           Be talkative when running the script.
+#       --plot(bool, default FALSE):
+#           Whether to plot.
+#       --rname (str, default 'bold'):
+#           Root name for the bold files.¸
+#       --bold_tail (str, default ''):
+#           Tail of bold files.
 #
-#   Options
-#
-#       -folder, -f     the folder to look for .dat data [.]
-#       -mreport, -mr   the file to write movement report to [none]
-#       -preport, -pr   the file to write movement report after scrubbing to [none]
-#       -sreport, -sr   the file to write scrubbing report to [none]
-#       -session, -s    session id to use in plots and reports [none]
-#       -dvars, -d      threshold to use for computing dvars rejections [3]
-#       -dvarsme, -e    threshold to use for computing dvarsme rejections [1.5]
-#       -movement, -m   threshold to use for computing frame-to-frame movement rejections [0.5]
-#       -radius, -rd    radius (in mm) from center of head to cortex to estimate rotation size [50]
-#       -tr             TR to be used when generating .fidl files [2.5]
-#       -fidl           whether to output and what to base fild on (fd, dvars, dvarsme, udvars, udvarsme, idvars, idvarsme, none) [none]
-#       -plot           root name of the plot file, none to omit plotting [mov_report]
-#       -post           whether to create report of scrubbing effect and what to base it on (fd, dvars, dvarsme, udvars, udvarsme, idvars, idvarsme, none) [none]
-#       -bolds          | separated list of bold indeces for which to do the stat report
-#       -pref           prefix for the reports
-#       -verbose, -v    be talkative when running the script
-#       -rname          root name for the bold files ['bold']
-#       -bold_tail      tail of bold files ['']
-#
-#
+#   Notes:
 #       (c) Grega Repovs
 #       2011-07-26 -> First complete version of the script
 #       2012-09-20 -> Added reporting of stats after scrubbing

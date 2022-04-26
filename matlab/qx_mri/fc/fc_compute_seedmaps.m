@@ -203,38 +203,37 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %           N
 %               Number of frames over which the map was computed.
 %
+%   Output files:
+%       Based on saveind option specification the following files may be saved:
+%
+%       - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_r`
+%           Pearson correlations
+%
+%       - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Fz`
+%           Fisher Z values
+%
+%       - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Z`
+%           Z converted p values testing difference from 0
+%
+%       - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_p`
+%           p values testing difference from 0
+%
+%       - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_cv`
+%           covariance.
+%
+%       Definitions:
+%
+%       - `<roi>` is the name of the ROI for which the seed map was computed
+%         for.
+%       - `<name>` is the provided name of the bold(s).
+%       - `<subjectname>` is the provided name of the subject, if it was
+%         specified.
+%       - `<title>` is the title of the extraction event(s), if event string
+%         was specified.
+%
 %   Notes:
 %       The method returns a structure array named fcmaps with the fields lised
 %       above for each specified data extraction.
-%
-%       Resulting files:
-%           Based on saveind option specification the following files may be
-%           saved:
-%
-%           - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_r`
-%               Pearson correlations
-%
-%           - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Fz`
-%               Fisher Z values
-%
-%           - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_Z`
-%               Z converted p values testing difference from 0
-%
-%           - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_p`
-%               p values testing difference from 0
-%
-%           - `<targetf>/<name>[_<subjectname>][_<title>]_<roi>_cv`
-%               covariance.
-%
-%           Definitions:
-%
-%           - `<roi>` is the name of the ROI for which the seed map was computed
-%             for.
-%           - `<name>` is the provided name of the bold(s).
-%           - `<subjectname>` is the provided name of the subject, if it was
-%             specified.
-%           - `<title>` is the title of the extraction event(s), if event string
-%             was specified.
 %
 %       Use:
 %           The function computes seed maps for the specified ROI. If an event

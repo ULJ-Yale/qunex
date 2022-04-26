@@ -23,22 +23,21 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 %       --verbose (str, default 'none'):
 %           Whether to report the progress 'full', 'script', 'none'.
 %
+%   Output files:
+%       - <root>_corr_roi
+%           Correlations of each session with the target roi.
+%
+%       - <root>_segs
+%           Segmentations for each session.
+%
+%       - <root>_scorr
+%           Final segmentation and probabilities of segmentation for each
+%           target ROI across the group.
+%
+%       - <root>_gseg
+%           Final segmentation based on group mean correlations.
+%
 %   Notes:
-%       Resulting files:
-%           - <root>_corr_roi
-%               Correlations of each session with the target roi.
-%
-%           - <root>_segs
-%               Segmentations for each session.
-%
-%           - <root>_scorr
-%               Final segmentation and probabilities of segmentation for each
-%               target ROI across the group.
-%
-%           - <root>_gseg
-%               Final segmentation based on group mean correlations.
-%
-%       Use:
 %           Use the function to segment voxels specified in smask roi file based
 %           on the correlation with ROI specifed in the tmask file. Each voxel
 %           is assigned the code of the target ROI it most correlates with. For

@@ -187,51 +187,50 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %
 %               Defaults to 'false'.
 %
+%   Output files:
+%       Based on specification it saves group files:
+%
+%       `<targetf>/<root>[_<title>]_<roi>_group_r`
+%           Mean group Pearson correlations (converted from Fz).
+%
+%       `<targetf>/<root>[_<title>]_<roi>_group_Fz`
+%           Mean group Fisher Z values.
+%
+%       `<targetf>/<root>[_<title>]_<roi>_group_Z`
+%           Z converted p values testing difference from 0.
+%
+%       `<targetf>/<root>[_<title>]_<roi>_all_Fz`
+%           Fisher Z values for all participants.
+%
+%       `<targetf>/<root>[_<title>]_<roi>_group_cov`
+%           Mean group covariance.
+%
+%       `<targetf>/<root>[_<title>]_<roi>_all_cov`
+%           Covariances for all participants.
+%
+%       Definitions:
+%
+%       - `<roi>` is the name of the ROI for which the seed map was computed
+%         for.
+%       - `<root>` is the root name of the flist.
+%       - `<title>` is the title of the extraction event(s), if event string
+%         was specified.
+%
 %   Notes:
-%       Resulting files:
-%           Based on specification it saves group files:
+%       The function computes seed maps for the specified ROI. If an event
+%       string is provided, it uses each session's .fidl file to extract
+%       only the specified event related frames. The string format is::
 %
-%           `<targetf>/<root>[_<title>]_<roi>_group_r`
-%               Mean group Pearson correlations (converted from Fz).
+%           <title>:<eventlist>:<frame offset1>:<frame offset2>
 %
-%           `<targetf>/<root>[_<title>]_<roi>_group_Fz`
-%               Mean group Fisher Z values.
-%
-%           `<targetf>/<root>[_<title>]_<roi>_group_Z`
-%               Z converted p values testing difference from 0.
-%
-%           `<targetf>/<root>[_<title>]_<roi>_all_Fz`
-%               Fisher Z values for all participants.
-%
-%           `<targetf>/<root>[_<title>]_<roi>_group_cov`
-%               Mean group covariance.
-%
-%           `<targetf>/<root>[_<title>]_<roi>_all_cov`
-%               Covariances for all participants.
-%
-%           Definitions:
-%
-%           - `<roi>` is the name of the ROI for which the seed map was computed
-%             for.
-%           - `<root>` is the root name of the flist.
-%           - `<title>` is the title of the extraction event(s), if event string
-%             was specified.
-%
-%       Use:
-%           The function computes seed maps for the specified ROI. If an event
-%           string is provided, it uses each session's .fidl file to extract
-%           only the specified event related frames. The string format is::
-%
-%               <title>:<eventlist>:<frame offset1>:<frame offset2>
-%
-%           and multiple extractions can be specified by separating them using
-%           the pipe '|' separator. Specifically, for each extraction, all the
-%           events listed in a comma-separated eventlist will be considered
-%           (e.g. 'task1,task2') and for each event all the frames starting from
-%           event start + offset1 to event end + offset2 will be extracted and
-%           concatenated into a single timeseries. Do note that the extracted
-%           frames depend on the length of the event specified in the .fidl
-%           file!
+%       and multiple extractions can be specified by separating them using
+%       the pipe '|' separator. Specifically, for each extraction, all the
+%       events listed in a comma-separated eventlist will be considered
+%       (e.g. 'task1,task2') and for each event all the frames starting from
+%       event start + offset1 to event end + offset2 will be extracted and
+%       concatenated into a single timeseries. Do note that the extracted
+%       frames depend on the length of the event specified in the .fidl
+%       file!
 %
 %   Examples:
 %       To compute resting state seed maps using first eigenvariate of each ROI:

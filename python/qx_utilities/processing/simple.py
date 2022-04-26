@@ -62,11 +62,11 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
     bfile.close()
 
 
+#TODO - documentation of this gmri-used function not yet available.
 def create_conc_list(sinfo, options, overwrite=False, thread=0):
     """
     create_conc_list - documentation not yet available.
     """
-
     bfile = open(os.path.join(options['sessionsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
     concs = options['bolds'].split("|")
