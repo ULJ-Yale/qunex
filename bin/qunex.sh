@@ -1544,9 +1544,19 @@ if [[ ${setflag} =~ .*-.* ]]; then
         if [[ -z ${SESSION_LABELS} ]]; then
             SESSION_LABELS=`get_parameters "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
             SESSIONS="$SESSION_LABELS"
-            CASES="$SESSION_LABELS"   
+            CASES="$SESSION_LABELS"
             SESSIONIDS="$SESSION_LABELS"
         fi
+    fi
+
+    # -- Filter sessions if we are inside a SLURM array
+    if [[ -n ${SLURM_ARRAY_TASK_ID} ]]; then
+        SESSION_LABELS=`gmri get_sessions_for_slurm_array --sessions="${CASES}" --sessionids="${SESSIONIDS}"`
+        echo "---> SLURM array ${SLURM_ARRAY_TASK_ID}, running over sessions: ${SESSION_LABELS}"
+        echo ""
+        SESSIONS="${SESSION_LABELS}"
+        CASES="${SESSION_LABELS}"
+        SESSIONIDS="${SESSION_LABELS}"
     fi
 
     # -- General operational flags
