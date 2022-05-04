@@ -11,12 +11,12 @@
 This file holds code for support functions for image preprocessing and analysis.
 It consists of functions:
 
---create_bold_list  Creates a list with paths to each session's BOLD files.
---create_conc_list  Creates a list with paths to each session's conc files.
---list_session_info Lists session data stored in batch.txt file.
+--create_bold_list  ... Creates a list with paths to each session's BOLD files.
+--create_conc_list  ... Creates a list with paths to each session's conc files.
+--list_session_info ... Lists session data stored in batch.txt file.
 
-All the functions are part of the processing suite. They should be called
-from the command line using `qunex` command. Help is available through:
+All the functions are part of the processing suite. They should be called from
+the command line using `qunex` command. Help is available through:
 
 - `qunex ?<command>` for command specific help
 - `qunex -o` for a list of relevant arguments and options
@@ -62,10 +62,23 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
     bfile.close()
 
 
-#TODO - documentation of this gmri-used function not yet available.
 def create_conc_list(sinfo, options, overwrite=False, thread=0):
     """
-    create_conc_list - documentation not yet available.
+    ``create_conc_list``
+
+    Creates a list with paths to each session's conc files.
+
+    Parameters:
+        --sessionsfolder (str):
+            The path to study sessions folder.
+        --bold_prefix (str):
+            An optional prefix to place in front of processing name extensions
+            in the resulting files.
+        --bolds (str):
+            Which bolds to process (can be multiple joind with '|' ).
+        --event_file (str):
+            The root name of the fidl event file for task regression.
+
     """
     bfile = open(os.path.join(options['sessionsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 

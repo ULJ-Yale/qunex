@@ -50,7 +50,7 @@
 #       --plot(bool, default FALSE):
 #           Whether to plot.
 #       --rname (str, default 'bold'):
-#           Root name for the bold files.¸
+#           Root name for the bold files.
 #       --bold_tail (str, default ''):
 #           Tail of bold files.
 #

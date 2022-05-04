@@ -66,8 +66,8 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 % 
 %                   <filename parameter><the filename of the first specified file>_tsplot.<fformat>
 %
-%               An example with bold1.nii.gz as the first file, 'QA_' as value
-%               of the filename parameter, and 'pdf' as the value of fformat
+%               An example with bold1.nii.gz as the first file, `QA_` as value
+%               of the filename parameter, and `pdf` as the value of fformat
 %               parameter would be::
 %
 %                   QA_bold1_tsplot.pdf

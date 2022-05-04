@@ -2588,10 +2588,11 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
     if not processReport['ok']:
         raise ge.CommandNull("pull_sequence_names", "No files processed", "No valid data was found!")                
 
-# prepare variables for data export
-
 
 def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
+    """
+    Prepares variables for data export.
+    """
     if os.path.exists(sessionsfolder):
         sessionsfolder = os.path.abspath(sessionsfolder)
     else:
@@ -2632,7 +2633,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         --sessions (str, default '*'):
             Either an explicit list (space, comma or pipe separated) of sessions
             to process or the path to a batch or list file with sessions to
-            process. If left unspecified, "*" will be used and all folders
+            process. If left unspecified, '*' will be used and all folders
             within sessions' folders will be processed.
         --pipelines (str, default 'hcp'):
               Specify a comma separated list of pipelines for which the session
@@ -2651,10 +2652,8 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             true will be processed. All the sessions will be processed if no
             filter is provided.
         --overwrite (str, default 'no'):
-            Whether to overwrite target files that already exist (yes) or not
-            (no).
-
-
+            Whether to overwrite target files that already exist ('yes') or not
+            ('no').
 
     Notes:
         If an explicit list of parameters is provided, each element is treated

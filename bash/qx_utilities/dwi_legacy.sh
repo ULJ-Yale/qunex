@@ -11,130 +11,144 @@ source ${HCPPIPEDIR}/global/scripts/log.shlib     # log_ functions
 source ${HCPPIPEDIR}/global/scripts/version.shlib # version_ functions
 
 usage() {
- echo ""
- echo "This function runs the DWI preprocessing using the FUGUE method for legacy data "
- echo "that are not TOPUP compatible."
- echo ""
- echo "It explicitly assumes the the Human Connectome Project folder structure for "
- echo "preprocessing. "
- echo ""
- echo "DWI data needs to be in the following folder::"
- echo ""
- echo " <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
- echo ""
- echo "T1w data needs to be in the following folder::"
- echo ""
- echo " <study_folder>/<case>/hcp/<case>/T1w"
- echo ""
- echo "Note: "
- echo ""
- echo "- If PreFreeSurfer component of the HCP Pipelines was run the function will "
- echo "  make use of the T1w data [Results will be better due to superior brain "
- echo "  stripping]."
- echo "- If PreFreeSurfer component of the HCP Pipelines was NOT run the function will "
- echo "  start from raw T1w data [Results may be less optimal]."
- echo "- If you are this function interactively you need to be on a GPU-enabled node "
- echo "  or send it to a GPU-enabled queue."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder    Path to study data folder"
- echo "--sessions          Comma separated list of sessions to run"
- echo "--scanner           Name of scanner manufacturer (siemens or ge supported) "
- echo "--echospacing       EPI Echo Spacing for data [in msec]; e.g. 0.69"
- echo "--PEdir             Use 1 for Left-Right Phase Encoding, 2 for "
- echo "                    Anterior-Posterior"
- echo "--unwarpdir         Direction for EPI image unwarping; e.g. x or x- for LR/RL, "
- echo "                    y or y- for AP/PA; may been to try out both -/+ combinations"
- echo "--usefieldmap       Whether to use the standard field map (yes / no). If set "
- echo "                    to <yes> then the parameter --TE becomes mandatory"
- echo "--diffdatasuffix    Name of the DWI image; e.g. if the data is called "
- echo "                    <SessionID>_DWI_dir91_LR.nii.gz - you would enter "
- echo "                    DWI_dir91_LR"
- echo "--overwrite         Delete prior run for a given session (yes / no)"
- echo ""
- echo "FIELDMAP-SPECFIC INPUT"
- echo "----------------------"
- echo ""
- echo "--TE                This is the echo time difference of the fieldmap sequence "
- echo "                    - find this out form the operator - defaults are *usually* "
- echo "                    2.46ms on SIEMENS"
- echo ""
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "Examples using Siemens FieldMap (needs GPU-enabled node)."
- echo ""
- echo "Run directly via::"
- echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIPreprocPipelineLegacy.sh \ "
- echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- reho "NOTE: --scheduler is not available via direct script call."
- echo ""
- echo "Run via:: "
- echo ""
- echo " qunex dwi_legacy --<parameter1> --<parameter2> ... --<parameterN> "
- echo ""
- geho "NOTE: scheduler is available via qunex call."
- echo ""
- echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                  followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""                   
- echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "     
- echo ""    
- echo "::"
- echo ""
- echo " qunex dwi_legacy \ "
- echo " --sessionsfolder='<folder_with_sessions>' \ "
- echo " --sessions='<comma_separarated_list_of_cases>' \ "
- echo " --function='dwi_legacy' \ "
- echo " --PEdir='1' \ "
- echo " --echospacing='0.69' \ "
- echo " --TE='2.46' \ "
- echo " --unwarpdir='x-' \ "
- echo " --diffdatasuffix='DWI_dir91_LR' \ "
- echo " --usefieldmap='yes' \ "
- echo " --scanner='siemens' \ "
- echo " --overwrite='yes'"
- echo ""
- echo "Example with flagged parameters for submission to the scheduler using Siemens "
- echo "FieldMap (needs GPU-enabled queue)::"
- echo ""
- echo " qunex dwi_legacy \ "
- echo " --sessionsfolder='<folder_with_sessions>' \ "
- echo " --sessions='<comma_separarated_list_of_cases>' \ "
- echo " --function='dwi_legacy' \ "
- echo " --PEdir='1' \ "
- echo " --echospacing='0.69' \ "
- echo " --TE='2.46' \ "
- echo " --unwarpdir='x-' \ "
- echo " --diffdatasuffix='DWI_dir91_LR' \ "
- echo " --scheduler='<name_of_scheduler_and_options>' \ "
- echo " --usefieldmap='yes' \ "
- echo " --scanner='siemens' \ "
- echo " --overwrite='yes' \ "
- echo ""
- echo "Example with flagged parameters for submission to the scheduler using GE data "
- echo "without FieldMap (needs GPU-enabled queue)::"
- echo ""
- echo " qunex dwi_legacy \ "
- echo " --sessionsfolder='<folder_with_sessions>' \ "
- echo " --sessions='<comma_separarated_list_of_cases>' \ "
- echo " --diffdatasuffix='DWI_dir91_LR' \ "
- echo " --scheduler='<name_of_scheduler_and_options>' \ "
- echo " --usefieldmap='no' \ "
- echo " --PEdir='1' \ "
- echo " --echospacing='0.69' \ "
- echo " --unwarpdir='x-' \ "
- echo " --scanner='ge' \ "
- echo " --overwrite='yes' \ "
- echo ""
- exit 0
+    cat << EOF
+``dwi_legacy``
+
+This function runs the DWI preprocessing using the FUGUE method for legacy data
+that are not TOPUP compatible.
+
+It explicitly assumes the the Human Connectome Project folder structure for
+preprocessing.
+
+DWI data needs to be in the following folder::
+
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+
+T1w data needs to be in the following folder::
+
+    <study_folder>/<case>/hcp/<case>/T1w
+
+Warning:
+    - If PreFreeSurfer component of the HCP Pipelines was run the function will
+      make use of the T1w data [Results will be better due to superior brain
+      stripping].
+    - If PreFreeSurfer component of the HCP Pipelines was NOT run the
+      function will start from raw T1w data [Results may be less optimal]. -
+      If you are this function interactively you need to be on a GPU-enabled
+      node or send it to a GPU-enabled queue.
+
+Parameters:
+    --sessionsfolder (str, default '.'):
+        Path to study data folder.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --scanner (str):
+        Name of scanner manufacturer ('siemens' or 'ge' supported).
+    --echospacing (str):
+        EPI Echo Spacing for data [in msec]; e.g. 0.69
+    --PEdir (int):
+        Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior.
+    --unwarpdir (str):
+        Direction for EPI image unwarping; e.g. 'x' or 'x-' for LR/RL, 'y' or
+        'y-' for AP/PA; may been to try out both -/+ combinations.
+    --usefieldmap (str):
+        Whether to use the standard field map ('yes' | 'no'). If set to <yes>
+        then the parameter --TE becomes mandatory.
+    --diffdatasuffix (str):
+        Name of the DWI image; e.g. if the data is called
+        <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
+    --overwrite (str):
+        Delete prior run for a given session ('yes' | 'no').
+
+Specific parameters:
+    --TE (float):
+        This is the echo time difference of the fieldmap sequence - find this
+        out form the operator - defaults are *usually* 2.46ms on SIEMENS.
+
+Output files:
+     - DiffFolder=${SessionsFolder}/${Session}/Diffusion
+     - T1wDiffFolder=${SessionsFolder}/${Session}/T1w/Diffusion_"$DiffDataSuffix"
+
+     ::
+
+         $DiffFolder/$DiffDataSuffix/rawdata
+         $DiffFolder/$DiffDataSuffix/eddy
+         $DiffFolder/$DiffDataSuffix/data
+         $DiffFolder/$DiffDataSuffix/reg
+         $DiffFolder/$DiffDataSuffix/logs
+         $T1wDiffFolder
+
+Examples:
+    Examples using Siemens FieldMap (needs GPU-enabled node).
+
+    Run directly via:
+
+    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIPreprocPipelineLegacy.sh \\
+        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via:
+
+    >>> qunex dwi_legacy --<parameter1> --<parameter2> ... --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    >>> qunex dwi_legacy \\
+              --sessionsfolder='<folder_with_sessions>' \\
+              --sessions='<comma_separarated_list_of_cases>' \\
+              --function='dwi_legacy' \\
+              --PEdir='1' \\
+              --echospacing='0.69' \\
+              --TE='2.46' \\
+              --unwarpdir='x-' \\
+              --diffdatasuffix='DWI_dir91_LR' \\
+              --usefieldmap='yes' \\
+              --scanner='siemens' \\
+              --overwrite='yes'
+
+    Example with flagged parameters for submission to the scheduler using
+    Siemens FieldMap (needs GPU-enabled queue):
+
+    >>> qunex dwi_legacy \\
+              --sessionsfolder='<folder_with_sessions>' \\
+              --sessions='<comma_separarated_list_of_cases>' \\
+              --function='dwi_legacy' \\
+              --PEdir='1' \\
+              --echospacing='0.69' \\
+              --TE='2.46' \\
+              --unwarpdir='x-' \\
+              --diffdatasuffix='DWI_dir91_LR' \\
+              --scheduler='<name_of_scheduler_and_options>' \\
+              --usefieldmap='yes' \\
+              --scanner='siemens' \\
+              --overwrite='yes'
+
+    Example with flagged parameters for submission to the scheduler using GE data
+    without FieldMap (needs GPU-enabled queue):
+
+    >>> qunex dwi_legacy \\
+              --sessionsfolder='<folder_with_sessions>' \\
+              --sessions='<comma_separarated_list_of_cases>' \\
+              --diffdatasuffix='DWI_dir91_LR' \\
+              --scheduler='<name_of_scheduler_and_options>' \\
+              --usefieldmap='no' \\
+              --PEdir='1' \\
+              --echospacing='0.69' \\
+              --unwarpdir='x-' \\
+              --scanner='ge' \\
+              --overwrite='yes'
+
+EOF
+exit 0
 }
 
 # ------------------------------------------------------------------------------

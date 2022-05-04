@@ -79,313 +79,302 @@ QuNexTurnkeyClean="hcp_fmri_volume"
 
 usage() {
     cat << EOF
-qunex runTurnkey
+``run_turnkey``
 
 This function implements QuNex Suite workflows as a turnkey function.
 It operates on a local server or cluster or within the XNAT Docker engine.
 
+Parameters:
+    --turnkeytype (str, default 'xnat'):
+        Specify type turnkey run. Options are: 'local' or 'xnat'.
+    --path (str, default '/output/xnatprojectid'):
+        Path where study folder is located. If empty default is for XNAT run.
+    --sessions (str):
+        Sessions to run locally on the file system if not an XNAT run.
+    --sessionids (str):
+        Comma separated list of session IDs to select for a run via gMRI engine
+        from the batch file.
+    --turnkeysteps (str):
+        Specify specific turnkey steps you wish to run:
+        Supported: TODO
+    --turnkeycleanstep (str):
+        Specify specific turnkey steps you wish to clean up intermediate files
+        for.
+        Supported: TODO
+    --batchfile (str):
+        Batch file with pre-configured header specifying processing parameters.
 
-INPUTS
-======
+        Note: This file needs to be created *manually* prior to starting
+        runTurnkey.
 
---turnkeytype         Specify type turnkey run. Options are: local or xnat.
-                      Default: [xnat].
---path                Path where study folder is located. If empty default 
-                      is [/output/xnatprojectid] for XNAT run.
---sessions            Sessions to run locally on the file system if not an XNAT 
-                      run.
---sessionids          Comma separated list of session IDs to select for a run 
-                      via gMRI engine from the batch file.
---turnkeysteps        Specify specific turnkey steps you wish to run:
-                      Supported:  
---turnkeycleanstep    Specify specific turnkey steps you wish to clean up 
-                      intermediate files for.
-                      Supported: 
---batchfile           Batch file with pre-configured header specifying 
-                      processing parameters
+        - IF executing a 'local' run then provide the absolute path to the file
+          on the local file system:
+          If no file name is given then by default QuNex RunTurnkey will exit
+          with an error.
+        - IF executing a run via the XNAT WebUI then provide the name of the
+          file. This file should be created and uploaded manually as the
+          project-level resource on XNAT.
 
-                      Note: This file needs to be created *manually* prior to 
-                      starting runTurnkey.
+    --mappingfile (str):
+        File for mapping NIFTI files into the desired QuNex file structure (e.g.
+        'hcp', 'fMRIPrep' etc.)
 
-                      - IF executing a 'local' run then provide the absolute 
-                        path to the file on the local file system:
-                        If no file name is given then by default QuNex 
-                        RunTurnkey will exit with an error.
-                      - IF executing a run via the XNAT WebUI then provide the 
-                        name of the file. This file should be created and 
-                        uploaded manually as the project-level resource on XNAT
+        Note: This file needs to be created *manually* prior to starting
+        runTurnkey.
 
---mappingfile         File for mapping NIFTI files into the desired QuNex file 
-                      structure (e.g. hcp, fMRIPrep, etc.)
+        - IF executing a 'local' run then provide the absolute path to the file
+          on the local file system:
+          If no file name is given then by default QuNex RunTurnkey will exit
+          with an error.
+        - IF executing a run via the XNAT WebUI then provide the name of the
+          file. This file should be created and uploaded manually as the
+          project-level resource on XNAT.
 
-                      Note: This file needs to be created *manually* prior to 
-                      starting runTurnkey
+Specific parameters:
+    --acceptancetest (str, default 'no'):
+        Specify if you wish to run a final acceptance test after each unit of
+        processing.
 
-                      - IF executing a 'local' run then provide the absolute 
-                        path to the file on the local file system:
-                        If no file name is given then by default QuNex 
-                        RunTurnkey will exit with an error.
-                      - IF executing a run via the XNAT WebUI then provide the 
-                        name of the file. This file should be created and 
-                        uploaded manually as the project-level resource on XNAT
+        If --acceptancetest='yes', then --turnkeysteps must be provided and will
+        be executed first.
 
-ACCEPTANCE TESTING INPUT
-------------------------
+        If --acceptancetest='<turnkey_step>', then acceptance test will be run
+        but step won't be executed.
+    --xnathost (str):
+        Specify the XNAT site hostname URL to push data to.
+    --xnatprojectid (str):
+        Specify the XNAT site project id. This is the Project ID in XNAT and not
+        the Project Title.
+    --xnatuser (str):
+        Specify XNAT username.
+    --xnatpass (str):
+        Specify XNAT password.
+    --xnatsubjectid (str):
+        ID for subject across the entire XNAT database.
+        Required or --xnatsubjectlabel needs to be set.
+    --xnatsubjectlabel (str):
+        Label for subject within a project for the XNAT database.
+        Required or --xnatsubjectid needs to be set.
+    --xnataccsessionid (str):
+        ID for subject-specific session within the XNAT project.
+        Derived from XNAT but can be set manually.
+    --xnatsessionlabel (str):
+        Label for session within XNAT project.
+        Note: may be general across multiple subjects (e.g. rest). Required.
+    --xnatstudyinputpath (str, default 'input/RESOURCES/qunex_study'):
+        The path to the previously generated session data as mounted for the
+        container.
+    --dataformat (str, default 'DICOM'):
+        Specify the format in which the data is. Acceptable values are:
 
---acceptancetest      Specify if you wish to run a final acceptance test after 
-                      each unit of processing. Default is [no]
+        - 'DICOM' ... datasets with images in DICOM format
+        - 'BIDS'  ... BIDS compliant datasets
+        - 'HCPLS' ... HCP Life Span datasets
+        - 'HCPYA' ... HCP Young Adults (1200) dataset.
 
-                      If --acceptancetest='yes', then --turnkeysteps must be 
-                      provided and will be executed first.
+    --hcp_filename (str):
+        Specify how files and folders should be named using HCP processing:
 
-                      If --acceptancetest='<turnkey_step>', then acceptance 
-                      test will be run but step won't be executed.
+        - 'automated'   ... files should be named using QuNex automated naming
+          (e.g. BOLD_1_PA)
+        - 'userdefined' ... files should be named using user defined names (e.g.
+          rfMRI_REST1_AP)
+        - 'standard'    ... default
 
-XNAT HOST, PROJECT AND USER INPUTS
-----------------------------------
+        Note that the filename to be used has to be provided in the
+        session_hcp.txt file or the standard naming will be used. If not
+        provided the default 'standard' will be used.
+    --bidsformat (str, default 'no'):
+        Note: this parameter is deprecated and is kept for backward
+        compatibility.
 
---xnathost            Specify the XNAT site hostname URL to push data to.
---xnatprojectid       Specify the XNAT site project id. This is the Project ID 
-                      in XNAT and not the Project Title.
---xnatuser            Specify XNAT username.
---xnatpass            Specify XNAT password.
+        If set to 'yes', it will set --dataformat to BIDS. If left undefined or
+        set to 'no', the --dataformat value will be used. The specification of
+        the parameter follows ...
 
-XNAT SUBJECT AND SESSION INPUTS
--------------------------------
+        Specify if input data is in BIDS format (yes/no). Default is [no]. If
+        set to yes, it overwrites the --dataformat parameter.
 
---xnatsubjectid       ID for subject across the entire XNAT database. 
-                      Required or --xnatsubjectlabel needs to be set.
---xnatsubjectlabel    Label for subject within a project for the XNAT database. 
-                      Required or --xnatsubjectid needs to be set.
---xnataccsessionid    ID for subject-specific session within the XNAT project. 
-                      Derived from XNAT but can be set manually.
---xnatsessionlabel    Label for session within XNAT project. Note: may be 
-                      general across multiple subjects (e.g. rest). Required.
---xnatstudyinputpath  The path to the previously generated session data as 
-                      mounted for the container. Default is 
-                      [input/RESOURCES/qunex_study]
+        Note:
 
-MISCELLANEOUS INPUTS
---------------------
+        - If --bidsformat='yes' and XNAT run is requested then
+          --xnatsessionlabel is required.
+        - If --bidsformat='yes' and XNAT run is NOT requested
+          then BIDS data expected in <sessions_folder/inbox/BIDS.
 
---dataformat            Specify the format in which the data is. Acceptable 
-                        values are:
+    --bidsname (str, default detailed below):
+        The name of the BIDS dataset. The dataset level information that does
+        not pertain to a specific session will be stored in
+        <projectname>/info/bids/<bidsname>. If bidsname is not provided, it
+        will be deduced from the name of the folder in which the BIDS database
+        is stored or from the zip package name.
+    --rawdatainput (str, default ''):
+        If --turnkeytype is not XNAT then specify location of raw data on the
+        file system for a session. Default is '' for the XNAT type run as host
+        is used to pull data.
+    --workingdir (str, default '/output'):
+        Specify where the study folder is to be created or resides.
+    --projectname (str):
+        Specify name of the project on local file system if XNAT is not
+        specified.
+    --overwritestep (str, default 'no'):
+        Specify 'yes' or 'no' for delete of prior workflow step.
+    --overwritesession (str, default 'no'):
+        Specify 'yes' or 'no' for delete of prior session run.
+    --overwriteproject (str, default 'no'):
+        Specify 'yes' or 'no' for delete of entire project prior to run.
+    --overwriteprojectxnat (str, default 'no'):
+        Specify 'yes' or 'no' for delete of entire XNAT project folder prior to
+        run.
+    --cleanupsession (str, default 'no'):
+        Specify 'yes' or 'no' for cleanup of session folder after steps are
+        done.
+    --cleanupproject (str, default 'no'):
+        Specify 'yes' or 'no' for cleanup of entire project after steps are
+        done.
+    --cleanupoldfiles (str, default 'no'):
+        Specify <yes> or <no> for cleanup of files that are older than start of
+        run (XNAT run only).
+    --bolds (str, default 'all'):
+        For commands that work with BOLD images this flag specifies which
+        specific BOLD images to process. The list of BOLDS has to be specified
+        as a comma or pipe '|' separated string of bold numbers or bold tags as
+        they are specified in the session_hcp.txt or batch.txt file.
 
-                        - DICOM ... datasets with images in DICOM format
-                        - BIDS  ... BIDS compliant datasets
-                        - HCPLS ... HCP Life Span datasets
-                        - HCPYA ... HCP Young Adults (1200) dataset
+        Example: '--bolds=1,2,rest' would process BOLD run 1, BOLD run 2 and any
+        other BOLD image that is tagged with the string 'rest'.
 
-                        Default is [DICOM]
+        If the parameter is not specified, the default value 'all' will be used.
+        In this scenario every BOLD image that is specified in the group
+        batch.txt file for that session will be processed.
 
---hcp_filename          Specify how files and folders should be named using HCP 
-                        processing:
+        **Note**: This parameter takes precedence over the 'bolds' parameter in
+        the batch.txt file. Therefore when RunTurnkey is executed and this
+        parameter is ommitted the '_bolds' specification in the batch.txt file
+        never takes effect, because the default value 'all' will take
+        precedence.
+    --customqc (str, default 'no'):
+        Either 'yes' or 'no'. If set to 'yes' then the script ooks into:
+        ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes.
 
-                        automated
-                           files should be named using QuNex automated naming 
-                           (e.g. BOLD_1_PA)
-                        userdefined
-                           files should be named using user defined names 
-                           (e.g. rfMRI_REST1_AP)
+        Note: The provided scene has to conform to QuNex QC template
+        standards.xw
 
-                        Note that the filename to be used has to be provided in 
-                        the session_hcp.txt file or the standard naming will be 
-                        used. If not provided the default 'standard' will be 
-                        used.
---bidsformat            Note: this parameter is deprecated and is kept for 
-                        backward compatibility. 
+        See /opt/qunex/qx_library/data/scenes/qc/ for example templates.
 
-                        If set to yes, it will set --dataformat to BIDS. If 
-                        left undefined or set to no, the --dataformat value
-                        will be used. The specification of the parameter 
-                        follows ...
+        The qc path has to contain relevant files for the provided scene.
+    --qcplotimages (str):
+        Absolute path to images for general_plot_bold_timeseries. See
+        'qunex general_plot_bold_timeseries' for help.
 
-                        Specify if input data is in BIDS format (yes/no). 
-                        Default is [no]. If set to yes, it overwrites the 
-                        --dataformat parameter.
+        Only set if general_plot_bold_timeseries is requested then this is a
+        required setting.
+    --qcplotmasks (str)
+        Absolute path to one or multiple masks to use for extracting BOLD data.
+        See 'qunex general_plot_bold_timeseries' for help.
 
-                        Note:
+        Only set if general_plot_bold_timeseries is requested then this is a
+        required setting.
+    --qcplotelements (str, default TODO):
+        Plot element specifications for general_plot_bold_timeseries. See
+        'qunex general_plot_bold_timeseries' for help.
 
-                        - If --bidsformat='yes' and XNAT run is requested then 
-                          --xnatsessionlabel is required.
-                        - If --bidsformat='yes' and XNAT run is NOT requested 
-                          then BIDS data expected in <sessions_folder/inbox/BIDS
---bidsname              The name of the BIDS dataset. The dataset level 
-                        information that does not pertain to a specific session 
-                        will be stored in <projectname>/info/bids/<bidsname>. 
-                        If bidsname is not provided, it will be deduced from 
-                        the name of the folder in which the BIDS database is 
-                        stored or from the zip package name.
---rawdatainput          If --turnkeytype is not XNAT then specify location of 
-                        raw data on the file system for a session. Default is 
-                        [] for the XNAT type run as host is used to pull data.
---workingdir            Specify where the study folder is to be created or 
-                        resides. Default is [/output].
---projectname           Specify name of the project on local file system if 
-                        XNAT is not specified.
---overwritestep         Specify <yes> or <no> for delete of prior workflow 
-                        step. Default is [no].
---overwritesession      Specify <yes> or <no> for delete of prior session run. 
-                        Default is [no].
---overwriteproject      Specify <yes> or <no> for delete of entire project 
-                        prior to run. Default is [no].
---overwriteprojectxnat  Specify <yes> or <no> for delete of entire XNAT project 
-                        folder prior to run. Default is [no].
---cleanupsession        Specify <yes> or <no> for cleanup of session folder 
-                        after steps are done. Default is [no].
---cleanupproject        Specify <yes> or <no> for cleanup of entire project 
-                        after steps are done. Default is [no].
---cleanupoldfiles       Specify <yes> or <no> for cleanup of files that are 
-                        older than start of run (XNAT run only). Default is 
-                        [no].
---bolds                 For commands that work with BOLD images this flag 
-                        specifies which specific BOLD images to process. The 
-                        list of BOLDS has to be specified as a comma or pipe 
-                        '|' separated string of bold numbers or bold tags as 
-                        they are specified in the session_hcp.txt or batch.txt 
-                        file. 
+        Only set if general_plot_bold_timeseries is requested. If not set then
+        the default is: TODO
 
-                        Example: '--bolds=1,2,rest' would process BOLD run 1, 
-                        BOLD run 2 and any other BOLD image that is tagged with 
-                        the string 'rest'.
+Notes:
+    List of Turnkey Steps:
+        Most turnkey steps have exact matching qunex commands with several
+        exceptions that fall into two categories:
 
-                        If the parameter is not specified, the default value 
-                        'all' will be used. In this scenario every BOLD image 
-                        that is specified in the group batch.txt file for that 
-                        session will be processed.
+        * `map_raw_data`  step is only relevant to `run_turnkey`, which maps
+          files on a local filesystem or in XNAT to the study folder.
+        * `run_qc*` and `compute_bold_fc*`  are two groups of turnkey steps that
+          have qunex commands as their prefixes. The suffixes of these commands
+          are options of the corresponding qunex command.
 
-                        **Note**: This parameter takes precedence over the 
-                        'bolds' parameter in the batch.txt file. Therefore when 
-                        RunTurnkey is executed and this parameter is ommitted 
-                        the '_bolds' specification in the batch.txt file never 
-                        takes effect, because the default value 'all' will take 
-                        precedence.
+        A complete list of turnkey commands:
 
-CUSTOM QC INPUTS
-----------------
+        * create_study
+        * map_raw_data
+        * import_dicom
+        * run_qc_rawnii
+        * create_session_info
+        * setup_hcp
+        * create_batch
+        * export_hcp
+        * hcp_pre_freesurfer
+        * hcp_freesurfer
+        * hcp_post_freesurfer
+        * run_qc_t1w
+        * run_qc_t2w
+        * run_qc_myelin
+        * hcp_fmri_volume
+        * hcp_fmri_surface
+        * run_qc_bold
+        * hcp_diffusion
+        * run_qc_dwi
+        * dwi_legacy
+        * run_qc_dwi_legacy
+        * dwi_eddy_qc
+        * run_qc_dwi_eddy
+        * dwi_dtifit
+        * run_qc_dwi_dtifit
+        * dwi_bedpostx_gpu
+        * run_qc_dwi_process
+        * run_qc_dwi_bedpostx
+        * dwi_probtrackx_dense_gpu
+        * dwi_pre_tractography
+        * dwi_parcellate
+        * dwi_seed_tractography_dense
+        * run_qc_custom
+        * map_hcp_data
+        * create_bold_brain_masks
+        * compute_bold_stats
+        * create_stats_report
+        * extract_nuisance_signal
+        * preprocess_bold
+        * preprocess_conc
+        * general_plot_bold_timeseries
+        * parcellate_bold
+        * parcellate_bold
+        * compute_bold_fc_seed
+        * compute_bold_fc_gbc
+        * run_qc_bold_fc.
 
---customqc          Yes or no. Default is [no]. If set to 'yes' then the script
-                    ooks into: ~/<study_path>/processing/scenes/QC/ for 
-                    additional custom QC scenes.
+Examples:
+    Run directly via:
 
-                    Note: The provided scene has to conform to QuNex QC 
-                    template standards.xw
+     >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh \\
+         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
-                    See /opt/qunex/qx_library/data/scenes/qc/ for example
-                    templates.
+    Run via:
 
-                    The qc path has to contain relevant files for the provided
-                    scene.
---qcplotimages      Absolute path to images for general_plot_bold_timeseries. See 
-                    'qunex general_plot_bold_timeseries' for help. 
+    >>> qunex runTurnkey --<parameter1> --<parameter2> ... --<parameterN>
 
-                    Only set if general_plot_bold_timeseries is requested then this is a 
-                    required setting.
---qcplotmasks       Absolute path to one or multiple masks to use for 
-                    extracting BOLD data. See 'qunex general_plot_bold_timeseries' for help. 
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
 
-                    Only set if general_plot_bold_timeseries is requested then this is a 
-                    required setting.
---qcplotelements    Plot element specifications for general_plot_bold_timeseries. See 
-                    'qunex general_plot_bold_timeseries' for help. 
+    For SLURM scheduler the string would look like this via the qunex call::
 
-                    Only set if general_plot_bold_timeseries is requested. If not set then the 
-                    default is: 
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-EXAMPLE USE
-===========
-
-Run directly via::
-
- /opt/qunex/bash/qx_utilities/run_turnkey.sh \ 
- --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> 
-
-
-Run via:: 
-
- qunex runTurnkey --<parameter1> --<parameter2> ... --<parameterN> 
-
-
---scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) 
-                  followed by relevant options
-
-For SLURM scheduler the string would look like this via the qunex call:: 
-
- --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' 
-
-::
-
- run_turnkey.sh \ 
-  --turnkeytype=<turnkey_run_type> \ 
-  --turnkeysteps=<turnkey_worlflow_steps> \ 
-  --batchfile=<batch_file> \ 
-  --overwritestep=yes \ 
-  --mappingfile=<mapping_file> \ 
-  --xnatsubjectlabel=<XNAT_SUBJECT_LABEL> \ 
-  --xnatsessionlabel=<XNAT_SESSION_LABEL> \ 
-  --xnatprojectid=<name_of_xnat_project_id> \ 
-  --xnathostname=<XNAT_site_URL> \ 
-  --xnatuser=<xnat_host_user_name> \ 
-  --xnatpass=<xnat_host_user_pass> \ 
-
-List of Turnkey Steps
-=====================
-
-Most turnkey steps have exact matching qunex commands with several exceptions that fall into two categories:
-
-* `map_raw_data`  step is only relevant to `run_turnkey`, which maps files on a local filesystem or in XNAT to the study folder.
-* `run_qc*` and `compute_bold_fc*`  are two groups of turnkey steps that have qunex commands as their prefixes. The suffixes of these commands are options of the corresponding qunex command. 
-
-A complete list of turnkey commands:
-
-* create_study
-* map_raw_data
-* import_dicom
-* run_qc_rawnii
-* create_session_info
-* setup_hcp
-* create_batch
-* export_hcp
-* hcp_pre_freesurfer
-* hcp_freesurfer
-* hcp_post_freesurfer
-* run_qc_t1w
-* run_qc_t2w
-* run_qc_myelin
-* hcp_fmri_volume
-* hcp_fmri_surface
-* run_qc_bold
-* hcp_diffusion
-* run_qc_dwi
-* dwi_legacy
-* run_qc_dwi_legacy
-* dwi_eddy_qc
-* run_qc_dwi_eddy
-* dwi_dtifit
-* run_qc_dwi_dtifit
-* dwi_bedpostx_gpu
-* run_qc_dwi_process
-* run_qc_dwi_bedpostx
-* dwi_probtrackx_dense_gpu
-* dwi_pre_tractography
-* dwi_parcellate
-* dwi_seed_tractography_dense
-* run_qc_custom
-* map_hcp_data
-* create_bold_brain_masks
-* compute_bold_stats
-* create_stats_report
-* extract_nuisance_signal
-* preprocess_bold
-* preprocess_conc
-* general_plot_bold_timeseries
-* parcellate_bold
-* parcellate_bold
-* compute_bold_fc_seed
-* compute_bold_fc_gbc
-* run_qc_bold_fc
+    >>> run_turnkey.sh \\
+        --turnkeytype=<turnkey_run_type> \\
+        --turnkeysteps=<turnkey_worlflow_steps> \\
+        --batchfile=<batch_file> \\
+        --overwritestep=yes \\
+        --mappingfile=<mapping_file> \\
+        --xnatsubjectlabel=<XNAT_SUBJECT_LABEL> \\
+        --xnatsessionlabel=<XNAT_SESSION_LABEL> \\
+        --xnatprojectid=<name_of_xnat_project_id> \\
+        --xnathostname=<XNAT_site_URL> \\
+        --xnatuser=<xnat_host_user_name> \\
+        --xnatpass=<xnat_host_user_pass>
 
 EOF
+exit 0
 }
 
 # ------------------------------------------------------------------------------

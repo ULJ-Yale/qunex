@@ -11,86 +11,87 @@
 # ------------------------------------------------------------------------------
 
 usage() {
- echo ""
- echo "dwi_eddy_qc"
- echo ""
- echo "This function is based on FSL's eddy to perform quality control on "
- echo "diffusion MRI (dMRI) datasets. It explicitly assumes the that eddy has been "
- echo " run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
- echo ""
- echo "For full documentation of the EDDY QC please examine the README file."
- echo ""
- echo "The function assumes that eddy outputs are saved in the following folder::"
- echo ""
- echo " <folder_with_sessions>/<session>/hcp/<session>/Diffusion/eddy/"
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder    Path to study folder that contains sessions"
- echo "--session           Session ID to run EDDY QC on"
- echo "--eddybase          This is the basename specified when running EDDY (e.g. "
- echo "                    eddy_unwarped_images)"
- echo "--eddyidx           EDDY index file"
- echo "--eddyparams        EDDY parameters file"
- echo "--mask              Binary mask file (most qc measures will be averaged "
- echo "                    across voxels labeled in the mask)"
- echo "--bvalsfile         bvals input file"
- echo "--report            If you want to generate a group report (individual or "
- echo "                    group) [individual]"
- echo "--overwrite         Delete prior run for a given session"
- echo "--eddypath          Specify the relative path of the eddy folder you want to "
- echo "                    use for inputs"
- echo "                    [<study_folder>/<session>/hcp/<session>/Diffusion/eddy/]"
- echo "--bvecsfile         If specified, the tool will create a "
- echo "                    bvals_no_outliers.txt and a bvecs_no_outliers.txt file "
- echo "                    that contain the bvals and bvecs of the non-outlier "
- echo "                    volumes, based on the MSR estimates,"
- echo ""
- echo "If --report='group', then this argument needs to be specified: "
- echo ""
- echo "--list              Text file containing a list of qc.json files obtained "
- echo "                    from SQUAD"
- echo ""
- echo "Extra optional inputs if --report='group' "
- echo ""
- echo "--groupvar          Text file containing extra grouping variable"
- echo "--outputdir         Output directory ['<eddyBase>.qc']"
- echo "--update            Applies only if --report='group' - set to <true> to "
- echo "                    update existing single session qc reports "
- echo ""
- echo "OUTPUTS"
- echo "======="
- echo ""
- echo "Outputs for individual run: "
- echo "" 
- echo "- qc.pdf               ... single session QC report "
- echo "- qc.json              ... single session QC and data info"
- echo "- vols_no_outliers.txt ... text file that contains the list of the non-outlier "
- echo "  volumes (based on eddy residuals)"
- echo ""
- echo "Outputs for group run: "
- echo "" 
- echo "- group_qc.pdf ... single session QC report "
- echo "- group_qc.db  ... database"  
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "::"
- echo ""
- echo " dwi_eddy_qc.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \ "
- echo " --session='<session_id>' \ "
- echo " --eddybase='<eddy_base_name>' \ "
- echo " --report='individual'"
- echo " --bvalsfile='<bvals_file>' \ "
- echo " --mask='<mask_file>' \ "
- echo " --eddyidx='<eddy_index_file>' \ "
- echo " --eddyparams='<eddy_param_file>' \ "
- echo " --bvecsfile='<bvecs_file>' \ "
- echo " --overwrite='yes' "
- echo ""	
- exit 0
+    cat << EOF
+``dwi_eddy_qc``
+
+This function is based on FSL's eddy to perform quality control on diffusion MRI
+(dMRI) datasets. It explicitly assumes the that eddy has been run and that EDDY
+QC by Matteo Bastiani, FMRIB has been installed.
+
+For full documentation of the EDDY QC please examine the README file.
+
+The function assumes that eddy outputs are saved in the following folder::
+
+    <folder_with_sessions>/<session>/hcp/<session>/Diffusion/eddy/
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+    --session (str):
+        Session ID to run EDDY QC on.
+    --eddybase (str) :
+        This is the basename specified when running EDDY (e.g.
+        eddy_unwarped_images)
+    --eddyidx (str):
+        EDDY index file.
+    --eddyparams (str):
+        EDDY parameters file.
+    --mask (str):
+        Binary mask file (most qc measures will be averaged across voxels
+        labeled in the mask).
+    --bvalsfile (str):
+        bvals input file.
+    --report (str, default 'individual'):
+        If you want to generate a group report ('individual' or 'group').
+    --overwrite (str):
+        Delete prior run for a given session.
+    --eddypath (str, default '<study_folder>/<session>/hcp/<session>/Diffusion/eddy/'):
+        Specify the relative path of the eddy folder you want to use for inputs.
+    --bvecsfile ():
+        If specified, the tool will create a bvals_no_outliers.txt and a
+        bvecs_no_outliers.txt file that contain the bvals and bvecs of the
+        non-outlier volumes, based on the MSR estimates,
+
+Special parameters:
+    --list (str):
+        Text file containing a list of qc.json files obtained from SQUAD. If
+        --report='group', then this argument needs to be specified.
+    --groupvar (str):
+        Text file containing extra grouping variable. Extra optional input if
+        --report='group'.
+    --outputdir (str, default '<eddyBase>.qc'):
+          Output directory. Extra optional input if --report='group'.
+    --update (str):
+        Applies only if --report='group' - set to <true> to update existing
+        single session qc reports.
+
+Output files:
+    Outputs for individual run:
+
+    - qc.pdf               ... single session QC report
+    - qc.json              ... single session QC and data info
+    - vols_no_outliers.txt ... text file that contains the list of the
+      non-outlier volumes (based on eddy residuals)
+
+    Outputs for group run:
+
+    - group_qc.pdf ... single session QC report
+    - group_qc.db  ... database
+
+Examples:
+     >>> dwi_eddy_qc.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \\
+                        --session='<session_id>' \\
+                        --eddybase='<eddy_base_name>' \\
+                        --report='individual' \\
+                        --bvalsfile='<bvals_file>' \\
+                        --mask='<mask_file>' \\
+                        --eddyidx='<eddy_index_file>' \\
+                        --eddyparams='<eddy_param_file>' \\
+                        --bvecsfile='<bvecs_file>' \\
+                        --overwrite='yes'
+
+EOF
+exit 0
 }
 
 # ------------------------------------------------------------------------------

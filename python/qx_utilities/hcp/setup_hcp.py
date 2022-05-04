@@ -53,15 +53,15 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             Options are:
 
             - 'abort' ... abort setting up hcp folder
-            - 'add' ... leave existing files and add new ones
+            - 'add'   ... leave existing files and add new ones
             - 'clear' ... remove any existing files and redo hcp mapping.
 
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
-            file by their number (e.g. BOLD_1). The alternative ('userdefined')
+            file by their number (e.g. `BOLD_1`). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
-            mapping (e.g. rfMRI_REST1_AP).
+            mapping (e.g. `rfMRI_REST1_AP`).
         --hcp_folderstructure (str, default 'hcpls'):
             Which HCP folder structure to use 'hcpya' or 'hcpls'.
         --hcp_suffix (str, default ''):
@@ -79,9 +79,9 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         if possible.
 
         Image definition:
-            For the mapping to work, each MR to be mapped has to be marked with the
-            appropriate image type in the source.txt file. The following file types
-            are recognized and will be mapped correctly:
+            For the mapping to work, each MR to be mapped has to be marked with
+            the appropriate image type in the source.txt file. The following
+            file types are recognized and will be mapped correctly:
 
             --T1w
                 T1 weighted high resolution structural image
@@ -93,10 +93,11 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                 Field mapping magnitude image used for distortion correction
             --FM-Phase
                 Field mapping phase image used for distortion correction
-            --boldref[N]
-                Reference image for the following BOLD image
-            --bold[N]
-                BOLD image
+            --boldref
+                Reference image for the following BOLD image, N should be added
+                to the end of the boldref (boldref<N>)
+            --bold
+                BOLD image, N should be added to the end of bold (bold<N>)
             --SE-FM-AP
                 Spin-echo fieldmap image recorded using the A-to-P phase
                 encoding direction
@@ -149,18 +150,17 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                 15: bold7:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(AP)
                 16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(PA)
 
-
             HCP folder structure version:
                 `version` parameter determines the HCP folder structure to use:
 
                 --'v1'
                     Unprocessed data is parallel to processed data, functional
-                    data folders have '_fncb' suffix and field map data folders
-                    have '_strc' tail.
+                    data folders have `_fncb` suffix and field map data folders
+                    have `_strc` tail.
                 --'v2'
                     Unprocessed data is a subfolder in the HCP session folder,
                     functional data folders and field map data folders do not
-                    have the '_fncb' and '_strc' extensions, respectively.
+                    have the `_fncb` and `_strc` extensions, respectively.
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying

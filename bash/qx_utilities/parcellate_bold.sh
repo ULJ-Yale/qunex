@@ -11,80 +11,88 @@
 # ------------------------------------------------------------------------------
 
 usage() {
- echo ""
- echo "This function implements parcellation on the BOLD dense files using a" 
- echo "whole-brain parcellation (e.g. Glasser parcellation with subcortical labels"
- echo "included)."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder     Path to study folder that contains sessions"
- echo "--sessions           Comma separated list of sessions to run"
- echo "--inputfile          Specify the name of the file you want to use for "
- echo "                     parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
- echo "--inputpath          Specify path of the file you want to use for parcellation "
- echo "                     relative to the master study folder and session directory "
- echo "                     (e.g. /images/functional/)"
- echo "--inputdatatype      Specify the type of data for the input file (e.g. dscalar "
- echo "                     or dtseries)"
- echo "--parcellationfile   Specify the absolute path of the file you want to use for "
- echo "                     parcellation "
- echo "                     (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
- echo "--singleinputfile    Parcellate only a single file in any location. Individual "
- echo "                     flags are not needed (--session, --sessionsfolder, --inputfile)."
- echo "--overwrite          Delete prior run (yes / no)"
- echo "--computepconn       Specify if a parcellated connectivity file should be "
- echo "                     computed (pconn). This is done using covariance and "
- echo "                     correlation (yes/no) [no]"
- echo "--outname            Specify the suffix output name of the pconn file"
- echo "--outpath            Specify the output path name of the pconn file relative "
- echo "                     to the master study folder (e.g. /images/functional/)"
- echo "--useweights         If computing a parcellated connectivity file you can "
- echo "                     specify which frames to omit (e.g. yes or no) [no] "
- echo "--weightsfile        Specify the location of the weights file relative to the "
- echo "                     master study folder "
- echo "                     (e.g. /images/functional/movement/bold1.use)"
- echo "--extractdata        Specify if you want to save out the matrix as a CSV file"
- echo ""
- echo "EXAMPLES"
- echo "========"
- echo ""
- echo "Run directly via::"
- echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \ "
- echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- echo ""
- reho "NOTE: --scheduler is not available via direct script call."
- echo ""
- echo "Run via:: "
- echo ""
- echo "  qunex parcellate_bold --<parameter1> --<parameter2> ... --<parameterN> "
- echo ""
- geho "NOTE: scheduler is available via qunex call."
- echo ""
- echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                  followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""                   
- echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo "::"
- echo ""
- echo " parcellate_bold.sh --sessionsfolder='<folder_with_sessions>' \ "
- echo " --session='<session_id>' \ "
- echo " --inputfile='<name_of_input_file' \ "
- echo " --inputpath='<path_for_input_file>' \ "
- echo " --inputdatatype='<type_of_dense_data_for_input_file>' \ "
- echo " --parcellationfile='<dlabel_file_for_parcellation>' \ "
- echo " --overwrite='no' \ "
- echo " --extractdata='yes' \ "
- echo " --outname='<name_of_output_pconn_file>' \ "
- echo " --outpath='<path_for_output_file>'"
- echo ""
- exit 0
+cat << EOF
+``parcellate_bold``
+
+This function implements parcellation on the BOLD dense files using a
+whole-brain parcellation (e.g. Glasser parcellation with subcortical labels
+included).
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --inputfile (str):
+        Specify the name of the file you want to use for parcellation (e.g.
+        'bold1_Atlas_MSMAll_hp2000_clean').
+    --inputpath (str):
+        Specify path of the file you want to use for parcellation relative to
+        the master study folder and session directory (e.g.
+        '/images/functional/').
+    --inputdatatype (str):
+        Specify the type of data for the input file (e.g. 'dscalar' or
+        'dtseries').
+    --parcellationfile (str):
+       Specify the absolute path of the file you want to use for parcellation
+       (e.g. '/gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii').
+    --singleinputfile (str):
+       Parcellate only a single file in any location. Individual flags are not
+       needed (--session, --sessionsfolder, --inputfile).
+    --overwrite (str):
+        Delete prior run ('yes' / 'no').
+    --computepconn (str, default 'no'):
+        Specify if a parcellated connectivity file should be computed (pconn).
+        This is done using covariance and correlation ('yes' / 'no').
+    --outname (str):
+        Specify the suffix output name of the pconn file.
+    --outpath (str):
+        Specify the output path name of the pconn file relative to the master
+        study folder (e.g. '/images/functional/').
+    --useweights (str, default 'no'):
+        If computing a parcellated connectivity file you can specify which
+        frames to omit (e.g. 'yes' or 'no').
+    --weightsfile (str):
+        Specify the location of the weights file relative to the master study
+        folder (e.g. '/images/functional/movement/bold1.use').
+    --extractdata (str):
+        Specify if you want to save out the matrix as a CSV file.
+
+Examples:
+    Run directly via:
+
+    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \\
+        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via:
+
+    >>> qunex parcellate_bold --<parameter1> --<parameter2> ... --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    >>> parcellate_bold.sh --sessionsfolder='<folder_with_sessions>' \\
+                           --session='<session_id>' \\
+                           --inputfile='<name_of_input_file' \\
+                           --inputpath='<path_for_input_file>' \\
+                           --inputdatatype='<type_of_dense_data_for_input_file>' \\
+                           --parcellationfile='<dlabel_file_for_parcellation>' \\
+                           --overwrite='no' \\
+                           --extractdata='yes' \\
+                           --outname='<name_of_output_pconn_file>' \\
+                           --outpath='<path_for_output_file>'
+
+EOF
+exit 0
 }
 
 

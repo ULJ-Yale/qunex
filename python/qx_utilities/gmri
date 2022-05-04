@@ -155,7 +155,7 @@ def runCommand(command, args):
     folders = gc.deduceFolders(args)
 
     if folders['basefolder']:
-        gu.checkStudy(folders['basefolder'])
+        gu.check_study(folders['basefolder'])
 
     # --- check if command is deprecated
     command = gcs.check_deprecated_commands(command)

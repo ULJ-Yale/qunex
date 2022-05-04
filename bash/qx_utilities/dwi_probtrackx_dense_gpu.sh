@@ -23,130 +23,147 @@ geho() {
 }
 
 usage() {
-    echo ""
-    echo "This function runs the probtrackxgpu dense whole-brain connectome generation by "
-    echo "calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh."
-    echo "Note that this function needs to send work to a GPU-enabled queue or you need "
-    echo "to run it locally from a GPU-equiped machine."
-    echo ""
-    echo "It explicitly assumes the Human Connectome Project folder structure and "
-    echo "completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:"
-    echo ""     
-    geho " - HCP Pipelines"
-    geho " - FSL 5.0.9 or greater"
-    echo ""
-    echo "Processed DWI data needs to be here::"
-    echo ""
-    echo " <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
-    echo ""
-    echo "BedpostX output data needs to be here::"
-    echo ""
-    echo " <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX"
-    echo ""
-    echo "T1w images need to be in MNINonLinear space here::"
-    echo ""
-    echo " <study_folder>/<session>/hcp/<session>/MNINonLinear"
-    echo ""
-    echo "INPUTS"
-    echo "======"
-    echo ""
-    echo "--sessionsfolder          Path to study folder that contains sessions"
-    echo "--sessions                Comma separated list of sessions to run"
-    echo "--overwrite               Delete a prior run for a given session (yes / no) [Note: "
-    echo "                          this will delete only the Matrix run specified by the "
-    echo "                          -omatrix flag]"
-    echo "--omatrix1                Specify if you wish to run matrix 1 model [yes or omit flag]"
-    echo "--omatrix3                Specify if you wish to run matrix 3 model [yes or omit flag]"
-    echo "--nsamplesmatrix1         Number of samples [10000]"
-    echo "--nsamplesmatrix3         Number of samples [3000]"
-    echo "--nsamplesmatrix1         Number of samples [10000]"
-    echo "--nsamplesmatrix3         Number of samples [3000]"
-    echo "--distancecorrection      Use distance correction [no]"
-    echo "--storestreamlineslength  Store average length of the streamlines [no]"
-    echo "--scriptsfolder           Location of the probtrackX GPU scripts"
-    echo ""
-    echo "Generic parameters set by default (will be parameterized in the future)::"
-    echo ""
-    echo " --loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -S 2000 \ "
-    echo " --steplength=0.5"
-    echo ""
-    echo "OUTPUTS"
-    echo "======="
-    echo ""
-    echo "Dense Connectome CIFTI Results in MNI space for Matrix1 will be here::"
-    echo ""
-    echo "   <study_folder>/<session>/hcp/<session>/MNINonLinear/Results/Conn1.dconn.nii.gz"
-    echo ""
-    echo "Dense Connectome CIFTI Results in MNI space for Matrix3 will be here::"
-    echo ""
-    echo "   <study_folder>/<session>/hcp/<session>/MNINonLinear/Results/Conn3.dconn.nii.gz"
-    echo ""
-    echo "USE"
-    echo "==="
-    echo ""
-    echo "The function calls either of these based on the --omatrix1 and --omatrix3 flags:: "
-    echo ""
-    echo " $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix1.sh"
-    echo " $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix3.sh"
-    echo ""
-    echo "Both functions are cluster-aware and send the jobs to the GPU-enabled queue. "
-    echo "They do not work interactively."
-    echo ""
-    echo "NOTES"
-    echo "====="
-    echo ""
-    echo "Note on waytotal normalization and log transformation of streamline counts:"
-    echo ""
-    echo "waytotal normalization is computed automatically as part of the run prior to "
-    echo "any inter-session or group comparisons to account for individual differences in "
-    echo "geometry and brain size. The function divides the dense connectome by the "
-    echo "waytotal value, turning absolute streamline counts into relative proportions of "
-    echo "the total streamline count in each session. "
-    echo ""
-    echo "Next, a log transformation is computed on the waytotal normalized data, which "
-    echo "will yield stronger connectivity values for longe-range projections. "
-    echo "Log-transformation accounts for algorithmic distance bias in tract generation "
-    echo "(path probabilities drop with distance as uncertainty is accumulated)."
-    echo ""
-    echo "See Donahue et al. (2016) The Journal of Neuroscience, 36(25):6758–6770. "
-    echo "DOI: https://doi.org/10.1523/JNEUROSCI.0493-16.2016"
-    echo ""
-    echo "The outputs for these files will be in::"
-    echo ""
-    echo " /<path_to_study_sessions_folder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii"
-    echo " /<path_to_study_sessions_folder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii"
-    echo ""
-    echo "EXAMPLE USE"
-    echo "==========="
-    echo ""
-    echo "Run directly via::"
-    echo ""
-    echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \ "
-    echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
-    echo ""
-    reho "NOTE: --scheduler is not available via direct script call."
-    echo ""
-    echo "Run via:: "
-    echo ""
-    echo " qunex dwi_probtrackx_dense_gpu --<parameter1> --<parameter2> ... --<parameterN> "
-    echo ""
-    geho "NOTE: scheduler is available via qunex call."
-    echo ""
-    echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
-    echo "                  followed by relevant options"
-    echo ""
-    echo "For SLURM scheduler the string would look like this via the qunex call:: "
-    echo ""                   
-    echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "     
-    echo ""
-    echo "::"
-    echo ""
-    echo " qunex dwi_probtrackx_dense_gpu --sessionsfolder='<path_to_study_sessions_folder>' \ "
-    echo " --sessions='<comma_separarated_list_of_cases>' \ "
-    echo " --scheduler='<name_of_scheduler_and_options>' \ "
-    echo " --omatrix1='yes' \ "
-    echo " --nsamplesmatrix1='10000' \ "
-    echo " --overwrite='no'"
+    cat << EOF
+``dwi_probtrackx_dense_gpu``
+
+This function runs the probtrackxgpu dense whole-brain connectome generation by
+calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh.
+Note that this function needs to send work to a GPU-enabled queue or you need
+to run it locally from a GPU-equiped machine.
+
+It explicitly assumes the Human Connectome Project folder structure and
+completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:
+
+- HCP Pipelines
+- FSL 5.0.9 or greater
+
+Processed DWI data needs to be here::
+
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+
+BedpostX output data needs to be here::
+
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
+
+T1w images need to be in MNINonLinear space here::
+
+    <study_folder>/<session>/hcp/<session>/MNINonLinear
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --overwrite (str):
+        Delete a prior run for a given session ('yes' / 'no').
+        Note: this will delete only the Matrix run specified by the -omatrix
+        flag.
+    --omatrix1 (str):
+        Specify if you wish to run matrix 1 model [yes or omit flag]
+    --omatrix3 (str):
+        Specify if you wish to run matrix 3 model [yes or omit flag]
+    --nsamplesmatrix1 (str, default '10000'):
+        Number of samples.
+    --nsamplesmatrix3 (str, default '3000'):
+        Number of samples.
+    --nsamplesmatrix1 (str, default '10000'):
+        Number of samples.
+    --nsamplesmatrix3 (str, default '3000'):
+        Number of samples.
+    --distancecorrection (str, default 'no'):
+        Use distance correction.
+    --storestreamlineslength (str, default 'no'):
+        Store average length of the streamlines.
+    --scriptsfolder (str):
+        Location of the probtrackX GPU scripts.
+    --loopcheck (flag):
+        Generic parameter set by default (will be parameterized in the future).
+    --forcedir (flag):
+        Generic parameter set by default (will be parameterized in the future).
+    --fibthresh (str, default '0.01'):
+        Generic parameter set by default (will be parameterized in the future).
+    --c (str, default '0.2'):
+        Generic parameter set by default (will be parameterized in the future).
+    --sampvox (str, default '2'):
+        Generic parameter set by default (will be parameterized in the future).
+    --randfib (str, default '1'):
+        Generic parameter set by default (will be parameterized in the future).
+    --S (str, default '2000'):
+        Generic parameter set by default (will be parameterized in the future).
+    --steplength (str, default '0.5'):
+        Generic parameter set by default (will be parameterized in the future).
+
+Output files:
+    Dense Connectome CIFTI Results in MNI space for Matrix1 will be here::
+
+       <study_folder>/<session>/hcp/<session>/MNINonLinear/Results/Conn1.dconn.nii.gz
+
+    Dense Connectome CIFTI Results in MNI space for Matrix3 will be here::
+
+       <study_folder>/<session>/hcp/<session>/MNINonLinear/Results/Conn3.dconn.nii.gz
+
+Notes:
+    Use:
+        The function calls either of these based on the --omatrix1 and --omatrix3 flags::
+
+            $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix1.sh
+            $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix3.sh
+
+        Both functions are cluster-aware and send the jobs to the GPU-enabled
+        queue. They do not work interactively.
+
+    Note on waytotal normalization and log transformation of streamline counts:
+        waytotal normalization is computed automatically as part of the run
+        prior to any inter-session or group comparisons to account for
+        individual differences in geometry and brain size. The function divides
+        the dense connectome by the waytotal value, turning absolute streamline
+        counts into relative proportions of the total streamline count in each
+        session.
+
+        Next, a log transformation is computed on the waytotal normalized data,
+        which will yield stronger connectivity values for longe-range
+        projections. Log-transformation accounts for algorithmic distance bias
+        in tract generation (path probabilities drop with distance as
+        uncertainty is accumulated).
+
+        See Donahue et al. (2016) The Journal of Neuroscience, 36(25):6758–6770.
+        DOI: https://doi.org/10.1523/JNEUROSCI.0493-16.2016
+
+        The outputs for these files will be in::
+
+            /<path_to_study_sessions_folder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii
+            /<path_to_study_sessions_folder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii
+
+Examples:
+    Run directly via:
+
+    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \\
+    --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via:
+
+    >>> qunex dwi_probtrackx_dense_gpu --<parameter1> --<parameter2> ... --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    >>> qunex dwi_probtrackx_dense_gpu --sessionsfolder='<path_to_study_sessions_folder>' \\
+              --sessions='<comma_separarated_list_of_cases>' \\
+              --scheduler='<name_of_scheduler_and_options>' \\
+              --omatrix1='yes' \\
+              --nsamplesmatrix1='10000' \\
+              --overwrite='no'
+
+EOF
     exit 0
 }
 

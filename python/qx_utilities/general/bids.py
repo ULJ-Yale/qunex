@@ -940,21 +940,21 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
             location of folders and a list of created NIfTI images with
             their description.
 
-            An example session.txt file would be:
+            An example session.txt file would be::
 
-            id: 06_retest
-            subject: 06
-            bids: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/bids
-            raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
-            hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
+                id: 06_retest
+                subject: 06
+                bids: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/bids
+                raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+                hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
 
-            01: T1w
-            02: bold covertverbgeneration
-            03: bold fingerfootlips
-            04: bold linebisection
-            05: bold overtverbgeneration
-            06: bold overtwordrepetition
-            07: dwi
+                01: T1w
+                02: bold covertverbgeneration
+                03: bold fingerfootlips
+                04: bold linebisection
+                05: bold overtverbgeneration
+                06: bold overtwordrepetition
+                07: dwi
 
             For each of the listed images there will be a corresponding
             NIfTI file in the nii subfolder (e.g. 04.nii.gz for the line

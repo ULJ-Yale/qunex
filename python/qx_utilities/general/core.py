@@ -349,27 +349,28 @@ def runExternalParallel(calls, cores=None, prepend=''):
     Runs external commands specified in 'calls' in parallel utilizing all the
     available or the number of cores specified in 'cores'.
 
-    INPUTS
-    ======
+    Parameters:
+        --calls (list):
+            A list of dictionaries that specifies the commands to run. It should
+            consists of:
 
-    --calls        A list of dictionaries that specifies the commands to run. It
-                   should consists of:
+            - 'name' ... the name of the command to run
+            - 'args' ... the actual command provided as a list of arguments
+            - 'sout' ... the name of the log file to which to direct the
+              standard output from the command ran.
 
-                   - name (the name of the command to run)
-                   - args (the actual command provided as a list of arguments)
-                   - sout (the name of the log file to which to direct the
-                     standard output from the command ran)
+        --cores (int | str, default 'all'):
+            Number of elements to run in parallel for grayordinate
+            decomposition. If specified as None or 'all', all available elements
+            (3 max for left surface, right surface and volume files) will be
+            used. One element per CPU core is processed at a time.
 
-    --cores        The number of cores to utilize. If specified as None or
-                   'all', all available cores will be utilized.
-    --prepend      The string to prepend to each line of progress report.
+        --prepend (str):
+            The string to prepend to each line of progress report.
 
-    EXAMPLE USE
-    ===========
-
-    ::
-
-        runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, cores=1, prepend=' ... ')
+    Examples:
+        >>> runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
+        cores=1, prepend=' ... ')
     """
 
     if cores is None or cores in ['all', 'All', 'ALL']:

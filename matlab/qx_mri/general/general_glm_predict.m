@@ -49,13 +49,12 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %               letters of all the predicted regressors. ['']
 %
 %           save
-%               A comma separated string, listing the files to save:
+%               A comma separated string, listing the files to save ['']:
 %
 %               predicted
 %                   save predicted bold timeseries
 %               residual
 %                   save residual bold timeseries
-%               ['']
 %
 %           ignore
 %               A comma separated list of information to identify frames to
@@ -66,7 +65,7 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %               fidl
 %                   ignore frames as marked in .fidl file
 %               <column>
-%                   the column name in *_scrub.txt file that matches bold file
+%                   the column name in ∗_scrub.txt file that matches bold file
 %                   to be used for ignore mask
 %
 %           indtargetf

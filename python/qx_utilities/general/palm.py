@@ -223,12 +223,11 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
         --root (str, default detailed below):
             Optional root name for the result images, design name is
             used if the optional parameter is not specified.
-        --parelements (str, default 'all'):
-            TODO: >>Number of elements<< is specified here, >>number of cores to utilize<< specified in actual code in gc.runExternalParallel().
+        --parelements (int | str, default 'all'):
             Number of elements to run in parallel for grayordinate
-            decomposition, all available elements (3 max for left
-            surface, right surface and volume files) will be used if
-            not specified.
+            decomposition. If specified as None or 'all', all available elements
+            (3 max for left surface, right surface and volume files) will be
+            used. One element per CPU core is processed at a time.
         --overwrite (str, default 'no'):
             Whether to remove preexisting image files, if they exists,
             the command will exit with a warning if there are

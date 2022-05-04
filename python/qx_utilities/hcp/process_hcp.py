@@ -307,8 +307,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         for folders and files::
 
-            T1w/*T1w_MPR[N]*
-            T2w/*T2w_MPR[N]*
+            T1w/∗T1w_MPR[N]∗
+            T2w/∗T2w_MPR[N]∗
 
         There has to be at least one T1w image present. If there are more than
         one T1w or T2w images, they will all be used and averaged together.
@@ -319,8 +319,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         **TOPUP**::
 
-            SpinEchoFieldMap[N]*/*_<hcp_sephasepos>_*
-            SpinEchoFieldMap[N]*/*_<hcp_sephaseneg>_*
+            SpinEchoFieldMap[N]∗/∗_<hcp_sephasepos>_∗
+            SpinEchoFieldMap[N]∗/∗_<hcp_sephaseneg>_∗
 
         **SiemensFieldMap**::
 
@@ -466,10 +466,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             - `all`: use all present inline information for all modalities,
             - 'DwellTime': use DwellTime information for all modalities,
-            - `T1w:all': use all present inline information for T1w modality,
-            - `SE:EchoSpacing': use EchoSpacing information for Spin-Echo
+            - `T1w:all`: use all present inline information for T1w modality,
+            - `SE:EchoSpacing`: use EchoSpacing information for Spin-Echo
               fieldmap images.
-            - 'none': do not use inline information
+            - `none`: do not use inline information
 
             Modalities: T1w, T2w, SE, BOLD, dMRi Inline information: TR,
             PEDirection, EchoSpacing DwellTime, ReadoutDirection.
@@ -1881,7 +1881,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if other than default.
         --log (str, default 'keep'):
             Whether to keep ("keep") or remove ("remove") the temporary logs
-            once jobs are completed. ["keep"]
+            once jobs are completed.
             When a comma or pipe ("|") separated list is given, the log will be
             created at the first provided location and then linked or copied to
             other locations.
@@ -1903,17 +1903,20 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             Example specifications:
 
-            - `all`: use all present inline information for all
-              modalities,
-            - 'DwellTime': use DwellTime information for all modalities,
-            - `T1w:all': use all present inline information for T1w
-              modality,
-            - `SE:EchoSpacing': use EchoSpacing information for
-              Spin-Echo fieldmap images.
-            - 'none': do not use inline information.
+            - `all`
+                Use all present inline information for all modalities.
+            - `DwellTime`
+                Use DwellTime information for all modalities.
+            - `T1w:all`
+                Use all present inline information for T1w modality.
+            - `SE:EchoSpacing`
+                Use EchoSpacing information for Spin-Echo fieldmap images.
+            - `none`
+                Do not use inline information.
 
-            Modalities: T1w, T2w, SE, BOLD, dMRi Inline information: TR,
-            PEDirection, EchoSpacing DwellTime, ReadoutDirection.
+            Modalities: 'T1w', 'T2w', 'SE', 'BOLD', 'dMRi'.
+            Inline information: 'TR', 'PEDirection', 'EchoSpacing' 'DwellTime',
+            'ReadoutDirection'.
 
             If information is not specified it will not be used. More
             general specification (e.g. `all`) implies all more specific
@@ -2301,7 +2304,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Adults study is used. Specifically, the source files are stored in
             individual folders within the main 'hcp' folder in parallel with the
             working folders and the 'MNINonLinear' folder with results. If set
-            to'hcpls' the folder structure used in the HCP Life Span study is
+            to 'hcpls' the folder structure used in the HCP Life Span study is
             used. Specifically, the source files are all stored within their
             individual subfolders located in the joint 'unprocessed' folder in
             the main 'hcp' folder, parallel to the working folders and the
@@ -2309,30 +2312,23 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
-            file by their number (e.g. BOLD_1). The alternative ('userdefined')
-            is to use the file names, which can be defined by the user prior to
-            mapping (e.g. rfMRI_REST1_AP).
+            file by their number (e.g. `BOLD_1`). The alternative
+            ('userdefined') is to use the file names, which can be defined by
+            the user prior to mapping (e.g. `rfMRI_REST1_AP`).
 
     Specific parameters:
         --hcp_bold_biascorrection (str, default 'NONE'):
-            Whether to perform bias correction for BOLD images. NONE or
-            Legacy.
+            Whether to perform bias correction for BOLD images. NONE or Legacy.
         --hcp_bold_usejacobian (str, default 'FALSE'):
             Whether to apply the jacobian of the distortion correction to fMRI
             data.
         --hcp_fs_longitudinal:
-            The name of the FS longitudinal template if one was created
-            and is to be used in this step.
+            The name of the FS longitudinal template if one was created and is
+            to be used in this step.
             (This parameter is currently not supported)
         --hcp_bold_prefix (str, default 'BOLD'):
-            The prefix to use when generating BOLD names (see 'hcp_filename')
+            The prefix to use when generating BOLD names (see --hcp_filename)
             for BOLD working folders and results.
-        --hcp_filename (str, default 'automated'):
-            How to name the BOLD files once mapped into the hcp input folder
-            structure. The default ('automated') will automatically name each
-            file by their number (e.g. BOLD_1). The alternative ('userdefined')
-            is to use the file names, which can be defined by the user prior to
-            mapping (e.g. rfMRI_REST1_AP).
         --hcp_bold_echospacing (float, default 0.00035):
             Echo Spacing or Dwelltime of BOLD images.
         --hcp_bold_sbref (str, default 'NONE'):
@@ -2346,11 +2342,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             - `all`: use all present inline information for all
               modalities,
             - 'DwellTime': use DwellTime information for all modalities,
-            - `T1w:all': use all present inline information for T1w
+            - `T1w:all`: use all present inline information for T1w
               modality,
-            - `SE:EchoSpacing': use EchoSpacing information for
+            - `SE:EchoSpacing`: use EchoSpacing information for
               Spin-Echo fieldmap images.
-            - 'none': do not use inline information.
+            - `none`: do not use inline information.
 
             Modalities: T1w, T2w, SE, BOLD, dMRi Inline information: TR,
             PEDirection, EchoSpacing, DwellTime, ReadoutDirection.
@@ -2358,8 +2354,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             If information is not specified it will not be used. More general
             specification (e.g. `all`) implies all more specific cases (e.g.
             `T1w:all`).
-
-        DISTORTION CORRECTION DETAILS:
         --hcp_bold_dcmethod (str, default 'TOPUP'):
             BOLD image deformation correction that should be used: TOPUP,
             FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap,
@@ -2382,8 +2376,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             A full path to the topup configuration file to use. Set to
             '' if the default is to be used or of TOPUP distortion
             correction is not used.
-
-        SLICE TIMING CORRECTION:
         --hcp_bold_doslicetime (str, default 'FALSE'):
             Whether to do slice timing correction 'TRUE' or 'FALSE'.
         --hcp_bold_slicetimerparams (str, default ''):
@@ -2397,14 +2389,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             not ('empty').
             This parameter is deprecated. If specified, it will be added to
             --hcp_bold_slicetimerparams.
-
-        MOTION CORRECTION AND ATLAS REGISTRATION:
         --hcp_bold_preregistertool (str, default 'epi_reg'):
             What tool to use to preregister BOLDs before FSL BBR is 'run',
             'epi_reg' (default) or 'flirt'.
         --hcp_bold_movreg (str, default 'FLIRT'):
-            Whether to use FLIRT (default and best for multiband images) or
-            MCFLIRT for motion correction.
+            Whether to use 'FLIRT' (default and best for multiband images) or
+            'MCFLIRT' for motion correction.
         --hcp_bold_movref (str, default 'independent'):
             What reference to use for movement correction ('independent',
             'first').
@@ -2423,13 +2413,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_mask (str, default 'T1_fMRI_FOV'):
             Specifies what mask to use for the final bold:
 
-            - 'T1_fMRI_FOV'           ... combined T1w brain mask and
+            - `T1_fMRI_FOV`           ... combined T1w brain mask and
               fMRI FOV masks (the default and HCPStyleData compliant)
-            - 'T1_DILATED_fMRI_FOV'   ... a once dilated T1w brain based
+            - `T1_DILATED_fMRI_FOV`   ... a once dilated T1w brain based
               mask combined with fMRI FOV
-            - 'T1_DILATED2x_fMRI_FOV' ... a twice dilated T1w brain
+            - `T1_DILATED2x_fMRI_FOV` ... a twice dilated T1w brain
               based mask combined with fMRI FOV
-            - 'fMRI_FOV'              ... a fMRI FOV mask.
+            - `fMRI_FOV`              ... a fMRI FOV mask.
 
             This parameter is only valid when running HCPpipelines
             using the LegacyStyleData processing mode!
@@ -2451,7 +2441,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                        └─ MNINonlinear_TemplateA
                           └─ Results
                              └─ BOLD_1
-
 
     Notes:
         These last parameters enable fine-tuning of preprocessing and deserve

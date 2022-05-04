@@ -53,53 +53,53 @@ geho() {
 # ------------------------------------------------------------------------------
 
 usage() {
- echo ""
- echo "pre_tractography"
- echo ""
- echo "This function runs the Pretractography Dense trajectory space generation."
- echo ""
- echo "Note that this is a very quick function to run [< 5min] so no overwrite options "
- echo "exist."
- echo ""
- echo "It explicitly assumes the Human Connectome Project folder structure for "
- echo "preprocessing and completed diffusion and bedpostX processing."
- echo ""
- echo "DWI data needs to be in the following folder::"
- echo ""
- echo "  <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
- echo ""
- echo "BedpostX output data needs to be in the following folder::"
- echo ""
- echo "  <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX"
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder   Path to study folder that contains sessions"
- echo "--sessions         Comma separated list of sessions to run"
- echo "--scheduler        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                   followed by relevant options e.g. for SLURM the string would "
- echo "                   look like this: "
- echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "::"
- echo " qunex pretractography_dense --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separarated_list_of_cases>' \ "
- echo " --scheduler='<name_of_scheduler_and_options>' \ "
- echo ""
- echo "Direct usage::"
- echo ""
- echo " $0 <StudyFolder> <Session> <MSMflag>"
- echo ""
- echo "T1w and MNINonLinear folders are expected within <StudyFolder>/<Session>."
- echo ""
- echo "MSMflag=0 uses the default surfaces, MSMflag=1 uses the MSM surfaces defined in"
- echo "make_trajectory_space_mni.sh" 
- echo ""
- exit 0
+    cat << EOF
+``pre_tractography``
+
+This function runs the Pretractography Dense trajectory space generation.
+
+Note that this is a very quick function to run
+} (less than 5min) so no overwrite
+options exist.
+
+It explicitly assumes the Human Connectome Project folder structure for
+preprocessing and completed diffusion and bedpostX processing.
+
+DWI data needs to be in the following folder::
+
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+
+BedpostX output data needs to be in the following folder::
+
+    <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --scheduler (str):
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options e.g. for SLURM the string would look like this::
+
+            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+Examples:
+    >>> qunex pretractography_dense --sessionsfolder='<path_to_study_sessions_folder>' \\
+              --sessions='<comma_separarated_list_of_cases>' \\
+              --scheduler='<name_of_scheduler_and_options>'
+
+    Direct usage::
+
+        $0 <StudyFolder> <Session> <MSMflag>
+
+    T1w and MNINonLinear folders are expected within <StudyFolder>/<Session>.
+
+    MSMflag=0 uses the default surfaces, MSMflag=1 uses the MSM surfaces defined
+    in make_trajectory_space_mni.sh.
+
+EOF
+exit 0
 }
 
 # ------------------------------------------------------------------------------
