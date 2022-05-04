@@ -434,9 +434,9 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                           whether to interactively ask ('ask'), overwrite ('yes'),
                           abort action ('no') or append ('append') the found / 
                           specified sessions to the batch file.
-    --paramfile           The path to the parameter file header to be used. If 
-                          not explicitly provided it defaults to:
-                          <sessionsfolder>/specs/batch.txt
+    --paramfile           The path to the parameter file header (parameters.txt) 
+                          to be used. If not explicitly provided it defaults to:
+                          <sessionsfolder>/specs/parameters.txt
 
     USE
     ===
@@ -469,7 +469,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramfile
     is specified and the default template does not exist, the command will print
-    a warning and create an empty template (sessions/spec/batch.txt)
+    a warning and create an empty template (sessions/spec/parameters.txt)
     with all the available parameters. Do note that this file will need to be
     edited with correct parameter values for your study.
 
@@ -477,9 +477,9 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
     copy and modify one of the following templates:
 
     -legacy data template   
-      ``qunex/python/qx_utilities/templates/batch_legacy_parameters.txt``
+      ``qunex/python/qx_utilities/templates/parameters_singleband_example.txt``
     -multiband data template
-      ``qunex/python/qx_utilities/templates/batch_multiband_parameters.txt``
+      ``qunex/python/qx_utilities/templates/parameters_multiband_example.txt`
 
     EXAMPLE USE
     ===========
