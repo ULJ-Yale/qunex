@@ -14,7 +14,6 @@ opts_GetOpt() {
 sopt="$1"
 shift 1
 for fn in "$@" ; do
-    echo "FN: ${fn}"
     if [[ `echo ${fn} | grep -- "^${sopt}=" | wc -w` -gt 0 ]]; then
         echo ${fn} | sed "s/^${sopt}=//"
         return 0
@@ -52,8 +51,6 @@ else
     orientation=${orientation//|/" "}
     echo "       Orientation correction: ${orientation}"
 fi
-
-exit 0
 
 # ------------------------------------------------------------------------------
 # -- prep
