@@ -170,7 +170,7 @@ qunex_passed() {
 
 show_usage_qxutil() {
     echo ""
-    gmri ?${usage_input}
+    gmri ${usage_input} --h
 }
 
 show_all_qunex_commands() {
@@ -1147,22 +1147,7 @@ done
 if [[ $is_gmri_command == 1 ]]; then
     # -- If yes then set the gmri function variable
     qxutil_command_to_run="$1"
-    # -- Check for input with question mark
-    if [[ "$qxutil_command_to_run" =~ .*"?".* ]] && [[ -z ${2} ]]; then
-        # -- Set usage_input variable to pass and remove question mark
-        usage_input=`echo ${qxutil_command_to_run} | cut -c 2-`
-        # -- If no other input is provided print help
-        show_usage_qxutil
-        exit 0
-    fi
-    # -- Check for input with flag mark
-    if [[ "$qxutil_command_to_run" =~ .*"-".* ]] && [[ -z ${2} ]]; then
-        # -- Set usage_input variable to pass and remove question mark
-        usage_input=`echo ${qxutil_command_to_run} | cut -c 2-`
-        # -- If no other input is provided print help
-        show_usage_qxutil
-        exit 0
-    fi
+
     # -- Check for input is command name with no other arguments
     if [[ "$qxutil_command_to_run" != *"-"* ]] && [[ -z ${2} ]]; then
         usage_input="$qxutil_command_to_run"
@@ -1246,27 +1231,16 @@ if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     fi  
 fi
 
-# -- Check for input with question mark
-HelpInputUsage="$1"
-if [[ ${HelpInputUsage:0:1} == "?" ]] && [[ -z ${2} ]]; then
-    Usage="$1"
-    usage_input=`echo ${Usage} | cut -c 2-`
-    # -- Check if input part of function list
-    is_qunex_command ${usage_input}
-    show_version
-    show_usage_"${usage_input}"
-    exit 0
-fi
-
-# -- Check for input with no flags
-if [[ -z ${2} ]]; then
-    usage_input="$1"
-    # -- Check if input part of function list
-    is_qunex_command ${usage_input}
-    show_version
-    show_usage_"${usage_input}"
-    exit 0
-fi
+# -- Check if one of args is -h, --h, -H or --H
+for fn in "$@" ; do
+    if [[ ${fn} == "-h" ]] || [[ ${fn} == "--h" ]] || [[ ${fn} == "-H" ]] || [[ ${fn} == "--H" ]]; then
+        # -- Check if input part of function list
+        is_qunex_command ${1}
+        show_version
+        show_usage_"${1}"
+        exit 0
+    fi
+done
 
 # ------------------------------------------------------------------------------
 # -- Check if running script interactively or using flag arguments
