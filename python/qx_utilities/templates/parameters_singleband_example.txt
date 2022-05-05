@@ -8,7 +8,6 @@
 # ===============================================================================
 # == Batch example preprocessing options for singleband non-HCP-compliant data ==
 # ==       NOTE: ADJUST SETTINGS AS NEEDED FOR YOUR STUDY BEFORE USE!          ==
-# ==          For all supported batch parameter options run > qunex -o         ==
 # ===============================================================================
 
 # -------------------------> General HCP settings

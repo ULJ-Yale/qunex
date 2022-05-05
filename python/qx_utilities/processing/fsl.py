@@ -18,8 +18,6 @@ All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
 - ``qunex ?<command>`` for command specific help
-- ``qunex -o`` for a list of relevant arguments and options
-
 There are additional support functions that are not to be used
 directly.
 """

@@ -1041,15 +1041,6 @@ get_flags() {
     done
 }
 
-# -- Checks command line arguments for "--help" indicating that help has been requested
-check_help_request() {
-    for fn in "$@" ; do
-        if [[ ${fn} = "--help" ]]; then
-            return 0
-        fi
-    done
-}
-
 # -- Set and report version
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 echo ""
@@ -1078,12 +1069,6 @@ fi
 if [ "$1" == "-splash" ] || [ "$1" == "splash" ] || [ "$1" == "--splash" ] || [ "$1" == "--s" ] || [ "$1" == "-s" ]; then
     show_splash
     echo ""
-    exit 0
-fi
-
-if [ $(check_help_request $@) ]; then
-    show_splash
-    show_usage
     exit 0
 fi
 
@@ -1233,7 +1218,7 @@ fi
 
 # -- Check if one of args is -h, --h, -H or --H
 for fn in "$@" ; do
-    if [[ ${fn} == "-h" ]] || [[ ${fn} == "--h" ]] || [[ ${fn} == "-H" ]] || [[ ${fn} == "--H" ]]; then
+    if [[ ${fn} == "-h" ]] || [[ ${fn} == "--h" ]] || [[ ${fn} == "-H" ]] || [[ ${fn} == "--H" ]] || [[ ${fn} == "--help" ]] || [[ ${fn} == "-help" ]]; then
         # -- Check if input part of function list
         is_qunex_command ${1}
         show_version
