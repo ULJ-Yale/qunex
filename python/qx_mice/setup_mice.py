@@ -249,7 +249,7 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
                     "work_dir"   : work_dir,
                     "bold"       : boldname,
                     "tr"         : options["tr"],
-                    "orientation": options["orientation"]}
+                    "orientation": options["orientation"].replace(" ", "|")}
 
             # optional parameters
             # voxel_increase
