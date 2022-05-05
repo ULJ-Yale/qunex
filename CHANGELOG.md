@@ -6,9 +6,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.93.7
+## 0.93.8
 
-Fixed writing and reading whitespaces to/from sequence specific infomration.
+Fixed writing and reading whitespaces to/from sequence specific infomration. Help for commands can be now accessed by using a --h flag.
 
 ## 0.93.6
 
