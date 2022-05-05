@@ -88,12 +88,11 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
     Specific parameters
     -------------------
 
-    --tr                            TR of the bold data. [2.5]
-    --voxel_increase                The factor by which to increase voxel size.
-                                    If not provided QuNex will not increase the
-                                    voxel size. []
-    --no_orienatation_correction    Whether to disable orientation correction.
-                                    [Not set by default].
+    --tr                TR of the bold data. [2.5]
+    --voxel_increase    The factor by which to increase voxel size. If not
+                        provided QuNex will not increase the voxel size. []
+    --orienatation      A string depicting how to fix the orientation.
+                        Set to "" to leave orientation as is. [x -y z]
 
     OUTPUTS
     =======
@@ -244,20 +243,18 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
             comm = '%(script)s \
                     --work_dir="%(work_dir)s" \
                     --bold="%(bold)s" \
-                    --tr="%(tr)s"' % {
-                    "script"   : setup_mice_script,
-                    "work_dir" : work_dir,
-                    "bold"     : boldname,
-                    "tr"       : options["tr"]}
+                    --tr="%(tr)s" \
+                    --orientation="%(orientation)s"' % {
+                    "script"     : setup_mice_script,
+                    "work_dir"   : work_dir,
+                    "bold"       : boldname,
+                    "tr"         : options["tr"],
+                    "orientation": options["orientation"]}
 
             # optional parameters
             # voxel_increase
             if 'voxel_increase' in options:
                 comm += '                --voxel_increase=' + options['voxel_increase']
-
-            # no_orienatation_correction
-            if options['no_orienatation_correction']:
-                comm += '                --no_orienatation_correction'
 
             # report command
             r += '\n\n------------------------------------------------------------\n'

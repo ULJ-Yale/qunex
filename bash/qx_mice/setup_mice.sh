@@ -25,7 +25,7 @@ work_dir=`opts_GetOpt "--work_dir" $@`
 bold=`opts_GetOpt "--bold" $@`
 tr=`opts_GetOpt "--tr" $@`
 voxel_increase=`opts_GetOpt "--voxel_increase" $@`
-no_orientation_correction=`opts_GetOpt "--no_orientation_correction" $@`
+orientation=`opts_GetOpt "--orientation" $@`
 
 # check required parameters
 if [[ -z ${work_dir} ]]; then echo "ERROR: Work directory is not set!"; exit 1; fi
@@ -45,12 +45,11 @@ else
     echo "       Increase voxel size by: ${voxel_increase}"
 fi
 
-if [[ -z ${no_orientation_correction} ]]; then 
-    echo "       Orientation correction: yes"
+if [[ -z ${orientation} ]]; then
+    echo "       Orientation correction: none"
 else
-    echo "       Orientation correction: no"
+    echo "       Orientation correction: ${orientation}"
 fi
-
 
 # ------------------------------------------------------------------------------
 # -- prep
@@ -101,13 +100,13 @@ fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}
 
 
 # ------------------------------------------------------------------------------
-# -- orientation correction (should user be able to flip x, y, z?)
+# -- orientation correction
 # ------------------------------------------------------------------------------
 if [ -z $no_orientation_correction ]; then
     echo " --> Correcting orientation"
 
-    echo " ... Running fslswapdim ${bold}_SM.nii.gz -x -y z ${bold}_SM.nii.gz"
-    fslswapdim ${bold}_SM.nii.gz -x -y z ${bold}_SM.nii.gz 
+    echo " ... Running fslswapdim ${bold}_SM.nii.gz ${orientation} ${bold}_SM.nii.gz"
+    fslswapdim ${bold}_SM.nii.gz ${orientation} ${bold}_SM.nii.gz 
     echo " ... Running fslorient -deleteorient ${bold}_SM.nii.gz"
     fslorient -deleteorient ${bold}_SM.nii.gz
     echo " ... Running 3drefit -orient RAI ${bold}_SM.nii.gz"
