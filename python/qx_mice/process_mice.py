@@ -40,7 +40,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     """
     ``preprocess_mice [... processing options]``
 
-    Runs the command to prepare a QuNex study for mice preprocessing.
+    Runs the QuNex mice preprocessing command.
 
     REQUIREMENTS
     ============
