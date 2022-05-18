@@ -64,6 +64,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                             user prior to mapping (e.g. rfMRI_REST1_AP).
                             ['automated']
     --hcp_folderstructure   Which HCP folder structure to use 'hcpya' or 'hcpls'.
+                            ['hcpls']
     --hcp_suffix            Optional suffix to append to session id when creating 
                             session folder within the hcp folder. The final path
                             to HCP session is then:
