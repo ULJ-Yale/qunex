@@ -151,6 +151,9 @@ main() {
 get_options $@
 
 # -- Run img_extract_roi.m --> img_extract_roi(obj, roi, rcodes, method, weights, criterium)
+cmd="imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
+echo ${QUNEXMCOMMAND}
+echo $cmd
 ${QUNEXMCOMMAND} "imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
 
 # -- Completion check

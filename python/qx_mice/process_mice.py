@@ -102,6 +102,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
                                 [Disabled by default]
     --mice_highpass             The value of the highpass filter. [0.01]
     --mice_lowpass              The value of the lowpass filter. [0.25]
+    --mice_volumes              Number of volumes. [900]
     --flirt_ref                 Path to the template file.
                                 [qx_library/etc/mice_pipelines/EPI_template.nii.gz]
 
@@ -236,13 +237,15 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
                     --bold="%(bold)s" \
                     --fix_threshold="%(fix_threshold)s" \
                     --mice_highpass="%(mice_highpass)s" \
-                    --mice_lowpass="%(mice_lowpass)s"' % {
+                    --mice_lowpass="%(mice_lowpass)s" \
+                    --mice_volumes="%(mice_volumes)s"' % {
                     "script"   : preprocess_mice_script,
                     "work_dir" : work_dir,
                     "bold"     : boldname,
                     "fix_threshold" : options["fix_threshold"],
                     "mice_highpass" : options["mice_highpass"],
-                    "mice_lowpass"  : options["mice_lowpass"]}
+                    "mice_lowpass"  : options["mice_lowpass"],
+                    "mice_volumes"  : options["mice_volumes"]}
 
             # optional parameters
             if options["melodic_anatfile"]:

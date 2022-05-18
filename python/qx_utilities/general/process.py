@@ -494,11 +494,12 @@ arglist = [
             ['no_despike',                 '',       flag,   "Provide this to disable despiking."],
             ['melodic_anatfile',           '',       isNone, "Path to the melodic anat file. If not provided QuNex will use EPI_template.nii.gz from its library."],
             ['fix_rdata',                  '',       isNone, "Path to the RData file used by fix. If not provided QuNex will use zerbi_2015_neuroimage.RData from its library."],
-            ['fix_threshold',              '20',     int,    "Trehshold for fix ICA. [20]"],
+            ['fix_threshold',              '20',     int,    "Trehshold for fix ICA."],
             ['fix_no_motion_cleanup',      '',       flag,   "A flag for disabling cleanup of motion confounds."],
             ['fix_aggressive_cleanup',     '',       flag,   "A flag for performing aggressive celanup."],
-            ['mice_highpass',              '0.01',   str,    "The value of the highpass filter. [0.01]"],
-            ['mice_lowpass',               '0.25',   str,    "The value of the lowpass filter. [0.25]"],
+            ['mice_highpass',              '0.01',   str,    "The value of the highpass filter."],
+            ['mice_lowpass',               '0.25',   str,    "The value of the lowpass filter."],
+            ['mice_volumes',               '900',    int,    "Number of volumes."],
             ['flirt_ref',                  '',       isNone, "Path to the template file. If not provided QuNex will use EPI_template.nii.gz from its library."],
 ]
 

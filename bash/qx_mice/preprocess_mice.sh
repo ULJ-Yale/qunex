@@ -37,7 +37,7 @@ fix_aggressive_cleanup=`opts_GetOpt "--fix_aggressive_cleanup" $@`
 highpass=`opts_GetOpt "--mice_highpass" $@`
 lowpass=`opts_GetOpt "--mice_lowpass" $@`
 flirt_ref=`opts_GetOpt "--flirt_ref" $@`
-
+volumes=`opts_GetOpt "--mice_volumes" $@`
 
 # check required parameters
 if [[ -z $work_dir ]]; then echo "ERROR: Work directory is not set!"; exit 1; fi
@@ -52,6 +52,7 @@ if [[ -z $highpass ]]; then highpass=0.01; fi
 fix_highpass=$(bc <<< "scale=2;$highpass * 10000")
 if [[ -z $flirt_ref ]]; then flirt_ref="${mice_templates}/EPI_template.nii.gz"; fi
 if [[ -z $lowpass ]]; then lowpass=0.25; fi
+if [[ -z $volumes ]]; then volumes=900; fi
 
 
 # list parameters
@@ -64,6 +65,7 @@ echo "       FIX threshold: ${fix_threshold}"
 echo "       Highpass: ${highpass}"
 echo "       Lowpass: ${lowpass}"
 echo "       FLIRT reference: ${flirt_ref}"
+echo "       Volumes: ${volumes}"
 
 # flags
 motion_cleanup=" -m"
@@ -98,12 +100,13 @@ ica_dir="${melodic_output}.ica"
 if [ -d ${ica_dir} ]; then rm -rf ${ica_dir}; fi
 
 # copy the fsf file
-cp ${mice_templates}/rsfMRI_Standard_900.fsf ${work_dir}/${bold}_rsfMRI_Standard_900.fsf
+cp ${mice_templates}/rsfMRI_Standard.fsf ${work_dir}/${bold}_rsfMRI_Standard.fsf
 
 # inject varibale values into the fsf file
-for i in "${work_dir}/${bold}_rsfMRI_Standard_900.fsf"; do
+for i in "${work_dir}/${bold}_rsfMRI_Standard.fsf"; do
     sed -e 's@OUTPUT@'${melodic_output}'@g' \
     -e 's@ANATFILE@'${melodic_anatfile}'@g' \
+    -e 's@VOLUMES@'${volumes}'@g' \
     -e 's@DATA@'${work_dir}/${bold}_DS'@g' <$i> ${work_dir}/${bold}_DS.fsf
 done
 
@@ -186,7 +189,7 @@ WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean
 # -- wrap up
 # ------------------------------------------------------------------------------
 echo " --> Removing intermediate files"
-rm ${work_dir}/${bold}_rsfMRI_Standard_900.fsf
+rm ${work_dir}/${bold}_rsfMRI_Standard.fsf
 rm ${work_dir}/${bold}_DS.fsf
 rm ${work_dir}/${bold}*_BP+orig.BRIK
 rm ${work_dir}/${bold}*_BP+orig.HEAD

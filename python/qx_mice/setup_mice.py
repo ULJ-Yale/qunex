@@ -253,7 +253,7 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
 
             # optional parameters
             # voxel_increase
-            if 'voxel_increase' in options:
+            if options['voxel_increase']:
                 comm += '                --voxel_increase=' + options['voxel_increase']
 
             # report command
