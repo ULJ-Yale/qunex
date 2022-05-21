@@ -1,0 +1,38 @@
+id: HCPA001
+subject: HCPA001
+dicom: /data/sessions/HCPA001/dicom
+raw_data: /data/sessions/HCPA001/nii
+data: /data/sessions/HCPA001/4dfp
+hcp: /data/sessions/HCPA001/hcp
+hcpready: true
+81  :                :SpinEchoFieldMap_PA
+91  :boldref1:rest   :rfMRI_REST_AP_SBRef:se(1)
+101 :bold1:rest      :rfMRI_REST_AP:se(1)
+121 :boldref2:rest   :rfMRI_REST_PA_SBRef:se(1)
+131 :bold2:rest      :rfMRI_REST_PA:se(1)
+151 :                :T1w_setter
+171 :                :T1w_MPR_vNav_4e [1/4] e1
+172 :                :T1w_MPR_vNav_4e [2/4] e2
+173 :                :T1w_MPR_vNav_4e [3/4] e3
+174 :                :T1w_MPR_vNav_4e [4/4] e4
+181 :                :T1w_MPR_vNav_4e [1/4] e1
+182 :                :T1w_MPR_vNav_4e [2/4] e2
+183 :                :T1w_MPR_vNav_4e [3/4] e3
+184 :                :T1w_MPR_vNav_4e [4/4] e4
+191 :T1w             :T1w_MPR_vNav_4e RMS:se(1)
+201 :                :T1w_MPR_vNav_4e RMS
+211 :                :T2w_setter
+231 :T2w             :T2w_SPC_vNav:se(1)
+241 :                :T2w_SPC_vNav
+251 :                :TSE_HiResHp
+261 :                :TSE_HiResHp
+271 :SE-FM-AP        :SpinEchoFieldMap_AP:se(1)
+281 :SE-FM-PA        :SpinEchoFieldMap_PA:se(1)
+291 :                :dMRI_dir98_AP_SBRef
+301 :DWI             :dMRI_dir98_AP:se(1)
+321 :                :dMRI_dir98_PA_SBRef
+331 :DWI             :dMRI_dir98_PA:se(1)
+351 :                :dMRI_dir99_AP_SBRef
+361 :DWI             :dMRI_dir99_AP:se(1)
+381 :                :dMRI_dir99_PA_SBRef
+391 :DWI             :dMRI_dir99_PA:se(1)
