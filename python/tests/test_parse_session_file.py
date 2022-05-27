@@ -1,7 +1,13 @@
 from .utils import get_test_data_path
-from general.parser import read_generic_session_file, read_hcp_session_file, read_mapping_file
+from general.parser import (
+    read_generic_session_file,
+    read_hcp_session_file,
+    read_mapping_file,
+)
+
 
 def test_read_generic_session_file():
+    """Reading a simple bids session file"""
     filename = get_test_data_path("session1.txt")
     sess = read_generic_session_file(filename)
     assert sess["id"] == "12345_1"
@@ -13,6 +19,7 @@ def test_read_generic_session_file():
 
 
 def test_read_generic_session_file_complex():
+    """Reading a dicom session file"""
     filename = get_test_data_path("session2.txt")
     sess = read_generic_session_file(filename)
     assert sess["id"] == "HCPA001"
@@ -23,7 +30,20 @@ def test_read_generic_session_file_complex():
     assert len(sess["images"]) == 49
 
 
+def test_read_hcpls_session():
+    """Reading a dicom session file"""
+    filename = get_test_data_path("session5.txt")
+    sess = read_generic_session_file(filename)
+    assert sess["id"] == "06_retest"
+    assert sess["subject"] == "06"
+    assert len(sess["paths"]) == 3
+    assert "hcpls" in sess["paths"]
+    assert len(sess["pipeline_ready"]) == 0
+    assert len(sess["images"]) == 9
+
+
 def test_read_hcp_session_file():
+    """Reading session mapped for hcp pipeline"""
     filename = get_test_data_path("session2_hcp.txt")
     sess = read_hcp_session_file(filename)
     assert sess["id"] == "HCPA001"
@@ -39,6 +59,7 @@ def test_read_hcp_session_file():
 
 
 def test_read_mapping_file():
+    """Reading a mapping file"""
     filename = get_test_data_path("mapping2.txt")
     rules = read_mapping_file(filename)
     assert len(rules["group_rules"]["image_number"]) == 2

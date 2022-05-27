@@ -1,0 +1,32 @@
+id: Z1VPF
+subject: Z1VPF
+raw_data: /Volumes/tigr/MBLab/fMRI/MMI/subjects.j/Z1VPF/nii
+hcp: /Volumes/tigr/MBLab/fMRI/MMI/subjects.j/Z1VPF/hcp
+hcpready: true
+102011:                :T1w 1mm N2 L SENSE: TR(0.00924): PEDirection(j-)
+103011:FM-Magnitude    :B0 map NSA1 2.5 [1/2] magnitude: TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033): fm(1)
+103012:FM-Phase        :B0 map NSA1 2.5 [2/2] real: TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033): fm(1)
+105011:boldref1:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.00066747484): se(1): fm(1)
+106011:bold1:restEO    :BOLD OPEN MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.00074946981): se(1): fm(1)
+109011:T1w             :T1w 0.7mm N1: TR(0.01227): PEDirection(j-): se(1): fm(1)
+110011:T1w             :T1w 0.7mm N1: TR(0.01227): PEDirection(j-): se(1): fm(1)
+111011:T2w             :T2w 0.7mm N1: TR(2.5): PEDirection(j-): se(1): fm(1)
+112011:T2w             :T2w 0.7mm N1: TR(2.5): PEDirection(j-): se(1): fm(1)
+113011:                :FLASH T1w 1.0mm: TR(0.0067): PEDirection(j-)
+114011:SE-FM-PA        :SE-PA MB8 2.5 s56: TR(8.10576): PEDirection(j-): EchoSpacing(0.00066608509): se(1)
+115011:SE-FM-AP        :SE-AP MB8 2.5 s56: TR(8.10387): PEDirection(j-): EchoSpacing(0.00066608509): se(1)
+117011:DWI:dir80_AP    :DWI MB2 S3 AP80: se(1): fm(1)
+118011:DWI:dir80_PA    :DWI MB2 S3 PA80: se(1): fm(1)
+119011:DWI:dir81_AP    :DWI MB2 S3 AP81: se(1): fm(1)
+120011:DWI:dir81_PA    :DWI MB2 S3 PA81: se(1): fm(1)
+202011:                :T1w 1mm N2 L SENSE: TR(0.00926): PEDirection(j-)
+203011:FM-Magnitude    :B0 map NSA1 2.5 [1/2] magnitude: TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033): fm(2)
+203012:FM-Phase        :B0 map NSA1 2.5 [2/2] real: TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033): fm(2)
+205011:boldref2:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.0006666807): se(1): fm(2)
+206011:bold2:restEO    :BOLD OPEN MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.00075463172): se(1): fm(2)
+207011:boldref3:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.0006666807): se(1): fm(2)
+208011:boldref4:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.0006666807): se(1): fm(2)
+209011:boldref5:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.0006666807): se(1): fm(2)
+210011:boldref6:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.0006666807): se(1): fm(2)
+211011:boldref7:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.0006666807): se(1): fm(2)
+212011:boldref8:ref    :REFBOLD MB8 2.5 s56: TR(1): PEDirection(j-): EchoSpacing(0.0006666807): se(1): fm(2)

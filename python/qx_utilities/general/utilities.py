@@ -2692,7 +2692,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
     For all the sessions specified, the command checks for the presence of
     specified source file (sourcefile). If the source file is found, each sequence
     name is checked against the source specified in the mapping file (mapping),
-    and the specified label is aded. The results are then saved to the specified
+    and the specified label is added. The results are then saved to the specified
     target file (targetfile). The resulting session information files will have
     `"<pipeline>ready: true"` key-value pair added.
 
@@ -2781,11 +2781,16 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
 
     # loop over them
     for pipeline in pipelines:
+        if pipeline != "hcp":
+            raise ge.CommandFailed(
+                "create_session_info", "invlida pipeline type", "Only hcp mapping is currently supported")
+
         if sessions is None:
             sessions = "*"
 
         if mapping is None:
-            mapping = os.path.join(sessionsfolder, 'specs', '%s_mapping.txt' % pipeline)
+            mapping = os.path.join(
+                sessionsfolder, 'specs', '%s_mapping.txt' % pipeline)
 
         if targetfile is None:
             targetfile = "session_%s.txt" % pipeline
@@ -2793,7 +2798,8 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         # -- get mapping ready
 
         if not os.path.exists(mapping):
-            raise ge.CommandFailed("create_session_info", "No pipeline mapping file", "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
+            raise ge.CommandFailed("create_session_info", "No pipeline mapping file",
+                                   "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
 
         print(" ... Reading pipeline mapping from %s" % (mapping))
 
@@ -2801,31 +2807,35 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             mapping_rules = parser.read_mapping_file(mapping)
         except ge.SpecFileSyntaxError as e:
             raise ge.CommandFailed(
-                "create_session_info", 
+                "create_session_info",
                 "Invalid mapping file"
-                "Please check the specified file [{}]".format(mapping), 
+                "Please check the specified file [{}]".format(mapping),
                 "Syntax error: {}".format(e.error))
 
         # -- get list of session folders
 
-        sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False)
+        sessions, gopts = gc.getSessionList(
+            sessions, filter=filter, verbose=False)
 
         sfolders = []
         for session in sessions:
             newSet = glob.glob(os.path.join(sessionsfolder, session['id']))
             if not newSet:
-                print("WARNING: No folders found that match %s. Please check your data!" % (os.path.join(sessionsfolder, session['id'])))
+                print("WARNING: No folders found that match %s. Please check your data!" % (
+                    os.path.join(sessionsfolder, session['id'])))
             sfolders += newSet
 
         # -- check if we have any
 
         if not sfolders:
-            raise ge.CommandFailed("create_session_info", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
+            raise ge.CommandFailed("create_session_info", "No sessions found to process",
+                                   "No sessions were found to process!", "Please check the data and sessions parameter!")
 
         # -- loop through sessions folders
 
-        report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': [], 'error': []}
-        
+        report = {'missing source': [], 'pre-existing target': [],
+                  'pre-processed source': [], 'processed': [], 'error': []}
+
         for sfolder in sfolders:
             ssfile = os.path.join(sfolder, sourcefile)
             stfile = os.path.join(sfolder, targetfile)
@@ -2836,20 +2846,22 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             print(" ... Processing folder %s" % (sfolder))
 
             if os.path.exists(stfile) and overwrite != "yes":
-                print("     ... Target file already exists, skipping! [%s]" % (stfile))
+                print(
+                    "     ... Target file already exists, skipping! [%s]" % (stfile))
                 report['pre-existing target'].append(sfolder)
                 continue
-            
+
             try:
                 src_session = parser.read_generic_session_file(ssfile)
-                
+
                 if "hcp" in src_session["pipeline_ready"]:
                     print("     ... %s already pipeline ready" % (sourcefile))
                     if sourcefile != targetfile:
                         shutil.copyfile(sourcefile, targetfile)
                     report['pre-processed source'].append(sfolder)
-                
-                tgt_session = _process_pipeline_mapping(src_session, mapping_rules)
+
+                tgt_session = _process_pipeline_hcp_mapping(
+                    src_session, mapping_rules)
 
                 output_lines = _serialize_session(tgt_session)
 
@@ -2859,7 +2871,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
                     print(line, file=fout)
                 report['processed'].append(sfolder)
 
-            except e: # session file syntax error, conflicting rules
+            except e:  # session file syntax error, conflicting rules
                 report['error'].append(sfolder)
                 print(traceback.format_exc())
 
@@ -2871,18 +2883,19 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             for session in report[status]:
                 print("     -> %s " % (os.path.basename(session)))
 
-
     if report['missing source'] or report['error']:
         raise ge.CommandFailed(
-            "create_session_info", 
-            "Error", 
-            "Some sessions were missing source files {}!".format(report['missing source']), 
-            "Some sessions encountered errors {}!".format(report['error']), 
+            "create_session_info",
+            "Error",
+            "Some sessions were missing source files {}!".format(
+                report['missing source']),
+            "Some sessions encountered errors {}!".format(report['error']),
             "Please check the data and parameters!")
 
     return
 
-def _process_pipeline_mapping(src_session, mapping_rules):
+
+def _process_pipeline_hcp_mapping(src_session, mapping_rules):
     """
     """
 
@@ -2893,19 +2906,18 @@ def _process_pipeline_mapping(src_session, mapping_rules):
     field_map_fm = _find_field_maps(tgt_session, "fm")
     field_map_se = _find_field_maps(tgt_session, "se")
 
-    if len(field_map_fm) != 0 and len(field_map_se) != 0:
-        # TODO: ??? what should we do
-        raise Exception()
-    elif len(field_map_fm) != 0:
+    if len(field_map_fm) != 0:
         _assign_field_maps(tgt_session, field_map_fm, "fm")
-    elif len(field_map_se) != 0:
+
+    if len(field_map_se) != 0:
         _assign_field_maps(tgt_session, field_map_se, "se")
 
     _assign_remaining_image_type(tgt_session)
-    
+
     tgt_session["pipeline_ready"].append("hcp")
-    
+
     return tgt_session
+
 
 def _apply_rules(src_session, mapping_rules):
     """
@@ -2927,19 +2939,42 @@ def _apply_rules(src_session, mapping_rules):
         # evaluate session specific rules
         # evaluate group specific rules
         img_name = img_info["series_description"]
-        # rules defined using image number takes precedence 
+        rule = {"additional_tags": []}
+        # rules defined using image number takes precedence
         if img_num in grp_img_num_rule:
-            tgt_session["images"][img_num] = img_info
-            img_info["applied_rule"] = grp_img_num_rule[img_num]
+            rule = grp_img_num_rule[img_num]
         elif img_name in grp_name_rule:
-            tgt_session["images"][img_num] = img_info
-            img_info["applied_rule"] = grp_name_rule[img_name]
-        else:
-            tgt_session["images"][img_num] = img_info
-            img_info["applied_rule"] = {}
-        img_info["additional_tags"].append(img_info["series_description"])
-    
+            rule = grp_name_rule[img_name]
+
+        tgt_session["images"][img_num] = _apply_image_rule(img_info, rule)
+
     return tgt_session
+
+
+def _apply_image_rule(img_info, rule):
+    """Construct new_image_info based on rule"""
+
+    # special tags that are parsed but not handled by special handlers
+    pass_through_tags = ["phenc", "bold_num"]
+
+    new_img_info = {
+        "image_number": img_info["image_number"],
+        "applied_rule": rule,
+        "additional_tags": [img_info["series_description"]] + img_info["additional_tags"] + rule["additional_tags"]
+    }
+    for i in pass_through_tags:
+        if i in img_info and i in rule:
+            raise ge.SpecFileSyntaxError(
+                error=f"""Multiple definitions of tag {i} for image {img_info["image_number"]}""")
+        
+        if i in img_info:
+            new_img_info[i] = img_info[i]
+        
+        if i in rule:
+            new_img_info[i] = rule[i]
+
+    return new_img_info
+
 
 def _assign_bold_number(tgt_session):
     """
@@ -2956,7 +2991,7 @@ def _assign_bold_number(tgt_session):
         hcp_image_type = rule.get("hcp_image_type")
         if hcp_image_type is None:
             continue
-        
+
         # bold ref
         if hcp_image_type[0] == "boldref":
             bold_num += 1
@@ -2968,8 +3003,9 @@ def _assign_bold_number(tgt_session):
                 bold_num += 1
         else:
             continue
-        
-        image["hcp_image_type"] = (hcp_image_type[0], bold_num, hcp_image_type[2])
+
+        image["hcp_image_type"] = (
+            hcp_image_type[0], bold_num, hcp_image_type[2])
 
 
 def _find_field_maps(tgt_session, field_map_type):
@@ -2981,19 +3017,18 @@ def _find_field_maps(tgt_session, field_map_type):
     IDLE_STATE = 0
     LOOKING_FOR_PAIR_STATE = 1
     PHASE_MAGNITUDE_OPPOSITE_LUT = {"Phase": "Magnitude", "Magnitude": "Phase"}
-    SPIN_ECHO_OPPOSITE_LUT = {"AP":"PA", "PA":"AP", "LR":"RL", "RL":"LR"}
-
+    SPIN_ECHO_OPPOSITE_LUT = {"AP": "PA", "PA": "AP", "LR": "RL", "RL": "LR"}
 
     def get_fm_info(hcp_image_type):
         """
-        return: 
-        is_field_map: depending on field_map_type
-        current_dir:
-        opposite_dir:
+        Returns: 
+            is_field_map: depending on field_map_type
+            current_dir: direction/type of the current image, None if FM-GE
+            opposite_dir: opposite direction/type of the current image, None if FM-GE
         """
         if hcp_image_type is None:
             return False, None, None
-        
+
         if field_map_type == "fm":
             if hcp_image_type[0] == "FM":
                 cur = hcp_image_type[1]
@@ -3030,6 +3065,7 @@ def _find_field_maps(tgt_session, field_map_type):
                     pending_image = inum
                     looking_for_dir = opposite_dir
                 else:
+                    # FM-GE
                     found_fm.append((inum,))
                     state = IDLE_STATE
                     pending_image = None
@@ -3041,21 +3077,29 @@ def _find_field_maps(tgt_session, field_map_type):
         elif state == LOOKING_FOR_PAIR_STATE:
             if is_field_map:
                 if looking_for_dir == current_dir:
+                    # record the pair iff the 2 consecutive images are a matching pair
                     found_fm.append((inum, pending_image))
                     state = IDLE_STATE
                     pending_image = None
                     looking_for_dir = None
                 else:
                     print("WARNING: Incomplete pair detected")
-                    state = LOOKING_FOR_PAIR_STATE
-                    pending_image = inum
-                    looking_for_dir = opposite_dir
+                    if opposite_dir:
+                        state = LOOKING_FOR_PAIR_STATE
+                        pending_image = inum
+                        looking_for_dir = opposite_dir
+                    else:
+                        # Found FM-GE
+                        found_fm.append((inum,))
+                        state = IDLE_STATE
+                        pending_image = None
+                        looking_for_dir = None
             else:
                 print("WARNING: Incomplete pair detected")
                 state = IDLE_STATE
                 pending_image = None
                 looking_for_dir = None
-    
+
     found_fm.reverse()
     return found_fm
 
@@ -3072,8 +3116,8 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
 
     images = tgt_session["images"]
     image_numbers = list(sorted(images.keys()))
-    fm_range = [] # starting index for each fm pair
-    
+    fm_range = []  # starting index for each fm pair
+
     img_idx = 0
     for fm_idx, fm in enumerate(field_maps):
         fm_hint = fm_idx + 1
@@ -3085,14 +3129,15 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
 
             image["hcp_image_type"] = hcp_image_type
             image[field_map_type] = fm_hint
-        
+
         while img_idx < len(image_numbers) and image_numbers[img_idx] < fm[0]:
             img_idx += 1
-        
+
         fm_range.append(img_idx)
-    
+
     fm_range.append(len(image_numbers))
-    fm_range[0] = 0 # everything before the first field map will be assigned with the first fm
+    # everything before the first field map will be assigned with the first fm
+    fm_range[0] = 0
 
     for fm_idx, (st, ed) in enumerate(zip(fm_range[:-1], fm_range[1:])):
         fm_hint = fm_idx + 1
@@ -3108,8 +3153,7 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
 
 
 def _assign_remaining_image_type(tgt_session):
-    """
-    This function assigns hcp image tag for t1w, t2w, and dwi images
+    """This function assigns hcp image tag for t1w, t2w, and dwi images
 
     bold/boldref should be assigned in `_assign_bold_number`
     se/fm that are used are assigned in `_assign_field_map`
@@ -3125,6 +3169,7 @@ def _assign_remaining_image_type(tgt_session):
 
 
 def _serialize_session(tgt_session):
+    """Encode mapped session as a list of strings"""
     lines = []
 
     if tgt_session.get("id") is None:
@@ -3137,37 +3182,49 @@ def _serialize_session(tgt_session):
 
     for path_name, path in tgt_session["paths"].items():
         lines.append("{}: {}".format(path_name, path))
-    
+
     for pipeline in tgt_session["pipeline_ready"]:
         lines.append("{}ready: true".format(pipeline))
-    
+
     for img_num in sorted(tgt_session["images"].keys()):
         image = tgt_session["images"][img_num]
         image_num_str = ".".join([str(i) for i in img_num])
         hcp_image_type = image.get("hcp_image_type")
-        
+
         tags = []
-        
+
         if hcp_image_type is None:
             tags.append("")
         elif hcp_image_type[0] in ["bold", "boldref"]:
             tags.append("{}{}:{}".format(*hcp_image_type))
         elif hcp_image_type[0] in ["SE-FM", "FM"]:
             tags.append("{}-{}".format(*hcp_image_type))
+        elif hcp_image_type[0] == "DWI":
+            tags.append("{}:{}".format(*hcp_image_type))
         else:
             tags.append(hcp_image_type[0])
-    
+
         # add additional tags
         tags.extend(image["additional_tags"])
-        
-        # add se, fm, bold_num at the end 
-        for k in ["se", "fm", "bold_num"]:
+
+        # add se, fm, bold_num at the end
+        for k in ["se", "fm", "bold_num", "phenc"]:
             if image.get(k):
                 tags.append("{}({})".format(k, image[k]))
-        
+
         remaining_tags = ""
         if len(tags) > 1:
-            remaining_tags = ":" + ":".join(tags[1:])
+            # tag: str | (str, str)
+            serialized_tags = []
+            for t in tags[1:]:
+                if type(t) is str:
+                    serialized_tags.append(t)
+                elif type(t) is tuple and len(t) == 2:
+                    serialized_tags.append(f"{t[0]}({t[1]})")
+                else:
+                    # invalid tag format
+                    raise Exception()
+            remaining_tags = ":" + ": ".join(serialized_tags)
 
         lines.append("{:<4}:{:<16}{}".format(
             image_num_str,
