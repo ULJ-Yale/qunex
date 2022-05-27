@@ -46,7 +46,7 @@ def test_mapping_missing_se1():
     """Mapping with se images that do not form a pair"""
     _, lines = _run_mapping_test("session2_se.txt", "mapping2.txt")
     result = _parse_session_file_lines(lines, "pipeline:hcp")
-    expected = _load_expected_mapping("session2_hcp_se.txt")
+    expected = _load_expected_mapping("session2_se_hcp.txt")
     print("\n".join(lines))
     assert result == expected
 
@@ -55,7 +55,7 @@ def test_mapping_missing_se2():
     """Mapping with se images that do not form a pair"""
     _, lines = _run_mapping_test("session2_se2.txt", "mapping2.txt")
     result = _parse_session_file_lines(lines, "pipeline:hcp")
-    expected = _load_expected_mapping("session2_hcp_se2.txt")
+    expected = _load_expected_mapping("session2_se2_hcp.txt")
     print("\n".join(lines))
     assert result == expected
 
@@ -73,7 +73,7 @@ def test_mapping_mix_ge_fm():
     """FM-Phase FM-Magnitude pair interrupted by FM-GE (FSM specific)"""
     _, lines = _run_mapping_test("session3_fm_ge.txt", "mapping3.txt")
     result = _parse_session_file_lines(lines, "pipeline:hcp")
-    expected = _load_expected_mapping("session3_hcp_fm_ge.txt")
+    expected = _load_expected_mapping("session3_fm_ge_hcp.txt")
     print("\n".join(lines))
     assert result == expected
 
