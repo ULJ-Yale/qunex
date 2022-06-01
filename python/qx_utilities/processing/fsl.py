@@ -91,7 +91,9 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                       └─ F99reg
 
     Examples:
-        >>> qunex dwi_f99 \\
+        ::
+
+            qunex dwi_f99 \\
                 --sessionsfolder="/data/macaque_study/sessions" \\
                 --sessions="hilary,jane" \\
                 --overwrite=no \\
@@ -298,13 +300,17 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                       └─ xtract
 
     Examples:
-        >>> qunex dwi_xtract \\
+        ::
+
+            qunex dwi_xtract \\
                 --sessionsfolder="/data/macaque_study/sessions" \\
                 --sessions="/data/example_study/processing/batch.txt" \\
                 --species="human" \\
                 --overwrite=yes
 
-        >>> qunex dwi_xtract \\
+        ::
+
+            qunex dwi_xtract \\
                 --sessionsfolder="/data/macaque_study/sessions" \\
                 --sessions="hilary,jane" \\
                 --species="macaque" \\

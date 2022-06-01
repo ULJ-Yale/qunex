@@ -52,16 +52,16 @@ Parameters:
         - 'log'      ... log-transformed waytotal normalized.
 
 Examples:
-    Run directly via:
+    Run directly via::
 
-    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh \\
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh \\
         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
-    Run via:
+    Run via::
 
-    >>> qunex dwi_seed_tractography_dense --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_seed_tractography_dense --<parameter1> --<parameter2> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -73,7 +73,9 @@ Examples:
 
         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> qunex dwi_seed_tractography_dense --sessionsfolder='<folder_with_sessions>' \\
+    ::
+
+        qunex dwi_seed_tractography_dense --sessionsfolder='<folder_with_sessions>' \\
                --session='<case_id>' \\
                --matrixversion='3' \\
                --seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \\

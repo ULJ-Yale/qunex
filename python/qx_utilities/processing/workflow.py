@@ -214,7 +214,9 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         - bold[N]<nifti_tail>_frame1_brain_mask.*
 
     Examples:
-        >>> qunex create_bold_brain_masks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex create_bold_brain_masks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no nifti_tail=_hp2000_clean bolds=all parelements=8
     """
 
@@ -638,14 +640,14 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             the expected locations.
 
     Examples:
-        Using the defaults:
+        Using the defaults::
 
-        >>> qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+            qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no bolds=all
 
-        Specifying additional parameters for identification of bad frames:
+        Specifying additional parameters for identification of bad frames::
 
-        >>> qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+            qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
                 mov_before=1 mov_after=2
     """
@@ -938,7 +940,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             For the group level it creates three report files that are stored in
             the <sessionsfolder>/QC/movement folder. These files are:
 
-            - ``<mov_mreport>``(bold<nifti_tail>_movement_report.txt by default)
+            - ``<mov_mreport>`` (bold<nifti_tail>_movement_report.txt by default)
                 This file lists for each session and bold file mean, sd, range,
                 max, min, median, and squared mean divided by max statistics for
                 each of the 6 movement correction parameters. It also prints
@@ -977,15 +979,21 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 omitting the slow generation of session specific plots.
 
     Examples:
-        >>> qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
+        ::
+
+            qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions --overwrite=no --bolds=all \\
                 --parsessions=1
 
-        >>> qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
+        ::
+
+            qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions --overwrite=no --bolds=all \\
                 --parsessions=10
 
-        >>> qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
+        ::
+
+            qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions --overwrite=no --bolds=all \\
                 --nifti_tail=_hp2000_clean --parsessions=1 --mov_plot=""
     """
@@ -1312,7 +1320,9 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             expected locations.
 
     Examples:
-        >>> qunex extract_nuisance_signal sessions=fcMRI/sessions_hcp.txt \\
+        ::
+
+            qunex extract_nuisance_signal sessions=fcMRI/sessions_hcp.txt \\
                 sessionsfolder=sessions overwrite=no bolds=all parsessions=10
     """
 
@@ -1943,7 +1953,9 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 preprocess_conc command.
 
     Examples:
-        >>> qunex preprocess_bold
+        ::
+
+            qunex preprocess_bold
                   sessions=fcMRI/sessions_hcp.txt \\
                   sessionsfolder=sessions \\
                    overwrite=no \\
@@ -2631,18 +2643,18 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     explained by the reaction time to the target.
 
     Examples:
-        Activation analysis:
+        Activation analysis::
 
-        >>> qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+            qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
                   bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
                   event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
                   glm_matrix=both glm_residuals=none nprocess=0 \\
                   pignore="hipass=keep|regress=keep|lopass=keep"
 
-        Functional connectivity preprocessing:
+        Functional connectivity preprocessing::
 
-        >>> qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+            qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
                   bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
                   event_string="block:boynton|target:9" \\

@@ -85,7 +85,9 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %               function is running. False by default.
 %
 %   Examples:
-%       >>> general_plot_bold_timeseries_list('bolds.list', [], 'QA_', 5, 'png', true);
+%       ::
+%
+%           general_plot_bold_timeseries_list('bolds.list', [], 'QA_', 5, 'png', true);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

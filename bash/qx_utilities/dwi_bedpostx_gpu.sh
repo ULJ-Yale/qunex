@@ -55,7 +55,7 @@ node or via a GPU-enabled queue if using the scheduler option.
 
 It explicitly assumes the Human Connectome Project folder structure for
 preprocessing and completed diffusion processing. DWI data is expected to
-be in the following folder:
+be in the following folder::
 
     <study_folder>/<session>/hcp/<session>/T1w/Diffusion
 
@@ -100,16 +100,16 @@ Parameters:
         Note: You need to specify a GPU-enabled queue or partition.
 
 Examples:
-    Run directly via:
+    Run directly via::
 
-    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \
-     --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \\
+        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
-    Run via:
+    Run via::
 
-    >>> qunex dwi_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -122,7 +122,9 @@ Examples:
         ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, \\
         mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> qunex dwi_bedpostx_gpu \\
+    ::
+
+        qunex dwi_bedpostx_gpu \\
               --sessionsfolder='<path_to_study_sessions_folder>' \\
               --sessions='<comma_separarated_list_of_cases>' \\
               --fibers='3' \\

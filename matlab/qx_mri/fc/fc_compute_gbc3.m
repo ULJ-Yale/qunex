@@ -116,7 +116,9 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %       method.
 %
 %   Examples:
-%       >>> fc_compute_gbc3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3',
+%       ::
+%
+%           fc_compute_gbc3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3',
 %               0, 'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
 %
 

@@ -7,53 +7,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 usage() {
-
-# -------------------------------------------------------------------------------------------------------------------
-# EXAMPLE inputs from Matlab into fc_compute_seedmaps_multiple and fc_compute_gbc3:
-# -------------------------------------------------------------------------------------------------------------------
-#  fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-#  INPUT
-#  flist    - A .list file with session information.
-#  roinfo   - An ROI file.
-#  inmask   - An array mask defining which frames to use (1) and which not (0) [0]
-#  options  - A string defining which session files to save ['']:
-#  r        - save map of correlations
-#  f        - save map of Fisher z values
-#  cv       - save map of covariances
-#  z        - save map of Z scores
-#  targetf  - The folder to save images in ['.'].
-#  method   - Method for extracting timeseries - 'mean' or 'pca' ['mean'].
-#  ignore   - Do we omit frames to be ignored ['no']
-#                  -> no:    do not ignore any additional frames
-#                  -> event: ignore frames as marked in .fidl file
-#                  -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
-#  cv       - Whether covariances should be computed instead of correlations.
-# -------------------------------------------------------------------------------------------------------------------   
-#  fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
-#  INPUT 
-#  flist       - conc-like style list of session image files or conc files:
-#                  session id:<session_id>
-#                  roi:<path to the individual's ROI file>
-#                  file:<path to bold files - one per line>
-#               or a well strucutured string (see general_read_file_list).
-#  command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
-#               mFzp, aFzp, ...
-#               <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
-#  mask        - An array mask defining which frames to use (1) and
-#               which not (0). All if empty.
-#  verbose     - Report what is going on. [false]
-#  target      - Array of ROI codes that define target ROI [default:
-#               FreeSurfer cortex codes]
-#  targetf     - Target folder for results.
-#  rsmooth     - Radius for smoothing (no smoothing if empty). []
-#  rdilate     - Radius for dilating mask (no dilation if empty). []
-#  ignore      - The column in *_scrub.txt file that matches bold file to
-#               be used for ignore mask. All if empty. []
-#  time        - Whether to print timing information. [false]
-#  cv          - Whether to compute covariances instead of correlations.
-#               [false]
-#  vstep       - How many voxels to process in a single step. [1200]
-# -------------------------------------------------------------------------------------------------------------------
     cat << EOF
 ``fc_compute_wrapper``
 
@@ -83,7 +36,7 @@ Parameters:
 
 Specific parameters:
     --flist (str):
-        Specify *.list file of session information. If specified then
+        Specify ∗.list file of session information. If specified then
         --sessionsfolder, --inputfile, --session and --outname are omitted.
     --sessionsfolder (str):
         Path to study sessions folder.
@@ -168,7 +121,7 @@ Specific parameters:
         Specify if you want to save out the matrix as a CSV file (only available
         if the file is a ptseries).
     --ignore (str, default ''):
-        The column in *_scrub.txt file that matches bold file to be used for
+        The column in ∗_scrub.txt file that matches bold file to be used for
         ignore mask. All if empty.
     --mask (str):
         An array mask defining which frames to use (1) and which not (0). All if
@@ -178,16 +131,16 @@ Specific parameters:
         Restrict memory. Memory limit expressed in gigabytes.
 
 Examples:
-    Run directly via:
+    Run directly via::
 
-    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \\
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \\
         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via:
 
-    >>> qunex fc_compute_wrapper --<parameter1> --<parameter2> ... --<parameterN>
+        qunex fc_compute_wrapper --<parameter1> --<parameter2> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -199,7 +152,9 @@ Examples:
 
         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> qunex fc_compute_wrapper \\
+    ::
+
+        qunex fc_compute_wrapper \\
               --sessionsfolder='<folder_with_sessions>' \\
               --calculation='seed' \\
               --runtype='individual' \\
@@ -215,7 +170,9 @@ Examples:
               --mask='5' \\
               --covariance='false'
 
-    >>> qunex fc_compute_wrapper \\
+    ::
+
+        qunex fc_compute_wrapper \\
               --sessionsfolder='<folder_with_sessions>' \\
               --runtype='list' \\
               --flist='sessions.list' \\
@@ -229,7 +186,9 @@ Examples:
               --mask='5' \\
               --covariance='false'
 
-    >>> qunex fc_compute_wrapper \\
+    ::
+
+        qunex fc_compute_wrapper \\
               --sessionsfolder='<folder_with_sessions>' \\
               --calculation='gbc' \\
               --runtype='individual' \\
@@ -250,7 +209,9 @@ Examples:
               --vstep='10000' \\
               --covariance='false'
 
-    >>> qunex fc_compute_wrapper \\
+    ::
+
+        qunex fc_compute_wrapper \\
               --sessionsfolder='<folder_with_sessions>' \\
               --calculation='gbc' \\
               --runtype='list' \\
@@ -270,6 +231,52 @@ Examples:
               --covariance='false'
 
 EOF
+# -------------------------------------------------------------------------------------------------------------------
+# EXAMPLE inputs from Matlab into fc_compute_seedmaps_multiple and fc_compute_gbc3:
+# -------------------------------------------------------------------------------------------------------------------
+#  fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+#  INPUT
+#  flist    - A .list file with session information.
+#  roinfo   - An ROI file.
+#  inmask   - An array mask defining which frames to use (1) and which not (0) [0]
+#  options  - A string defining which session files to save ['']:
+#  r        - save map of correlations
+#  f        - save map of Fisher z values
+#  cv       - save map of covariances
+#  z        - save map of Z scores
+#  targetf  - The folder to save images in ['.'].
+#  method   - Method for extracting timeseries - 'mean' or 'pca' ['mean'].
+#  ignore   - Do we omit frames to be ignored ['no']
+#                  -> no:    do not ignore any additional frames
+#                  -> event: ignore frames as marked in .fidl file
+#                  -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
+#  cv       - Whether covariances should be computed instead of correlations.
+# -------------------------------------------------------------------------------------------------------------------
+#  fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
+#  INPUT
+#  flist       - conc-like style list of session image files or conc files:
+#                  session id:<session_id>
+#                  roi:<path to the individual's ROI file>
+#                  file:<path to bold files - one per line>
+#               or a well strucutured string (see general_read_file_list).
+#  command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
+#               mFzp, aFzp, ...
+#               <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
+#  mask        - An array mask defining which frames to use (1) and
+#               which not (0). All if empty.
+#  verbose     - Report what is going on. [false]
+#  target      - Array of ROI codes that define target ROI [default:
+#               FreeSurfer cortex codes]
+#  targetf     - Target folder for results.
+#  rsmooth     - Radius for smoothing (no smoothing if empty). []
+#  rdilate     - Radius for dilating mask (no dilation if empty). []
+#  ignore      - The column in *_scrub.txt file that matches bold file to
+#               be used for ignore mask. All if empty. []
+#  time        - Whether to print timing information. [false]
+#  cv          - Whether to compute covariances instead of correlations.
+#               [false]
+#  vstep       - How many voxels to process in a single step. [1200]
+# -------------------------------------------------------------------------------------------------------------------
 exit 0
 }
 

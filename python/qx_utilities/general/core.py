@@ -369,8 +369,10 @@ def runExternalParallel(calls, cores=None, prepend=''):
             The string to prepend to each line of progress report.
 
     Examples:
-        >>> runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
-        cores=1, prepend=' ... ')
+        ::
+
+            runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
+            cores=1, prepend=' ... ')
     """
 
     if cores is None or cores in ['all', 'All', 'ALL']:

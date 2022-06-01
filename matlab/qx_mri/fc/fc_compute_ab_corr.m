@@ -54,7 +54,9 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %       see `img_compute_ab_correlation` - nimage method.
 %
 %   Examples:
-%       >>> fc_compute_ab_corr('scz.list', 'PFC.names', 'ACC.names', 5, ...
+%       ::
+%
+%           fc_compute_ab_corr('scz.list', 'PFC.names', 'ACC.names', 5, ...
 %               'SCZ_PFC-ACC', 'g', 'full');
 %
 

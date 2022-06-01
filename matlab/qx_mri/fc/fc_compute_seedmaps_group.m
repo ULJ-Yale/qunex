@@ -233,31 +233,31 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %       file!
 %
 %   Examples:
-%       To compute resting state seed maps using first eigenvariate of each ROI:
+%       To compute resting state seed maps using first eigenvariate of each ROI::
 %
-%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
+%           fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
 %               'roimethod:pca|ignore:udvarsme');
 %
 %       To compute resting state seed maps using mean of each region and
-%       covariances instead of correlation:
+%       covariances instead of correlation::
 %
-%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
+%           fc_compute_seedmaps('scz.list', 'CCNet.names', 0, 'seed-maps', ...
 %               'roimethod:mean|igmore:udvarsme|fcmeasure:cv');
 %
 %       To compute seed maps for third and fourth frame of incongruent and
 %       congruent trials (listed as inc and con events in fidl files with
 %       duration 1) using mean of each region and exclude only frames marked for
-%       exclusion in fidl files:
+%       exclusion in fidl files::
 %
-%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', ...
+%           fc_compute_seedmaps('scz.list', 'CCNet.names', ...
 %               'incongruent:inc:2,3|congruent:con:2,3', 'seed-maps', ...
 %               'roimethod:mean|ignore:event');
 %
 %       To compute seed maps across all the tasks blocks, starting with the
 %       third frame into the block and taking one additional frame after the end
-%       of the block, use:
+%       of the block, use::
 %
-%       >>> fc_compute_seedmaps('scz.list', 'CCNet.names', ...
+%           fc_compute_seedmaps('scz.list', 'CCNet.names', ...
 %               'task:easyblock,hardblock:2,1', 'seed-maps', ...
 %               'roimethod:mean|ignore:event');
 %

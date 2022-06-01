@@ -24,7 +24,9 @@ function [] = general_cluster_threshold(fname, tname, csize, t)
 %       t, that are part of clusters of at least csize voxels remain.
 %
 %   Examples:
-%       >>> general_cluster_threshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
+%       ::
+%
+%           general_cluster_threshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

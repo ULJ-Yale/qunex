@@ -1,0 +1,8 @@
+numpy
+pydicom
+recommonmark
+sphinxcontrib-napoleon
+sphinxcontrib-matlabdomain
+sphinx-book-theme
+sphinx-copybutton
+sphinxext-opengraph

@@ -59,16 +59,16 @@ Parameters:
         Specify if you want to save out the matrix as a CSV file.
 
 Examples:
-    Run directly via:
+    Run directly via::
 
-    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \\
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \\
         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
-    Run via:
+    Run via::
 
-    >>> qunex parcellate_bold --<parameter1> --<parameter2> ... --<parameterN>
+        qunex parcellate_bold --<parameter1> --<parameter2> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -80,7 +80,9 @@ Examples:
 
         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> parcellate_bold.sh --sessionsfolder='<folder_with_sessions>' \\
+    ::
+
+        parcellate_bold.sh --sessionsfolder='<folder_with_sessions>' \\
                            --session='<session_id>' \\
                            --inputfile='<name_of_input_file' \\
                            --inputpath='<path_for_input_file>' \\

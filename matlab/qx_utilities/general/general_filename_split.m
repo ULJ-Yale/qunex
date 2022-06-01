@@ -15,8 +15,9 @@ function [elements] = general_filename_split(filename, delim)
 %           Cell array of file elements excluding extension.
 %
 %   Example:
-%       Example below will result in `elements = {'bold3', 's', 'hpss'}`:
-%       >>> elements = general_filename_split('bold3_s_hpss.nii.gz');
+%       Example below will result in `elements = {'bold3', 's', 'hpss'}`::
+%
+%           elements = general_filename_split('bold3_s_hpss.nii.gz');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

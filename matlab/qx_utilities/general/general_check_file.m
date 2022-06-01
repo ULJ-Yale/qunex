@@ -36,7 +36,9 @@ function [ok] = general_check_file(filename, description, v, prepend)
 %       execution when the specified file is not present.
 %
 %   Examples:
-%       >>> general_check_file('images/functional/movement/bold1.dat', ...
+%       ::
+%
+%           general_check_file('images/functional/movement/bold1.dat', ...
 %           'movement file', 'full');
 %
 

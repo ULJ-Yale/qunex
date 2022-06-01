@@ -48,14 +48,16 @@ Parameters:
 Examples:
     Run directly via:
 
-    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \\
-     --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+    ::
+
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \\
+         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
-    Run via:
+    Run via::
 
-    >>> qunex dwi_parcellate --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_parcellate --<parameter1> --<parameter2> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -67,7 +69,9 @@ Examples:
 
         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> qunex dwi_parcellate --sessionsfolder='<folder_with_sessions>' \\
+    ::
+
+        qunex dwi_parcellate --sessionsfolder='<folder_with_sessions>' \\
               --sessions='<comma_separarated_list_of_cases>' \\
               --matrixversion='3' \\
               --parcellationfile='<dlabel_file_for_parcellation>' \\
@@ -76,7 +80,9 @@ Examples:
 
     Example with flagged parameters for submission to the scheduler:
 
-    >>> qunex dwi_parcellate --sessionsfolder='<folder_with_sessions>' \\
+    ::
+
+        qunex dwi_parcellate --sessionsfolder='<folder_with_sessions>' \\
               --sessions='<comma_separarated_list_of_cases>' \\
               --matrixversion='3' \\
               --parcellationfile='<dlabel_file_for_parcellation>' \\

@@ -360,7 +360,9 @@ def create_study(studyfolder=None, folders=None):
         file in the <studyfolder> to identify it as a study basefolder.
 
     Examples:
-        >>> qunex create_study studyfolder=/Volumes/data/studies/WM.v4
+        ::
+
+            qunex create_study studyfolder=/Volumes/data/studies/WM.v4
     """
 
     print("Running create_study\n===================")
@@ -475,7 +477,9 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             ``qunex/python/qx_utilities/templates/batch_multiband_parameters.txt``
 
     Examples:
-        >>> qunex create_batch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
+        ::
+
+            qunex create_batch sourcefiles="session.txt" targetfile="fcMRI/sessions_fcMRI.txt"
     """
 
     print("Running create_batch\n====================")
@@ -824,9 +828,9 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
               but do not include the file in the list).
 
     Examples:
-        The command:
+        The command::
 
-        >>> qunex create_list bolds="1,2,3"
+            qunex create_list bolds="1,2,3"
 
         will create a list file in `../processing/list/sessions.list` that will
         list for all the sessions found in the current folder BOLD files 1, 2, 3
@@ -834,9 +838,9 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
             file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
-        The command:
+        The command::
 
-        >>> qunex create_list sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+            qunex create_list sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                     bolds="rest" listfile="lists/rest.list" bold_tail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
 
         will create a `lists/rest.list` list file in which for all the sessions
@@ -845,9 +849,9 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
             file:<sessionsfolder>/<session id>/images/functional/bold[n]_Atlas_s_hpss_res-mVWMWB1d.dtseries
 
-        The command:
+        The command::
 
-        >>> qunex create_list sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+            qunex create_list sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                     filter="EC:use" listfile="lists/EC.list" \\
                     conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
                     fidl="EC.fidl" glm="bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
@@ -1153,9 +1157,9 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
     Examples:
         The command below will create set of conc files in `/inbox/concs`,
         each of them named <session id>.conc, one for each of the sessions found
-        in the current folder:
+        in the current folder::
 
-        >>> qunex create_conc bolds="1,2,3"
+            qunex create_conc bolds="1,2,3"
 
         Each conc file will include BOLD files 1, 2, 3
         listed as::
@@ -1163,9 +1167,9 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
             file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
         The command below will create for each session listed in the `batch.txt`
-        a `<session id>_WM.conc` file in `sessions/inbox/concs`:
+        a `<session id>_WM.conc` file in `sessions/inbox/concs`::
 
-        >>> qunex create_conc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+            qunex create_conc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                 bolds="WM" concname="_WM" bold_tail="_Atlas.dtseries.nii"
 
         In it it will list all the BOLD files tagged as `WM` as::
@@ -1174,9 +1178,9 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
 
         For all the sessions in the `batch.txt` file that have the key:value
         pair "EC:use" set the command below will create a conc file in
-        `analysis/EC/concs` folder:
+        `analysis/EC/concs` folder::
 
-        >>> qunex create_conc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
+            qunex create_conc sessionsfolder="/studies/myStudy/sessions" sessions="batch.txt" \\
                 filter="EC:use" concfolder="analysis/EC/concs" \\
                 concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
                 bold_tail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
@@ -2736,10 +2740,14 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             Note, that the old sequence names are preserved.
 
     Examples:
-        >>> qunex create_session_info sessions="OP*|AP*" sessionsfolder=session \\
+        ::
+
+            qunex create_session_info sessions="OP*|AP*" sessionsfolder=session \\
                 mapping=session/hcp_mapping.txt
     
-        >>> qunex create_session_info sessions="processing/batch_new.txt" \\
+        ::
+
+            qunex create_session_info sessions="processing/batch_new.txt" \\
                 sessionsfolder=session mapping=session/hcp_mapping.txt
     """
 

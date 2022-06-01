@@ -1,4 +1,4 @@
-function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose);
+function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)
 
 %``function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)``
 %
@@ -331,7 +331,7 @@ function [mimg] = getImage(mimg, fsimg, verbose)
 %   ----> process extra ROI name
 %
 
-function [filename nomask] = processeROI(s);
+function [filename nomask] = processeROI(s)
 
     [filename, s] = strtok(s, '|');
     nomask = {};

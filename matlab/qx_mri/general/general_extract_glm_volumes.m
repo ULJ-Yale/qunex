@@ -58,7 +58,9 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %       generated. So do check the list structure that all the data is there.
 %
 %   Examples:
-%       >>> general_extract_glm_volumes('wm-glm.list', 'wm-encoding-delay', ...
+%       ::
+%
+%           general_extract_glm_volumes('wm-glm.list', 'wm-encoding-delay', ...
 %               'encoding,delay', [], 'by_session');
 %
 

@@ -44,7 +44,9 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 %           more information see img_fcmri_segment() nimage method.
 %
 %   Examples:
-%       >>> fc_segment_mri('con.list', 'thalamus.names', 'yeo7.names', 0, ...
+%       ::
+%
+%           fc_segment_mri('con.list', 'thalamus.names', 'yeo7.names', 0, ...
 %               'Th-yeo-seg', 'partial', 'script');
 %
 

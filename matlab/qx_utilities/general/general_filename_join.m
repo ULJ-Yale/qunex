@@ -15,9 +15,9 @@ function [filename] = general_filename_join(elements, delim)
 %           The generated filename.
 %
 %   Example:
-%       The example below will result in 'bold1_s_hpss':
+%       The example below will result in 'bold1_s_hpss'::
 %
-%       >>> filename = general_filename_join({'bold1', 's', 'hpss'});
+%           filename = general_filename_join({'bold1', 's', 'hpss'});
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

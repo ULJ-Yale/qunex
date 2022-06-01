@@ -117,7 +117,9 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
             Optional fidl name.
 
     Examples:
-        >>> qunex join_fidl concfile=OP33-WM.conc fidlroot=OP33-WM
+        ::
+
+            qunex join_fidl concfile=OP33-WM.conc fidlroot=OP33-WM
     """
 
     # ---> find all fidl files, sort them, read them, get TR info
@@ -214,7 +216,9 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
             Folder with fidl files.
 
     Examples:
-        >>> qunex join_fidl_folder concfolder=concs fidlfolder=fidls
+        ::
+
+            qunex join_fidl_folder concfolder=concs fidlfolder=fidls
     """
 
     if fidlfolder is None:
@@ -260,7 +264,9 @@ def split_fidl(concfile, fidlfile, outfolder=None):
             The path to the folder to put split fidls in.
 
     Examples:
-        >>> qunex split_fidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl \\
+        ::
+
+            qunex split_fidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl \\
                   outfolder=/data/mystudy/analysis/splitfidls
     """
 
@@ -333,7 +339,9 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
             particular code.
 
     Examples:
-        >>> qunex check_fidl fidlfolder=jfidls
+        ::
+
+            qunex check_fidl fidlfolder=jfidls
     """
 
     if fidlfile:

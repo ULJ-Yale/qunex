@@ -65,7 +65,9 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %       results as well as any specified individual results.
 %
 %   Examples:
-%       >>> fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', ...
+%       ::
+%
+%           fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', ...
 %               'mean', 'udvarsme', false);
 %
 

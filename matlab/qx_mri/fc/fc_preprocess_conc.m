@@ -594,16 +594,16 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %                   `glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png`
 %
 %   Examples:
-%       Activation analysis:
+%       Activation analysis::
 %
-%       >>> fc_preprocess_conc(sessions/OP234', [1 2 4 5], 's,r,c', 2.5, 0, 'e', ...
+%           fc_preprocess_conc(sessions/OP234', [1 2 4 5], 's,r,c', 2.5, 0, 'e', ...
 %               [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', ...
 %               '', false, '.nii.gz', '', 'hipass=keep|regress=keep|lopass=keep', ...
 %               'glm_name:M1');
 %
-%       Functional connectivity preprocessing:
+%       Functional connectivity preprocessing::
 %
-%       >>> fc_preprocess_conc(sessions/OP234', [1 2 4 5], 's,h,r', 2.5, 0, ...
+%           fc_preprocess_conc(sessions/OP234', [1 2 4 5], 's,h,r', 2.5, 0, ...
 %               'm,V,WM,WB,1d,e', [], 'flanker.fidl', ...
 %               'block:boynton|target:9|target:9>target_rt:1:within:z', '', ...
 %               false, '.nii.gz', '', 'hipass=linear|regress=ignore|lopass=linear');
@@ -1633,7 +1633,7 @@ return
 %                           ----> create temporary image
 %
 
-function [img] = tmpimg(data, use);
+function [img] = tmpimg(data, use)
 
     img = nimage();
     img.data = data;

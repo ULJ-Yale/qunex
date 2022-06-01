@@ -32,9 +32,9 @@ function [options] = general_parse_options(options, s, default)
 %       String format:
 %           The string defines key:value pairs that will be embedded in
 %           the structure. Keys will be the field names and values will
-%           be assigned to them. So:
+%           be assigned to them. So::
 %
-%           >>> a = general_parse_options([], 'id:66|name:Tom');
+%               a = general_parse_options([], 'id:66|name:Tom');
 %
 %           will result in a structure::
 %
@@ -46,9 +46,9 @@ function [options] = general_parse_options(options, s, default)
 %       Structure arrays:
 %           The function can generate or edit arrays of structures. To
 %           specify key-value pairs for multiple sets, separate them
-%           using semicolon:
+%           using semicolon::
 %
-%           >>> a = general_parse_options([], ...
+%               a = general_parse_options([], ...
 %               'id:66|name:Tom;id=33|name=Mary');
 %
 %           will result in a structure::
@@ -65,9 +65,9 @@ function [options] = general_parse_options(options, s, default)
 %           It is also possible to populate fields with structures. In
 %           this case, use greater than sign to specify that the filed
 %           contains a substructure and use a comma to separate
-%           key-value pairs of the substructure:
+%           key-value pairs of the substructure::
 %
-%           >>> a = general_parse_options([], ...
+%               a = general_parse_options([], ...
 %               'id:66|name:Tom|demographics>age:37,sex:male');
 %
 %           will result in a structure::
@@ -80,9 +80,9 @@ function [options] = general_parse_options(options, s, default)
 %       Default structure:
 %           It is possible to define a default structure. In this case
 %           the default strucutre will be generated first and then
-%           overwritten by the specification string:
+%           overwritten by the specification string::
 %
-%           >>> a = general_parse_options([], ...
+%               a = general_parse_options([], ...
 %               'id:66|name:Tom;id=33|name=Mary', 'status:ok|id=0');
 %
 %           will result in a structure::
@@ -98,9 +98,9 @@ function [options] = general_parse_options(options, s, default)
 %           Values can be numbers, strings or any other valid
 %           expression, also arrays and cell arrays, just be aware that
 %           strings for the cell array need to be specifed using
-%           regular double quotes:
+%           regular double quotes::
 %
-%           >>> a = general_parse_options([], ...
+%               a = general_parse_options([], ...
 %               'id:66|name=Tom|vars={"a", "b", "c"}|values=[1, 2, 3]');
 %
 %           will result in a structure::

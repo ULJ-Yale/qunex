@@ -16,9 +16,9 @@ function [normals] = general_compute_vertex_normals(surface)
 %           number of vertices).
 %
 %   Examples:
-%       To get vertex normal vectors of a surface file 'L_midthickness.surf.gii' use:
+%       To get vertex normal vectors of a surface file 'L_midthickness.surf.gii' use::
 %
-%       >>> normal_vectors = general_compute_vertex_normals('L_midthickness.surf.gii');
+%           normal_vectors = general_compute_vertex_normals('L_midthickness.surf.gii');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

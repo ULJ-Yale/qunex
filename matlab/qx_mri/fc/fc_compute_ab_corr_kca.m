@@ -63,7 +63,9 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %       distance measure, and taking the best of nrep replications.
 %
 %   Examples:
-%       >>> fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', ...
+%       ::
+%
+%           fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', ...
 %               [3:9], 0, 'Th-PFC', 'g', 'correlations', 15);
 %
 

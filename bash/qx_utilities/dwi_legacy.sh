@@ -67,7 +67,7 @@ Specific parameters:
 
 Output files:
      - DiffFolder=${SessionsFolder}/${Session}/Diffusion
-     - T1wDiffFolder=${SessionsFolder}/${Session}/T1w/Diffusion_"$DiffDataSuffix"
+     - T1wDiffFolder=${SessionsFolder}/${Session}/T1w/Diffusion\_"$DiffDataSuffix"
 
      ::
 
@@ -81,16 +81,16 @@ Output files:
 Examples:
     Examples using Siemens FieldMap (needs GPU-enabled node).
 
-    Run directly via:
+    Run directly via::
 
-    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIPreprocPipelineLegacy.sh \\
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIPreprocPipelineLegacy.sh \\
         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
-    Run via:
+    Run via::
 
-    >>> qunex dwi_legacy --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_legacy --<parameter1> --<parameter2> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -102,7 +102,9 @@ Examples:
 
          --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> qunex dwi_legacy \\
+    ::
+
+        qunex dwi_legacy \\
               --sessionsfolder='<folder_with_sessions>' \\
               --sessions='<comma_separarated_list_of_cases>' \\
               --function='dwi_legacy' \\
@@ -118,7 +120,9 @@ Examples:
     Example with flagged parameters for submission to the scheduler using
     Siemens FieldMap (needs GPU-enabled queue):
 
-    >>> qunex dwi_legacy \\
+    ::
+
+        qunex dwi_legacy \\
               --sessionsfolder='<folder_with_sessions>' \\
               --sessions='<comma_separarated_list_of_cases>' \\
               --function='dwi_legacy' \\
@@ -135,7 +139,9 @@ Examples:
     Example with flagged parameters for submission to the scheduler using GE data
     without FieldMap (needs GPU-enabled queue):
 
-    >>> qunex dwi_legacy \\
+    ::
+
+        qunex dwi_legacy \\
               --sessionsfolder='<folder_with_sessions>' \\
               --sessions='<comma_separarated_list_of_cases>' \\
               --diffdatasuffix='DWI_dir91_LR' \\

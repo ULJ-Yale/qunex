@@ -342,7 +342,9 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             Please see `map_bids2nii` inline documentation!
 
     Examples:
-        >>> qunex import_bids sessionsfolder=myStudy overwrite=yes bidsname=swga
+        ::
+
+            qunex import_bids sessionsfolder=myStudy overwrite=yes bidsname=swga
     """
 
     print("Running import_bids\n==================")
@@ -1020,7 +1022,9 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
             achieved by running on a single node and a single core.
 
     Examples:
-        >>> qunex map_bids2nii folder=. overwrite=yes
+        ::
+
+            qunex map_bids2nii folder=. overwrite=yes
     """
 
     if fileinfo is None:

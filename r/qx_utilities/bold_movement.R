@@ -26,7 +26,7 @@
 #           Threshold to use for computing dvarsme rejections.
 #       --movement, -m (numeric, default 0.5):
 #           Threshold to use for computing frame-to-frame movement rejections.
-#       --radius, -rd (numeric, default 50)
+#       --radius, -rd (numeric, default 50):
 #           Radius (in mm) from center of head to cortex to estimate rotation
 #           size.
 #       --tr (numeric, default 2.5):

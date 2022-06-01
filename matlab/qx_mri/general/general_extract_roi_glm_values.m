@@ -58,7 +58,9 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %       ROI statistics.
 %
 %   Examples:
-%       >>> general_extract_roi_glm_values('wm-glm.list', 'CCN.names', [], ...
+%       ::
+%
+%           general_extract_roi_glm_values('wm-glm.list', 'CCN.names', [], ...
 %               'encoding, delay', [], 'psc', 'long');
 %
 

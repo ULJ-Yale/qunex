@@ -26,7 +26,9 @@ function [data, hdr, meta] = general_read_table(instr)
 %       header.
 %
 %   Example:
-%       >>> [data, hdr, meta] = general_read_table('movement.dat');
+%       ::
+%
+%           [data, hdr, meta] = general_read_table('movement.dat');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

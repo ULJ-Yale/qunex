@@ -21,7 +21,9 @@ function [img] = stats_p2z(img, out, tail)
 %       provided, no file is saved.
 %
 %   Examples:
-%       >>> stats_p2z('WM_p.nii.gz', 'WM_Z.nii.gz');
+%       ::
+%
+%           stats_p2z('WM_p.nii.gz', 'WM_Z.nii.gz');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

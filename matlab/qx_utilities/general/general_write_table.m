@@ -43,7 +43,9 @@ function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, 
 %       can be specified as the pre and post parameters.
 %
 %   Example:
-%       >>> general_write_table('mov.dat', movdata, 'frame,X,Y,Z', ...
+%       ::
+%
+%           general_write_table('mov.dat', movdata, 'frame,X,Y,Z', ...
 %           'mean,sd,min,max');
 %
 

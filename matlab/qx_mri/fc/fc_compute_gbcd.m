@@ -106,7 +106,9 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       method img_compute_gbcd.
 %
 %   Examples:
-%       >>> fc_compute_gbcd('scz.list', 'mFz:0.1|pFz:0.1', 'dlpfc.names', [], ...
+%       ::
+%
+%           fc_compute_gbcd('scz.list', 'mFz:0.1|pFz:0.1', 'dlpfc.names', [], ...
 %               10, 0, true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
 %
 

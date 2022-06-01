@@ -278,7 +278,9 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         Please see `map_hcpls2nii` inline documentation!
 
     Examples:
-        >>> qunex import_hcp sessionsfolder=myStudy/sessions inbox=HCPLS \\
+        ::
+
+            qunex import_hcp sessionsfolder=myStudy/sessions inbox=HCPLS \\
                   overwrite=yes hcplsname=hcpls
     """
 
@@ -805,9 +807,13 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
             achieved by running on a single node and a single core.
 
     Examples:
-        >>> qunex map_hcpls2nii folder=. overwrite=yes
+        ::
 
-        >>> qunex map_hcpls2nii \\
+            qunex map_hcpls2nii folder=. overwrite=yes
+
+        ::
+
+            qunex map_hcpls2nii \\
             --sessionsfolder="/data/my_study/sessions" \\
             --sessions="AP*" \\
             --overwrite=yes

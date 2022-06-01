@@ -1,4 +1,4 @@
-function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices);
+function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices)
 
 %``function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices)``
 %

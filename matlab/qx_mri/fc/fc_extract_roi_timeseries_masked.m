@@ -112,14 +112,14 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %           and replaced by mcodes.
 %
 %   Examples:
-%       Resting state data:
+%       Resting state data::
 %
-%       >>> fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 0, ...
+%           fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 0, ...
 %               'con-ccnet', 'mt', 'mean', 'udvarsme');
 %
-%       Event data:
+%       Event data::
 %
-%       >>> fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 'inc:3:4', ...
+%           fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 'inc:3:4', ...
 %               'con-ccnet-inc', 'm', 'pca', 'event');
 %
 

@@ -505,7 +505,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
             make best guess, where the logs should go.
 
     Examples:
-        >>> qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes parelements=3
+        ::
+
+            qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes parelements=3
 
         Multiple sessions example::
 
@@ -1037,11 +1039,14 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             make best guess, where the logs should go.
 
     Examples:
-        >>> qunex dicom2nii folder=. clean=yes unzip=yes gzip=folder parelements=3
+        ::
+
+            qunex dicom2nii folder=. clean=yes unzip=yes gzip=folder parelements=3
     
     
-    Multiple sessions example:
-        >>> qunex dicom2niix \\
+    Multiple sessions example::
+
+        qunex dicom2niix \\
           --sessionsfolder="/data/my_study/sessions" \\
           --sessions="OP*" \\
           --clean=yes \\
@@ -1758,13 +1763,13 @@ def sort_dicom(folder=".", **kwargs):
             guess, where the logs should go.
 
     Examples:
-        Single sessions example:
+        Single sessions example::
 
-        >>> qunex sort_dicom folder=OP667
+            qunex sort_dicom folder=OP667
 
-        Multiple sessions example:
+        Multiple sessions example::
 
-        >>> qunex sort_dicom \\
+            qunex sort_dicom \\
                   --sessionsfolders="/data/my_study/sessions" \\
                   --sessions="OP*"
     """
@@ -1918,7 +1923,9 @@ def list_dicom(folder=None):
         Importantly, it can work with both regular and gzipped DICOM files.
 
     Examples:
-        >>> qunex list_dicom folder=OP269/dicom
+        ::
+
+            qunex list_dicom folder=OP269/dicom
     """
 
     if folder is None:
@@ -1967,7 +1974,9 @@ def split_dicom(folder=None):
         files in the right sessions's subfolder.
 
     Examples:
-        >>> qunex split_dicom folder=dicommess
+        ::
+
+            qunex split_dicom folder=dicommess
     """
 
     if folder is None:
@@ -2292,20 +2301,26 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
         to the packet name. All packets found are to be processed, after the
         user gives a go-ahead to an interactive prompt:
 
-        >>> qunex import_dicom \\
+        ::
+
+            qunex import_dicom \\
                   --sessionsfolder="<path_to_studyfolder>/sessions"
 
         If the processing should continue automatically if packages to process
         were found, then the command should be:
 
-        >>> qunex import_dicom \\
+        ::
+
+            qunex import_dicom \\
                   --sessionsfolder="<path_to_studyfolder>/sessions" \\
                   --check="any"
 
         If only package names starting with 'AP' or 'HQ' are to be processed
         then the `sessions` parameter has to be added:
 
-        >>> qunex import_dicom \\
+        ::
+
+            qunex import_dicom \\
                   --sessionsfolder="<path_to_studyfolder>/sessions" \\
                   --sessions="AP.*,HQ.*" \\
                   --check="any"
@@ -2314,7 +2329,9 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
         optional, then to extract the packet name and map it directly to
         subject id, the following `pattern` parameter needs to be added:
 
-        >>> qunex import_dicom \\
+        ::
+
+            qunex import_dicom \\
                   --sessionsfolder="<path_to_studyfolder>/sessions" \\
                   --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
                   --sessions="AP.*,HQ.*" \\
@@ -2324,7 +2341,9 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
         format e.g. 'Yale-AP4876_Baseline.zip', then a `nameformat` parameter
         needs to be added:
 
-        >>> qunex import_dicom \\
+        ::
+
+            qunex import_dicom \\
                   --sessionsfolder="<path_to_studyfolder>/sessions" \\
                   --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
                   --sessions="AP.*,HQ.*" \\
@@ -2338,7 +2357,9 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
         which the AP* or HQ* are mapped to a corresponding subject id and
         session names, then the command is changed to:
 
-        >>> qunex import_dicom \\
+        ::
+
+            qunex import_dicom \\
                   --sessionsfolder="<path_to_studyfolder>/sessions" \\
                   --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
                   --sessions="AP.*,HQ.*" \\
@@ -2347,25 +2368,30 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
         For the examples of processing data already present in the individual
         session id folder, let's assume that we have the following files
-        present, with no other files in the sessions folders:
+        present, with no other files in the sessions folders::
 
             /studies/myStudy/sessions/S001_baseline/inbox/AYXQ.tar.gz
+
             /studies/myStudy/sessions/S001_incentive/inbox/TWGS.tar.gz
+
             /studies/myStudy/sessions/S002_baseline/inbox/OHTZ.zip
+
             /studies/myStudy/sessions/S002_incentive/inbox/QRTD.zip
 
         Then these are a set of possible commands:
 
-        >>> qunex import_dicom \\
+        ::
+
+            qunex import_dicom \\
                   --sessionsfolder="/studies/myStudy/sessions" \\
                   --masterinbox="none" \\
                   --sessions="S*"
 
         In the above case all the folders will be processed, the packages will
         be extracted and (by default) moved to
-        `/studies/myStudy/sessions/archive/MR`:
+        `/studies/myStudy/sessions/archive/MR`::
 
-        >>> qunex import_dicom \\
+            qunex import_dicom \\
                   --sessionsfolder="/studies/myStudy/sessions" \\
                   --masterinbox="none" \\
                   --sessions="*baseline" \\

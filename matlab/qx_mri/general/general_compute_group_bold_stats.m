@@ -58,14 +58,14 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %
 %   Examples:
 %       To compute mean and standard variation and exclude the first 5 frames
-%       and the frames marked bad using udvarsme criterion, use:
+%       and the frames marked bad using udvarsme criterion, use::
 %
-%       >>> general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', 5, 'udvarsme');
+%           general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', 5, 'udvarsme');
 %
 %       To compute the mean and standard variation for all negative trials
-%       (frames 3 & 4), and use ignore information in fidl file, use:
+%       (frames 3 & 4), and use ignore information in fidl file, use::
 %
-%       >>> general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', 'negative:block:3:4', 'fidl');
+%           general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', 'negative:block:3:4', 'fidl');
 %
 %   See Also:
 %       nimage.img_stats

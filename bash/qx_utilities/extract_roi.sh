@@ -38,11 +38,13 @@ Output files:
        singleinputfile.
 
 Examples:
-    >>> qunex roi_extract \\
-    --roifile='<path_to_roifile>' \\
-    --inputfile='<path_to_inputfile>' \\
-    --outdir='<path_to_outdir>' \\
-    --outname='<output_name>'
+    ::
+
+        qunex roi_extract \\
+        --roifile='<path_to_roifile>' \\
+        --inputfile='<path_to_inputfile>' \\
+        --outdir='<path_to_outdir>' \\
+        --outname='<output_name>'
 
 EOF
  exit 0

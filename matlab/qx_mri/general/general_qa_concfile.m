@@ -29,7 +29,9 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 %       is specified no files will be saved.
 %
 %   Examples:
-%       >>> general_qa_concfile('OP337.conc', 'm,sd,min,max', 'OP337');
+%       ::
+%
+%           general_qa_concfile('OP337.conc', 'm,sd,min,max', 'OP337');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

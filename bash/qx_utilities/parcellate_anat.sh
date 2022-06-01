@@ -19,34 +19,34 @@ files using a whole-brain parcellation (e.g. Glasser parcellation with
 subcortical labels included).
 
 Parameters:
-     --sessionsfolder (str):
+    --sessionsfolder (str):
         Path to study data folder.
-     --session (str):
+    --session (str):
         Comma separated list of sessions to run
-     --inputdatatype (str):
+    --inputdatatype (str):
         Specify the type of dense data for the input file (e.g. MyelinMap_BC or
         corrThickness).
-     --parcellationfile (str):
-        Specify the absolute path of the *.dlabel file you want to use for
+    --parcellationfile (str):
+        Specify the absolute path of the ∗.dlabel file you want to use for
         parcellation.
-     --outname (str):
+    --outname (str):
         Specify the suffix output name of the pconn file.
-     --overwrite (str):
+    --overwrite (str):
         Delete prior run for a given session ('yes' / 'no').
-     --extractdata (flag):
+    --extractdata (flag):
         Specify if you want to save out the matrix as a CSV file.
 
 Examples:
-    Run directly via:
+    Run directly via::
 
-    >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_anat.sh \\
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_anat.sh \\
         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
-    Run via:
+    Run via::
 
-    >>> qunex parcellate_anat \\
+        qunex parcellate_anat \\
               --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call:
@@ -59,7 +59,9 @@ Examples:
 
         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> qunex parcellate_anat --sessionsfolder='<folder_with_sessions>' \
+    ::
+
+        qunex parcellate_anat --sessionsfolder='<folder_with_sessions>' \\
               --session='<case_id>' \\
               --inputdatatype='MyelinMap_BC' \\
               --parcellationfile='<dlabel_file_for_parcellation>' \\

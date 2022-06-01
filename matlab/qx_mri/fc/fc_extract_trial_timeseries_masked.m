@@ -84,7 +84,9 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %       save the results in a file 'ccroits.mat'. At extraction it would ignore
 %       all frames that were marked bad using the 'udvarsme' criterion.
 %
-%       >>> fc_extract_trial_timeseries_masked('scz+con.list', ...
+%       ::
+%
+%           fc_extract_trial_timeseries_masked('scz+con.list', ...
 %               'ccroi.names', 'ccroits', {[0], [1 2], [3 4]}, [2 4], 'udvarsme');
 %
 

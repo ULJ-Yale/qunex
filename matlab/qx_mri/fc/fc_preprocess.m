@@ -556,7 +556,9 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %                       please use preprocess_conc command.
 %
 %   Examples:
-%       >>> fc_preprocess('sessions/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', ...
+%       ::
+%
+%           fc_preprocess('sessions/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', ...
 %               '', '', 2.5, '', '', true, '', 'udvarsme', ...
 %               'hipass:linear|regress=ignore|lopass=linear');
 %

@@ -47,7 +47,7 @@ Parameters:
         Delete prior run for a given session.
     --eddypath (str, default '<study_folder>/<session>/hcp/<session>/Diffusion/eddy/'):
         Specify the relative path of the eddy folder you want to use for inputs.
-    --bvecsfile ():
+    --bvecsfile (str):
         If specified, the tool will create a bvals_no_outliers.txt and a
         bvecs_no_outliers.txt file that contain the bvals and bvecs of the
         non-outlier volumes, based on the MSR estimates,
@@ -79,7 +79,9 @@ Output files:
     - group_qc.db  ... database
 
 Examples:
-     >>> dwi_eddy_qc.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \\
+    ::
+
+        dwi_eddy_qc.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \\
                         --session='<session_id>' \\
                         --eddybase='<eddy_base_name>' \\
                         --report='individual' \\

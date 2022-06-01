@@ -20,7 +20,9 @@ function  [] = general_check_glm(sfolder, tfolder)
 %       results and identify bad files.
 %
 %   Examples:
-%       >>> general_check_glm('glms', 'glms/check');
+%       ::
+%
+%           general_check_glm('glms', 'glms/check');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

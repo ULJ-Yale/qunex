@@ -516,10 +516,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             preprocessing to run with of without T2w image(s).
 
     Examples:
-        >>> qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no parsessions=10 hcp_brainsize=170
 
-        >>> qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_pre_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10 hcp_t2=NONE
     """
 
@@ -1020,16 +1024,24 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         if no T2w image is present.
 
     Examples:
-        >>> qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10
 
-        >>> qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10 hcp_fs_longitudinal=TemplateA
 
-        >>> qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10 hcp_t2=NONE
 
-        >>> qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10 hcp_t2=NONE \\
                   hcp_freesurfer_home=<absolute_path_to_freesurfer_binary>
     """
@@ -1708,10 +1720,14 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         present.
 
     Examples:
-        >>> qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no parsessions=10
 
-        >>> qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_post_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no parsessions=10 hcp_t2=NONE
     """
 
@@ -2029,30 +2045,30 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             the specific preprocessing steps.
 
     Examples:
-        Example run from the base study folder with test flag:
+        Example run from the base study folder with test flag::
 
-        >>> qunex hcp_diffusion \\
-            --sessionsfolder="<path_to_study_folder>/sessions" \\
-            --sessions="<path_to_study_folder>/processing/batch.txt" \\
-            --overwrite="no" \\
-           --test
+            qunex hcp_diffusion \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --overwrite="no" \\
+               --test
 
-        Run with scheduler, the compute node also loads the required CUDA module:
+        Run with scheduler, the compute node also loads the required CUDA module::
 
-        >>> qunex hcp_diffusion \\
-            --sessionsfolder="<path_to_study_folder>/sessions" \\
-            --sessions="<path_to_study_folder>/processing/batch.txt" \\
-            --overwrite="yes" \\
-            --bash="module load CUDA/9.1.85" \\
-            --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
+            qunex hcp_diffusion \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --overwrite="yes" \\
+                --bash="module load CUDA/9.1.85" \\
+                --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
 
-        Run without a scheduler and without GPU support:
+        Run without a scheduler and without GPU support::
 
-        >>> qunex hcp_diffusion \\
-            --sessionsfolder="<path_to_study_folder>/sessions" \\
-            --sessions="<path_to_study_folder>/processing/batch.txt" \\
-            --overwrite="yes" \\
-            --hcp_dwi_nogpu
+            qunex hcp_diffusion \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --overwrite="yes" \\
+                --hcp_dwi_nogpu
     """
 
     r = "\n------------------------------------------------------------"
@@ -2515,10 +2531,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             preprocessing steps.
 
     Examples:
-        >>> qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10
 
-        >>> qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_fmri_volume sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no parsessions=10 hcp_bold_movref=first hcp_bold_seimg=first \\
                   hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     """
@@ -3365,10 +3385,14 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         grayordinate representation and generates .dtseries.nii files.
 
     Examples:
-        >>> qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no parsessions=10
 
-        >>> qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex hcp_fmri_surface sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                 overwrite=no parsessions=10
     """
 
@@ -3930,11 +3954,15 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         computational resources.
 
     Examples:
-        >>> qunex hcp_icafix \\
+        ::
+
+            qunex hcp_icafix \\
                   --sessions=processing/batch.txt \\
                   --sessionsfolder=sessions
 
-        >>> qunex hcp_icafix \\
+        ::
+
+            qunex hcp_icafix \\
                   --sessions=processing/batch.txt \\
                   --sessionsfolder=sessions \\
                   --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
@@ -4431,12 +4459,16 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         computational resources.
 
     Examples:
-        >>> qunex hcp_post_fix \\
+         ::
+
+            qunex hcp_post_fix \\
                 --sessions=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_matlab_mode="interpreted"
 
-        >>> qunex hcp_post_fix \\
+        ::
+
+            qunex hcp_post_fix \\
                 --sessions=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
@@ -4798,12 +4830,16 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         computational resources.
 
     Examples:
-        >>> qunex hcp_reapply_fix \\
+        ::
+
+            qunex hcp_reapply_fix \\
                    --sessions=processing/batch.txt \\
                    --sessionsfolder=sessions \\
                    --hcp_matlab_mode="interpreted"
 
-        >>> qunex hcp_reapply_fix \\
+         ::
+
+            qunex hcp_reapply_fix \\
                   --sessions=processing/batch.txt \\
                   --sessionsfolder=sessions \\
                   --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
@@ -5477,18 +5513,18 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         cleaned using hcp_icafix.
 
     Examples:
-        HCP MSMAll after application of single-run ICAFix:
+        HCP MSMAll after application of single-run ICAFix::
 
-        >>> qunex hcp_msmall \\
+            qunex hcp_msmall \\
                   --sessions=processing/batch.txt \\
                   --sessionsfolder=sessions \\
                   --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
                   --hcp_msmall_bolds="REST_1,REST_2" \\
                   --hcp_matlab_mode="interpreted"
 
-        HCP MSMAll after application of multi-run ICAFix:
+        HCP MSMAll after application of multi-run ICAFix::
 
-        >>> qunex hcp_msmall \\
+            qunex hcp_msmall \\
                   --sessions=processing/batch.txt \\
                   --sessionsfolder=sessions \\
                   --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
@@ -6008,17 +6044,17 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         folder inside the same sessions's root hcp folder.
 
     Examples:
-        HCP DeDriftAndResample after application of single-run ICAFix:
+        HCP DeDriftAndResample after application of single-run ICAFix::
 
-        >>> qunex hcp_dedrift_and_resample \\
+            qunex hcp_dedrift_and_resample \\
                 --sessions=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
                 --hcp_matlab_mode="interpreted"
 
-        HCP DeDriftAndResample after application of multi-run ICAFix:
+        HCP DeDriftAndResample after application of multi-run ICAFix::
 
-        >>> qunex hcp_dedrift_and_resample \\
+            qunex hcp_dedrift_and_resample \\
                 --sessions=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
@@ -6602,15 +6638,15 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             `/data/gc/Prisma.conf` would be used.
 
     Examples:
-        Example run:
+        Example run::
 
-        >>> qunex hcp_asl \\
+            qunex hcp_asl \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --sessions="<path_to_study_folder>/processing/batch.txt"
 
-        Run with scheduler, while bumbing up the number of used cores:
+        Run with scheduler, while bumbing up the number of used cores::
 
-        >>> qunex hcp_asl \
+            qunex hcp_asl \
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --sessions="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_asl_cores="8" \\
@@ -6922,9 +6958,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         then a group folder is created inside the QuNex's session folder.
 
     Examples:
-        Example run:
+        Example run::
 
-        >>> qunex hcp_temporal_ica \\
+            qunex hcp_temporal_ica \\
                   --sessionsfolder="<path_to_study_folder>/sessions" \\
                   --sessions="<path_to_study_folder>/processing/batch.txt" \\
                   --hcp_tica_bolds="fMRI_CONCAT_ALL" \\
@@ -7307,9 +7343,9 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         folder.
 
     Examples:
-        Example run:
+        Example run::
 
-        >>> qunex hcp_make_average_dataset \\
+            qunex hcp_make_average_dataset \\
                   --sessionsfolder="<path_to_study_folder>/sessions" \\
                   --sessions="<path_to_study_folder>/processing/batch.txt" \\
                   --hcp_outgroupname="hcp_group"
@@ -7782,7 +7818,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 └-> images/functional/movement/[boldname][N]_mov.dat
 
     Examples:
-        >>> qunex map_hcp_data sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+        ::
+
+            qunex map_hcp_data sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
                   overwrite=no hcp_cifti_tail=_Atlas bolds=all
     """
 
@@ -8114,17 +8152,17 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         folder inside the same sessions's root hcp folder.
 
     Examples:
-        First level HCP TaskfMRIanalysis:
+        First level HCP TaskfMRIanalysis::
 
-        >>> qunex hcp_task_fmri_analysis \\
+            qunex hcp_task_fmri_analysis \\
                   --sessionsfolder="<study_path>/sessions" \\
                   --sessions="<study_path>/processing/batch.txt" \\
                   --hcp_task_lvl1tasks="tfMRI_GUESSING_PA" \\
                   --hcp_task_summaryname="tfMRI_GUESSING/tfMRI_GUESSING"
 
-        Second level HCP TaskfMRIanalysis:
+        Second level HCP TaskfMRIanalysis::
 
-        >>> qunex hcp_task_fmri_analysis \\
+            qunex hcp_task_fmri_analysis \\
                   --sessionsfolder="<study_path>/sessions" \\
                   --sessions="<study_path>/processing/batch.txt" \\
                   --hcp_task_lvl1tasks="tfMRI_GUESSING_AP@tfMRI_GUESSING_PA" \\

@@ -24,7 +24,9 @@ function [ok] = general_check_folder(filename, description, create, v)
 %       (optionally) create one if it does not yet exist.
 %
 %   Examples:
-%       >>> general_check_folder('images/functional/movement',
+%       ::
+%
+%           general_check_folder('images/functional/movement',
 %           'movement folder', true, true);
 %
 

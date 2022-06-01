@@ -9,17 +9,17 @@
 #
 # ## PRODUCT
 #
-# Wrapper to run pre_tractography function
+# Wrapper to run dwi_pre_tractography function
 #
 # ## LICENCE
 #
-# * The pre_tractography.sh = the "Software"
+# * The dwi_pre_tractography.sh = the "Software"
 # * This Software conforms to the license outlined in the QuNex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## DESCRIPTION 
 #   
-# This script, pre_tractography.sh, implements ROI extraction
+# This script, dwi_pre_tractography.sh, implements ROI extraction
 # using a pre-specified ROI file in NIFTI or CIFTI format
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
@@ -28,7 +28,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./pre_tractography.sh --help
+# See output of usage function: e.g. $./dwi_pre_tractography.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -54,24 +54,25 @@ geho() {
 
 usage() {
     cat << EOF
-``pre_tractography``
+``dwi_pre_tractography``
 
 This function runs the Pretractography Dense trajectory space generation.
 
-Note that this is a very quick function to run
-} (less than 5min) so no overwrite
+Note that this is a very quick function to run (less than 5min) so no overwrite
 options exist.
 
-It explicitly assumes the Human Connectome Project folder structure for
-preprocessing and completed diffusion and bedpostX processing.
+Warning:
 
-DWI data needs to be in the following folder::
+    It explicitly assumes the Human Connectome Project folder structure for
+    preprocessing and completed diffusion and bedpostX processing.
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+    DWI data needs to be in the following folder::
 
-BedpostX output data needs to be in the following folder::
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
 
-    <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX
+    BedpostX output data needs to be in the following folder::
+
+        <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX
 
 Parameters:
     --sessionsfolder (str):
@@ -85,7 +86,9 @@ Parameters:
             --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
 Examples:
-    >>> qunex pretractography_dense --sessionsfolder='<path_to_study_sessions_folder>' \\
+    ::
+
+        qunex pretractography_dense --sessionsfolder='<path_to_study_sessions_folder>' \\
               --sessions='<comma_separarated_list_of_cases>' \\
               --scheduler='<name_of_scheduler_and_options>'
 

@@ -212,15 +212,15 @@ function [] = general_plot_bold_timeseries(images, elements, masks, filename, sk
 %       [false]
 %
 %   Examples:
-%       Inside MATLAB:
+%       Inside MATLAB::
 %
-%       >>> general_plot_bold_timeseries('bold1.nii.gz;bold1_s_hpss_res.nii.gz', ...
-%        'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', ...
+%           general_plot_bold_timeseries('bold1.nii.gz;bold1_s_hpss_res.nii.gz', ...
+%           'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', ...
 %        'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
 %
-%       Via QuNex from terminal:
+%       Via QuNex from terminal::
 %
-%       >>> qunex general_plot_bold_timeseries \
+%           qunex general_plot_bold_timeseries \
 %            --images="<Path_to_Study>/sessions/AP1937/images/functional/bold1.nii.gz" \
 %           --elements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1" \
 %           --masks="<Path_to_Study>/sessions/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \

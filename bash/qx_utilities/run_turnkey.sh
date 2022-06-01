@@ -343,14 +343,14 @@ Notes:
         * run_qc_bold_fc.
 
 Examples:
-    Run directly via:
+    Run directly via::
 
-     >>> ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh \\
+         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh \\
          --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
-    Run via:
+    Run via::
 
-    >>> qunex runTurnkey --<parameter1> --<parameter2> ... --<parameterN>
+        qunex runTurnkey --<parameter1> --<parameter2> ... --<parameterN>
 
     --scheduler
         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
@@ -360,7 +360,9 @@ Examples:
 
         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    >>> run_turnkey.sh \\
+    ::
+
+        run_turnkey.sh \\
         --turnkeytype=<turnkey_run_type> \\
         --turnkeysteps=<turnkey_worlflow_steps> \\
         --batchfile=<batch_file> \\
