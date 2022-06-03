@@ -47,7 +47,7 @@ extensions = [
     'sphinxcontrib.matlab',
 #    'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'recommonmark',
+    'myst_parser',
     'sphinx_copybutton',
     'sphinxext.opengraph',
 ]

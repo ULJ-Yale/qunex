@@ -1,6 +1,6 @@
 numpy
 pydicom
-recommonmark
+myst-parser
 sphinxcontrib-napoleon
 sphinxcontrib-matlabdomain
 sphinx-book-theme
