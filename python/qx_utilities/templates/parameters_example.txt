@@ -19,10 +19,6 @@
 # parameters and their valid values, please consult the qunex documentation
 * (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
 # preprocessing) and online help for the relevant qunex commands.
-#
-#
-# --> For all supported batch parameter options run: 
-#     qunex -o
 # 
 # Please note that if a parameter is specified in the batch file qunex will set it to the value specified. 
 # This is also the case for parameters that are left '' empty (e.g. `_event_file         :`). 
@@ -153,7 +149,7 @@
 # _hcp_processing_mode       Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData) ['HCPStyleData']
 # _hcp_freesurfer_home       Path to FreeSurfer base folder []
 # _hcp_freesurfer_module     Whether to load FreeSurfer as a module on the cluster: YES or NONE []
-# _hcp_Pipeline              Path to pipeline base folder []
+# _hcp_pipeline              Path to pipeline base folder []
 # _hcp_folderstructure       If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically, the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study is used. Specifically, the source files are all stored within their individual subfolders located in the joint 'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder. [`hcpls`]
 # _hcp_filename              How to name the BOLD files once mapped into the hcp input folder structure. The default ('automated') will automatically name each file by their number (e.g. BOLD_1). The alternative ('userdefined') is to use the file names, which can be defined by the user prior to mapping (e.g. rfMRI_REST1_AP). ['automated']
 # _hcp_suffix                Session id suffix if running HCP preprocessing variants []
@@ -185,7 +181,6 @@
 # _hcp_prefs_template_res    The resolution (in mm) of the structural images templates to use in the prefs step [0.7]
 # _hcp_sephaseneg            Spin echo field map volume with a negative phase encoding direction: LR, RL, NONE [NONE]
 # _hcp_sephasepos            Spin echo field map volume with a positive phase encoding direction: LR, RL, NONE [NONE]
-# _hcp_bold_smoothFWHM       Whether slices were acquired in an interleaved fashion (odd or even) or not (empty) [2]
 #
 # # --- hcp_freesurfer options
 # _hcp_fs_seed               Recon-all seed value. If not specified, none will be used. HCP Pipelines specific! []
@@ -223,6 +218,9 @@
 # _hcp_bold_topupconfig      A full path to the topup configuration file to use. Set to '' if the default is to be used or of TOPUP distortion correction is not used.
 # _hcp_bold_preregistertool  What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt [epi_reg]
 # _hcp_bold_dof              Degrees of freedom for EPI-T1 FLIRT. Empty to use HCP default []
+#
+# # --- hcp_fmri_surface options
+# _hcp_bold_smoothFWHM       The size of the smoothing kernel (in mm) [2]
 #
 # # --- hcp_diffusion options
 # _hcp_dwi_echospacing       Echo Spacing or Dwelltime of DWI images [image specific]

@@ -1,6 +1,6 @@
 function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose);
 
-%``function [] = general_extract_roi_glm_values(flist, roif, effects, frames, values, tformat, verbose)`
+%``function [] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)`
 %
 %	Extracts per ROI estimates of specified effects from a volume or cifti GLM
 %   files as specified in the file list.
@@ -9,9 +9,13 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %   ======
 %
 %   --flist       List of sessions and files to process.
-%   --roif        .names ROI file descriptor.
+%   --roif        path to a .names ROI file descriptor or a comma separated list 
+%                 of parcels to be extracted, specified as 
+%                 'parcels:<parcel1>,<parcel2>'. 'parcels:all' will export data
+%                 for all parcels. Note that in this case the list of parcels 
+%                 will be based on glm file from the first session in the list.
 %   --outf        Name of the output file. If left empty the it is set to list 
-%                 root with '.dat' extension. []
+%                 root with '.tsv' extension. []
 %   --effects     List of effects of interest. If none specified, all but trend 
 %                 and baseline are exported. []
 %   --frames      List of frames to extract from all effects. All if empty or 
@@ -68,15 +72,24 @@ if nargin < 6 || isempty(values), values = 'raw'; end
 if nargin < 5, frames  = [];    end
 if nargin < 4, effects = [];    end
 if nargin < 3, outf    = [];    end
-
-if nargin < 2, error('ERROR: No ROI provided for value extraction!');          end
+if nargin < 2, error('ERROR: No ROI file or parcel definition list provided!');  end
 if nargin < 1, error('ERROR: No files to extract the values from provided!');  end
+
+% --------------------------------------------------------------
+%                                              parcel processing
+
+parcels = {};
+if startsWith(roif, 'parcels:')
+    parcels = strtrim(regexp(roif(9:end), ',', 'split'));    
+end
 
 % --------------------------------------------------------------
 %                                                    check files
 
 general_check_file(flist, 'file list', 'errorstop');
-general_check_file(roif, 'ROI image', 'errorstop');
+if isempty(parcels)
+    general_check_file(roif, 'ROI image', 'errorstop');
+end
 
 % --------------------------------------------------------------
 %                                                  read filelist
@@ -87,9 +100,20 @@ nsub = length(sessions);
 % --------------------------------------------------------------
 %                                                       read roi
 
-roi = nimage.img_read_roi(roif);
-roi.data = roi.image2D;
+if isempty(parcels)
+    roi = nimage.img_read_roi(roif);
+    roi.data = roi.image2D;    
+elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
+    t = nimage(sessions(1).glm);
+    if ~isfield(t.cifti, 'parcels') || isempty(t.cifti.parcels)
+        error('ERROR: The glm file lacks parcel specification! [%s]', sessions(1).glm);
+    end
+    parcels = t.cifti.parcels;
+    roi.roi.roinames = parcels;    
+    roi.roi.roicodes = 1:length(parcels);
+end
 nroi = length(roi.roi.roinames);
+nparcels = length(parcels);
 
 % --------------------------------------------------------------
 %                                             create output file
@@ -102,11 +126,11 @@ ltext = false;
 wtext = false;
 
 if ~isempty(strfind(tformat, 'long'))
-    ltext = fopen([outf '_long.txt'], 'w');
+    ltext = fopen([outf '_long.tsv'], 'w');
     fprintf(ltext, 'session\troi\troicode\tevent\tframe\tmin\tmax\tmean\tmedian\tsd\tse\tN');
 end
 if ~isempty(strfind(tformat, 'wide'))
-    wtext = fopen([outf '_wide.txt'], 'w');
+    wtext = fopen([outf '_wide.tsv'], 'w');
     fprintf(wtext, 'session\tevent\tframe');
     for r = 1:nroi
         fprintf(wtext, '\t%s', roi.roi.roinames{r});
@@ -130,7 +154,7 @@ for s = 1:nsub
 
     % ---> update ROI
 
-    if isfield(sessions(s), 'roi') && ~isempty(sessions(s).roi)
+    if isempty(parcels) && isfield(sessions(s), 'roi') && ~isempty(sessions(s).roi)
         sroi = roi.img_mask_roi(sessions(s).roi);
     else
         sroi = roi;
@@ -140,7 +164,33 @@ for s = 1:nsub
         glm.data = bsxfun(@rdivide, glm.data, glm.glm.gmean / 100);
     end
 
-    stats   = glm.img_extract_roi_stats(sroi);
+    if isempty(parcels)
+        stats   = glm.img_extract_roi_stats(sroi);
+    else
+        if ~isfield(glm.cifti, 'parcels') || isempty(glm.cifti.parcels)
+            fprintf('WARNING: The glm file [%s] lacks parcel specification! Skipping session [%s]', sessions(s).glm, sessions(s).id);
+            continue
+        end
+
+        if all(ismember(parcels, glm.cifti.parcels))
+            [~, parcel_index] = ismember(parcels, glm.cifti.parcels);
+            for p = 1:nparcels
+                stats(p).roiname = parcels{p};
+                stats(p).roicode = p;
+                stats(p).median  = glm.data(parcel_index(p),:);
+                stats(p).max     = glm.data(parcel_index(p),:);
+                stats(p).min     = glm.data(parcel_index(p),:);
+                stats(p).mean    = glm.data(parcel_index(p),:);
+                stats(p).N       = 1;
+                stats(p).sd      = zeros(1, glm.frames);
+                stats(p).se      = zeros(1, glm.frames);  
+            end          
+        else
+            fprintf('WARNING: The glm file [%s] lacks some parcels (%s)! Skipping session [%s]', sessions(s).glm, strjoin(parcels(~ismember(parcels, glm.cifti.parcels)), ', '), sessions(s).id);
+            continue
+        end
+    end
+
     data(s).stats = stats;
     data(s).effect = glm.glm.effects(glm.glm.effect);
     data(s).frame = glm.glm.eindex;

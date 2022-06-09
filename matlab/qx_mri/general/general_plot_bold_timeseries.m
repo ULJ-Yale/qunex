@@ -1,4 +1,4 @@
-sfunction [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)
+function [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)
 
 %``function [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)``
 %

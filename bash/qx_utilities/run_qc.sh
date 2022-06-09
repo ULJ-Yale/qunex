@@ -64,17 +64,17 @@ usage() {
  echo "                       <sessions_folder> if scene is 'general'."
  echo "--datafile             Required ==> Specify input data file name if scene is "
  echo "                       'general'."
- echo "--sessionsbatchfile    Absolute path to local batch file with pre-configured "
- echo "                       processing parameters. " 
+ echo "--batchfile            Absolute path to local batch file with pre-configured "
+ echo "                       processing parameters." 
  echo ""
  echo "                       Note: It can be used in combination with --sessions to "
  echo "                       select only specific cases to work on from the batch "
- echo "                       file." 
- echo ""
- echo "                       Note: If --sessions is omitted in favor of "
- echo "                       --sessionsbatchfile OR if batch file is provided as "
- echo "                       input for --sessions flag, then all cases from the batch "
+ echo "                       file. If --sessions is omitted, then all cases from the batch "
  echo "                       file are processed."
+ echo "                       It can also used in combination with --bolddata to select"
+ echo "                       only specific BOLD runs to work on from the batch file. If "
+ echo "                       --bolddata is omitted (see below), all BOLD runs in the "
+ echo "                       batch file will be processed."
  echo "--overwrite            Delete prior QC run: yes/no [no]"
  echo "--hcp_suffix           Allows user to specify session id suffix if running HCP "
  echo "                       preprocessing variants []."
@@ -111,12 +111,6 @@ usage() {
  echo "--suffix               Allows user to specify unique suffix or to parse a time "
  echo "                       stamp from QuNex bash wrapper."
  echo "                       Default is [<session_id>_<timestamp>]"
- echo "--batchfile            Batch file with pre-configured BOLD tags for quick "
- echo "                       filtering of BOLD runs." 
- echo ""
- echo "                       Note: This file needs to be created *manually* prior to "
- echo "                       starting function and absolute path provided in the "
- echo "                       function."
  echo ""
  echo "DWI INPUTS"
  echo "----------"
@@ -157,10 +151,11 @@ usage() {
  echo "                    with --bolds or --boldruns to allow more redundancy in "
  echo "                    specification."
  echo ""
- echo "                    Note: If unspecified empty the QC script will by default "
- echo "                    look into "
- echo "                    /<path_to_study_sessions_folder>/<session_id>/session_hcp.txt "
- echo "                    and identify all BOLDs to process"
+ echo "                    Note: If --bolddata is unspecified, a batch file must be  "
+ echo "                    provided in --batchfile or an error will be reported. If "
+ echo "                    --bolddata is empty and --batchfile is provided, by default "
+ echo "                    QuNex will use the information in the batch file to identify "
+ echo "                    all BOLDS to process."
  echo ""
  echo "BOLD FC INPUTS"
  echo "--------------"
@@ -269,7 +264,7 @@ usage() {
  echo " --dwipath='<path_for_dwi_data>' \ "
  echo " --overwrite='yes'"
  echo ""
- echo " # -- BOLD QC"
+ echo " # -- BOLD QC (for a specific BOLD run)"
  echo " qunex run_qc \ "
  echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
  echo " --sessions='<comma_separated_list_of_cases>' \ "
@@ -277,6 +272,17 @@ usage() {
  echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
  echo " --modality='BOLD' \ "
  echo " --bolddata='1' \ "
+ echo " --boldsuffix='Atlas' \ "
+ echo " --overwrite='yes'"
+ echo ""
+ echo " # -- BOLD QC (search for all available BOLD runs)"
+ echo " qunex run_qc \ "
+ echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
+ echo " --sessions='<comma_separated_list_of_cases>' \ "
+ echo " --batchfile='<path_to_batch_file>' \ "
+ echo " --outpath='<path_for_output_file> \ "
+ echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
+ echo " --modality='BOLD' \ "
  echo " --boldsuffix='Atlas' \ "
  echo " --overwrite='yes'"
  echo ""
@@ -420,6 +426,11 @@ fi
 if [ -z "${BOLDS}" ]; then
     BOLDS=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
 fi
+# set to all if not specified
+if [ -z "${BOLDS}" ]; then
+    BOLDS="all"
+fi
+
 BOLDRUNS="${BOLDS}"
 BOLDDATA="${BOLDS}"
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
@@ -436,9 +447,9 @@ Suffix=`opts_GetOpt "--suffix" $@`
 SceneZip=`opts_GetOpt "--scenezip" $@`
 
 # -- Parse batch file input
-SessionBatchFile=`opts_GetOpt "--sessionsbatchfile" $@`
+SessionBatchFile=`opts_GetOpt "--batchfile" $@`
 if [ -z "${SessionBatchFile}" ]; then
-    SessionBatchFile=`opts_GetOpt "--batchfile" $@`
+    SessionBatchFile=`opts_GetOpt "--sessionsbatchfile" $@`
 fi
 
 # -- Check general required parameters
@@ -452,7 +463,7 @@ if [[ ${CASES} == *.txt ]]; then
     echo ""
     echo "---> Using $SessionBatchFile for input."
     echo ""
-    CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
+    CASES=`cat ${SessionBatchFile} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
 fi
 if [ -z ${SessionsFolder} ]; then
     usage
@@ -527,7 +538,7 @@ else
     fi
 fi
 if [ -z ${TimeStamp} ]; then
-    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
     Suffix="$CASE_$TimeStamp"
     echo "Time stamp for logging not found. Setting now: ${TimeStamp}"; echo ""
 fi
@@ -555,14 +566,6 @@ if [ "$Modality" = "DWI" ]; then
 fi
 # -- BOLD modality-specific settings:
 if [ "$Modality" = "BOLD" ]; then
-    # - Check if BOLDS parameter is empty:
-    if [ -z "$BOLDS" ]; then 
-        echo ""
-        echo "Note: BOLD input list not specified. Relying ${SessAcqInfoFile} individual information files."
-        BOLDS="${SessAcqInfoFile}"
-        echo ""
-    fi
-    
     if [ -z "$BOLDfc" ]; then
         # -- Set BOLD prefix correctly
         if [ -z "$BOLDPrefix" ]; then 
@@ -1234,6 +1237,16 @@ main() {
            fi
         fi
 
+        # - If BOLDS parameter is empty then use session acquisition file
+        if [ "$Modality" = "BOLD" ]; then
+            if [ -z "$BOLDS" ]; then 
+                echo ""
+                echo "Note: BOLD input list not specified. Relying ${SessAcqInfoFile} individual information files."
+                BOLDS="${SessAcqInfoFile}"
+                echo ""
+            fi
+        fi
+
         CASEName="${CASE}${HCPSuffix}"
         HCPFolder="${SessionsFolder}/${CASE}/hcp/${CASEName}"
         if [ ! -z "$HCPSuffix" ]; then 
@@ -1242,11 +1255,16 @@ main() {
         fi 
         # -- Check if raw NIFTI QC is requested and run it first
         if [ "$Modality" == "rawNII" ] ; then 
-               unset CompletionCheck
-               slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*
-               if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
-                  CompletionCheck="fail"
-               fi
+            unset CompletionCheck
+            pushd ${SessionsFolder}/${CASE}/nii/
+            slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*
+            popd
+            if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
+                CompletionCheck="fail"
+            else
+                mkdir -p ${OutPath}/${CASE}
+                mv ${SessionsFolder}/${CASE}/nii/slicesdir/* ${OutPath}/${CASE}
+            fi
         else
             # -- Proceed with other QC steps
             
@@ -1839,7 +1857,7 @@ main() {
                                             echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt"
                                         else
                                             echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt not found. Regenerating... "
-                                            more ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
+                                            cat ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
                                         fi
                                     echo ""
                                     echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"

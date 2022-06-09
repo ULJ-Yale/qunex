@@ -24,11 +24,11 @@ import subprocess
 import os.path
 import glob
 import re
-import datetime
 
 import general.core as gc
 import general.exceptions as ge
 
+from datetime import datetime
 
 template = '''@ economy = 5
 @ go = 1
@@ -274,7 +274,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     # ---- run avi preprocessing
 
-    logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%s') + ".log"
+    logname = 'preprocess.' + datetime.now().strftime('%Y-%m-%d_%H.%M.%S.%f') + ".log"
     print("...  running NIL preprocessing, saving log to %s " % (logname))
     logfile = open(os.path.join(folder, '4dfp', logname), 'w')
 

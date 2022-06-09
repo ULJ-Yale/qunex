@@ -18,8 +18,6 @@ All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
 - ``qunex ?<command>`` for command specific help
-- ``qunex -o`` for a list of relevant arguments and options
-
 There are additional support functions that are not to be used
 directly.
 """
@@ -29,10 +27,11 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 import os
-import datetime
 import traceback
 
 import processing.core as pc
+
+from datetime import datetime
 
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
@@ -318,8 +317,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     ::
 
         qunex dwi_xtract \
-          --sessionsfolder="/data/example_study/sessions" \
-          --sessions="OP110" \
+          --sessionsfolder="/data/macaque_study/sessions" \
+          --sessions="/data/example_study/processing/batch.txt" \
           --species="human" \
           --overwrite=yes
 
@@ -359,7 +358,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_dir = os.path.join(nhp_dir, "dMRI.bedpostX")
             output_dir = os.path.join(nhp_dir, "xtract")
         else:
-            hcp_dir = os.path.join(sinfo["hcp"], sinfo["id"] + options["hcp_suffix"])
+            hcp_dir = os.path.join(options["sessionsfolder"], session, "hcp")
+            # if sessions is a folder
+            if os.path.isfile(options["sessions"]):
+                hcp_dir = os.path.join(sinfo["hcp"], sinfo["id"] + options["hcp_suffix"])
             xfms_dir = os.path.join(hcp_dir, "MNINonLinear", "xfms") 
             t1w_dir = os.path.join(hcp_dir, "T1w")
             bedpostx_dir = os.path.join(t1w_dir, "Diffusion.bedpostX")
@@ -424,7 +426,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         if "xtract_resolution" in options:
             comm = comm + " -res %s" % options["xtract_resolution"]
 
-        # xtract_stdwarp
+        # xtract_ptx_options
         if "xtract_ptx_options" in options:
             comm = comm + " -ptx_options %s" % options["xtract_ptx_options"]
         elif species=="MACAQUE":
@@ -458,6 +460,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
                 # execute
                 r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL XTRACT", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
+
+                r += "\n---> Processing details can be found in %s" % (os.path.join(output_dir, "logs"))
 
                 if failed:
                     r += "\n---> FSL XTRACT processing for session %s failed" % session

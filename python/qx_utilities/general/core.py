@@ -25,7 +25,9 @@ import sys
 import types
 import traceback
 import gzip
+import math
 from datetime import datetime
+from concurrent.futures import ProcessPoolExecutor
 
 import general.filelock as fl
 import general.exceptions as ge
@@ -80,7 +82,15 @@ def readSessionData(filename, verbose=False):
                 c += 1
 
                 # --- read preferences / settings
-                if line.startswith(('_', '-', '--')):
+                if line.startswith('--'):
+                    pkey, pvalue = [e.strip() for e in line.split(':', 1)]
+                    if first:
+                        gpref[pkey[2:]] = pvalue
+                    else:
+                        dic[pkey] = pvalue
+                    continue
+
+                elif line.startswith('_') or line.startswith('-'):
                     pkey, pvalue = [e.strip() for e in line.split(':', 1)]
                     if first:
                         gpref[pkey[1:]] = pvalue
@@ -102,7 +112,7 @@ def readSessionData(filename, verbose=False):
                     for e in line:
                         m = nsearch.match(e)
                         if m:
-                            image[m.group(1)] = m.group(2)
+                            image[m.group(1).strip()] = m.group(2).strip()
                             remove.append(e)
 
                     for e in remove:
@@ -126,7 +136,7 @@ def readSessionData(filename, verbose=False):
                     for e in line:
                         m = nsearch.match(e)
                         if m:
-                            conc[m.group(1)] = m.group(2)
+                            conc[m.group(1).strip()] = m.group(2).strip()
                             line.remove(e)
 
                     ni = len(line)
@@ -276,6 +286,17 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
 
+    # are we inside a SLURM job array?
+    if 'SLURM_ARRAY_TASK_ID' in os.environ:
+        # get ID for this job
+        slurm_array_ix = int(os.environ['SLURM_ARRAY_TASK_ID'])
+
+        # get size of job array
+        slurm_array_size = int(os.environ['SLURM_ARRAY_TASK_MAX']) + 1
+
+        # get the chunk
+        slist = slist[slurm_array_ix::slurm_array_size]
+
     return slist, gpref
 
 
@@ -351,7 +372,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
     """
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
@@ -419,7 +440,8 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
 
 results = []
-lock    = multiprocessing.Lock()
+lock = multiprocessing.Lock()
+
 
 def record(response):
     """
@@ -445,6 +467,15 @@ def record(response):
             print("%s%s failed%s" % (prepend, name, see))
         else:
             print("%s%s finished successfully%s" % (prepend, name, see))
+
+
+def record_future(future):
+    if future.exception() is not None:
+        print("Unhandled exception")
+        print(future.exception())
+    else:
+        record(future.result())
+
 
 # Logger class that prints both to stdour and to console
 class Logger(object):
@@ -475,7 +506,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
     For internal use only.
     """
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if name is None:
         name = function.__name__
@@ -638,22 +669,19 @@ def runInParallel(calls, cores=None, prepend=""):
     global results
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
         except:
             cores = 1
 
-    pool    = multiprocessing.Pool(processes=cores)
     results = []
-
-    for call in calls:
-        pool.apply_async(runWithLog, (call['function'], call['args'], call['logfile'], call['name'], prepend), callback=record)
-
-    pool.close()
-    pool.join()
-
+    with ProcessPoolExecutor(max_workers=cores) as executor:
+        for call in calls:
+            future = executor.submit(runWithLog, call['function'], call['args'], call['logfile'], call['name'], prepend)
+            future.add_done_callback(record_future)
+        
     return results
 
 
@@ -820,7 +848,7 @@ def getLogFile(folders=None, tags=None):
     if isinstance(tags, basestring) or tags is None:
         tags = []
 
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname  = tags + [logstamp]
     logname  = [e for e in logname if e]
     logname  = "_".join(logname)
@@ -881,7 +909,7 @@ def pcslist(s):
     return s
 
 
-def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
+def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None, symlink=False):
     """
     linkOrCopy - documentation not yet available.
     """
@@ -901,11 +929,18 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
                         return (status and True, "%s%s%s already mapped" % (r, prefix, name))
                 else:
                     os.remove(target)
-            linkOrCopy(source, target)
+
+            # link
+            if not symlink:
+                os.link(source, target)
+            else:
+                os.symlink(source, target)
+
             if r is None:
                 return status and True
             else:
                 return (status and True, "%s%s%s mapped" % (r, prefix, name))
+
         except:
             try:
                 shutil.copy2(source, target)
@@ -1021,7 +1056,7 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
             raise ge.CommandFailed(command, "session.txt file already present!", "A session.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout = open(sfile, 'w')
-    print("# Generated by QuNex %s on %s" % (get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=sout)
+    print("# Generated by QuNex %s on %s" % (get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=sout)
     print("#", file=sout)
     print('session:', session, file=sout)
     print('subject:', subject, file=sout)

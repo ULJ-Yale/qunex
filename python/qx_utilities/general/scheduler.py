@@ -17,13 +17,14 @@ import subprocess
 import math
 import os
 import os.path
-import datetime
 import time
 import re
 
 import general.exceptions as ge
 import general.core as gc
+import general.process as gp
 
+from datetime import datetime
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None, bash=None, parsessions=1, parelements=1):
     """
@@ -251,9 +252,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     except:
         raise ge.CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
 
-    if scheduler not in ['PBS', 'LSF', 'SLURM']:
-        raise ge.CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", settings)
-
     # --- compile command to pass
     if command is None:
         if not os.path.exists(script):
@@ -452,20 +450,29 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
     gc.printAndLog("===> Running scheduler for command %s" % (command), file=flog)
 
     # ---- setup scheduler options
-    settings    = args['scheduler']
-    workdir     = args.get('scheduler_workdir', None)
+    settings = args['scheduler']
+    settings_list = [e.strip() for e in settings.split(",")]
+    scheduler = settings_list.pop(0)
+    workdir = args.get('scheduler_workdir', None)
     environment = args.get('scheduler_environment', None)
-    sleeptime   = args.get('scheduler_sleep', 0)
-    parjobs     = args.get('parjobs', None)
+    sleeptime = args.get('scheduler_sleep', 0)
+
+    parjobs = args.get('parjobs', None)
     if parjobs is not None:
         parjobs = int(parjobs)
+    
     parelements = args.get('parelements', 1)
     if parelements is not None:
         parelements = int(parelements)
-    test        = args.get('run', 'run')
+
+    test = args.get('run', 'run')
+
+    # check scheduler
+    if scheduler not in ['PBS', 'LSF', 'SLURM']:
+        raise ge.CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", settings)
 
     # ---- setup bash (commands to run inside compute node before the QuNex command)
-    bash  = args.get('bash', None)
+    bash = args.get('bash', None)
 
     # --- set logfolder
     if logfolder is None:
@@ -487,29 +494,46 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         gc.printAndLog(cBase, file=flog)
 
         if test == "run":
-            scheduler = settings.split(',')[0].strip()
-            exectime  = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
+            exectime  = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
             result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile), bash=bash, parsessions=parsessions, parelements=parelements)
             jobs.append((jobid, command))
 
     # ---- if session list is present
     else:
-        settingsList  = settings.split(',')
-        scheduler = settingsList.pop(0).strip()
         settings = {}
 
+        # slurm array
+        slurm_array = False
+
         # split settings
-        for s in settingsList:
+        for s in settings_list:
             # parameters with values
             if "=" in s:
                 sSplit = s.split("=", 1)
+
+                # SLURM job array?
+                if scheduler == "SLURM" and sSplit[0].strip() == "array":
+                    slurm_array = True
+            
                 settings[sSplit[0].strip()] = sSplit[1].strip()
             # flags
             else:
-                settings[s.strip()] = "QX_FLAG"
+                # SLURM job array?
+                if scheduler == "SLURM" and s.strip() == "array":
+                    slurm_array = True
+                    if parjobs is None:
+                        settings["array"] = "0-%s" % (len(sessions) - 1)
+                    else:
+                        settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
+                else:
+                    settings[s.strip()] = "QX_FLAG"
 
         settings['jobname'] = settings.get('jobname', command)
+
+        # if job array we have a single job
+        if slurm_array:
+            parjobs = 1
 
         # split sessions
         # how big are chunks of sessions
@@ -524,6 +548,10 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         # if chunks is lower then parjobs tweak parjobs
         if chunks < parjobs:
             parjobs = chunks
+
+        # do not create multiple jobs if running a multi-session command
+        if command in gp.mactions:
+            parjobs = 1
 
         # init queues
         sessionids_array = [""] * parjobs
@@ -558,8 +586,11 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
         print("    Maximum elements run in parallel for a session: %s." % parelements)
         print("    Up to %s processes will be utilized for a job.\n" % (parelements * parsessions))
 
-        for i in range(0, parjobs):
-            print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
+        if slurm_array:
+            print("    Using SLURM job array over sessions: %s" % sessionids_array[0])
+        else:
+            for i in range(0, parjobs):
+                print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
 
         if test == "run":
             for i in range(parjobs):
@@ -570,8 +601,13 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                 # ---- set sheduler settings
                 settings['jobnum'] = str(i)
                 sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
-                exectime = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
-                logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, i, exectime))
+                exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+
+                # set different output format for slurm_array
+                if not slurm_array:
+                    logfile = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, i, exectime))
+                else:
+                    logfile = os.path.join(logfolder, "%s_%s_job%%a.%s.log" % (scheduler, command, exectime))
 
                 jobname = "%s_#%02d" % (command, i)
 

@@ -6,6 +6,50 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.93.8
+
+Fixed writing and reading whitespaces to/from sequence specific infomration. Help for commands can be now accessed by using a --h flag.
+
+## 0.93.6
+
+Fixed a bug in the `qunex_container` script that prevented it from running without using a scheduler.
+
+## 0.93.5
+
+Improved flexibility of GLM analyses. Processing of Philips PAR files is now more robust. Fixed a bug with the `hcp_task_confound` parameter. You can now process DWIs that do not have a matching pos/neg pair with `hcp_diffusion`. Improved stability, scheduling and documentation of the suite.
+
+## 0.93.4
+
+The default normalization for assumed HRF modelling has changed from 'run', which normalizes assumed regressors to amplitude 1 within each run separately, to 'uni', which normalizes regressors universally to HRF area-under-the-curve = 1.
+
+## 0.93.3
+
+Improved several aspects of parallelism inside QuNex, added SLURM job array support. Added additional information to several command's documentation. You can now generate predicted timeseries and residual timeseries for arbitrary set of regressors used in the GLM analyses.
+
+## 0.93.2
+
+Fixed a bug in backwards compatibility of import functions.
+
+## 0.93.1
+
+The preprocess_bold and preprocess_conc commands now allow user to normalize the assumed regressors within each run or to normalize the area under the curve of the hrf function and this way ensure universal normalization. Increased the consistency of parameter passing across commands.
+
+## 0.93.0
+
+Fixed a backwards compatibility issue with hcp_fmri_volume. Optimized qunex_container. Implemented support for HCP temporal ICA fix.
+
+## 0.92.2
+
+Fixed a bug in the fsl_xtract command that prevented users from running it. Corrected some typos in inline documentation.
+
+## 0.92.1
+
+Fixed a bug with time stamps in qunex_container.
+
+## 0.92.0
+
+Improved scheduling, HCP ASL support, XNAT support update, rawNII QC should now again work, setup_hcp now also copies over the JSON files associated with the mapped scan, improved the documentation at several location and squashed a number of minor bugs that should improve the overall stability of QuNex.
+
 ## 0.91.11 (2021-04-10)
 
 File link creation inside QuNex is now more robust and should not crash on certain file systems.

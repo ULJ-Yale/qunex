@@ -1,11 +1,15 @@
-function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
+function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, psign)
 
-%``function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)``
+%``function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, psign)``
 %
 %	INPUTS
 %	======
 %
-%	Reads image file, computes conjunction using g_conjunction and saves results.
+%	Reads image file, computes conjunction using general_conjunction and 
+%	saves results. Accepts image of significance estimates and computes 
+%	conjunction for 1 <= u <= n. Results at each step are thresholded using FDR
+%	q. Based on Heller et al. (2017). NeuroImage 37, 1178–1185.
+%	(https://doi.org/10.1016/j.neuroimage.2007.05.051).
 %
 %	--imgf 		input file, a z-score image file of concatenated individual files
 %	--maskf		optional mask image
@@ -13,6 +17,28 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 %				- missing or empty -> takes all non-zero voxels
 %				- nonzero -> takes all non-zero voxels
 %				- all -> takes all voxels
+%
+%	--method	method of calculating conjunction p ['Fisher']
+%
+%		 		- 'Simes' 	 ... pooling dependent p-values (eq. 5)
+%		 		- 'Stouffer' ... pooling independent p-values (eq. 6)
+%		 		- 'Fisher'	 ... pooling independent p-values (eq. 7)
+%
+%	--effects 	the effect of interest ['all']
+%
+%				- 'pos'	... positive effect only (one tailed test)
+%				- 'neg'	... negative effect only (one tailed test)
+%				- 'all'	... both effects (two tailed test)
+%
+%	--q			the FDR q value at which to threshold	[default: 0.05]
+%	--data		the values in image
+%			
+%				- 'z' ... z-values [default]
+%				- 'p' ... p-values
+%
+%	--psign		in case of two-tailed test for p-values input, an image
+%				that includes signs for the effect direction if p-values 
+%				are not signed. It can be signed z-scores image.
 %
 %	For the rest of arguments see g_conjunction.m
 %
@@ -22,12 +48,18 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 %	Saves
 %
 %	'_Conj_p'
-%		conjunction results, zscores for u = 1 to u = n
+%		conjunction results, p-values for u = 1 to u = n
 %
-%	'_Conj_FDR'
-%		above thresholded with FDR
+%	'_Conj_z'
+%		conjunction results, z-scores for u = 1 to u = n
 %
-%	'_Conj_c'
+%	'_Conj_FDR_p_<q>'
+%		p-values thresholded with FDR
+%
+%	'_Conj_FDR_z_<q>'
+%		z-scores thresholded with FDR
+%
+%	'_Conj_FDR_c_<q>'
 %		image of frequency of passing threshold
 %
 
@@ -37,6 +69,7 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data)
 
 % parsing arguments
 
+if nargin < 7, psign = []; end
 if nargin < 6, data = []; end
 if nargin < 5, q = 0.05; end
 if nargin < 4, effect = []; end
@@ -52,9 +85,12 @@ fraw = strrep(fraw, '.nii', '');
 fraw = strrep(fraw, '.conc', '');
 fraw = strrep(fraw, '.dtseries', '');
 fraw = strrep(fraw, '.dscalar', '');
-imgpf = [fraw '_Conj_p'];
-imgtf = [fraw '_Conj_FDR' qs ];
-imgcf = [fraw '_Conj_c'];
+
+imgpf  = [fraw '_Conj_p'];
+imgzf  = [fraw '_Conj_z'];
+imgptf = [fraw '_Conj_FDR_p_' qs];
+imgztf = [fraw '_Conj_FDR_z_' qs];
+imgcf  = [fraw '_Conj_FDR_c_' qs];
 
 fprintf('\n\nComputing conjunction with file %s, thresholding with FDR q=%.4f\n', imgf, q);
 
@@ -66,11 +102,10 @@ nim = img.frames;
 fprintf(' volumes: %d ', nim);
 fprintf('... done\n');
 
-
 %  ---- Creating image mask and masking image
 
 if ~strcmp(maskf, 'all')
-	fprintf('... masking image ');
+	fprintf('... masking image\n');
 
 	if strcmp(maskf, 'nonzero')
 		img.data = img.image2D;
@@ -84,10 +119,15 @@ else
 	mask = ones(img.voxels, 1) == 1;
 end
 
+if ~isempty(psign)
+	psign = nimage(psign);
+	psign = psign.data(mask);
+end
+
 %  ---- Coing conjunction
 
 fprintf('... starting conjunction analysis\n');
-[mzp, mzt, mzc] = general_conjunction(img.data(mask, :), method, effect, q, data);
+[mp, mpt, mc, mz, mzt] = general_conjunction(img.data(mask, :), method, effect, q, data, psign);
 fprintf('... done\n');
 
 %  ---- saving results
@@ -95,15 +135,23 @@ fprintf('... done\n');
 fprintf('... saving results ');
 
 out = img.zeroframes(nim);
-out.data(mask,:) = mzp;
+out.data(mask,:) = mp;
 out.img_saveimage(imgpf);       fprintf('.');
 
 out = img.zeroframes(nim);
+out.data(mask,:) = mpt;
+out.img_saveimage(imgptf);       fprintf('.');
+
+out = img.zeroframes(nim);
+out.data(mask,:) = mz;
+out.img_saveimage(imgzf);       fprintf('.');
+
+out = img.zeroframes(nim);
 out.data(mask,:) = mzt;
-out.img_saveimage(imgtf);       fprintf('.');
+out.img_saveimage(imgztf);       fprintf('.');
 
 out = img.zeroframes(1);
-out.data(mask) = mzc;
+out.data(mask) = mc;
 out.img_saveimage(imgcf);       fprintf('.');
 
 fprintf(' done.\n\n');
