@@ -28,6 +28,7 @@ import general.core as gc
 import general.exceptions as ge
 import general.commands_support as gcs
 from processing import fs, fsl, simple, workflow
+from general import extensions
 
 
 # pipelines imports
@@ -490,6 +491,8 @@ arglist = [
            ['log',                    'keep',                                     str,    "Whether to remove ('remove') the temporary logs once jobs are completed, keep them in the study level processing/logs/comlogs folder ('keep' or 'study') in the hcp folder ('hcp') or in a <session id>/logs/comlogs folder ('sessions'). Multiple options can be specified separated by '|'."],
 ]
 
+# Add arguments used in extensions
+arglist += extensions.compile_list('arglist')
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -511,6 +514,8 @@ flaglist = [
     ['hcp_tica_config_out',      'hcp_tica_config_out',   False, "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."]
 ]
 
+# Add flags used in extensions
+flaglist += extensions.compile_list('flaglist')
 
 #   ------------------------------------------------------------------ OPTIONS
 #   The options dictionary
@@ -593,6 +598,12 @@ salist = [
     ['ccl',     'create_conc_list',           simple.create_conc_list,                        "Create conc list"],
     ['lsi',     'list_session_info',          simple.list_session_info,                       "List session info"]
 ]
+
+# Add command lists used in extensions
+calist += extensions.compile_list('calist')
+lalist += extensions.compile_list('lalist')
+malist += extensions.compile_list('malist')
+salist += extensions.compile_list('salist')
 
 
 #   -------------------------------------------------------- COMMAND DICTIONARY

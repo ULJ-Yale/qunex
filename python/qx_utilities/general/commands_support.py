@@ -11,6 +11,8 @@
 Helper code for perarations of commands and their parameters
 """
 
+from general import extensions
+
 # ==============================================================================
 #                                                            COMMAND DEPRECATION
 #
@@ -162,6 +164,9 @@ deprecated_commands = {
                         "dwi_f99": ["fsl_f99"]
                       }
 
+# Add information provided in extensions
+deprecated_commands.update(extensions.compile_dict('deprecated_commands'))
+
 # the function for checking whether a command is deprecated or not
 def check_deprecated_commands(command):
     """
@@ -285,6 +290,13 @@ towarn_parameters = {
                             'The sourcefiles parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.']
 }
 
+# Add information provided in extensions
+deprecated_parameters.update(extensions.compile_dict('deprecated_parameters'))
+deprecated_values.update(extensions.compile_dict('deprecated_values'))
+to_impute += extensions.compile_list('to_impute')
+towarn_parameters.update(extensions.compile_dict('towarn_parameters'))
+
+
 # ==============================================================================
 #                                                  MAPPING DEPRECATED PARAMETERS
 #
@@ -403,3 +415,8 @@ extra_parameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler'
 #
 
 logskip_commands = ["batch_tag2namekey", "check_deprecated_commands", "get_sessions_for_slurm_array"]
+
+
+# Add information from in extensions
+extra_parameters += extensions.compile_list('extra_parameters')
+logskip_commands += extensions.compile_list('logskip_commands')
