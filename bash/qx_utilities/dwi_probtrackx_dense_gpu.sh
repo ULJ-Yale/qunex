@@ -154,12 +154,13 @@ Examples:
 
     ::
 
-        qunex dwi_probtrackx_dense_gpu --sessionsfolder='<path_to_study_sessions_folder>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --scheduler='<name_of_scheduler_and_options>' \\
-              --omatrix1='yes' \\
-              --nsamplesmatrix1='10000' \\
-              --overwrite='no'
+        qunex dwi_probtrackx_dense_gpu \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --scheduler='<name_of_scheduler_and_options>' \\
+            --omatrix1='yes' \\
+            --nsamplesmatrix1='10000' \\
+            --overwrite='no'
 
 EOF
     exit 0

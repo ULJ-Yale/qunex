@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """
-Automatically generates .rst files in docs/api/gmri.
+Automatically generates .rst files in docs/api/gmri directory.
 """
 
 import sys
@@ -18,7 +18,7 @@ spec.loader.exec_module(gmri)
 if __name__ == "__main__":
     directory_path = "../../api/gmri"
 
-    for full_name, description, language, optional_path in gmri.all_qunex_commands:
+    for full_name, description, language in gmri.all_qunex_commands:
         function_name = full_name.split(".")[-1]
         file_content = f'{function_name}\n{"=" * len(function_name)}\n\n'
         if language.lower() in ["python", "bash", "r"]:

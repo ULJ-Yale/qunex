@@ -81,16 +81,17 @@ Output files:
 Examples:
     ::
 
-        dwi_eddy_qc.sh --sessionsfolder='<path_to_study_folder_with_session_directories>' \\
-                        --session='<session_id>' \\
-                        --eddybase='<eddy_base_name>' \\
-                        --report='individual' \\
-                        --bvalsfile='<bvals_file>' \\
-                        --mask='<mask_file>' \\
-                        --eddyidx='<eddy_index_file>' \\
-                        --eddyparams='<eddy_param_file>' \\
-                        --bvecsfile='<bvecs_file>' \\
-                        --overwrite='yes'
+        qunex dwi_eddy_qc \\
+            --sessionsfolder='<path_to_study_folder_with_session_directories>' \\
+            --session='<session_id>' \\
+            --eddybase='<eddy_base_name>' \\
+            --report='individual' \\
+            --bvalsfile='<bvals_file>' \\
+            --mask='<mask_file>' \\
+            --eddyidx='<eddy_index_file>' \\
+            --eddyparams='<eddy_param_file>' \\
+            --bvecsfile='<bvecs_file>' \\
+            --overwrite='yes'
 
 EOF
 exit 0

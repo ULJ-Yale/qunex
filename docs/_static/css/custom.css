@@ -49,7 +49,7 @@ h4 a,
 .content-container h3,
 .content-container h4,
 .content-container h5,
-code,
+main code,
 .sig-name,
 .fas {
     color: #0F4D92 !important;
@@ -64,4 +64,14 @@ code,
     color: rgba(var(--pst-color-link),1);
     background-color: transparent;
     text-decoration: none;
+}
+
+.paragraph-with-image {
+    text-align: center;
+}
+
+.paragraph-with-image img {
+    display: table;
+    margin-left: auto;
+    margin-right: auto;
 }

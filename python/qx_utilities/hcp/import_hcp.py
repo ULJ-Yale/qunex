@@ -280,8 +280,11 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     Examples:
         ::
 
-            qunex import_hcp sessionsfolder=myStudy/sessions inbox=HCPLS \\
-                  overwrite=yes hcplsname=hcpls
+            qunex import_hcp \\
+                --sessionsfolder=myStudy/sessions \\
+                --inbox=HCPLS \\
+                --overwrite=yes \\
+                --hcplsname=hcpls
     """
 
     print("Running import_hcp\n==================")
@@ -809,14 +812,14 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     Examples:
         ::
 
-            qunex map_hcpls2nii folder=. overwrite=yes
+            qunex map_hcpls2nii --folder=. --overwrite=yes
 
         ::
 
             qunex map_hcpls2nii \\
-            --sessionsfolder="/data/my_study/sessions" \\
-            --sessions="AP*" \\
-            --overwrite=yes
+                --sessionsfolder="/data/my_study/sessions" \\
+                --sessions="AP*" \\
+                --overwrite=yes
     """
 
     if not filesort:

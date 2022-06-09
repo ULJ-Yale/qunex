@@ -82,16 +82,17 @@ Examples:
 
     ::
 
-        parcellate_bold.sh --sessionsfolder='<folder_with_sessions>' \\
-                           --session='<session_id>' \\
-                           --inputfile='<name_of_input_file' \\
-                           --inputpath='<path_for_input_file>' \\
-                           --inputdatatype='<type_of_dense_data_for_input_file>' \\
-                           --parcellationfile='<dlabel_file_for_parcellation>' \\
-                           --overwrite='no' \\
-                           --extractdata='yes' \\
-                           --outname='<name_of_output_pconn_file>' \\
-                           --outpath='<path_for_output_file>'
+        qunex parcellate_bold \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --session='<session_id>' \\
+            --inputfile='<name_of_input_file' \\
+            --inputpath='<path_for_input_file>' \\
+            --inputdatatype='<type_of_dense_data_for_input_file>' \\
+            --parcellationfile='<dlabel_file_for_parcellation>' \\
+            --overwrite='no' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_pconn_file>' \\
+            --outpath='<path_for_output_file>'
 
 EOF
 exit 0

@@ -189,7 +189,9 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     Examples:
         ::
 
-            qunex setup_hcp sourcefolder=OP316 sourcefile=session.txt
+            qunex setup_hcp \\
+                --sourcefolder=OP316 \\
+                --sourcefile=session.txt
     """
 
     print("Running setup_hcp\n================")

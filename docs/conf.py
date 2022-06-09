@@ -84,6 +84,12 @@ napoleon_custom_sections = [
 ]
 
 
+# -- Options for MyST parser extension ---------------------------------------
+
+# Depth of auto-generated header anchors
+myst_heading_anchors = 4
+
+
 # -- Options for Opengraph extension -----------------------------------------
 
 # TODO: change ogp_site_url to "docs.qunex.yale.edu" or other actual URL
@@ -111,6 +117,7 @@ html_css_files = [
 
 html_js_files = [
     'js/header.js',
+    'js/custom.js',
 ]
 
 html_title = f'{project} documentation'

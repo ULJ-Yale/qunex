@@ -216,8 +216,10 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     Examples:
         ::
 
-            qunex create_bold_brain_masks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-                overwrite=no nifti_tail=_hp2000_clean bolds=all parelements=8
+            qunex create_bold_brain_masks
+                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
+                --overwrite=no --nifti_tail=_hp2000_clean --bolds=all \\
+                --parelements=8
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -642,14 +644,17 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     Examples:
         Using the defaults::
 
-            qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-                overwrite=no bolds=all
+            qunex compute_bold_stats \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no --bolds=all
 
         Specifying additional parameters for identification of bad frames::
 
-            qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-                overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
-                mov_before=1 mov_after=2
+            qunex compute_bold_stats \\
+                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
+                --overwrite=no --bolds=all --mov_fd=0.9 --mov_dvarsme=1.6 \\
+                --mov_before=1 --mov_after=2
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1322,8 +1327,10 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     Examples:
         ::
 
-            qunex extract_nuisance_signal sessions=fcMRI/sessions_hcp.txt \\
-                sessionsfolder=sessions overwrite=no bolds=all parsessions=10
+            qunex extract_nuisance_signal \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions --overwrite=no \\
+                --bolds=all --parsessions=10
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1955,17 +1962,17 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     Examples:
         ::
 
-            qunex preprocess_bold
-                  sessions=fcMRI/sessions_hcp.txt \\
-                  sessionsfolder=sessions \\
-                   overwrite=no \\
-                   parsessions=10 \\
-                   bolds=rest \\
-                   bold_actions="s,h,r,c,l" \\
-                   bold_nuisance="m,V,WM,WB,1d" \\
-                   mov_bad=udvarsme \\
-                   pignore="hipass=linear|regress=ignore|lopass=linear" \\
-                   nprocess=0
+            qunex preprocess_bold \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --bolds=rest \\
+                --bold_actions="s,h,r,c,l" \\
+                --bold_nuisance="m,V,WM,WB,1d" \\
+                --mov_bad=udvarsme \\
+                --pignore="hipass=linear|regress=ignore|lopass=linear" \\
+                --nprocess=0
     """
 
     pc.doOptionsCheck(options, sinfo, 'preprocess_bold')
@@ -2645,21 +2652,40 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     Examples:
         Activation analysis::
 
-            qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-                  overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
-                  bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
-                  event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
-                  glm_matrix=both glm_residuals=none nprocess=0 \\
-                  pignore="hipass=keep|regress=keep|lopass=keep"
+            qunex preprocess_conc \\
+                --sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --bolds=SRT \\
+                --event_file=SRT \\
+                --glm_name=-M1 \\
+                --bold_actions="s,r,c" \\
+                --bold_nuisance=e \\
+                --mov_bad=none \\
+                --event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
+                --glm_matrix=both \\
+                --glm_residuals=none \\
+                --nprocess=0 \\
+                --pignore="hipass=keep|regress=keep|lopass=keep"
 
         Functional connectivity preprocessing::
 
-            qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-                  overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
-                  bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
-                  event_string="block:boynton|target:9" \\
-                  glm_matrix=none glm_residuals=save nprocess=0 \\
-                  pignore="hipass=linear|regress=ignore|lopass=linear"
+            qunex preprocess_conc \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --bolds=SRT \\
+                --event_file=SRT \\
+                --glm_name=-FC \\
+                --bold_actions="s,h,r,c,l" \\
+                --bold_nuisance="m,V,WM,WB,1d,e" \\
+                --mov_bad=udvarsme \\
+                --event_string="block:boynton|target:9" \\
+                --glm_matrix=none \\
+                --glm_residuals=save \\
+                --nprocess=0 \\
+                --pignore="hipass=linear|regress=ignore|lopass=linear"
     """
 
     pc.doOptionsCheck(options, sinfo, 'preprocess_conc')

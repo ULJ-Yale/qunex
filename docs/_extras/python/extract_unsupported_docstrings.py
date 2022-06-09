@@ -125,18 +125,14 @@ def extract_docstrings(input_dict):
         if len(commands) > 0:
             # hardcoded module description
             output_dict[lang] = ['#!/usr/bin/env python\n# encoding: utf-8\n\n"""\nThis file consists of docstrings from ' + lang + ' commands.\n"""\n\n\n']
-            for command, optional_path in commands:
+            for command in commands:
                 command_split = command.split(".")
                 function_name = command_split[-1]
-                file_path = "../../../" + lang + "/"
-                if optional_path != '':
-                    file_path += optional_path
-                else:
-                    file_path += command_split[0] + "/" + "/".join(command_split[2:])
-                    if lang == "bash":
-                        file_path += ".sh"
-                    elif lang == "r":
-                        file_path += ".R"
+                file_path = os.path.abspath("../../../" + lang + "/" + command_split[0] + "/" + "/".join(command_split[2:]))
+                if lang == "bash":
+                    file_path += ".sh"
+                elif lang == "r":
+                    file_path += ".R"
 
                 with open(file_path, "r") as file:
                     if lang == "bash":
@@ -173,9 +169,9 @@ if __name__ == "__main__":
     for language in unsupported_languages:
         unsupported_commands[language] = []
 
-    for full_name, description, language, optional_path in gmri.all_qunex_commands:
+    for full_name, description, language in gmri.all_qunex_commands:
         if language in unsupported_languages:
-            unsupported_commands[language].append((full_name, optional_path))
+            unsupported_commands[language].append(full_name)
 
     docstrings = extract_docstrings(unsupported_commands)
 

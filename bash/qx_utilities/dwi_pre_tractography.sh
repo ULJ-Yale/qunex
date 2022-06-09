@@ -88,9 +88,10 @@ Parameters:
 Examples:
     ::
 
-        qunex pretractography_dense --sessionsfolder='<path_to_study_sessions_folder>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --scheduler='<name_of_scheduler_and_options>'
+        qunex pretractography_dense \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --scheduler='<name_of_scheduler_and_options>'
 
     Direct usage::
 

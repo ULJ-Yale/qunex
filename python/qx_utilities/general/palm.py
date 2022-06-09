@@ -288,8 +288,10 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
     Examples:
         ::
 
-            qunex run_palm design="name:sustained|t:taov" palm_args="n:500|accel:tail|T|fonly" \\
-                root=sustained_aov
+            qunex run_palm \\
+                --design="name:sustained|t:taov" \\
+                --palm_args="n:500|accel:tail|T|fonly" \\
+                --root=sustained_aov
     """
 
     print("Running PALM\n============")
@@ -1006,7 +1008,8 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     Examples:
         ::
 
-            qunex create_ws_palm_design factors="2,3" nsubjects=33 root=WM.type_by_load
+            qunex create_ws_palm_design --factors="2,3" --nsubjects=33 \\
+                --root=WM.type_by_load
     """
 
     if factors is None:

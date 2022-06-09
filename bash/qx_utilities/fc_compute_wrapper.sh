@@ -138,7 +138,7 @@ Examples:
 
     NOTE: --scheduler is not available via direct script call.
 
-    Run via:
+    Run via::
 
         qunex fc_compute_wrapper --<parameter1> --<parameter2> ... --<parameterN>
 
@@ -155,80 +155,80 @@ Examples:
     ::
 
         qunex fc_compute_wrapper \\
-              --sessionsfolder='<folder_with_sessions>' \\
-              --calculation='seed' \\
-              --runtype='individual' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --inputfiles='<files_to_compute_connectivity_on>' \\
-              --inputpath='/images/functional' \\
-              --extractdata='yes' \\
-              --ignore='udvarsme' \\
-              --roinfo='ROI_Names_File.names' \\
-              --options='' \\
-              --method='' \\
-              --targetf='<path_for_output_file>' \\
-              --mask='5' \\
-              --covariance='false'
+            --sessionsfolder='<folder_with_sessions>' \\
+            --calculation='seed' \\
+            --runtype='individual' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --inputfiles='<files_to_compute_connectivity_on>' \\
+            --inputpath='/images/functional' \\
+            --extractdata='yes' \\
+            --ignore='udvarsme' \\
+            --roinfo='ROI_Names_File.names' \\
+            --options='' \\
+            --method='' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --covariance='false'
 
     ::
 
         qunex fc_compute_wrapper \\
-              --sessionsfolder='<folder_with_sessions>' \\
-              --runtype='list' \\
-              --flist='sessions.list' \\
-              --extractdata='yes' \\
-              --outname='<name_of_output_file>' \\
-              --ignore='udvarsme' \\
-              --roinfo='ROI_Names_File.names' \\
-              --options='' \\
-              --method='' \\
-              --targetf='<path_for_output_file>' \\
-              --mask='5' \\
-              --covariance='false'
+            --sessionsfolder='<folder_with_sessions>' \\
+            --runtype='list' \\
+            --flist='sessions.list' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_file>' \\
+            --ignore='udvarsme' \\
+            --roinfo='ROI_Names_File.names' \\
+            --options='' \\
+            --method='' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --covariance='false'
 
     ::
 
         qunex fc_compute_wrapper \\
-              --sessionsfolder='<folder_with_sessions>' \\
-              --calculation='gbc' \\
-              --runtype='individual' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \\
-              --inputpath='/images/functional' \\
-              --extractdata='yes' \\
-              --outname='<name_of_output_file>' \\
-              --ignore='udvarsme' \\
-              --gbc-command='mFz:' \\
-              --targetf='<path_for_output_file>' \\
-              --mask='5' \\
-              --target='' \\
-              --rsmooth='0' \\
-              --rdilate='0' \\
-              --verbose='true' \\
-              --time='true' \\
-              --vstep='10000' \\
-              --covariance='false'
+            --sessionsfolder='<folder_with_sessions>' \\
+            --calculation='gbc' \\
+            --runtype='individual' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \\
+            --inputpath='/images/functional' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_file>' \\
+            --ignore='udvarsme' \\
+            --gbc-command='mFz:' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --target='' \\
+            --rsmooth='0' \\
+            --rdilate='0' \\
+            --verbose='true' \\
+            --time='true' \\
+            --vstep='10000' \\
+            --covariance='false'
 
     ::
 
         qunex fc_compute_wrapper \\
-              --sessionsfolder='<folder_with_sessions>' \\
-              --calculation='gbc' \\
-              --runtype='list' \\
-              --flist='sessions.list' \\
-              --extractdata='yes' \\
-              --outname='<name_of_output_file>' \\
-              --ignore='udvarsme' \\
-              --gbc-command='mFz:' \\
-              --targetf='<path_for_output_file>' \\
-              --mask='5' \\
-              --target='' \\
-              --rsmooth='0' \\
-              --rdilate='0' \\
-              --verbose='true' \\
-              --time='true' \\
-              --vstep='10000' \\
-              --covariance='false'
+            --sessionsfolder='<folder_with_sessions>' \\
+            --calculation='gbc' \\
+            --runtype='list' \\
+            --flist='sessions.list' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_file>' \\
+            --ignore='udvarsme' \\
+            --gbc-command='mFz:' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --target='' \\
+            --rsmooth='0' \\
+            --rdilate='0' \\
+            --verbose='true' \\
+            --time='true' \\
+            --vstep='10000' \\
+            --covariance='false'
 
 EOF
 # -------------------------------------------------------------------------------------------------------------------

@@ -12,7 +12,6 @@ build:
     python: "3.8"
   jobs:
     pre_build:
-      - export QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
       - docs/_extras/bash/pre_build.sh
 #    post_build:
 #      - docs/_extras/bash/post_build.sh

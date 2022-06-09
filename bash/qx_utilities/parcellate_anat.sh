@@ -40,14 +40,13 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_anat.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex parcellate_anat \\
-              --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+        qunex parcellate_anat --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: scheduler is available via qunex call:
 
@@ -61,13 +60,14 @@ Examples:
 
     ::
 
-        qunex parcellate_anat --sessionsfolder='<folder_with_sessions>' \\
-              --session='<case_id>' \\
-              --inputdatatype='MyelinMap_BC' \\
-              --parcellationfile='<dlabel_file_for_parcellation>' \\
-              --overwrite='no' \\
-              --extractdata='yes' \\
-              --outname='<name_of_output_pconn_file>'
+        qunex parcellate_anat \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --session='<case_id>' \\
+            --inputdatatype='MyelinMap_BC' \\
+            --parcellationfile='<dlabel_file_for_parcellation>' \\
+            --overwrite='no' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_pconn_file>'
 
 EOF
 exit 0

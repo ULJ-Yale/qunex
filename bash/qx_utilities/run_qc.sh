@@ -107,9 +107,9 @@ Parameters:
     --userscenepath (str, default ''):
         Path for user-specified scene and relevant data in the same location.
         --modality info is still required to ensure correct run.
-    --timestamp ():
+    --timestamp (str, default detailed below):
         Allows user to specify unique time stamp or to parse a time stamp from
-        QuNex bash wrapper.
+        QuNex bash wrapper. Current time is used if no value is provided.
     --suffix (str, default '<session_id>_<timestamp>'):
         Allows user to specify unique suffix or to parse a time stamp from QuNex
         bash wrapper.
@@ -163,7 +163,7 @@ Specific parameters:
         Specify path for input FC data.
         Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
         --bolddata or --boldruns or --bolds.
-    --boldfcinput ():
+    --boldfcinput (str):
         Required. If no --boldfcpath is provided then specify only data input
         name after bold<Number>_ which is searched for in
         '<sessions_folder>/<session_id>/images/functional'.
@@ -191,7 +191,7 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
@@ -212,88 +212,88 @@ Examples:
     raw NII QC::
 
         qunex run_qc \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --modality='rawNII'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --modality='rawNII'
 
     T1w QC::
 
         qunex run_qc \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --outpath='<path_for_output_file> \\
-          --scenetemplatefolder='<path_for_the_template_folder>' \\
-          --modality='T1w' \\
-          --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file> \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='T1w' \\
+            --overwrite='yes'
 
     T2w QC::
 
         qunex run_qc \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --outpath='<path_for_output_file> \\
-          --scenetemplatefolder='<path_for_the_template_folder>' \\
-          --modality='T2w' \\
-          --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file> \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='T2w' \\
+            --overwrite='yes'
 
     Myelin QC::
 
         qunex run_qc \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --outpath='<path_for_output_file> \\
-          --scenetemplatefolder='<path_for_the_template_folder>' \\
-          --modality='myelin' \\
-          --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file> \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='myelin' \\
+            --overwrite='yes'
 
     DWI QC::
 
         qunex run_qc \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --scenetemplatefolder='<path_for_the_template_folder>' \\
-          --modality='DWI' \\
-          --outpath='<path_for_output_file> \\
-          --dwilegacy='yes' \\
-          --dwidata='<file_name_for_dwi_data>' \\
-          --dwipath='<path_for_dwi_data>' \\
-          --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='DWI' \\
+            --outpath='<path_for_output_file> \\
+            --dwilegacy='yes' \\
+            --dwidata='<file_name_for_dwi_data>' \\
+            --dwipath='<path_for_dwi_data>' \\
+            --overwrite='yes'
 
     BOLD QC (for a specific BOLD run)::
 
         qunex run_qc \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --outpath='<path_for_output_file> \\
-          --scenetemplatefolder='<path_for_the_template_folder>' \\
-          --modality='BOLD' \\
-          --bolddata='1' \\
-          --boldsuffix='Atlas' \\
-          --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file> \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='BOLD' \\
+            --bolddata='1' \\
+            --boldsuffix='Atlas' \\
+            --overwrite='yes'
 
     BOLD QC (search for all available BOLD runs)::
 
         qunex run_qc \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --batchfile='<path_to_batch_file>' \\
-          --outpath='<path_for_output_file> \\
-          --scenetemplatefolder='<path_for_the_template_folder>' \\
-          --modality='BOLD' \\
-          --boldsuffix='Atlas' \\
-          --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --batchfile='<path_to_batch_file>' \\
+            --outpath='<path_for_output_file> \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='BOLD' \\
+            --boldsuffix='Atlas' \\
+            --overwrite='yes'
 
     BOLD FC QC [pscalar or pconn]::
 
         qunex run_qc \\
-          --overwritestep='yes' \\
-          --sessionsfolder='<path_to_study_sessions_folder>' \\
-          --sessions='<comma_separated_list_of_cases>' \\
-          --modality='BOLD' \\
-          --boldfc='<pscalar_or_pconn>' \\
-          --boldfcinput='<data_input_for_bold_fc>' \\
-          --bolddata='1' \\
-          --overwrite='yes'
+            --overwritestep='yes' \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --modality='BOLD' \\
+            --boldfc='<pscalar_or_pconn>' \\
+            --boldfcinput='<data_input_for_bold_fc>' \\
+            --bolddata='1' \\
+            --overwrite='yes'
 
 EOF
 exit 0

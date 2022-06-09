@@ -160,7 +160,7 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           larger than 300 voxels, after smoothing with a kernel of fwhm 2 and
 %           kernel size 7 voxels use::
 %
-%               general_find_peaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz',
+%               general_find_peaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', ...
 %                   [72 80], [300 350], 'b', 3, 'fwhm:2|ksize:7', '', [], 1);
 %
 %           To get a roi image of both positive and negative peak regions with

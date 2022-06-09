@@ -119,7 +119,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     Examples:
         ::
 
-            qunex join_fidl concfile=OP33-WM.conc fidlroot=OP33-WM
+            qunex join_fidl --concfile=OP33-WM.conc --fidlroot=OP33-WM
     """
 
     # ---> find all fidl files, sort them, read them, get TR info
@@ -218,7 +218,7 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
     Examples:
         ::
 
-            qunex join_fidl_folder concfolder=concs fidlfolder=fidls
+            qunex join_fidl_folder --concfolder=concs --fidlfolder=fidls
     """
 
     if fidlfolder is None:
@@ -266,8 +266,10 @@ def split_fidl(concfile, fidlfile, outfolder=None):
     Examples:
         ::
 
-            qunex split_fidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl \\
-                  outfolder=/data/mystudy/analysis/splitfidls
+            qunex split_fidl \\
+                --concfile=OP333_WM.conc \\
+                --fidlfile=OP333_WM.fidl \\
+                --outfolder=/data/mystudy/analysis/splitfidls
     """
 
     # ---> read the fidl and conc info
@@ -341,7 +343,7 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     Examples:
         ::
 
-            qunex check_fidl fidlfolder=jfidls
+            qunex check_fidl --fidlfolder=jfidls
     """
 
     if fidlfile:
