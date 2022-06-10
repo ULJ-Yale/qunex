@@ -4,4 +4,4 @@
 
 [submodule "library"]
 	path = qx_library
-	url = https://gitlab.qunex.yale.edu/qunex/library.git
+	url = ./qx_library
