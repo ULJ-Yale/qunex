@@ -64,9 +64,21 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %
 %               It takes the following keys and values:
 %
-%               roimethod
-%                   what method to use to compute ROI signal, 'mean', 'median', 
-%                   or 'pca' ['mean']
+%               roimethod 
+%                   what method to use to compute ROI signal: 
+%
+%                   mean
+%                       mean value across the ROI
+%	                median
+%                       median value across the ROI
+%	                max
+%                       maximum value across the ROI
+%	                min
+%                       mimimum value across the ROI
+%                   pca
+%                       first eigenvariate of the ROI
+%
+%                   ['mean']
 %
 %               eventdata
 %                   what data to use from each event:
@@ -128,17 +140,28 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %               saveind
 %                   a comma separted list of formats to use to save the data ['']
 %
-%                   - txt ... save the resulting data in a long format txt file
-%                   - mat ... save the resulting data in a matlab .mat file
+%                   long
+%                       save the resulting data in a long format .tsv file
+%                   wide-single
+%                       save the resulting data in a single wide format .tsv file
+%                   wide-separate
+%                       save the resulting data in a wide format .tsv file, one
+%                       file per each measure of interest
+%                   mat
+%                       save the resulting data in a matlab .mat file
 %                                 
 %               fcname
 %                   an optional name describing the functional connectivity 
 %                   computed to add to the output files, if empty, it won't be 
 %                   used ['']
 %
-%               subjectname
-%                   an optional subject/session name to add to the output files, 
+%               subjectid
+%                   an optional subject/session id to report in the results, 
 %                   if empty, it won't be used ['']
+%
+%               addidtofile
+%                   whether to add subjectid to the filename if a subject id, 
+%                   is provided ['false']
 %
 %               verbose
 %                   Whether to be verbose 'true' or not 'false', when running the 
@@ -178,25 +201,32 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %   connectivity
 %   data saved in a matlab.mat file and/or in a text long format::
 %
-%       <targetf>/<name>[_<fcname>][_<subjectname>]_<cor|cov>.<txt|mat>
+%       <targetf>/<name>[_<fcname>][_<subjectname>]_<cor|cov>[_<long|[_<r|Fz|cv>]wide>].<tsv|mat>
 %
 %   `<name>` is the provided name of the bold(s).
 %   `<fcname>` is the provided name of the functional connectivity computed,
 %   if it was specified.
 %   `<subjectname>` is the provided name of the subject, if it was specified.
+%   `long` and `wide` will be added for long and wide tsv files, respectively.
+%   `r`, `Fz`, `cv` will be added when wide data is saved in separate wide 
+%   format files.
 %
 %   The text file will have the following columns (depending on the fcmethod):
 %   
-%   - name
-%   - title
-%   - roi1
-%   - roi2
+%   long format         wide format
+%   - name              - name
+%   - title             - title
+%   - subject           - subject
+%   - roi1              - measure
+%   - roi2              - [<roi1_code>]_<roi1_name>-[<roi_code>2]_<roi3_name>
 %   - cv
 %   - r
 %   - Fz
 %   - Z
 %   - p
 %   
+%   Note:
+%   In wide format only cv, r, and Fz data will be saved. 
 %
 %   USE
 %   ===
@@ -231,11 +261,13 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 
 % ----- parse options
 
-default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname=';
+default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname=|addidtofile=false|subjectid=';
 options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
+addidtofile = strcmp(options.addidtofile, 'true');
+issubjectid = ~isempty(options.subjectid);
 
 if printdebug
     general_print_struct(options, 'Options used');
@@ -245,7 +277,7 @@ if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
     error('ERROR: Invalid eventdata option: %s', options.eventdata);
 end
 
-if ~ismember(options.roimethod, {'mean', 'pca', 'median'})
+if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'min', 'max'})
     error('ERROR: Invalid roi extraction method: %s', options.roimethod);
 end
 
@@ -259,7 +291,7 @@ options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 if ismember({'none'}, options.saveind)
     options.saveind = {};
 end
-sdiff = setdiff(options.saveind, {'mat', 'txt', ''});
+sdiff = setdiff(options.saveind, {'mat', 'long', 'wide-single', 'wide-separate', ''});
 if ~isempty(sdiff)
     error('ERROR: Invalid save format specified: %s', strjoin(sdiff,","));
 end
@@ -306,7 +338,8 @@ if verbose; fprintf('     ... creating ROI mask\n'); end
 
 roi  = nimage.img_read_roi(roideffile, sroifile);
 nroi = length(roi.roi.roinames);
-
+roinames = roi.roi.roinames;
+roicodes = roi.roi.roicodes;
 
 % ---> reading image files
 
@@ -317,9 +350,11 @@ if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 
 % ---> create extraction sets
 
-if verbose; fprintf('     ... generating extraction sets ...'); end
+if verbose; fprintf('     ... generating extraction sets\n'); end
 exsets = y.img_get_extraction_matrices(frames, options);
-if verbose; fprintf(' done.\n'); end
+for n = 1:length(exsets)
+    if verbose; fprintf('         -> %s: %d good events, %d good frames\n', exsets(n).title, size(exsets(n).exmat, 1), sum(exsets(n).estat)); end
+end
 
 % ---> loop through extraction sets
 
@@ -354,9 +389,10 @@ for n = 1:nsets
 
     % ------> Embed results
 
-    fcmat(n).title = exsets(n).title;
-    fcmat(n).roi   = roi.roi.roinames;
-    fcmat(n).N     = ts.frames;
+    fcmat(n).title    = exsets(n).title;
+    fcmat(n).roinames = roi.roi.roinames;
+    fcmat(n).roicodes = roi.roi.roicodes;
+    fcmat(n).N        = ts.frames;
 
     if strcmp(options.fcmeasure, 'cv')
         fcmat(n).cv = fc;
@@ -371,9 +407,10 @@ for n = 1:nsets
 end
 
 
-% ---> save results
+% ===================================================================================================
+%                                                                                        save results
 
-if ~any(ismember({'mat', 'txt'}, options.saveind))
+if ~any(ismember({'mat', 'long', 'wide-single', 'wide-separate'}, options.saveind))
     if verbose; fprintf(' ... done\n'); end
     return; 
 end
@@ -390,8 +427,8 @@ end
 
 % set subjectname
 
-if options.subjectname
-    subjectname = [options.subjectname, '_'];
+if addidtofile && issubjectid
+    subjectname = [options.subjectid, '_'];
 else
     subjectname = '';
 end
@@ -401,22 +438,28 @@ ftail = ftail{ismember({'r', 'cv'}, options.fcmeasure)};
 
 basefilename = fullfile(targetf, sprintf('%s_%s%s%s', name, fcname, subjectname, ftail));
 
+% ---------------------------------------------------------------------------------------------------
+%                                                                                              matlab
+
 if ismember({'mat'}, options.saveind)
     if verbose; fprintf('         ... saving mat file'); end
     save(basefilename, 'fcmat');
     if verbose; fprintf(' ... done\n'); end
 end
 
-if ismember({'txt'}, options.saveind)
-    
-    if verbose; fprintf('         ... saving txt file'); end
+% ---------------------------------------------------------------------------------------------------
+%                                                                                            long tsv
 
-    fout = fopen([basefilename '.txt'], 'w');
+if ismember({'long'}, options.saveind)
+    
+    if verbose; fprintf('         ... saving long tsv file'); end
+
+    fout = fopen([basefilename '_long.tsv'], 'w');
 
     if strcmp(options.fcmeasure, 'cv')
-        fprintf(fout, 'name\ttitle\troi1\troi2\tcv\n');
+        fprintf(fout, 'name\ttitle\tsubject\troi1_name\troi2_name\troi1_code\troi2_code\tcv\n');
     else
-        fprintf(fout, 'name\ttitle\troi1\troi2\tr\tFz\tZ\tp\n');
+        fprintf(fout, 'name\ttitle\tsubject\troi1_name\troi2_name\troi1_code\troi2_code\tr\tFz\tZ\tp\n');
     end
 
     for n = 1:nsets
@@ -424,7 +467,7 @@ if ismember({'txt'}, options.saveind)
 
         % --- set ROI names
 
-        nroi = length(fcmat(n).roi);
+        nroi = length(fcmat(n).roinames);
 
         idx1 = repmat([1:nroi], nroi, 1);
         idx1 = tril(idx1, -1);
@@ -434,8 +477,10 @@ if ismember({'txt'}, options.saveind)
         idx2 = tril(idx2, -1);
         idx2 = idx2(idx2 > 0);
 
-        roi1 = fcmat(n).roi(idx1);
-        roi2 = fcmat(n).roi(idx2);
+        roi1name = fcmat(n).roinames(idx1);
+        roi2name = fcmat(n).roinames(idx2);
+        roi1code = fcmat(n).roicodes(idx1);
+        roi2code = fcmat(n).roicodes(idx2);
 
         idx  = reshape([1:nroi*nroi], nroi, nroi);
         idx  = tril(idx, -1);
@@ -448,7 +493,7 @@ if ismember({'txt'}, options.saveind)
         if strcmp(options.fcmeasure, 'cv')
             cv = fcmat(n).cv(idx);
             for c = 1:nfc
-                fprintf(fout, '%s\t%s\t%s\t%s\t%.5f\n', name, settitle, roi1{c}, roi2{c}, cv(c));
+                fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%d\t%d\t%.5f\n', name, settitle, options.subjectid, roi1name{c}, roi2name{c}, roi1code{c}, roi2code{c}, cv(c));
             end
         else
             r  = fcmat(n).r(idx);
@@ -456,7 +501,7 @@ if ismember({'txt'}, options.saveind)
             z  = fcmat(n).z(idx);
             p  = fcmat(n).p(idx);
             for c = 1:nfc
-                fprintf(fout, '%s\t%s\t%s\t%s\t%.5f\t%.5f\t%.5f\t%.7f\n', name, settitle, roi1{c}, roi2{c}, r(c), fz(c), z(c), p(c));
+                fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%d\t%d\t%.5f\t%.5f\t%.5f\t%.7f\n', name, settitle, options.subjectid, roi1name{c}, roi2name{c}, roi1code{c}, roi2code{c}, r(c), fz(c), z(c), p(c));
             end
         end
     end
@@ -464,4 +509,68 @@ if ismember({'txt'}, options.saveind)
     if verbose; fprintf(' ... done\n'); end
 end
 
+% ---------------------------------------------------------------------------------------------------
+%                                                                                            wide tsv
+
+if any(ismember({'wide-separate', 'wide-single'}, options.saveind))
+
+    if verbose; fprintf('         ... saving wide tsv file'); end
+
+    nroi = length(fcmat(1).roi);
+    roi  = fcmat(1).roi;
+    
+    if ismember({'wide-separate'}, options.saveind)
+        if strcmp(options.fcmeasure, 'cv') 
+            fout_cv = fopen([basefilename '_cv_wide.tsv'], 'w');
+            printHeader(fout_cv, roinames, roicodes);
+            toclose = [fout_cv];
+        else
+            fout_r  = fopen([basefilename '_r_wide.tsv'], 'w');            
+            fout_Fz = fopen([basefilename '_Fz_wide.tsv'], 'w');
+            printHeader(fout_r, roinames, roicodes);
+            printHeader(fout_Fz, roinames, roicodes);
+            toclose = [fout_r, fout_Fz];
+        end        
+    else
+        fout = fopen([basefilename '_wide.tsv'], 'w');
+        fout_r  = fout;
+        fout_Fz = fout;
+        fout_cv = fout;
+        printHeader(fout, roinames, roicodes)        
+        toclose = [fout];
+    end
+
+    for n = 1:nsets
+        if fcmat(n).title, settitle = fcmat(n).title; else settitle = 'ts'; end
+
+        if strcmp(options.fcmeasure, 'cv')
+            for r = 1:nroi
+                fprintf(fout_cv,'\n%s\t%s\t%s\t%s\t%s\t%d', name, settitle, options.subjectid, 'cv', roinames{r}, roicodes(r));
+                fprintf(fout_cv, '\t%.7f', fcmat(n).cv(r, :))
+            end
+        else
+            for r = 1:nroi
+                fprintf(fout_r,'\n%s\t%s\t%s\t%s\t%s\t%d', name, settitle, options.subjectid, 'cv', roinames{r}, roicodes(r));
+                fprintf(fout_r, '\t%.7f', fcmat(n).r(r, :))
+            end
+            for r = 1:nroi
+                fprintf(fout_Fz,'\n%s\t%s\t%s\t%s\t%s\t%d', name, settitle, options.subjectid, 'cv', roinames{r}, roicodes(r));
+                fprintf(fout_Fz, '\t%.7f', fcmat(n).fz(r, :))
+            end
+        end
+    end
+
+    for f = toclose
+        fclose(f);
+    end
+end
+
 if verbose; fprintf(' ... done\n'); end
+
+
+function [] = printHeader(fout, roinames, roicodes)
+    fprintf(fout, 'name\ttitle\tsubject\tmeasure\troiname\troicode');
+    nroi = length(roinames)
+    for r = 1:nroi
+        fprintf(fout, '\t[%d]_%s', roicodes(r), roinames{r})
+    end

@@ -15,17 +15,44 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %               to compute ROI functional connectivity,
 %               or a well strucutured string (see general_read_file_list).
 %   --roiinfo   A names file for definition of ROI to include in the analysis.
-%   --frames    The definition of which frames to use, it can be one of:
+%   --frames    The definition of which frames to extract, specifically:
 %
-%               - a numeric array mask defining which frames to use (1) and which
-%                 not (0) 
-%               - a single number, specifying the number of frames to skip at 
-%                 start
-%               - a string describing which events to extract timeseries for, and 
-%                 the frame offset from the start and end of the event in format: 
-%                 ('title1:event1,event2:2:2|title2:event3,event4:1:2') 
+%               -  a numeric array mask defining which frames to use (1) and 
+%                  which not (0), or 
+%               -  a single number, specifying the number of frames to skip at 
+%                  the start of each bold, or
+%               -  a string describing which events to extract timeseries for, 
+%                  and the frame offset from the start and end of the event in 
+%                  format::
+% 
+%                      '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>'
 %
-%               []
+%                  where:
+%
+%                  fidlfile        
+%                      is a path to the fidle file that defines the events    
+%                  extraction name 
+%                      is the name for the specific extraction definition    
+%                  event list      
+%                      is a comma separated list of events for which data is to 
+%                      be extracted    
+%                  extraction start
+%                      is a frame number relative to event start or end when the 
+%                      extraction should start    
+%                  extraction end  
+%                      is a frame number relative to event start or end when the
+%                      extraction should start the extraction start and end 
+%                      should be given as '<s|e><frame number>'. E.g.:
+%
+%                      - s0  ... the frame of the event onset 
+%                      - s2  ... the second frame from the event onset 
+%                      - e1  ... the first frame from the event end 
+%                      - e0  ... the last frame of the event 
+%                      - e-2 ... the two frames before the event end
+%                      
+%                  Example::
+%
+%                      '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
 %
 %   --targetf   The folder to save images in ['.'].
 %
@@ -36,7 +63,19 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %               It takes the following keys and values:
 %
 %               roimethod 
-%                   what method to use to compute ROI signal, 'mean' or 'pca' 
+%                   what method to use to compute ROI signal: 
+%
+%                   mean
+%                       mean value across the ROI
+%	                median
+%                       median value across the ROI
+%	                max
+%                       maximum value across the ROI
+%	                min
+%                       mimimum value across the ROI
+%                   pca
+%                       first eigenvariate of the ROI
+%
 %                   ['mean']
 %
 %               eventdata 
@@ -88,21 +127,26 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %
 %               fcmeasure
 %                   which functional connectivity measure to compute, the 
-%                   options are:
+%                   options are ['r']:
 %
-%                   - r  ... pearson's r value
-%                   - cv ... covariance estimate
-%                   
-%                   ['r']
+%                   r
+%                       pearson's r value
+%                   cv
+%                       covariance estimate
 %
 %               savegroup
 %                   a comma separated list of formats to use to save the group 
-%                   data:
+%                   data ['']:
 %
-%                   - txt ... save the resulting data in a long format txt file
-%                   - mat ... save the resulting data in a matlab .mat file
-%
-%                   ['']
+%                   long
+%                       save the resulting data in a long format .tsv file
+%                   wide-single
+%                       save the resulting data in a single wide format .tsv file
+%                   wide-separate
+%                       save the resulting data in a wide format .tsv file, one
+%                       file per each measure of interest
+%                   mat
+%                       save the resulting data in a matlab .mat file
 %
 %               fcname   
 %                   an optional name to add to the output files, if empty, it 
@@ -110,19 +154,25 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %
 %               saveind  
 %                   a comma separated list of formats to use to save the 
-%                   invidvidual data:
-%                   - txt ... save the resulting data in a long format txt file
-%                   - mat ... save the resulting data in a matlab .mat file
+%                   invidvidual data ['']:
 %
-%               ['']
+%                   long
+%                       save the resulting data in a long format .tsv file
+%                   wide-single
+%                       save the resulting data in a single wide format .tsv file
+%                   wide-separate
+%                       save the resulting data in a wide format .tsv file, one
+%                       file per each measure of interest
+%                   mat
+%                       save the resulting data in a matlab .mat file
 %
 %               itargetf 
-%                   where to save the individual data:
+%                   where to save the individual data ['gfolder']:
 %
-%                   - gfolder ... in the group target folder
-%                   - sfolder ... in the individual session folder
-%                   
-%                   ['gfolder']
+%                   gfolder
+%                       in the group target folder
+%                   sfolder
+%                       in the individual session folder
 %
 %               verbose  
 %                   whether to be verbose 'true' or not 'false', when running 
@@ -160,24 +210,32 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %   Based on saveind option specification a file may be saved with the functional 
 %   connectivity data saved in a matlab.mat file and/or in a text long format:
 %
-%   <targetf>/<listname>[_<fcname>]_<cor|cov>.<txt|mat>
+%   <targetf>/<listname>[_<fcname>]_<cor|cov>[_<long|[_<r|Fz|cv>]wide>].<tsv|mat>
 %
 %   `<listname>` is the filename of the provided <flist> w/o the extension.
 %   `<fcname>` is the provided name of the functional connectivity computed,
 %   if it was specified.
+%   `long` and `wide` will be added for long and wide tsv files, respectively.
+%   `r`, `Fz`, `cv` will be added when wide data is saved in separate wide 
+%   format files.
+
 %
 %   The text file will have the following columns (depending on the fcmethod):
 %   
-%   - name
-%   - title
-%   - subject
-%   - roi1
-%   - roi2
+%   long format         wide format
+%   - name              - name
+%   - title             - title
+%   - subject           - subject
+%   - roi1              - measure
+%   - roi2              - [<roi1_code>]_<roi1_name>-[<roi_code>2]_<roi3_name>
 %   - cv
 %   - r
 %   - Fz
 %   - Z
 %   - p
+%   
+%   Note:
+%   In wide format only cv, r, and Fz data will be saved. 
 %
 %   USE
 %   ===
@@ -216,6 +274,14 @@ default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'Options used');
+
+if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
+    error('ERROR: Invalid eventdata option: %s', options.eventdata);
+end
+
+if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'min', 'max'})
+    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
+end
 
 if ~ismember(options.fcmeasure, {'r', 'cv'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
@@ -344,8 +410,8 @@ for n = 1:nsub
 
     for s = 1:nset
 
-        fcset(s).title = fcmat(s).title;            
-        fcset(s).roi   = fcmat(s).roi;                
+        fcset(s).title    = fcmat(s).title;            
+        fcset(s).roinames = fcmat(s).roinames;                
 
         % -------> Embed data
 
@@ -414,7 +480,7 @@ if ismember({'txt'}, options.savegroup)
 
         % --- set ROI names
 
-        nroi = length(fcset(n).roi);
+        nroi = length(fcset(n).roinames);
 
         idx1 = repmat([1:nroi], nroi, 1);
         idx1 = tril(idx1, -1);
@@ -424,8 +490,8 @@ if ismember({'txt'}, options.savegroup)
         idx2 = tril(idx2, -1);
         idx2 = idx2(idx2 > 0);
 
-        roi1 = fcset(n).roi(idx1);
-        roi2 = fcset(n).roi(idx2);
+        roi1 = fcset(n).roinames(idx1);
+        roi2 = fcset(n).roinames(idx2);
 
         idx  = reshape([1:nroi*nroi], nroi, nroi);
         idx  = tril(idx, -1);
