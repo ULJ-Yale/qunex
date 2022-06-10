@@ -1041,17 +1041,12 @@ get_flags() {
     done
 }
 
-# -- Set and report version
-QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
-echo ""
-geho " ........................ Running QuNex v${QuNexVer} ........................"
-echo ""
-
 # -- Checks for version
 show_version() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
     echo "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version: ${QuNexVer}"
+    exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -1065,7 +1060,7 @@ if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] ||
     exit 0
 fi
 
-# -- Check if version was requested
+# -- Check if splash was requested
 if [ "$1" == "-splash" ] || [ "$1" == "splash" ] || [ "$1" == "--splash" ] || [ "$1" == "--s" ] || [ "$1" == "-s" ]; then
     show_splash
     echo ""
@@ -1093,6 +1088,11 @@ if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envset
     exit 0
 fi
 
+# -- Set and report version
+QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+echo ""
+geho " ........................ Running QuNex v${QuNexVer} ........................"
+echo ""
 
 # ------------------------------------------------------------------------------
 # -- Map deprecated commands
@@ -1200,7 +1200,6 @@ is_qunex_command() {
 if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]] || [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     if [[ ${Usage} == "--a" ]] || [[ ${Usage} == "--all" ]] || [[ ${Usage} == "--allcommands" ]]; then
-        show_splash
         show_all_qunex_commands
         exit 0
     fi
@@ -1210,7 +1209,6 @@ fi
 if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     if [[ ${Usage} == "-a" ]] || [[ ${Usage} == "-all" ]] || [[ ${Usage} == "-allcommands" ]]; then
-        show_splash
         show_all_qunex_commands
         exit 0
     fi  

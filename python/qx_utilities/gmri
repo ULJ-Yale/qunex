@@ -411,7 +411,7 @@ def print_help(com):
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
-        os.system("qunex -splash")
+        os.system("qunex --splash")
         print(all_qunex_commands)
 
     # --- print help for gmri local commands
