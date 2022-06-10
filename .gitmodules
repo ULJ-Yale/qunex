@@ -4,4 +4,4 @@
 
 [submodule "library"]
 	path = qx_library
-	url = ./qx_library
+	url = ../library
