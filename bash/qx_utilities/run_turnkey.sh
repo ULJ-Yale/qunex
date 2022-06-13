@@ -346,11 +346,19 @@ Examples:
     Run directly via::
 
          ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh \\
-            --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+             --<parameter1> \\
+             --<parameter2> \\
+             --<parameter3> \\
+             ... \\
+             --<parameterN>
 
     Run via::
 
-        qunex run_turnkey --<parameter1> --<parameter2> ... --<parameterN>
+        qunex run_turnkey \\
+            --<parameter1> \\
+            --<parameter2> \\
+            ... \\
+            --<parameterN>
 
     --scheduler
         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by

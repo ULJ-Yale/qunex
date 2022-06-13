@@ -1035,26 +1035,37 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --parsessions=10
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10
 
         ::
 
             qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --parsessions=10 --hcp_fs_longitudinal=TemplateA
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --hcp_fs_longitudinal=TemplateA
 
         ::
 
             qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --parsessions=10 --hcp_t2=NONE
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --hcp_t2=NONE
 
         ::
 
             qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --parsessions=10 --hcp_t2=NONE \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --hcp_t2=NONE \\
                 --hcp_freesurfer_home=<absolute_path_to_freesurfer_binary>
     """
 
@@ -2554,14 +2565,20 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_volume \\
                 --sessions=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions --overwrite=no --parsessions=10
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10
 
         ::
 
             qunex hcp_fmri_volume \\
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --parsessions=10 --hcp_bold_movref=first \\
-                --hcp_bold_seimg=first --hcp_bold_refreg=nonlinear \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --hcp_bold_movref=first \\
+                --hcp_bold_seimg=first \\
+                --hcp_bold_refreg=nonlinear \\
                 --hcp_bold_mask=DILATED
     """
 
@@ -3410,8 +3427,10 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_fmri_surface \\
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --parsessions=10
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10
     """
 
     r = "\n------------------------------------------------------------"

@@ -46,8 +46,14 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 %   Examples:
 %       ::
 %
-%           fc_segment_mri('con.list', 'thalamus.names', 'yeo7.names', 0, ...
-%               'Th-yeo-seg', 'partial', 'script');
+%           qunex fc_segment_mri \
+%               --flist='con.list' \
+%               --smask='thalamus.names' \
+%               --tmask='yeo7.names' \
+%               --mask=0 \
+%               --root='Th-yeo-seg' \
+%               --options='partial' \
+%               --verbose='script'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

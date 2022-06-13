@@ -60,8 +60,14 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %   Examples:
 %       ::
 %
-%           general_extract_roi_glm_values('wm-glm.list', 'CCN.names', [], ...
-%               'encoding, delay', [], 'psc', 'long');
+%           qunex general_extract_roi_glm_values \
+%               --flist='wm-glm.list' \
+%               --roif='CCN.names' \
+%               --outf='' \
+%               --effects='encoding, delay' \
+%               --frames='' \
+%               --values='psc' \
+%               --tformat='long'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

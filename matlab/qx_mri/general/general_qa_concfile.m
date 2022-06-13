@@ -31,7 +31,10 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 %   Examples:
 %       ::
 %
-%           general_qa_concfile('OP337.conc', 'm,sd,min,max', 'OP337');
+%           qunex general_qa_concfile \
+%               --file='OP337.conc' \
+%               --do='m,sd,min,max' \
+%               --target='OP337'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

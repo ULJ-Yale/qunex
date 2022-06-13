@@ -25,17 +25,6 @@ top_line_padding = 4
 bottom_line_padding = 0
 
 
-def get_header_block():
-    """
-    Returns a list of strings corresponding to the fixed header for the Sphinx
-    rST files. These lines are not visible to website visitors.
-    """
-    return [".. QuNexDocs documentation master file, created by",
-            "   sphinx-quickstart on Fri Nov 15 13:15:28 2019.",
-            "   You can adapt this file completely to your liking, but it should at least",
-            "   contain the root `toctree` directive.\n"]
-
-
 def get_image_block(lines):
     """
     Return a list of two lines in the Sphinx RST format, converted from the list

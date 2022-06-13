@@ -1767,7 +1767,8 @@ def sort_dicom(folder=".", **kwargs):
     Examples:
         Single sessions example::
 
-            qunex sort_dicom --folder=OP667
+            qunex sort_dicom \\
+                --folder=OP667
 
         Multiple sessions example::
 
@@ -1927,7 +1928,8 @@ def list_dicom(folder=None):
     Examples:
         ::
 
-            qunex list_dicom --folder=OP269/dicom
+            qunex list_dicom \\
+                --folder=OP269/dicom
     """
 
     if folder is None:
@@ -1978,7 +1980,8 @@ def split_dicom(folder=None):
     Examples:
         ::
 
-            qunex split_dicom --folder=dicommess
+            qunex split_dicom \\
+                --folder=dicommess
     """
 
     if folder is None:

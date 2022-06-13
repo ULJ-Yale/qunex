@@ -191,13 +191,21 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \\
-            --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> \\
+            ... \\
+            --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex run_qc --<parameter1> --<parameter2> ... --<parameterN>
+        qunex run_qc \\
+            --<parameter1> \\
+            --<parameter2> \\
+            ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -221,7 +229,7 @@ Examples:
         qunex run_qc \\
             --sessionsfolder='<path_to_study_sessions_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
-            --outpath='<path_for_output_file> \\
+            --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='T1w' \\
             --overwrite='yes'
@@ -231,7 +239,7 @@ Examples:
         qunex run_qc \\
             --sessionsfolder='<path_to_study_sessions_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
-            --outpath='<path_for_output_file> \\
+            --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='T2w' \\
             --overwrite='yes'
@@ -241,7 +249,7 @@ Examples:
         qunex run_qc \\
             --sessionsfolder='<path_to_study_sessions_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
-            --outpath='<path_for_output_file> \\
+            --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='myelin' \\
             --overwrite='yes'
@@ -253,7 +261,7 @@ Examples:
             --sessions='<comma_separated_list_of_cases>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='DWI' \\
-            --outpath='<path_for_output_file> \\
+            --outpath='<path_for_output_file>' \\
             --dwilegacy='yes' \\
             --dwidata='<file_name_for_dwi_data>' \\
             --dwipath='<path_for_dwi_data>' \\
@@ -264,7 +272,7 @@ Examples:
         qunex run_qc \\
             --sessionsfolder='<path_to_study_sessions_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
-            --outpath='<path_for_output_file> \\
+            --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='BOLD' \\
             --bolddata='1' \\
@@ -277,7 +285,7 @@ Examples:
             --sessionsfolder='<path_to_study_sessions_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --batchfile='<path_to_batch_file>' \\
-            --outpath='<path_for_output_file> \\
+            --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='BOLD' \\
             --boldsuffix='Atlas' \\

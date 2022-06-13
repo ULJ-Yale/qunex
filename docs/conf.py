@@ -84,8 +84,7 @@ napoleon_custom_sections = [
 ]
 
 
-# -- Options for MyST parser extension ---------------------------------------
-
+# -- Options for MyST parser extension --------------------------------------
 # Depth of auto-generated header anchors
 myst_heading_anchors = 4
 

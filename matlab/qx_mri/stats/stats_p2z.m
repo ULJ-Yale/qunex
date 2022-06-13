@@ -23,7 +23,9 @@ function [img] = stats_p2z(img, out, tail)
 %   Examples:
 %       ::
 %
-%           stats_p2z('WM_p.nii.gz', 'WM_Z.nii.gz');
+%           qunex stats_p2z \\
+%               --img='WM_p.nii.gz' \\
+%               --out='WM_Z.nii.gz'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

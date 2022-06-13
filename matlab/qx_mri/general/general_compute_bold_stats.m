@@ -64,7 +64,13 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %   Examples:
 %       ::
 %
-%           general_compute_bold_stats('bold1.nii.gz', [], 'movement', '', '', true);
+%           general_compute_bold_stats \
+%               --img='bold1.nii.gz' \
+%               --mask='' \
+%               --target='movement' \
+%               --store='' \
+%               --scrub='' \
+%               --verbose='true'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

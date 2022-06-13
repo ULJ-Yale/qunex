@@ -13,7 +13,7 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %           Prefix of root filename to save the plot to.
 %       --skip (int, default 0):
 %           How many frames to skip at the stat of the bold run.
-%       --fformat (str, default '.pdf'):
+%       --fformat (str, default 'pdf'):
 %           Plot output format.
 %       --verbose (bool, default false):
 %           Whether to be talkative.
@@ -87,7 +87,13 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %   Examples:
 %       ::
 %
-%           general_plot_bold_timeseries_list('bolds.list', [], 'QA_', 5, 'png', true);
+%           qunex general_plot_bold_timeseries_list \
+%               --flist='bolds.list' \
+%               --elements='[]' \
+%               --filename='QA_' \
+%               --skip=5 \
+%               --fformat=png \
+%               --verbose=true
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -60,12 +60,22 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %       To compute mean and standard variation and exclude the first 5 frames
 %       and the frames marked bad using udvarsme criterion, use::
 %
-%           general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', 5, 'udvarsme');
+%           qunex general_compute_group_bold_stats \
+%               --flist='scz-wm.list' \
+%               --tfile='[]' \
+%               --stats='m, sd' \
+%               --inmask=5 \
+%               --ignore='udvarsme'
 %
 %       To compute the mean and standard variation for all negative trials
 %       (frames 3 & 4), and use ignore information in fidl file, use::
 %
-%           general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', 'negative:block:3:4', 'fidl');
+%           qunex general_compute_group_bold_stats \
+%               --flist='scz-wm.list' \
+%               --tfile='[]' \
+%               --stats='m, sd' \
+%               --inmask='negative:block:3:4' \
+%               --ignore='fidl'
 %
 %   See Also:
 %       nimage.img_stats

@@ -13,7 +13,7 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %           file).
 %       --outf (str, default []):
 %           Root file name for the results. If empty, the flist name is used.
-%       --efects (cell array | str, default []):
+%       --effects (cell array | str, default []):
 %           A cell array of strings or a comma separated list of effects of
 %           interest. If empty all effects but Baseline and Trend are extracted.
 %       --frames (int, default []):
@@ -60,8 +60,10 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %   Examples:
 %       ::
 %
-%           general_extract_glm_volumes('wm-glm.list', 'wm-encoding-delay', ...
-%               'encoding,delay', [], 'by_session');
+%           qunex general_extract_glm_volumes \
+%               --flist='wm-glm.list' \
+%               --outf='wm-encoding-delay' \
+%               --effects='encoding,delay'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

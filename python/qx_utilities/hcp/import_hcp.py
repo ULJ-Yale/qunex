@@ -812,7 +812,9 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     Examples:
         ::
 
-            qunex map_hcpls2nii --folder=. --overwrite=yes
+            qunex map_hcpls2nii \\
+                --folder=. \\
+                --overwrite=yes
 
         ::
 

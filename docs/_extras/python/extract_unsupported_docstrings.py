@@ -5,7 +5,7 @@
 Extracts docstrings from unsupported languages to files named ``<language>.py`` in the python/qx_utilities folder.
 
 Warning:
-    Only qx_utilities commands in bash and R are can currently be used with this script.
+    Only qx_utilities commands in bash and R can currently be used with this script.
 """
 
 import re

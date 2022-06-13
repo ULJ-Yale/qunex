@@ -25,7 +25,10 @@ function [] = general_image_overlap(af, bf, tf, v)
 %   Examples:
 %       ::
 %
-%           general_image_overlap(imga, imgb, 'atlas_subject_overlap.png');
+%           qunex general_image_overlap \
+%               --af=imga \
+%               --bf=imgb \
+%               --tf='atlas_subject_overlap.png'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -2653,7 +2653,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
         Activation analysis::
 
             qunex preprocess_conc \\
-                --sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
                 --bolds=SRT \\

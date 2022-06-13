@@ -90,7 +90,7 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           colons will result in an error - use normal colons with the command
 %           instead.
 %
-%       --options (str, ''):
+%       --options (str, default ''):
 %           List of options separated with a pipe symbol ("|"):
 %
 %           - frames
@@ -160,8 +160,17 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           larger than 300 voxels, after smoothing with a kernel of fwhm 2 and
 %           kernel size 7 voxels use::
 %
-%               general_find_peaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', ...
-%                   [72 80], [300 350], 'b', 3, 'fwhm:2|ksize:7', '', [], 1);
+%               qunex general_find_peaks \
+%                   --fin='zscores.nii.gz' \
+%                   --fout='zscores_peaks_3_72_300.nii.gz' \
+%                   --mins='[72 80]' \
+%                   --maxs='[300 350]' \
+%                   --val='b' \
+%                   --t=3 \
+%                   --presmooth='fwhm:2|ksize:7' \
+%                   --projection='' \
+%                   --options='' \
+%                   --verbose=1
 %
 %           To get a roi image of both positive and negative peak regions with
 %           miminum z value of (-)3 and 72 contiguous voxels in size, but no
@@ -169,29 +178,53 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           volume and surfaces structures, where only frames 1, 6 and 7 are to
 %           be analyzed use::
 %
-%               general_find_peaks('zscores.dtseries.nii', ...
-%                   'zscores_analyzed.dtseries.nii', [72 80], [300 350], 'b', ...
-%                   1, 'fwhm:3', 'inflated', 'frames:[1 5 7]', 1);
+%               qunex general_find_peaks \
+%                   --fin='zscores.dtseries.nii' \
+%                   --fout='zscores_analyzed.dtseries.nii' \
+%                   --mins='[72 80]' \
+%                   --maxs='[300 350]' \
+%                   --val='b' \
+%                   --t=1 \
+%                   --presmooth='fwhm:3' \
+%                   --projection='inflated' \
+%                   --options='frames:[1 5 7]' \
+%                   --verbose=1
 %
 %           To get a roi image of both positive and negative peak regions with
 %           miminum z value of (-)3 and 72 contiguous voxels in size, but no
 %           larger than 300 voxels, after smoothing with a kernel of fwhm 1 use::
 %
-%               general_find_peaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', ...
-%                   [72 80], [300 350], 'b', 3, 'fwhm:1', ...
-%                   'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', ...
-%                   [], 1);
+%               qunex general_find_peaks \
+%                   --fin='zscores.nii.gz' \
+%                   --fout='zscores_peaks_3_72_300.nii.gz' \
+%                   --mins='[72 80]' \
+%                   --maxs='[300 350]' \
+%                   --val='b' \
+%                   --t=3 \
+%                   --presmooth='fwhm:1' \
+%                   --projection='cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii' \
+%                   --options='' \
+%                   --verbose=1
 %
 %       NIfTI image:
 %           To get a roi image of both positive and negative peak regions with
 %           miminum z value of (-)1 and 50 contiguous voxels in size, but no
 %           larger than 250 voxels, after applying fwhm 3 gaussian smoothing and
-%           a smoothing kernel of size 6 voxels use ``presmooth = ;``.
+%           a smoothing kernel of size 6 voxels use ``presmooth=''``.
 %
 %           ::
 %
-%               general_find_peaks('zscores.nii.gz', 'zscores_analyzed.nii.gz', ...
-%                   50, 250, 'b', 1, 'fwhm:3|ksize:6|ftype:gaussian', [], [], 2);
+%               qunex general_find_peaks \
+%                   --fin='zscores.nii.gz' \
+%                   --fout='zscores_analyzed.nii.gz' \
+%                   --mins=50 \
+%                   --maxs=250 \
+%                   --val='b' \
+%                   --t=1 \
+%                   --presmooth='fwhm:3|ksize:6|ftype:gaussian' \
+%                   --projection='' \
+%                   --options='' \
+%                   --verbose=2
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

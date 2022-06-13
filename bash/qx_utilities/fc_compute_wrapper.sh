@@ -134,13 +134,21 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> \\
+            ... \\
+            --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex fc_compute_wrapper --<parameter1> --<parameter2> ... --<parameterN>
+        qunex fc_compute_wrapper \\
+            --<parameter1> \\
+            --<parameter2> \\
+            ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 

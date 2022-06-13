@@ -596,17 +596,40 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   Examples:
 %       Activation analysis::
 %
-%           fc_preprocess_conc('sessions/OP234', [1 2 4 5], 's,r,c', 2.5, 0, 'e', ...
-%               [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', ...
-%               '', false, '.nii.gz', '', 'hipass=keep|regress=keep|lopass=keep', ...
-%               'glm_name:M1');
+%           qunex fc_preprocess_conc \
+%               --sessionf='sessions/OP234' \
+%               --bolds='[1 2 4 5]' \
+%               --doIt='s,r,c' \
+%               --TR=2.5 \
+%               --omit=0 \
+%               --rgss='e' \
+%               --task='' \
+%               --efile='flanker.fidl' \
+%               --eventstring='block:boynton|target:9|target:9>target_rt:1:within:z' \
+%               --variant='' \
+%               --overwrite='false' \
+%               --tail='.nii.gz' \
+%               --scrub='' \
+%               --ignores='hipass=keep|regress=keep|lopass=keep' \
+%               --options='glm_name:M1'
 %
 %       Functional connectivity preprocessing::
 %
-%           fc_preprocess_conc('sessions/OP234', [1 2 4 5], 's,h,r', 2.5, 0, ...
-%               'm,V,WM,WB,1d,e', [], 'flanker.fidl', ...
-%               'block:boynton|target:9|target:9>target_rt:1:within:z', '', ...
-%               false, '.nii.gz', '', 'hipass=linear|regress=ignore|lopass=linear');
+%           qunex fc_preprocess_conc \
+%               --sessionf='sessions/OP234' \
+%               --bolds='[1 2 4 5]' \
+%               --doIt='s,h,r' \
+%               --TR=2.5 \
+%               --omit=0 \
+%               --rgss='m,V,WM,WB,1d,e' \
+%               --task='' \
+%               --efile='flanker.fidl' \
+%               --eventstring='block:boynton|target:9|target:9>target_rt:1:within:z' \
+%               --variant='' \
+%               --overwrite='false' \
+%               --tail='.nii.gz' \
+%               --scrub='' \
+%               --ignores='hipass=linear|regress=ignore|lopass=linear'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

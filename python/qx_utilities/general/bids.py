@@ -1027,7 +1027,9 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     Examples:
         ::
 
-            qunex map_bids2nii --folder=. --overwrite=yes
+            qunex map_bids2nii \\
+                --folder=. \\
+                --overwrite=yes
     """
 
     if fileinfo is None:
