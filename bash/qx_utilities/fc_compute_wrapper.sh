@@ -7,7 +7,230 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 usage() {
+    cat << EOF
+``fc_compute_wrapper``
 
+This function implements Global Brain Connectivity (GBC) or seed-based
+functional connectivity (FC) on the dense or parcellated (e.g. Glasser
+parcellation).
+
+For more detailed documentation run <help fc_compute_gbc3>, <help
+nimage.img_compute_gbc> or <help fc_compute_seedmaps_multiple> inside MATLAB.
+
+Parameters:
+    --calculation (str):
+        Run <seed>, <gbc> or <dense> calculation for functional connectivity.
+    --runtype (str):
+        Run calculation on a <list> (requires a list input), on 'individual'
+        sessions (requires manual specification) or a 'group' of individual
+        sessions (equivalent to a list, but with manual specification).
+    --targetf (str):
+        Specify the absolute path for output folder. If using
+        --runtype='individual' and left empty the output will default to
+        --inputpath location for each session
+    --overwrite (str, default 'no'):
+        Delete prior run for a given session.
+    --covariance (str, default 'false'):
+        Whether to compute covariances instead of correlations ('true' /
+        'false').
+
+Specific parameters:
+    --flist (str):
+        Specify ∗.list file of session information. If specified then
+        --sessionsfolder, --inputfile, --session and --outname are omitted.
+    --sessionsfolder (str):
+        Path to study sessions folder.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --inputfiles (str):
+        Specify the comma separated file names you want to use (e.g.
+        /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii).
+    --inputpath (str):
+        Specify path of the file you want to use relative to the master study
+        folder and session directory (e.g. '/images/functional/').
+    --outname (str):
+        Specify the suffix name of the output file name.
+    --target (str, default detailed below):
+        Array of ROI codes that define target ROI. Defaults to FreeSurfer cortex
+        codes.
+    --rsmooth (str, default ''):
+        Radius for smoothing (no smoothing if empty).
+    --rdilate (str, default ''):
+        Radius for dilating mask (no dilation if empty).
+    --gbc-command (str):
+        Specify the the type of gbc to run. This is a string describing GBC to
+        compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2'
+
+        mFz:t
+            computes mean Fz value across all voxels (over threshold t)
+        aFz:t
+            computes mean absolute Fz value across all voxels (over threshold t)
+        pFz:t
+            computes mean positive Fz value across all voxels (over threshold t)
+        nFz:t
+            computes mean positive Fz value across all voxels (below
+            threshold t)
+        aD:t
+            computes proportion of voxels with absolute r over t
+        pD:t
+            computes proportion of voxels with positive r over t
+        nD:t
+            computes proportion of voxels with negative r below t
+        mFzp:n
+            computes mean Fz value across n proportional ranges
+        aFzp:n
+            computes mean absolute Fz value across n proportional ranges
+        mFzs:n
+            computes mean Fz value across n strength ranges
+        pFzs:n
+            computes mean Fz value across n strength ranges for positive
+            correlations
+        nFzs:n
+            computes mean Fz value across n strength ranges for negative
+            correlations
+        mDs:n
+            computes proportion of voxels within n strength ranges of r
+        aDs:n
+            computes proportion of våoxels within n strength ranges of
+            absolute r
+        pDs:n
+            computes proportion of voxels within n strength ranges of positive r
+        nDs:n
+            computes proportion of voxels within n strength ranges of
+            negative r.
+
+    --verbose (str, default 'false'):
+        Report what is going on.
+    --time (str, default 'false'):
+        Whether to print timing information.
+    --vstep (str, default '1200'):
+        How many voxels to process in a single step.
+    --roinfo (str):
+        An ROI file for the seed connectivity.
+    --method (str, default 'mean'):
+        Method for extracting timeseries - 'mean' or 'pca'.
+    --options (str, default ''):
+        A string defining which session files to save. Default assumes all:
+
+        - 'r'  ... save map of correlations
+        - 'f'  ... save map of Fisher z values
+        - 'cv' ... save map of covariances
+        - 'z'  ... save map of Z scores.
+
+    --extractdata (str):
+        Specify if you want to save out the matrix as a CSV file (only available
+        if the file is a ptseries).
+    --ignore (str, default ''):
+        The column in ∗_scrub.txt file that matches bold file to be used for
+        ignore mask. All if empty.
+    --mask (str):
+        An array mask defining which frames to use (1) and which not (0). All if
+        empty. If single value is specified then this number of frames is
+        skipped.
+    --mem-limit (str, default '4'):
+        Restrict memory. Memory limit expressed in gigabytes.
+
+Examples:
+    Run directly via::
+
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \\
+        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via::
+
+        qunex fc_compute_wrapper --<parameter1> --<parameter2> ... --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    ::
+
+        qunex fc_compute_wrapper \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --calculation='seed' \\
+            --runtype='individual' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --inputfiles='<files_to_compute_connectivity_on>' \\
+            --inputpath='/images/functional' \\
+            --extractdata='yes' \\
+            --ignore='udvarsme' \\
+            --roinfo='ROI_Names_File.names' \\
+            --options='' \\
+            --method='' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --covariance='false'
+
+    ::
+
+        qunex fc_compute_wrapper \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --runtype='list' \\
+            --flist='sessions.list' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_file>' \\
+            --ignore='udvarsme' \\
+            --roinfo='ROI_Names_File.names' \\
+            --options='' \\
+            --method='' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --covariance='false'
+
+    ::
+
+        qunex fc_compute_wrapper \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --calculation='gbc' \\
+            --runtype='individual' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \\
+            --inputpath='/images/functional' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_file>' \\
+            --ignore='udvarsme' \\
+            --gbc-command='mFz:' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --target='' \\
+            --rsmooth='0' \\
+            --rdilate='0' \\
+            --verbose='true' \\
+            --time='true' \\
+            --vstep='10000' \\
+            --covariance='false'
+
+    ::
+
+        qunex fc_compute_wrapper \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --calculation='gbc' \\
+            --runtype='list' \\
+            --flist='sessions.list' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_file>' \\
+            --ignore='udvarsme' \\
+            --gbc-command='mFz:' \\
+            --targetf='<path_for_output_file>' \\
+            --mask='5' \\
+            --target='' \\
+            --rsmooth='0' \\
+            --rdilate='0' \\
+            --verbose='true' \\
+            --time='true' \\
+            --vstep='10000' \\
+            --covariance='false'
+
+EOF
 # -------------------------------------------------------------------------------------------------------------------
 # EXAMPLE inputs from Matlab into fc_compute_seedmaps_multiple and fc_compute_gbc3:
 # -------------------------------------------------------------------------------------------------------------------
@@ -28,9 +251,9 @@ usage() {
 #                  -> event: ignore frames as marked in .fidl file
 #                  -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
 #  cv       - Whether covariances should be computed instead of correlations.
-# -------------------------------------------------------------------------------------------------------------------   
-#  fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
-#  INPUT 
+# -------------------------------------------------------------------------------------------------------------------
+#  fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
+#  INPUT
 #  flist       - conc-like style list of session image files or conc files:
 #                  session id:<session_id>
 #                  roi:<path to the individual's ROI file>
@@ -54,235 +277,7 @@ usage() {
 #               [false]
 #  vstep       - How many voxels to process in a single step. [1200]
 # -------------------------------------------------------------------------------------------------------------------
-
- echo ""
- echo "This function implements Global Brain Connectivity (GBC) or seed-based "
- echo "functional connectivity (FC) on the dense or parcellated (e.g. Glasser "
- echo "parcellation)."
- echo ""
- echo "For more detailed documentation run <help fc_compute_gbc3>, "
- echo "<help nimage.img_compute_gbc> or <help fc_compute_seedmaps_multiple> inside MATLAB."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--calculation    Run <seed>, <gbc> or <dense> calculation for functional"
- echo "                 connectivity."
- echo "--runtype        Run calculation on a <list> (requires a list input), on "
- echo "                 <individual> sessions (requires manual specification) or a "
- echo "                 <group> of individual sessions (equivalent to a list, but "
- echo "                 with manual specification)"
- echo "--targetf        Specify the absolute path for output folder. If using" 
- echo "                 --runtype='individual' and left empty the output will "
- echo "                 default to --inputpath location for each session"
- echo "--overwrite      Delete prior run for a given session [no]."
- echo "--covariance     Whether to compute covariances instead of correlations "
- echo "                 (true / false). Default is [false]"
- echo ""
- echo "INPUTS FOR A GROUP SEED/GBC RUN"
- echo "==============================="
- echo ""
- echo "--flist          Specify *.list file of session information. If specified then" 
- echo "                 --sessionsfolder, --inputfile, --session and --outname are"
- echo "                 omitted"
- echo ""
- echo "INPUTS FOR AN INDIVIDUAL SESSION SEED/GBC RUN"
- echo "============================================="
- echo ""
- echo "--sessionsfolder   Path to study sessions folder"
- echo "--sessions         Comma separated list of sessions to run"
- echo "--inputfiles       Specify the comma separated file names you want to use "
- echo "                   (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
- echo "--inputpath        Specify path of the file you want to use relative to the "
- echo "                   master study folder and session directory "
- echo "                   (e.g. /images/functional/)"
- echo "--outname          Specify the suffix name of the output file name"  
- echo ""
- echo "INPUTS FOR GBC"
- echo "=============="
- echo ""
- echo "--target           Array of ROI codes that define target ROI"
- echo "                   [default: FreeSurfer cortex codes]"
- echo "--rsmooth          Radius for smoothing (no smoothing if empty). []"
- echo "--rdilate          Radius for dilating mask (no dilation if empty). []"
- echo "--gbc-command      Specify the the type of gbc to run. This is a string "
- echo "                   describing GBC to compute. "
- echo "                   E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
- echo ""
- echo "                   mFz:t"
- echo "                       computes mean Fz value across all voxels (over "
- echo "                       threshold t)"
- echo "                   aFz:t"
- echo "                       computes mean absolute Fz value across all voxels "
- echo "                       (over threshold t) "
- echo "                   pFz:t"
- echo "                       computes mean positive Fz value across all voxels "
- echo "                       (over threshold t) "
- echo "                   nFz:t"
- echo "                       computes mean positive Fz value across all voxels "
- echo "                       (below threshold t) "
- echo "                   aD:t"
- echo "                       computes proportion of voxels with absolute r over t "
- echo "                   pD:t"
- echo "                       computes proportion of voxels with positive r over t "
- echo "                   nD:t"
- echo "                       computes proportion of voxels with negative r below t "
- echo "                   mFzp:n"
- echo "                       computes mean Fz value across n proportional ranges "
- echo "                   aFzp:n"
- echo "                       computes mean absolute Fz value across n proportional "
- echo "                       ranges "
- echo "                   mFzs:n"
- echo "                       computes mean Fz value across n strength ranges "
- echo "                   pFzs:n"
- echo "                       computes mean Fz value across n strength ranges for "
- echo "                       positive correlations "
- echo "                   nFzs:n"
- echo "                       computes mean Fz value across n strength ranges for "
- echo "                       negative correlations "
- echo "                   mDs:n"
- echo "                       computes proportion of voxels within n strength ranges "
- echo "                       of r "
- echo "                   aDs:n"
- echo "                       computes proportion of våoxels within n strength "
- echo "                       ranges of absolute r "
- echo "                   pDs:n"
- echo "                       computes proportion of voxels within n strength ranges "
- echo "                       of positive r "
- echo "                   nDs:n"
- echo "                       computes proportion of voxels within n strength ranges "
- echo "                       of negative r "  
- echo ""
- echo "--verbose          Report what is going on. Default is [false]"
- echo "--time             Whether to print timing information. [false]"
- echo "--vstep            How many voxels to process in a single step. [1200]"
- echo ""
- echo "INPUTS FOR SEED FC"
- echo "=================="
- echo ""
- echo "--roinfo           An ROI file for the seed connectivity "
- echo "--method           Method for extracting timeseries - 'mean' or 'pca' ['mean'] "
- echo "--options          A string defining which session files to save. Default "
- echo "                   assumes all [''] "
- echo ""
- echo "                   - r ... save map of correlations "
- echo "                   - f ... save map of Fisher z values "
- echo "                   - cv ... save map of covariances "
- echo "                   - z ... save map of Z scores "
- echo ""
- echo "INPUTS FOR SEED OR GBC"
- echo "======================"
- echo ""
- echo "--extractdata      Specify if you want to save out the matrix as a CSV file "
- echo "                   (only available if the file is a ptseries) "
- echo "--ignore           The column in *_scrub.txt file that matches bold file to "
- echo "                   be used for ignore mask. All if empty. Default is [] "
- echo "--mask             An array mask defining which frames to use (1) and which "
- echo "                   not (0). All if empty. If single value is specified then "
- echo "                   this number of frames is skipped."
- echo ""
- echo "INPUTS FOR DENSE FC RUN"
- echo "======================="
- echo ""
- echo "--mem-limit        Restrict memory. Memory limit expressed in gigabytes. [4]"
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "Run directly via:: "
- echo ""
- echo "  ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \ "
- echo "      --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- reho "NOTE: --scheduler is not available via direct script call."
- echo ""
- echo "Run via:: "
- echo ""
- echo "  qunex fc_compute_wrapper --<parameter1> --<parameter2> ... --<parameterN> "
- echo ""
- geho "NOTE: scheduler is available via qunex call."
- echo ""
- echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                  followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""                   
- echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo ""
- echo "::"
- echo ""
- echo "  qunex fc_compute_wrapper \ "
- echo "  --sessionsfolder='<folder_with_sessions>' \ "
- echo "  --calculation='seed' \ "
- echo "  --runtype='individual' \ "
- echo "  --sessions='<comma_separarated_list_of_cases>' \ "
- echo "  --inputfiles='<files_to_compute_connectivity_on>' \ "
- echo "  --inputpath='/images/functional' \ "
- echo "  --extractdata='yes' \ "
- echo "  --ignore='udvarsme' \ "
- echo "  --roinfo='ROI_Names_File.names' \ "
- echo "  --options='' \ "
- echo "  --method='' \ "
- echo "  --targetf='<path_for_output_file>' \ "
- echo "  --mask='5' \ "
- echo "  --covariance='false' "
- echo ""
- echo "  qunex fc_compute_wrapper \ "
- echo "  --sessionsfolder='<folder_with_sessions>' \ "
- echo "  --runtype='list' \ "
- echo "  --flist='sessions.list' \ "
- echo "  --extractdata='yes' \ "
- echo "  --outname='<name_of_output_file>' \ "
- echo "  --ignore='udvarsme' \ "
- echo "  --roinfo='ROI_Names_File.names' \ "
- echo "  --options='' \ "
- echo "  --method='' \ "
- echo "  --targetf='<path_for_output_file>' \ "
- echo "  --mask='5' "
- echo "  --covariance='false' "
- echo ""
- echo "  qunex fc_compute_wrapper \ "
- echo "  --sessionsfolder='<folder_with_sessions>' \ "
- echo "  --calculation='gbc' \ "
- echo "  --runtype='individual' \ "
- echo "  --sessions='<comma_separarated_list_of_cases>' \ "
- echo "  --inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
- echo "  --inputpath='/images/functional' \ "
- echo "  --extractdata='yes' \ "
- echo "  --outname='<name_of_output_file>' \ "
- echo "  --ignore='udvarsme' \ "
- echo "  --gbc-command='mFz:' \ "
- echo "  --targetf='<path_for_output_file>' \ "
- echo "  --mask='5' \ "
- echo "  --target='' \ "
- echo "  --rsmooth='0' \ "
- echo "  --rdilate='0' \ "
- echo "  --verbose='true' \ "
- echo "  --time='true' \ "
- echo "  --vstep='10000'"
- echo "  --covariance='false' "
- echo ""
- echo "  qunex fc_compute_wrapper \ "
- echo "  --sessionsfolder='<folder_with_sessions>' \ "
- echo "  --calculation='gbc' \ "
- echo "  --runtype='list' \ "
- echo "  --flist='sessions.list' \ "
- echo "  --extractdata='yes' \ "
- echo "  --outname='<name_of_output_file>' \ "
- echo "  --ignore='udvarsme' \ "
- echo "  --gbc-command='mFz:' \ "
- echo "  --targetf='<path_for_output_file>' \ "
- echo "  --mask='5' \ "
- echo "  --target='' \ "
- echo "  --rsmooth='0' \ "
- echo "  --rdilate='0' \ "
- echo "  --verbose='true' \ "
- echo "  --time='true' \ "
- echo "  --vstep='10000'"
- echo "  --covariance='false' "
- echo ""
- exit 0
+exit 0
 }
 
 # ------------------------------------------------------------------------------

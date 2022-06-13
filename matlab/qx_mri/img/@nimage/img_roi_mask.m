@@ -5,19 +5,19 @@ function [mask] = img_roi_mask(img, roi)
 %   Checks which voxels have roi codes and returns a binary mask.
 %
 %   INPUTS
-%	======
-%	
-%   --img 		An ROI nimage object.
-%   --roi 		A list of ROI numeric codes or a cell array of ROI names [].
+%    ======
+%
+%   --img         An ROI nimage object.
+%   --roi         A list of ROI numeric codes or a cell array of ROI names [].
 %
 %   OUTPUT
-%	======
+%    ======
 %
 %   mask
-%		A binary mask marking voxels with specified roi codes.
+%        A binary mask marking voxels with specified roi codes.
 %
 %   USE
-%	===
+%    ===
 %
 %   Use this method to get a binary mask of specified ROI. If no ROI codes are
 %   provided or an empty matrix is passed, the mask has true values for all the

@@ -47,82 +47,93 @@ weho() {
 # ------------------------------------------------------------------------------
 
 usage() {
- echo ""
- echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled"
- echo "node or via a GPU-enabled queue if using the scheduler option."
- echo ""
- echo "It explicitly assumes the Human Connectome Project folder structure for"
- echo "preprocessing and completed diffusion processing. DWI data is expected to"
- echo "be in the following folder:"
- echo ""
- echo " <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
- echo ""
- echo "INPUTS"
- echo "======"
- echo "" 
- echo "--sessionsfolder   Path to study folder that contains sessions"
- echo "--sessions         Comma separated list of sessions to run"
- echo "--fibers           Number of fibres per voxel. [3]"
- echo "--weight           ARD weight, more weight means less secondary"
- echo "                   fibres per voxel [1]"
- echo "--burnin           Burnin period. [1000]"
- echo "--jumps            Number of jumps. [1250]"
- echo "--sample           Sample every. [25]"
- echo "--model            Deconvolution model:"
- echo "                   - 1 ... with sticks,"
- echo "                   - 2 ... with sticks with a range of diffusivities,"
- echo "                   - 3 ... with zeppelins. [2]"
- echo "--rician           Replace the default Gaussian noise assumption with"
- echo "                   Rician noise (yes/no). [yes]"
- echo "--gradnonlin       Consider gradient nonlinearities (yes/no). By default set"
- echo "                   automatically. Set to yes if the file grad_dev.nii.gz"
- echo "                   is present, set to no if it is not."
- echo "--overwrite        Delete prior run for a given session. [no]"
- echo "--scheduler        A string for the cluster scheduler (LSF, PBS or SLURM)"
- echo "                   followed by relevant options, e.g. for SLURM the string"
- echo "                   would look like this:"
- echo "                   --scheduler='SLURM,jobname=<name_of_job>,"
- echo "                   time=<job_duration>,ntasks=<numer_of_tasks>,"
- echo "                   cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,"
- echo "                   partition=<queue_to_send_job_to>'"
- echo "                   Note: You need to specify a GPU-enabled queue or partition"
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "Run directly via::"
- echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \ "
- echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- reho "NOTE: --scheduler is not available via direct script call."
- echo ""
- echo "Run via:: "
- echo ""
- echo " qunex dwi_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN> "
- echo ""
- geho "NOTE: scheduler is available via qunex call."
- echo ""
- echo "--scheduler       A string for the cluster scheduler (LSF, PBS or SLURM)"
- echo "                  followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""                   
- echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,"
- echo "ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,"
- echo "mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'"
- echo ""    
- echo "::"
- echo ""
- echo " qunex dwi_bedpostx_gpu \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separarated_list_of_cases>' \ "
- echo " --fibers='3' \ "
- echo " --burnin='3000' \ "
- echo " --model='3' \ "
- echo " --scheduler='<name_of_scheduler_and_options>' \ "
- echo " --overwrite='yes'"
- echo ""
+    cat << EOF
+``dwi_bedpostx_gpu``
+
+This function runs the FSL bedpostx_gpu processing using a GPU-enabled
+node or via a GPU-enabled queue if using the scheduler option.
+
+It explicitly assumes the Human Connectome Project folder structure for
+preprocessing and completed diffusion processing. DWI data is expected to
+be in the following folder::
+
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --fibers (str, default '3'):
+        Number of fibres per voxel.
+    --weight (str, default '1'):
+        ARD weight, more weight means less secondary fibres per voxel.
+    --burnin (str, default '1000'):
+        Burnin period.
+    --jumps (str, default '1250'):
+        Number of jumps.
+    --sample (str, default '25'):
+        Sample every.
+    --model (str, default '2'):
+        Deconvolution model:
+
+        - '1' ... with sticks,
+        - '2' ... with sticks with a range of diffusivities,
+        - '3' ... with zeppelins.
+
+    --rician (str, default 'yes'):
+        Replace the default Gaussian noise assumption with Rician noise
+        ('yes'/'no').
+    --gradnonlin (str, default detailed below):
+        Consider gradient nonlinearities ('yes'/'no'). By default set
+        automatically. Set to 'yes' if the file grad_dev.nii.gz is present, set
+        to 'no' if it is not.
+    --overwrite (str, default 'no'):
+        Delete prior run for a given session.
+    --scheduler (str):
+        A string for the cluster scheduler (LSF, PBS or SLURM) followed by
+        relevant options, e.g. for SLURM the string would look like this:
+        --scheduler='SLURM,jobname=<name_of_job>,
+        time=<job_duration>,ntasks=<numer_of_tasks>,
+        cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,
+        partition=<queue_to_send_job_to>'
+        Note: You need to specify a GPU-enabled queue or partition.
+
+Examples:
+    Run directly via::
+
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \\
+        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via::
+
+        qunex dwi_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler       A string for the cluster scheduler (LSF, PBS or SLURM)
+                      followed by relevant options
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>, \\
+        ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, \\
+        mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    ::
+
+        qunex dwi_bedpostx_gpu \\
+              --sessionsfolder='<path_to_study_sessions_folder>' \\
+              --sessions='<comma_separarated_list_of_cases>' \\
+              --fibers='3' \\
+              --burnin='3000' \\
+              --model='3' \\
+              --scheduler='<name_of_scheduler_and_options>' \\
+              --overwrite='yes'
+
+EOF
  exit 0
 }
 

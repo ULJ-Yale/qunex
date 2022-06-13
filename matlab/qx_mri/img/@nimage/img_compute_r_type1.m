@@ -8,7 +8,7 @@ function [B, Z] = img_compute_r_type1(obj, bdata, verbose)
 %   INPUTS
 %   =====
 %
-%	--obj     
+%    --obj
 %       nimage image object
 %   --bdata   
 %       Data matrix to compute linear regression with and estimate significances.

@@ -1,0 +1,8 @@
+numpy
+pydicom
+myst-parser
+sphinxcontrib-napoleon
+sphinxcontrib-matlabdomain
+sphinx-book-theme
+sphinx-copybutton
+sphinxext-opengraph

@@ -2,116 +2,125 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 
 %``function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``
 %
-%	Extracts and saves region timeseries defined by provided roiinfo file
+%   Extracts and saves region timeseries defined by provided roiinfo file
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A .list file, or a well strucutured string (see
+%           general_read_file_list).
+%       --roiinfo (str):
+%           A .names ROI definition file.
+%       --inmask (str, default ''):
+%           Per run mask information:
 %
-%	--flist     A .list file, or a well strucutured string (see general_read_file_list).
-%	--roiinfo   A .names ROI definition file.
-%   --inmask    Per run mask information, number of frames to skip or a vector 
-%               of frames to keep (1) and reject (0), or a string describing 
-%               which events to extract timeseries for and the frame offset at 
-%               start and end in format: 
-%               ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
-%	--targetf	The name for the file to save timeseries in.
-%   --options   A string defining which outputs to create ['m']:
+%           - number of frames to skip or
+%           - a vector of frames to keep (1) and reject (0) or
+%           - a string describing which events to extract timeseries for and the
+%             frame offset at start and end in format:
+%             ``('title1:event1,event2:2:2|title2:event3,event4:1:2')``.
 %
-%               - t - create a tab delimited text file,
-%               - m - create a matlab file
-
-%   --method    Method for extracting timeseries - 'mean', 'median', 'pca', 
-%               'all' ['mean'].
-%   --ignore    Do we omit frames to be ignored ['no']:
-%               - no:     do not ignore any additional frames
-%               - event:  ignore frames as marked in .fidl file
-%               - other:  the column in *_scrub.txt file that matches bold file 
-%               to be used for ignore mask
-%               - usevec: as specified in the use vector
-%   --rcodes    A list of region codes for which to extract the time-series [].
-%   --mcodes    A list of region codes from session's roi file to use for 
-%               masking if empty the specification from roiinfo will be used.
-%   --bmask     Should a BOLD brain mask be used to further mask the regions 
-%               used [false].
+%       --targetf (str):
+%           The name for the file to save timeseries in.
+%       --options (str, default 'm'):
+%           A string defining which outputs to create:
 %
-%   USE
-%   ===
+%           - t - create a tab delimited text file,
+%           - m - create a matlab file.
 %
-%   The function is used to extract ROI timeseries. What frames are extracted
-%   can be specified using an event string. If specified, it uses each
-%   session's .fidl file to extract only the specified event related frames.
-%   The string format is::
+%       --method (str, default 'mean'):
+%           Method for extracting timeseries - 'mean', 'median', 'pca' or 'all'.
+%       --ignore (str, default 'no'):
+%           Do we omit frames to be ignored:
 %
-%       <title>:<eventlist>:<frame offset1>:<frame offset2>
+%           - no     - do not ignore any additional frames
+%           - event  - ignore frames as marked in .fidl file
+%           - other  - the column in ∗_scrub.txt file that matches bold file
+%             to be used for ignore mask
+%           - usevec - as specified in the use vector.
 %
-%   and multiple extractions can be specified by separating them using the pipe
-%   '|' separator. Specifically, for each extraction, all the events listed in
-%   a comma-separated eventlist will be considered (e.g. 'task1,task2') and for
-%   each event all the frames starting from event start + offset1 to event end
-%   + offset2 will be extracted and concatenated into a single timeseries. Do
-%   note that the extracted frames depend on the length of the event specified
-%   in the .fidl file!
+%       --rcodes (str | vector | cell array, default []):
+%           A list of region codes for which to extract the time-series.
+%       --mcodes (str | vector | cell array, default specification from roiinfo):
+%           A list of region codes from session's roi file to use for masking if
+%           empty the specification from roiinfo will be used.
+%       --bmask (bool, default false):
+%           Should a BOLD brain mask be used to further mask the regions used.
 %
-%   The extracted timeseries can be saved either in a matlab file with structure:
+%   Notes:
+%       The function is used to extract ROI timeseries. What frames are
+%       extracted can be specified using an event string. If specified, it uses
+%       each session's .fidl file to extract only the specified event related
+%       frames.
 %
-%   data.roinames
-%       cell array of ROI names
+%       The string format is::
 %
-%   data.roicodes1
-%       array of group ROI codes
+%           <title>:<eventlist>:<frame offset1>:<frame offset2>
 %
-%   data.roicodes2
-%       array of session specific ROI codes
+%       and multiple extractions can be specified by separating them using the
+%       pipe '|' separator. Specifically, for each extraction, all the events
+%       listed in a comma-separated eventlist will be considered (e.g.
+%       'task1,task2') and for each event all the frames starting from event
+%       start + offset1 to event end + offset2 will be extracted and
+%       concatenated into a single timeseries. Do note that the extracted frames
+%       depend on the length of the event specified in the .fidl file!
 %
-%   data.sessions
-%       cell array of session codes
+%       The extracted timeseries can be saved either in a matlab file with
+%       structure:
 %
-%   data.n_roi_vox
-%       cell array of number voxels for each ROI
+%       data.roinames
+%           cell array of ROI names
 %
-%   data.datasets
-%       cell array of titles for each of the dataset
+%       data.roicodes1
+%           array of group ROI codes
 %
-%   data.<title>.timeseries
-%       cell array of extracted timeseries
+%       data.roicodes2
+%           array of session specific ROI codes
 %
-%   data.<title>.usevec
-%       cell array of vectors of frames to use (i.e. not discarded after 
-%       movement scrubbing)
+%       data.sessions
+%           cell array of session codes
 %
-%   data.<title>.runframes
-%       cell array of vectors with number of frames for each concatenated run
+%       data.n_roi_vox
+%           cell array of number voxels for each ROI
 %
-%   or in a tab separated text file in which data for each frame of each session
-%   is in its own line, the first column is the session code, the second the
-%   dataset title, the third the frame number and the following columns are for
-%   each of the specified ROI. The ROI are listed in the header.
+%       data.datasets
+%           cell array of titles for each of the dataset
 %
-%   ROI definition
-%   --------------
+%       data.<title>.timeseries
+%           cell array of extracted timeseries
 %
-%   The basic definition of ROI to use is taken from roiinfo. Additional masking
-%   is done using session specific ROI files as listed in the .list file. With
-%   large number of regions, masking can time consuming. If the same mask is
-%   used for all the ROI specified in the roiinfo file (e.g. gray matter) then
-%   it is possible to specify the relevant session specific mask codes using
-%   the mcodes paramater. In this case the session specific part of the roiinfo
-%   will be ignored and replaced by mcodes.
+%       data.<title>.usevec
+%           cell array of vectors of frames to use (i.e. not discarded after
+%           movement scrubbing)
 %
-%   It is also possible to use
+%       data.<title>.runframes
+%           cell array of vectors with number of frames for each concatenated run
 %
-%   EXAMPLE USE
-%   ===========
+%       or in a tab separated text file in which data for each frame of each
+%       session is in its own line, the first column is the session code, the
+%       second the dataset title, the third the frame number and the following
+%       columns are for each of the specified ROI. The ROI are listed in the
+%       header.
 %
-%   Resting state data::
+%       ROI definition:
+%           The basic definition of ROI to use is taken from roiinfo. Additional
+%           masking is done using session specific ROI files as listed in the
+%           .list file. With large number of regions, masking can time
+%           consuming. If the same mask is used for all the ROI specified in the
+%           roiinfo file (e.g. gray matter) then it is possible to specify the
+%           relevant session specific mask codes using the mcodes paramater. In
+%           this case the session specific part of the roiinfo will be ignored
+%           and replaced by mcodes.
 %
-%       fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 0, ...
-%       'con-ccnet', 'mt', 'mean', 'udvarsme');
+%   Examples:
+%       Resting state data::
 %
-%   Event data::
+%           fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 0, ...
+%               'con-ccnet', 'mt', 'mean', 'udvarsme');
 %
-%       fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 'inc:3:4', ...
-%       'con-ccnet-inc', 'm', 'pca', 'event');
+%       Event data::
+%
+%           fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 'inc:3:4', ...
+%               'con-ccnet-inc', 'm', 'pca', 'event');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

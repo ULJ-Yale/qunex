@@ -1,28 +1,28 @@
 function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)
 
 %``function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)``
-%	
+%
 %   Computes correlations between given images and provided data
 %   and outputs resulting images per each behavioral variable.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --imgfile (str):
+%           Path to data in either a single multi volume file or a conc file.
+%       --datafile (str):
+%           Path to a tab, space or comma delimited text file with a header line
+%           and one column per variable.
+%       --target (str, default 'r'):
+%           A string specifying the results to compute separated by comma
+%           or space:
 %
-%   --imgfile   data in either a single multi volume file or a conc file
-%   --datafile  a tab, space or comma delimited text file with a header line and 
-%               one column per variable
-%   --target    a string specifying the results to compute separated by comma 
-%               or space ['r']
-%
-%               'r'
-%                   compute independent correlations for each behavioral 
-%                   variable
-%               't1' 
-%                   compute multiple regression (GLM) and report Type I SS based 
-%                   results
-%               't3' 
-%                   compute multiple regression (GLM) and report Type III SS 
-%                   based results
+%           - 'r'
+%               compute independent correlations for each behavioral variable
+%           - 't1'
+%               compute multiple regression (GLM) and report Type I SS based
+%               results
+%           - 't3'
+%               compute multiple regression (GLM) and report Type III SS based
+%               results.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

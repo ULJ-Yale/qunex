@@ -5,22 +5,22 @@ function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)
 %   Does 3D gaussian smoothing of the gmri image.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%   --img     	A nimage object with data in volume representation.
-%   --fwhm    	Full Width at Half Maximum in voxels
-%   --verbose 	Whether to report the progress. [false]
-%   --ftype   	Type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
-%   --ksize   	Size of the smoothing kernel. [7]
+%   --img         A nimage object with data in volume representation.
+%   --fwhm        Full Width at Half Maximum in voxels
+%   --verbose     Whether to report the progress. [false]
+%   --ftype       Type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
+%   --ksize       Size of the smoothing kernel. [7]
 %
 %   OUTPUT
-%	======
+%    ======
 %
 %   img
-%		Image with data smoothed.
+%        Image with data smoothed.
 %
 %   USE
-%	===
+%    ===
 %
 %   The method enables smoothing of (isometric) volume MR data. The smoothing is
 %   specified in voxels. The default smoothing kernel is 'gaussian' with kernel
@@ -32,11 +32,11 @@ function img = img_smooth_3d(img, fwhm, verbose, ftype, ksize)
 %   `<https://github.com/VincentToups/matlab-utils/tree/master/chronux/spikesort/utility>`_
 %
 %   EXAMPLE
-%	=======
+%    =======
 %
-%	::
+%    ::
 %
-%   	smooth = img.img_smooth_3d(3, true);
+%       smooth = img.img_smooth_3d(3, true);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -55,7 +55,7 @@ data = single(img.data);
 
 if verbose, fprintf('Smoothing frame     ');, end
 for n = 1:img.frames
-	if verbose, fprintf('\b\b\b\b%4d',n);, end
+    if verbose, fprintf('\b\b\b\b%4d',n);, end
     if exist('smooth3f')
         data(:,:,:,n) = smooth3f(data(:,:,:,n), ftype, ksize, ksd);
     else

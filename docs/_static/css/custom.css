@@ -1,0 +1,77 @@
+:root {
+    --pst-font-size-h2: 28px !important;
+    --pst-font-size-h3: 22px !important;
+    --pst-font-size-h4: 18px !important;
+    --pst-font-size-h5: 17px !important;
+}
+
+#site-navigation {
+    width: 300px !important;
+}
+
+#site-navigation .bd-sidebar__bottom {
+    margin-bottom: calc(2em + 142px) !important; /* default + .heading height */
+}
+
+.navbar-brand-box {
+    display: none !important;
+}
+
+.sig{
+    display: none !important;
+}
+
+.heading-style, h1, h2, h3, h4, h5, h6 {
+    margin-top: 2rem !important;
+}
+
+#main-content p a,
+/* not sure about h1 to h4 */
+/*
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+*/
+.prev-next-title,
+.toctree-wrapper.compound a /* not sure about this one (used in List of commands) */
+{
+    color: #ff6600 !important;
+}
+
+.toc-entry>.nav-link.active {
+    color: rgba(var(--pst-color-link),1) !important;
+    border-left: 2px solid rgba(var(--pst-color-link),1) !important;
+}
+
+.content-container h1,
+.content-container h2,
+.content-container h3,
+.content-container h4,
+.content-container h5,
+main code,
+.sig-name,
+.fas {
+    color: #0F4D92 !important;
+}
+
+.caption a {
+    color: rgba(var(--pst-color-sidebar-caption),1);
+}
+
+.caption a:hover,
+.caption a.active{
+    color: rgba(var(--pst-color-link),1);
+    background-color: transparent;
+    text-decoration: none;
+}
+
+.paragraph-with-image {
+    text-align: center;
+}
+
+.paragraph-with-image img {
+    display: table;
+    margin-left: auto;
+    margin-right: auto;
+}

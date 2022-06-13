@@ -1,27 +1,26 @@
 function [ts, er, dr] = simulate_generate_correlated_timeseries(r, len, md)
 
 %``function [ts, er, dr] = simulate_generate_correlated_timeseries(r, len, md)``
-%	
-%   Function that generates multi normal timeseries with specified correlations.
+%    
+%   Function that generates multi normal timeseries with specified
+%   correlations.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --r (matrix):
+%           Correlation matrix.
+%       --len (int):
+%           Desired timeseries length.
+%       --md (float, default []):
+%           Maximal allowed difference between desired and actual
+%           correlation.
 %
-%   --r     correlation matrix
-%   --l     desired timeseries length
-%   --md    maximal allowed difference between desired and actual correlation
-%
-%   OUTPUT
-%   ======
-%
-%   ts
-%       generated timeseries
-%
-%   r
-%       actual correlations
-%
-%   dr
-%       maximal difference between desired and actual correlation
+%   Returns:
+%       ts
+%           Generated timeseries.
+%       r
+%           Actual correlations.
+%       dr
+%           Maximal difference between desired and actual correlation.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -68,4 +67,3 @@ if nargout > 1 & ~er
         dr = max(abs(changeform(er) - changeform(r)));
     end
 end
-

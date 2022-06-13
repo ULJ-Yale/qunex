@@ -2,7 +2,7 @@ function [img] = img_embed_stats(img)
 
 %``function [img] = img_embed_stats(img)``
 %
-%	Embeds the extra data on image signal, movement statistics, and frame use.
+%    Embeds the extra data on image signal, movement statistics, and frame use.
 %
 %   INPUT
 %   =====

@@ -2,13 +2,13 @@ function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes,
 
 %``function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)``
 %
-%	Computes GBC averages for each specified ROI for n bands defined as distance 
+%    Computes GBC averages for each specified ROI for n bands defined as distance
 %   from ROI.
 %
 %   INPUTS
 %   ======
 %
-%	--obj         image
+%    --obj         image
 %   --command     string describing GBC to compute (pipe separated)
 %
 %                 mFz:t
@@ -54,11 +54,11 @@ function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes,
 %   USE
 %   ===
 %
-%   The method takes each specified ROI—specified with roi and rcodes paramtes.
-%   It extracts its representative timecourse using the specified method (mean /
-%   pca / threshold / maxn / weighted), and then computes its GBC (using the
-%   specified GBC method) with each of the bands of voxels specified by distance
-%   from the ROI center mass.
+%   The method takes each specified ROI—specified with roi and rcodes
+%   parameters. It extracts its representative timecourse using the specified
+%   method (mean / pca / threshold / maxn / weighted), and then computes its GBC
+%   (using the specified GBC method) with each of the bands of voxels specified
+%   by distance from the ROI center mass.
 %
 %   For instance the following call::
 %
@@ -367,7 +367,7 @@ end
 %       - nvox : the number of voxels in the mask (necessary to compute bands for prange)
 %
 %   Output
-%       - out  : vector of structure with fieldsČ
+%       - out  : vector of structure with fields
 %                - command      ... type of GBC to run
 %                - parameter    ... threshold or limits to be used
 %                - volumes      ... how many volumes the results will span

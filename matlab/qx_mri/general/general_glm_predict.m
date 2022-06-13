@@ -4,115 +4,115 @@
 
 function [] = general_glm_predict(flist, effects, targetf, options)
 
-%function [] = general_glm_predict(flist, effects, targetf, options)
+%``function [] = general_glm_predict(flist, effects, targetf, options)``
 %
 %   Computes predicted and residual signal based on GLM.
 %
-%   INPUTS
-%   ======
+%   The function is based on the provided GLM file and (optionally) raw bold
+%   data.
 %
-%   --flist     Either a .list file listing the subjects and their files to use, 
-%               or a well strucutured file list string 
-%               (see `general_read_file_list`). The information should include
-%               at least `glm:` entries for each session, as well as raw bold or
-%               conc files if residuals are requested. 
+%   Parameters:
+%       --flist (str):
+%           Either a .list file listing the subjects and their files to use, or
+%           a well strucutured file list string (see `general_read_file_list`).
+%           The information should include at least `glm:` entries for each
+%           session, as well as raw bold or conc files if residuals are
+%           requested.
 %
-%   --effects   Either a cell array or a comma separated string listing the 
-%               names of the effects that should be included in the prediction.
+%       --effects (cell array | str):
+%           Either a cell array or a comma separated string listing the names of
+%           the effects that should be included in the prediction.
 %
-%   --targetf   The folder to save images in ['.']. It has to specify either a
-%               target folder for all processed data or the location of session 
-%               functional images folder.
+%       --targetf (str, default '.'):
+%           The folder to save images in. It has to specify either a
+%           target folder for all processed data or the location of session
+%           functional images folder.
 %
-%   --options   A string specifying additional analysis options formated as pipe 
-%               separated pairs of colon separated key, value pairs: 
+%       --options (str, 'default predicted_tail=|residual_tail=|save=|ignore=use,fidl|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high'):
+%           A string specifying additional analysis options formated as pipe
+%           separated pairs of colon separated key, value pairs::
+%
 %               "<key>:<value>|<key>:<value>".
 %
-%               It takes the following keys and values:
+%           It takes the following keys and values:
 %
-%               predicted_tail 
-%                   The tail to use for the predicted data. If no tail is 
-%                   provided, a '_pred-<effects abbreviation> tail will be added
-%                   to the glm file name. <effects abbreviation> will be the 
-%                   first letters of all the predicted regressors. ['']
+%           predicted_tail
+%               The tail to use for the predicted data. If no tail is provided,
+%               a '_pred-<effects abbreviation> tail will be added to the glm
+%               file name. <effects abbreviation> will be the first letters of
+%               all the predicted regressors. ['']
 %
-%               residual_tail
-%                   The tail to use for the residual data. If no tail is 
-%                   provided a '_res-<effects abbreviation> tail will be added 
-%                   to each of the source BOLD files. <effects abbreviation> 
-%                   will be the first letters of all the predicted regressors. ['']
+%           residual_tail
+%               The tail to use for the residual data. If no tail is provided, a
+%               '_res-<effects abbreviation> tail will be added to each of the
+%               source BOLD files. <effects abbreviation> will be the first
+%               letters of all the predicted regressors. ['']
 %
-%               save
-%                   A comma separated string, listing the files to save:
+%           save
+%               A comma separated string, listing the files to save ['']:
 %
-%                   predicted
-%                       save predicted bold timeseries
-%                   residual   
-%                       save residual bold timeseries
-%                   ['']
+%               predicted
+%                   save predicted bold timeseries
+%               residual
+%                   save residual bold timeseries
 %
-%               ignore
-%                   A comma separated list of information to identify frames to 
-%                   ignore, options are ['use,fidl']:
+%           ignore
+%               A comma separated list of information to identify frames to
+%               ignore, options are ['use,fidl']:
 %
-%                   use      
-%                       ignore frames as marked in the use field of the bold file
-%                   fidl     
-%                       ignore frames as marked in .fidl file
-%                   <column> 
-%                       the column name in *_scrub.txt file that matches bold file 
-%                       to be used for ignore mask
+%               use
+%                   ignore frames as marked in the use field of the bold file
+%               fidl
+%                   ignore frames as marked in .fidl file
+%               <column>
+%                   the column name in ∗_scrub.txt file that matches bold file
+%                   to be used for ignore mask
 %
-%               indtargetf 
-%                   In case of group level extraction, where to save the 
-%                   individual data ['sfolder']:
+%           indtargetf
+%               In case of group level extraction, where to save the individual
+%               data ['sfolder']:
 %
-%                   gfolder
-%                       in the group target folder
-%                   sfolder
-%                       in the individual session folder
+%               gfolder
+%                   in the group target folder
+%               sfolder
+%                   in the individual session folder
 %
-%               bold_variant
-%                   An optional string that specifies the tail be added to the 
-%                   session specific 'functional' subfolder if one is used. The
-%                   target location will then be:
-%                   <targetf>/<subjectid>/images/functional<bold_variant>
-%                   ['']
+%           bold_variant
+%               An optional string that specifies the tail be added to the
+%               session specific 'functional' subfolder if one is used. The
+%               target location will then be:
+%               <targetf>/<subjectid>/images/functional<bold_variant>
+%               ['']
 %
-%               addidtofile
-%                   When running single session extraction or when saving to the
-%                   individual session functional images folder, whether to add 
-%                   subjectid to the single session filename, if one is provided 
-%                   ['false'].
+%           addidtofile
+%               When running single session extraction or when saving to the
+%               individual session functional images folder, whether to add
+%               subjectid to the single session filename, if one is provided
+%               ['false'].
 %
-%               verbose
-%                   Whether to be verbose 'true' or not 'false', when running the 
-%                   analysis ['true']
+%           verbose
+%               Whether to be verbose 'true' or not 'false', when running the
+%               analysis ['true']
 %
-%               verboselevel
-%                   Whether to be very detailed 'high' or not 'low', when 
-%                   reporting progress ['high']
-%   RESULTS
-%   =======
+%           verboselevel
+%               Whether to be very detailed 'high' or not 'low', when reporting
+%               progress ['high']
 %
-%   The function based on the provided GLM file and (optionally) raw bold data
-%   The functions computes predicted timeseries and (if requested) residual 
-%   after removal of the predicted signal, and saves the results.
+%   Output files:
+%       If `indtargetf` is set to 'gfolder', all the resulting files will be
+%       saved in the same folder, specified by `targetf` parameter. If
+%       `indtargetf` is set to 'sfolder', then the results will be saved in
+%       the subject specific sessions subfolders within the sessions folder
+%       specified by the `targetf` parameter. If the files are in a variant
+%       functional folder, then the 'bold_variant' option has to be
+%       specified. In this case the location where the files will be saved
+%       is specified by::
 %
-%   Location of saved files
-%   If `indtargetf` is set to 'gfolder', all the resulting files will be saved
-%   in the same folder, specified by `targetf` parameter. If `indtargetf` is 
-%   set to 'sfolder', then the results will be saved in the subject specific
-%   sessions subfolders within the sessions folder specified by the `targetf`
-%   parameter. If the files are in a variant functional folder, then the
-%   'bold_variant' option has to be specified. In this case the location where
-%   the files will be saved is specified by:
+%           <targetf>/<session id>/images/functional<bold_variant>
 %
-%   <targetf>/<session id>/images/functional<bold_variant>
-%
-%   USE
-%   ===
-% 
+%   Notes:
+%       The functions computes predicted timeseries and (if requested) residual
+%       after removal of the predicted signal, and saves the results.
 %
 
 if nargin < 4 || isempty(options), options = '';  end

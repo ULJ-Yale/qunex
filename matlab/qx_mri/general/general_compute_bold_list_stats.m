@@ -2,36 +2,40 @@ function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbo
 
 %``function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)``
 %
-%	Computes BOLD run per frame statistics and scrubbing information for a list 
+%   Computes BOLD run per frame statistics and scrubbing information for a list
 %   of sessions.
 %
-%   INPUTS
-%   ======
-%   --flist     A list text file providing a list of sessions' image or conc 
-%               files:
-%               
-%               - session id:<session_id>
-%               - roi:<path to the individual's brain segmentation file>
-%               - file:<path to a bold file - one bold file per line>
-%   --target    A folder to save results into, default: where bold image is,
-%              'none': do not save the results in an external file [''].
-%   --store     A string specifying how to store the data ['']:
+%   Parameters:
+%       --flist (str):
+%           Path to a list text file providing a list of sessions' image or conc
+%           files:
 %
-%               - 'same': in the same file,
-%               - '<ext>': new file with extension,
-%               - '': no img file
+%           - session id:<session_id>
+%           - roi:<path to the individual's brain segmentation file>
+%           - file:<path to a bold file - one bold file per line>.
 %
-%   --scrub     A string specifying whether and how to compute scrubbing
-%               information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' []
-%	--verbose	Whether to report on progress or not [false].
+%       --target (str, default []):
+%           Path to the folder to save results into. By default this location is
+%           set to where bold image is. If 'none' is used, the results are not
+%           saved in an external file.
+%       --store (str, default []):
+%           Specifies how to store the data:
 %
-%   USE
-%   ===
+%           - 'same': in the same file,
+%           - '<ext>': new file with extension,
+%           - '': no img file.
 %
-%   The function calls general_compute_bold_stats on each of the bolds for each of the
-%   sessions specified in the list file. Please see general_compute_bold_stats for
-%   more detailed information. If arguments are left empty, the defaults in
-%   general_compute_bold_stats will be used.
+%       --scrub (str, default []):
+%           Specifies whether and how to compute scrubbing
+%           information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme'.
+%        --verbose (bool, default false):
+%           Whether to report on progress or not.
+%
+%   Notes:
+%       The function calls general_compute_bold_stats on each of the bolds for
+%       each of the sessions specified in the list file. Please see
+%       general_compute_bold_stats for more detailed information. If arguments
+%       are left empty, the defaults in general_compute_bold_stats will be used.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -75,7 +79,7 @@ for s = 1:nsessions
     end
 
     nfiles = length(session(s).files);
-	for n = 1:nfiles
+    for n = 1:nfiles
         general_compute_bold_stats(session(s).files{n}, mask, target, store, scrub, verbose);
 
     end

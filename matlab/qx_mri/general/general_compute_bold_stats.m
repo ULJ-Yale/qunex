@@ -1,82 +1,81 @@
-function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbose);
+function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbose)
 
 %``function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbose)``
 %
 %   Computes BOLD run per frame statistics and scrubbing information.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --img (str | matrix | cell | nimage):
+%           An nimage object or a path to a BOLD file to process.
+%       --mask (str | matrix | cell | nimage):
+%           An nimage object or a path to a mask file to use.
+%       --target (str, default []):
+%           A folder to save results into:
 %
-%   --img      An nimage object or a path to a BOLD file to process.
-%   --mask     An nimage object or a path to a mask file to use.
-%   --target   A folder to save results into ['']:
+%           - []: where bold image is,
+%           - 'none': do not save results in an external file.
 %
-%              - '': where bold image is,
-%              - 'none': do not save results in an external file
+%       --store (str, default []):
+%           Whether to store the data in the image file:
 %
-%   --store    Whether to store the data in the image file ['']:
+%           - 'same': in the same file,
+%           - '<ext>': in a new file with extension <ext>,
+%           - []: do not save information in an image file.
 %
-%              - 'same': in the same file,
-%              - '<ext>': in a new file with extension <ext>,
-%              - '': do not save information in an image file
+%       --scrub (str, default 'none'):
+%           A string describing whether and how to compute scrubbing
+%           information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or 'none' for
+%           no scrubbing (see img_compute_scrub_nimage method for more
+%           information).
+%       --verbose (bool, default false):
+%            To report the progress or not.
 %
-%   --scrub    A string describing whether and how to compute scrubbing
-%              information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or
-%              'none' for no scrubbing (see img_compute_scrub nimage
-%              method for more information.
-%   --verbose  To report the progress or not [false].
+%   Notes:
+%       The function is used to compute and save per frame statistics to be used
+%       for bad frames scrubbing. It also initiates computation of scrubbing
+%       information if a scrubbing string is present.
 %
-%   USE
-%   ===
+%       The function identifies relevant brain voxels in two manners. First, it
+%       identifies voxels with intensity higher than 300 on the first BOLD
+%       frame. If there are more than 20000 valid voxels, it then select those
+%       for which the intensity is always above the specified threshold and
+%       selects those for computation of image statistics.
 %
-%   The function is used to compute and save per frame statistics to be used for
-%   bad frames scrubbing. It also initiates computation of scrubbing information
-%   if a scrubbing string is present.
+%       Second, if the first method fails (e.g. in the case when images were
+%       demeaned), it identifies all the voxels for which the variance across
+%       the frames is more than 0.
 %
-%   The function identifies relevant brain voxels in two manners. First, it
-%   identifies voxels with intensity higher than 300 on the first BOLD frame. If
-%   there are more than 20000 valid voxels, it then select those for which the
-%   intensity is allways above the specified threshold and selects those for
-%   computation of image statistics.
+%       After the voxels were identified, the image is additionally masked if a
+%       mask was specified, and the statistics are computed using img_stats_time
+%       nimage method.
 %
-%   Second, if the first method fails (e.g. in the case when images were
-%   demeaned), it identifies all the voxels for which the variance across the
-%   frames is more than 0.
+%       If scrub is not set to 'none', scrubbing information is also computed by
+%       calling img_compute_scrub nimage method.
 %
-%   After the voxels were identified, the image is additionally masked if a
-%   mask was specified, and the statistics are computed using img_stats_time
-%   nimage method.
+%       The results can then be saved either by embedding them into the volume
+%       image (specified in the store parameter) or by saving them in separate
+%       files in the specified target folder using .bstats extension for bold
+%       statistics, .scrub extension for scrubbing information and .use
+%       extension for information, which frame to use.
 %
-%   If scrub is not set to 'none', scrubbing information is also computed by
-%   calling img_compute_scrub nimage method.
+%   Warning:
+%       Saving data by embedding in a volume file is currently disabled.
 %
-%   The results can then be saved either by embedding them into the volume
-%   image (specified in the store parameter) or by saving them in separate
-%   files in the specified target folder using .bstats extension for bold
-%   statistics, .scrub extension for scrubbing information and .use extension
-%   for information, which frame to use.
+%   Examples:
+%       ::
 %
-%   NOTICE
-%   ======
-%   Saving data by embedding in a volume file is currently disabled.
-%
-%   EXAMPLE USE
-%   ===========
-%   
-%   ::
-%
-%       general_compute_bold_stats('bold1.nii.gz', [], 'movement', '', '', true);
+%           general_compute_bold_stats('bold1.nii.gz', [], 'movement', '', '', true);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 6, verbose = false; end
-if nargin < 5, scrub   = [];    end
-if nargin < 4, store   = [];    end
-if nargin < 3, target  = [];    end
-if nargin < 2, mask    = [];    end
+if nargin < 6, verbose = false;  end
+if nargin < 5, scrub   = 'none'; end
+if nargin < 4, store   = [];     end
+if nargin < 3, target  = [];     end
+if nargin < 2, mask    = [];     end
 
 brainthreshold = 300;
 minbrainvoxels = 20000;

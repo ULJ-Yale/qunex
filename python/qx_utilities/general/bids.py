@@ -179,186 +179,175 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
     
     Maps a BIDS dataset to the QuNex Suite file structure.
 
-    INPUTS
-    ======
+    Parameters:
+        --sessionsfolder (str, default '.'):
+            The sessions folder where all the sessions are to be mapped to. It
+            should be a folder within the <study folder>.
+        --inbox (str, default <sessionsfolder>/inbox/BIDS):
+            The location of the BIDS dataset. It can be any of the following:
+            the BIDS dataset top folder, a folder that contains the BIDS
+            dataset, a path to the compressed `.zip` or `.tar.gz` package that
+            can contain a single session or a multi-session dataset, or a
+            folder that contains a compressed package. For instance the user
+            can specify "<path>/<bids_file>.zip" or "<path>" to a folder that
+            contains multiple packages. The default location where the command
+            will look for a BIDS dataset is.
+        --sessions (str, default ):
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Glob patterns
+            can be used. If provided, only packets or folders within the inbox
+            that match the list of sessions will be processed. If `inbox` is a
+            file `sessions` has to be a list of session specifications, only
+            those sessions that match the list will be processed. If `inbox` is
+            a valid bids datastructure folder or archive, then the sessions can
+            be specified either in `<subject id>[_<session name>]` format or as
+            explicit `sub-<subject id>[/ses-<session name>]` names.
+        --action (str, default 'link'):
+            How to map the files to QuNex structure.
+            These are the options:
 
-    --sessionsfolder      The sessions folder where all the sessions are to be 
-                          mapped to. It should be a folder within the 
-                          <study folder>. [.]
+            - 'link' ... the files will be mapped by creating hard
+              links if possible, otherwise they will be copied
+            - 'copy' ... the files will be copied
+            - 'move' ... the files will be moved.
 
-    --inbox               The location of the BIDS dataset. It can be any of the
-                          following: the BIDS dataset top folder, a folder that 
-                          contains the BIDS dataset, a path to the compressed 
-                          `.zip` or `.tar.gz` package that can contain a single 
-                          session or a multi-session dataset, or a folder that 
-                          contains a compressed package. For instance the user 
-                          can specify "<path>/<bids_file>.zip" or "<path>" to
-                          a folder that contains multiple packages. The default 
-                          location where the command will look for a BIDS 
-                          dataset is [<sessionsfolder>/inbox/BIDS].
+        --overwrite (str, default 'no'):
+            The parameter specifies what should be done with data that already
+            exists in the locations to which bids data would be mapped to.
+            Options are:
 
-    --sessions            An optional parameter that specifies a comma or pipe
-                          separated list of sessions from the inbox folder to be 
-                          processed. Glob patterns can be used. If provided, 
-                          only packets or folders within the inbox that match 
-                          the list of sessions will be processed. If `inbox` is 
-                          a file `sessions` has to be a list of session 
-                          specifications, only those sessions that match the 
-                          list will be processed. If `inbox` is a valid bids 
-                          datastructure folder or archive, then the sessions can
-                          be specified either in `<subject id>[_<session name>]`
-                          format or as explicit 
-                          `sub-<subject id>[/ses-<session name>]` names.
+            - 'no'  ... do not overwrite the data and skip processing of the
+              session
+            - 'yes' ... remove existing files in `nii` folder and redo the
+              mapping.
 
-    --action              How to map the files to QuNex structure. ['link']
-                          These are the options:
-                        
-                          - link (the files will be mapped by creating hard 
-                            links if possible, otherwise they will be copied)
-                          - copy (the files will be copied)       
-                          - move (the files will be moved)
+        --archive (str, default 'move'):
+            What to do with the files after they were mapped.
+            Options are:
 
-    --overwrite           The parameter specifies what should be done with 
-                          data that already exists in the locations to which 
-                          bids data would be mapped to. ['no'] Options are:
+            - 'leave'  ... leave the specified archive where it is
+            - 'move'   ... move the specified archive to
+              `<sessionsfolder>/archive/BIDS`
+            - 'copy'   ... copy the specified archive to
+              `<sessionsfolder>/archive/BIDS`
+            - 'delete' ... delete the archive after processing if no
+              errors were identified.
 
-                          - no (do not overwrite the data and skip processing of
-                            the session)
-                          - yes (remove existing files in `nii` folder and redo 
-                            the mapping)
+            Please note that there can be an interaction with the `action`
+            parameter. If files are moved during action, they will be missing
+            if `archive` is set to 'move' or 'copy'.
+        --bidsname (str, default detailed below):
+            The optional name of the BIDS dataset. If not provided it will be
+            set to the name of the inbox folder or the name of the compressed
+            package.
+        --fileinfo (str, default 'short'):
+            What file information to include in the session.txt file. Options
+            are:
 
-    --archive             What to do with the files after they were mapped. 
-                          ['move'] Options are:
+            - 'short' ... only provide the short description based on
+              the identified BIDS tags
+            - 'full' ... list the full file name excluding the
+              participant id, session name and extension.
 
-                          - leave (leave the specified archive where it is)
-                          - move (move the specified archive to 
-                            `<sessionsfolder>/archive/BIDS)`
-                          - copy (copy the specified archive to 
-                            `<sessionsfolder>/archive/BIDS)`
-                          - delete (delete the archive after processing if no 
-                            errors were identified)
+    Output files:
+        After running the `import_bids` command the BIDS dataset will be
+        mapped to the QuNex folder structure and image files will be
+        prepared for further processing along with required metadata.
 
-                         Please note that there can be an interaction with the 
-                         `action` parameter. If files are moved during action, 
-                         they will be missing if `archive` is set to 'move' or 
-                         'copy'.
+        Files pertaining to the study and not specific subject / session are
+        stored in::
 
-    --bidsname           The optional name of the BIDS dataset. If not provided
-                         it will be set to the name of the inbox folder or the 
-                         name of the compressed package.
+            <study folder>/info/bids/<bids bame>
 
-    --fileinfo           What file information to include in the session.txt 
-                         file. Options are:
-                        
-                         - short (only provide the short description based on 
-                           the identified BIDS tags)
-                         - full (list the full file name excluding the 
-                           participant id, session name and extension)
+        The original BIDS session-level data is stored in::
 
-    OUTPUTS
-    =======
+            <sessionsfolder>/<session>/bids
 
-    After running the `import_bids` command the BIDS dataset will be mapped 
-    to the QuNex folder structure and image files will be prepared for further
-    processing along with required metadata.
+        Image files mapped to new names for QuNex are stored in::
 
-    Files pertaining to the study and not specific subject / session are
-    stored in::
+            <sessionsfolder>/<session>/nii
 
-        <study folder>/info/bids/<bids bame>
-    
-    The original BIDS session-level data is stored in::
+        The full description of the mapped files is in::
 
-        <sessionsfolder>/<session>/bids
+            <sessionsfolder>/<session>/session.txt
 
-    Image files mapped to new names for QuNex are stored in::
+        The output log of BIDS mapping is in::
 
-        <sessionsfolder>/<session>/nii
+            <sessionsfolder>/<session>/bids/bids2nii.log
 
-    The full description of the mapped files is in::
+        The study-level BIDS files are in::
 
-        <sessionsfolder>/<session>/session.txt
+            <study_folder>/<info>/bids/<bidsname>
 
-    The output log of BIDS mapping is in::
+    Notes:
+        The import_bids command consists of two steps:
 
-        <sessionsfolder>/<session>/bids/bids2nii.log
+        Step 1 - Mapping BIDS dataset to QuNex Suite folder structure:
+            The `inbox` parameter specifies the location of the BIDS
+            dataset. This path is inspected for a BIDS compliant dataset.
+            The path can point to a folder with extracted BIDS dataset, a
+            `.zip` or `.tar.gz` archive or a folder containing one or more
+            `.zip` or `.tar.gz` archives. In the initial step, each file
+            found will be assigned either to a specific session or the
+            overall study.
 
-    The study-level BIDS files are in::
+            The BIDS files assigned to the study will be saved in the
+            following location::
 
-        <study_folder>/<info>/bids/<bidsname>
+                <study_folder>/info/bids/<bids_dataset_name>
 
-    USE
-    ===
-    
-    The import_bids command consists of two steps:
-    
-    Step 1 - Mapping BIDS dataset to QuNex Suite folder structure
-    --------------------------------------------------------------
-    
-    The `inbox` parameter specifies the location of the BIDS dataset. This path 
-    is inspected for a BIDS compliant dataset. The path can point to a folder 
-    with extracted BIDS dataset, a `.zip` or `.tar.gz` archive or a folder 
-    containing one or more `.zip` or `.tar.gz` archives. In the initial step, 
-    each file found will be assigned either to a specific session or the 
-    overall study. 
+            <bids_dataset_name> can be provided as a `bidsname` parameter to
+            the command call. If `bidsname` is not provided, the name will
+            be set to the name of the parent folder or the name of the
+            compressed archive.
 
-    The BIDS files assigned to the study will be saved in the following 
-    location::
+            The files identified as belonging to a specific session will be
+            mapped to folder::
 
-        <study_folder>/info/bids/<bids_dataset_name>
+                <sessions_folder>/<subject>_<session>/bids
 
-    <bids_dataset_name> can be provided as a `bidsname` parameter to the command
-    call. If `bidsname` is not provided, the name will be set to the name of the 
-    parent folder or the name of the compressed archive.
+            The `<subject>_<session>` string will be used as the identifier
+            for the session in all the following steps. If no session is
+            specified in BIDS, `session` will be the same as `subject`. If
+            the folder for the `session` does not exist, it will be
+            created.
 
-    The files identified as belonging to a specific session will be mapped to 
-    folder::
-    
-        <sessions_folder>/<subject>_<session>/bids
+            When the files are mapped, their filenames will be preserved and
+            the correct folder structure will be reconstructed if it was
+            previously flattened.
 
-    The `<subject>_<session>` string will be used as the identifier for the 
-    session in all the following steps. If no session is specified in BIDS,
-    `session` will be the same as `subject`. If the folder for the `session` 
-    does not exist, it will be created.
-    
-    When the files are mapped, their filenames will be preserved and the correct
-    folder structure will be reconstructed if it was previously flattened.
+            Behavioral data:
+                In this step the subject specific and behavioral data that
+                is present in `<bids_study>/participants.tsv` and
+                `phenotype/*.tsv` files, will be parsed and split so that
+                data belonging to a specific participant will be mapped to
+                that participant's sessions 'behavior' folder (e.g. `<QuNex
+                study folder>/sessions/s14_01/behavior/masq01.tsv`). In
+                this way the session folder contains all the behavioral
+                data relevant for that participant.
 
-    Behavioral data
-    ~~~~~~~~~~~~~~~
-     
-    In this step the subject specific and behavioral data that is present in 
-    `<bids_study>/participants.tsv` and `phenotype/*.tsv` files, will be parsed
-    and split so that data belonging to a specific participant will be mapped to 
-    that participant's sessions 'behavior' folder (e.g. 
-    `<QuNex study folder>/sessions/s14_01/behavior/masq01.tsv`). In this way 
-    the session folder contains all the behavioral data relevant for that 
-    participant.
+        Step 2 - Mapping image files to QuNex Suite `nii` folder:
+            For each session separately, images from the `bids` folder are
+            mapped to the `nii` folder and appropriate `session.txt` file
+            is created per standard QuNex specification.
 
-    Step 2 - Mapping image files to QuNex Suite `nii` folder
-    ---------------------------------------------------------
-    
-    For each session separately, images from the `bids` folder are 
-    mapped to the `nii` folder and appropriate `session.txt` file is created per
-    standard QuNex specification.
+            The second step is achieved by running `map_bids2nii` on each
+            session folder. This step is run automatically, but can be
+            invoked indepdendently if mapping of bids dataset to QuNex
+            Suite folder structure was already completed. For detailed
+            information about this step, please review `map_bids2nii`
+            inline help.
 
-    The second step is achieved by running `map_bids2nii` on each session folder.
-    This step is run automatically, but can be invoked indepdendently if mapping 
-    of bids dataset to QuNex Suite folder structure was already completed. For 
-    detailed information about this step, please review `map_bids2nii` inline 
-    help.
+        Extra notes:
+            Please see `map_bids2nii` inline documentation!
 
-    Notes
-    -----
+    Examples:
+        ::
 
-    Please see `map_bids2nii` inline documentation!
-
-    EXAMPLE USE
-    ===========
-    
-    ::
-
-        qunex import_bids sessionsfolder=myStudy overwrite=yes bidsname=swga
+            qunex import_bids \\
+                --sessionsfolder=myStudy \\
+                --overwrite=yes \\
+                --bidsname=swga
     """
 
     print("Running import_bids\n==================")
@@ -904,153 +893,141 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     Maps data organized according to BIDS specification to `nii` folder 
     structure as expected by QuNex commands.
 
-    INPUTS
-    ======
+    Warning:
+        File order:
+            The files are ordered according to best guess sorted primarily by
+            modality. This can be problematic for further HCP processing when
+            different fieldmap files are used for different BOLD and structural
+            files. In the a future version the files will be organized so that
+            fieldmaps will precede the files to which they correspond,
+            according to HCP processing expectations.
 
-    --sourcefolder      The base session folder in which bids folder with data 
-                        and files for the session is present. [.]
+        .bvec and .bval files:
+            `.bvec` and `.bval` files are expected to be present along with dwi
+            files in each session folder. If they are only present in the main
+            folder, they are currently not mapped to the `.nii` folder.
 
-    --overwrite         Parameter that specifies what should be done in cases 
-                        where there are existing data stored in `nii` folder. 
-                        ['no'] The options are:
+        Image format:
+            The function assumes that all the images are saved as `.nii.gz`
+            files!
 
-                        - no (do not overwrite the data, skip session)
-                        - yes (remove existing files in `nii` folder and redo 
-                          the mapping)
+    Parameters:
+        --sourcefolder (str, default '.'):
+            The base session folder in which bids folder with data and files for
+            the session is present.
+        --overwrite (str, default 'no'):
+            Parameter that specifies what should be done in cases where there
+            are existing data stored in `nii` folder.
+            The options are:
 
+            - 'no'  ... do not overwrite the data, skip session
+            - 'yes' ... remove existing files in `nii` folder and redo the
+              mapping.
 
-    --fileinfo          What file information to include in the session.txt 
-                        file. Options are:
+        --fileinfo (str, default 'short'):
+            What file information to include in the session.txt file. Options
+            are:
 
-                        - short (only provide the short description based on the
-                          identified BIDS tags)
-                        - full (list the full file name excluding the 
-                          participant id, session name and extension)
+            - 'short' ... only provide the short description based on the
+              identified BIDS tags
+            - 'full' ... list the full file name excluding the
+              participant id, session name and extension.
 
-    OUTPUTS
-    =======
+    Output files:
+        After running the mapped nifti files will be in the `nii` subfolder,
+        named with sequential image number. `session.txt` will be in the
+        base session folder and `bids2nii.log` will be in the `bids`
+        folder.
 
-    After running the mapped nifti files will be in the `nii` subfolder, 
-    named with sequential image number. `session.txt` will be in the base 
-    session folder and `bids2nii.log` will be in the `bids` folder.
-    
-    session.txt file
-    ----------------
+        session.txt file:
+            The session.txt will be placed in the session base folder. It
+            will contain the information about the session id, subject id
+            location of folders and a list of created NIfTI images with
+            their description.
 
-    The session.txt will be placed in the session base folder. It will contain
-    the information about the session id, subject id location of folders and a 
-    list of created NIfTI images with their description.
+            An example session.txt file would be::
 
-    An example session.txt file would be:
+                id: 06_retest
+                subject: 06
+                bids: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/bids
+                raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+                hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
 
-    id: 06_retest
-    subject: 06
-    bids: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/bids
-    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
-    hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
-    
-    01: T1w
-    02: bold covertverbgeneration
-    03: bold fingerfootlips
-    04: bold linebisection
-    05: bold overtverbgeneration
-    06: bold overtwordrepetition
-    07: dwi
+                01: T1w
+                02: bold covertverbgeneration
+                03: bold fingerfootlips
+                04: bold linebisection
+                05: bold overtverbgeneration
+                06: bold overtwordrepetition
+                07: dwi
 
-    For each of the listed images there will be a corresponding NIfTI file in
-    the nii subfolder (e.g. 04.nii.gz for the line bisection BOLD sequence). 
-    The generated session.txt files form the basis for the following HCP and 
-    other processing steps. `id` field will be set to the full session name,
-    `subject` will be set to the text preceeding the underscore (`_`) 
-    character.
+            For each of the listed images there will be a corresponding
+            NIfTI file in the nii subfolder (e.g. 04.nii.gz for the line
+            bisection BOLD sequence). The generated session.txt files form
+            the basis for the following HCP and other processing steps.
+            `id` field will be set to the full session name, `subject` will
+            be set to the text preceeding the underscore (`_`) character.
 
-    bids2nii.log file
-    -----------------
+        bids2nii.log file:
+            The `bids2nii.log` provides the information about the date and
+            time the files were mapped and the exact information about
+            which specific file from the `bids` folder was mapped to which
+            file in the `nii` folder.
 
-    The `bids2nii.log` provides the information about the date and time the
-    files were mapped and the exact information about which specific file 
-    from the `bids` folder was mapped to which file in the `nii` folder.
+    Notes:
+        The command is used to map data organized according to BIDS
+        specification, residing in `bids` session subfolder to `nii` folder
+        as expected by QuNex functions. The command checks the imaging data
+        and compiles a list in the following order:
 
-    USE
-    ===
+        - anatomical images
+        - fieldmap images
+        - functional images
+        - diffusion weighted images.
 
-    The command is used to map data organized according to BIDS specification,
-    residing in `bids` session subfolder to `nii` folder as expected by QuNex
-    functions. The command checks the imaging data and compiles a list in the
-    following order:
+        Once the list is compiled, the files are mapped to `nii` folder to
+        files named by ordinal number of the image in the list. To save
+        space, files are not copied but rather hard links are created. Only
+        image, bvec and bval files are mapped from the `bids` to `nii`
+        folder. The exact mapping is noted in file `bids2nii.log` that is
+        saved to the `bids` folder. The information on images is also
+        compiled in `session.txt` file that is generated in the main
+        session folder. For every image all the information present in the
+        bids filename is listed.
 
-    - anatomical images
-    - fieldmap images
-    - functional images
-    - diffusion weighted images
+        Multiple sessions and scheduling:
+            The command can be run for multiple sessions by specifying
+            `sessions` and optionally `sessionsfolder` and `parsessions`
+            parameters. In this case the command will be run for each of
+            the specified sessions in the sessionsfolder (current directory
+            by default). Optional `filter` and `sessionids` parameters can
+            be used to filter sessions or limit them to just specified id
+            codes. (for more information see online documentation).
+            `sourcefolder` will be filled in automatically as each
+            session's folder. Commands will run in parallel where the
+            degree of parallelism is determined by `parsessions` (1 by
+            default).
 
-    Once the list is compiled, the files are mapped to `nii` folder to files
-    named by ordinal number of the image in the list. To save space, files are 
-    not copied but rather hard links are created. Only image, bvec and bval 
-    files are mapped from the `bids` to `nii` folder. The exact mapping is
-    noted in file `bids2nii.log` that is saved to the `bids` folder. The 
-    information on images is also compiled in `session.txt` file that is 
-    generated in the main session folder. For every image all the information
-    present in the bids filename is listed.
+            If `scheduler` parameter is set, the command will be run using
+            the specified scheduler settings (see `qunex ?schedule` for
+            more information). If set in combination with `sessions`
+            parameter, sessions will be processed over multiple nodes,
+            `core` parameter specifying how many sessions to run per node.
+            Optional `scheduler_environment`, `scheduler_workdir`,
+            `scheduler_sleep`, and `nprocess` parameters can be set.
 
-    Multiple sessions and scheduling
-    --------------------------------
+            Set optional `logfolder` parameter to specify where the
+            processing logs should be stored. Otherwise the processor will
+            make best guess, where the logs should go.
 
-    The command can be run for multiple sessions by specifying `sessions` and
-    optionally `sessionsfolder` and `parsessions` parameters. In this case the
-    command will be run for each of the specified sessions in the sessionsfolder
-    (current directory by default). Optional `filter` and `sessionids` 
-    parameters can be used to filter sessions or limit them to just specified 
-    id codes. (for more information see online documentation). `sourcefolder` 
-    will be filled in automatically as each session's folder. Commands will run 
-    in parallel where the degree of parallelism is determined by `parsessions` 
-    (1 by default).
+            Do note that as this command only performs file mapping and no
+            image or file processing, the best performance might be
+            achieved by running on a single node and a single core.
 
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `qunex ?schedule` for more information). If set in
-    combination with `sessions` parameter, sessions will be processed over
-    multiple nodes, `core` parameter specifying how many sessions to run per
-    node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
+    Examples:
+        ::
 
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
-
-    Do note that as this command only performs file mapping and no image or 
-    file processing, the best performance might be achieved by running on a 
-    single node and a single core.
-
-    Caveats and missing functionality
-    ---------------------------------
-
-    File order
-    ----------
-
-    The files are ordered according to best guess sorted primarily by modality. 
-    This can be problematic for further HCP processing when different fieldmap
-    files are used for different BOLD and structural files. In the a future 
-    version the files will be organized so that fieldmaps will precede the 
-    files to which they correspond, according to HCP processing expectations.
-
-    .bvec and .bval files
-    ~~~~~~~~~~~~~~~~~~~~~
-
-    `.bvec` and `.bval` files are expected to be present along with dwi files
-    in each session folder. If they are only present in the main folder, they
-    are currently not mapped to the `.nii` folder.
-
-    Image format
-    ~~~~~~~~~~~~
-
-    The function assumes that all the images are saved as `.nii.gz` files!
-
-    EXAMPLE USE
-    ===========
-    
-    ::
-
-        qunex map_bids2nii folder=. overwrite=yes
+            qunex map_bids2nii --folder=. --overwrite=yes
     """
 
     if fileinfo is None:

@@ -121,182 +121,170 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
     
     Maps HCPLS data to the QuNex Suite file structure. 
 
-    INPUTS
-    ======
+    Parameters:
+        --sessionsfolder (str, default '.'):
+            The sessions folder where all the sessions are to be mapped to. It
+            should be a folder within the <study folder>.
+        --inbox (str, default <sessionsfolder>/inbox/HCPLS):
+            The location of the HCPLS dataset. It can be any of the following:
+            the HCPLS dataset top folder, a folder that contains the HCPLS
+            dataset, a path to the compressed `.zip` or `.tar.gz` package that
+            can contain a single session or a multi-session dataset, or a
+            folder that contains a compressed package. For instance the user
+            can specify "<path>/<hcpfs_file>.zip" or "<path>" to a folder that
+            contains multiple packages. The default location where the command
+            will look for a HCPLS dataset is "<sessionsfolder>/inbox/HCPLS".
+        --sessions (str, default detailed below):
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Regular
+            expression patterns can be used. If provided, only packets or
+            folders within the inbox that match the list of sessions will be
+            processed. If `inbox` is a file `sessions` will not be applied. If
+            `inbox` is a valid HCPLS datastructure folder, then the sessions
+            will be matched against the `<subject id>[_<session name>]`. Note:
+            the session will match if the string is found within the package
+            name or the session id. So 'HCPA' with match any zip file that
+            contains string 'HCPA' or any session id that contains 'HCPA'!
+        --action (str, default 'link'):
+            How to map the files to QuNex structure.
+            The following actions are supported:
 
-    --sessionsfolder    The sessions folder where all the sessions are to be 
-                        mapped to. It should be a folder within the 
-                        <study folder>. [.]
+            - 'link' ... files will be mapped by creating hard links if
+              possible, otherwise they will be copied
+            - 'copy' ... files will be copied
+            - 'move' ... files will be moved.
 
-    --inbox             The location of the HCPLS dataset. It can be any of the
-                        following: the HCPLS dataset top folder, a folder that 
-                        contains the HCPLS dataset, a path to the compressed 
-                        `.zip` or `.tar.gz` package that can contain a single 
-                        session or a multi-session dataset, or a folder that 
-                        contains a compressed package. For instance the user 
-                        can specify "<path>/<hcpfs_file>.zip" or "<path>" to
-                        a folder that contains multiple packages. The default 
-                        location where the command will look for a HCPLS dataset
-                        is [<sessionsfolder>/inbox/HCPLS]
+        --overwrite (str, default 'no'):
+            The parameter specifies what should be done with data that already
+            exists in the locations to which HCPLS data would be mapped to.
+            Options are:
 
-    --sessions          An optional parameter that specifies a comma or pipe
-                        separated list of sessions from the inbox folder to be 
-                        processed. Regular expression patterns can be used. 
-                        If provided, only packets or folders within the inbox 
-                        that match the list of sessions will be processed. If 
-                        `inbox` is a file `sessions` will not be applied. 
-                        If `inbox` is a valid HCPLS datastructure folder, then 
-                        the sessions will be matched against the 
-                        `<subject id>[_<session name>]`.
-                        Note: the session will match if the string is found
-                        within the package name or the session id. So 
-                        'HCPA' with match any zip file that contains string
-                        'HCPA' or any session id that contains 'HCPA'!
+            - 'no'  ... do not overwrite the data and skip processing of the
+              session
+            - 'yes' ... remove exising files in `nii` folder and redo the
+              mapping.
 
-    --action            How to map the files to QuNex structure. ['link']
-                        The following actions are supported:
-                        
-                        - link (files will be mapped by creating hard links if 
-                          possible, otherwise they will be copied)
-                        - copy (files will be copied)                  
-                        - move (files will be moved)
+        --archive (str, default 'move'):
+            What to do with the files after they were mapped.
+            Options are:
 
-    --overwrite         The parameter specifies what should be done with 
-                        data that already exists in the locations to which HCPLS
-                        data would be mapped to. ['no'] Options are:
+            - 'leave' ... leave the specified archive where it is
+            - 'move'  ... move the specified archive to
+              `<sessionsfolder>/archive/HCPLS`)
+            - 'copy'  ... copy the specified archive to
+              `<sessionsfolder>/archive/HCPLS`)
+            - 'delete' ... delete the archive after processing if no errors were
+              identified.
 
-                        - no (do not overwrite the data and skip processing of 
-                          the session)
-                        - yes (remove exising files in `nii` folder and redo the
-                          mapping) 
+            Please note that there can be an interaction with the `action`
+            parameter. If files are moved during action, they will be missing
+            if `archive` is set to 'move' or 'copy'.
+        --hcplsname (str, default detailed below):
+            The optional name of the HCPLS dataset. If not provided it will be
+            set to the name of the inbox folder or the name of the compressed
+            package.
+        --nameformat (str, default '(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'):
+            An optional parameter that contains a regular expression pattern
+            with named fields used to extract the subject and session
+            information based on the file paths and names. The pattern has to
+            return the groups named:
 
-    --archive           What to do with the files after they were mapped. 
-                        ['move'] Options are:
+            - 'subject_id'   ... the id of the subject
+            - 'session_name' ... the name of the session
+            - 'data'         ... the rest of the path with the sequence related
+              files.
 
-                        - leave (leave the specified archive where it is)
-                        - move (move the specified archive to 
-                          `<sessionsfolder>/archive/HCPLS`)
-                        - copy (copy the specified archive to 
-                          `<sessionsfolder>/archive/HCPLS`)
-                        - delete (delete the archive after processing if no 
-                          errors were identified)
+        --filesort (str, default 'name_type_se'):
+            An optional parameter that specifies how the files should be sorted
+            before mapping to `nii` folder and inclusion in `session_hcp.txt`.
+            The sorting is specified by a string of sort keys separated by '_'.
+            The available sort keys are:
 
-                        Please note that there can be an
-                        interaction with the `action` parameter. If files are
-                        moved during action, they will be missing if `archive` 
-                        is set to 'move' or 'copy'.
+            - 'name' ... sort by the name of the file
+            - 'type' ... sort by the type of the file (T1w, T2w, rfMRI, tfMRI,
+              Diffusion)
+            - 'se'   ... sort by the number of the related pair of the SE
+              fieldmap images.
 
-    --hcplsname         The optional name of the HCPLS dataset. If not provided
-                        it will be set to the name of the inbox folder or the 
-                        name of the compressed package.
+            The files will be sorted in the order of the listed keys.
 
-    --nameformat        An optional parameter that contains a regular expression 
-                        pattern with named fields used to extract the subject
-                        and session information based on the file paths and 
-                        names. The pattern has to return the groups named:
+            NOTE:
 
-                        - subject_id (the id of the subject)
-                        - session_name (the name of the session) 
-                        - data (the rest of the path with the sequence related 
-                          files)
+            1. SE field map pair will always come before the first
+               image in the sorted list that references it.
+            2. Diffusion images will always be listed jointly in a
+               fixed order.
 
-                        The default is:
-                        ``'(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'``
+    Output files:
+        After running the `import_hcp` command the HCPLS dataset will be
+        mapped to the QuNex folder structure and image files will be
+        prepared for further processing along with required metadata.
 
-    --filesort          An optional parameter that specifies how the files should
-                        be sorted before mapping to `nii` folder and inclusion 
-                        in `session_hcp.txt`. The sorting is specified by a 
-                        string of sort keys separated by '_'. [`name_type_se`] 
-                        The available sort keys are:
-       
-                        - name (sort by the name of the file)
-                        - type (sort by the type of the file (T1w, T2w, rfMRI, 
-                          tfMRI, Diffusion))
-                        - se (sort by the number of the related pair of the SE 
-                          fieldmap images)
-       
-                        The files will be sorted in the order of the listed 
-                        keys.
+        - The original HCPL session-level data is stored in::
 
-                        NOTE:
+            <sessionsfolder>/<session>/hcpls
 
-                        1. SE field map pair will always come before the first 
-                           image in the sorted list that references it. 
-                        2. Diffusion images will always be listed jointly in a 
-                           fixed order.
-    
-    OUTPUTS
-    =======
+        - Image files mapped to new names for QuNex are stored in::
 
-    After running the `import_hcp` command the HCPLS dataset will be mapped 
-    to the QuNex folder structure and image files will be prepared for further
-    processing along with required metadata.
+            <sessionsfolder>/<session>/nii
 
-    - The original HCPL session-level data is stored in:
+        - The full description of the mapped files is in::
 
-        ``<sessionsfolder>/<session>/hcpls``
+            <sessionsfolder>/<session>/session.txt
 
-    - Image files mapped to new names for QuNex are stored in:
+        - The output log of HCPLS mapping is in::
 
-        ``<sessionsfolder>/<session>/nii``
+            <sessionsfolder>/<session>/hcpls/hcpls2nii.log
 
-    - The full description of the mapped files is in:
+    Notes:
+        The import_hcp command consists of two steps:
 
-        ``<sessionsfolder>/<session>/session.txt``
+        1. Mapping HCPLS dataset to QuNex Suite folder structure:
+            The `inbox` parameter specifies the location of the HCPLS
+            dataset. This path is inspected for a HCPLS compliant dataset.
+            The path can point to a folder with extracted HCPLS dataset, a
+            `.zip` or `.tar.gz` archive or a folder containing one or more
+            `.zip` or `.tar.gz` archives. In the initial step, each file
+            found will be assigned either to a specific session.
 
-    - The output log of HCPLS mapping is in: 
+            <hcpls_dataset_name> can be provided as a `hcplsname` parameter
+            to the command call. If `hcplsname` is not provided, the name
+            will be set to the name of the parent folder or the name of the
+            compressed archive.
 
-        ``<sessionsfolder>/<session>/hcpls/hcpls2nii.log``
+            The files identified as belonging to a specific session will be
+            mapped to folder::
 
-    USE
-    ===
-    
-    The import_hcp command consists of two steps:
-    
-    1. Mapping HCPLS dataset to QuNex Suite folder structure
-    
-        The `inbox` parameter specifies the location of the HCPLS dataset. This
-        path is inspected for a HCPLS compliant dataset. The path can point to a
-        folder with extracted HCPLS dataset, a `.zip` or `.tar.gz` archive or a 
-        folder containing one or more `.zip` or `.tar.gz` archives. In the
-        initial step, each file found will be assigned either to a specific 
-        session. 
+                <sessions_folder>/<subject>_<session>/hcpls
 
-        <hcpls_dataset_name> can be provided as a `hcplsname` parameter to the
-        command call. If `hcplsname` is not provided, the name will be set to
-        the name of the parent folder or the name of the compressed archive.
+            The `<subject>_<session>` string will be used as the identifier
+            for the session in all the following steps. If the folder for
+            the `session` does not exist, it will be created.
 
-        The files identified as belonging to a specific session will be mapped to 
-        folder::
-        
-            <sessions_folder>/<subject>_<session>/hcpls
+            When the files are mapped, their filenames will be preserved.
 
-        The `<subject>_<session>` string will be used as the identifier for the 
-        session in all the following steps. If the folder for the `session` 
-        does not exist, it will be created.
-        
-        When the files are mapped, their filenames will be preserved.
+        2. Mapping image files to QuNex Suite `nii` folder:
+            For each session separately, images from the `hcpls` folder are
+            mapped to the `nii` folder and appropriate `session.txt` file
+            is created per standard QuNex specification.
 
-    2. Mapping image files to QuNex Suite `nii` folder
-    
-        For each session separately, images from the `hcpls` folder are 
-        mapped to the `nii` folder and appropriate `session.txt` file is created per
-        standard QuNex specification.
+            The second step is achieved by running `map_hcpls2nii` on each
+            session folder. This step is run automatically, but can be
+            invoked independently if mapping of HCPLS dataset to QuNex
+            Suite folder structure was already completed. For detailed
+            information about this step, please review `map_hcpls2nii`
+            inline help.
 
-        The second step is achieved by running `map_hcpls2nii` on each session folder.
-        This step is run automatically, but can be invoked independently if mapping 
-        of HCPLS dataset to QuNex Suite folder structure was already completed. For 
-        detailed information about this step, please review `map_hcpls2nii` inline 
-        help.
+        Please see `map_hcpls2nii` inline documentation!
 
-    Please see `map_hcpls2nii` inline documentation!
+    Examples:
+        ::
 
-    EXAMPLE CALL
-    ============
-    
-    ::
-
-        qunex import_hcp sessionsfolder=myStudy/sessions inbox=HCPLS overwrite=yes hcplsname=hcpls
+            qunex import_hcp \\
+                --sessionsfolder=myStudy/sessions \\
+                --inbox=HCPLS \\
+                --overwrite=yes \\
+                --hcplsname=hcpls
     """
 
     print("Running import_hcp\n==================")
@@ -683,168 +671,155 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     Maps data organized according to HCPLS specification to `nii` folder
     structure as expected by QuNex functions.
 
-    INPUTS
-    ======
+    Warning:
+        .bvec and .bval files:
+            `.bvec` and `.bval` files are expected to be present along with dMRI
+            files in each session folder. If they are present in another
+            folder, they are currently not mapped to the `.nii` folder.
 
-    --sourcefolder  The base session folder in which bids folder with data and
-                    files for the session are present. [.]
-    
-    --overwrite     Parameter that specifes what should be done in cases where
-                    there are existing data stored in `nii` folder. ['no'] The 
-                    options are:
+        Image format:
+            The function assumes that all the images are saved as `.nii.gz`
+            files!
 
-                    - no (do not overwrite the data, skip session)
-                    - yes (remove exising files in `nii` folder and redo the
-                      mapping)
+    Parameters:
+        --sourcefolder (str, default '.'):
+            The base session folder in which bids folder with data and files for
+            the session are present.
+        --overwrite (str, default 'no'):
+            Parameter that specifes what should be done in cases where there are
+            existing data stored in `nii` folder. The options are:
 
-    --report        The path to the file that will hold the information about the
-                    images that are relevant for HCP Pipelines. If not provided
-                    it will default to 
+            - 'no'  ... do not overwrite the data, skip session
+            - 'yes' ... remove exising files in `nii` folder and redo the
+              mapping.
 
-    --filesort      An optional parameter that specifies how the files should
-                    be sorted before mapping to `nii` folder and inclusion in 
-                    `session_hcp.txt`. The sorting is specified by a string of
-                    sort keys separated by '_'. The available sort keys are:
-   
-                    - name (sort by the name of the file)
-                    - type (sort by the type of the file (T1w, T2w, rfMRI, 
-                      tfMRI, Diffusion)
-                    - se (sort by the number of the related pair of the SE 
-                      fieldmap images)
-   
-                    The files will be sorted in the order of the listed keys.
-                    The default is: "name_type_se".
-   
-                    NOTE: 
-                    
-                    - SE field map pair will allways come before the first image
-                      in the sorted list that references it. 
-                    - Diffusion images will always be listed jointly in a fixed 
-                      order.
+        --report (str, default '<basefolder>/info/hcpls/parameters.txt'):
+            The path to the file that will hold the information about the images
+            that are relevant for HCP Pipelines.
+        --filesort (str, default 'name_type_se'):
+            An optional parameter that specifies how the files should
+            be sorted before mapping to `nii` folder and inclusion in
+            `session_hcp.txt`. The sorting is specified by a string of
+            sort keys separated by '_'. The available sort keys are:
 
-    OUTPUTS
-    =======
+            - 'name' ... sort by the name of the file
+            - 'type' ... sort by the type of the file (T1w, T2w, rfMRI, tfMRI,
+              Diffusion
+            - 'se'   ... sort by the number of the related pair of the SE fieldmap
+              images.
 
-    After running the mapped nifti files will be in the `nii` subfolder, 
-    named with sequential image number. `session.txt` will be in the base 
-    session folder and `hcpls2nii.log` will be in the `hcpls` folder.
-    
-    session.txt file
-    ----------------
+            The files will be sorted in the order of the listed keys.
 
-    The session.txt will be placed in the session base folder. It will contain
-    the information about the session id, subject id location of folders and a 
-    list of created NIfTI images with their description.
+            NOTE:
 
-    An example session.txt file would be::
+            - SE field map pair will always come before the first image in the
+              sorted list that references it.
+            - Diffusion images will always be listed jointly in a fixed order.
 
-        id: 06_retest
-        subject: 06
-        hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
-        raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
-        hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
-        
-        01: T1w
-        02: bold1:rest1
-        03: bold2:rest1
-        04: bold3:rest2
-        05: bold4:rest2
-        06: bold5:CARIT
-        07: bold6:FACENAME
-        08: bold7:VISMOTOR
-        09: dwi
+    Output files:
+        After running the mapped nifti files will be in the `nii` subfolder,
+        named with sequential image number. `session.txt` will be in the
+        base session folder and `hcpls2nii.log` will be in the `hcpls`
+        folder.
 
-    For each of the listed images there will be a corresponding NIfTI file in
-    the nii subfolder (e.g. 04.nii.gz for resting state 2 PA). 
-    The generated session.txt files form the basis for the following HCP and 
-    other processing steps. `id` field will be set to the full session name,
-    `subject` will be set to the text preceeding the first underscore (`_`) 
-    character.
+        session.txt file:
+            The session.txt will be placed in the session base folder. It
+            will contain the information about the session id, subject id
+            location of folders and a list of created NIfTI images with
+            their description.
 
-    hcpls2nii.log file
-    ------------------
+            An example session.txt file would be::
 
-    The `hcpls2nii.log` provides the information about the date and time the
-    files were mapped and the exact information about which specific file 
-    from the `hcpls` folder was mapped to which file in the `nii` folder.
+                id: 06_retest
+                subject: 06
+                hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
+                raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+                hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
 
-    USE
-    ===
+                01: T1w
+                02: bold1:rest1
+                03: bold2:rest1
+                04: bold3:rest2
+                05: bold4:rest2
+                06: bold5:CARIT
+                07: bold6:FACENAME
+                08: bold7:VISMOTOR
+                09: dwi
 
-    The command is used to map data organized according to HCPLS specification,
-    residing in `hcpls` session subfolder to `nii` folder as expected by QuNex
-    functions. The command checks the imaging data and compiles a list in the
-    following order:
+            For each of the listed images there will be a corresponding
+            NIfTI file in the nii subfolder (e.g. 04.nii.gz for resting
+            state 2 PA). The generated session.txt files form the basis for
+            the following HCP and other processing steps. `id` field will
+            be set to the full session name, `subject` will be set to the
+            text preceeding the first underscore (`_`) character.
 
-    - anatomical images
-    - fieldmap images
-    - functional images
-    - diffusion weighted images
+        hcpls2nii.log file:
+            The `hcpls2nii.log` provides the information about the date and
+            time the files were mapped and the exact information about
+            which specific file from the `hcpls` folder was mapped to which
+            file in the `nii` folder.
 
-    Once the list is compiled, the files are mapped to `nii` folder to files
-    named by ordinal number of the image in the list. To save space, files are 
-    not copied but rather hard links are created. Only image, bvec and bval 
-    files are mapped from the `hcpls` to `nii` folder. The exact mapping is
-    noted in file `hcpls2nii.log` that is saved to the `hcpls` folder. The 
-    information on images is also compiled in `session.txt` file that is 
-    generated in the main session folder. For every image all the information
-    present in the hcpls filename is listed.
+    Notes:
+        The command is used to map data organized according to HCPLS
+        specification, residing in `hcpls` session subfolder to `nii`
+        folder as expected by QuNex functions. The command checks the
+        imaging data and compiles a list in the following order:
 
-    Multiple sessions and scheduling
-    --------------------------------
+        - anatomical images
+        - fieldmap images
+        - functional images
+        - diffusion weighted images.
 
-    The command can be run for multiple sessions by specifying `sessions` and
-    optionally `sessionsfolder` and `parsessions` parameters. In this case the
-    command will be run for each of the specified sessions in the sessionsfolder
-    (current directory by default). Optional `filter` and `sessionids` parameters
-    can be used to filter sessions or limit them to just specified id codes.
-    (for more information see online documentation). `sourcefolder` will be filled
-    in automatically as each sessions's folder. Commands will run in parallel, where
-    the degree of parallelism is determined by `parsessions` (1 by default).
+        Once the list is compiled, the files are mapped to `nii` folder to
+        files named by ordinal number of the image in the list. To save
+        space, files are not copied but rather hard links are created. Only
+        image, bvec and bval files are mapped from the `hcpls` to `nii`
+        folder. The exact mapping is noted in file `hcpls2nii.log` that is
+        saved to the `hcpls` folder. The information on images is also
+        compiled in `session.txt` file that is generated in the main
+        session folder. For every image all the information present in the
+        hcpls filename is listed.
 
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `qunex ?schedule` for more information). If set in
-    combination with `sessions` parameter, sessions will be processed over
-    multiple nodes, `core` parameter specifying how many sessions to run per
-    node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
+        Multiple sessions and scheduling:
+            The command can be run for multiple sessions by specifying
+            `sessions` and optionally `sessionsfolder` and `parsessions`
+            parameters. In this case the command will be run for each of
+            the specified sessions in the sessionsfolder (current directory
+            by default). Optional `filter` and `sessionids` parameters can
+            be used to filter sessions or limit them to just specified id
+            codes. (for more information see online documentation).
+            `sourcefolder` will be filled in automatically as each
+            sessions's folder. Commands will run in parallel, where the
+            degree of parallelism is determined by `parsessions` (1 by
+            default).
 
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
+            If `scheduler` parameter is set, the command will be run using
+            the specified scheduler settings (see `qunex ?schedule` for
+            more information). If set in combination with `sessions`
+            parameter, sessions will be processed over multiple nodes,
+            `core` parameter specifying how many sessions to run per node.
+            Optional `scheduler_environment`, `scheduler_workdir`,
+            `scheduler_sleep`, and `nprocess` parameters can be set.
 
-    Do note that as this command only performs file mapping and no image or 
-    file processing, the best performance might be achieved by running on a 
-    single node and a single core.
+            Set optional `logfolder` parameter to specify where the
+            processing logs should be stored. Otherwise the processor will
+            make best guess, where the logs should go.
 
-    Caveats and missing functionality
-    ---------------------------------
+            Do note that as this command only performs file mapping and no
+            image or file processing, the best performance might be
+            achieved by running on a single node and a single core.
 
-    .bvec and .bval files
-    ~~~~~~~~~~~~~~~~~~~~~
+    Examples:
+        ::
 
-    `.bvec` and `.bval` files are expected to be present along with dMRI files
-    in each session folder. If they are present in another folder, they are 
-    currently not mapped to the `.nii` folder.
+            qunex map_hcpls2nii --folder=. --overwrite=yes
 
-    Image format
-    ~~~~~~~~~~~~
+        ::
 
-    The function assumes that all the images are saved as `.nii.gz` files!
-
-    EXAMPLE USE
-    ===========
-    
-    ::
-
-        qunex map_hcpls2nii folder=. overwrite=yes
-
-    ::
-
-        qunex map_hcpls2nii \\
-          --sessionsfolder="/data/my_study/sessions" \\
-          --sessions="AP*" \\
-          --overwrite=yes
+            qunex map_hcpls2nii \\
+                --sessionsfolder="/data/my_study/sessions" \\
+                --sessions="AP*" \\
+                --overwrite=yes
     """
 
     if not filesort:

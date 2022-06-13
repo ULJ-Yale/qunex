@@ -2,71 +2,73 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 
 %``function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)``
 %
-%	Computes seed based correlations maps for individuals as well as group maps.
+%   Computes seed based correlations maps for individuals as well as group maps.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A .list file of session information, or a well strucutured
+%           string (see general_read_file_list).
+%       --roinfo (str)
+%           An ROI file.
+%       --inmask (matrix | string, default []):
+%           Either an array mask defining which frames to use (1) and which
+%           not (0) or an event string specifying the events and frames to
+%           extract.
+%       --options (str, default []):
+%           A string defining which session files to save:
 %
-%	--flist   	A .list file of session information, or a well strucutured 
-%               string (see general_read_file_list).
-%	--roinfo	An ROI file.
-%	--inmask    Either an array mask defining which frames to use (1) and which 
-%               not (0) or an event string specifying the events and frames to 
-%               extract [0]
-%	--options	A string defining which session files to save ['']:
+%           - r   - save map of correlations
+%           - f   - save map of Fisher z values
+%           - cv  - save map of covariances
+%           - z   - save map of Z scores
+%           - []  - no files are saved.
 %
-%	    	    - r   - save map of correlations
-%               - f   - save map of Fisher z values
-%	    	    - cv  - save map of covariances
-%	    	    - z   - save map of Z scores
+%       --targetf (str, default '.'):
+%           The folder to save images in.
+%       --method (str, default 'mean'):
+%           Method for extracting timeseries - 'mean' or 'pca'.
+%       --ignore (str, default 'no'):
+%           Do we omit frames to be ignored:
 %
-%	--targetf	The folder to save images in ['.'].
-%   --method    Method for extracting timeseries - 'mean' or 'pca' ['mean'].
-%   --ignore    Do we omit frames to be ignored ['no']
+%           - no    - do not ignore any additional frames
+%           - event - ignore frames as marked in .fidl file
+%           - other - the column in ∗_scrub.txt file that matches bold file to be
+%             used for ignore mask.
 %
-%               - no:    do not ignore any additional frames
-%               - event: ignore frames as marked in .fidl file
-%               - other: the column in *_scrub.txt file that matches bold file 
-%               to be used for ignore mask
+%       --cv (bool, default false):
+%           Whether covariances should be computed instead of correlations.
 %
-%   --cv          Whether covariances should be computed instead of correlations.
+%   Output files:
+%       Function saves the following group files:
 %
-%   RESULTS
-%   =======
+%       _group_Fz
+%           average Fz over all the sessions
 %
-%   It saves group files:
+%       _group_r
+%           average Fz converted back to Pearson r
 %
-%   _group_Fz
-%       average Fz over all the sessions
+%       _group_Z
+%           p values converted to Z scores based on t-test testing if Fz
+%           over session differ significantly from 0 (two-tailed)
 %
-%   _group_r   
-%       average Fz converted back to Pearson r
+%       _all_Fz
+%           Fz values of all the participants
 %
-%   _group_Z   
-%       p values converted to Z scores based on t-test testing if Fz over session differ significantly from 0 (two-tailed)
+%       _group_cov
+%           average covariance
 %
-%   _all_Fz    
-%       Fz values of all the participants
+%       _all_cov
+%           covariances of all the participants.
 %
-%   _group_cov 
-%       average covariance
+%   Notes:
+%       The function computes seedmaps for the specified ROI and saves group
+%       results as well as any specified individual results.
 %
-%   _all_cov
-%       covariances of all the participants
+%   Examples:
+%       ::
 %
-%   USE
-%   ===
-%
-%   The function computes seedmaps for the specified ROI and saves group results
-%   as well as any specified individual results.
-%
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', 'mean', ...
-%       'udvarsme', false);
+%           fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', ...
+%               'mean', 'udvarsme', false);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -105,7 +107,7 @@ go = go & general_check_file(roiinfo, 'ROI definition file','error');
 general_check_folder(targetf, 'results folder');
 
 if ~go
-	error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
+    error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
 end
 
 % ---- Start
@@ -137,37 +139,37 @@ for n = 1:nsub
 
     % ---> reading ROI file
 
-	fprintf('\n     ... creating ROI mask');
+    fprintf('\n     ... creating ROI mask');
 
-	if isfield(session(n), 'roi')
-	    sroifile = session(n).roi;
-	else
-	    sroifile = '';
+    if isfield(session(n), 'roi')
+        sroifile = session(n).roi;
+    else
+        sroifile = '';
     end
 
-	roi = nimage.img_read_roi(roiinfo, sroifile);
+    roi = nimage.img_read_roi(roiinfo, sroifile);
 
 
-	% ---> reading image files
+    % ---> reading image files
 
-	fprintf('\n     ... reading image file(s)');
+    fprintf('\n     ... reading image file(s)');
 
-	y = nimage(session(n).files{1});
-	for f = 2:length(session(n).files)
-	    y = [y nimage(session(n).files{f})];
+    y = nimage(session(n).files{1});
+    for f = 2:length(session(n).files)
+        y = [y nimage(session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
 
     % ---> creating timeseries mask
 
-	if eventbased
-	    mask = [];
-	    if isfield(session(n), 'fidl')
+    if eventbased
+        mask = [];
+        if isfield(session(n), 'fidl')
             if session(n).fidl
                 mask = general_create_task_regressors(session(n).fidl, y.runframes, inmask, fignore);
                 mask = mask.run;
-    	        nmask = [];
+                nmask = [];
                 for r = 1:length(mask)
                     nmask = [nmask; sum(mask(r).matrix,2)>0];
                 end
@@ -200,9 +202,9 @@ for n = 1:nsub
         end
     end
 
-	% ---> extracting ROI timeseries
+    % ---> extracting ROI timeseries
 
-	fprintf('\n     ... extracting timeseries ');
+    fprintf('\n     ... extracting timeseries ');
 
     ts = y.img_extract_roi(roi, [], method);
 
@@ -210,7 +212,7 @@ for n = 1:nsub
 
     fprintf('\n     ... computing seed maps ');
 
-	if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
+    if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
         [pr, p] = y.img_compute_correlations(ts', false, cv);
         if strfind(options, 'z')
             z = p.img_p2z(pr);
@@ -252,18 +254,18 @@ for n = 1:nsub
         end
         if ~isempty(strfind(options, 'r')) && ~cv
             pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_r']);   fprintf(' r');
-    	end
-    	if ~isempty(strfind(options, 'f')) && ~cv
+        end
+        if ~isempty(strfind(options, 'f')) && ~cv
             group(r).Fz.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_Fz']);   fprintf(' Fz');
-    	end
-    	if ~isempty(strfind(options, 'p')) && ~cv
+        end
+        if ~isempty(strfind(options, 'p')) && ~cv
             p.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_p']);   fprintf(' p');
-    	end
-    	if ~isempty(strfind(options, 'z')) && ~cv
-    	    z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_Z']);   fprintf(' Z');
-    	end
+        end
+        if ~isempty(strfind(options, 'z')) && ~cv
+            z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_Z']);   fprintf(' Z');
+        end
 
-	end
+    end
 
 end
 
@@ -279,7 +281,7 @@ for r = 1:nroi
         extra(s).value = session(n).id;
     end
 
-	fprintf('\n    ... for region %s', group(r).roi);
+    fprintf('\n    ... for region %s', group(r).roi);
 
     if cv
         [p Z M] = group(r).cv.img_ttest_zero();
@@ -288,7 +290,7 @@ for r = 1:nroi
         pr = M.img_FisherInv();
     end
 
-	fprintf('... saving ...');
+    fprintf('... saving ...');
 
     if cv
        M.img_saveimage([targetf '/' lname '_' group(r).roi '_group_cov'], extra);           fprintf(' cov');
@@ -301,7 +303,7 @@ for r = 1:nroi
 
     Z.img_saveimage([targetf '/' lname '_' group(r).roi '_group_Z'], extra);                fprintf(' Z');
 
-	fprintf(' ... done.');
+    fprintf(' ... done.');
 
 end
 

@@ -2,28 +2,28 @@ function [B, res, rvar, Xdof] = img_glm_fit(obj, X)
 
 %``function [B, res, rvar, Xdof] = img_glm_fit(obj, X)``.
 %
-%	Computes GLM fit to whole brain
+%    Computes GLM fit to whole brain
 %
 %   INPUTS
-%	======
+%    ======
 %
-%	--obj   nimage image object
+%    --obj   nimage image object
 %   --X     predictor matrix (frames x predictors)
 %
 %   OUTPUTS
-%	=======
+%    =======
 %
 %   B
-%		beta weights image
+%        beta weights image
 %   rvar
-%		variance of the residual
+%        variance of the residual
 %   Xdof
-%		model degrees of freedom
+%        model degrees of freedom
 %   res
-%		residual image
+%        residual image
 %
 %   USE
-%	===
+%    ===
 %
 %   The method computes a linear regression between dataseries of each voxel and
 %   all the columns of the X regressor matrix. The image can be a series of
@@ -38,11 +38,11 @@ function [B, res, rvar, Xdof] = img_glm_fit(obj, X)
 %   the sum of squares of the residuals divided by the model degrees of freedom.
 %
 %   EXAMPLE USE
-%	===========
+%    ===========
 %
 %   ::
-%	
-%		[B, res, rvar, Xdof] = img.img_glm_fit2(behmatrix);
+%
+%        [B, res, rvar, Xdof] = img.img_glm_fit2(behmatrix);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
