@@ -97,7 +97,7 @@ show_splash() {
     geho ""
     geho "Use of this software is subject to the terms and conditions defined in"
     geho "'LICENSE.md' which is a part of the QuNex Suite source code package:"
-    geho "https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md"
+    geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
     geho ""
 }
 
@@ -178,7 +178,7 @@ show_all_qunex_commands() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-# -- Master Execution and Logging -- https://bitbucket.org/oriadev/qunex/wiki/Overview/Logging.md
+# -- Master Execution and Logging -- https://qunex.readthedocs.io/en/latest/wiki/Overview/Logging.md
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
@@ -1754,7 +1754,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
             echo "     resolving the conflict such that a consistent folder specification is used. "
             echo ""
             echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-            echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+            echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
             echo ""
         fi
 
@@ -1770,7 +1770,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
                 echo "            --> ${StudyFolder}/sessions"
                 echo ""
                 echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
                 echo ""
             else
                 mageho "WARNING: You are attempting to execute QuNex command using a conflicting QuNex file hierarchy:"
@@ -1786,7 +1786,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
                 echo "     resolving the conflict such that a consistent folder specification is used. "
                 echo ""
                 echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
                 echo ""
             fi
         fi
@@ -1802,7 +1802,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
         echo "       --> ${StudyFolder}/sessions"
         echo ""
         echo "       QuNex will proceed but please consider renaming your directories per latest specs:"
-        echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+        echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
         echo ""
     fi
 fi

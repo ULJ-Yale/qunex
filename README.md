@@ -17,11 +17,10 @@ The QuNex code is is co-developed and co-maintained by the:
 ## Quick links
 
 * [Website](http://qunex.yale.edu/)
-* [QuNex Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
-* [SDK Wiki](https://bitbucket.org/oriadev/qunexsdk/wiki/Home)
-* [QuNex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
-* [QuNex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
-* [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
+* [QuNex Documentation](https://qunex.readthedocs.io)
+* [QuNex quick start](https://qunex.readthedocs.io/en/latest/wiki/Overview/QuickStart.html)
+* [QuNex container deployment](https://qunex.readthedocs.io/en/latest/wiki/Overview/QuNexContainerUsage.html)
+* [Installing from source and dependencies](https://qunex.readthedocs.io/en/latest/wiki/Overview/Installation.html)
 
 ## Version
 
