@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [obj] = img_extract_glm_estimates(obj, effects, frames, values)
 
 %``function [obj] = img_extract_glm_estimates(obj, effects, frames, values)``
@@ -47,6 +43,10 @@ function [obj] = img_extract_glm_estimates(obj, effects, frames, values)
 %   
 %		glme = glm.img_extract_glm_estimates('encoding, delay, response', 1);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4 || isempty(values); values = 'raw';  end
 if nargin < 3; frames  = [];  end

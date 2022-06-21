@@ -1,4 +1,9 @@
 function central_vertices = general_get_central_vertices(fin, fout, params)
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 3 || isempty(params), params = []; end
 if nargin < 2 || isempty(fout),   fout   = ''; end
 

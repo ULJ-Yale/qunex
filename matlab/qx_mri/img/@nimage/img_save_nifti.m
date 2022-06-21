@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [res] = img_save_nifti(img, filename, datatype, verbose)
 
 %``function [res] = img_save_nifti(obj, filename, datatype, verbose)``
@@ -22,6 +18,10 @@ function [res] = img_save_nifti(img, filename, datatype, verbose)
 %   
 %   res
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4, verbose = false; end
 if nargin < 3, datatype = []; end

@@ -9,8 +9,8 @@ import os
 import os.path
 import sys
 import copy
-import datetime
 
+from datetime import datetime
 from general import scheduler as gs
 from general import utilities as gu
 from general import process as gp
@@ -39,10 +39,10 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
  Specific command usage
 =======================
 
-  qunex <command_name>
+  qunex <command_name> --h
 
 
- Display listing of all QuNex commands 
+ Display a list of all QuNex commands 
 ======================================
 
   qunex --a
@@ -101,6 +101,7 @@ general_extract_glm_volumes             Extracts and saves the GLM estimates of 
 general_extract_roi_glm_values          Extracts per ROI estimates of specified effects from a volume or cifti GLM files.
 general_extract_roi_values              Extracts desired statistics from provided files for each ROI.
 general_find_peaks                      Performs smoothing and defines ROIs from peaks.
+general_glm_predict                     Computes predicted and residual signal based on GLM.
 general_image_conjunction               Reads image file, computes conjunction using g_conjunction and saves results.
 general_image_overlap                   Prints the overlap of two images, one in red, another in green.
 general_parcellated2dense               Expands the parcelated file to a dense file.
@@ -120,6 +121,8 @@ hcp_pre_freesurfer                      Runs HCP PreFreeSurfer pipeline.
 hcp_reapply_fix                         Runs HCP ReApplyFix pipeline.
 hcp_asl                                 Runs HCP ASL pipeline.
 hcp_task_fmri_analysis                  Runs HCP fMRI task analysis pipeline.
+hcp_temporal_ica                        Runs HCP temporal ICA pipeline.
+hcp_make_average_dataset                Runs HCP make average dataset pipeline.
 import_bids                             Maps a BIDS dataset to the QuNex Suite file structure.
 import_dicom                            Processes sessions's DICOM or PAR/REC files and generates NIfTI files.
 import_hcp                              Maps HCPLS data to the QuNex Suite file structure. 
@@ -268,7 +271,7 @@ def runCommand(command, args):
                 if not os.path.isdir(runListFolder):
                     os.makedirs(runListFolder)
 
-                logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+                logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
                 logname = os.path.join(runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
                 gs.runThroughScheduler(command, args=args, logfolder=runListFolder, logname=logname)
@@ -350,7 +353,7 @@ def runCommand(command, args):
             print("\n===> Successful completion of task")
 
 
-def printHelp(com):
+def print_help(com):
 
     # --- print list of available commands, required for qunex.sh checks
     if com == 'available':
@@ -358,20 +361,21 @@ def printHelp(com):
         # -> gmri commands
         for c, _ in gcom.commands.items():
             available_commands.append(c)
-        # -> complex processing commands
+        # -> processing commands
         for l in gp.calist:
             if len(l):
-                # deprecated command abbreviations 
                 available_commands.append(l[1])
         # -> longitudinal processing commands
         for l in gp.lalist:
             if len(l):
-                # deprecated command abbreviations 
+                available_commands.append(l[1])
+        # -> multi-sesssion processing commands
+        for l in gp.malist:
+            if len(l):
                 available_commands.append(l[1])
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
-                # deprecated command abbreviations 
                 available_commands.append(l[1])
         # -> matlab wrapped commands
         for l in gm.functions.keys():
@@ -407,7 +411,7 @@ def printHelp(com):
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
-        os.system("qunex -splash")
+        os.system("qunex --splash")
         print(all_qunex_commands)
 
     # --- print help for gmri local commands
@@ -438,36 +442,41 @@ def main(args=None):
         print(help)
         sys.exit(0)
 
-    comm = args[0]
+    comm = args[0].strip('-')
     opts = dict()
 
-     # --- check if help arguments are specified and strip all flags (? or -)
-    if comm[0] in ['?', '-']:
-        comm = comm.strip('-')
-        comm = comm.strip('?')
-        try:
-            command = comm[0:]
-            command = gcs.check_deprecated_commands(command)
-            printHelp(command)
-        except:
-            print("ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:]))
-            print(help)
-            raise
-        sys.exit(0)
-
     try:
-        for n in range(1, len(args)):
-            if "=" in args[n]:
-                k, v = args[n].split("=", 1)
-                k = k.strip('-')
-                opts[k] = v
-            elif comm in gcom.commands:
-                k = gcom.commands[comm]['args'][n - 1]
-                opts[k] = args[n]
-            else:
-                k = args[n].strip('-')
-                opts[k] = True
-        runCommand(comm, opts)
+        help_request = False
+        if comm in ['a', 'A', 'allcommands', 'available']:
+            help_request = True
+        else:
+            for n in range(1, len(args)):
+                # if --h, -h, --H or -H flag is provided user is looking for help
+                if args[n].strip('-') in ['h', 'H', 'help']:
+                    help_request = True
+                    break
+                elif "=" in args[n]:
+                    k, v = args[n].split("=", 1)
+                    k = k.strip('-')
+                    opts[k] = v
+                elif comm in gcom.commands:
+                    k = gcom.commands[comm]['args'][n - 1]
+                    opts[k] = args[n]
+                else:
+                    k = args[n].strip('-')
+                    opts[k] = True
+
+        # print help or run the command
+        if help_request:
+            try:
+                comm = gcs.check_deprecated_commands(comm)
+                print_help(comm)
+            except:
+                print("ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:]))
+                print(help)
+                raise
+        else:
+            runCommand(comm, opts)
 
 
     except ge.CommandNull as e:
@@ -481,7 +490,7 @@ def main(args=None):
     except ge.CommandError as e:
         print(ge.reportCommandError(comm, e))
         print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs)))
-        print("\nPlease run `qunex ?%s` to get help for the failed command.\n" % (comm))
+        print("\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm))
         sys.exit(1)
     except ValueError as e:
         print("\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm))
@@ -492,7 +501,7 @@ def main(args=None):
         sys.exit(e)
     except:
         print("\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm))
-        print("       Please check documentation for the command (`qunex ?%s`)!" % (comm))
+        print("       Please check documentation for the command (`qunex %s --h`)!" % (comm))
         print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs)))
         print("\n--------------------------------------------------------------\nHere's the error as caught by python:\n")
         raise

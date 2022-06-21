@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose);
 
 %``function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)``
@@ -36,6 +32,10 @@ function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, nt
 %
 %   hdr
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 10, verbose     = false; end
 if nargin < 9,  shrink      = true;  end

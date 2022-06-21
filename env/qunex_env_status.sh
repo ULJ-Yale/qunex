@@ -162,6 +162,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "             WORKBENCHDIR : $WORKBENCHDIR";         if [[ -z $WORKBENCHDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport WORKBENCHDIR"; fi
     echo "                CARET7DIR : $CARET7DIR";            if [[ -z $CARET7DIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport CARET7DIR"; fi
     echo "                  AFNIDIR : $AFNIDIR";              if [[ -z $AFNIDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport AFNIDIR"; fi
+    echo "                  ANTSDIR : $ANTSDIR";              if [[ -z $ANTSDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport ANTSDIR"; fi
     echo "                DCMNIIDIR : $DCMNIIDIR";            if [[ -z $DCMNIIDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport DCMNIIDIR"; fi
     echo "               DICMNIIDIR : $DICMNIIDIR";           if [[ -z $DICMNIIDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport DICMNIIDIR"; fi
     if [ "$USEOCTAVE" == "TRUE" ]; then
@@ -213,6 +214,10 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         # add specific TAG and commit hash
         echo "    HCPpipelines TAG : $(cat $HCPPIPEDIR/global/scripts/versioning/base.txt)"
         echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
+    elif [[ -e $HCPPIPEDIR/version.txt ]]; then
+        # add specific TAG and commit hash
+        echo "    HCPpipelines TAG : $(cat $HCPPIPEDIR/version.txt)"
+        echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
     else
         BinaryError="yes"; BinaryErrorReport="HCPPipelines"
         reho "        HCPpipelines : Version not found!"
@@ -249,19 +254,30 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo ""
 
     ## -- Check for AFNI
-    if [ ! -f /opt/.container ]; then
-        echo "        AFNI Binary  : $(which afni 2>&1 | grep -v 'no afni')"
-        if [[ -z $(which afni 2>&1 | grep -v 'no afni') ]]; then 
-            BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
-            reho "        AFNI Version : Binary not found!"
-            if [[ -L "$AFNIDIR"  && ! -e "$AFNIDIR" ]]; then
-                reho "                     : $AFNIDIR is a link to a nonexisiting folder!"
-            fi
-        else
-            echo "        AFNI Version : $(afni --version)"
+    echo "        AFNI Binary  : $(which afni 2>&1 | grep -v 'no afni')"
+    if [[ -z $(which afni 2>&1 | grep -v 'no afni') ]]; then 
+        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
+        reho "        AFNI Version : Binary not found!"
+        if [[ -L "$AFNIDIR"  && ! -e "$AFNIDIR" ]]; then
+            reho "                     : $AFNIDIR is a link to a nonexisiting folder!"
         fi
-        echo ""
+    else
+        echo "        AFNI Version : $(afni --version)"
     fi
+    echo ""
+
+    ## -- Check for ANTs (only very few ANTs commands support --version flag)
+    echo "        ANTs Binary  : $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion')"
+    if [[ -z $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion') ]]; then 
+        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
+        reho "        ANTs Version : Binary not found!"
+        if [[ -L "$ANTSDIR"  && ! -e "$ANTSDIR" ]]; then
+            reho "                     : $ANTSDIR is a link to a nonexisiting folder!"
+        fi
+    else
+        echo "        ANTs Version : $(antsJointFusion --version)"
+    fi
+    echo ""
 
     ## -- Check for dcm2niix
     echo "    dcm2niix Binary  : $(which dcm2niix 2>&1 | grep -v 'no dcm2niix')"

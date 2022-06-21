@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, options)
 
 %function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, options)
@@ -275,6 +271,10 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %
 %   The results will be returned in a fcset structure and, if so specified, saved.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 || isempty(options), options = '';  end
 if nargin < 4 || isempty(targetf), targetf = '.'; end

@@ -27,7 +27,6 @@ import shutil
 import zipfile
 import tarfile
 import glob
-import datetime
 import gzip
 import ast
 
@@ -35,6 +34,7 @@ import general.exceptions as ge
 import general.core as gc
 import general.filelock as fl
 
+from datetime import datetime
 
 def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
     '''
@@ -108,7 +108,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
             if io and io != 'File exists':
                 raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS info folder [%s]!" % (bidsfolder), "Please check paths and permissions!")
 
-            io = fl.open_status(os.path.join(bidsfolder, 'bids_info_status'), "Processing started on %s.\n" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")))
+            io = fl.open_status(os.path.join(bidsfolder, 'bids_info_status'), "Processing started on %s.\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")))
 
             # --> status created
             if io is None:
@@ -130,11 +130,11 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
         elif os.path.exists(folder):
             if overwrite == 'yes':
                 print(prefix + "--> bids for session %s already exists: cleaning session" % (session))
-                shutil.rmtree(folder)                    
+                shutil.rmtree(folder)
                 sessionsList['clean'].append(session)
             elif not os.path.exists(os.path.join(folder, 'bids2nii.log')):
                 print(prefix + "--> incomplete bids for session %s already exists: cleaning session" % (session))
-                shutil.rmtree(folder)                    
+                shutil.rmtree(folder)
                 sessionsList['clean'].append(session)
             else:
                 sessionsList['skip'].append(session)
@@ -624,7 +624,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
     # ---> close status file
 
     if sessionsList['bids'] == 'open':
-        fl.write_status(os.path.join(BIDSInfo, 'bids_info_status'), 'Processing done on %s.' % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")), 'a')
+        fl.write_status(os.path.join(BIDSInfo, 'bids_info_status'), 'Processing done on %s.' % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")), 'a')
 
     # ---> archiving the dataset
     
@@ -1116,7 +1116,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         mode = 'a'
 
     bout  = open(os.path.join(bfolder, 'bids2nii.log'), mode)
-    print("BIDS to nii mapping report, executed on %s" % (datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")), file=bout)
+    print("BIDS to nii mapping report, executed on %s" % (datetime.now().strftime("%Y-%m-%dT%H:%M:%S")), file=bout)
 
     # --- map files
 

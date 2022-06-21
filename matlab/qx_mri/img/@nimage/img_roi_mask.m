@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [mask] = img_roi_mask(img, roi)
 
 %``function [mask] = img_roi_mask(img, roi)``
@@ -27,6 +23,10 @@ function [mask] = img_roi_mask(img, roi)
 %   provided or an empty matrix is passed, the mask has true values for all the
 %   voxels with non-zero codes.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 img.data = img.image2D;
 

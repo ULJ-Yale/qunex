@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [exsets] = img_get_extraction_matrices(obj, frames, options)
 
 %function [exsets] = img_get_extraction_matrices(obj, frames, options)
@@ -59,6 +55,10 @@ function [exsets] = img_get_extraction_matrices(obj, frames, options)
 %               -> eind    ... event indeces for each retained row
 %               -> estat   ... statistics (number of good trials) for each event
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3 options = ''; end
 if nargin < 2 error('ERROR: Events string has to be specified!'); end

@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options)
 
 %``function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options)``
@@ -233,6 +229,10 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %                           'task:easyblock,hardblock:2,1', 'seed-maps', ...
 %                           'roimethod:mean|ignore:event');
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 || isempty(options), options = '';  end
 if nargin < 4 || isempty(targetf), targetf = '.'; end

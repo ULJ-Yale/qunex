@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_read_glm(img, fname, dtype, verbose)
 
 %``function [img] = img_read_glm(img, fname, dtype, verbose)``
@@ -21,6 +17,10 @@ function [img] = img_read_glm(img, fname, dtype, verbose)
 %
 %   img
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4
     verbose = [];
@@ -51,6 +51,7 @@ end
 
 img = processHeader(img, fin);
 img.filename = fname;
+img.filenames = {fname};
 
 % [img.data, count] = fread(fin, img.voxels * img.frames, ['float32=>' dtype]);
 [img.data, count] = fread(fin, inf, ['float32=>' dtype]);

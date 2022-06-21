@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)
 
 %``function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)``
@@ -37,6 +33,10 @@ function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbo
 %   more detailed information. If arguments are left empty, the defaults in
 %   general_compute_bold_stats will be used.
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 || isempty(verbose), verbose = false; end
 if nargin < 4, scrub  = []; end

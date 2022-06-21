@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [p] = stats_partial_correlation_matrix(X, Z, verbose)
 
 %function [p] = stats_partial_correlation_matrix(X, Z)
@@ -22,6 +18,10 @@ function [p] = stats_partial_correlation_matrix(X, Z, verbose)
 %   p
 %       matrix n x m where n is number of column in X and m number of vars in Z
 %	
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3
     verbose = false;

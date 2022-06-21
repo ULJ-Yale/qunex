@@ -394,8 +394,8 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     if [ -f ${HOME}/${XNAT_CREDENTIAL_FILE} ]; then
         echo ""
         ceho " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} found. Performing credential checks... "
-        XNAT_USER_NAME=`more ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f1`
-        XNAT_PASSWORD=`more ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f2`
+        XNAT_USER_NAME=`cat ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f1`
+        XNAT_PASSWORD=`cat ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f2`
         if [[ ! -z ${XNAT_USER_NAME} ]] && [[ ! -z ${XNAT_PASSWORD} ]]; then
             echo ""
             ceho " -- XNAT credentials parsed from ${HOME}/${XNAT_CREDENTIAL_FILE} " 
@@ -467,7 +467,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     if [[ ! -d ${RunAcceptanceTestDir} ]]; then mkdir -p ${RunAcceptanceTestDir} > /dev/null 2>&1; fi
     
     ## -- Obtain temp info on subjects and experiments in the project
-    XNATTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    XNATTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -m 30 -X GET "${XNAT_HOST_NAME}/data/sessions?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv
     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -m 30 -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv
 
@@ -568,15 +568,15 @@ echo ""
                 unset Status
                 # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
                 unset XNAT_SUBJECT_ID XNAT_SESSION_LABEL_HOST XNAT_ACCSESSION_ID
-                XNAT_SUBJECT_ID=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`
-                XNAT_SUBJECT_LABEL=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`
+                XNAT_SUBJECT_ID=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`
+                XNAT_SUBJECT_LABEL=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`
                 if [[ -z ${XNAT_SESSION_LABEL} ]]; then
-                    XNAT_SESSION_LABEL_HOST=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_ACCSESSION_ID}" | awk  -F, '{print $5}'`
+                    XNAT_SESSION_LABEL_HOST=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_ACCSESSION_ID}" | awk  -F, '{print $5}'`
                     XNAT_SESSION_LABEL=`echo ${XNAT_SESSION_LABEL_HOST} | sed 's|$CASE_||g'`
                 else
-                    XNAT_SESSION_LABEL_HOST=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`
+                    XNAT_SESSION_LABEL_HOST=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`
                 fi
-                XNAT_ACCSESSION_ID=`more ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`
+                XNAT_ACCSESSION_ID=`cat ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`
                 
                 # -- Report error if variables remain undefined
                 if [[ -z ${XNAT_SUBJECT_ID} ]] || [[ -z ${XNAT_SUBJECT_LABEL} ]] || [[ -z ${XNAT_ACCSESSION_ID} ]] || [[ -z ${XNAT_SESSION_LABEL_HOST} ]]; then 
@@ -623,7 +623,7 @@ echo ""
             
             ## -- Setup function to check presence of files on either local file system or on XNAT on 
             UnitTestDataCheck() {
-                SubjectSessionTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+                SubjectSessionTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
                 if [[ ${RUN_TYPE} == "xnat" ]]; then
                        if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData} ); then 
                            Status="PASS"
@@ -715,7 +715,7 @@ echo ""
             #    UnitTests="hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd dwi_dtifit dwi_bedpostx_gpu preprocess_bold compute_bold_fc_seed compute_bold_fc_gbc" 
             #
             # -- Needs to be added:
-            #    UnitTests="hcpd dwi_legacy eddy_qc dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries bold_parcellation compute_bold_fc_seed compute_bold_fc_gbc"
+            #    UnitTests="hcpd dwi_legacy eddy_qc dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc"
             #
             # -- FILES FOR EACH UNIT
             #
@@ -819,7 +819,7 @@ echo ""
             XNAT_SESSION_LABEL="${SESSION_LABEL}"
             ## -- Setup relevant acceptance paths for XNAT run
             unset AcceptDirTimeStamp
-            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
             RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_XNAT_${XNAT_SESSION_LABEL}_${AcceptDirTimeStamp}.txt"
             ## -- Open JSESSION to the XNAT Site
             JSESSION=$(curl -k -X POST -u "${XNAT_CREDENTIALS}" "${XNAT_HOST_NAME}/data/JSESSION" )
@@ -839,7 +839,7 @@ echo ""
         else
             ## -- Setup relevant acceptance paths for non-XNAT run
             unset AcceptDirTimeStamp
-            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+            AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
             RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_${AcceptDirTimeStamp}.txt"
             echo "" >> ${RunAcceptanceTestOut}
             echo "  QuNex Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}

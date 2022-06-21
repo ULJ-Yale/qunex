@@ -39,6 +39,7 @@ else:
 functions = {
     'general_parcellated2dense':       [('inimg', 'string'), ('outimg', 'string'), ('verbose', 'bool'), ('missingvalues', 'string')],
     'general_extract_glm_volumes':     [('flist', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('saveoption', 'string'), ('values', 'string'), ('verbose', 'bool'), ('txtf', 'string')],
+    'general_glm_predict':             [('flist', 'string'), ('effects', 'string'), ('targetf', 'string'), ('options', 'string')],
     'general_compute_bold_list_stats': [('flist', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'general_compute_bold_stats':      [('img', 'string'), ('mask', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'general_compute_group_bold_stats': [('flist', 'string'), ('tfile', 'string'), ('stats', 'string'), ('inmask', 'string'), ('ignore', 'string')],
@@ -48,7 +49,7 @@ functions = {
     'general_plot_bold_timeseries':    [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('sessionid', 'string'), ('verbose', 'bool')],
     'general_plot_bold_timeseries_list': [('flist', 'string'), ('elements', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('fformat', 'string'), ('verbose', 'bool')],
     'general_qa_concfile':             [('file', 'string'), ('do', 'string'), ('target', 'string')],
-    'general_image_conjunction':       [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string')],
+    'general_image_conjunction':       [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string'), ('psign', 'string')],
     'general_image_overlap':           [('af', 'string'), ('bf', 'string'), ('tf', 'string'), ('v', 'numeric')],
     'fc_compute_ab_corr':              [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('verbose', 'bool')],
     'fc_compute_ab_corr_kca':          [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('nc', 'numeric'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('dmeasure', 'string'), ('nrep', 'numeric'), ('verbose', 'bool')],

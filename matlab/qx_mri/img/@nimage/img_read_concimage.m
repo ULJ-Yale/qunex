@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_read_concimage(file, dtype, frames, verbose)
 
 %``function [img] = img_read_concimage(file, dtype, frames, verbose)``
@@ -41,6 +37,10 @@ function [img] = img_read_concimage(file, dtype, frames, verbose)
 %   	concimage = nimage('OP234-WM.conc');
 %
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 4, verbose = false; end
 if nargin < 3, frames = []; end
 if nargin < 2 || isempty(dtype), dtype = 'single'; end
@@ -57,3 +57,9 @@ for n = 2:nfiles
     nimg = nimage(char(files{n}), dtype, frames, verbose);
 	img = [img nimg];
 end
+
+% -- store conc name
+
+img.rootconcname = regexprep(file, '\.conc', '');
+[p, n, e]        = fileparts(file);
+img.concname     = [n e];

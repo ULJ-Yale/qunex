@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [panel] = img_slice_matrix(img, sdim, slices)
 
 %``function [panel] = img_slice_matrix(img, sdim, slices)``
@@ -32,6 +28,10 @@ function [panel] = img_slice_matrix(img, sdim, slices)
 %	
 %		panel = img.img_slice_matrix(2);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3,	slices = []; end
 if nargin < 2   sdim   = 3;  end

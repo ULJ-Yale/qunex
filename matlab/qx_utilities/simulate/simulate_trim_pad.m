@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [ts] = simulate_trim_pad(ts,l)
 
 %``function [ts] = simulate_trim_pad(ts,l)``
@@ -20,6 +16,10 @@ function [ts] = simulate_trim_pad(ts,l)
 %   ts
 %		trimmed / padded timeseries
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 2
     error('ERROR: not enough parameters to trim or pad the timeseries!');

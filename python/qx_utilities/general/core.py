@@ -25,7 +25,9 @@ import sys
 import types
 import traceback
 import gzip
+import math
 from datetime import datetime
+from concurrent.futures import ProcessPoolExecutor
 
 import general.filelock as fl
 import general.exceptions as ge
@@ -37,7 +39,7 @@ def readSessionData(filename, verbose=False):
     ``readSessionData(filename, verbose=False)``
 
     Reads a `batch.txt` file.
-    
+
     USE
     ===
 
@@ -80,8 +82,15 @@ def readSessionData(filename, verbose=False):
                 c += 1
 
                 # --- read preferences / settings
+                if line.startswith('--'):
+                    pkey, pvalue = [e.strip() for e in line.split(':', 1)]
+                    if first:
+                        gpref[pkey[2:]] = pvalue
+                    else:
+                        dic[pkey] = pvalue
+                    continue
 
-                if line.startswith('_'):
+                elif line.startswith('_') or line.startswith('-'):
                     pkey, pvalue = [e.strip() for e in line.split(':', 1)]
                     if first:
                         gpref[pkey[1:]] = pvalue
@@ -90,14 +99,12 @@ def readSessionData(filename, verbose=False):
                     continue
 
                 # --- split line
-
                 line = line.split(':')
                 line = [e.strip() for e in line]
                 if len(line) < 2:
                     continue
 
                 # --- read ima data
-
                 if line[0].isdigit():
                     image = {}
                     image['ima'] = line[0]
@@ -105,9 +112,9 @@ def readSessionData(filename, verbose=False):
                     for e in line:
                         m = nsearch.match(e)
                         if m:
-                            image[m.group(1)] = m.group(2)
+                            image[m.group(1).strip()] = m.group(2).strip()
                             remove.append(e)
-                    
+
                     for e in remove:
                         line.remove(e)
 
@@ -123,14 +130,13 @@ def readSessionData(filename, verbose=False):
 
 
                 # --- read conc data
-
                 elif csearch.match(line[0]):
                     conc = {}
                     conc['cnum'] = line[0]
                     for e in line:
                         m = nsearch.match(e)
                         if m:
-                            conc[m.group(1)] = m.group(2)
+                            conc[m.group(1).strip()] = m.group(2).strip()
                             line.remove(e)
 
                     ni = len(line)
@@ -144,7 +150,6 @@ def readSessionData(filename, verbose=False):
                     dic[line[0]]  = conc
 
                 # --- read rest of the data
-
                 else:
                     dic[line[0]] = ":".join(line[1:])
 
@@ -159,7 +164,6 @@ def readSessionData(filename, verbose=False):
                     slist.append(dic)
 
             # check paths
-
             for field in ['dicom', 'raw_data', 'data', 'hpc']:
                 if field in dic:
                     if not os.path.exists(dic[field]) and verbose:
@@ -217,7 +221,7 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
     USE
     ===
 
-    An internal function for getting a list of sessions as an array of 
+    An internal function for getting a list of sessions as an array of
     dictionaries in the form::
 
         [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}]
@@ -228,17 +232,17 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
     - a path to a batch file (identified by .txt extension),
     - a path to a `*.list` file (identified by .list extension).
 
-    In the first cases, the dictionary will include only session ids, in the 
-    second all the other information present in the batch file, in the third 
+    In the first cases, the dictionary will include only session ids, in the
+    second all the other information present in the batch file, in the third
     lists of specified files, e.g.::
 
         [{'id': <session id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
 
-    If filter is provided (not None), only sessions that match the filter will 
-    be returned. If sessionids is provided (not None), only sessions with 
-    matching id will be returned. If sessionsfolder is provided (not None), 
-    sessions from a listString will be treated as glob patterns and all folders 
-    that match the pattern in the sessionsfolder will be returned as session 
+    If filter is provided (not None), only sessions that match the filter will
+    be returned. If sessionids is provided (not None), only sessions with
+    matching id will be returned. If sessionsfolder is provided (not None),
+    sessions from a listString will be treated as glob patterns and all folders
+    that match the pattern in the sessionsfolder will be returned as session
     ids.
     """
 
@@ -276,12 +280,23 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
             filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
         except:
             raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
-            
+
         if any([len(e) != 2 for e in filters]):
             raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
+
+    # are we inside a SLURM job array?
+    if 'SLURM_ARRAY_TASK_ID' in os.environ:
+        # get ID for this job
+        slurm_array_ix = int(os.environ['SLURM_ARRAY_TASK_ID'])
+
+        # get size of job array
+        slurm_array_size = int(os.environ['SLURM_ARRAY_TASK_MAX']) + 1
+
+        # get the chunk
+        slist = slist[slurm_array_ix::slurm_array_size]
 
     return slist, gpref
 
@@ -331,9 +346,9 @@ def runExternalParallel(calls, cores=None, prepend=''):
     """
     ``runExternalParallel(calls, cores=None, prepend='')``
 
-    Runs external commands specified in 'calls' in parallel utilizing all the 
+    Runs external commands specified in 'calls' in parallel utilizing all the
     available or the number of cores specified in 'cores'.
-    
+
     INPUTS
     ======
 
@@ -342,10 +357,10 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
                    - name (the name of the command to run)
                    - args (the actual command provided as a list of arguments)
-                   - sout (the name of the log file to which to direct the 
+                   - sout (the name of the log file to which to direct the
                      standard output from the command ran)
 
-    --cores        The number of cores to utilize. If specified as None or 
+    --cores        The number of cores to utilize. If specified as None or
                    'all', all available cores will be utilized.
     --prepend      The string to prepend to each line of progress report.
 
@@ -358,7 +373,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
     """
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
@@ -426,7 +441,8 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
 
 results = []
-lock    = multiprocessing.Lock()
+lock = multiprocessing.Lock()
+
 
 def record(response):
     """
@@ -453,6 +469,15 @@ def record(response):
         else:
             print("%s%s finished successfully%s" % (prepend, name, see))
 
+
+def record_future(future):
+    if future.exception() is not None:
+        print("Unhandled exception")
+        print(future.exception())
+    else:
+        record(future.result())
+
+
 # Logger class that prints both to stdour and to console
 class Logger(object):
     def __init__(self, logfile):
@@ -461,7 +486,7 @@ class Logger(object):
 
     def write(self, message):
         self.terminal.write(message)
-        self.log.write(message)  
+        self.log.write(message)
 
     def close(self):
         self.log.close()
@@ -482,7 +507,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
     For internal use only.
     """
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s.%f")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if name is None:
         name = function.__name__
@@ -504,8 +529,9 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
             os.makedirs(logfolder)
         with lock:
             # header
-            print("# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp), file=open(tlogfile, "w"))
-            print("#", file=open(tlogfile, "w"))
+            with open(tlogfile, "w") as f:
+                print("# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp), file=f)
+                print("#", file=f)
             print(prepend + "started running %s at %s, track progress in %s" % (name, str(datetime.now()).split('.')[0], tlogfile))
 
         sysstdout = sys.stdout
@@ -519,9 +545,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
             print(prepend + "started running %s at %s" % (name, str(datetime.now()).split('.')[0]))
 
     with lock:
-        print("# Generated by QuNex %s on %s" % (get_qunex_version(), timestamp))
-        print("#")
-        print("Started running %s at %s\ncall: gmri %s %s\n-----------------------------------------" % (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), function.__name__, " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()])))
+        print("call: gmri %s %s\n-----------------------------------------" % (function.__name__, " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()])))
 
     try:
         result = function(**args)
@@ -567,7 +591,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         # create runlog
         if "comlog" in logfolder:
             logfolder = logfolder.replace("comlog", "runlog")
-            
+
             if not os.path.exists(logfolder):
                 try:
                     os.makedirs(logfolder)
@@ -616,22 +640,22 @@ def runInParallel(calls, cores=None, prepend=""):
     """
     ``runInParallel(calls, cores=None, prepend="")``
 
-    Runs functions specified in 'calls' in parallel utilizing all the available 
+    Runs functions specified in 'calls' in parallel utilizing all the available
     or the number of cores specified in 'cores'.
-    
+
     INPUTS
     ======
 
-    --calls        A list of dictionaries that specifies the commands to run. 
+    --calls        A list of dictionaries that specifies the commands to run.
                    It should consists of:
 
                    - name (the name of the command to run)
                    - function (the function to be run)
                    - args (the arguments to be passed to the function)
-                   - logfile (the path to the log file to which to direct the 
+                   - logfile (the path to the log file to which to direct the
                      standard output from the command ran)
 
-    --cores        The number of cores to utilize. If specified as None or 
+    --cores        The number of cores to utilize. If specified as None or
                    'all', all available cores will be utilized.
     --prepend      The string to prepend to each line of progress report.
 
@@ -646,22 +670,19 @@ def runInParallel(calls, cores=None, prepend=""):
     global results
 
     if cores is None or cores in ['all', 'All', 'ALL']:
-        cores = multiprocessing.cpu_count()
+        cores = len(os.sched_getaffinity(0))
     else:
         try:
             cores = int(cores)
         except:
             cores = 1
 
-    pool    = multiprocessing.Pool(processes=cores)
     results = []
-
-    for call in calls:
-        pool.apply_async(runWithLog, (call['function'], call['args'], call['logfile'], call['name'], prepend), callback=record)
-
-    pool.close()
-    pool.join()
-
+    with ProcessPoolExecutor(max_workers=cores) as executor:
+        for call in calls:
+            future = executor.submit(runWithLog, call['function'], call['args'], call['logfile'], call['name'], prepend)
+            future.add_done_callback(record_future)
+        
     return results
 
 
@@ -670,15 +691,15 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     """
     ``checkFiles(testFolder, specFile, fields=None, report=None, append=False)``
 
-    Check the testFolder for presence of files as specified in specFile, which 
+    Check the testFolder for presence of files as specified in specFile, which
     lists files one per line with space delimited paths. Additionally an array
-    of key-value pairs can be provided. If present every instance of {<key>} 
-    will be replaced by <value>. If report is specified, a report will be 
+    of key-value pairs can be provided. If present every instance of {<key>}
+    will be replaced by <value>. If report is specified, a report will be
     written to that file. Where there might be two alternative options of results
-    e.g. difference because of AP/PA direction, then the alternative is to 
+    e.g. difference because of AP/PA direction, then the alternative is to
     be provided in the same line separated by a pipe '|'
     """
- 
+
     # --- open the report if needed:
 
     if report:
@@ -757,7 +778,7 @@ def printAndLog(*args, **kwargs):
     ``printAndLog(*args, **kwargs)``
 
     Prints all that is given as nonpositional argument to the standard output.
-    
+
     INPUTS
     ======
 
@@ -785,7 +806,7 @@ def printAndLog(*args, **kwargs):
         for out in [append, write, file]:
             if out:
                 print(element, end=" ", file=out)
-    
+
     for toclose in [append, write]:
         if toclose:
             toclose.close()
@@ -797,7 +818,7 @@ def getLogFile(folders=None, tags=None):
     ``getLogFile(folders=None, tags=None)``
 
     Creates a log file in the comlogs folder.
-    
+
     INPUTS
     ======
 
@@ -809,12 +830,12 @@ def getLogFile(folders=None, tags=None):
 
     --filename         The path to the log file.
     --file handle      The file handle of the open file.
-    
+
     USE
     ===
 
-    Creates a log file in the comlogs folder and returns the name and the file 
-    handle. It tries to find the correct location for the log based on the 
+    Creates a log file in the comlogs folder and returns the name and the file
+    handle. It tries to find the correct location for the log based on the
     provided folders.
 
     """
@@ -828,7 +849,7 @@ def getLogFile(folders=None, tags=None):
     if isinstance(tags, basestring) or tags is None:
         tags = []
 
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname  = tags + [logstamp]
     logname  = [e for e in logname if e]
     logname  = "_".join(logname)
@@ -880,7 +901,7 @@ def pcslist(s):
     '''
     pcslist(s)
     Processes the string, spliting it by the pipe "|", comma or space, trimming
-    any whitespace caracters from start or end of each resulting substring, and 
+    any whitespace caracters from start or end of each resulting substring, and
     retuns an array of substrings of length more than 0.
     '''
     s = re.split(' *, *| *\| *| +', s)
@@ -889,7 +910,7 @@ def pcslist(s):
     return s
 
 
-def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
+def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None, symlink=False):
     """
     linkOrCopy - documentation not yet available.
     """
@@ -909,11 +930,18 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
                         return (status and True, "%s%s%s already mapped" % (r, prefix, name))
                 else:
                     os.remove(target)
-            os.link(source, target)
+
+            # link
+            if not symlink:
+                os.link(source, target)
+            else:
+                os.symlink(source, target)
+
             if r is None:
                 return status and True
             else:
                 return (status and True, "%s%s%s mapped" % (r, prefix, name))
+
         except:
             try:
                 shutil.copy2(source, target)
@@ -981,7 +1009,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
                     io = fl.link(source, target)
                     if not io:
                         return report(status, "%s mapped" % (name))
-                    else: 
+                    else:
                         action = 'copy'
             else:
                 action = 'copy'
@@ -1015,7 +1043,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
 def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     """
     ``createSessionFile(command, sfolder, session, subject, overwrite, prefix)``
-    
+
     Creates the generic, non pipeline specific, session file.
     """
 
@@ -1029,11 +1057,11 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
             raise ge.CommandFailed(command, "session.txt file already present!", "A session.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout = open(sfile, 'w')
-    print("# Generated by QuNex %s on %s" % (get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%s")), file=sout)
+    print("# Generated by QuNex %s on %s" % (get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=sout)
     print("#", file=sout)
     print('id:', session, file=sout)
     print('subject:', subject, file=sout)
-     
+
     # bids
     bfolder = os.path.join(sfolder, 'bids')
     if os.path.exists(bfolder):

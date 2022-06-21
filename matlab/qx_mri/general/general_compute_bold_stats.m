@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbose);
 
 %``function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbose)``
@@ -71,6 +67,10 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %
 %       general_compute_bold_stats('bold1.nii.gz', [], 'movement', '', '', true);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 6, verbose = false; end
 if nargin < 5, scrub   = [];    end

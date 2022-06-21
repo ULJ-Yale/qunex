@@ -20,7 +20,7 @@ usage() {
  echo ""
  echo "DWI data needs to be in the following folder::"
  echo ""
- echo " <study_folder>/<case>/hcp/<case>/Diffusion"
+ echo " <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
  echo ""
  echo "T1w data needs to be in the following folder::"
  echo ""
@@ -160,7 +160,7 @@ fi
 ########################################## INPUTS ########################################## 
 
 # DWI Data and T1w data needed in HCP-style format to perform legacy DWI preprocessing
-# The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
+# The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion
 # Also assumes that hcp_pre_freesurfer T1 preprocessing has been carried out with results in "$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w
 # Mandatory input parameters:
 

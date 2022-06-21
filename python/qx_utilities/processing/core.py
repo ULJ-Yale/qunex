@@ -175,9 +175,9 @@ def useOrSkipBOLD(sinfo, options, r=""):
         if len(bskip) > 0:
             r += "\n\nSkipping the following BOLD images:"
             for n, b, t, v in bskip:
-                if 'filename' in v and options.get('hcp_filename', '') == 'original':
+                if 'filename' in v and options.get('hcp_filename', '') == 'userdefined':
                     r += "\n...  %-20s [%-6s %s]" % (v['filename'], b, t)
-                elif 'boldname' in v and options.get('hcp_filename', '') == 'original':
+                elif 'boldname' in v and options.get('hcp_filename', '') == 'userdefined':
                     r += "\n...  %-20s [%-6s %s]" % (v['boldname'], b, t)
                 else:
                     r += "\n...  %-6s [%s]" % (b, t)
@@ -316,32 +316,32 @@ def getFileNames(sinfo, options):
         # ---> BET & FAST
 
         if os.path.exists(f['m111_brain']) and not os.path.exists(f['t1_brain']):
-            os.link(f['m111_brain'], f['t1_brain'])
+            gc.linkOrCopy(f['m111_brain'], f['t1_brain'])
 
         if os.path.exists(f['m111_seg']) and not os.path.exists(f['t1_seg']):
-            os.link(f['m111_seg'], f['t1_seg'])
+            gc.linkOrCopy(f['m111_seg'], f['t1_seg'])
 
         # ---> FreeSurfer
 
         if os.path.exists(f['fs_aseg_111']) and not os.path.exists(f['fs_aseg_t1']):
-            os.link(f['fs_aseg_111'], f['fs_aseg_t1'])
+            gc.linkOrCopy(f['fs_aseg_111'], f['fs_aseg_t1'])
         if os.path.exists(f['fs_aseg_111'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aseg_t1'].replace('.img', '.ifh')):
-            os.link(f['fs_aseg_111'].replace('.img', '.ifh'), f['fs_aseg_t1'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aseg_111'].replace('.img', '.ifh'), f['fs_aseg_t1'].replace('.img', '.ifh'))
 
         if os.path.exists(f['fs_aseg_333']) and not os.path.exists(f['fs_aseg_bold']):
-            os.link(f['fs_aseg_333'], f['fs_aseg_bold'])
+            gc.linkOrCopy(f['fs_aseg_333'], f['fs_aseg_bold'])
         if os.path.exists(f['fs_aseg_333'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aseg_bold'].replace('.img', '.ifh')):
-            os.link(f['fs_aseg_333'].replace('.img', '.ifh'), f['fs_aseg_bold'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aseg_333'].replace('.img', '.ifh'), f['fs_aseg_bold'].replace('.img', '.ifh'))
 
         if os.path.exists(f['fs_aparc+aseg_111']) and not os.path.exists(f['fs_aparc_t1']):
-            os.link(f['fs_aparc+aseg_111'], f['fs_aparc_t1'])
+            gc.linkOrCopy(f['fs_aparc+aseg_111'], f['fs_aparc_t1'])
         if os.path.exists(f['fs_aparc+aseg_111'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aparc_t1'].replace('.img', '.ifh')):
-            os.link(f['fs_aparc+aseg_111'].replace('.img', '.ifh'), f['fs_aparc_t1'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aparc+aseg_111'].replace('.img', '.ifh'), f['fs_aparc_t1'].replace('.img', '.ifh'))
 
         if os.path.exists(f['fs_aparc+aseg_333']) and not os.path.exists(f['fs_aparc_bold']):
-            os.link(f['fs_aparc+aseg_333'], f['fs_aparc_bold'])
+            gc.linkOrCopy(f['fs_aparc+aseg_333'], f['fs_aparc_bold'])
         if os.path.exists(f['fs_aparc+aseg_333'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aparc_bold'].replace('.img', '.ifh')):
-            os.link(f['fs_aparc+aseg_333'].replace('.img', '.ifh'), f['fs_aparc_bold'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aparc+aseg_333'].replace('.img', '.ifh'), f['fs_aparc_bold'].replace('.img', '.ifh'))
 
     return f
 
@@ -603,6 +603,17 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         passed = 'done'
         failed = 0
 
+        # check log contents for errors
+        log = open(logFile, 'r')
+        lines = log.readlines()
+        
+        for line in lines:
+            if "Error" in line or "ERROR" in line:
+                report = "%s not finished" % (command)
+                passed = None
+                failed = 1
+                break
+
     else:
         if verbose and tfile is not None:
             r += "\n---> %s test file missing:\n     %s" % (command, tfile)
@@ -612,6 +623,36 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
 
     return passed, report, r, failed
 
+def closeLog(logfile, logname, logfolders, status, remove, r):
+
+    # -- close the log
+    if logfile:
+        logfile.close()
+
+    # -- do we delete it
+    if status == 'done' and remove:
+        os.remove(logname)
+        return None, r
+
+    # -- rename it
+    sfolder, sname = os.path.split(logname)
+    tname = re.sub("^tmp", status, sname)
+    tfile = os.path.join(sfolder, tname)
+    shutil.move(logname, tfile)
+    r += '\n---> logfile: %s' % (tfile)
+
+    # -- do we have multiple logfolders?
+    for logfolder in logfolders:
+        nfile = os.path.join(logfolder, tname)
+        if not os.path.exists(logfolder):
+            os.makedirs(logfolder)
+        try:
+            gc.linkOrCopy(tfile, nfile)
+            r += '\n---> logfile: %s' % (nfile)
+        except:
+            r += '\n---> WARNING: could not map logfile to: %s' % (nfile)
+
+    return tfile, r
 
 
 def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
@@ -658,41 +699,10 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     --failed        0 for ok, 1 or more for failed or incomplete runs.
     """
 
-    def closeLog(logfile, logname, logfolders, status, remove, r):
-
-        # -- close the log
-        if logfile:
-            logfile.close()
-
-        # -- do we delete it
-        if status == 'done' and remove:
-            os.remove(logname)
-            return None, r
-
-        # -- rename it
-        sfolder, sname = os.path.split(logname)
-        tname = re.sub("^tmp", status, sname)
-        tfile = os.path.join(sfolder, tname)
-        shutil.move(logname, tfile)
-        r += '\n---> logfile: %s' % (tfile)
-
-        # -- do we have multiple logfolders?
-        for logfolder in logfolders:
-            nfile = os.path.join(logfolder, tname)
-            if not os.path.exists(logfolder):
-                os.makedirs(logfolder)
-            try:
-                gc.linkOrCopy(tfile, nfile)
-                r += '\n---> logfile: %s' % (nfile)
-            except:
-                r += '\n---> WARNING: could not map logfile to: %s' % (nfile)
-
-        return tfile, r
-
     endlog = None
 
     # timestamp
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     # -- Report command
     # header
@@ -700,21 +710,22 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     printComm += "#\n"
     # external command info
     printComm += "------------------------------------------------------------\n"
-    printComm += "Running external command via QuNex:\n"
-    comm = run.replace(" ", "").replace("--", " \ \n    --")
-    comm += "\n"
+    printComm += "Running external command via QuNex:\n\n"
+
+    comm = run + "\n"
+
     printComm += comm
     if checkfile is not None and checkfile != "":
         printComm += "\nTest file: \n%s\n" % checkfile
     printComm += "------------------------------------------------------------"
 
     # report for local runs
-    print(printComm)
+    print("Running external command: %s" % comm)
 
     # add an empty line for log purposes
     printComm += "\n"
 
-    if overwrite or not os.path.exists(checkfile):
+    if overwrite or checkfile is None or not os.path.exists(checkfile):
         r += '\n\n%s' % (description)
 
         # --- set up parameters
@@ -739,26 +750,24 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
                 raise ExternalFailed(r)
 
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
-
         # --- report
         print("You can follow command's progress in:")
         print(tmplogfile)
         print("------------------------------------------------------------")
 
-        # --- open log file
-        nf = open(tmplogfile, 'a')
-        if not os.path.exists(tmplogfile):
-            r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
-            raise ExternalFailed(r)
-
         # --- run command
         try:
+            # append mode
+            nf = open(tmplogfile, 'a')
+
+            # --- open log file
+            if not os.path.exists(tmplogfile):
+                r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
+                raise ExternalFailed(r)
+
             # add command call to start of the log
             print(printComm, file=nf)
-
-            # close and switch to append mode
-            nf.close()
-            nf = open(tmplogfile, 'a')
+            nf.flush()
 
             if shell:
                 ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
@@ -773,21 +782,19 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
 
         # --- check results
-
         if ret:
             r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (description, ret)
             r += comm
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
-        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf, verbose=verbose)
+        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=tmplogfile, verbose=verbose)
 
         if status is None:
             r += "\n\nTry running the command directly for more detailed error information:\n"
             r += comm
 
         # --- End
-
         if status and status == 'done':
             print("\n\n===> Successful completion of task\n", file=nf)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
@@ -830,7 +837,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     if isinstance(logtags, basestring):
         logtags = [logtags]
 
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname  = [task] + logtags + [thread, logstamp]
     logname  = [e for e in logname if e]
     logname  = "_".join(logname)
@@ -884,6 +891,33 @@ def checkForFile2(r, checkfile, ok, bad, status=True):
     else:
         r += bad
         return r, False
+
+
+def checkForFiles(r, checkfiles, ok, bad, all=False, status=True):
+    """
+    checkForFiles - checks if any of the files in the checkfiles list exists
+
+    If all parameter is set to True, returns True only if all files exist,
+    if all parameter is False it returns the first found file.
+    """
+
+    for f in checkfiles:
+        if os.path.exists(f):
+            if not all:
+                r += ok
+                return r, status, f
+        else:
+            if all:
+                r += bad
+                return r, False, ""
+
+    if not all:
+        r += bad
+        return r, False, ""
+
+    # if we are here all files exist and all is set
+    r += ok
+    return r, status, ""
 
 
 def action(action, run):

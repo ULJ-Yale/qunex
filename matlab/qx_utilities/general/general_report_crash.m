@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_report_crash(ME);
 
 %``function [] = general_report_crash(ME)``;
@@ -9,8 +5,11 @@ function [] = general_report_crash(ME);
 %   Function for reporting of errors found in the code.
 %
 
-fprintf('\n\n=========================================\nExecution error! Processing failed! \nPlease check arguments and/or try running the command in Matlab or Octave directly.\n\nThe exact error reported:\n-----------------------------------------\n%s\n\n=========================================\n', prepareErrorReport(ME))
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
+fprintf('\n\n=========================================\nExecution error! Processing failed! \nPlease check arguments and/or try running the command in Matlab or Octave directly.\n\nThe exact error reported:\n-----------------------------------------\n%s\n\n=========================================\n', prepareErrorReport(ME))
 
 function [s] = prepareErrorReport(ME);
 

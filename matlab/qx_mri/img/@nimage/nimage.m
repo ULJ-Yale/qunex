@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 classdef nimage
 %
 %   nimage class offers an object to store MR image data. It provides basic
@@ -124,6 +120,10 @@ classdef nimage
 %   cifti         
 %       A structure providing CIFTI information
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
     properties
         data
         imageformat
@@ -135,10 +135,14 @@ classdef nimage
         vsizes
         TR
         frames
-        runframes       = [];
+        runframes       = [];        
+        concname        = [];
+        rootconcname    = [];
         filename        = [];
+        filenames       = {};
         filetype        = [];
         rootfilename    = [];
+        rootfilenames   = {};
         mask            = [];
         masked          = false;
         empty           = true;
@@ -248,7 +252,7 @@ classdef nimage
         %   img2 = nimage('t1w.nii.gz');
         %   img3 = nimage('boldlist.conc');
         %   img4 = nimage('bold1.nii.gz|bold2.nii.gz|bold3.nii.gz');
-        %   img5 = gmrimahe('boldlist.conc;bold1.nii.gz;bold2.nii.gz|bold3.nii.gz');
+        %   img5 = nimage('boldlist.conc;bold1.nii.gz;bold2.nii.gz|bold3.nii.gz');
         %   img6 = nimage(randn(91,191,91));
         %   img7 = nimage(randn(91282,5));
         %   img8 = nimage(randn(91282,5), 'dscalar', {'A', 'B', 'C', 'D', 'E'});
@@ -699,6 +703,8 @@ classdef nimage
             % if strcmp(obj.imageformat, 'CIFTI-2')
             %     obj.dim = size(obj.data);
             % end
+            obj.filenames = [obj.filenames, add.filenames];
+            obj.rootfilenames = [obj.rootfilenames, add.rootfilenames];
 
             % --> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)
@@ -783,6 +789,12 @@ classdef nimage
             obj.frames = frames;
             obj.runframes = frames;
             obj.use = true(1, frames);
+            obj.filename = '';
+            obj.filenames = {};
+            obj.rootfilename = '';
+            obj.rootfilenames = {};
+            obj.concname = '';
+            obj.rootconcname = '';
 
             % ---> erase metadata
 
@@ -929,6 +941,70 @@ classdef nimage
 
         end
 
+
+        % =================================================
+        %                                         splitruns
+        %
+        %   method for splitting concatenated file back into
+        %   constituent runs
+        %
+        
+        function conc = splitruns(obj)
+            startframe = 1;
+            endframe = 0;
+            obj.data = obj.image2D;
+            for n = 1:length(obj.runframes)                
+                endframe = endframe + obj.runframes(n);
+               
+                % -- data
+                conc(n) = obj.zeroframes(obj.runframes(n));                
+                conc(n).data = obj.data(:, startframe:endframe);
+
+                % -- metadata
+                conc(n).filename = obj.filenames{n};
+                conc(n).filenames = obj.filenames(n);
+                conc(n).rootfilename = obj.rootfilenames{n};
+                conc(n).rootfilenames = obj.rootfilenames(n);
+
+                conc(n).use = obj.use(startframe:endframe);
+                if strcmp(obj.imageformat, 'CIFTI-2')
+                    conc(n).dim = size(conc(n).data);
+                end
+
+                if ~isempty(obj.mov)
+                    conc(n).mov = obj.mov(startframe:endframe, :);
+                end
+
+                if ~isempty(obj.fstats)
+                    conc(n).fstats = obj.fstats(startframe:endframe, :);
+                end
+
+                if ~isempty(obj.scrub)
+                    conc(n).scrub = obj.scrub(startframe:endframe, :);
+                end
+
+                if ~isempty(obj.list)
+                    for f = fields(obj.list)'
+                        f = f{1};
+                        if strcmp(f, 'meta')
+                            continue
+                        else
+                            conc(n).list.(f) = obj.list.(f)(startframe:endframe);
+                        end
+                    end
+                end
+
+                if ~isempty(obj.tevents)
+                    conc(n).tevents = obj.tevents(:, startframe:endframe);
+                end
+
+                if isfield(obj.cifti, 'maps') && ~isempty(obj.cifti.maps)
+                    conc(n).cifti.maps = obj.cifti.maps(startframe:endframe);
+                end
+
+                startframe = startframe + obj.runframes(n);
+            end
+        end
     end
 
     methods (Static)

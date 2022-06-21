@@ -12,9 +12,8 @@
 # -------------------------------------
 # ---> HCP Pipelines general parameters
 # -------------------------------------
-_hcp_Pipeline            : ${HCPPIPEDIR}
-_hcp_folderstructure     : hcpls
-_hcp_filename            : original
+_hcp_pipeline            : ${HCPPIPEDIR}
+_hcp_filename            : userdefined
 _hcp_processing_mode     : LegacyStyleData # For HCP compliant data set to ==> HCPStyleData
 
 # -------------------------------------

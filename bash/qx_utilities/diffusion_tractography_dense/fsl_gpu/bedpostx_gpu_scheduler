@@ -331,7 +331,7 @@ if [ "$Scheduler" = "" ]; then
 	. ${subjdir}.bedpostX/commands.txt                      ########## <<< XFIBERS <<< ############ 
 else
 	# -- Set dependencies on all prior jobs
-	splitID=`more ${subjdir}.bedpostX/logs/pre_command.output.log | awk 'NF{ print $NF }'`
+	splitID=`cat ${subjdir}.bedpostX/logs/pre_command.output.log | awk 'NF{ print $NF }'`
 
 	# - Specify scheduler options
 	if [ $Scheduler == "SLURM" ]; then
@@ -346,7 +346,7 @@ else
     
     # - Loop through all commands in ${subjdir}.bedpostX/commands.txt
     rm -f ${subjdir}.bedpostX/logs/bedpostx_gpu_command_*.sh
-    commandcount=`more ${subjdir}.bedpostX/commands.txt | wc -l`    
+    commandcount=`cat ${subjdir}.bedpostX/commands.txt | wc -l`    
     counter=1
 	# -- Start loopx
 	while [ $counter -le $commandcount ]
@@ -386,10 +386,10 @@ else
 	part=1
 	bedpostid=""
 	while [ $part -le $njobs ]; do 
-		bedpostid=`more ${subjdir}.bedpostX/logs/bedpostx_gpu_command_$part.output.log | awk 'NF{ print $NF }'`
+		bedpostid=`cat ${subjdir}.bedpostX/logs/bedpostx_gpu_command_$part.output.log | awk 'NF{ print $NF }'`
 		echo "${bedpostid}" >> ${subjdir}.bedpostX/logs/bedpostidall.tmp; part=$(($part + 1)) 
 	done 
-	bedpostid=`more ${subjdir}.bedpostX/logs/bedpostidall.tmp | cut -c1-`
+	bedpostid=`cat ${subjdir}.bedpostX/logs/bedpostidall.tmp | cut -c1-`
 	bedpostid=`echo ${bedpostid} | sed 's/ /:/g'`
 	
 	# - Specify scheduler options

@@ -14,8 +14,8 @@
 # ## LICENCE
 #
 # * The pre_tractography.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
+# * This Software conforms to the licenses outlined in the QuNex Suite:
+# * https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES
 #
 # ## DESCRIPTION 
 #   
@@ -66,7 +66,7 @@ usage() {
  echo ""
  echo "DWI data needs to be in the following folder::"
  echo ""
- echo "  <study_folder>/<case>/hcp/<case>/Diffusion"
+ echo "  <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
  echo ""
  echo "BedpostX output data needs to be in the following folder::"
  echo ""

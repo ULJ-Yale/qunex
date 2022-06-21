@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [simg] = img_extract_timeseries(obj, exmat, method, eind)
 
 %function [simg] = img_extract_timeseries(obj, exmat, method, eind)
@@ -32,6 +28,10 @@ function [simg] = img_extract_timeseries(obj, exmat, method, eind)
 %                        frame was extracted. If eind was provided, that information will be
 %                        used instead of the row index. 
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4 eind = []; end
 if nargin < 3 || isempty(method), method = 'all'; end

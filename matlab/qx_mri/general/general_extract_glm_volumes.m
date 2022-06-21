@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf);
 
 %``function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
@@ -68,6 +64,10 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %       'encoding,delay', [], 'by_session');
 %
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 8 || isempty(txtf),       txtf       = ''; end
 if nargin < 7, verbose   = false; end
 if nargin < 6 || isempty(values),     values     = 'raw'; end
@@ -100,6 +100,24 @@ end
 
 sessions = general_read_file_list(flist);
 nsub = length(sessions);
+
+
+% --------------------------------------------------------------
+%                             check that glm entries are present
+
+if verbose, fprintf('\n---> checking file list'); end
+allok = true;
+for s = 1:nsub
+    if ~isfield(sessions(s), 'glm')
+        fprintf('\n     WARNING: Session id: %s has no glm file specified!', sessions(s).id);
+        allok = false;
+    end
+end
+if ~allok
+    fprintf('\n\nERROR: Some sessions do not have a glm file specified in the file list.\n       Please, check your list file!\n');
+    exit(1);
+end
+
 
 % --------------------------------------------------------------
 %                             check that glm entries are present

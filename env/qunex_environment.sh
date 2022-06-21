@@ -119,7 +119,7 @@ fi
 #  Environment clear and check functions
 # ------------------------------------------------------------------------------
 
-ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLGPUDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder FSLGPUScripts FSLGPUBinary EDDYCUDADIR USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW'
+ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLGPUDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder FSLGPUScripts FSLGPUBinary EDDYCUDADIR USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT'
 export ENVVARIABLES
 
 # -- Check if inside the container and reset the environment on first setup
@@ -128,7 +128,7 @@ if [[ -e /opt/.container ]]; then
     if [[ "$FIRSTRUNDONE" != "TRUE" ]]; then
 
         # -- First unset all conflicting variables in the environment
-        echo "--> unsetting all environment variables: $ENVVARIABLES"
+        echo "--> unsetting the following environment variables: $ENVVARIABLES"
         unset $ENVVARIABLES
 
         # -- Set PATH
@@ -257,7 +257,8 @@ if [[ -z ${FSL_FIXDIR} ]]; then FSL_FIXDIR="${TOOLS}/fsl/fix"; fi
 if [[ -z ${FREESURFERDIR} ]]; then FREESURFERDIR="${TOOLS}/freesurfer/freesurfer-6.0"; export FREESURFERDIR; fi
 if [[ -z ${FreeSurferSchedulerDIR} ]]; then FreeSurferSchedulerDIR="${TOOLS}/freesurfer/FreeSurferScheduler"; export FreeSurferSchedulerDIR; fi
 if [[ -z ${HCPWBDIR} ]]; then HCPWBDIR="${TOOLS}/workbench/workbench"; export HCPWBDIR; fi
-if [[ -z ${AFNIDIR} ]]; then AFNIDIR="${TOOLS}/afni/afni"; export AFNIDIR; fi
+if [[ -z ${AFNIDIR} ]]; then AFNIDIR="${TOOLS}/AFNI/AFNI"; export AFNIDIR; fi
+if [[ -z ${ANTSDIR} ]]; then ANTSDIR="${TOOLS}/ANTs/ANTs/bin"; export ANTSDIR; fi
 if [[ -z ${DCMNIIDIR} ]]; then DCMNIIDIR="${TOOLS}/dcm2niix/dcm2niix"; export DCMNIIDIR; fi
 if [[ -z ${DICMNIIDIR} ]]; then DICMNIIDIR="${TOOLS}/dicm2nii/dicm2nii"; export DICMNIIDIR; fi
 if [[ -z ${OCTAVEDIR} ]]; then OCTAVEDIR="${TOOLS}/octave/octave"; export OCTAVEDIR; fi
@@ -326,8 +327,8 @@ geho ""
 geho "                      COPYRIGHT & LICENSE NOTICE:"
 geho ""
 geho "Use of this software is subject to the terms and conditions defined in"
-geho "'LICENSE.md' which is a part of the QuNex Suite source code package:"
-geho "https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md"
+geho "'LICENSES' which is a part of the QuNex Suite source code package:"
+geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
 geho ""
 
 # ------------------------------------------------------------------------------
@@ -454,6 +455,10 @@ export AFNIDIR PATH
 #MATLABPATH=$AFNIDIR:$MATLABPATH
 #export MATLABPATH
 
+# -- ANTS path
+PATH=${ANTSDIR}:${PATH}
+export ANTSDIR PATH
+
 # -- dcm2niix path
 DCMNIIBINDIR=${DCMNIIDIR}/build/bin
 PATH=${DCMNIIDIR}:${DCMNIIBINDIR}:${PATH}
@@ -503,9 +508,6 @@ PATH=${NIUTemplateFolder}:${PATH}
 export NIUTemplateFolder PATH
 
 # -- Define submodules, but omit hcpextendedpull to avoid conflicts
-unset QuNexSubModules
-QuNexSubModules=`cd $QUNEXPATH; git submodule status | awk '{ print $2 }' | sed 's/hcpextendedpull//' | sed '/^\s*$/d'`
-
 alias qunex_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
 alias qx_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
 alias qunex_environment_set='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
@@ -589,15 +591,25 @@ MATLABROOT=`cd $MATLABBIN; cd ..; pwd`
 export MATLABROOT
 
 # -- Setup HCP Pipelines global matlab path relevant for FIX ICA
-HCPDIRMATLAB=${HCPPIPEDIR}/global/matlab/
+HCPDIRMATLAB=${HCPPIPEDIR}/global/matlab
 export HCPDIRMATLAB
 PATH=${HCPDIRMATLAB}:${PATH}
 MATLABPATH=$HCPDIRMATLAB:$MATLABPATH
 export MATLABPATH
 export PATH
 
+# -- Setup HCP Pipelines global matlab path relevant for temporal ICA
+NETS_SPECTRA=${HCPDIRMATLAB}/nets_spectra
+MATLABPATH=$NETS_SPECTRA:$MATLABPATH
+ICA_DIM=${HCPDIRMATLAB}/icaDim
+MATLABPATH=$ICA_DIM:$MATLABPATH
+export MATLABPATH
+
 # -- ciftirw
 if [[ -z ${FSL_FIX_CIFTIRW} ]]; then FSL_FIX_CIFTIRW=${HCPPIPEDIR}/global/matlab; export FSL_FIX_CIFTIRW; fi
+if [[ -z ${HCPCIFTIRWDIR} ]]; then HCPCIFTIRWDIR=${HCPPIPEDIR}/global/matlab/cifti-matlab; export HCPCIFTIRWDIR; fi
+MATLABPATH=$FSL_FIX_CIFTIRW:$HCPCIFTIRWDIR:$MATLABPATH
+export MATLABPATH
 
 # if in container set compiled matlab and CUDA path
 if [[ -e /opt/.container ]]; then

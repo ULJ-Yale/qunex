@@ -54,8 +54,7 @@ deprecated_commands = {
                         "run_qc": ["runQC","RunQC","QCPreproc"],
                         "parcellate_anat": ["ANATparcellate", "anat_parcellate"],
                         "fc_compute_wrapper": ["BOLDcomputeFC", "bold_compute_fc", "compute_fc_bold"],
-                        "parcellate_bold": ["BOLDparcellate", "bold_parcellate"],
-                        "bold_parcellation": ["BOLDParcellation"],
+                        "parcellate_bold": ["BOLDparcellate", "bold_parcellate", "bold_parcellation"],
                         "data_sync": ["DataSync"],
                         "run_qc_dwi_eddy": ["runQC_DWIeddyQC"],
                         "dwi_eddy_qc": ["DWIeddyQC"],
@@ -236,13 +235,25 @@ deprecated_parameters = {
     'hcp_bold_stcorrdir':      'hcp_bold_slicetimerparams', 
     'hcp_bold_stcorrint':      'hcp_bold_slicetimerparams',
     'hcp_bold_sequencetype': None,
-    'hcp_biascorrect_t1w': None
+    'hcp_biascorrect_t1w': None,
+    'hcp_Pipeline': 'hcp_pipeline',
+    'args': 'palm_args'
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
 deprecated_values = {
-    'hcp_processing_mode':  {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
-    'hcp_filename':         {'name': 'original', 'number': 'standard'}
+    'hcp_processing_mode': {
+        'hcp': 'HCPStyleData',
+        'legacy': 'LegacyStyleData'
+    },
+    'hcp_filename': {
+        'name': 'userdefined',
+        'number': 'automated',
+        'original': 'userdefined',
+        'standard': 'automated'
+    },
+    'hcp_folderstructure': {'initial': 'hcpya'},
+    'gzip': {'yes': 'file'}
 }
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 
@@ -391,4 +402,4 @@ extra_parameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler'
 #                                                SKIP LOGGING FOR THESE COMMANDS
 #
 
-logskip_commands = ["batch_tag2namekey", "check_deprecated_commands"]
+logskip_commands = ["batch_tag2namekey", "check_deprecated_commands", "get_sessions_for_slurm_array"]

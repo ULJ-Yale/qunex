@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [img] = img_read_nifti(img, filename, dtype, frames, verbose)
 
 %``function [img] = img_read_nifti(img, file, dtype, frames, verbose)``
@@ -21,6 +17,10 @@ function [img] = img_read_nifti(img, filename, dtype, frames, verbose)
 %
 %   img
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 verbose = false;  end
 if nargin < 4 frames = [];      end
@@ -96,8 +96,10 @@ if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.dscalar|\.pconn', '');
 
 img.rootfilename = root;
+img.rootfilenames = {root};
 [p, n, e]        = fileparts(filename);
 img.filename     = [n e];
+img.filenames    = {img.filename};
 
 ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar|\.dscalar)', 'tokens');
 if length(ftype) > 0
@@ -194,7 +196,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
 
     img.hdrnifti.datatype = 16;
 
-    % ---- Add hardcoded structure info
+    % ---- Add structure info
 
     img.cifti.longnames  = {'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'};
     img.cifti.shortnames = {'CORTEX_LEFT', 'CORTEX_RIGHT', 'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'};
@@ -202,6 +204,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
     img.cifti.end        = [29696 59412 59547 59687 60002 60334 63806 64534 65289 73998 83142 83848 84560 85324 86119 86416 86676 87736 88746 90034 91282];
     img.cifti.length     = [29696 29716 135 140 315 332 3472 728 755 8709 9144 706 712 764 795 297 260 1060 1010 1288 1248];
     img.cifti.maps       = {};
+    img.cifti.parcels    = {};
 
 end
 
@@ -318,14 +321,20 @@ if mi > 0
             end
         end
         if img.meta(m).code == 32
-            if strcmp(img.filetype, '.dscalar')
+            if strcmp(img.filetype, '.dscalar') || strcmp(img.filetype, '.pscalar')
                 t = regexp(char(img.meta(m).data)', '<MapName>(.*?)</MapName>', 'tokens');
                 for e = t
                     img.cifti.maps(end+1) = e{1};
                 end
-            elseif strcmp(img.filetype, '.dtseries')
+            elseif strcmp(img.filetype, '.dtseries') || strcmp(img.filetype, '.ptseries')
                 TR = regexp(char(img.meta(m).data)', 'SeriesStep="(.*?)"', 'tokens');
                 img.TR = str2num(TR{1}{1});
+            end
+            if strcmp(img.filetype, '.ptseries') || strcmp(img.filetype, '.pscalar')
+                t = regexp(char(img.meta(m).data)', '<Parcel Name="(.*?)">', 'tokens');
+                for e = t
+                    img.cifti.parcels(end+1) = e{1};
+                end
             end
         end
     end

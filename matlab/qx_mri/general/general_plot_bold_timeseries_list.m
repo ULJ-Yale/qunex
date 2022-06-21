@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)
 
 %``function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)``
@@ -45,7 +41,7 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %		Either a structure or a well formed string that can be processed using
 %   	the general_parse_options function that specifies what should be plotted.
 %   	Please see documentation for general_plot_bold_timeseries for detailed
-    	information on how to specify plot elements. The default string is::
+%   	information on how to specify plot elements. The default string is::
 %
 %   		'type=stats|stats>type=dvarsme,img=1>type=fd,img=1;
 %   		 type=image|name=V|mask=1;
@@ -92,6 +88,10 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %
 %   	general_plot_bold_timeseries_list('bolds.list', [], 'QA_', 5, 'png', true);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 %  ---- initializing
 

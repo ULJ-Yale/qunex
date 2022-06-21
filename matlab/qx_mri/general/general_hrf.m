@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [ts] = general_hrf(dt, hrf, len, p)
 
 %``function [ts] = general_hrf(dt, hrf, len, p)``
@@ -88,6 +84,10 @@ function [ts] = general_hrf(dt, hrf, len, p)
 %       hrf = general_hrf(0.1, 'boynton');
 %       hrf = general_hrf(0.1, 'spm', [6 0.9 12 0.9 3 0]);
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4,                 p   = [];        end
 if nargin < 3 || isempty(len), len = 32;        end

@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose);
 
 %``function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
@@ -41,6 +37,10 @@ function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, 
 %   
 %   report
 %
+
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 7, verbose = false; end
 if nargin < 6 || isempty(stats),  stats   = 'rsize, rmean, mean';    end

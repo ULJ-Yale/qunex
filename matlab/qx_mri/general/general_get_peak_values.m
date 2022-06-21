@@ -29,6 +29,10 @@ function [] = general_get_peak_values(peak_report, fin, fout)
 %       'ROI_values.txt');
 %
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 3 || isempty(fout), fout = peak_report; end
 
 % -- read ROI report (output from general_find_peaks)

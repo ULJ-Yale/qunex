@@ -37,6 +37,10 @@ function central_vertices = general_get_central_vertices(fin, fout, projection)
 %       central_vertices = general_get_central_vertices('inputImage.dscalar.nii','outputFile.txt','very_inflated');
 %
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 3 || isempty(projection), projection = 'midthickness'; end
 if nargin < 2 || isempty(fout),       fout       = '';             end
 

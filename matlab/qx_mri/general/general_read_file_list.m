@@ -1,10 +1,6 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
+function [session, nsessions, nfiles, listname, missing] = general_read_file_list(flist, verbose, check)
 
-function [session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose)
-
-%``function [session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose)``
+%``function [session, nsessions, nfiles, listname, missing] = general_read_file_list(flist, verbose, check)``
 %
 %   Reads a list of files and returns a structure with file information.
 %
@@ -13,10 +9,12 @@ function [session, nsessions, nfiles, listname] = general_read_file_list(flist, 
 %
 %   --flist       A path to the list file or a well structured string.
 %   --verbose     Whether to report on progress. [false]
+%   --check       A comma separated list of elements that each session has to 
+%                 have or a warning is reported.
 %
 %   OUTPUTS
 %
-%   sessions
+%   session
 %       A structure array with information:
 %
 %       - id      ... session id
@@ -30,6 +28,14 @@ function [session, nsessions, nfiles, listname] = general_read_file_list(flist, 
 %       number of sessions in the list
 %   nfiles
 %       number of all files in the list
+%   listname
+%       the name of the list file or the listname specified in the string
+%   missing
+%       structure with information on missing data, with fields:
+%       
+%       - fields    ... a list of missing fields
+%       - sessions  ... a vector specifying whether a session has any missing
+%                       data
 %
 %   USE
 %   ===
@@ -50,8 +56,15 @@ function [session, nsessions, nfiles, listname] = general_read_file_list(flist, 
 %       [sessions, nsessions] = general_read_file_list('scz.list', true);
 %
 
-if nargin < 2
-    verbose = false;
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
+if nargin < 3, check = []; end
+if nargin < 2 || isempty(verbose), verbose = false; end
+
+if ~isempty(check)
+    check = strtrim(regexp(check, ',', 'split'));
 end
 
 if verbose, fprintf('\n ... reading file list: '); end
@@ -133,6 +146,26 @@ end
 if nsessions == 0
     fprintf('\n\nERROR: No session id information present in file list: %s! Please check file format!\n\n', flist);
     error('ERROR: Could not read the provided filelist.');
+end
+
+missing.fields = {};
+missing.sessions = zeros(1, nsessions);
+if ~isempty(check)    
+    for s = 1:nsessions
+        for c = check
+            c = c{1};
+            if ~isfield(session(s), c) || isempty(session(s).(c))
+                if isempty(missing.fields)
+                    fprintf('\n\nWARNING: Some sessions in the list are missing required information.\n\n');
+                end
+                fprintf('       - session %s is missing %s field\n', session(s).id, c);
+                if ~ismember({c}, missing.fields)
+                    missing.fields{end+1} = c;
+                end
+                missing.sessions(s) = 1;
+            end
+        end
+    end
 end
 
 if verbose, fprintf(' done.\n'); end

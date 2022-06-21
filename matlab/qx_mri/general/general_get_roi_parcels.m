@@ -30,6 +30,10 @@ function [] = general_get_roi_parcels(fin, fout, atlas)
 %       'my_atlas.dscalar.nii');
 %
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 3 || isempty(atlas), atlas = []; end
 if nargin < 2 || isempty(fout), fout = []; end
 
