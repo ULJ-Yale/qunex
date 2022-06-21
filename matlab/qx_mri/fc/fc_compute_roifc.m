@@ -361,14 +361,15 @@ if isempty(parcels)
     if verbose; fprintf('     ... creating ROI mask\n'); end
     roi = nimage.img_read_roi(roideffile, sroifile);
     roi.data = roi.image2D;    
-elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
+else
     if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
-        error('ERROR: The glm file lacks parcel specification! [%s]', sessions(1).glm);
+        error('ERROR: The bold file lacks parcel specification! [%s]', sessions(1).glm);
     end
-
-    parcels = y.cifti.parcels;
+    if length(parcels) == 1 && strcmp(parcels{1}, 'all')        
+        parcels = y.cifti.parcels;
+    end
     roi.roi.roinames = parcels;
-    roi.roi.roicodes = 1:length(parcels);
+    [x, roi.roi.roicodes] = ismember(parcels, y.cifti.parcels);
 end
 
 roinames = roi.roi.roinames;
@@ -401,8 +402,12 @@ for n = 1:nsets
     if verbose; fprintf(' ... extracted ts'); end
     
     % --> generate fc matrice
-
-    rs = ts.img_extract_roi(roi, [], options.roimethod);
+    
+    if isempty(parcels)
+        rs = ts.img_extract_roi(roi, [], options.roimethod);
+    else
+        rs = ts.img_extract_roi(roiinfo, [], options.roimethod); 
+    end
 
     if strcmp(options.fcmeasure, 'cv')
         fc = rs';
@@ -522,7 +527,7 @@ if ismember({'long'}, options.saveind)
         if strcmp(options.fcmeasure, 'cv')
             cv = fcmat(n).cv(idx);
             for c = 1:nfc
-                fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%d\t%d\t%.5f\n', name, settitle, options.subjectid, roi1name{c}, roi2name{c}, roi1code{c}, roi2code{c}, cv(c));
+                fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%d\t%d\t%.5f\n', name, settitle, options.subjectid, roi1name{c}, roi2name{c}, roi1code(c), roi2code(c), cv(c));
             end
         else
             r  = fcmat(n).r(idx);
@@ -530,7 +535,7 @@ if ismember({'long'}, options.saveind)
             z  = fcmat(n).z(idx);
             p  = fcmat(n).p(idx);
             for c = 1:nfc
-                fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%d\t%d\t%.5f\t%.5f\t%.5f\t%.7f\n', name, settitle, options.subjectid, roi1name{c}, roi2name{c}, roi1code{c}, roi2code{c}, r(c), fz(c), z(c), p(c));
+                fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%d\t%d\t%.5f\t%.5f\t%.5f\t%.7f\n', name, settitle, options.subjectid, roi1name{c}, roi2name{c}, roi1code(c), roi2code(c), r(c), fz(c), z(c), p(c));
             end
         end
     end

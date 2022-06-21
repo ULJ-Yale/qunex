@@ -72,6 +72,27 @@ if isa(roi, 'nimage')
     if obj.voxels ~= roi.voxels;
         error('ERROR: ROI image does not match target in dimensions!');
     end
+elseif isa(roi, 'char') || isa(roi, 'string')
+    if startsWith(roi, 'parcels')
+        if ~isfield(obj.cifti, 'parcels') || isempty(obj.cifti.parcels)
+            error('ERROR: The file lacks parcel specification!');
+        end
+
+        parcels = strtrim(regexp(roi(9:end), ',', 'split'));
+        if length(parcels) == 1 && strcmp(parcels{1}, 'all')            
+            parcels = obj.cifti.parcels;
+        end
+        if isempty(rcodes)
+            rcodes = parcels;
+        else
+            rcodes = strtrim(regexp(rcodes, ',', 'split'));
+        end
+        [tf, rows] = ismember(rcodes, obj.cifti.parcels);
+        ts = obj.data(rows, :);
+        return
+    else
+        error('ERROR: Unknown ROI specification [%s]!', roi);
+    end
 else
     roi = reshape(roi, [], 1);
     if size(roi, 1) ~= obj.voxels

@@ -373,7 +373,7 @@ for n = 1:nsub
 
     % ---> setting up bolds parameter
 
-    if isfield(subject(n), 'files') && ~isempty(subject(n).conc) 
+    if isfield(subject(n), 'files') && ~isempty(subject(n).files) 
         for bold = subject(n).files
             go = go & general_check_file(bold{1}, 'bold file', 'error');
         end
@@ -424,12 +424,12 @@ for n = 1:nsub
     end
 
     % ---> run individual subject
-    try
+    %try
         fcmat = fc_compute_roifc(bolds, roidef, sframes, stargetf, options);
-    catch ME
-        fprintf(' ... ERROR: Computation of ROI FC for %s failed with error: %s\n', subject(n).id, ME.message);
-        continue
-    end
+    %catch ME
+    %    fprintf(' ... ERROR: Computation of ROI FC for %s failed with error: %s\n', subject(n).id, ME.message);
+    %    continue
+    %end
 
     % ------> Reorganize results
 
