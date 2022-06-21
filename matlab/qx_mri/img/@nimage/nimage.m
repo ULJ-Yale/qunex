@@ -684,6 +684,8 @@ classdef nimage
         %   method for concatenation of image volumes
         %
 
+        % TODO: Add parcel matching check
+
         function obj = horzcat(obj, add)
 
             if isempty(obj)

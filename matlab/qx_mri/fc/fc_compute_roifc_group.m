@@ -24,7 +24,11 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %               e.g.: 'listname:wmlist|session id:OP483|file:bold1.nii.gz|roi:aseg.nii.gz'
 %
 %   --roiinfo   A (group level) names file for definition of ROI to include in 
-%               the analysis.
+%               the analysis or, in a case of parcellated data, a comma 
+%               separated list of parcels to be used, specified as
+%               'parcels:<parcel1>,<parcel2>'. 'parcels:all' will use data
+%               for all parcels. Note that in this case the list of parcels
+%               will be based on the first file from each session in the list.
 %
 %   --frames    The definition of which frames to extract, specifically:
 %
@@ -303,13 +307,24 @@ end
 cv = strcmp(options.fcmeasure, 'cv');
 verbose = strcmp(options.verbose, 'true');
 
+% ------ parcels processing
+
+parcels = {};
+if startsWith(roiinfo, 'parcels:')
+    parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
+end
+
 % ----- Check if the files are there!
 
 go = true;
 
 if verbose; fprintf('\n\nChecking ...\n'); end
-go = go & general_check_file(flist, 'image file list', 'error');
-go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
+if ~startsWith(flist, 'listname:')    
+    go = go & general_check_file(flist, 'image file list', 'error');
+end
+if isempty(parcels)
+    go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
+end
 general_check_folder(targetf, 'results folder');
 
 if ~go
@@ -349,7 +364,7 @@ for n = 1:nsub
 
     % ---> setting up roidef parameter
 
-    if isfield(subject(n), 'roi')
+    if isfield(subject(n), 'roi') && isempty(parcels)
         go = go & general_check_file(subject(n).roi, [subject(n).id ' individual ROI file'], 'error');
         roidef = [roiinfo '|' subject(n).roi];
     else

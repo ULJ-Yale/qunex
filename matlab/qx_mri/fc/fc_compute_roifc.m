@@ -259,6 +259,15 @@ if nargin < 4 || isempty(targetf), targetf = '.'; end
 if nargin < 3 frames  = []; end
 if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be specified!'); end
 
+% --------------------------------------------------------------
+%                                              parcel processing
+
+parcels = {};
+
+if startsWith(roiinfo, 'parcels:')
+    parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
+end
+
 % ----- parse options
 
 default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname=|addidtofile=false|subjectid=';
@@ -302,13 +311,14 @@ end
 bolds = bolds(2:end);
 boldlist = strtrim(regexp(bolds, '\|', 'split'));
 
-[roideffile, sroifile] = strtok(roiinfo, '|');
-if sroifile
-    sroifile = sroifile(2:end);
-else
-    sroifile = [];
+if isempty(parcels)
+    [roideffile, sroifile] = strtok(roiinfo, '|');
+    if sroifile
+        sroifile = sroifile(2:end);
+    else
+        sroifile = [];
+    end
 end
-
 
 % ----- Check if the files are there!
 
@@ -318,9 +328,12 @@ if verbose; fprintf('\nChecking ...\n'); end
 for bold = boldlist
     go = go & general_check_file(bold{1}, bold{1}, 'error');
 end
-go = go & general_check_file(roideffile, 'ROI definition file', 'error');
-if sroifile
-    go = go & general_check_file(sroifile, 'individual ROI file', 'error');
+
+if isempty(parcels)
+    go = go & general_check_file(roideffile, 'ROI definition file', 'error');
+    if sroifile
+        go = go & general_check_file(sroifile, 'individual ROI file', 'error');
+    end
 end
 if any(ismember({'txt', 'mat'}, options.saveind))
     general_check_folder(targetf, 'results folder', true, verbose);
@@ -334,18 +347,34 @@ end
 %   ------------------------------------------------------------------------------------------
 %                                                                            do the processing
 
-if verbose; fprintf('     ... creating ROI mask\n'); end
-
-roi  = nimage.img_read_roi(roideffile, sroifile);
-nroi = length(roi.roi.roinames);
-roinames = roi.roi.roinames;
-roicodes = roi.roi.roicodes;
 
 % ---> reading image files
 
 if verbose; fprintf('     ... reading image file(s)'); end
 y = nimage(bolds);
 if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
+
+
+% ---> processing roi/parcels info
+
+if isempty(parcels)
+    if verbose; fprintf('     ... creating ROI mask\n'); end
+    roi = nimage.img_read_roi(roideffile, sroifile);
+    roi.data = roi.image2D;    
+elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
+    if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
+        error('ERROR: The glm file lacks parcel specification! [%s]', sessions(1).glm);
+    end
+
+    parcels = y.cifti.parcels;
+    roi.roi.roinames = parcels;
+    roi.roi.roicodes = 1:length(parcels);
+end
+
+roinames = roi.roi.roinames;
+roicodes = roi.roi.roicodes;
+nroi = length(roi.roi.roinames);
+nparcels = length(parcels);
 
 
 % ---> create extraction sets
