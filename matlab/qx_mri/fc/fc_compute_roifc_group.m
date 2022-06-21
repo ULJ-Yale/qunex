@@ -11,10 +11,25 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %   INPUTS
 %   ======
 %
-%   --flist     A .list file listing the subjects and their files for which 
-%               to compute ROI functional connectivity,
-%               or a well strucutured string (see general_read_file_list).
-%   --roiinfo   A names file for definition of ROI to include in the analysis.
+%   --flist     Either a .list file or a string listing the subjects and their
+%               files for which to compute ROI functional connectivity.
+%               
+%               For a .list file see list file format specification.
+%               For a string see `general_read_file_list` inline help. Briefly,
+%               The string should provide the same information separated by
+%               a pipe character, with the first entry providing a list name:
+%
+%               'listname:<name of the list>|
+%                  session id:<id>|
+%                  file:<path to a bold or conc file>|
+%                  roi:<path to an optional session specific ROI mask>|
+%                  fidl:<path to a fidl file describing event structure>'
+%
+%               e.g.: 'listname:wmlist|session id:OP483|file:bold1.nii.gz|roi:aseg.nii.gz'
+%
+%   --roiinfo   A (group level) names file for definition of ROI to include in 
+%               the analysis.
+%
 %   --frames    The definition of which frames to extract, specifically:
 %
 %               -  a numeric array mask defining which frames to use (1) and 
@@ -25,12 +40,10 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %                  and the frame offset from the start and end of the event in 
 %                  format::
 % 
-%                      '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>'
+%                      '<extraction name>:<event list>:<extraction start>:<extraction end>'
 %
 %                  where:
 %
-%                  fidlfile        
-%                      is a path to the fidle file that defines the events    
 %                  extraction name 
 %                      is the name for the specific extraction definition    
 %                  event list      
@@ -266,7 +279,7 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 if nargin < 5 || isempty(options), options = '';  end
 if nargin < 4 || isempty(targetf), targetf = '.'; end
 if nargin < 3 frames  = []; end
-if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be specified!'); end
+if nargin < 2 error('ERROR: At least file list and ROI information have to be specified!'); end
 
 % ----- parse options
 
