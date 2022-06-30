@@ -17,3 +17,6 @@ python3 ../python/extract_unsupported_docstrings.py
 
 echo "==> Generating .rst files for individual commands"
 python3 ../python/generate_gmri_rsts.py
+
+# use the following command to build the documentation locally:
+# python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html

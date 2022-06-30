@@ -11,4 +11,12 @@ window.addEventListener('load', function() {
         $(this).append(imageAlt);
         $(this).addClass("paragraph-with-image");
     });
+
+    document.getElementsByClassName("btn-navbar")[0].addEventListener('click', function () {
+        /*
+            Fixes incorrect hamburger menu scrolling position in responsive mode.
+        */
+            document.body.scrollTop = 0; // For Safari
+            document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+        });
 });
