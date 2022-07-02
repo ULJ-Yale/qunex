@@ -558,9 +558,16 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %   Examples:
 %       ::
 %
-%           fc_preprocess('sessions/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', ...
-%               '', '', 2.5, '', '', true, '', 'udvarsme', ...
-%               'hipass:linear|regress=ignore|lopass=linear');
+%           qunex fc_preprocess \
+%               --sessionf='sessions/OP234' \
+%               --bold=3 \
+%               --omit=4 \
+%               --doIt='s,h,r' \
+%               --rgss='m,V,WM,WB,1d' \
+%               --TR=2.5 \
+%               --overwrite=true \
+%               --scrub='udvarsme' \
+%               --ignores='hipass:linear|regress=ignore|lopass=linear'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

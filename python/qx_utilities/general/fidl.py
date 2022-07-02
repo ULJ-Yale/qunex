@@ -347,7 +347,8 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     Examples:
         ::
 
-            qunex check_fidl --fidlfolder=jfidls
+            qunex check_fidl \\
+                --fidlfolder=jfidls
     """
 
     if fidlfile:

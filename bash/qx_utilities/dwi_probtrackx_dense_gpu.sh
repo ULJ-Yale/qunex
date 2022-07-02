@@ -134,13 +134,19 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1>  \\
+            --<parameter2>  \\
+            --<parameter3>  \\
+            ...  --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex dwi_probtrackx_dense_gpu --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_probtrackx_dense_gpu \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 

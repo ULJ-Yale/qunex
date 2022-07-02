@@ -362,7 +362,8 @@ def create_study(studyfolder=None, folders=None):
     Examples:
         ::
 
-            qunex create_study --studyfolder=/Volumes/data/studies/WM.v4
+            qunex create_study \\
+                --studyfolder=/Volumes/data/studies/WM.v4
     """
 
     print("Running create_study\n===================")
@@ -832,7 +833,8 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
     Examples:
         The command::
 
-            qunex create_list --bolds="1,2,3"
+            qunex create_list \\
+                --bolds="1,2,3"
 
         will create a list file in `../processing/list/sessions.list` that will
         list for all the sessions found in the current folder BOLD files 1, 2, 3
@@ -842,8 +844,10 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
         The command::
 
-            qunex create_list --sessionsfolder="/studies/myStudy/sessions" \\
-                --sessions="batch.txt" --bolds="rest" \\
+            qunex create_list \\
+                --sessionsfolder="/studies/myStudy/sessions" \\
+                --sessions="batch.txt" \\
+                --bolds="rest" \\
                 --listfile="lists/rest.list" \\
                 --bold_tail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
 
@@ -857,7 +861,8 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
             qunex create_list \\
                 --sessionsfolder="/studies/myStudy/sessions" \\
-                --sessions="batch.txt" --filter="EC:use" \\
+                --sessions="batch.txt" \\
+                --filter="EC:use" \\
                 --listfile="lists/EC.list" \\
                 --conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
                 --fidl="EC.fidl" \\
@@ -1166,7 +1171,8 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         each of them named <session id>.conc, one for each of the sessions found
         in the current folder::
 
-            qunex create_conc --bolds="1,2,3"
+            qunex create_conc \\
+                --bolds="1,2,3"
 
         Each conc file will include BOLD files 1, 2, 3
         listed as::
@@ -1176,8 +1182,11 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         The command below will create for each session listed in the `batch.txt`
         a `<session id>_WM.conc` file in `sessions/inbox/concs`::
 
-            qunex create_conc --sessionsfolder="/studies/myStudy/sessions" \\
-                --sessions="batch.txt" --bolds="WM" --concname="_WM" \\
+            qunex create_conc \\
+                --sessionsfolder="/studies/myStudy/sessions" \\
+                --sessions="batch.txt" \\
+                --bolds="WM" \\
+                --concname="_WM" \\
                 --bold_tail="_Atlas.dtseries.nii"
 
         In it it will list all the BOLD files tagged as `WM` as::
@@ -1188,10 +1197,13 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         pair "EC:use" set the command below will create a conc file in
         `analysis/EC/concs` folder::
 
-            qunex create_conc sessionsfolder="/studies/myStudy/sessions" \\
+            qunex create_conc \\
+                --sessionsfolder="/studies/myStudy/sessions" \\
                 --sessions="batch.txt" \\
-                --filter="EC:use" --concfolder="analysis/EC/concs" \\
-                --concname="_EC_s_hpss_res-mVWMWB1de" --bolds="EC" \\
+                --filter="EC:use" \\
+                --concfolder="analysis/EC/concs" \\
+                --concname="_EC_s_hpss_res-mVWMWB1de" \\
+                --bolds="EC" \\
                 --bold_tail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
 
         The conc files will be named `<session id>_EC_s_hpss_res-mVWMWB1de.conc`
@@ -2751,14 +2763,16 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         ::
 
             qunex create_session_info \\
-                --sessions="OP*|AP*" --sessionsfolder=session \\
+                --sessions="OP*|AP*" \\
+                --sessionsfolder=session \\
                 --mapping=session/hcp_mapping.txt
-    
+
         ::
 
             qunex create_session_info \\
                 --sessions="processing/batch_new.txt" \\
-                --sessionsfolder=session --mapping=session/hcp_mapping.txt
+                --sessionsfolder=session \\
+                --mapping=session/hcp_mapping.txt
     """
 
     print("Running create_session_info\n===================")

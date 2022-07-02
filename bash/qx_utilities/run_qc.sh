@@ -193,8 +193,7 @@ Examples:
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \\
             --<parameter1> \\
             --<parameter2> \\
-            --<parameter3> \\
-            ... \\
+            --<parameter3> ... \\
             --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
@@ -203,8 +202,7 @@ Examples:
 
         qunex run_qc \\
             --<parameter1> \\
-            --<parameter2> \\
-            ... \\
+            --<parameter2> ... \\
             --<parameterN>
 
     NOTE: scheduler is available via qunex call.

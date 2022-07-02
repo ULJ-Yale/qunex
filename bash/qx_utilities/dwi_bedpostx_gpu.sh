@@ -103,13 +103,19 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex dwi_bedpostx_gpu --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_bedpostx_gpu \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -118,20 +124,18 @@ Examples:
 
     For SLURM scheduler the string would look like this via the qunex call::
 
-        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>, \\
-        ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, \\
-        mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>, ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
     ::
 
         qunex dwi_bedpostx_gpu \\
-              --sessionsfolder='<path_to_study_sessions_folder>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --fibers='3' \\
-              --burnin='3000' \\
-              --model='3' \\
-              --scheduler='<name_of_scheduler_and_options>' \\
-              --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --fibers='3' \\
+            --burnin='3000' \\
+            --model='3' \\
+            --scheduler='<name_of_scheduler_and_options>' \\
+            --overwrite='yes'
 
 EOF
  exit 0

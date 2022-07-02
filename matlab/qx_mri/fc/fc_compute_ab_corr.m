@@ -56,8 +56,14 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %   Examples:
 %       ::
 %
-%           fc_compute_ab_corr('scz.list', 'PFC.names', 'ACC.names', 5, ...
-%               'SCZ_PFC-ACC', 'g', 'full');
+%           qunex fc_compute_ab_corr \
+%               --flist='scz.list' \
+%               --smask='PFC.names' \
+%               --tmask='ACC.names' \
+%               --mask=5 \
+%               --root='SCZ_PFC-ACC' \
+%               --options='g' \
+%               --verbose='full'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

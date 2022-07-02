@@ -108,8 +108,20 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %   Examples:
 %       ::
 %
-%           fc_compute_gbcd('scz.list', 'mFz:0.1|pFz:0.1', 'dlpfc.names', [], ...
-%               10, 0, true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
+%           qunex fc_compute_gbcd \
+%               --flist='scz.list' \
+%               --command='mFz:0.1|pFz:0.1' \
+%               --roi='dlpfc.names' \
+%               --rcodes='[]' \
+%               --nbands=10 \
+%               --mask=0 \
+%               --verbose=true \
+%               --target='gray' \
+%               --targetf='dGBC' \
+%               --rsmooth=2 \
+%               --rdilate=2 \
+%               --ignore='udvarsme' \
+%               --time=false
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

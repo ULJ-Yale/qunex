@@ -55,13 +55,19 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex dwi_seed_tractography_dense --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_seed_tractography_dense \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -75,12 +81,13 @@ Examples:
 
     ::
 
-        qunex dwi_seed_tractography_dense --sessionsfolder='<folder_with_sessions>' \\
-               --session='<case_id>' \\
-               --matrixversion='3' \\
-               --seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \\
-               --overwrite='no' \\
-               --outname='THALAMUS'
+        qunex dwi_seed_tractography_dense \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --session='<case_id>' \\
+            --matrixversion='3' \\
+            --seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \\
+            --overwrite='no' \\
+            --outname='THALAMUS'
 
 EOF
 exit 0

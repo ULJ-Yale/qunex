@@ -217,8 +217,11 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_bold_brain_masks
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --nifti_tail=_hp2000_clean --bolds=all \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --nifti_tail=_hp2000_clean \\
+                --bolds=all \\
                 --parelements=8
     """
 
@@ -647,14 +650,20 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             qunex compute_bold_stats \\
                 --sessions=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
-                --overwrite=no --bolds=all
+                --overwrite=no \\
+                --bolds=all
 
         Specifying additional parameters for identification of bad frames::
 
             qunex compute_bold_stats \\
-                --sessions=fcMRI/sessions_hcp.txt --sessionsfolder=sessions \\
-                --overwrite=no --bolds=all --mov_fd=0.9 --mov_dvarsme=1.6 \\
-                --mov_before=1 --mov_after=2
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --mov_fd=0.9 \\
+                --mov_dvarsme=1.6 \\
+                --mov_before=1 \\
+                --mov_after=2
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -986,21 +995,32 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     Examples:
         ::
 
-            qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions --overwrite=no --bolds=all \\
+            qunex create_stats_report \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
                 --parsessions=1
 
         ::
 
-            qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions --overwrite=no --bolds=all \\
+            qunex create_stats_report \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
                 --parsessions=10
 
         ::
 
-            qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions --overwrite=no --bolds=all \\
-                --nifti_tail=_hp2000_clean --parsessions=1 --mov_plot=""
+            qunex create_stats_report \\
+                --sessions=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --nifti_tail=_hp2000_clean \\
+                --parsessions=1 \\
+                --mov_plot=""
     """
 
     preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0, 'boldskipped': 0}
@@ -1329,8 +1349,10 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
 
             qunex extract_nuisance_signal \\
                 --sessions=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions --overwrite=no \\
-                --bolds=all --parsessions=10
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --parsessions=10
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}

@@ -67,8 +67,13 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %   Examples:
 %       ::
 %
-%           fc_compute_seedmaps_multiple('con.list', 'DMN.names', 0, '', ...
-%               'mean', 'udvarsme', false);
+%           qunex fc_compute_seedmaps_multiple \
+%               --flist='con.list' \
+%               --roinfo='DMN.names' \
+%               --inmask=0 \
+%               --targetf=mean \
+%               --method=udvarsme \
+%               --ignore=false
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

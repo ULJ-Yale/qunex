@@ -77,13 +77,19 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex dwi_dtifit --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_dtifit \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -98,10 +104,10 @@ Examples:
     ::
 
         qunex dwi_dtifit \\
-              --sessionsfolder='<path_to_study_sessions_folder>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --scheduler='<name_of_scheduler_and_options>' \\
-              --overwrite='yes'
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --scheduler='<name_of_scheduler_and_options>' \\
+            --overwrite='yes'
 
 EOF
 exit 0

@@ -64,8 +64,7 @@ Examples:
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_bold.sh \\
             --<parameter1> \\
             --<parameter2> \\
-            --<parameter3> \\
-            ... \\
+            --<parameter3> ... \\
             --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
@@ -74,8 +73,7 @@ Examples:
 
         qunex parcellate_bold \\
             --<parameter1> \\
-            --<parameter2> \\
-            ... \\
+            --<parameter2> ... \\
             --<parameterN>
 
     NOTE: scheduler is available via qunex call.

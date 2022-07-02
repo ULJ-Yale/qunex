@@ -118,8 +118,18 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %   Examples:
 %       ::
 %
-%           fc_compute_gbc3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3', ...
-%               0, 'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
+%           qunex fc_compute_gbc3 \
+%               --flist='scz.list' \
+%               --command='mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3' \
+%               --mask=0 \
+%               --verbose=true \
+%               --target=gray \
+%               --targetf=GBC \
+%               --rsmooth=2 \
+%               --rdilate=2 \
+%               --ignore=udvarsme \
+%               --time=true \
+%               --cv=true
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

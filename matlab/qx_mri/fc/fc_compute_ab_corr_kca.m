@@ -65,8 +65,16 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %   Examples:
 %       ::
 %
-%           fc_compute_ab_corr_kca('study.list', 'thalamus.names', 'PFC.names', ...
-%               [3:9], 0, 'Th-PFC', 'g', 'correlations', 15);
+%           qunex fc_compute_ab_corr_kca \
+%               --flist='study.list' \
+%               --smask='thalamus.names' \
+%               --tmask='PFC.names' \
+%               --nc='[3:9]' \
+%               --mask=0 \
+%               --root='Th-PFC' \
+%               --options=g \
+%               --dmeasure=correlations \
+%               --nrep=15
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

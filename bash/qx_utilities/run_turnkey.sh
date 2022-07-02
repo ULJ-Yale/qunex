@@ -348,16 +348,14 @@ Examples:
          ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh \\
              --<parameter1> \\
              --<parameter2> \\
-             --<parameter3> \\
-             ... \\
+             --<parameter3> ... \\
              --<parameterN>
 
     Run via::
 
         qunex run_turnkey \\
             --<parameter1> \\
-            --<parameter2> \\
-            ... \\
+            --<parameter2> ... \\
             --<parameterN>
 
     --scheduler

@@ -84,13 +84,19 @@ Examples:
     Run directly via::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIPreprocPipelineLegacy.sh \\
-        --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex dwi_legacy --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_legacy \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -105,17 +111,17 @@ Examples:
     ::
 
         qunex dwi_legacy \\
-              --sessionsfolder='<folder_with_sessions>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --function='dwi_legacy' \\
-              --PEdir='1' \\
-              --echospacing='0.69' \\
-              --TE='2.46' \\
-              --unwarpdir='x-' \\
-              --diffdatasuffix='DWI_dir91_LR' \\
-              --usefieldmap='yes' \\
-              --scanner='siemens' \\
-              --overwrite='yes'
+            --sessionsfolder='<folder_with_sessions>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --function='dwi_legacy' \\
+            --PEdir='1' \\
+            --echospacing='0.69' \\
+            --TE='2.46' \\
+            --unwarpdir='x-' \\
+            --diffdatasuffix='DWI_dir91_LR' \\
+            --usefieldmap='yes' \\
+            --scanner='siemens' \\
+            --overwrite='yes'
 
     Example with flagged parameters for submission to the scheduler using
     Siemens FieldMap (needs GPU-enabled queue):
@@ -123,18 +129,18 @@ Examples:
     ::
 
         qunex dwi_legacy \\
-              --sessionsfolder='<folder_with_sessions>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --function='dwi_legacy' \\
-              --PEdir='1' \\
-              --echospacing='0.69' \\
-              --TE='2.46' \\
-              --unwarpdir='x-' \\
-              --diffdatasuffix='DWI_dir91_LR' \\
-              --scheduler='<name_of_scheduler_and_options>' \\
-              --usefieldmap='yes' \\
-              --scanner='siemens' \\
-              --overwrite='yes'
+            --sessionsfolder='<folder_with_sessions>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --function='dwi_legacy' \\
+            --PEdir='1' \\
+            --echospacing='0.69' \\
+            --TE='2.46' \\
+            --unwarpdir='x-' \\
+            --diffdatasuffix='DWI_dir91_LR' \\
+            --scheduler='<name_of_scheduler_and_options>' \\
+            --usefieldmap='yes' \\
+            --scanner='siemens' \\
+            --overwrite='yes'
 
     Example with flagged parameters for submission to the scheduler using GE data
     without FieldMap (needs GPU-enabled queue):
@@ -142,16 +148,16 @@ Examples:
     ::
 
         qunex dwi_legacy \\
-              --sessionsfolder='<folder_with_sessions>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --diffdatasuffix='DWI_dir91_LR' \\
-              --scheduler='<name_of_scheduler_and_options>' \\
-              --usefieldmap='no' \\
-              --PEdir='1' \\
-              --echospacing='0.69' \\
-              --unwarpdir='x-' \\
-              --scanner='ge' \\
-              --overwrite='yes'
+            --sessionsfolder='<folder_with_sessions>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --diffdatasuffix='DWI_dir91_LR' \\
+            --scheduler='<name_of_scheduler_and_options>' \\
+            --usefieldmap='no' \\
+            --PEdir='1' \\
+            --echospacing='0.69' \\
+            --unwarpdir='x-' \\
+            --scanner='ge' \\
+            --overwrite='yes'
 
 EOF
 exit 0

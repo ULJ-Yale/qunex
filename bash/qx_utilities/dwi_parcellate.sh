@@ -51,13 +51,19 @@ Examples:
     ::
 
         ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_parcellate.sh \\
-         --<parameter1> --<parameter2> --<parameter3> ... --<parameterN>
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
 
     NOTE: --scheduler is not available via direct script call.
 
     Run via::
 
-        qunex dwi_parcellate --<parameter1> --<parameter2> ... --<parameterN>
+        qunex dwi_parcellate \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
 
     NOTE: scheduler is available via qunex call.
 
@@ -71,24 +77,26 @@ Examples:
 
     ::
 
-        qunex dwi_parcellate --sessionsfolder='<folder_with_sessions>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --matrixversion='3' \\
-              --parcellationfile='<dlabel_file_for_parcellation>' \\
-              --overwrite='no' \\
-              --outname='LR_Colelab_partitions_v1d_islands_withsubcortex'
+        qunex dwi_parcellate \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --matrixversion='3' \\
+            --parcellationfile='<dlabel_file_for_parcellation>' \\
+            --overwrite='no' \\
+            --outname='LR_Colelab_partitions_v1d_islands_withsubcortex'
 
     Example with flagged parameters for submission to the scheduler:
 
     ::
 
-        qunex dwi_parcellate --sessionsfolder='<folder_with_sessions>' \\
-              --sessions='<comma_separarated_list_of_cases>' \\
-              --matrixversion='3' \\
-              --parcellationfile='<dlabel_file_for_parcellation>' \\
-              --overwrite='no' \\
-              --outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \\
-              --scheduler='<name_of_scheduler_and_options>'
+        qunex dwi_parcellate \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --matrixversion='3' \\
+            --parcellationfile='<dlabel_file_for_parcellation>' \\
+            --overwrite='no' \\
+            --outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \\
+            --scheduler='<name_of_scheduler_and_options>'
 
 EOF
 exit 0

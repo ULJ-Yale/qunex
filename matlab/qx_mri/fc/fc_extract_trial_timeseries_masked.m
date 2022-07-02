@@ -86,8 +86,13 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %
 %       ::
 %
-%           fc_extract_trial_timeseries_masked('scz+con.list', ...
-%               'ccroi.names', 'ccroits', {[0], [1 2], [3 4]}, [2 4], 'udvarsme');
+%           qunex fc_extract_trial_timeseries_masked \
+%               --flist='scz+con.list' \
+%               --roif='ccroi.names' \
+%               --targetf='ccroits' \
+%               --tevents='{[0], [1 2], [3 4]}' \
+%               --frames='[2 4]' \
+%               --scrubvar='udvarsme'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

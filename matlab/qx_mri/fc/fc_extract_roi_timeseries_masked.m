@@ -114,13 +114,25 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %   Examples:
 %       Resting state data::
 %
-%           fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 0, ...
-%               'con-ccnet', 'mt', 'mean', 'udvarsme');
+%           qunex fc_extract_roi_timeseries_masked \
+%               --flist='con.list' \
+%               --roiinfo='CCNet.names' \
+%               --inmask=0 \
+%               --targetf='con-ccnet' \
+%               --options='mt' \
+%               --method='mean' \
+%               --ignore='udvarsme'
 %
 %       Event data::
 %
-%           fc_extract_roi_timeseries_masked('con.list', 'CCNet.names', 'inc:3:4', ...
-%               'con-ccnet-inc', 'm', 'pca', 'event');
+%           qunex fc_extract_roi_timeseries_masked \
+%               --flist='con.list' \
+%               --roiinfo='CCNet.names' \
+%               --inmask='inc:3:4' \
+%               --targetf='con-ccnet-inc' \
+%               --options='m' \
+%               --method='pca' \
+%               --ignore='event'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
