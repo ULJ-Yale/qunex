@@ -1,6 +1,6 @@
 function [roi] = img_mask_roi(img, roi2)
 
-%``function [img] = img_mask_roi(img, roi2)``
+%``img_mask_roi(img, roi2)``
 %
 %    Mask the ROI file based on the second ROI.
 %

@@ -1,6 +1,6 @@
 function [res] = img_save_4dfp(obj, filename, extra)
 
-%  ``function [res] = img_save_4dfp(obj, filename, extra)``
+%  ``img_save_4dfp(obj, filename, extra)``
 %
 %  Saves a 4dfp image based on the existing header information.
 %

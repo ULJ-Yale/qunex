@@ -1,6 +1,6 @@
 function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
 
-%``function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)``
+%``fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)``
 %
 %   Computes seed based correlations maps for individuals as well as group maps.
 %

@@ -1,6 +1,6 @@
 function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)
 
-%``function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
+%``general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
 %
 %   For sessions specified in the session list it extracts the GLM estimates of
 %   the effects of interests and saves them in the specified file.

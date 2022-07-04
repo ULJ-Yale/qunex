@@ -1,6 +1,6 @@
 function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues)
 
-%``function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues)``
+%``general_parcellated2dense(inimg, outimg, verbose, missingvalues)``
 %
 %   Expands the parcelated file to a dense file
 %

@@ -1,6 +1,6 @@
 function [img] = img_read_4dfp(img, file, dtype, frames, verbose)
 
-%``function [img] = img_read_4dfp(img, file, dtype, frames, verbose)``
+%``img_read_4dfp(img, file, dtype, frames, verbose)``
 %
 %   Reads in a 4dfp image into an image object
 %

@@ -1,6 +1,6 @@
 function [B, res rvar, Xdof] = simulate_compute_glm(y, X)
 
-%``function [B, res rvar, Xdof] = simulate_compute_glm(y, X)``
+%``simulate_compute_glm(y, X)``
 %   
 %   Function for task structure removal.
 %

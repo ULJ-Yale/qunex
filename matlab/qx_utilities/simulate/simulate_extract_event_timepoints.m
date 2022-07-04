@@ -1,6 +1,6 @@
 function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 
-%``function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)``
+%``simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)``
 %   
 %   Function that extracts specified timepoints from each event.
 %

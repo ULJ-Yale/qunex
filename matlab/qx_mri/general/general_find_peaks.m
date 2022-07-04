@@ -1,6 +1,6 @@
 function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
 
-%``function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)``
+%``general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)``
 %
 %   Performs smoothing using img_smooth() method and uses img_find_peaks method
 %   to define peak ROI using a watershed algorithm to grow regions from peaks.

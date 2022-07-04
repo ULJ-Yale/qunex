@@ -1,6 +1,6 @@
 function [m] = simulate_voronoi_map(w, h, p)
 
-%``function [m] = simulate_voronoi_map(w, h, p)``
+%``simulate_voronoi_map(w, h, p)``
 %   
 %   Function for creating w by h Voronoi bitmap with points p.
 %

@@ -1,6 +1,6 @@
 function [img] = stats_p2z(img, out, tail)
 
-%``function [img] = stats_p2z(img, out, tail)``
+%``stats_p2z(img, out, tail)``
 %
 %   Converts p to Z values considering one or two tails.
 %

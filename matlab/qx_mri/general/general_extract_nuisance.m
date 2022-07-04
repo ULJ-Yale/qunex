@@ -1,6 +1,6 @@
 function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)
 
-%``function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)``
+%``general_extract_nuisance(img, fsimg, bmimg, target, ntarget, wbmask, sessionroi, nroi, shrink, verbose)``
 %
 %    Extracts the specified nuisances and saves it into .nuisance file.
 %

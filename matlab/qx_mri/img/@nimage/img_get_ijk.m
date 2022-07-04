@@ -1,6 +1,6 @@
 function [ijk] = img_get_ijk(img, xyz)
 
-%``function [xyz] = img_get_ijk(img, xyz)``
+%``img_get_ijk(img, xyz)``
 %
 %    Returns the IJK voxel indices of a given world coordinates matrix.
 %

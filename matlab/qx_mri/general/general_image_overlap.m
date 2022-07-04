@@ -1,6 +1,6 @@
 function [] = general_image_overlap(af, bf, tf, v)
 
-%``function [] = general_image_overlap(af, bf, tf, v)``
+%``general_image_overlap(af, bf, tf, v)``
 %
 %   Function that prints the overlap of two images, one in red, another in
 %   green.

@@ -1,6 +1,6 @@
 function [ts] = general_hrf(dt, hrf, len, p)
 
-%``function [ts] = general_hrf(dt, hrf, len, p)``
+%``general_hrf(dt, hrf, len, p)``
 %
 %   INPUTS
 %   ======

@@ -2,8 +2,8 @@
 
 cd $(dirname $0)
 
-echo "==> Cloning latest wiki version from BitBucket"
-git clone --depth 1 https://bitbucket.org/oriadev/qunex.git/wiki ../../wiki
+echo "==> Cloning latest wiki version from GitLab"
+git clone --depth 1 https://token:glpat-rjavmB_di2fsZCtqHzYi@gitlab.qunex.yale.edu/qunex/qunex.wiki.git ../../wiki
 
 echo "==> Removing [TOC] from wiki files"
 find ../../wiki -iname '*.md' -exec sed -i.bkp '/\[TOC\]/d' '{}' ';'

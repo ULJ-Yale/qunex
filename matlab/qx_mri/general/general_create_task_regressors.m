@@ -1,6 +1,6 @@
 function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)
 
-%``function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)``
+%``general_create_task_regressors(fidlf, concf, model, ignore, check)``
 %
 %   Create task regressors for each bold run.
 %

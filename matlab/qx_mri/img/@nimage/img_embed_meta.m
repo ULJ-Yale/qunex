@@ -1,6 +1,6 @@
 function [img] = img_embed_meta(img, data, code, name, verbose)
 
-%``function [img] = img_embed_meta(img, data, code, name, verbose)``
+%``img_embed_meta(img, data, code, name, verbose)``
 %
 %   Method for embedding meta-data in a format ready to save in the extension
 %   part of the NIfTI files.

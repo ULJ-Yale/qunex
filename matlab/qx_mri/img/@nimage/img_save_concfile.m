@@ -1,6 +1,6 @@
 function [] = img_save_concfile(file, files)
 
-%``function [] = img_save_concfile(file, files)``
+%``img_save_concfile(file, files)``
 %
 %    Saves a conc file.
 %

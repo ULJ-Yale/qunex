@@ -1,6 +1,6 @@
 function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, verbose, cv)
 
-%``function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, verbose, cv)``
+%``img_compute_correlations(obj, bdata, verbose, cv)``
 %
 %   For each voxel, computes correlation with the provided (behavioral or other)
 %   data.

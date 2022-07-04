@@ -1,6 +1,6 @@
 function [frames] = general_get_image_length(file)
 
-%``function [frames] = general_get_image_length(file)``
+%``general_get_image_length(file)``
 %
 %    Reads a regular image or a conc file and returns the number of frames in
 %   each of the files.

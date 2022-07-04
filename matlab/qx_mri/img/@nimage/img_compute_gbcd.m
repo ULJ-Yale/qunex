@@ -1,6 +1,6 @@
 function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)
 
-%``function [results, roiinfo, rdata] = img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)``
+%``img_compute_gbcd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)``
 %
 %    Computes GBC averages for each specified ROI for n bands defined as distance
 %   from ROI.

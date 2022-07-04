@@ -1,6 +1,6 @@
 function [img] = img_read_concimage(file, dtype, frames, verbose)
 
-%``function [img] = img_read_concimage(file, dtype, frames, verbose)``
+%``img_read_concimage(file, dtype, frames, verbose)``
 %
 %   Reads and concatenates all image file specified in a .conc image.
 %

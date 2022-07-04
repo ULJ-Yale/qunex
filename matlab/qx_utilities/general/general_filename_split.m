@@ -1,6 +1,6 @@
 function [elements] = general_filename_split(filename, delim)
 
-%``function [elements] = general_filename_split(filename, delim)``
+%``general_filename_split(filename, delim)``
 %
 %   Splits the filename into elements separated by delim.
 %

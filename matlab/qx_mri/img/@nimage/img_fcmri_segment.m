@@ -1,6 +1,6 @@
 function [obj] = img_fcmri_segment(obj, smask, tmask, options, verbose)
 
-%``function [obj] = img_fcmri_segment(obj, ssmask, tmask, options, verbose)``
+%``img_fcmri_segment(obj, ssmask, tmask, options, verbose)``
 %
 %    Computes WTA segmentation of source mask voxels based on target mask ROI
 %

@@ -1,6 +1,6 @@
 function [obj] = img_read_stats(obj, verbose)
 
-%``function [obj] = img_read_stats(obj, verbose)``
+%``img_read_stats(obj, verbose)``
 %
 %    Reads in available files with information on movement, per frame image stats
 %   and scrubbing information.

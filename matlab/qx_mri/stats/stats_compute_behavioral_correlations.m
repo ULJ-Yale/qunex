@@ -1,6 +1,6 @@
 function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)
 
-%``function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)``
+%``stats_compute_behavioral_correlations(imgfile, datafile, target)``
 %
 %   Computes correlations between given images and provided data
 %   and outputs resulting images per each behavioral variable.

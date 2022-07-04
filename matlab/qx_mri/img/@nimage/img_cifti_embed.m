@@ -1,5 +1,5 @@
 function [img] = img_cifti_embed(img, structures, data)
-%``function [img] = img_cifti_embed(img, structures, data)``
+%``img_cifti_embed(img, structures, data)``
 %
 %    Embeds given data in the listed CIFTI structures.
 %

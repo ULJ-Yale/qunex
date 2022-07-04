@@ -1,6 +1,6 @@
 function [mask] = img_roi_mask(img, roi)
 
-%``function [mask] = img_roi_mask(img, roi)``
+%``img_roi_mask(img, roi)``
 %
 %   Checks which voxels have roi codes and returns a binary mask.
 %

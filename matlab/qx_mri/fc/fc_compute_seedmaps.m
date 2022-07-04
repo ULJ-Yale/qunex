@@ -1,6 +1,6 @@
 function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options)
 
-%``function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options)``
+%``fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options)``
 %
 %   Computes seed based functional connectivity maps for individual subject / 
 %   session.

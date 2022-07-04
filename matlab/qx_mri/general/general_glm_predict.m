@@ -4,7 +4,7 @@
 
 function [] = general_glm_predict(flist, effects, targetf, options)
 
-%``function [] = general_glm_predict(flist, effects, targetf, options)``
+%``general_glm_predict(flist, effects, targetf, options)``
 %
 %   Computes predicted and residual signal based on GLM.
 %

@@ -1,6 +1,6 @@
 function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)
 
-%``function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)``
+%``img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)``
 %
 %    Computes whole brain GBC based on the specified mask and command string.
 %

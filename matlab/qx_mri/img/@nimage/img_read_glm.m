@@ -1,6 +1,6 @@
 function [img] = img_read_glm(img, fname, dtype, verbose)
 
-%``function [img] = img_read_glm(img, fname, dtype, verbose)``
+%``img_read_glm(img, fname, dtype, verbose)``
 %
 %   Reads in a fidl glm image into an image object
 %

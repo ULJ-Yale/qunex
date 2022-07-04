@@ -1,6 +1,6 @@
 function [img] = img_read_nifti(img, filename, dtype, frames, verbose)
 
-%``function [img] = img_read_nifti(img, file, dtype, frames, verbose)``
+%``img_read_nifti(img, file, dtype, frames, verbose)``
 %
 %    Reads in a NIfTI image into an image object
 %

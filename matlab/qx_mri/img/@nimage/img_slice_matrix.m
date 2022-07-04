@@ -1,6 +1,6 @@
 function [panel] = img_slice_matrix(img, sdim, slices)
 
-%``function [panel] = img_slice_matrix(img, sdim, slices)``
+%``img_slice_matrix(img, sdim, slices)``
 %
 %    Takes the first volume and generates a panel / matrix of slices in selected
 %    dimension.

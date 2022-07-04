@@ -1,6 +1,6 @@
 function [] = general_print_struct(info, ftitle)
 
-%``function [] = general_print_struct(info, ftitle)``
+%``general_print_struct(info, ftitle)``
 %
 %   Function for printing the content of a struct field
 %

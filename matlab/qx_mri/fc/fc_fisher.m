@@ -1,6 +1,6 @@
 function [Fz] = fc_fisher(r)
 
-%``function [Fz] = fc_fisher(r)``
+%``fc_fisher(r)``
 %
 %    Converts Pearson correlations to Fisher z values. As a pre-pass, to avoid
 %    infinite Fisher z values, it multiplies all correlations with 0.9999999.

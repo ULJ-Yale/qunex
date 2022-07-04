@@ -1,6 +1,6 @@
 function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
-%``function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
+%``fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
 %
 %   A command for fcMRI preprocessing and GLM analysis a set of BOLD files.
 %

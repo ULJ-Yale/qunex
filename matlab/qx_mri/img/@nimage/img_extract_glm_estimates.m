@@ -1,6 +1,6 @@
 function [obj] = img_extract_glm_estimates(obj, effects, frames, values)
 
-%``function [obj] = img_extract_glm_estimates(obj, effects, frames, values)``
+%``img_extract_glm_estimates(obj, effects, frames, values)``
 %
 %    Extracts specified effects of interest from a GLM file.
 %

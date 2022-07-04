@@ -1,6 +1,6 @@
 function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices)
 
-%``function [img] = general_create_rgb_overlay(img, roi, R, G, B, filename, slices)``
+%``general_create_rgb_overlay(img, roi, R, G, B, filename, slices)``
 %
 %   Creates an RGB image of img with overlay in R, G and B for specified ROI
 %   values. Filename is optional. If specified image is saved as a PNG file. img

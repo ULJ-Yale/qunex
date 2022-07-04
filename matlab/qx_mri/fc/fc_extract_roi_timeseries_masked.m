@@ -1,6 +1,6 @@
 function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)
 
-%``function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``
+%``fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``
 %
 %   Extracts and saves region timeseries defined by provided roiinfo file
 %

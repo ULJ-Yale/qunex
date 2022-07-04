@@ -1,6 +1,6 @@
 function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)
 
-%``function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)``
+%``general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)``
 %
 %   Creates and saves a plot of BOLD timeseries for a list of sessions.
 %

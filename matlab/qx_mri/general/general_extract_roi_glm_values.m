@@ -1,6 +1,6 @@
 function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)
 
-%``function [] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)``
+%``general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)``
 %
 %   Extracts per ROI estimates of specified effects from a volume or cifti GLM
 %   files as specified in the file list.

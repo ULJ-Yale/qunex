@@ -1,6 +1,6 @@
 function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, psign)
 
-%``function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, psign)``
+%``general_image_conjunction(imgf, maskf, method, effect, q, data, psign)``
 %
 %   Reads image file, computes conjunction using general_conjunction and
 %   saves results. Accepts image of significance estimates and computes

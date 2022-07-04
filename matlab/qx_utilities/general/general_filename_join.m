@@ -1,6 +1,6 @@
 function [filename] = general_filename_join(elements, delim)
 
-%``function [filename] = general_filename_join(elements, delim)``
+%``general_filename_join(elements, delim)``
 %
 %   Joins all the elements of a file with the specified delimiter.
 %

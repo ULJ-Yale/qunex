@@ -1,6 +1,6 @@
 function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)
 
-%``function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)``
+%``general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)``
 %
 %   A command for extraction of image statistics over the whole group.
 %

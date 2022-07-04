@@ -1,6 +1,6 @@
 function [img] = img_embed_cifti_volume(img, vol_img)
 
-%``function [img] = img_embed_cifti_volume(img, vol_img)``
+%``img_embed_cifti_volume(img, vol_img)``
 %
 %   Overwrites the CIFTI-2 nimage with a modified/analyzed NIfTY model.
 %

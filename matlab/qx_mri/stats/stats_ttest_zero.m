@@ -1,6 +1,6 @@
 function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 
-%``function [] = stats_ttest_zero(dfile, output, exclude, verbose)``
+%``stats_ttest_zero(dfile, output, exclude, verbose)``
 %
 %   Computes t-test against zero and saves specified results.
 %

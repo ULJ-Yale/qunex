@@ -1,5 +1,5 @@
 function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)
-%``function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)``
+%``img_anova_2way_repeated(obj, a, b, verbose)``
 %
 %    Computes ANOVA with two repeated measures factors with a and b levels.
 %

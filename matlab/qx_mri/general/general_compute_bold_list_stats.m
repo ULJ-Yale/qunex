@@ -1,6 +1,6 @@
 function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)
 
-%``function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbose)``
+%``general_compute_bold_list_stats(flist, target, store, scrub, verbose)``
 %
 %   Computes BOLD run per frame statistics and scrubbing information for a list
 %   of sessions.

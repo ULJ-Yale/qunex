@@ -1,6 +1,6 @@
 function [B, res, rvar, Xdof] = img_glm_fit(obj, X)
 
-%``function [B, res, rvar, Xdof] = img_glm_fit(obj, X)``.
+%``img_glm_fit(obj, X)``.
 %
 %    Computes GLM fit to whole brain
 %

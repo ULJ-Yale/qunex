@@ -1,6 +1,6 @@
 function [img, param] = img_compute_scrub(img, comm)
 
-%``function [img, param] = img_compute_scrub(img, comm)``
+%``img_compute_scrub(img, comm)``
 %
 %   Method that computes image scrubbing parameters.
 %

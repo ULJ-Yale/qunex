@@ -1,6 +1,6 @@
 function [y] = changeform(x, d)
 
-%``function [y] = changeform(x, d)``
+%``changeform(x, d)``
 %   
 %   Function that converts vector to matrix or the other way arround
 %   depending on input.

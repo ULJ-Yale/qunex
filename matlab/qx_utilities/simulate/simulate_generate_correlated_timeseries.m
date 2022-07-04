@@ -1,6 +1,6 @@
 function [ts, er, dr] = simulate_generate_correlated_timeseries(r, len, md)
 
-%``function [ts, er, dr] = simulate_generate_correlated_timeseries(r, len, md)``
+%``simulate_generate_correlated_timeseries(r, len, md)``
 %    
 %   Function that generates multi normal timeseries with specified
 %   correlations.

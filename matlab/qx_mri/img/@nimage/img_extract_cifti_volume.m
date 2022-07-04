@@ -1,6 +1,6 @@
 function [vol_img] = img_extract_cifti_volume(img, data_format)
 
-%``function [vol_img] = img_CIFTI2volume(img, data_format)``
+%``img_CIFTI2volume(img, data_format)``
 %
 %   Transforms a CIFTI nimage into a NIfTI volume nimage in order to allow the
 %   usage of the existing methods for volume model analysis.

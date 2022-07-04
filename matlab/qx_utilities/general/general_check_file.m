@@ -1,6 +1,6 @@
 function [ok] = general_check_file(filename, description, v, prepend)
 
-%``function [ok] = general_check_file(filename, description, v, prepend)``
+%``general_check_file(filename, description, v, prepend)``
 %
 %   Checks for existence of a file and prints error notices specified in v.
 %

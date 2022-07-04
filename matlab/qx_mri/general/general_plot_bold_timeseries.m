@@ -1,6 +1,6 @@
 function [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)
 
-%``function [] = general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)``
+%``general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)``
 %
 %   Creates and saves a plot of BOLD timeseries.
 %

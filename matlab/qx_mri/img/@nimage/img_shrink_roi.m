@@ -1,6 +1,6 @@
 function [out] = img_shrink_roi(img, method, crit)
 
-%``function [out] = img_shrink_roi(img, method, crit)``
+%``img_shrink_roi(img, method, crit)``
 %
 %    Peels a layer off all regions to reduce their size.
 %

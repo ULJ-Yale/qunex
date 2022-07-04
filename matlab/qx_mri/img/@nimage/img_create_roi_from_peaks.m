@@ -1,5 +1,5 @@
 function [img] = img_create_roi_from_peaks(img, peaksIn)
-%``function [img] = img_create_roi_from_peaks(img, peaksIn)``
+%``img_create_roi_from_peaks(img, peaksIn)``
 %
 %   Creates ROI from given peaks data.
 %

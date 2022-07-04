@@ -1,6 +1,6 @@
 function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)
 
-%``function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``
+%``general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``
 %
 %   A general function for writing data tables.
 %

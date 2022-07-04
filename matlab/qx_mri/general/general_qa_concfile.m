@@ -1,6 +1,6 @@
 function [r, doIt] = general_qa_concfile(file, doIt, target)
 
-%``function [r, doIt] = general_qa_concfile(file, doIt, target)``
+%``general_qa_concfile(file, doIt, target)``
 %
 %   Computes the specified statistics on images specified in the conc file and
 %   saves them to the target file.

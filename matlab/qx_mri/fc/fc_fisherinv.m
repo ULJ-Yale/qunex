@@ -1,6 +1,6 @@
 function [r] = fc_fisherinv(fz)
 
-%``function [r] = fc_fisherinv(fz)``
+%``fc_fisherinv(fz)``
 %
 %    Converts Fisher z values to Pearson correlations.
 %

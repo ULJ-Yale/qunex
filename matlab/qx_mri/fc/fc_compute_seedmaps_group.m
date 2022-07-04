@@ -1,6 +1,6 @@
 function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options)
 
-%``function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options)``
+%``fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options)``
 %
 %   Computes seed based correlations maps for individuals as well as group maps.
 %

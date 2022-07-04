@@ -1056,12 +1056,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         Multiple sessions example::
 
             qunex dicom2niix \\
-              --sessionsfolder="/data/my_study/sessions" \\
-              --sessions="OP*" \\
-              --clean=yes \\
-              --unzip=yes \\
-              --gzip=no \\
-              --parelements=3
+                --sessionsfolder="/data/my_study/sessions" \\
+                --sessions="OP*" \\
+                --clean=yes \\
+                --unzip=yes \\
+                --gzip=no \\
+                --parelements=3
     """
 
     print("Running dicom2niix\n==================")

@@ -1,6 +1,6 @@
 function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 
-%``function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)``
+%``fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)``
 %
 %   Segments the voxels in smask based on their connectivity with tmask ROI.
 %   Uses WTA to select the region the voxel is most correlated with.

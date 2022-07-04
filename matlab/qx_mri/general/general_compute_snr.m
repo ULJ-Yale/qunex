@@ -1,6 +1,6 @@
 function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, target, slice, fname)
 
-%``function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, target, slice, fname)``
+%``general_compute_snr(filename, imask, fmask, target, slice, fname)``
 %
 %   Computes Signal-to-noise ratio for the given image.
 %

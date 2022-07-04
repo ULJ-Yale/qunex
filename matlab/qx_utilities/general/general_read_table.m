@@ -1,6 +1,6 @@
 function [data, hdr, meta] = general_read_table(instr)
 
-%``function [data, hdr, meta] = general_read_table(instr)``
+%``general_read_table(instr)``
 %
 %   A general function for reading whitespace separated data tables.
 %

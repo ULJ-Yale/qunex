@@ -1,6 +1,6 @@
 function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)
 
-%``function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)``
+%``fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)``
 %
 %   Extracts trial timeseries for each of the specified ROI.
 %

@@ -1,6 +1,6 @@
 function [out] = general_read_event_file(file, tunit)
 
-%``function [out] = general_read_event_file(file, tunit)``
+%``general_read_event_file(file, tunit)``
 %
 %    Reads fidl event file and returns a structure.
 %

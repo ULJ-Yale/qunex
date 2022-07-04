@@ -1,6 +1,6 @@
 function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)
 
-%``function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)``
+%``fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)``
 %
 %   Computes the correlation of each source mask voxel with each target mask
 %   voxel.

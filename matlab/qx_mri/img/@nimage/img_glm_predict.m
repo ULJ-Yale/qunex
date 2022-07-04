@@ -1,6 +1,6 @@
 function [predicted, residual] = img_glm_predict(glm, effects, raw)
 
-%``function [predicted, residual] = img_glm_predict(glm, effects, raw)``.
+%``img_glm_predict(glm, effects, raw)``.
 %
 %    Computes predicted and residual values based on the provided GLM object,
 %   list of effects to predict and raw data.

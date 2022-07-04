@@ -1,6 +1,6 @@
 function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)
 
-%``function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)``
+%``general_create_assumed_response(TR, frames, delay, elength, hrf_type)``
 %
 %   Returns timecourse of an assumed response to an event.
 %

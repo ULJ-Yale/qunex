@@ -119,7 +119,7 @@ def get_toc_tree_structure(caption):
     the desired toctree caption.
     """
     return ["\n.. toctree::",
-            "   :maxdepth: 1",
+            "   :maxdepth: 2",
             "   :caption: " + caption,
             "   :hidden:\n"]
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     cap_ind = get_captions_line_indices(home_lines, list_of_headers)
 
-    index_lines.extend("\n.. toctree::\n   :maxdepth: 1\n   :hidden:\n\n   QuNex quick start <wiki/Overview/QuickStart.md>".split("\n"))
+    index_lines.extend("\n.. toctree::\n   :maxdepth: 2\n   :hidden:\n\n   QuNex quick start <wiki/Overview/QuickStart.md>".split("\n"))
 
     index_lines.extend(get_toc_tree_structure("General overview"))
     index_lines.append("   Overview <wiki/Overview/Overview.md>")

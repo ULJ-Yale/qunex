@@ -1,6 +1,6 @@
 function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)
 
-%``function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)``
+%``simulate_generate_timeseries(TR, eventlist, model, modeldata)``
 %
 %   Function for generation of simulated BOLD timeseries.
 %

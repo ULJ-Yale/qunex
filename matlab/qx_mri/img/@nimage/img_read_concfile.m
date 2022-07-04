@@ -1,6 +1,6 @@
 function [files, boldnum, sfolder] = img_read_concfile(file)
 
-%``function [files, boldnum, sfolder] = img_read_concfile(file)``
+%``img_read_concfile(file)``
 %
 %    Reads a .conc file and returns a list of files.
 %

@@ -1,6 +1,6 @@
 function [] = general_cluster_threshold(fname, tname, csize, t)
 
-%``function [] = general_cluster_threshold(fname, tname, csize, t)``
+%``general_cluster_threshold(fname, tname, csize, t)``
 %
 %   Thresholding using cluster size for volume images.
 %

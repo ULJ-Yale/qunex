@@ -1,6 +1,6 @@
 function [p Z M D SE t] = img_ttest_independent(A, B, vartype, verbose)
 
-%``function [p Z M D SE t] = img_ttest_zero(A, B, vartype, verbose)``
+%``img_ttest_zero(A, B, vartype, verbose)``
 %
 %    Computes independent t-test comparing the called image object (A) to B.
 %

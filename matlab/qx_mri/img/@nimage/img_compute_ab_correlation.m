@@ -1,6 +1,6 @@
 function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 
-%``function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)``
+%``img_compute_ab_correlation(obj, smask, tmask, verbose)``
 %
 %    Compute correlation between each source and target voxels and returns a
 %    correlational image.

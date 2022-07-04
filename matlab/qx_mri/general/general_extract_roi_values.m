@@ -1,6 +1,6 @@
 function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)
 
-%``function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
+%``general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
 %
 %   Extracts desired statistics from provided files for each ROI.
 %

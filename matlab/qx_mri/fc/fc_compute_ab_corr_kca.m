@@ -1,6 +1,6 @@
 function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
 
-%``function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
+%``fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
 %
 %   Segments the voxels in smask based on their connectivity pattern with tmask 
 %   voxels. Uses k-means to group voxels in smask.

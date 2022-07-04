@@ -1,6 +1,6 @@
 function [p Z M SE t] = img_ttest_zero(obj, verbose)
 
-%``function [p Z M SE t] = img_ttest_zero(obj, verbose)``
+%``img_ttest_zero(obj, verbose)``
 %
 %    Computes t-test against zero across all the volumes in the image.
 %

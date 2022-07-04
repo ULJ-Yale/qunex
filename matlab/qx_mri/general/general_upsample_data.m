@@ -1,5 +1,5 @@
 function [ud] = general_upsample_data(oldData, oldSphere, newSphere, newData)
-%``function [ud] = general_upsample_data(data, oldSphere, newSphere, newData)``
+%``general_upsample_data(data, oldSphere, newSphere, newData)``
 %
 %   Upsample surface data and the corresponding surface file.
 %

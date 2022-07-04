@@ -1,6 +1,6 @@
 function [ts] = simulate_trim_pad(ts, l)
 
-%``function [ts] = simulate_trim_pad(ts, l)``
+%``simulate_trim_pad(ts, l)``
 %    
 %   Function that trims or pads timeseries to specified length.
 %

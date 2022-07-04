@@ -1,6 +1,6 @@
 function [img] = img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
 
-%``function [img] = img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)``
+%``img_filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)``
 %
 %   INPUTS
 %   ======

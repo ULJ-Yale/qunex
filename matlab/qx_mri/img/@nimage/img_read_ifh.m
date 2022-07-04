@@ -1,6 +1,6 @@
 function [ifh] = img_read_ifh(img, file)
 
-%``function [ifh] = img_read_ifh(img, file)``
+%``img_read_ifh(img, file)``
 %
 %    Reads .ifh header from a 4dfp file
 %

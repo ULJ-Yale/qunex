@@ -1,6 +1,6 @@
 function [files] = general_read_concfile(file)
 
-%``function [files] = general_read_concfile(file)``
+%``general_read_concfile(file)``
 %
 %    Reads a conc file and returns a list of files.
 %

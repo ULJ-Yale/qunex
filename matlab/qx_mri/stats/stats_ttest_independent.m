@@ -1,6 +1,6 @@
 function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exclude, verbose)
 
-%``function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exclude, verbose)``
+%``stats_ttest_independent(filea, fileb, target, output, vartype, exclude, verbose)``
 %
 %   Computes t-test of differences between two independent groups.
 %

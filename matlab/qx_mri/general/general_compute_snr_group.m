@@ -1,6 +1,6 @@
 function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 
-%``function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)``
+%``general_compute_snr_group(flist, target, fmask, verbose)``
 %
 %   Computes SNR and SD for the whole group.
 %

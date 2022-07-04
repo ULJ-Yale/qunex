@@ -1,6 +1,6 @@
 function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)
 
-%``function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)``
+%``fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)``
 %
 %   Computes GBC averages for each specified ROI for n bands defined as distance
 %   from ROI.

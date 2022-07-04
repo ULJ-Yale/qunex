@@ -1,6 +1,6 @@
 function [cors, sim] = simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)
 
-%``function [cors, runs] = simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)``
+%``simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)``
 %    
 %   Function that generates multi normal timeseries with specified
 %   correlations.

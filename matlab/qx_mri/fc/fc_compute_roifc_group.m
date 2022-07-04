@@ -1,6 +1,6 @@
 function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, options)
 
-%``function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, options)``
+%``fc_compute_roifc_group(flist, roiinfo, frames, targetf, options)``
 %
 %   Computes ROI functional connectivity matrices for a group of sujects/sessions.
 %

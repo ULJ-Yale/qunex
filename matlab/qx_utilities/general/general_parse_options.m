@@ -1,6 +1,6 @@
 function [options] = general_parse_options(options, s, default)
 
-%``function [options] = general_parse_options(options, s, default)``
+%``general_parse_options(options, s, default)``
 %
 %   Function for compact passing of values between functions.
 %

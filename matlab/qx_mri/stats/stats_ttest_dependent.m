@@ -1,6 +1,6 @@
 function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbose)
 
-%``function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbose)``
+%``stats_ttest_dependent(filea, fileb, target, output, exclude, verbose)``
 %
 %   Computes t-test of differences between two dependent groups.
 %

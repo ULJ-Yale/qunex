@@ -1,6 +1,6 @@
 function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 
-%``function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)``
+%``fc_compute_roifc(bolds, roiinfo, frames, targetf, options)``
 %
 %   Computes ROI functional connectivity matrices for individual
 %   subject / session.

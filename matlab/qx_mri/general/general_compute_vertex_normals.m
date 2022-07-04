@@ -1,5 +1,5 @@
 function [normals] = general_compute_vertex_normals(surface)
-%``function [normals] = general_compute_vertex_normals(surfaceFile)``
+%``general_compute_vertex_normals(surfaceFile)``
 %
 %   Function computes the vertex normals to the passed surface file (.surf.gii)
 %

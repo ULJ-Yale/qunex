@@ -1,6 +1,6 @@
 function [] = stats_anova_2way_repeated(dfile, a, b, output, verbose)
 
-%``function [] = stats_anova_2way_repeated(dfile, a, b, output, verbose)``
+%``stats_anova_2way_repeated(dfile, a, b, output, verbose)``
 %
 %   Computes ANOVA with two repeated measures factors with a and b levels and
 %   saves specified results.
