@@ -28,3 +28,7 @@ sphinx:
 python:
    install:
    - requirements: docs/_extras/requirements.txt
+
+# Exclude submodules to suppress Read the Docs invalid token error
+submodules:
+  exclude: all
