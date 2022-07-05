@@ -664,10 +664,7 @@ extract_roi() {
     # -- Parse general parameters
     ROIFileSessionSpecific="$ROIFileSessionSpecific"
     SingleInputFile="$SingleInputFile"
-    if [[ -z ${SingleInputFile} ]]; then
-        OutPath="${SessionsFolder}/${CASE}/${OutPath}"
-    else
-        OutPath="${OutPath}"
+    if [[ -n ${SingleInputFile} ]]; then
         InputFile="${SingleInputFile}"
     fi
     if [[ ${ROIFileSessionSpecific} == "no" ]]; then
@@ -677,15 +674,16 @@ extract_roi() {
     fi
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh \
-    --roifile='${ROIInputFile}' \
+    --roifile='${ROIFile}' \
     --inputfile='${InputFile}' \
-    --outdir='${OutPath}' \
+    --outpath='${OutPath}' \
     --outname='${OutName}'"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
 
-show_usage_roi_extract() {
+show_usage_extract_roi() {
     echo ""
     echo "qunex ${usage_input}"
     ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh
