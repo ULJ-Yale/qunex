@@ -33,8 +33,7 @@ consists of functions:
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
-- ``qunex ?<command>`` for command specific help
-- ``qunex -o`` for a list of relevant arguments and options
+- ``qunex <command> -h`` for command specific help
 
 There are additional support functions that are not to be used
 directly.
@@ -2010,7 +2009,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                             coefficients, alternatively a string describing
                             multiple options (see below), or "NONE", if not
                             used [NONE].
-    --hcp_bold_topupconfig  A full path to the topup configuration file to use.
+    --hcp_dwi_topupconfig   A full path to the topup configuration file to use.
                             [$HCPPIPEDIR/global/config/b02b0.cnf].
 
     Eddy post processing parameters
@@ -2170,17 +2169,29 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             r += "\n---> hcp_dwi_phasepos is currently set to %s." % options['hcp_dwi_phasepos']
 
         # --- set up data
-        if options['hcp_dwi_phasepos'] == "PA":
-            direction = [('pos', 'PA'), ('neg', 'AP')]
+        if options['hcp_dwi_phasepos'] == 'PA':
+            direction = {
+                'pos': 'PA',
+                'neg': 'AP'
+            }
             pe_dir = 2
-        elif options['hcp_dwi_phasepos'] == "AP":
-            direction = [('pos', 'AP'), ('neg', 'PA')]
+        elif options['hcp_dwi_phasepos'] == 'AP':
+            direction = {
+                'pos': 'AP',
+                'neg': 'PA'
+            }
             pe_dir = 2
-        elif options['hcp_dwi_phasepos'] == "LR":
-            direction = [('pos', 'LR'), ('neg', 'RL')]
+        elif options['hcp_dwi_phasepos'] == 'LR':
+            direction = {
+                'pos': 'LR',
+                'neg': 'RL'
+            }
             pe_dir = 1
-        elif options['hcp_dwi_phasepos'] == "RL":
-            direction = [('pos', 'RL'), ('neg', 'LR')]
+        elif options['hcp_dwi_phasepos'] == 'RL':
+            direction = {
+                'pos': 'RL',
+                'neg': 'LR'
+            }
             pe_dir = 1
         else:
             r += "\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]" % options['hcp_dwi_phasepos']
@@ -2195,23 +2206,48 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # get dwi files
             dwi_data = dict()
-            for ddir, dext in direction:
+            for ddir, dext in direction.items():
                 dwi_files = glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
 
                 # sort by temporal order as specified in batch
                 for dwi in sorted(dwis):
                     for dwi_file in dwi_files:
                         if dwis[dwi] in dwi_file:
-                            if ddir in dwi_data:
-                                dwi_data[ddir] = dwi_data[ddir] + "@" + dwi_file
-                            else:
-                                dwi_data[ddir] = dwi_file
-                            break
+                            dwi_dict = {
+                                'dir': ddir,
+                                'ext': dext,
+                                'file': dwi_file
+                            }
+                            dwi_data[dwis[dwi]] = dwi_dict
+
+                            # add matching pair if it does not exist
+                            opposite_dir = 'pos'
+                            if ddir == 'pos':
+                                opposite_dir = 'neg'
+                            opposite_exp = direction[opposite_dir]
+
+                            dwi_matching = dwis[dwi].replace(dext, opposite_exp)
+
+                            if dwi_matching not in dwi_data:
+                                dwi_dict = {
+                                    'dir': opposite_dir,
+                                    'ext': opposite_exp,
+                                    'file': 'EMPTY'
+                                }
+                                dwi_data[dwi_matching] = dwi_dict
+
+            # prepare pos and neg files
+            dwi_files = dict()
+            for _, dwi in dwi_data.items():
+                if dwi['dir'] in dwi_files:
+                    dwi_files[dwi['dir']] = dwi_files[dwi['dir']] + "@" + dwi['file']
+                else:
+                    dwi_files[dwi['dir']] = dwi['file']
 
             for ddir in ['pos', 'neg']:
-                dfiles = dwi_data[ddir].split("@")
+                dfiles = dwi_files[ddir].split("@")
 
-                if dfiles and dfiles != ['']:
+                if dfiles and dfiles != [''] and dfiles != 'EMPTY':
                     r += "\n---> The following %s direction files were found:" % (ddir)
                     for dfile in dfiles:
                         r += "\n     %s" % (os.path.basename(dfile))
@@ -2247,8 +2283,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --combine-data-flag="%(combinedataflag)s" \
                 --printcom="%(printcom)s"' % {
                     'script'            : os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
-                    'pos_data'          : dwi_data['pos'],
-                    'neg_data'          : dwi_data['neg'],
+                    'pos_data'          : dwi_files['pos'],
+                    'neg_data'          : dwi_files['neg'],
                     'path'              : sinfo['hcp'],
                     'subject'           : sinfo['id'] + options['hcp_suffix'],
                     'echospacing'       : echospacing,
@@ -2276,8 +2312,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if options['hcp_bold_topupconfig'] != '':
-                comm += "                --topup-config-file=" + options['hcp_bold_topupconfig']
+            if options['hcp_dwi_topupconfig'] != '':
+                comm += "                --topup-config-file=" + options['hcp_dwi_topupconfig']
 
             if options['hcp_dwi_even_slices']:
                 comm += "                --ensure-even-slices"
@@ -2517,7 +2553,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_doslicetime          Whether to do slice timing correction TRUE
                                     or FALSE. []
     --hcp_bold_slicetimerparams     A comma or pipe separated string of
-                                    parameters for FSL slicetimer.
+                                    parameters for FSL slicetimer. The 
+                                    parameters have to be specified exactly as
+                                    they should be passed to fsl slicetimer, 
+                                    e.g., '--odd' and not only 'odd'.
     --hcp_bold_stcorrdir            (*) The direction of slice acquisition
                                     ('up' or 'down'. [up]
     --hcp_bold_stcorrint            (*) Whether slices were acquired in an
@@ -8516,7 +8555,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
             # confound
             if options['hcp_task_confound'] is not None:
-                comm += "                --confound==\"%s\"" % options['hcp_task_confound']
+                comm += "                --confound=\"%s\"" % options['hcp_task_confound']
 
             # origsmoothingFWHM
             if options['hcp_bold_smoothFWHM'] != "2":

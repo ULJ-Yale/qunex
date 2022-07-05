@@ -14,8 +14,8 @@
 # ## LICENCE
 #
 # * The pre_tractography.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
+# * This Software conforms to the licenses outlined in the QuNex Suite:
+# * https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES
 #
 # ## DESCRIPTION 
 #   

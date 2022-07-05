@@ -327,8 +327,8 @@ geho ""
 geho "                      COPYRIGHT & LICENSE NOTICE:"
 geho ""
 geho "Use of this software is subject to the terms and conditions defined in"
-geho "'LICENSE.md' which is a part of the QuNex Suite source code package:"
-geho "https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md"
+geho "'LICENSES' which is a part of the QuNex Suite source code package:"
+geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
 geho ""
 
 # ------------------------------------------------------------------------------
@@ -611,6 +611,8 @@ export MATLABPATH
 # -- ciftirw
 if [[ -z ${FSL_FIX_CIFTIRW} ]]; then FSL_FIX_CIFTIRW=${HCPPIPEDIR}/global/matlab; export FSL_FIX_CIFTIRW; fi
 if [[ -z ${HCPCIFTIRWDIR} ]]; then HCPCIFTIRWDIR=${HCPPIPEDIR}/global/matlab/cifti-matlab; export HCPCIFTIRWDIR; fi
+MATLABPATH=$FSL_FIX_CIFTIRW:$HCPCIFTIRWDIR:$MATLABPATH
+export MATLABPATH
 
 # if in container set compiled matlab and CUDA path
 if [[ -e /opt/.container ]]; then

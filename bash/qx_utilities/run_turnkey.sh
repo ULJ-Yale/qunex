@@ -615,6 +615,7 @@ AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; Ac
 #
 AddImageType=`opts_GetOpt "--add_image_type" $@`
 AddJsonInfo=`opts_GetOpt "--add_json_info" $@`
+Gzip=`opts_GetOpt "--gzip" $@`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 #
@@ -824,11 +825,11 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     curl -k -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv
 
     # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
-    if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
-    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SUBJECT_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`; fi
+    if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SUBJECT_LABEL=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`; fi
     # -- Re-obtain the label from the database just in case it was mis-specified
-    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SESSION_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`; fi
-    if [[ -z ${XNAT_ACCSESSION_ID} ]]; then XNAT_ACCSESSION_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SESSION_LABEL=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`; fi
+    if [[ -z ${XNAT_ACCSESSION_ID} ]]; then XNAT_ACCSESSION_ID=`cat ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`; fi
 
     # -- Clean up temp curl call info
     rm -r ${HOME}/xnatInfoTmp &> /dev/null
@@ -890,7 +891,7 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderN
     echo "     resolving the conflict such that a consistent folder specification is used. "
     echo ""
     echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-    echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+    echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
     echo ""
 fi
 
@@ -908,7 +909,7 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolde
     echo "     resolving the conflict such that a consistent folder specification is used. "
     echo ""
     echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-    echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+    echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
     echo ""
     SessionsFolder="${STUDY_PATH}/subjects"
     SessionsFolderName="subjects"
@@ -1720,7 +1721,7 @@ fi
                 MAPPINGFILECHECK="fail"
                 exit 1
             else
-                if [[ ! `more ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} | grep '=>'` ]]; then
+                if [[ ! `cat ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} | grep '=>'` ]]; then
                     echo " ==> ERROR: Scan mapping file ${SCAN_MAPPING_FILENAME_PATH} not found in ${RawDataInputPath}!"
                     MAPPINGFILECHECK="fail"
                     exit 1
@@ -1872,7 +1873,7 @@ fi
 
             # -- Run BIDS completion checks on mapped data
             if [ -f ${SessionsFolder}/${CASE}/bids/bids2nii.log ]; then
-                 FILESEXPECTED=`more ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
+                 FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
             else
                  FILECHECK="fail"
             fi
@@ -1992,7 +1993,7 @@ fi
 
             # -- Run HCPLS completion checks on mapped data
             if [ -f ${SessionsFolder}/${CASE}/hcpls/hcpls2nii.log ]; then
-                FILESEXPECTED=`more ${SessionsFolder}/${CASE}/hcpls/hcpls2nii.log | grep "=>" | wc -l 2> /dev/null`
+                FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/hcpls/hcpls2nii.log | grep "=>" | wc -l 2> /dev/null`
             else
                 FILECHECK="fail"
             fi
@@ -2019,7 +2020,7 @@ fi
             MAPPINGFILECHECK=pass
         else
             if [[ -f ${SpecsMappingFile} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
-            if [[ -z `more ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
+            if [[ -z `cat ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
         fi
 
         # -- Declare checks
@@ -2073,9 +2074,15 @@ fi
             echo ""
             cyaneho " ===> RUNNING RunTurnkey step ~~~ import_dicom"
             echo ""
-           [] 
+            if [[ -z ${Gzip} ]]; then
+                if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+                    Gzip="no"
+                else
+                    Gzip="folder"
+                fi
+            fi
 
-            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='folder' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QuNexCommand} import_dicom --sessionsfolder='${SessionsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --add_image_type='${AddImageType}' --add_json_info='${AddJsonInfo}' --gzip='${Gzip}' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"

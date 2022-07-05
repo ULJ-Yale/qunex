@@ -527,7 +527,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                     else:
                         settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
                 else:
-                    scheduler_params[s.strip()] = "QX_FLAG"
+                    settings[s.strip()] = "QX_FLAG"
 
         settings['jobname'] = settings.get('jobname', command)
 

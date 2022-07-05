@@ -96,8 +96,8 @@ show_splash() {
     geho "                      COPYRIGHT & LICENSE NOTICE:"
     geho ""
     geho "Use of this software is subject to the terms and conditions defined in"
-    geho "'LICENSE.md' which is a part of the QuNex Suite source code package:"
-    geho "https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md"
+    geho "'LICENSES' which is a part of the QuNex Suite source code package:"
+    geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
     geho ""
 }
 
@@ -170,7 +170,7 @@ qunex_passed() {
 
 show_usage_qxutil() {
     echo ""
-    gmri ?${usage_input}
+    gmri ${usage_input} --h
 }
 
 show_all_qunex_commands() {
@@ -178,7 +178,7 @@ show_all_qunex_commands() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-# -- Master Execution and Logging -- https://bitbucket.org/oriadev/qunex/wiki/Overview/Logging.md
+# -- Master Execution and Logging -- https://qunex.readthedocs.io/en/latest/wiki/Overview/Logging.html
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
@@ -223,7 +223,7 @@ bash_call_execute() {
     if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
         # -- Add check in case the sessions folder is distinct from the default name
         # -- Eventually use the template file to replace hard-coded values
-        QuNexSessionsSubFolders=`more $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
+        QuNexSessionsSubFolders=`cat $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
         QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
         for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
             if [[ ! -d ${QuNexSessionsFolder} ]]; then
@@ -664,10 +664,7 @@ extract_roi() {
     # -- Parse general parameters
     ROIFileSessionSpecific="$ROIFileSessionSpecific"
     SingleInputFile="$SingleInputFile"
-    if [[ -z ${SingleInputFile} ]]; then
-        OutPath="${SessionsFolder}/${CASE}/${OutPath}"
-    else
-        OutPath="${OutPath}"
+    if [[ -n ${SingleInputFile} ]]; then
         InputFile="${SingleInputFile}"
     fi
     if [[ ${ROIFileSessionSpecific} == "no" ]]; then
@@ -677,15 +674,16 @@ extract_roi() {
     fi
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh \
-    --roifile='${ROIInputFile}' \
+    --roifile='${ROIFile}' \
     --inputfile='${InputFile}' \
-    --outdir='${OutPath}' \
+    --outpath='${OutPath}' \
     --outname='${OutName}'"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
 
-show_usage_roi_extract() {
+show_usage_extract_roi() {
     echo ""
     echo "qunex ${usage_input}"
     ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh
@@ -983,7 +981,7 @@ run_qc() {
     --boldfcpath='${BOLDfcPath}' \
     --suffix='${Suffix}' \
     --hcp_suffix='${HCPSuffix}' \
-    --batchfile='${SessionBatchFile}' "
+    --batchfile='${BATCH_FILE}' "
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1041,26 +1039,12 @@ get_flags() {
     done
 }
 
-# -- Checks command line arguments for "--help" indicating that help has been requested
-check_help_request() {
-    for fn in "$@" ; do
-        if [[ ${fn} = "--help" ]]; then
-            return 0
-        fi
-    done
-}
-
-# -- Set and report version
-QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
-echo ""
-geho " ........................ Running QuNex v${QuNexVer} ........................"
-echo ""
-
 # -- Checks for version
 show_version() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
     echo "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version: ${QuNexVer}"
+    exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -1074,16 +1058,10 @@ if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] ||
     exit 0
 fi
 
-# -- Check if version was requested
+# -- Check if splash was requested
 if [ "$1" == "-splash" ] || [ "$1" == "splash" ] || [ "$1" == "--splash" ] || [ "$1" == "--s" ] || [ "$1" == "-s" ]; then
     show_splash
     echo ""
-    exit 0
-fi
-
-if [ $(check_help_request $@) ]; then
-    show_splash
-    show_usage
     exit 0
 fi
 
@@ -1108,6 +1086,11 @@ if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envset
     exit 0
 fi
 
+# -- Set and report version
+QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+echo ""
+geho " ........................ Running QuNex v${QuNexVer} ........................"
+echo ""
 
 # ------------------------------------------------------------------------------
 # -- Map deprecated commands
@@ -1147,22 +1130,7 @@ done
 if [[ $is_gmri_command == 1 ]]; then
     # -- If yes then set the gmri function variable
     qxutil_command_to_run="$1"
-    # -- Check for input with question mark
-    if [[ "$qxutil_command_to_run" =~ .*"?".* ]] && [[ -z ${2} ]]; then
-        # -- Set usage_input variable to pass and remove question mark
-        usage_input=`echo ${qxutil_command_to_run} | cut -c 2-`
-        # -- If no other input is provided print help
-        show_usage_qxutil
-        exit 0
-    fi
-    # -- Check for input with flag mark
-    if [[ "$qxutil_command_to_run" =~ .*"-".* ]] && [[ -z ${2} ]]; then
-        # -- Set usage_input variable to pass and remove question mark
-        usage_input=`echo ${qxutil_command_to_run} | cut -c 2-`
-        # -- If no other input is provided print help
-        show_usage_qxutil
-        exit 0
-    fi
+
     # -- Check for input is command name with no other arguments
     if [[ "$qxutil_command_to_run" != *"-"* ]] && [[ -z ${2} ]]; then
         usage_input="$qxutil_command_to_run"
@@ -1230,7 +1198,6 @@ is_qunex_command() {
 if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]] || [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     if [[ ${Usage} == "--a" ]] || [[ ${Usage} == "--all" ]] || [[ ${Usage} == "--allcommands" ]]; then
-        show_splash
         show_all_qunex_commands
         exit 0
     fi
@@ -1240,33 +1207,21 @@ fi
 if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     if [[ ${Usage} == "-a" ]] || [[ ${Usage} == "-all" ]] || [[ ${Usage} == "-allcommands" ]]; then
-        show_splash
         show_all_qunex_commands
         exit 0
     fi  
 fi
 
-# -- Check for input with question mark
-HelpInputUsage="$1"
-if [[ ${HelpInputUsage:0:1} == "?" ]] && [[ -z ${2} ]]; then
-    Usage="$1"
-    usage_input=`echo ${Usage} | cut -c 2-`
-    # -- Check if input part of function list
-    is_qunex_command ${usage_input}
-    show_version
-    show_usage_"${usage_input}"
-    exit 0
-fi
-
-# -- Check for input with no flags
-if [[ -z ${2} ]]; then
-    usage_input="$1"
-    # -- Check if input part of function list
-    is_qunex_command ${usage_input}
-    show_version
-    show_usage_"${usage_input}"
-    exit 0
-fi
+# -- Check if one of args is -h, --h, -H or --H
+for fn in "$@" ; do
+    if [[ ${fn} == "-h" ]] || [[ ${fn} == "--h" ]] || [[ ${fn} == "-H" ]] || [[ ${fn} == "--H" ]] || [[ ${fn} == "--help" ]] || [[ ${fn} == "-help" ]]; then
+        # -- Check if input part of function list
+        is_qunex_command ${1}
+        show_version
+        show_usage_"${1}"
+        exit 0
+    fi
+done
 
 # ------------------------------------------------------------------------------
 # -- Check if running script interactively or using flag arguments
@@ -1471,9 +1426,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     OVERWRITE_PROJECT=`get_parameters "${setflag}overwriteproject" $@`
     OVERWRITE_PROJECT_FORCE=`get_parameters "${setflag}overwriteprojectforce" $@`
     OVERWRITE_PROJECT_XNAT=`get_parameters "${setflag}overwriteprojectxnat" $@`
-    BATCH_PARAMETERS_FILENAME=`get_parameters "${setflag}batchfile" $@`
     LOCAL_BATCH_FILE=`get_parameters "${setflag}local_batchfile" $@`
-    SessionBatchFile=`get_parameters "${setflag}batchfile" $@`
+    BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`get_parameters "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`get_parameters "${setflag}xnataccsessionid" $@`
     XNAT_SESSION_LABELS=`get_parameters "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
@@ -1545,9 +1499,19 @@ if [[ ${setflag} =~ .*-.* ]]; then
         if [[ -z ${SESSION_LABELS} ]]; then
             SESSION_LABELS=`get_parameters "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
             SESSIONS="$SESSION_LABELS"
-            CASES="$SESSION_LABELS"   
+            CASES="$SESSION_LABELS"
             SESSIONIDS="$SESSION_LABELS"
         fi
+    fi
+
+    # -- Filter sessions if we are inside a SLURM array
+    if [[ -n ${SLURM_ARRAY_TASK_ID} ]]; then
+        SESSION_LABELS=`gmri get_sessions_for_slurm_array --sessions="${CASES}" --sessionids="${SESSIONIDS}"`
+        echo "---> SLURM array ${SLURM_ARRAY_TASK_ID}, running over sessions: ${SESSION_LABELS}"
+        echo ""
+        SESSIONS="${SESSION_LABELS}"
+        CASES="${SESSION_LABELS}"
+        SESSIONIDS="${SESSION_LABELS}"
     fi
 
     # -- General operational flags
@@ -1752,11 +1716,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
-        SessionBatchFile="$CASES"
+        BATCH_FILE="$CASES"
         echo ""
-        echo "Using $SessionBatchFile for input."
+        echo "Using $BATCH_FILE for input."
         echo ""
-        CASES=`more ${SessionBatchFile} | grep "id:"| cut -d " " -f 2`
+        CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
     fi
 
     # -- Get species flag for NHP pipelines
@@ -1788,7 +1752,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
             echo "     resolving the conflict such that a consistent folder specification is used. "
             echo ""
             echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-            echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+            echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
             echo ""
         fi
 
@@ -1804,7 +1768,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
                 echo "            --> ${StudyFolder}/sessions"
                 echo ""
                 echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
                 echo ""
             else
                 mageho "WARNING: You are attempting to execute QuNex command using a conflicting QuNex file hierarchy:"
@@ -1820,7 +1784,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
                 echo "     resolving the conflict such that a consistent folder specification is used. "
                 echo ""
                 echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
                 echo ""
             fi
         fi
@@ -1836,7 +1800,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
         echo "       --> ${StudyFolder}/sessions"
         echo ""
         echo "       QuNex will proceed but please consider renaming your directories per latest specs:"
-        echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+        echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
         echo ""
     fi
 fi
@@ -2042,12 +2006,12 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     fi
 
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
-        if [[ ! -z ${SessionBatchFile} ]]; then
-            if [[ ! -f ${SessionBatchFile} ]]; then
+        if [[ ! -z ${BATCH_FILE} ]]; then
+            if [[ ! -f ${BATCH_FILE} ]]; then
                 reho "ERROR: Requested BOLD modality with a batch file. Batch file not found."
                 exit 1
             else
-                echo "   Session batch file requested: ${SessionBatchFile}"
+                echo "   Session batch file requested: ${BATCH_FILE}"
                 BOLDSBATCH="${BOLDRUNS}"
             fi
         fi

@@ -68,4 +68,5 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'run_list'              : {'com': utilities.run_list,             'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')},
             'import_nhp'            : {'com': import_nhp.import_nhp,          'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive')},
             'bruker_to_dicom'       : {'com': bruker.bruker_to_dicom,         'args': ('sessionsfolder', 'inbox', 'sessions', 'archive', 'parelements')},
-            }
+            'get_sessions_for_slurm_array' : {'com': utilities.get_sessions_for_slurm_array, 'args': ('sessions', 'sessionids')}
+}

@@ -19,10 +19,6 @@
 # parameters and their valid values, please consult the qunex documentation
 * (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
 # preprocessing) and online help for the relevant qunex commands.
-#
-#
-# --> For all supported batch parameter options run: 
-#     qunex -o
 # 
 # Please note that if a parameter is specified in the batch file qunex will set it to the value specified. 
 # This is also the case for parameters that are left '' empty (e.g. `_event_file         :`). 

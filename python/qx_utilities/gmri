@@ -39,10 +39,10 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
  Specific command usage
 =======================
 
-  qunex <command_name>
+  qunex <command_name> --h
 
 
- Display listing of all QuNex commands 
+ Display a list of all QuNex commands 
 ======================================
 
   qunex --a
@@ -359,7 +359,7 @@ def runCommand(command, args):
             print("\n===> Successful completion of task")
 
 
-def printHelp(com):
+def print_help(com):
 
     # --- print list of available commands, required for qunex.sh checks
     if com == 'available':
@@ -417,7 +417,7 @@ def printHelp(com):
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
-        os.system("qunex -splash")
+        os.system("qunex --splash")
         print(all_qunex_commands)
 
     # --- print help for gmri local commands
@@ -448,37 +448,41 @@ def main(args=None):
         print(help)
         sys.exit(0)
 
-    comm = args[0]
+    comm = args[0].strip('-')
     opts = dict()
 
-     # --- check if help arguments are specified and strip all flags (? or -)
-    if comm[0] in ['?', '-']:
-        comm = comm.strip('-')
-        comm = comm.strip('?')
-        try:
-            command = comm[0:]
-            command = gcs.check_deprecated_commands(command)
-            printHelp(command)
-        except:
-            print("ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:]))
-            print(help)
-            raise
-        sys.exit(0)
-
     try:
-        for n in range(1, len(args)):
-            if "=" in args[n]:
-                k, v = args[n].split("=", 1)
-                k = k.strip('-')
-                opts[k] = v
-            elif comm in gcom.commands:
-                k = gcom.commands[comm]['args'][n - 1]
-                opts[k] = args[n]
-            else:
-                k = args[n].strip('-')
-                opts[k] = True
+        help_request = False
+        if comm in ['a', 'A', 'allcommands', 'available']:
+            help_request = True
+        else:
+            for n in range(1, len(args)):
+                # if --h, -h, --H or -H flag is provided user is looking for help
+                if args[n].strip('-') in ['h', 'H', 'help']:
+                    help_request = True
+                    break
+                elif "=" in args[n]:
+                    k, v = args[n].split("=", 1)
+                    k = k.strip('-')
+                    opts[k] = v
+                elif comm in gcom.commands:
+                    k = gcom.commands[comm]['args'][n - 1]
+                    opts[k] = args[n]
+                else:
+                    k = args[n].strip('-')
+                    opts[k] = True
 
-        runCommand(comm, opts)
+        # print help or run the command
+        if help_request:
+            try:
+                comm = gcs.check_deprecated_commands(comm)
+                print_help(comm)
+            except:
+                print("ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:]))
+                print(help)
+                raise
+        else:
+            runCommand(comm, opts)
 
 
     except ge.CommandNull as e:
@@ -492,7 +496,7 @@ def main(args=None):
     except ge.CommandError as e:
         print(ge.reportCommandError(comm, e))
         print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs)))
-        print("\nPlease run `qunex ?%s` to get help for the failed command.\n" % (comm))
+        print("\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm))
         sys.exit(1)
     except ValueError as e:
         print("\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm))
@@ -503,7 +507,7 @@ def main(args=None):
         sys.exit(e)
     except:
         print("\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm))
-        print("       Please check documentation for the command (`qunex ?%s`)!" % (comm))
+        print("       Please check documentation for the command (`qunex %s --h`)!" % (comm))
         print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs)))
         print("\n--------------------------------------------------------------\nHere's the error as caught by python:\n")
         raise

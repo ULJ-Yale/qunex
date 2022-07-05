@@ -112,7 +112,7 @@ def readSessionData(filename, verbose=False):
                     for e in line:
                         m = nsearch.match(e)
                         if m:
-                            image[m.group(1)] = m.group(2)
+                            image[m.group(1).strip()] = m.group(2).strip()
                             remove.append(e)
 
                     for e in remove:
@@ -136,7 +136,7 @@ def readSessionData(filename, verbose=False):
                     for e in line:
                         m = nsearch.match(e)
                         if m:
-                            conc[m.group(1)] = m.group(2)
+                            conc[m.group(1).strip()] = m.group(2).strip()
                             line.remove(e)
 
                     ni = len(line)

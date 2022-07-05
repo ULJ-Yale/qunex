@@ -23,7 +23,6 @@ All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
 - `qunex ?<command>` for command specific help
-- `qunex -o` for a list of relevant arguments and options
 """
 
 """
@@ -1849,8 +1848,10 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     case is performed after the signal is weighted, so in effect the scaling of 
     weights (e.g. behavioral regressors), can differ across bold runs.
  
-    The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
-    be assumed (the default might change).
+    The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
+    be assumed. The default has changed from '-run', which results in different 
+    assumed HRF regressor scaling and resulting GLM beta estimates as of QuNex 
+    version 0.93.4.
 
     Naming And Behavioral Regressors
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2497,8 +2498,10 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     case is performed after the signal is weighted, so in effect the scaling of 
     weights (e.g. behavioral regressors), can differ across bold runs.
  
-    The flag can be abbreviated to '-r' and '-u'. If not specified, '-run' will
-    be assumed (the default might change).
+    The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
+    be assumed. The default has changed from '-run', which results in different 
+    assumed HRF regressor scaling and resulting GLM beta estimates as of QuNex 
+    version 0.93.4.
 
     Naming And Behavioral Regressors
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
