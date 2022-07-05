@@ -494,6 +494,7 @@ arglist = [
     ['voxel_increase',             '',       isNone, "The factor by which to increase voxel size."],
     ['orientation',                'x -y z', str,    'A string depicting how to fix the orientation. Set to "" to leave orientation as is.'],
     ['no_despike',                 '',       flag,   "Provide this to disable despiking."],
+    ['bias_field_correction',      'yes',    str,    "Whether to perform bias field correction, yes/no."],
     ['melodic_anatfile',           '',       isNone, "Path to the melodic anat file. If not provided QuNex will use EPI_template.nii.gz from its library."],
     ['fix_rdata',                  '',       isNone, "Path to the RData file used by fix. If not provided QuNex will use zerbi_2015_neuroimage.RData from its library."],
     ['fix_threshold',              '20',     int,    "Trehshold for fix ICA."],

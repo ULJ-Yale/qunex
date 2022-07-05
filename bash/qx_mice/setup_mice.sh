@@ -103,7 +103,7 @@ fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}
 # ------------------------------------------------------------------------------
 # -- orientation correction
 # ------------------------------------------------------------------------------
-if [ -z $no_orientation_correction ]; then
+if [ -n $orientation ]; then
     echo " --> Correcting orientation"
 
     echo " ... Running fslswapdim ${bold}_SM.nii.gz ${orientation} ${bold}_SM.nii.gz"
@@ -149,7 +149,7 @@ rm *${bold}_VI.m
 echo ""
 echo " --> setup_mice successfully completed"
 echo ""
-echo "------------------------- Successful completion of work --------------------------------"
+echo "------------------------ Successful completion of work ------------------------"
 echo ""
 exit 0
 

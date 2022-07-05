@@ -29,6 +29,7 @@ done
 
 work_dir=`opts_GetOpt "--work_dir" $@`
 bold=`opts_GetOpt "--bold" $@`
+bias_field_correction=`opts_GetOpt "--bias_field_correction" $@`
 melodic_anatfile=`opts_GetOpt "--melodic_anatfile" $@`
 fix_rdata=`opts_GetOpt "--fix_rdata" $@`
 fix_threshold=`opts_GetOpt "--fix_threshold" $@`
@@ -44,6 +45,7 @@ if [[ -z $work_dir ]]; then echo "ERROR: Work directory is not set!"; exit 1; fi
 if [[ -z $bold ]]; then echo "ERROR: BOLD missing!"; exit 1; fi
 
 # default values
+if [[ -z $bias_field_correction ]]; then bias_field_correction="yes"; fi
 if [[ -z $melodic_anatfile ]]; then melodic_anatfile="${mice_templates}/EPI_brain"; fi
 if [[ -z $fix_rdata ]]; then fix_rdata="${mice_templates}/zerbi_2015_neuroimage.RData"; fi
 if [[ -z $fix_threshold ]]; then fix_threshold=20; fi
@@ -60,6 +62,7 @@ echo ""
 echo " --> Executing preprocess_mice:"
 echo "       Work directory: ${work_dir}"
 echo "       BOLD: ${bold}"
+echo "       Bias field correction: ${bias_field_correction}"
 echo "       FIX RData file: ${fix_rdata}"
 echo "       FIX threshold: ${fix_threshold}"
 echo "       Highpass: ${highpass}"
@@ -86,6 +89,21 @@ fi
 
 echo ""
 
+
+# ------------------------------------------------------------------------------
+# -- BIAS FIELD CORRECTION
+# ------------------------------------------------------------------------------
+if [[ $bias_field_correction == "yes" ]]; then
+    echo ""
+    echo " --> Starting BIAS FIELD CORRECTION"
+    N4BiasFieldCorrection -d 4 -i ${work_dir}/${bold}_DS.nii.gz -o ${work_dir}/${bold}_BC.nii.gz
+    bold_suffix="BC"
+    echo " --> BIAS FIELD CORRECTION completed"
+else
+    bold_suffix="DS"
+fi
+
+
 # ------------------------------------------------------------------------------
 # -- MELODIC
 # ------------------------------------------------------------------------------
@@ -97,7 +115,7 @@ melodic_output="${work_dir}/${bold}_melodic_output"
 ica_dir="${melodic_output}.ica"
 
 # remove the previous dir if it exists
-if [ -d ${ica_dir} ]; then rm -rf ${ica_dir}; fi
+if [[ -d ${ica_dir} ]]; then rm -rf ${ica_dir}; fi
 
 # copy the fsf file
 cp ${mice_templates}/rsfMRI_Standard.fsf ${work_dir}/${bold}_rsfMRI_Standard.fsf
@@ -107,12 +125,12 @@ for i in "${work_dir}/${bold}_rsfMRI_Standard.fsf"; do
     sed -e 's@OUTPUT@'${melodic_output}'@g' \
     -e 's@ANATFILE@'${melodic_anatfile}'@g' \
     -e 's@VOLUMES@'${volumes}'@g' \
-    -e 's@DATA@'${work_dir}/${bold}_DS'@g' <$i> ${work_dir}/${bold}_DS.fsf
+    -e 's@DATA@'${work_dir}/${bold}_${bold_suffix}'@g' <$i> ${work_dir}/${bold}_${bold_suffix}.fsf
 done
 
 # feat
-echo " ... Running feat ${work_dir}/${bold}_DS.fsf"
-feat ${work_dir}/${bold}_DS.fsf
+echo " ... Running feat ${work_dir}/${bold}_${bold_suffix}.fsf"
+feat ${work_dir}/${bold}_${bold_suffix}.fsf
 
 echo " --> MELODIC completed"
 
@@ -190,13 +208,13 @@ WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean
 # ------------------------------------------------------------------------------
 echo " --> Removing intermediate files"
 rm ${work_dir}/${bold}_rsfMRI_Standard.fsf
-rm ${work_dir}/${bold}_DS.fsf
+rm ${work_dir}/${bold}_${bold_suffix}.fsf
 rm ${work_dir}/${bold}*_BP+orig.BRIK
 rm ${work_dir}/${bold}*_BP+orig.HEAD
 rm ${work_dir}/${bold}*_BP.nii.gz
 echo ""
 echo " --> preprocess_mice successfully completed"
 echo ""
-echo "------------------------- Successful completion of work --------------------------------"
+echo "------------------------ Successful completion of work ------------------------"
 echo ""
 exit 0

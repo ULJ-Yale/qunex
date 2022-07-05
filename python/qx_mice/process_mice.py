@@ -90,6 +90,8 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     Specific parameters
     -------------------
 
+    --bias_field_correction     Whether to perform bias field correction,
+                                yes/no. [yes]
     --melodic_anatfile          Path to the melodic anat file, without the
                                 extension, e.g. without .nii.gz.
                                 [qx_library/etc/mice_pipelines/EPI_braine]
@@ -235,17 +237,19 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
             comm = '%(script)s \
                     --work_dir="%(work_dir)s" \
                     --bold="%(bold)s" \
+                    --bias_field_correction="%(bias_field_correction)s" \
                     --fix_threshold="%(fix_threshold)s" \
                     --mice_highpass="%(mice_highpass)s" \
                     --mice_lowpass="%(mice_lowpass)s" \
                     --mice_volumes="%(mice_volumes)s"' % {
-                    "script"   : preprocess_mice_script,
-                    "work_dir" : work_dir,
-                    "bold"     : boldname,
-                    "fix_threshold" : options["fix_threshold"],
-                    "mice_highpass" : options["mice_highpass"],
-                    "mice_lowpass"  : options["mice_lowpass"],
-                    "mice_volumes"  : options["mice_volumes"]}
+                    "script"                : preprocess_mice_script,
+                    "work_dir"              : work_dir,
+                    "bold"                  : boldname,
+                    "bias_field_correction" : options["bias_field_correction"],
+                    "fix_threshold"         : options["fix_threshold"],
+                    "mice_highpass"         : options["mice_highpass"],
+                    "mice_lowpass"          : options["mice_lowpass"],
+                    "mice_volumes"          : options["mice_volumes"]}
 
             # optional parameters
             if options["melodic_anatfile"]:
