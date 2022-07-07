@@ -2896,22 +2896,33 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
 
 
 def _process_pipeline_hcp_mapping(src_session, mapping_rules):
-    """
+    """ Apply mapping rule and assign spin-echo and field-map pairs
+
+    The algorithm for assign field-map requires two passes. It need to find 
+    correct se / fm pairs with a finite-state machine. 
     """
 
+    # construct mapped session object by making a shallow copy of the image
+    # in the input session, and add the appropriate rule
     tgt_session = _apply_rules(src_session, mapping_rules)
 
+    # assign numbers for bold and boldref images 
     _assign_bold_number(tgt_session)
 
+    # execute FSM to identify proper se/fm pairs
     field_map_fm = _find_field_maps(tgt_session, "fm")
     field_map_se = _find_field_maps(tgt_session, "se")
 
+    # assign se/fm number only proper SE/FM pairs will be assigned with proper
+    # HCP image type tag
     if len(field_map_fm) != 0:
         _assign_field_maps(tgt_session, field_map_fm, "fm")
 
     if len(field_map_se) != 0:
         _assign_field_maps(tgt_session, field_map_se, "se")
 
+    # All remaining hcp image type tags can be assigned now
+    # every thing except bold/boldref/se/fm
     _assign_remaining_image_type(tgt_session)
 
     tgt_session["pipeline_ready"].append("hcp")
@@ -2920,8 +2931,12 @@ def _process_pipeline_hcp_mapping(src_session, mapping_rules):
 
 
 def _apply_rules(src_session, mapping_rules):
-    """
-    mapping rule will be attached to images if exists
+    """ Apply mapping rules for each image
+
+    A mapping rule will be attached to images if exists
+    A mapping rule identified by image numbers always takes precedence 
+    
+    Note: 
     src_session object should not be used after this function
     """
     tgt_session = {
@@ -2997,6 +3012,7 @@ def _assign_bold_number(tgt_session):
             bold_num += 1
             hasref = True
         elif hcp_image_type[0] == "bold":
+            # bold immediately following boldref should have the same bold number
             if hasref:
                 hasref = False
             else:
