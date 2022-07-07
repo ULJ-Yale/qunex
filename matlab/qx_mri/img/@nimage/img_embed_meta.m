@@ -1,33 +1,33 @@
 function [img] = img_embed_meta(img, data, code, name, verbose)
 
-%``function [img] = img_embed_meta(img, data, code, name, verbose)``
+%``img_embed_meta(img, data, code, name, verbose)``
 %
 %   Method for embedding meta-data in a format ready to save in the extension
 %   part of the NIfTI files.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%   --img     	a nimage image object
-%   --data    	data to be embedded
-%   --code    	metadata code to be used  [64]
-%   --name    	if nonempty a name of the metadata block []
-%   --verbose 	whether to be talkative
+%   --img         a nimage image object
+%   --data        data to be embedded
+%   --code        metadata code to be used  [64]
+%   --name        if nonempty a name of the metadata block []
+%   --verbose     whether to be talkative
 %
 %   OUTPUT
 %   ======
 %
-%	img
-%		a nimage image object with added meta data
+%    img
+%        a nimage image object with added meta data
 %
 %   USE
-%	===
+%    ===
 %
 %   The method is used to prepare meta-data to be added to the extension part of
 %   the NIfTI image file. If name is specified, the method assumes that the data
 %   is a string and prepends a line::
 %
-%   	# meta: <name>
+%       # meta: <name>
 %
 %   which helps interpreting data present in the NIfTI file. The method adds as
 %   many spaces (ASCII value 32) at the end, as needed for the data to be a
@@ -38,11 +38,11 @@ function [img] = img_embed_meta(img, data, code, name, verbose)
 %   specification.
 %
 %   EXAMPLE USE
-%	===========
+%    ===========
 %
-%	::
+%    ::
 %   
-%		img = img.img_embed_meta(datatable, [], 'Behavioral results');
+%        img = img.img_embed_meta(datatable, [], 'Behavioral results');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

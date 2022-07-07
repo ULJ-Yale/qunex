@@ -1,33 +1,41 @@
 function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)
 
-%``function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model, modeldata)``
+%``simulate_generate_timeseries(TR, eventlist, model, modeldata)``
 %
 %   Function for generation of simulated BOLD timeseries.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --TR (float):
+%           TR of the simulated timecourse in seconds.
+%       --eventlist (matrix | cell array):
+%           Matrix or cell array of matrices with columns:
 %
-%   --TR           TR of the simulated timecourse
-%   --eventlist    matrix or cell array of matrices with columns:
+%           - start time in seconds
+%           - duration in seconds
+%           - weight.
 %
-%                  - start time in seconds
-%                  - duration in seconds
-%                  - weight
+%       --model (str, default 'boynton')
+%           Can be one of the following:
 %
-%   --model        boynton | spm | gamma | empirical | raw | unassumed 
-%                  ['boynton']
-%   --modeldata    parameters or the actual HRF timecourse depending on model []
+%           - 'boynton'
+%           - 'spm'
+%           - 'gamma'
+%           - 'empirical'
+%           - 'raw'
+%           - 'unassumed'.
 %
-%   OUTPUTS
-%   =======
+%       --modeldata (str, default []):
+%           Parameters or the actual HRF timecourse depending on model.
 %
-%   ts
-%
-%   hrf
-%
-%   tso
-%
-%   te
+%   Returns:
+%       ts
+%           
+%       hrf
+%           
+%       tso
+%           
+%       te
+%           
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -13,291 +13,296 @@
 SupportedQC="rawNII, T1w, T2w, myelin, BOLD, DWI, general, eddyQC"
 
 usage() {
- echo ""
- echo "This function runs the QC preprocessing for a specified modality / processing "
- echo "step."
- echo ""
- echo "Currently Supported: ${SupportedQC}"
- echo ""
- echo "This function is compatible with both legacy data [without T2w scans] and "
- echo "HCP-compliant data [with T2w scans and DWI]."
- echo ""
- echo "With the exception of rawNII, the function generates 3 types of outputs, which "
- echo "are stored within the Study in <path_to_folder_with_sessions>/QC "
- echo ""
- echo "- .scene files that contain all relevant data loadable into Connectome Workbench"
- echo "- .png images that contain the output of the referenced scene file."
- echo "- .zip file that contains all relevant files to download and re-generate the scene in Connectome Workbench."
- echo ""
- echo "Note: For BOLD data there is also an SNR txt output if specified."
- echo ""
- echo "Note: For raw NIFTI QC outputs are generated in: "
- echo "<sessions_folder>/<case>/nii/slicesdir"
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder       Path to study folder that contains sessions"
- echo "--sessions             Comma separated list of sessions to run"
- echo "--modality             Specify the modality to perform QC on. "
- echo "                       Supported: rawNII, T1w, T2w, myelin, BOLD, DWI, general, "
- echo "                       eddyQC"
- echo ""
- echo "                       Note: If selecting 'rawNII' this function performs QC  "
- echo "                       for raw NIFTI images in <sessions_folder>/<case>/nii "
- echo "                       It requires NIFTI images in <sessions_folder>/<case>/nii/ "
- echo "                       after either BIDS import of DICOM organization. "
- echo ""
- echo "                       Session-specific output: "
- echo "                       <sessions_folder>/<case>/nii/slicesdir "
- echo ""
- echo "                       Uses FSL's 'slicesdir' script to generate PNGs and an "
- echo "                       HTML file in the above directory. "
- echo ""
- echo "                       Note: If using 'general' modality, then visualization is "
- echo "                       $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/template_general_qc.wb.scene"
- echo ""
- echo "                       This will work on any input file within the "
- echo "                       session-specific data hierarchy."
- echo ""
- echo "--datapath             Required ==> Specify path for input path relative to the "
- echo "                       <sessions_folder> if scene is 'general'."
- echo "--datafile             Required ==> Specify input data file name if scene is "
- echo "                       'general'."
- echo "--batchfile            Absolute path to local batch file with pre-configured "
- echo "                       processing parameters." 
- echo ""
- echo "                       Note: It can be used in combination with --sessions to "
- echo "                       select only specific cases to work on from the batch "
- echo "                       file. If --sessions is omitted, then all cases from the batch "
- echo "                       file are processed."
- echo "                       It can also used in combination with --bolddata to select"
- echo "                       only specific BOLD runs to work on from the batch file. If "
- echo "                       --bolddata is omitted (see below), all BOLD runs in the "
- echo "                       batch file will be processed."
- echo "--overwrite            Delete prior QC run: yes/no [no]"
- echo "--hcp_suffix           Allows user to specify session id suffix if running HCP "
- echo "                       preprocessing variants []."
- echo "                       E.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' "
- echo "                       would be specified as --hcp_suffix='-run2' "
- echo "--scenetemplatefolder  Specify the absolute path name of the template folder "
- echo "                       [default: ${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc]"
- echo ""
- echo "                       Note: relevant scene template data has to be in the same "
- echo "                       folder as the template scenes."
- echo "--outpath              Specify the absolute path name of the QC folder you wish "
- echo "                       the individual images and scenes saved to."
- echo "                       If --outpath is unspecified then files are saved to: "
- echo "                       /<path_to_study_sessions_folder>/QC/<input_modality_for_qc>"
- echo "--scenezip             Yes or no. Generates a ZIP file with the scene and all "
- echo "                       relevant files for Connectome Workbench visualization "
- echo "                       [yes]"
- echo ""
- echo "                       Note: If scene zip set to yes, then relevant scene files "
- echo "                       will be zipped with an updated relative base folder." 
- echo "                       All paths will be relative to this base --> "
- echo "                       <path_to_study_sessions_folder>/<session_id>/hcp/<session_id>"
- echo ""
- echo "                       The scene zip file will be saved to: "
- echo "                       /<path_for_output_file>/<session_id>.<input_modality_for_qc>.QC.wb.zip"
- echo "--userscenefile        User-specified scene file name. --modality info is still "
- echo "                       required to ensure correct run. Relevant data needs to "
- echo "                       be provided. Default []"
- echo "--userscenepath        Path for user-specified scene and relevant data in the "
- echo "                       same location. --modality info is still required to "
- echo "                       ensure correct run. Default []"
- echo "--timestamp            Allows user to specify unique time stamp or to parse a "
- echo "                       time stamp from QuNex bash wrapper"
- echo "--suffix               Allows user to specify unique suffix or to parse a time "
- echo "                       stamp from QuNex bash wrapper."
- echo "                       Default is [<session_id>_<timestamp>]"
- echo ""
- echo "DWI INPUTS"
- echo "----------"
- echo ""
- echo "--dwipath           Specify the input path for the DWI data (may differ across "
- echo "                    studies; e.g. Diffusion or Diffusion or "
- echo "                    Diffusion_DWI_dir74_AP_b1000b2500)"
- echo "--dwidata           Specify the file name for DWI data (may differ across "
- echo "                    studies; e.g. data or DWI_dir74_AP_b1000b2500_data)"
- echo "--dtifitqc          Specify if dtifit visual QC should be completed (e.g. yes "
- echo "                    or no)"
- echo "--bedpostxqc        Specify if BedpostX visual QC should be completed (e.g. yes "
- echo "                    or no)"
- echo "--eddyqcstats       Specify if EDDY QC stats should be linked into QC folder "
- echo "                    and motion report generated (e.g. yes or no)"
- echo "--dwilegacy         Specify if DWI data was processed via legacy pipelines "
- echo "                    (e.g. yes or no)"
- echo ""
- echo "BOLD INPUTS"
- echo "-----------"
- echo ""
- echo "--boldprefix        Specify the prefix file name for BOLD dtseries data (may "
- echo "                    differ across studies depending on processing; e.g. BOLD or "
- echo "                    TASK or REST)."
- echo "                    Note: If unspecified then QC script will assume that folder "
- echo "                    names containing processed BOLDs are named numerically only "
- echo "                    (e.g. 1, 2, 3)."
- echo "--boldsuffix        Specify the suffix file name for BOLD dtseries data (may "
- echo "                    differ across studies depending on processing; e.g. Atlas "
- echo "                    or MSMAll)"
- echo "--skipframes        Specify the number of initial frames you wish to exclude "
- echo "                    from the BOLD QC calculation"
- echo "--snronly           Specify if you wish to compute only SNR BOLD QC calculation "
- echo "                    and skip image generation <yes/no>. Default is [no]"
- echo ""
- echo "--bolddata          Specify BOLD data numbers separated by comma or pipe. "
- echo "                    E.g. --bolddata='1,2,3,4,5'. This flag is interchangeable "
- echo "                    with --bolds or --boldruns to allow more redundancy in "
- echo "                    specification."
- echo ""
- echo "                    Note: If --bolddata is unspecified, a batch file must be  "
- echo "                    provided in --batchfile or an error will be reported. If "
- echo "                    --bolddata is empty and --batchfile is provided, by default "
- echo "                    QuNex will use the information in the batch file to identify "
- echo "                    all BOLDS to process."
- echo ""
- echo "BOLD FC INPUTS"
- echo "--------------"
- echo ""
- echo "Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>, "
- echo "--bolddata or --boldruns or --bolds"
- echo ""
- echo "--boldfc            Specify if you wish to compute BOLD QC for FC-type BOLD "
- echo "                    results. Supported: pscalar or pconn. Default is []"
- echo "--boldfcpath        Specify path for input FC data. Default is "
- echo "                    [<study_folder>/sessions/<session_id>/images/functional]"
- echo "--boldfcinput       Required. If no --boldfcpath is provided then specify only "
- echo "                    data input name after bold<Number>_ which is searched for "
- echo "                    in <sessions_folder>/<session_id>/images/functional "
- echo ""
- echo "                    pscalar FC"
- echo "                       Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii" 
- echo "                    pconn FC"
- echo "                       Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz.pconn.nii"
- echo ""
- echo ""
- echo "OPTIONAL QC INPUTS FOR CUSTOM SCENE"
- echo "-----------------------------------"
- echo ""
- echo "--processcustom     Yes or no. Default is [no]. If set to 'yes' then the script "
- echo "                    looks into: "
- echo "                    ~/<study_path>/processing/scenes/QC/ for additional custom "
- echo "                    QC scenes."
- echo ""
- echo "                    Note: The provided scene has to conform to QuNex QC "
- echo "                    template standards.xw"
- echo ""
- echo "                    See $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/ for example "
- echo "                    templates. The qc path has to contain relevant files for "
- echo "                    the provided scene."
- echo "--omitdefaults      Yes or no. Default is [no]. If set to 'yes' then the script "
- echo "                    omits defaults."
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "Run directly via::"
- echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \ "
- echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- reho "NOTE: --scheduler is not available via direct script call."
- echo ""
- echo "Run via:: "
- echo ""
- echo " qunex run_qc --<parameter1> --<parameter2> ... --<parameterN> "
- echo ""
- geho "NOTE: scheduler is available via qunex call."
- echo ""
- echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                  followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""                   
- echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo "::"
- echo ""
- echo " # -- raw NII QC"
- echo " qunex run_qc \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --modality='rawNII' "
- echo ""
- echo " # -- T1w QC"
- echo " qunex run_qc \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --outpath='<path_for_output_file> \ "
- echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
- echo " --modality='T1w' \ "
- echo " --overwrite='yes' "
- echo ""
- echo " # -- T2w QC"
- echo " qunex run_qc \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --outpath='<path_for_output_file> \ "
- echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
- echo " --modality='T2w' \ "
- echo " --overwrite='yes'"
- echo ""
- echo " # -- Myelin QC"
- echo " qunex run_qc \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --outpath='<path_for_output_file> \ "
- echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
- echo " --modality='myelin' \ "
- echo " --overwrite='yes'"
- echo ""
- echo " # -- DWI QC "
- echo " qunex run_qc \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
- echo " --modality='DWI' \ "
- echo " --outpath='<path_for_output_file> \ "
- echo " --dwilegacy='yes' \ "
- echo " --dwidata='<file_name_for_dwi_data>' \ "
- echo " --dwipath='<path_for_dwi_data>' \ "
- echo " --overwrite='yes'"
- echo ""
- echo " # -- BOLD QC (for a specific BOLD run)"
- echo " qunex run_qc \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --outpath='<path_for_output_file> \ "
- echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
- echo " --modality='BOLD' \ "
- echo " --bolddata='1' \ "
- echo " --boldsuffix='Atlas' \ "
- echo " --overwrite='yes'"
- echo ""
- echo " # -- BOLD QC (search for all available BOLD runs)"
- echo " qunex run_qc \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --batchfile='<path_to_batch_file>' \ "
- echo " --outpath='<path_for_output_file> \ "
- echo " --scenetemplatefolder='<path_for_the_template_folder>' \ "
- echo " --modality='BOLD' \ "
- echo " --boldsuffix='Atlas' \ "
- echo " --overwrite='yes'"
- echo ""
- echo " # -- BOLD FC QC [pscalar or pconn]"
- echo " qunex run_qc \ "
- echo " --overwritestep='yes' \ "
- echo " --sessionsfolder='<path_to_study_sessions_folder>' \ "
- echo " --sessions='<comma_separated_list_of_cases>' \ "
- echo " --modality='BOLD' \ "
- echo " --boldfc='<pscalar_or_pconn>' \ "
- echo " --boldfcinput='<data_input_for_bold_fc>' \ "
- echo " --bolddata='1' \ "
- echo " --overwrite='yes' "
- echo ""
- exit 0
+    cat << EOF
+``run_qc``
+
+This function runs the QC preprocessing for a specified modality / processing
+step.
+
+Currently Supported: ${SupportedQC}
+
+This function is compatible with both legacy data [without T2w scans] and
+HCP-compliant data [with T2w scans and DWI].
+
+With the exception of rawNII, the function generates 3 types of outputs, which
+are stored within the Study in <path_to_folder_with_sessions>/QC :
+
+- .scene files that contain all relevant data loadable into Connectome Workbench
+- .png images that contain the output of the referenced scene file.
+- .zip file that contains all relevant files to download and re-generate the
+  scene in Connectome Workbench.
+
+Note: For BOLD data there is also an SNR txt output if specified.
+
+Note: For raw NIFTI QC outputs are generated in:
+<sessions_folder>/<case>/nii/slicesdir
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --modality (str):
+        Specify the modality to perform QC on.
+        Supported: 'rawNII', 'T1w', 'T2w', 'myelin', 'BOLD', 'DWI', 'general',
+        'eddyQC'.
+
+        Note: If selecting 'rawNII' this function performs QC for raw NIFTI
+        images in <sessions_folder>/<case>/nii It requires NIFTI images in
+        <sessions_folder>/<case>/nii/ after either BIDS import of DICOM
+        organization.
+
+        Session-specific output: <sessions_folder>/<case>/nii/slicesdir
+
+        Uses FSL's 'slicesdir' script to generate PNGs and an HTML file in the
+        above directory.
+
+        Note: If using 'general' modality, then visualization is
+        $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/template_general_qc.wb.scene
+
+        This will work on any input file within the
+        session-specific data hierarchy.
+    --datapath (str):
+        Required ==> Specify path for input path relative to the
+        <sessions_folder> if scene is 'general'.
+    --datafile (str):
+        Required ==> Specify input data file name if scene is 'general'.
+    --batchfile (str):
+        Absolute path to local batch file with pre-configured processing
+        parameters.
+
+        Note: It can be used in combination with --sessions to select only
+        specific cases to work on from the batch file. If --sessions is
+        omitted, then all cases from the batch file are processed. It can also
+        used in combination with --bolddata to select only specific BOLD runs
+        to work on from the batch file. If --bolddata is omitted (see below),
+        all BOLD runs in the batch file will be processed.
+    --overwrite (str, default 'no'):
+        Delete prior QC run: yes/no.
+    --hcp_suffix (str, default ''):
+        Allows user to specify session id suffix if running HCP preprocessing
+        variants. E.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' would be
+        specified as --hcp_suffix='-run2'
+    --scenetemplatefolder (str, default '${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc'):
+        Specify the absolute path name of the template folder.
+
+        Note: relevant scene template data has to be in the same folder as the
+        template scenes.
+    --outpath (str, default '<path_to_study_sessions_folder>/QC/<input_modality_for_qc>'):
+        Specify the absolute path name of the QC folder you wish the individual
+        images and scenes saved to. If --outpath is unspecified then files are
+        saved to: '<path_to_study_sessions_folder>/QC/<input_modality_for_qc>'.
+    --scenezip (str, default 'yes'):
+        Yes or no. Generates a ZIP file with the scene and all relevant files
+        for Connectome Workbench visualization.
+        Note: If scene zip set to yes, then relevant scene files will be zipped
+        with an updated relative base folder.
+        All paths will be relative to this base -->
+        <path_to_study_sessions_folder>/<session_id>/hcp/<session_id>
+        The scene zip file will be saved to:
+        <path_for_output_file>/<session_id>.<input_modality_for_qc>.QC.wb.zip
+    --userscenefile (str, default ''):
+        User-specified scene file name. --modality info is still required to
+        ensure correct run. Relevant data needs to be provided.
+    --userscenepath (str, default ''):
+        Path for user-specified scene and relevant data in the same location.
+        --modality info is still required to ensure correct run.
+    --timestamp (str, default detailed below):
+        Allows user to specify unique time stamp or to parse a time stamp from
+        QuNex bash wrapper. Current time is used if no value is provided.
+    --suffix (str, default '<session_id>_<timestamp>'):
+        Allows user to specify unique suffix or to parse a time stamp from QuNex
+        bash wrapper.
+
+Specific parameters:
+    --dwipath (str):
+        Specify the input path for the DWI data (may differ across studies; e.g.
+        'Diffusion' or 'Diffusion' or 'Diffusion_DWI_dir74_AP_b1000b2500').
+    --dwidata (str):
+        Specify the file name for DWI data (may differ across studies; e.g.
+        'data' or 'DWI_dir74_AP_b1000b2500_data').
+    --dtifitqc (str):
+        Specify if dtifit visual QC should be completed (e.g. 'yes' or 'no').
+    --bedpostxqc (str):
+        Specify if BedpostX visual QC should be completed (e.g. 'yes' or 'no').
+    --eddyqcstats (str):
+        Specify if EDDY QC stats should be linked into QC folder and motion
+        report generated (e.g. 'yes' or 'no').
+    --dwilegacy (str):
+        Specify if DWI data was processed via legacy pipelines (e.g. 'yes' or
+        'no').
+    --boldprefix (str):
+        Specify the prefix file name for BOLD dtseries data (may differ across
+        studies depending on processing; e.g. 'BOLD' or 'TASK' or 'REST').
+        Note: If unspecified then QC script will assume that folder names
+        containing processed BOLDs are named numerically only (e.g. 1, 2, 3).
+    --boldsuffix (str):
+        Specify the suffix file name for BOLD dtseries data (may differ across
+        studies depending on processing; e.g. 'Atlas' or 'MSMAll').
+    --skipframes (str):
+        Specify the number of initial frames you wish to exclude from the BOLD
+        QC calculation.
+    --snronly (str, default 'no'):
+        Specify if you wish to compute only SNR BOLD QC calculation and skip
+        image generation ('yes'/'no').
+    --bolddata (str):
+        Specify BOLD data numbers separated by comma or pipe. E.g.
+        --bolddata='1,2,3,4,5'. This flag is interchangeable with --bolds or
+        --boldruns to allow more redundancy in specification.
+
+        Note: If --bolddata is unspecified, a batch file must be provided in
+        --batchfile or an error will be reported. If --bolddata is empty and
+        --batchfile is provided, by default QuNex will use the information in
+        the batch file to identify all BOLDS to process.
+    --boldfc (str, default ''):
+        Specify if you wish to compute BOLD QC for FC-type BOLD results.
+        Supported: pscalar or pconn.
+        Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
+        --bolddata or --boldruns or --bolds.
+    --boldfcpath (str, default '<study_folder>/sessions/<session_id>/images/functional'):
+        Specify path for input FC data.
+        Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
+        --bolddata or --boldruns or --bolds.
+    --boldfcinput (str):
+        Required. If no --boldfcpath is provided then specify only data input
+        name after bold<Number>_ which is searched for in
+        '<sessions_folder>/<session_id>/images/functional'.
+
+        pscalar FC
+           Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii
+        pconn FC
+           Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz.pconn.nii
+
+        Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
+        --bolddata or --boldruns or --bolds.
+    --processcustom (str, default 'no'):
+        Either 'yes' or 'no'. If set to 'yes' then the script looks into:
+        ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes.
+
+        Note: The provided scene has to conform to QuNex QC template
+        standards.xw
+
+        See $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/ for example templates.
+        The qc path has to contain relevant files for the provided scene.
+    --omitdefaults (str, default 'no'):
+        Either 'yes' or 'no'. If set to 'yes' then the script omits defaults.
+
+Examples:
+    Run directly via::
+
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh \\
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via::
+
+        qunex run_qc \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    raw NII QC::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --modality='rawNII'
+
+    T1w QC::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='T1w' \\
+            --overwrite='yes'
+
+    T2w QC::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='T2w' \\
+            --overwrite='yes'
+
+    Myelin QC::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='myelin' \\
+            --overwrite='yes'
+
+    DWI QC::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='DWI' \\
+            --outpath='<path_for_output_file>' \\
+            --dwilegacy='yes' \\
+            --dwidata='<file_name_for_dwi_data>' \\
+            --dwipath='<path_for_dwi_data>' \\
+            --overwrite='yes'
+
+    BOLD QC (for a specific BOLD run)::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --outpath='<path_for_output_file>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='BOLD' \\
+            --bolddata='1' \\
+            --boldsuffix='Atlas' \\
+            --overwrite='yes'
+
+    BOLD QC (search for all available BOLD runs)::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --batchfile='<path_to_batch_file>' \\
+            --outpath='<path_for_output_file>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
+            --modality='BOLD' \\
+            --boldsuffix='Atlas' \\
+            --overwrite='yes'
+
+    BOLD FC QC [pscalar or pconn]::
+
+        qunex run_qc \\
+            --overwritestep='yes' \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
+            --modality='BOLD' \\
+            --boldfc='<pscalar_or_pconn>' \\
+            --boldfcinput='<data_input_for_bold_fc>' \\
+            --bolddata='1' \\
+            --overwrite='yes'
+
+EOF
+exit 0
 }
 
 # ------------------------------------------------------------------------------

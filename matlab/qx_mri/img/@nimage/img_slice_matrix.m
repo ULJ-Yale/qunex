@@ -1,39 +1,39 @@
 function [panel] = img_slice_matrix(img, sdim, slices)
 
-%``function [panel] = img_slice_matrix(img, sdim, slices)``
+%``img_slice_matrix(img, sdim, slices)``
 %
-%	Takes the first volume and generates a panel / matrix of slices in selected
-%	dimension.
+%    Takes the first volume and generates a panel / matrix of slices in selected
+%    dimension.
 %
-%	INPUTS
-%	======
+%    INPUTS
+%    ======
 %
-%	--img    	A nimage object.
-%	--sdim   	The dimension across which to make the slices. What slices are 
-%				generated (axial, saggital or coronal) depends on the geometry 
-%				of the image. [3]
-%	--slices 	Which slices to include. If empty, all the slices will be
-%				included. []
+%    --img        A nimage object.
+%    --sdim       The dimension across which to make the slices. What slices are
+%                generated (axial, saggital or coronal) depends on the geometry
+%                of the image. [3]
+%    --slices     Which slices to include. If empty, all the slices will be
+%                included. []
 %
-%	OUTPUT
-%	======
+%    OUTPUT
+%    ======
 %
-%	panel
-%		A 2D matrix consisting of optimal collage of slices.
+%    panel
+%        A 2D matrix consisting of optimal collage of slices.
 %
-%	EXAMPLE USE
-%	===========
+%    EXAMPLE USE
+%    ===========
 %
-%	::
-%	
-%		panel = img.img_slice_matrix(2);
+%    ::
+%
+%        panel = img.img_slice_matrix(2);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 3,	slices = []; end
+if nargin < 3,    slices = []; end
 if nargin < 2   sdim   = 3;  end
 
 mask = zeros(1, img.frames);
@@ -48,7 +48,7 @@ y    = dim(2);
 z    = dim(3);
 
 if isempty(slices)
-	slices = [1:dim(sdim)];
+    slices = [1:dim(sdim)];
 end
 slices = slices(slices > 0);
 slices = slices(slices <= dim(sdim));
@@ -57,45 +57,45 @@ nslices = length(slices);
 side = ceil(sqrt(nslices));
 
 switch sdim
-	 case 1
+     case 1
         panel  = zeros(side*y, side*z);
-		c = 1;
-		for j = 1:side
-			for i = 1:side
-			    if c <= nslices
-				    t = reshape(data(slices(c),:,:), y, z);
-				    panel((i-1)*y+1:(i)*y,(j-1)*z+1:(j)*z) = t;
-				end
-				c = c+1;
-			end
-		end
-		panel = imrotate(panel,90);
+        c = 1;
+        for j = 1:side
+            for i = 1:side
+                if c <= nslices
+                    t = reshape(data(slices(c),:,:), y, z);
+                    panel((i-1)*y+1:(i)*y,(j-1)*z+1:(j)*z) = t;
+                end
+                c = c+1;
+            end
+        end
+        panel = imrotate(panel,90);
 
-	 case 2
+     case 2
         panel  = zeros(side*x, side*z);
-		c = 1;
-		for j = 1:side
-			for i = 1:side
-			    if c <= nslices
-				    t = reshape(data(:,slices(c),:), x, z);
-				    panel((i-1)*x+1:(i)*x,(j-1)*z+1:(j)*z) = t;
-				end
-				c = c+1;
-			end
-		end
-		panel = imrotate(panel,90);
+        c = 1;
+        for j = 1:side
+            for i = 1:side
+                if c <= nslices
+                    t = reshape(data(:,slices(c),:), x, z);
+                    panel((i-1)*x+1:(i)*x,(j-1)*z+1:(j)*z) = t;
+                end
+                c = c+1;
+            end
+        end
+        panel = imrotate(panel,90);
 
-	 case 3
+     case 3
         panel  = zeros(side*x, side*y);
-		c = 1;
-		for j = side:-1:1
-			for i = side:-1:1
-			    if c <= nslices
-				    t = reshape(data(:,:,slices(c)), x, y);
-				    panel((i-1)*x+1:(i)*x,(j-1)*y+1:(j)*y) = t;
-				end
-				c = c+1;
-			end
-		end
-		panel = imrotate(panel,-90);
+        c = 1;
+        for j = side:-1:1
+            for i = side:-1:1
+                if c <= nslices
+                    t = reshape(data(:,:,slices(c)), x, y);
+                    panel((i-1)*x+1:(i)*x,(j-1)*y+1:(j)*y) = t;
+                end
+                c = c+1;
+            end
+        end
+        panel = imrotate(panel,-90);
 end

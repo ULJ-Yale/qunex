@@ -1,30 +1,30 @@
 function [predicted, residual] = img_glm_predict(glm, effects, raw)
 
-%``function [predicted, residual] = img_glm_predict(glm, effects, raw)``.
+%``img_glm_predict(glm, effects, raw)``.
 %
-%	Computes predicted and residual values based on the provided GLM object,
+%    Computes predicted and residual values based on the provided GLM object,
 %   list of effects to predict and raw data.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%	--glm       nimage glm object
+%    --glm       nimage glm object
 %   --raw       nimage object with raw bold data
 %   --effects   a comma separated string or a cell array with a list of effects
 %               to model
 %
 %   OUTPUTS
-%	=======
+%    =======
 %
 %   predicted
-%		a nimage object with values predicted based on the beta values maps and
+%        a nimage object with values predicted based on the beta values maps and
 %       regressor matrix
 %   residual
-%		a nimage object with residuals remaining after the predicted values are 
+%        a nimage object with residuals remaining after the predicted values are
 %       subtracted out
 %
 %   USE
-%	===
+%    ===
 %
 %   The method uses the data stored in the GLM nimage object to compute the 
 %   predicted timecourse based on the beta image and regressor matrix. If raw
@@ -32,11 +32,11 @@ function [predicted, residual] = img_glm_predict(glm, effects, raw)
 %   after the predicted signal has been regressed out.
 %
 %   EXAMPLE USE
-%	===========
+%    ===========
 %
 %   ::
-%	
-%		[predicted, residual] = glm_data.img_glm_predict(bold_data, 'Baseline,Trend,Incongruent,Congruent');
+%
+%        [predicted, residual] = glm_data.img_glm_predict(bold_data, 'Baseline,Trend,Incongruent,Congruent');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

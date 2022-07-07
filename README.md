@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number of scripts and functions written in several programming languages that support a flexible and extensible framework for data organization, preprocessing, quality assurance, and various analytics across neuroimaging modalities. The QuNex suite is designed to be flexible and can be developed by adding functions developed around its component tools.
 
-The QuNex code is is co-developed and co-maintained by the:
+The QuNex code is co-developed and co-maintained by the:
 
 * [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
 * [Mind and Brain Lab, University of Ljubljana](https://mblab.si),

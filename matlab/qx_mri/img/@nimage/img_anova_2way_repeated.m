@@ -1,12 +1,12 @@
 function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)
-%``function [p F Z M SE] = img_anova_2way_repeated(obj, a, b, verbose)``
+%``img_anova_2way_repeated(obj, a, b, verbose)``
 %
-%	Computes ANOVA with two repeated measures factors with a and b levels.
+%    Computes ANOVA with two repeated measures factors with a and b levels.
 %
 %   INPUTS
 %   ======
 %
-%	--obj       The images to work on. The images have to be organized as a 
+%    --obj       The images to work on. The images have to be organized as a
 %               series of volumes with session, factor A, factor B in the order 
 %               of faster to slowest varying variable. The data has to be fully 
 %               balanced with no missing values.

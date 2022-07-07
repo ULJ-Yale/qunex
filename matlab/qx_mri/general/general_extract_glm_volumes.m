@@ -1,67 +1,69 @@
-function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf);
+function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)
 
-%``function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
+%``general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
 %
 %   For sessions specified in the session list it extracts the GLM estimates of
 %   the effects of interests and saves them in the specified file.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A path to the list file or a well structured string of files or
+%           sessions to process. For each session id in the list, there has to
+%           be a `glm:` file listed that is a result of GLM analyses (a 'Bcoeff'
+%           file).
+%       --outf (str, default []):
+%           Root file name for the results. If empty, the flist name is used.
+%       --effects (cell array | str, default []):
+%           A cell array of strings or a comma separated list of effects of
+%           interest. If empty all effects but Baseline and Trend are extracted.
+%       --frames (int, default []):
+%           Frame indeces to extract. If empty, all frames are extracted.
+%       --saveoption (str, default 'by_session'):
+%           Whether to save the extracted estimates in a single file organized
+%           'by_session', 'by_effect', or in separate files for each effect
+%           ('effect_files').
+%       --values (str, default 'raw'):
+%           What kind of values to save: 'raw' or 'psc'.
+%       --verbose (bool, default false):
+%           Whether to report on the progress or not.
+%       --txtf (str, default []):
+%           An optional designator in what text file to also output the data.
+%           Only saved if an option is provided and the input is ptseries. Valid
+%           options are 'long' to save the data in long format or empty to skip
+%           saving data in a text file.
 %
-%   --flist       List of files / sessions to process. For each session id 
-%                 in the list, there has to be a `glm:` file listed that 
-%                 is a result of GLM analyses (a 'Bcoeff' file).
-%   --outf        Root file name for the results. If empty, the flist name is 
-%                 used. []
-%   --efects      A cell array of strings or a comma separated list of effects 
-%                 of interest. If empty all effects but Baseline and Trend are 
-%                 extracted. []
-%   --frames      Frame indeces to extract. If empty, all frames are extracted. []
-%   --saveoption  Whether to save the extracted estimates in a single file
-%                 organized 'by_session', 'by_effect', or in separate files for 
-%                 each effect ('effect_files'). ['by_session']
-%   --values      What kind of values to save: 'raw' or 'psc'. ['raw']
-%   --verbose     Whether to report on the progress or not [false]
-%   --txtf        An optional designator in what text file to also output the 
-%                 data. Only saved if an option is provided and the input is 
-%                 ptseries. Valid options are 'long' to save the data in long 
-%                 format or empty to skip saving data in a text file. []
+%   Notes:
+%       The function is used to extract GLM estimates for the effects of
+%       interest for all the specified sessions and save them in a single file
+%       (or one file per effect of interest). This files can then be used for
+%       more focused analyses, such as second-level statistical testing using
+%       PALM.
 %
-%   USE
-%   ===
+%       To extract the effects of interest, the function calls the
+%       img_extract_glm_estimates nimage method.
 %
-%   The function is used to extract GLM estimates for the effects of interest
-%   for all the specified sessions and save them in a single file (or one
-%   file per effect of interest). This files can then be used for more focused
-%   analyses, such as second-level statistical testing using PALM.
+%   Warning:
+%       The underlying method extracts the effects of interest by removing those
+%       frames that relate to irrelevant effects. The order of the effects in
+%       the resulting files will be the same as in the original GLM files when
+%       saved organized 'by_session' and not as specified in the call to the
+%       function. When the results are organized 'by_effect', the order of
+%       estimates will be the same as in the effects variable. To be sure in
+%       what order the data is present in the resulting file, please consult the
+%       'list' structure present in the extracted file, that for each frame
+%       specifies the session, effect and frame the estimate belongs to.
 %
-%   To extract the effects of interest, the function calls the
-%   img_extract_glm_estimates nimage method.
+%       Additionally, the code does not check for missing estimates. If an
+%       estimate is not present in the file, no warning or error will be
+%       generated. So do check the list structure that all the data is there.
 %
-%   NOTICE
-%   ======
+%   Examples:
+%       ::
 %
-%   The underlying method extracts the effects of interest by removing those
-%   frames that relate to irrelevant effects. The order of the effects in the
-%   resulting files will be the same as in the original GLM files when saved
-%   organized 'by_session' and not as specified in the call to the function.
-%   When the results are organized 'by_effect', the order of estimates will
-%   be the same as in the effects variable. To be sure in what order the data
-%   is present in the resulting file, please consult the 'list' structure
-%   present in the extracted file, that for each frame specifies the session,
-%   effect and frame the estimate belongs to.
-%
-%   Additionally, the code does not check for missing estimates. If an estimate
-%   is not present in the file, no warning or error will be generated. So do
-%   check the list structure that all the data is there.
-%
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%   
-%       general_extract_glm_volumes('wm-glm.list', 'wm-encoding-delay', ...
-%       'encoding,delay', [], 'by_session');
+%           qunex general_extract_glm_volumes \
+%               --flist='wm-glm.list' \
+%               --outf='wm-encoding-delay' \
+%               --effects='encoding,delay'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

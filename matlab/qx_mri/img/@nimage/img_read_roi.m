@@ -1,6 +1,6 @@
 function [img] = img_read_roi(roiinfo, roi2, check)
 
-%``function [img] = img_read_roi(roiinfo, roi2, check)``
+%``img_read_roi(roiinfo, roi2, check)``
 %
 %   Reads in an ROI file, if a second file is provided, it uses it to mask the
 %   first one.

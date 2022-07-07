@@ -1,14 +1,14 @@
 function [p Z M D SE t] = img_ttest_independent(A, B, vartype, verbose)
 
-%``function [p Z M D SE t] = img_ttest_zero(A, B, vartype, verbose)``
+%``img_ttest_zero(A, B, vartype, verbose)``
 %
-%	Computes independent t-test comparing the called image object (A) to B.
+%    Computes independent t-test comparing the called image object (A) to B.
 %
 %   INPUTS
 %   ======
 %
-%	--A          the image object the method is called on
-%	--B          the image object to compare to
+%    --A          the image object the method is called on
+%    --B          the image object to compare to
 %   --vartype    are the variances assumed to be equal ('equal') or not 
 %                ('unequal') ['equal']
 %   --verbose    should it talk a lot [false]

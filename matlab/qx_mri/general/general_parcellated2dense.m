@@ -1,29 +1,28 @@
 function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues)
 
-%``function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues)``
+%``general_parcellated2dense(inimg, outimg, verbose, missingvalues)``
 %
-%	Expands the parcelated file to a dense file
+%   Expands the parcelated file to a dense file
 %
-%   INPUTS
-%	======
+%   Parameters:
+%       --inimg (str):
+%           A path to the image to expand.
+%       --outimg (str, default inimg):
+%           An optional path where the expanded image is to be saved. If not
+%           provided, the specified inimg path is used.
+%       --verbose (bool, default false):
+%           Should it report the details.
+%       --missingvalues (str, default '0'):
+%           What value should be used in case of missing values (numeric or NaN)
+%           provided as a string.
 %
-%   --inimg				a path to the image to expand
-%   --outimg         	a path where the expanded image is to be saved
-%   --verbose        	should it report the details
-%   --missingvalues  	what value should be used in case of missing values 
-%						(numeric or NaN) provided as a string ['0']
+%   Returns:
+%       img
+%           A dense cifti nimage image object.
 %
-%   OUTPUT
-%	======
-%
-%   img
-%		a dense cifti nimage image object
-%
-%   USE
-%	===
-%
-%   This method is used to expand a parcellated cifti data file to a cifti 
-%   dense data file based on the information stored in cifti metatada.
+%   Notes:
+%       This method is used to expand a parcellated cifti data file to a cifti
+%       dense data file based on the information stored in cifti metatada.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -33,8 +32,8 @@ function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues
 % --> process variables
 
 if nargin < 4 || isempty(missingvalues), missingvalues = '0'; end
-if nargin < 3 || isempty(verbose),  	 verbose  = false;    end
-if nargin < 2,                      	 outimg   = [];       end
+if nargin < 3 || isempty(verbose),       verbose  = false;    end
+if nargin < 2,                           outimg   = [];       end
 
 missingvalues = str2num(missingvalues);
 

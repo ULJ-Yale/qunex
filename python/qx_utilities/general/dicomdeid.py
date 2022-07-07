@@ -213,7 +213,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     file.close()
 
             except Exception as e:
-               	pass  # file was not a dicom
+                pass  # file was not a dicom
 
             if opened_dicom is None:
                 try:

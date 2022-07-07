@@ -1,119 +1,127 @@
 function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)
 
-%``function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)`
+%``fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, method, weights, criterium)``
 %
 %   Computes GBC averages for each specified ROI for n bands defined as distance
 %   from ROI.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           A conc-like style list of session image files or conc files:
 %
-%	--flist   	 conc-like style list of session image files or conc files:
+%           - session id:<session_id>
+%           - roi:<path to the individual's ROI file>
+%           - file:<path to bold files - one per line>
 %
-%                - session id:<session_id>
-%                - roi:<path to the individual's ROI file>
-%                - file:<path to bold files - one per line>
+%           or a well strucutured string (see general_read_file_list).
+%       --command (str):
+%           The type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp,
+%           aFzp, ...
 %
-%                or a well strucutured string (see general_read_file_list).
-%   --command    the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, 
-%                aFzp, ...
+%           ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
 %
-%                   ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
+%           Following options are available:
 %
-%                mFz:t
-%                    computes mean Fz value across all voxels (over threshold t)
-%                aFz:t
-%                    computes mean absolute Fz value across all voxels (over 
-%                    threshold t)
-%                pFz:t
-%                    computes mean positive Fz value across all voxels (over 
-%                    threshold t)
-%                nFz:t
-%                    computes mean positive Fz value across all voxels (below 
-%                    threshold t)
-%                aD:t
-%                    computes proportion of voxels with absolute r over t
-%                pD:t
-%                    computes proportion of voxels with positive r over t
-%                nD:t
-%                    computes proportion of voxels with negative r below t
+%           - mFz:t
+%               computes mean Fz value across all voxels (over threshold t)
+%           - aFz:t
+%               computes mean absolute Fz value across all voxels (over
+%               threshold t)
+%           - pFz:t
+%               computes mean positive Fz value across all voxels (over
+%               threshold t)
+%           - nFz:t
+%               computes mean positive Fz value across all voxels (below
+%               threshold t)
+%           - aD:t
+%               computes proportion of voxels with absolute r over t
+%           - pD:t
+%               computes proportion of voxels with positive r over t
+%           - nD:t
+%               computes proportion of voxels with negative r below t.
 %
-%   --roi        roi names file
-%   --rcodes     codes of regions from roi file to compute GBC for (all if not 
-%                provided or left empty)
-%   --nbands     number of distance bands to compute GBC for
-%	--mask		 an array mask defining which frames to use (1) and which not (0)
-%	--verbose	 report what is going on
-%   --target     array of ROI codes that define target ROI [default: FreeSurfer 
-%                scortex codes]
-%	--targetf	 target folder for results
-%   --rsmooth    radius for smoothing (no smoothing if empty)
-%   --rdilate    radius for dilating mask (no dilation if empty)
-%   --ignore     the column in `*_scrub.txt` file that matches bold file to be 
-%                used for ignore mask []
-%   --time       whether to time the processing
+%       --roi (str):
+%           The roi names file.
+%       --rcodes (vector, default []):
+%           Codes of regions from roi file to compute GBC for (all if not
+%           provided or left empty).
+%       --nbands (int, default []):
+%           Number of distance bands to compute GBC for.
+%       --mask (int | logical | vector, default []):
+%           An array mask defining which frames to use (1) and which not (0).
+%           All if empty.
+%       --verbose (bool, default false):
+%           Report what is going on.
+%       --target (vector, default FreeSurfer scortex codes):
+%           Array of ROI codes that define target ROI.
+%       --targetf (str, default ''):
+%           Target folder for results.
+%       --rsmooth (int, default []):
+%           Radius for smoothing (no smoothing if empty).
+%       --rdilate (int, default []):
+%           Radius for dilating mask (no dilation if empty).
+%       --ignore (str, default 'usevec'):
+%           The column in `*_scrub.txt` file that matches bold file to be
+%           used for ignore mask.
+%       --time (bool, default true):
+%           Whether to time the processing.
 %
-%   Extract ROI parameters
-%   ----------------------
+%   Notes:
+%       This is a wrapper function for computing GBC for specified ROI across
+%       the specified number of distance bands. The function goes through a list
+%       of sessions specified by flist file and runs `img_compute_gbcd` method
+%       on bold files listed for each session. ROI to compute GBC for are
+%       specified in roi and rcodes parameters, whereas the mask of what voxels
+%       to compute GBC over is specified by target parameter. The values should
+%       match rcodes used in session specific roi file. Usually this would be a
+%       freesurfer segmentation image and if no target values are specified all
+%       the gray matter related values present in aseg files are used.
 %
-%   --method     method name ['mean']:
+%       The results are aggregated and stored in a matlab data file which holds
+%       a data structure with the following fields:
 %
-%                - 'mean'       - average value of the ROI
-%                - 'pca'        - first eigenvariate of the ROI
-%                - 'threshold'  - average of all voxels above threshold
-%                - 'maxn'       - average of highest n voxels
-%                - 'weighted'   - weighted average across ROI voxels
+%       - data.gbcd(s).gbc
+%           resulting GBC matrix for each session
 %
-%   --weights    image file with weights to use []
-%   --criterium  threshold or number of voxels to extract []
+%       - data.gbcd(s).roiinfo
+%           names of ROI for which the GBC was computed for
 %
-%   USE
-%   ===
+%       - data.gbcd(s).rdata
+%           information on center mass and distance bands for each of the ROI
 %
-%   This is a wrapper function for computing GBC for specified ROI across the
-%   specified number of distance bands. The function goes through a list of
-%   sessions specified by flist file and runs `img_compute_gbcd` method on bold
-%   files listed for each session. ROI to compute GBC for are specified in roi
-%   and rcodes parameters, whereas the mask of what voxels to compute GBC over
-%   is specified by target parameter. The values should match rcodes used in
-%   session specific roi file. Usually this would be a freesurfer segmentation
-%   image and if no target values are specified all the gray matter related
-%   values present in aseg files are used.
+%       - data.roifile
+%           the file used to defined ROI
 %
-%   The results are aggregated and stored in a matlab data file which holds a
-%   data structure with the following fields:
+%       - data.rcodes
+%           codes used to identify ROI
 %
-%   - data.gbcd(s).gbc
-%        resulting GBC matrix for each session
+%       - data.sessions
+%           cell array of session ids
 %
-%   - data.gbcd(s).roiinfo
-%        names of ROI for which the GBC was computed for
+%       targetf specifies the folder in which the results will be saved. The
+%       file will be named using the root of the flist with '_GBCd.mat' added to
+%       it.
 %
-%   - data.gbcd(s).rdata
-%       information on center mass and distance bands for each of the ROI
+%       For more specific information on what is computed, see help for nimage
+%       method img_compute_gbcd.
 %
-%   - data.roifile  
-%       the file used to defined ROI
+%   Examples:
+%       ::
 %
-%   - data.rcodes     
-%       codes used to identify ROI
-%
-%   - data.sessions    
-%       cell array of session ids
-%
-%   targetf specifies the folder in which the results will be saved. The file
-%   will be named using the root of the flist with '_GBCd.mat' added to it.
-%
-%   For more specific information on what is computed, see help for nimage
-%   method img_compute_gbcd.
-%
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       fc_compute_gbcd('scz.list', mFz:0.1|pFz:0.1', 'dlpfc.names', [], 10, 0, ...
-%       true, 'gray', 'dGBC', 2, 2, 'udvarsme', false, 'pca');
+%           qunex fc_compute_gbcd \
+%               --flist='scz.list' \
+%               --command='mFz:0.1|pFz:0.1' \
+%               --roi='dlpfc.names' \
+%               --rcodes='[]' \
+%               --nbands=10 \
+%               --mask=0 \
+%               --verbose=true \
+%               --target='gray' \
+%               --targetf='dGBC' \
+%               --rsmooth=2 \
+%               --rdilate=2 \
+%               --ignore='udvarsme' \
+%               --time=false
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -141,7 +149,7 @@ if isempty(ignore)
     ignore = 'usevec';
 end
 if isempty(target)
-	target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
+    target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
 end
 
 commands = regexp(command, '\|', 'split');
@@ -168,26 +176,26 @@ for s = 1:nsessions
 
     %   --- reading in image files
     tic;
-	fprintf('\n ... processing %s', session(s).id);
-	fprintf('\n     ... reading image file(s) ');
+    fprintf('\n ... processing %s', session(s).id);
+    fprintf('\n     ... reading image file(s) ');
 
-	y = [];
+    y = [];
 
-	nfiles = length(session(s).files);
+    nfiles = length(session(s).files);
 
-	img = nimage(session(s).files{1});
+    img = nimage(session(s).files{1});
 
     fprintf('1');
-	if ~isempty(mask),   img = img.sliceframes(mask); end
+    if ~isempty(mask),   img = img.sliceframes(mask); end
     if ~isempty(ignore), img = img.img_scrub(ignore); end
 
-	if nfiles > 1
-    	for n = 2:nfiles
-    	    new = nimage(session(s).files{n});
+    if nfiles > 1
+        for n = 2:nfiles
+            new = nimage(session(s).files{n});
             fprintf(', %d', n);
-    	    if ~isempty(mask),   new = new.sliceframes(mask); end
+            if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = new.img_scrub(ignore); end
-    	    img = [img new];
+            img = [img new];
         end
     end
 

@@ -1,6 +1,6 @@
 function [ts] = general_hrf(dt, hrf, len, p)
 
-%``function [ts] = general_hrf(dt, hrf, len, p)``
+%``general_hrf(dt, hrf, len, p)``
 %
 %   INPUTS
 %   ======
@@ -22,7 +22,7 @@ function [ts] = general_hrf(dt, hrf, len, p)
 %   Use the function to generate an HRF timeseries to convolve with design
 %   regressors or for other purposes. It makes sense to use a small timimg
 %   resolution, as that will provide a sensible estimate of HRF maximum and
-%   will ensure the right scaling. All the HRF functions are allways scaled
+%   will ensure the right scaling. All the HRF functions are always scaled
 %   so that the peak equals 1. The descriptions of specific HRF follow.
 %
 %   boynton

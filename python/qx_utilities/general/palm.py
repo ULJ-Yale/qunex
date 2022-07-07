@@ -11,9 +11,12 @@
 This file holds code for running PALM second level analyses, CIFTI map masking
 and concatenation. The specific commands implemented here are:
 
---run_palm  For running PALM resampling
---mask_map  For masking results
---join_maps For joining individual cifti maps into named concatenated maps
+--run_palm
+    For running PALM resampling
+--mask_map
+    For masking results
+--join_maps
+    For joining individual cifti maps into named concatenated maps
 
 The functions are to be run using the gmri terminal command.
 """
@@ -41,207 +44,254 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
 
     Runs second level analysis using PALM permutation resampling.
 
-    REQUIREMENTS
-    ============
+    Warning:
+        For the PALM processing to run successfully, the input image and the
+        design files need to be prepared and match. Specifically, the input
+        image file should hold first level results (e.g. GLM beta estimates or
+        functional connectivity seed-maps) for all the subjects and conditions.
+        For activation analyses a simple way to generate such a file is to use
+        general_extract_glm_volumes Matlab function.
 
-    For the PALM processing to run successfully, the input image and the design
-    files need to be prepared and match. Specifically, the input image file
-    should hold first level results (e.g. GLM beta estimates or functional
-    connectivity seed-maps) for all the subjects and conditions. For activation
-    analyses a simple way to generate such a file is to use general_extract_glm_volumes
-    Matlab function.
+        Design files:
+            When only a t-test against zero is run across all the volumes in the
+            image, no design files are needed, in all other cases some or all
+            of the design files need to be prepared:
 
-    Design files
-    ------------
+            - design matrix file (d)
+            - exchangibility blocks file (eb)
+            - t-contrasts file (t)
+            - f-contrast file (f).
 
-    When only a t-test against zero is run across all the volumes in the image,
-    no design files are needed, in all other cases some or all of the design
-    files need to be prepared:
+            The files should be named using the following convention. All the
+            files should start with the same root, the design name, followed by
+            an underscore then a tail that specifies the content of the file
+            and the '.csv' extension. The files are expected to be matrices in
+            the comma separated values format.
 
-    - design matrix file (d)
-    - exchangibility blocks file (eb)
-    - t-contrasts file (t)
-    - f-contrast file (f)
+    Parameters:
+        --image (str):
+            One or multiple files can be specified as input. If multiple files
+            are specified, they will be all passed to PALM. If they are cifti
+            files, they will be split into separate structures and run in
+            parallel. To specify multiple files, separate them with pipe ("|")
+            character and take care to put the whole string with files in
+            quotes. Also, if specifying multiple files, do take care, that they
+            are of the same format (nifti, cifti) and do specify the relevant
+            additional parameters (see below) that are relevant for multimodal
+            testing.
 
-    The files should be named using the following convention. All the files
-    should start with the same root, the design name, followed by an underscore
-    then a tail that specifies the content of the file and the '.csv' extension.
-    The files are expected to be matrices in the comma separated values format.
+            Example string for multiple files::
 
-    INPUTS
-    ======
+                image='rs_connectivity.dtseries.nii|task_activation.dtseries.nii'
 
-    --image: Image file(s) 
-    ----------------------
+        --design (str, default 'name꞉palm|d꞉d|t꞉t|f꞉f|eb꞉eb'):
+            The design name and the specific tails (if the defaults are not
+            used) are specified by a design string. Design string is a pipe
+            separated list of key:value pairs that specify the following (with
+            the defaults in the brackets):
 
-    One or multiple files can be specified as input. If multiple files are
-    specified, they will be all passed to PALM. If they are cifti files, they
-    will be split into separate structures and run in parallel. To specify
-    multiple files, separate them with pipe ("|") character and take care to
-    put the whole string with files in quotes. Also, if specifying multiple
-    files, do take care, that they are of the same format (nifti, cifti) and
-    do specify the relevant additional parameters (see below) that are relevant
-    for multimodal testing.
+            - 'name' ... the root name of the design files, defaults to 'palm'
+            - 'd'    ... the design matrix file tail, defaults to ''d'
+            - 't'    ... the t-contrasts file tail, defaults to 't'
+            - 'f'    ... the f-contrasts file tail, defaults to 'f'
+            - 'eb'   ... the exchange blocks file tail, defaults to 'eb'.
 
-    Example string for multiple files::
+            If 'none' is given as value, that file is not to be specified and
+            used.
 
-        image="rs_connectivity.dtseries.nii|task_activation.dtseries.nii"
+            Do take into account that the design files are looked for from the
+            location in which you are running the command from. If they are in
+            a different location, then "name" has to specify the full path!
 
-    --design: Design string
-    -----------------------
+            Two examples of design strings and files::
 
-    The design name and the specific tails (if the defaults are not used) are
-    specified by a design string. Design string is a pipe separated list of
-    key:value pairs that specify the following (with the defaults in the
-    brackets):
+                design='name:sustained|t:taov'
 
-    - name (the root name of the design files [palm])
-    - d    (the design matrix file tail [d])
-    - t    (the t-contrasts file tail [t])
-    - f    (the f-contrasts file tail [f])
-    - eb   (the exchange blocks file tail [eb])
+            In this case the following files would be expected:
 
-    If "none" is given as value, that file is not to be specified and used.
+            - sustained_d.csv     ... design matrix file
+            - sustained_eb.csv    ... exchangebility blocks file
+            - sustained_taov.csv  ... t-contrasts file
+            - sustained_f.csv     ... f-contrasts file.
 
-    Do take into account that the design files are looked for from the location
-    in which you are running the command from. If they are in a different
-    location, then "name" has to specify the full path!
+            ::
 
-    Example design string and files::
+                design='name:designs/transient|t:faov|f:fmain'
 
-        design='name:sustained|t:taov'
+            In this case the following files would be expected:
 
-    In this case the following files would be expected:
+            - designs/transient_d.csv     ... design matrix file
+            - designs/transient_eb.csv    ... exchangebility blocks file
+            - designs/transient_taov.csv  ... t-contrasts file
+            - designs/transient_fmain.csv ... f-contrasts file.
 
-    - sustained_d.csv      (design matrix file)
-    - sustained_eb.csv     (exchangebility blocks file)
-    - sustained_taov.csv   (t-contrasts file)
-    - sustained_f.csv      (f-contrasts file)
+            NOTE
 
-    design='name:designs/transient|t:faov|f:fmain'
+            The colon symbols used above to denote::
 
-    In this case the following files would be expected:
+                default 'name꞉palm|d꞉d|t꞉t|f꞉f|eb꞉eb'
 
-    - designs/transient_d.csv      (design matrix file)
-    - designs/transient_eb.csv     (exchangebility blocks file)
-    - designs/transient_taov.csv   (t-contrasts file)
-    - designs/transient_fmain.csv  (f-contrasts file)
+            are of the Unicode *modifier colon* variety (U+A789) and are
+            not equivalent to the *usual colon* (U+003A) that should be used
+            when running the command. Copying the above line containing modifier
+            colons will result in an error - use normal colons with the command
+            instead.
+
+        --palm_args (str, default 'n꞉100|zstat'):
+            Additional arguments to palm can be specified using the arguments
+            string. The arguments string is a pipe separated list of arguments
+            and optional values. The format of the string is::
+
+                '<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>'.
+
+            The default arguments and values are: 'n:100|zstat', which specify
+            that 100 permutations should be run and the statistics of interest
+            expressed in z values. To exclude a default argument, specify
+            '<arg>:remove', e.g.: 'zstat:remove' if the statistics are not to
+            be converted to z values.
+
+            For full list of possible arguments and values, please consult PALM
+            user guide.
+
+            **Some relevant arguments to consider:**
+
+            --accel
+                Methods to accelerate analysis. Possible values are:
+
+                - 'noperm'  ... do not do any permutations (works with fdr
+                  correction only)
+                - 'tail'    ... estimates tail of the permuted distribution,
+                  needs at least 100 resamples
+                - 'negbin'  ... runs as many permutations an needed (works with
+                  fdr correction only)
+                - 'gamma'   ... computes the moment of permutation distribution
+                  and fits a gamma function
+                - 'lowrank' ... runs as many permutations as needed to complete
+                  matrix (fdr, fwer only).
+
+            --twotail
+                Run two-tailed test for all the contrasts.
+            --fonly
+                Run only f-contrasts and not the individual t-contrasts.
+            --fdr
+                Compute a fdr correction for multiple comparisons.
+            --T
+                Enable TFCE inference.
+            --C <z>
+                Enable cluster inference for univariate tests with z cutoff.
+
+            NOTE
+
+            The colon symbols used above to denote::
+
+                default 'n꞉100|zstat'
+
+            are of the Unicode *modifier colon* variety (U+A789) and are
+            not equivalent to the *usual colon* (U+003A) that should be used
+            when running the command. Copying the above line containing modifier
+            colons will result in an error - use normal colons with the command
+            instead.
+
+    Specific parameters:
+        --T2DHEC (str, default '2:1:26'):
+            Sets H, E and C parameters for 2D part of analysis.
+
+            Sometimes it is desired to specify TFCE parameters that differ from
+            the default values. As the function allows combined surface/volume
+            processing of cifti files, it is useful to be able to set them
+            separately for 2D and 3D analysis. All three values need to be
+            provided when the parameter is specified, for example::
+
+                palm_args='T2HEC:2:0.5:26'
+
+            Defaults to H=2, E=1, C=26.
+
+        --T3DHEC (str, default detailed below):
+            Sets H, E and C parameters for 3D part of analysis.
+            Defaults to H=2, E=0.5 (C value is not listed in PALM
+            documentation). All three values need to be provided when the
+            parameter is specified, for example::
+
+                palm_args='T3DHEC:4:1:6'
+
+        --surface (str, default 'no'):
+            Should the command only analyze left and right surfaces from
+            dtseries or dscalar files.
+        --mask (str, default None):
+            Path to the mask file that will be used instead of the
+            default mask files.
+        --root (str, default detailed below):
+            Optional root name for the result images, design name is
+            used if the optional parameter is not specified.
+        --parelements (int | str, default 'all'):
+            Number of elements to run in parallel for grayordinate
+            decomposition. If specified as None or 'all', all available elements
+            (3 max for left surface, right surface and volume files) will be
+            used. One element per CPU core is processed at a time.
+        --overwrite (str, default 'no'):
+            Whether to remove preexisting image files, if they exists,
+            the command will exit with a warning if there are
+            preexisting files and overwrite is set to 'no' (the default).
+        --cleanup (str, default 'yes'):
+            Should the command clean all the temporary generated files
+            or not before the command exits.
+
+    Notes:
+        TFCE specific additional arguments:
+            Sometimes it is desired to specify TFCE parameters that differ from
+            the default values. As the function allows combined surface/volume
+            processing of cifti files, it is useful to be able to set them
+            separately for 2D and 3D analysis. run_palm therefore provides two
+            additional optional parameters that are separately expanded to TFCE
+            2D and 3D settings: --T2DHEC and --T3DHEC.
 
 
-    --palm_args: Additional arguments to PALM
-    ------------------------------------
+            All three values need to be provided when the parameter is
+            specified, for example::
 
-    Additional arguments to palm can be specified using the arguments string.
-    The arguments string is a pipe separated list of arguments and optional
-    values. The format of the string is::
+                palm_args="T2HEC:2:0.5:26|T3DHEC:4:1:6"
 
-        "<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>".
+            If these two parameters are not specified, the default values
+            specified by PALM are used, specifically, H=2, E=1, C=26 for 2D
+            analysis and H=2, E=0.5 for 3D analysis (C value is not listed in
+            PALM documentation).
 
-    The default arguments and values are: "n:100|zstat", which specify that
-    100 permutations should be run and the statistics of interest expressed in
-    z values. To exclude a default argument, specify "<arg>:remove", e.g.:
-    "zstat:remove" if the statistics are not to be converted to z values.
+            Example TFCE specific additional arguments:
+            ::
 
-    For full list of possible arguments and values, please consult PALM user
-    guide. Some relevant arguments to consider:
+                palm_args="n:500|accel:tail|T|fonly"
 
-    --accel    Methods to accelerate analysis. Possible values are:
+            In this case PALM would run 500 permutations and the p-values would
+            be estimated by a help of the tail estimation acceleration method,
+            TFCE inference would be used, and only f-contrasts would be
+            computed.
 
-                   - noperm  (do not do any permutations (works with fdr
-                             correction only))
-                   - tail    (estimates tail of the permuted distribution, needs
-                             at least 100 resamples)
-                   - negbin  (runs as many permutations an needed (works with
-                             fdr correction only))
-                   - gamma   (computes the moment of permutation distribution
-                             and fits a gamma function)
-                   - lowrank (runs as many permutations as needed to complete
-                             matrix (fdr, fwer only))
+        Use:
+            Runs second level analysis using PALM permutation resampling. It
+            provides a simplifed interface, especially when running the
+            analyses on grayordinate, CIFTI images. In this case the
+            .dtseries.nii file will be split up into left and right surface and
+            volume files, PALM will be run on each of them independently and in
+            parallel, and all the resulting images will be then stitched back
+            together in a single .dscalar.nii image file.
 
-    --twotail  Run two-tailed test for all the contrasts
-    --fonly    Run only f-contrasts and not the individual t-contrasts
-    --fdr      Compute a fdr correction for multiple comparisons
-    --T        Enable TFCE inference
-    --C <z>    Enable cluster inference for univariate tests with z cutoff
+            For volume images a standard MNI brain mask will be used. For CIFTI
+            dtseries images, a standard atlas 32k midthickness will be used for
+            surface data and the appropriate mask for volume data. In case of
+            ptseries no mask or surface will be used. In the latter case no
+            surface or volume based statistics (e.g. TFCE or clustering
+            extent/mass) should be specified.
 
-    TFCE specific additional arguments
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            For ptseries it might be necessary to specify transposedata in
+            argument string for the data to be interpreted correctly.
 
-    Sometimes it is desired to specify TFCE parameters that differ from the
-    default values. As the function allows combined surface/volume processing
-    of cifti files, it is useful to be able to set them separately for 2D and
-    3D analysis. run_palm therefore provides two additional optional parameters
-    that are separately expanded to TFCE 2D and 3D settings:
+    Examples:
+        ::
 
-    --T2DHEC    Sets H, E and C parameters for 2D part of analysis.
-    --T3DHEC    Sets H, E and C parameters for 3D part of analysis.
-
-    All three values need to be provided when the parameter is specified, for
-    example::
-
-        palm_args="T2HEC:2:0.5:26|T3DHEC:4:1:6"
-
-    If these two parameters are not specified, the default values specified by
-    PALM are used, specifically, H=2, E=1, C=26 for 2D analysis and H=2, E=0.5
-    for 3D analysis (C value is not listed in PALM documentation).
-
-    Example additional arguments
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    ::
-
-        palm_args="n:500|accel:tail|T|fonly"
-
-    In this case PALM would run 500 permutations and the p-values would be
-    estimated by a help of the tail estimation acceleration method, TFCE
-    inference would be used, and only f-contrasts would be computed.
-
-    Additional optional parameters
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
-    --surface       Should the command only analyze left and right surfaces 
-                    from dtseries or dscalar files. [no]
-    --mask          Path to the mask file that will be used instead of the
-                    default mask files.
-    --root          Optional root name for the result images, design name is
-                    used if the optional parameter is not specified.
-    --parelements   Number of elements to run in parallel for grayordinate
-                    decomposition, all available elements (3 max for left
-                    surface, right surface and volume files) will be used if
-                    not specified.
-    --overwrite     Whether to remove preexisting image files, if they exists,
-                    the command will exit with a warning if there are
-                    preexisting files and overwrite is set to 'no'
-                    (the default).
-    --cleanup       Should the command clean all the temporary generated files
-                    or not before the command exits. [yes]
-
-    USE
-    ===
-
-    Runs second level analysis using PALM permutation resampling. It provides a
-    simplifed interface, especially when running the analyses on grayordinate,
-    CIFTI images. In this case the .dtseries.nii file will be split up into left
-    and right surface and volume files, PALM will be run on each of them
-    independently and in parallel, and all the resulting images will be then
-    stitched back together in a single .dscalar.nii image file.
-
-    For volume images a standard MNI brain mask will be used. For CIFTI dtseries
-    images, a standard atlas 32k midthickness will be used for surface data and
-    the appropriate mask for volume data. In case of ptseries no mask or surface
-    will be used. In the latter case no surface or volume based statistics (e.g.
-    TFCE or clustering extent/mass) should be specified.
-
-    For ptseries it might be necessary to specify transposedata in argument
-    string for the data to be interpreted correctly.
-
-    EXAMPLE USE
-    ===========
-
-    ::
-    
-        qunex run_palm design="name:sustained|t:taov" palm_args="n:500|accel:tail|T|fonly" \\
-             root=sustained_aov
+            qunex run_palm \\
+                --design="name:sustained|t:taov" \\
+                --palm_args="n:500|accel:tail|T|fonly" \\
+                --root=sustained_aov
     """
 
     print("Running PALM\n============")
@@ -917,51 +967,51 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
     Prepares the design file.
 
-    INPUTS
-    ======
+    Parameters:
+        --factors (str):
+            A comma separated list of number of factor levels.
+        --nsubjects (int):
+            Number of subjects.
+        --root (str, default 'wspalm')
+            Root name for the created files.
 
-    --factors        A comma separated list of number of factor levels.
-    --nsubjects      Number of subjects.
-    --root           Root name for the created files. ['wspalm']
+    Notes:
+        create_ws_palm_design prepares the design file, t-contrasts, f-contrasts
+        and exchangebility block files for a single group within-subject PALM
+        designs. It supports full factorial designs with up to three factors.
 
-    USE
-    ===
+        The function assumes the data to be organized by subject and the first
+        specified factor to be the slowest varying one. The factors, their
+        interactions and subject intercepts will be specified in the following
+        order in the design matrix:
 
-    create_ws_palm_design prepares the design file, t-contrasts, f-contrasts and
-    exchangebility block files for a single group within-subject PALM designs.
-    It supports full factorial designs with up to three factors.
+        1. factor design::
 
-    The function assumes the data to be organized by subject and the first
-    specified factor to be the slowest varying one. The factors, their
-    interactions and subject intercepts will be specified in the following
-    order in the design matrix:
+            F1, subjects
 
-    1. factor design::
+        2. factor design::
 
-        F1, subjects
+            F1, F2, F1*F2, subjects
 
-    2. factor design::
+        3. factor design::
 
-        F1, F2, F1*F2, subjects
+            F1, F2, F3, F1*F2, F1*F3, F2*F3, F1*F2*F3, subjects
 
-    3. factor design::
+        4. factor design::
 
-        F1, F2, F3, F1*F2, F1*F3, F2*F3, F1*F2*F3, subjects
+            F1, F2, F3, F4, F1*F2, F1*F3, F1*F4, F2*F3, F2*F4, F3*F4, F1*F2*F3,
+            F1*F2*F4, F2*F3*F4, F1*F2*F3*F4, subjects
 
-    4. factor design::
+        t-tests will be specified in order and f-tests will be specified in the same
+        order as above.
 
-        F1, F2, F3, F4, F1*F2, F1*F3, F1*F4, F2*F3, F2*F4, F3*F4, F1*F2*F3, 
-        F1*F2*F4, F2*F3*F4, F1*F2*F3*F4, subjects
+    Examples:
+        ::
 
-    t-tests will be specified in order and f-tests will be specified in the same
-    order as above.
-
-    EXAMPLE USE
-    ===========
-    
-    ::
-
-        qunex create_ws_palm_design factors="2,3" nsubjects=33 root=WM.type_by_load
+            qunex create_ws_palm_design \\
+                --factors="2,3" \\
+                --nsubjects=33 \\
+                --root="WM.type_by_load"
     """
 
     if factors is None:
