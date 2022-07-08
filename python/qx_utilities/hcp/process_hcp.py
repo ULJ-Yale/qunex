@@ -11,24 +11,25 @@
 This file holds code for running HCP preprocessing pipeline. It
 consists of functions:
 
---hcp_pre_freesurfer        Runs HCP PreFS preprocessing.
---hcp_freesurfer            Runs HCP FS preprocessing.
---hcp_post_freesurfer       Runs HCP PostFS preprocessing.
---hcp_diffusion             Runs HCP Diffusion weighted image preprocessing.
---hcp_fmri_volume           Runs HCP BOLD Volume preprocessing.
---hcp_fmri_surface          Runs HCP BOLD Surface preprocessing.
---hcp_icafix                Runs HCP ICAFix.
---hcp_post_fix              Runs HCP PostFix.
---hcp_reapply_fix           Runs HCP ReApplyFix.
---hcp_msmall                Runs HCP MSMAll.
---hcp_dedrift_and_resample  Runs HCP DeDriftAndResample.
---hcp_asl                   Runs HCP ASL pipeline.
---hcp_temporal_ica          Runs HCP temporal ICA pipeline.
---hcp_make_average_dataset  Runs HCP make average dataset pipeline.
---hcp_dtifit                Runs DTI Fit.
---hcp_bedpostx              Runs Bedpost X.
---hcp_task_fmri_analysis    Runs HCP TaskfMRIanalysis.
---map_hcp_data              Maps results of HCP preprocessing into `images` folder.
+--hcp_pre_freesurfer            Runs HCP PreFS preprocessing.
+--hcp_freesurfer                Runs HCP FS preprocessing.
+--hcp_post_freesurfer           Runs HCP PostFS preprocessing.
+--hcp_longitudinal_freesurfer   Runs HCP Longitudinal FS preprocessing.
+--hcp_diffusion                 Runs HCP Diffusion weighted image preprocessing.
+--hcp_fmri_volume               Runs HCP BOLD Volume preprocessing.
+--hcp_fmri_surface              Runs HCP BOLD Surface preprocessing.
+--hcp_icafix                    Runs HCP ICAFix.
+--hcp_post_fix                  Runs HCP PostFix.
+--hcp_reapply_fix               Runs HCP ReApplyFix.
+--hcp_msmall                    Runs HCP MSMAll.
+--hcp_dedrift_and_resample      Runs HCP DeDriftAndResample.
+--hcp_asl                       Runs HCP ASL pipeline.
+--hcp_temporal_ica              Runs HCP temporal ICA pipeline.
+--hcp_make_average_dataset      Runs HCP make average dataset pipeline.
+--hcp_dtifit                    Runs DTI Fit.
+--hcp_bedpostx                  Runs Bedpost X.
+--hcp_task_fmri_analysis        Runs HCP TaskfMRIanalysis.
+--map_hcp_data                  Maps results of HCP preprocessing into `images` folder.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -138,20 +139,6 @@ def getHCPPaths(sinfo, options):
     except:
         d['T1w'] = 'NONE'
 
-    # --- longitudinal FS related paths
-
-    if options['hcp_fs_longitudinal']:
-        d['FS_long_template'] = os.path.join(hcpbase, 'T1w', options['hcp_fs_longitudinal'])
-        d['FS_long_results']  = os.path.join(hcpbase, 'T1w', "%s.long.%s" % (sinfo['id'] + options['hcp_suffix'], options['hcp_fs_longitudinal']))
-        d['FS_long_subject_template'] = os.path.join(options['sessionsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
-        d['hcp_long_nonlin']          = os.path.join(hcpbase, 'MNINonLinear_' + options['hcp_fs_longitudinal'])
-    else:
-        d['FS_long_template']         = ""
-        d['FS_long_results']          = ""
-        d['FS_long_subject_template'] = ""
-        d['hcp_long_nonlin']          = ""
-
-
     # --- T2w related paths
 
     if options['hcp_t2'] == 'NONE':
@@ -196,7 +183,6 @@ def getHCPPaths(sinfo, options):
 
     for pipe, default in [('hcp_prefs_check',     'check_PreFreeSurfer.txt'),
                           ('hcp_fs_check',        'check_FreeSurfer.txt'),
-                          ('hcp_fslong_check',    'check_FreeSurferLongitudinal.txt'),
                           ('hcp_postfs_check',    'check_PostFreeSurfer.txt'),
                           ('hcp_bold_vol_check',  'check_fMRIVolume.txt'),
                           ('hcp_bold_surf_check', 'check_fMRISurface.txt'),
@@ -1046,15 +1032,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
-                --hcp_fs_longitudinal=TemplateA
-
-        ::
-
-            qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --parsessions=10 \\
                 --hcp_t2=NONE
 
         ::
@@ -1165,34 +1142,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                   '5.3-HCP': os.path.join(hcp['FS_folder'], 'label', 'rh.entorhinal_exvivo.label')}
         tfile = tfiles[fsversion]
 
-
-        # --> longitudinal run currently not supported
-        #
-        # identify template if longitudinal run
-        #
-        # fslongitudinal = ""
-        #
-        # if options['hcp_fs_longitudinal']:
-        #     if 'subject' not in sinfo:
-        #         r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
-        #         run = False
-        #     elif sinfo['subject'] == sinfo['id']:
-        #         r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
-        #         run = False
-        #     else:
-        #         lresults = os.path.join(hcp['FS_long_template'], 'label', 'rh.entorhinal_exvivo.label')
-        #         if not os.path.exists(lresults):
-        #             r += "\n     ... ERROR: Longitudinal template not present! [%s]" % (lresults)
-        #             r += "\n                Please check the results of longitudinal_freesurfer command!"
-        #             r += "\n                Please check your data and settings!" % (lresults)
-        #             run = False
-        #         else:
-        #             r += "\n     ... longitudinal template present"
-        #             fslongitudinal = "run"
-        #             tfiles = {'6.0':     os.path.join(hcp['FS_long_results'], 'label', 'BA_exvivo.thresh.ctab'),
-        #                       '5.3-HCP': os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')}
-        #             tfile = tfiles[fsversion]
-
         # --> Building the command string
 
         comm = os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh') + " "
@@ -1255,25 +1204,19 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 # --> clean up only if hcp_fs_existing_session is not set to True
                 if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_session']:
-                    # -> longitudinal mode currently not supported
-                    # if options['hcp_fs_longitudinal']:
-                    #     if os.path.lexists(hcp['FS_long_results']):
-                    #         r += "\n --> removing preexisting folder with longitudinal results [%s]" % (hcp['FS_long_results'])
-                    #         shutil.rmtree(hcp['FS_long_results'])
-                    # else:
-                        if os.path.lexists(hcp['FS_folder']):
-                            r += "\n ---> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
-                            shutil.rmtree(hcp['FS_folder'])
-                        for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average', os.path.join('xfms','OrigT1w2T1w.nii.gz')]:
-                            rmtarget = os.path.join(hcp['T1w_folder'], toremove)
-                            try:
-                                if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
-                                    os.remove(rmtarget)
-                                elif os.path.isdir(rmtarget):
-                                    shutil.rmtree(rmtarget)
-                            except:
-                                r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
-                                status = False
+                    if os.path.lexists(hcp['FS_folder']):
+                        r += "\n ---> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
+                        shutil.rmtree(hcp['FS_folder'])
+                    for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average', os.path.join('xfms','OrigT1w2T1w.nii.gz')]:
+                        rmtarget = os.path.join(hcp['T1w_folder'], toremove)
+                        try:
+                            if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
+                                os.remove(rmtarget)
+                            elif os.path.isdir(rmtarget):
+                                shutil.rmtree(rmtarget)
+                        except:
+                            r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
+                            status = False
                 if status:
                     r, endlog, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP FS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
@@ -1304,340 +1247,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo['id'], report, failed))
-
-
-
-def longitudinal_freesurfer(sinfo, options, overwrite=False, thread=0):
-    """
-    ``longitudinal_freesurfer [... processing options]``
-
-    Runs longitudinal FreeSurfer processing in cases when multiple sessions with
-    structural data exist for a single subject.
-
-    REQUIREMENTS
-    ============
-
-    The code expects the FreeSurfer Pipeline (hcp_pre_freesurfer) to have run
-    successfully on all subject's session. In the batch file, there need to be
-    clear separation between session id (`id` parameter) and subject id
-    (`subject` parameter). So that the command can identify which sessions
-    belong to which subject.
-
-    INPUT
-    =====
-
-    General parameters
-    ------------------
-
-    When running the command, the following *general* processing parameters are
-    taken into account:
-
-    --sessions            The batch.txt file with all the sessions information.
-                          [batch.txt]
-    --sessionsfolder      The path to the study/subjects folder, where the
-                          imaging data is supposed to go. [.]
-    --parsessions         How many sessions to run in parallel. [1]
-    --overwrite           Whether to overwrite existing data (yes) or not (no).
-                          [no]
-    --hcp_suffix          Specifies a suffix to the session id if multiple
-                          variants are run, empty otherwise. []
-    --logfolder           The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default. []
-    --log                 Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed. ['keep']
-                          When a comma or pipe ('|') separated list is given,
-                          the log will be created at the first provided
-                          location and then linked or copied to other
-                          locations. The valid locations are:
-
-                          - 'study' (for the default:
-                            `<study>/processing/logs/comlogs` location)
-                          - 'session' (for `<sessionid>/logs/comlogs`)
-                          - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-                          - '<path>' (for an arbitrary directory)
-
-    --hcp_folderstructure If set to 'hcpya' the folder structure used
-                          in the initial HCP Young Adults study is used.
-                          Specifically, the source files are stored in
-                          individual folders within the main 'hcp' folder
-                          in parallel with the working folders and the
-                          'MNINonLinear' folder with results. If set to
-                          'hcpls' the folder structure used in
-                          the HCP Life Span study is used. Specifically,
-                          the source files are all stored within their
-                          individual subfolders located in the joint
-                          'unprocessed' folder in the main 'hcp' folder,
-                          parallel to the working folders and the
-                          'MNINonLinear' folder. ['hcpls']
-    --hcp_filename        How to name the BOLD files once mapped into
-                          the hcp input folder structure. The default
-                          ('automated') will automatically name each
-                          file by their number (e.g. BOLD_1). The
-                          alternative ('userdefined') is to use the
-                          file names, which can be defined by the
-                          user prior to mapping (e.g. rfMRI_REST1_AP).
-                          ['automated']
-
-    Specific parameters
-    -------------------
-
-    In addition the following *specific* parameters will be used to guide the
-    processing in this step:
-
-    --hcp_t2                     NONE if no T2w image is available and the
-                                 preprocessing should be run without them,
-                                 anything else otherwise. [t2]
-    --hcp_expert_file            Path to the read-in expert options file for
-                                 FreeSurfer if one is prepared and should be
-                                 used empty otherwise. []
-    --hcp_control_points         Specify YES to use manual control points or
-                                 empty otherwise. []
-    --hcp_wm_edits               Specify YES to use manually edited WM mask or
-                                 empty otherwise. []
-    --hcp_fs_brainmask           Specify 'original' to keep the masked original
-                                 brain image; 'manual' to use the manually
-                                 edited brainmask file; default 'fs' uses the
-                                 brainmask generated by mri_watershed. [fs]
-    --hcp_autotopofix_off        Specify YES to turn off the automatic
-                                 topological fix step in FS and compute WM
-                                 surface deterministically from manual WM mask,
-                                 or empty otherwise. []
-    --hcp_freesurfer_home        Path for FreeSurfer home folder can be manually
-                                 specified to override default environment
-                                 variable to ensure backwards compatibility and
-                                 hcp_freesurfer customization.
-    --hcp_freesurfer_module      Whether to load FreeSurfer as a module on the
-                                 cluster. You can specify using YES or empty
-                                 otherwise. [] To ensure backwards compatibility
-                                 and hcp_freesurfer customization.
-    --hcp_fs_longitudinal        The name of the FS longitudinal template to
-                                 be used for the template resulting from this
-                                 command call.
-
-    OUTPUTS
-    =======
-
-    The result is a longitudinal FreeSurfer template that is created in
-    `FSTemplates` folder for each subject in a subfolder with the template name,
-    but is also copied to each session's hcp folder in the T1w folder as
-    subjectid.long.TemplateA. An example is shown below::
-
-        study
-        └─ subjects
-           ├─ subject1_session1
-           │  └─ hcp
-           │     └─ subject1_session1
-           │       └─ T1w
-           │          ├─ subject1_session1 (FS folder - original)
-           │          └─ subject1_session1.long.TemplateA (FS folder - longitudinal)
-           ├─ subject1_session2
-           ├─ ...
-           └─ FSTemplates
-              ├─ subject1
-              │  └─ TemplateA
-              └─ ...
-
-    EXAMPLE USE
-    ===========
-
-    ::
-
-        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
-              overwrite=no parsessions=10
-
-    ::
-
-        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
-              overwrite=no parsessions=10 hcp_t2=NONE
-
-    ::
-
-        qunex longitudinal_freesurfer sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \
-              overwrite=no parsessions=10 hcp_t2=NONE \
-              hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \
-              hcp_freesurfer_module=YES
-    """
-
-    r = "\n------------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (pc.action("Running", options['run']), options['hcp_processing_mode'])
-
-    run           = True
-    report        = "Error"
-    sessionsid    = []
-    sessionspaths = []
-    resultspaths  = []
-
-    try:
-
-        # --- check that we have data for all sessions
-
-        r += "\n---> Checking sessions for subject %s" % (sinfo['id'])
-
-        for session in sinfo['sessions']:
-            r += "\n     => session %s" % (session['id'])
-            sessionsid.append(session['id'] + options['hcp_suffix'])
-            sessionStatus = True
-
-            try:
-                pc.doOptionsCheck(options, sinfo, 'longitudinal_freesurfer')
-                doHCPOptionsCheck(options, 'longitudinal_freesurfer')
-                hcp = getHCPPaths(session, options)
-                sessionspaths.append(hcp['FS_folder'])
-                resultspaths.append(hcp['FS_long_results'])
-                # --- run checks
-
-                if 'hcp' not in session:
-                    r += "\n       -> ERROR: There is no hcp info for session %s in batch file" % (session['id'])
-                    sessionStatus = False
-
-                # --- check for T1w and T2w images
-
-                for tfile in hcp['T1w'].split("@"):
-                    if os.path.exists(tfile):
-                        r += "\n       -> T1w image file present."
-                    else:
-                        r += "\n       -> ERROR: Could not find T1w image file."
-                        sessionStatus = False
-
-                if hcp['T2w'] == 'NONE':
-                    r += "\n       -> Not using T2w image."
-                else:
-                    for tfile in hcp['T2w'].split("@"):
-                        if os.path.exists(tfile):
-                            r += "\n       -> T2w image file present."
-                        else:
-                            r += "\n       -> ERROR: Could not find T2w image file."
-                            sessionStatus = False
-
-                # -> Pre FS results
-
-                if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
-                    r += "\n       -> PreFS results present."
-                else:
-                    r += "\n       -> ERROR: Could not find PreFS processing results."
-                    sessionStatus = False
-
-                # -> FS results
-
-                if os.path.exists(os.path.join(hcp['FS_folder'], 'mri', 'aparc+aseg.mgz')):
-                    r += "\n       -> FS results present."
-                else:
-                    r += "\n       -> ERROR: Could not find Freesurfer processing results."
-                    sessionStatus = False
-
-                if sessionStatus:
-                    r += "\n     => data check for session completed successfully!\n"
-                else:
-                    r += "\n     => data check for session failed!\n"
-                    run = False
-            except:
-                r += "\n     => data check for session failed!\n"
-
-        if run:
-            r += "\n===> OK: Sessions check completed with success!"
-        else:
-            r += "\n===> ERROR: Sessions check failed. Please check your data before proceeding!"
-
-        if hcp['T2w'] == 'NONE':
-            t2w = 'NONE'
-        else:
-            t2w = 'T2w_acpc_dc_restore.nii.gz'
-
-        # --- set up command
-
-        comm = '%(script)s \
-            --subject="%(subject)s" \
-            --subjectDIR="%(subjectDIR)s" \
-            --expertfile="%(expertfile)s" \
-            --controlpoints="%(controlpoints)s" \
-            --wmedits="%(wmedits)s" \
-            --autotopofixoff="%(autotopofixoff)s" \
-            --fsbrainmask="%(fsbrainmask)s" \
-            --freesurferhome="%(freesurferhome)s" \
-            --fsloadhpcmodule="%(fsloadhpcmodule)s" \
-            --t1="%(t1)s" \
-            --t1brain="%(t1brain)s" \
-            --t2="%(t2)s" \
-            --timepoints="%(timepoints)s" \
-            --longitudinal="template"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
-                'subject'           : options['hcp_fs_longitudinal'],
-                'subjectDIR'        : os.path.join(options['sessionsfolder'], 'FSTemplates', sinfo['id']),
-                'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-                'fsloadhpcmodule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
-                'expertfile'        : options['hcp_expert_file'],
-                'controlpoints'     : options['hcp_control_points'],
-                'wmedits'           : options['hcp_wm_edits'],
-                'autotopofixoff'    : options['hcp_autotopofix_off'],
-                'fsbrainmask'       : options['hcp_fs_brainmask'],
-                't1'                : "",
-                't1brain'           : "",
-                't2'                : "",
-                'timepoints'        : ",".join(sessionspaths)}
-
-        # -- Report command
-        if run:
-            r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via QuNex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
-            r += "\n------------------------------------------------------------\n"
-
-       # -- Test files
-
-        if hcp['hcp_fslong_check']:
-            fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_fslong_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
-        else:
-            fullTest = None
-
-        # -- Run
-
-        if run:
-            if options['run'] == "run":
-                lttemplate = hcp['FS_long_subject_template']
-                tfile      = os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')
-
-                if overwrite or not os.path.exists(tfile):
-                    try:
-                        if os.path.exists(lttemplate):
-                            rmfolder = lttemplate
-                            shutil.rmtree(lttemplate)
-                        for rmfolder in resultspaths:
-                            if os.path.exists(rmfolder):
-                                shutil.rmtree(rmfolder)
-                    except:
-                        r += "\n---> WARNING: Could not remove preexisting folder: %s! Please check your data!" % (rmfolder)
-                        status = False
-
-                    r, endlog, report, failed = pc.runExternalForFile(tfile, comm, 'Running HCP FS Longitudinal', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
-
-            # -- just checking
-            else:
-                r += "\n---> The command was tested for sessions: %s" % (", ".join(sessionsid))
-                report = "Command can be run"
-                failed = 0
-
-        else:
-            r += "\n---> The command could not be run on sessions: %s" % (", ".join(sessionsid))
-            report = "Command can not be run"
-            failed = 1
-
-    except ge.CommandFailed as e:
-        r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurferLongitudinal', e.function, "\n     ".join(e.report))
-        report = "FSLong failed"
-        failed = 1
-    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = str(errormessage)
-        failed = 1
-    except:
-        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
-        failed = 1
-
-    r += "\n\nLongitudinal FreeSurfer %s on %s\n------------------------------------------------------------" % (pc.action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-
-    # print r
-    return (r, (sinfo['id'], report, failed))
-
 
 
 def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
@@ -1724,11 +1333,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             Correction sigma used for metric smoothing.
         --hcp_inflatescale (int, default 1):
             Inflate extra scale parameter.
-        --hcp_fs_longitudinal (str, default ''):
-            The name of the FS longitudinal template if one was created and is
-            to be used in this step.
-            (currently not available)
-
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
@@ -1792,32 +1396,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!"
             run = False
 
-        ## -> longitudinal processing is currently not supported
-        #
-        # identify template if longitudinal run
-        #
-        # lttemplate     = ""
-        # fslongitudinal = ""
-        #
-        # if options['hcp_fs_longitudinal']:
-        #     if 'subject' not in sinfo:
-        #         r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
-        #         run = False
-        #     elif sinfo['subject'] == sinfo['id']:
-        #         r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
-        #         run = False
-        #     else:
-        #         lttemplate = hcp['FS_long_subject_template']
-        #         lresults = os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')
-        #         if not os.path.exists(lresults):
-        #             r += "\n     ... ERROR: Results of the longitudinal run not present [%s]" % (lresults)
-        #             r += "\n                Please check your data and settings!" % (lresults)
-        #             run = False
-        #         else:
-        #             r += "\n     ... longitudinal template present"
-        #             fslongitudinal = "run"
-
-
         comm = os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh') + " "
         elements = [("path", sinfo['hcp']),
                     ('subject', sinfo['id'] + options['hcp_suffix']),
@@ -1845,13 +1423,8 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
 
         # -- Test files
-
-        if False: #  fslongitudinal not supported:
-            tfolder = hcp['hcp_long_nonlin']
-            tfile = os.path.join(tfolder, sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
-        else:
-            tfolder = hcp['hcp_nonlin']
-            tfile = os.path.join(tfolder, sinfo['id'] + options['hcp_suffix'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+        tfolder = hcp['hcp_nonlin']
+        tfile = os.path.join(tfolder, sinfo['id'] + options['hcp_suffix'] + '.corrThickness.164k_fs_LR.dscalar.nii')
 
         if hcp['hcp_postfs_check']:
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_postfs_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix'])], 'specfolder': options['specfolder']}
@@ -1894,6 +1467,257 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo['id'], report, failed))
+
+
+def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
+    """
+    ``hcp_longitudinal_freesurfer [... processing options]``
+
+    ``hcp_lfs [... processing options]``
+
+    Runs the HCP Longitudinal FreeSurfer Pipeline.
+
+    Warning:
+        The code expects the first three HCP preprocessing steps
+        (hcp_pre_freesurfer, hcp_freesurfer and hcp_post_freesurfer) to have
+        been run and finished successfully.
+
+    Parameters:
+        --sessions (str, default 'batch.txt'):
+            The batch.txt file with all the sessions information.
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed.
+            When a comma or pipe ('|') separated list is given, the log will be
+            created at the first provided location and then linked or copied to
+            other locations. The valid locations are:
+
+            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
+            - 'session' (for `<sessionid>/logs/comlogs`)
+            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
+            - '<path>' (for an arbitrary directory).
+
+    Specific parameters:
+        --hcp_long_fs_template (str, default 'base'):
+            Name of the base template.
+        --hcp_long_fs_extra_reconall_base (str, default ''):
+            A string with extra parameters to pass to Longitudinal FreeSurfer
+            recon-all base template creation. The extra parameters are to be
+            listed in a pipe ('|') separated string. Parameters and their values
+            need to be listed separately. E.g. to pass `-norm3diters 3` to
+            reconall, the string has to be: '-norm3diters|3'.
+        --hcp_long_fs_extra_reconall (str, default ''):
+            A string with extra parameters to pass to Longitudinal FreeSurfer
+            recon-all processing. The extra parameters are to be listed in a
+            pipe ('|') separated string. Parameters and their values need to be
+            listed separately. E.g. to pass `-norm3diters 3` to reconall, the
+            string has to be: '-norm3diters|3'.
+
+    Output files:
+        The results of this step will be present in the
+        <study_folder>/<sessions_folder>/<subject_id>.
+
+    Examples:
+        Example run::
+
+            qunex hcp_longitudibnal_freesurfer \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --hcp_long_fs_template="<template_name>"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (subjectids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP Longitudnal FS Pipeline [%s] ..." % (pc.action("Running", options["run"]), options["hcp_processing_mode"])
+
+    run    = True
+    report = "Error"
+
+    try:
+        # checks
+        pc.doOptionsCheck(options, sinfo[1], "hcp_longitudinal_freesurfer")
+        doHCPOptionsCheck(options, "hcp_longitudinal_freesurfer")
+        hcp = getHCPPaths(sinfo[1], options)
+
+        # get subjects and their sesssions from the batch file
+        subjects_dict = {}
+        for session in sinfo:
+            if "hcp" not in session:
+                r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (session["id"])
+                run = False
+
+            if hcp['T1w'] != 'NONE':
+                subject = session["subject"]
+                if subject not in subjects_dict:
+                    subject_info = {}
+                    subject_info['id'] = subject
+                    subject_info['hcp'] = [session['hcp']]
+                    subject_info['sessions'] = [session['id']]
+                    subjects_dict[subject] = subject_info
+                else:
+                    subjects_dict[subject]['sessions'].append(session['id'])
+                    subjects_dict[subject]['hcp'].append(session['hcp'])
+
+        # dict to list
+        subjects_list = []
+        for subject in subjects_dict:
+            subjects_list.append(subjects_dict[subject])
+
+        # launch
+        parelements = options['parelements']
+        if parelements == 1: # serial execution
+            for subject in subjects_list:
+                result = _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp['hcp_base'], subject)
+
+                # merge r
+                r += result['r']
+
+                # merge report
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['failed']     += tempReport['failed']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']
+
+        else: # parallel execution
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(_execute_hcp_longitudinal_freesurfer, options, overwrite, run, hcp['hcp_base'])
+            results = processPoolExecutor.map(f, subjects_list)
+
+            # merge r and report
+            for result in results:
+                r                    += result['r']
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['failed']     += tempReport['failed']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
+
+    r += "\n\nHCP Longitudinal FS Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, (subjectids, report, failed))
+
+def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subject):
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    # get subject data
+    subject_id = subject['id']
+    hcp_list = subject['hcp']
+    sessions_list = subject['sessions']
+
+    # sort out the folder structure
+    sessionsfolder = options['sessionsfolder']
+    subject_dir = os.path.join(sessionsfolder, subject_id)
+    if not os.path.exists(subject_dir):
+        os.makedirs(subject_dir)
+
+    template = options["hcp_long_fs_template"]
+    long_dir = os.path.join(subject_dir, f"{subject_id}.long.{template}")
+    # exit if overwrite is not set, else create folders
+    if not overwrite and os.path.exists(long_dir):
+        r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
+        run = False
+    else:
+        if os.path.exists(long_dir):
+            os.rmdir(long_dir)
+
+    # symlink sessions
+    i = 0
+    for i in range(len(sessions_list)):
+        session = sessions_list[i]
+        hcp = hcp_list[i]
+        source_dir = os.path.join(hcp, session)
+        # check that source exists
+        if not os.path.exists(source_dir):
+            r += f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!"
+            run = False
+
+        target_dir = os.path.join(subject_dir, session)
+        gc.linkOrCopy(source_dir, target_dir, symlink=True)
+        i += 1
+
+    # build the command
+    if run:
+        comm = '%(script)s \
+            --subject-dir="%(subjectdir)s" \
+            --subject="%(subject)s" \
+            --sessions="%(sessions)s" \
+            --template="%(template)s"' % {
+                "script"        : os.path.join(hcp_dir, "FreeSurfer", "LongitudinalFreeSurferPipeline.sh"),
+                "subjectdir"    : subject_dir,
+                "subject"       : subject_id,
+                "sessions"      : '@'.join(sessions_list),
+                "template"      : template}
+
+        # -- Optional parameters
+        if options["hcp_long_fs_extra_reconall_base"] is not None:
+            for e in options['hcp_fs_extra_reconall'].split('|'):
+                comm += "                --extra-reconall-arg-base=" + e
+
+        if options["hcp_long_fs_extra_reconall"] is not None:
+            for e in options['hcp_fs_extra_reconall'].split('|'):
+                comm += "                --extra-reconall-arg-long=" + e
+
+        # -- Report command
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
+            r += comm.replace("                --", "\n    --")
+            r += "\n------------------------------------------------------------\n"
+
+        # -- Test file TODO for last subject
+        last_session = sessions_list[-1]
+        tfile = os.path.join(subject_dir,
+                             f"{subject_id}.long.{template}",
+                             "T1w",
+                             f"{last_session}.long.{template}",
+                             "mri",
+                             "T1.mgz")
+
+        if options["run"] == "run":
+            if overwrite and os.path.exists(tfile):
+                os.remove(tfile)
+            r, endlog, report, failed  = pc.runExternalForFile(tfile, comm, "Running HCP Longitudinal FS", overwrite=overwrite, thread=subject_id, remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=None, shell=True, r=r)
+
+        # -- just checking
+        else:
+            passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP Longitudinal FS", r, overwrite=overwrite)
+            if passed is None:
+                r += "\n---> HCP Longitudinal FS can be run"
+                report = "HCP Longitudinal FS can be run"
+                failed = 0
+
+    else:
+        r += "\n---> Session can not be processed."
+        report = "HCP Longitudinal FS can not be run"
+        failed = 1
+
+    return r, report
 
 
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
@@ -2335,9 +2159,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         (hcp_pre_freesurfer and hcp_freesurfer) to have been run and finished
         successfully. It also tests for the presence of fieldmap or spin-echo
         images if they were specified. It does not make a thorough check for
-        PreFS and FS steps due to the large number of files. If
-        `hcp_fs_longitudinal` is specified, it also checks for presence of the
-        specified longitudinal data.
+        PreFS and FS steps due to the large number of files.
 
     Parameters:
         --sessions (str, default 'batch.txt'):
@@ -2404,10 +2226,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_usejacobian (str, default 'FALSE'):
             Whether to apply the jacobian of the distortion correction to fMRI
             data.
-        --hcp_fs_longitudinal:
-            The name of the FS longitudinal template if one was created and is
-            to be used in this step.
-            (This parameter is currently not supported)
         --hcp_bold_prefix (str, default 'BOLD'):
             The prefix to use when generating BOLD names (see --hcp_filename)
             for BOLD working folders and results.
@@ -2508,19 +2326,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
-        in the sessions's root hcp folder. In case a longitudinal FS
-        template is used, the results will be stored in a
-        `MNINonlinear_<FS longitudinal template name>` folder::
+        in the sessions's root hcp folder::
 
             study
             └─ sessions
                └─ subject1_session1
                   └─ hcp
                      └─ subject1_session1
-                       ├─ MNINonlinear
-                       │  └─ Results
-                       │     └─ BOLD_1
-                       └─ MNINonlinear_TemplateA
+                       └─ MNINonlinear
                           └─ Results
                              └─ BOLD_1
 
@@ -2649,36 +2462,21 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> FS results
-
-        if False:  # Longitudinal processing is currently unavailanle # options['hcp_fs_longitudinal']:
-            tfolder = hcp['FS_long_results']
-        else:
-            tfolder = hcp['FS_folder']
+        tfolder = hcp['FS_folder']
 
         if os.path.exists(os.path.join(tfolder, 'mri', 'aparc+aseg.mgz')):
             r += "\n---> FS results present."
         else:
             r += "\n---> ERROR: Could not find Freesurfer processing results."
-            # if options['hcp_fs_longitudinal']:
-            #     r += "\n--->        Please check that you have run FS longitudinal as specified,"
-            #     r += "\n--->        and that %s template was successfully generated." % (options['hcp_fs_longitudinal'])
-
             run = False
 
         # -> PostFS results
-
-        if False:  # Longitudinal processing is currently unavailanle # options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
-        else:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
+        tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
         if os.path.exists(tfile):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
-            # if options['hcp_fs_longitudinal']:
-            #     r += "\n--->        Please check that you have run PostFS on FS longitudinal as specified,"
-            #     r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
             run = False
 
         # -> lookup gdcoeffs file if needed
@@ -3254,11 +3052,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-
-        if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s%d_%s.nii.gz" % (options['hcp_bold_prefix'], boldtarget, options['hcp_fs_longitudinal']))
-        else:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
 
         if hcp['hcp_bold_vol_check']:
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_vol_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
@@ -3415,11 +3209,6 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             mapping (e.g. rfMRI_REST1_AP).
 
     Specific parameters:
-        --hcp_fs_longitudinal (str, default 'NO')
-            (*) The name of the FS longitudinal template if one was created and
-            is to be used in this step.
-
-            (*) This parameter is currently not in use
         --hcp_bold_prefix (str, default 'BOLD')꞉
             The prefix to use when generating BOLD names (see 'hcp_filename')
             for BOLD working folders and results.
@@ -3438,19 +3227,14 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
-        in the sessions's root hcp folder. In case a longitudinal FS
-        template is used, the results will be stored in a `MNINonlinear_<FS
-        longitudinal template name>` folder::
+        in the sessions's root hcp folder::
 
             study
             └─ sessions
                └─ session1_session1
                   └─ hcp
                      └─ subject1_session1
-                       ├─ MNINonlinear
-                       │  └─ Results
-                       │     └─ BOLD_1
-                       └─ MNINonlinear_TemplateA
+                       └─ MNINonlinear
                           └─ Results
                              └─ BOLD_1
 
@@ -3494,19 +3278,12 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> PostFS results
-
-        if options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + '.32k_fs_LR.wb.spec')
-        else:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
+        tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
         if os.path.exists(tfile):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
-            if options['hcp_fs_longitudinal']:
-                r += "\n--->        Please check that you have run PostFS on FS longitudinal as specified,"
-                r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
             run = False
 
         # --- Get sorted bold numbers
@@ -3625,11 +3402,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-
-        if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
-            tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s_%s%s.dtseries.nii" % (boldtarget, options['hcp_fs_longitudinal'], options['hcp_cifti_tail']))
-        else:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
+        tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s%s.dtseries.nii" % (boldtarget, options['hcp_cifti_tail']))
 
         if hcp['hcp_bold_surf_check']:
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id'] + options['hcp_suffix']), ('scan', boldtarget)], 'specfolder': options['specfolder']}

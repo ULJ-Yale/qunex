@@ -550,7 +550,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
             parjobs = chunks
 
         # do not create multiple jobs if running a multi-session command
-        if command in gp.mactions:
+        if command in gp.mactions or command in gp.lactions:
             parjobs = 1
 
         # init queues

@@ -291,7 +291,6 @@ arglist = [
            ['hcp_bold_res',           '2',                                        str,    "Target image resolution 2mm recommended."],
            ['hcp_grayordinatesres',   '2',                                        int,    "Usually 2mm."],
            ['hcp_regname',            'MSMSulc',                                  str,    "What registration is used FS or MSMSulc. FS if none is provided."],
-           ['hcp_fs_longitudinal',    '',                                         str,    "Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO]."],
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
            ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' folder. '' by default."],
            ['hcp_nifti_tail',          '',                                        str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
@@ -459,7 +458,7 @@ arglist = [
            ['hcp_tica_stop_after_step', '',                                       isNone,  "What step to stop processing after, same valid values as for hcp_tica_starting_step."],
            ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
            ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
-           ['hcp_parallel_limit', '',                                        isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+           ['hcp_parallel_limit', '',                                             isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
            ['hcp_tica_config_out', None,                                          flag,    "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
 
 
@@ -479,7 +478,6 @@ arglist = [
            ['# --- HCP file checking'],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file)."],
            ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file)."],
-           ['hcp_fslong_check',       'last',                                     str,    "Whether to check the results of FreeSurferLongitudinal pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file)."],
            ['hcp_postfs_check',       'last',                                     str,    "Whether to check the results of PostFreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file)."],
            ['hcp_bold_vol_check',     'last',                                     str,    "Whether to check the results of fMRIVolume pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file)."],
            ['hcp_bold_surf_check',    'last',                                     str,    "Whether to check the results of fMRISurface pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file)."],
@@ -488,6 +486,11 @@ arglist = [
            ['# --- Processing options'],
            ['run',                    'run',                                      str,    "Run type: run - do the task, test - perform checks."],
            ['log',                    'keep',                                     str,    "Whether to remove ('remove') the temporary logs once jobs are completed, keep them in the study level processing/logs/comlogs folder ('keep' or 'study') in the hcp folder ('hcp') or in a <session id>/logs/comlogs folder ('sessions'). Multiple options can be specified separated by '|'."],
+
+           ['# --- hcp_longitudinal_freesurfer options'],
+           ['hcp_long_fs_template', 'base',                                        str,     "Name of the base template."],
+           ['hcp_long_fs_extra_reconall_base',  '',                                isNone,  "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all base template creation. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
+           ['hcp_long_fs_extra_reconall',  '',                                     isNone,  "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all processing. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
 ]
 
 
@@ -579,7 +582,7 @@ calist = [
 
 # longitudinal commands
 lalist = [
-    ['lfs',     'longitudinal_freesurfer',    process_hcp.longitudinal_freesurfer,            "Runs longitudinal FreeSurfer across sessions."]
+    ['hcp_lfs', 'hcp_longitudinal_freesurfer',  process_hcp.hcp_longitudinal_freesurfer,    "Runs longitudinal FreeSurfer across sessions."]
 ]
 
 # multi-session commands
@@ -627,14 +630,10 @@ for line in salist:
         # sactions[line[0]] = line[2]
         sactions[line[1]] = line[2]
 
-# processing, longitudinal and multi-session actions
-plactions = {}
-plactions.update(pactions.copy())
-plactions.update(lactions.copy())
-
 # all actions
 allactions = {}
-allactions.update(plactions.copy())
+allactions.update(pactions.copy())
+allactions.update(lactions.copy())
 allactions.update(mactions.copy())
 allactions.update(sactions.copy())
 
@@ -675,20 +674,14 @@ def run(command, args):
 
     sessions, gpref = gc.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
-    # check if we are running across subjects rather than sessions
+    # check if all sessions have subjects for longitudinal
     if command in lactions:
-        subjectList = []
-        subjectInfo = {}
+        subject_list = []
         for session in sessions:
             if 'subject' not in session:
                 raise ge.CommandFailed(command, "Missing subject information", "%s batch file does not provide subject information for session id %s." % (options['subjects'], session['id']), "Please check the batch file!", "Aborting processing!")
-            if session['subject'] not in subjectList:
-                subjectList.append(session['subject'])
-                subjectInfo[session['subject']] = {'id': session['subject'], 'sessions': []}
-            if session['subject'] == session['id']:
-                raise ge.CommandFailed(command, "Session id matches subject id", "Session id [%s] is the same as subject id [%s]!" % (session['id'], session['subject']), "Please check the batch file!", "Aborting processing!")
-            subjectInfo[session['subject']]['sessions'].append(session)
-        sessions = [subjectInfo[e] for e in subjectList]
+            if session['subject'] not in subject_list:
+                subject_list.append(session['subject'])
 
     # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, command)
@@ -822,10 +815,10 @@ def run(command, args):
         print("---- Running local")
         c = 0
         if parsessions == 1 or options['run'] == 'test':
-            # processing and longitudinal commands
-            if command in plactions:
+            # processing commands
+            if command in pactions:
                 pending_actions = plactions[command]
-                for session in sessions:
+                for session in pactions:
                     if len(session['id']) > 1:
                         if options['run'] == 'test':
                             action = 'testing'
@@ -869,6 +862,35 @@ def run(command, args):
 
                 # process
                 r, status = procResponse(pending_actions(sessions, sessionids, soptions, overwrite, c + 1))
+
+                # write log
+                writelog(r)
+                consoleLog += r
+                print(r)
+                stati.append(status)
+
+            # longitudinalo commands
+            elif command in lactions:
+                pending_actions = lactions[command]
+
+                # test or processing
+                if options['run'] == 'test':
+                    action = 'testing'
+                else:
+                    action = 'processing'
+
+                # update options and prepare the all subjects string for labeling
+                for session in sessions:
+                    soptions = updateOptions(session, options)
+                
+                subjectids = ",".join(subject_list)
+
+                # log
+                consoleLog += "\nStarting %s of subjects %s at %s" % (action, subjectids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                print("\nStarting %s of subjects %s at %s" % (action, subjectids, datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+
+                # process
+                r, status = procResponse(pending_actions(sessions, subjectids, soptions, overwrite, c + 1))
 
                 # write log
                 writelog(r)
