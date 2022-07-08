@@ -1,0 +1,18 @@
+REFBOLD MB8 2.5 s56     => boldref:ref
+BOLD OPEN MB8 2.5 s56   => bold:restEO
+BOLD CLOSED MB8 2.5 s56 => bold:restEC
+BOLD sWM MB8 2.5 s56    => bold:sWM
+
+B0 map NSA1 2.5 [1/2] magnitude => FM-Magnitude
+B0 map NSA1 2.5 [2/2] real      => FM-Phase
+
+T1w 0.7mm N1                    => T1w
+T2w 0.7mm N1                    => T2w
+
+SE-PA MB8 2.5 s56               => SE-FM-PA
+SE-AP MB8 2.5 s56               => SE-FM-AP
+
+DWI MB2 S3 AP80                 => DWI:dir80_AP
+DWI MB2 S3 PA80                 => DWI:dir80_PA
+DWI MB2 S3 AP81                 => DWI:dir81_AP
+DWI MB2 S3 PA81                 => DWI:dir81_PA
