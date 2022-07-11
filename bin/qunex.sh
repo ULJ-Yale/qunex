@@ -96,8 +96,8 @@ show_splash() {
     geho "                      COPYRIGHT & LICENSE NOTICE:"
     geho ""
     geho "Use of this software is subject to the terms and conditions defined in"
-    geho "'LICENSE.md' which is a part of the QuNex Suite source code package:"
-    geho "https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md"
+    geho "'LICENSES' which is a part of the QuNex Suite source code package:"
+    geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
     geho ""
 }
 
@@ -178,7 +178,7 @@ show_all_qunex_commands() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-# -- Master Execution and Logging -- https://bitbucket.org/oriadev/qunex/wiki/Overview/Logging.md
+# -- Master Execution and Logging -- https://qunex.readthedocs.io/en/latest/wiki/Overview/Logging.html
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
@@ -664,10 +664,7 @@ extract_roi() {
     # -- Parse general parameters
     ROIFileSessionSpecific="$ROIFileSessionSpecific"
     SingleInputFile="$SingleInputFile"
-    if [[ -z ${SingleInputFile} ]]; then
-        OutPath="${SessionsFolder}/${CASE}/${OutPath}"
-    else
-        OutPath="${OutPath}"
+    if [[ -n ${SingleInputFile} ]]; then
         InputFile="${SingleInputFile}"
     fi
     if [[ ${ROIFileSessionSpecific} == "no" ]]; then
@@ -677,15 +674,16 @@ extract_roi() {
     fi
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh \
-    --roifile='${ROIInputFile}' \
+    --roifile='${ROIFile}' \
     --inputfile='${InputFile}' \
-    --outdir='${OutPath}' \
+    --outpath='${OutPath}' \
     --outname='${OutName}'"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
 
-show_usage_roi_extract() {
+show_usage_extract_roi() {
     echo ""
     echo "qunex ${usage_input}"
     ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh
@@ -1041,17 +1039,12 @@ get_flags() {
     done
 }
 
-# -- Set and report version
-QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
-echo ""
-geho " ........................ Running QuNex v${QuNexVer} ........................"
-echo ""
-
 # -- Checks for version
 show_version() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
     echo "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version: ${QuNexVer}"
+    exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -1065,7 +1058,7 @@ if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] ||
     exit 0
 fi
 
-# -- Check if version was requested
+# -- Check if splash was requested
 if [ "$1" == "-splash" ] || [ "$1" == "splash" ] || [ "$1" == "--splash" ] || [ "$1" == "--s" ] || [ "$1" == "-s" ]; then
     show_splash
     echo ""
@@ -1093,6 +1086,11 @@ if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envset
     exit 0
 fi
 
+# -- Set and report version
+QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+echo ""
+geho " ........................ Running QuNex v${QuNexVer} ........................"
+echo ""
 
 # ------------------------------------------------------------------------------
 # -- Map deprecated commands
@@ -1200,7 +1198,6 @@ is_qunex_command() {
 if [[ ${1} =~ .*--.* ]] && [[ -z ${2} ]] || [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     if [[ ${Usage} == "--a" ]] || [[ ${Usage} == "--all" ]] || [[ ${Usage} == "--allcommands" ]]; then
-        show_splash
         show_all_qunex_commands
         exit 0
     fi
@@ -1210,7 +1207,6 @@ fi
 if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     Usage="$1"
     if [[ ${Usage} == "-a" ]] || [[ ${Usage} == "-all" ]] || [[ ${Usage} == "-allcommands" ]]; then
-        show_splash
         show_all_qunex_commands
         exit 0
     fi  
@@ -1756,7 +1752,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
             echo "     resolving the conflict such that a consistent folder specification is used. "
             echo ""
             echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-            echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+            echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
             echo ""
         fi
 
@@ -1772,7 +1768,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
                 echo "            --> ${StudyFolder}/sessions"
                 echo ""
                 echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
                 echo ""
             else
                 mageho "WARNING: You are attempting to execute QuNex command using a conflicting QuNex file hierarchy:"
@@ -1788,7 +1784,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
                 echo "     resolving the conflict such that a consistent folder specification is used. "
                 echo ""
                 echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
                 echo ""
             fi
         fi
@@ -1804,7 +1800,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
         echo "       --> ${StudyFolder}/sessions"
         echo ""
         echo "       QuNex will proceed but please consider renaming your directories per latest specs:"
-        echo "          https://bitbucket.org/oriadev/qunex/wiki/Overview/DataHierarchy"
+        echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
         echo ""
     fi
 fi

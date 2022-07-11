@@ -1,0 +1,16 @@
+# import hcp
+id: 06_retest
+subject: 06
+hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
+raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
+hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
+
+01: T1w
+02: bold1:rest1
+03: bold2:rest1
+04: bold3:rest2
+05: bold4:rest2
+06: bold5:CARIT
+07: bold6:FACENAME
+08: bold7:VISMOTOR
+09: dwi

@@ -153,7 +153,6 @@ deprecated_commands = {
                         "hcp_dtifit": ["hcp_DTIFit"],
                         "hcp_bedpostx": ["hcp_Bedpostx"],
                         "run_shell_script": ["runShellScript"],
-                        "longitudinal_freesurfer": ["longitudinalFS"],
                         "create_bold_list": ["createBoldList"],
                         "create_conc_list": ["createConcList"],
                         "map_raw_data": ["mapRawData"],

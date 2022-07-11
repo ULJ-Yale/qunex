@@ -11,81 +11,106 @@
 # ------------------------------------------------------------------------------
 
 usage() {
-  echo ""
-  echo "This function runs the FSL dtifit processing locally or via a scheduler."
-  echo "It explicitly assumes the Human Connectome Project folder structure for "
-  echo " preprocessing and completed diffusion processing. "
-  echo ""
-  echo "The DWI data is expected to be in the following folder::"
-  echo ""
-  echo "  <study_folder>/<session>/hcp/<session>/T1w/Diffusion"
-  echo ""
-  echo "INPUTS"
-  echo "======"
-  echo ""
-  echo "--sessionsfolder   Path to study folder that contains sessions"
-  echo "--sessions         Comma separated list of sessions to run"
-  echo "--overwrite        Delete prior run for a given session (yes / no)"
-  echo "--species          dtifit currently supports processing of human and macaque
-                           data. If processing macaques set this parameter to macaque."
-  echo "--mask             Bet binary mask file [T1w/Diffusion/nodif_brain_mask]."
-  echo "--bvecs            b vectors file [T1w/Diffusion/bvecs]."
-  echo "--bvals            b values file [T1w/Diffusion/bvals]."
-  echo "--cni              Input confound regressors [not set by default]."
-  echo "--sse              Output sum of squared errors [not set by default]."
-  echo "--wls              Fit the tensor with weighted least squares
-                           [not set by default]."
-  echo "--kurt             Output mean kurtosis map (for multi-shell data)
-                           [not set by default]."
-  echo "--kurtdir          Output parallel/perpendicular kurtosis maps
-                           (for multi-shell data) [not set by default]."
-  echo "--littlebit        Only process small area of brain [not set by default]."
-  echo "--save_tensor      Save the elements of the tensor [not set by default]."
-  echo "--zmin             Min z [not set by default]."
-  echo "--zmax             Max z [not set by default]."
-  echo "--ymin             Min y [not set by default]."
-  echo "--ymax             Max y [not set by default]."
-  echo "--xmin             Min x [not set by default]."
-  echo "--xmax             Max x [not set by default]."
-  echo "--gradnonlin       Gradient nonlinearity tensor file [not set by default]."
-  echo "--scheduler        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
-  echo "                   followed by relevant options; e.g. for SLURM the string "
-  echo "                   would look like this: "
-  echo ""
-  echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>, cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-  echo ""
-  echo "EXAMPLE USE"
-  echo "==========="
-  echo ""
-  echo "Run directly via::"
-  echo ""
-  echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \ "
-  echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
-  echo ""
-  reho "NOTE: --scheduler is not available via direct script call."
-  echo ""
-  echo "Run via:: "
-  echo ""
-  echo " qunex dwi_dtifit --<parameter1> --<parameter2> ... --<parameterN> "
-  echo ""
-  geho "NOTE: scheduler is available via qunex call."
-  echo ""
-  echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
-  echo "                  followed by relevant options"
-  echo ""
-  echo "For SLURM scheduler the string would look like this via the qunex call:: "
-  echo ""                   
-  echo " --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "     
-  echo ""     
-  echo "::"
-  echo ""
-  echo "qunex dwi_dtifit \ "
-  echo "--sessionsfolder='<path_to_study_sessions_folder>' \ "
-  echo "--sessions='<comma_separarated_list_of_cases>' \ "
-  echo "--scheduler='<name_of_scheduler_and_options>' \ "
-  echo "--overwrite='yes'"
-  echo ""
-  exit 0
+    cat << EOF
+``dwi_dtifit``
+
+This function runs the FSL dtifit processing locally or via a scheduler.
+It explicitly assumes the Human Connectome Project folder structure for
+preprocessing and completed diffusion processing.
+
+The DWI data is expected to be in the following folder::
+
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+    --sessions (str):
+        Comma separated list of sessions to run.
+    --overwrite (str):
+        Delete prior run for a given session ('yes' / 'no').
+    --species (str):
+        dtifit currently supports processing of human and macaqu data. If
+        processing macaques set this parameter to macaque.
+    --mask (str, default 'T1w/Diffusion/nodif_brain_mask'):
+        Set binary mask file.
+    --bvecs (str, default 'T1w/Diffusion/bvecs'):
+        b vectors file.
+    --bvals (str, default 'T1w/Diffusion/bvals'):
+        b values file.
+    --cni (str):
+        Input confound regressors [not set by default].
+    --sse (str):
+        Output sum of squared errors [not set by default].
+    --wls (str):
+        Fit the tensor with weighted least square [not set by default].
+    --kurt (str):
+        Output mean kurtosis map (for multi-shell data [not set by default].
+    --kurtdir (str):
+        Output parallel/perpendicular kurtosis map (for multi-shell data) [not
+        set by default].
+    --littlebit (str):
+        Only process small area of brain [not set by default].
+    --save_tensor (str):
+        Save the elements of the tensor [not set by default].
+    --zmin (str):
+        Min z [not set by default].
+    --zmax (str):
+        Max z [not set by default].
+    --ymin (str):
+        Min y [not set by default].
+    --ymax (str):
+        Max y [not set by default].
+    --xmin (str):
+        Min x [not set by default].
+    --xmax (str):
+        Max x [not set by default].
+    --gradnonlin (str):
+        Gradient nonlinearity tensor file [not set by default].
+    --scheduler (str):
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options; e.g. for SLURM the string would look like this::
+
+            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>, cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+Examples:
+    Run directly via::
+
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \\
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via::
+
+        qunex dwi_dtifit \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    ::
+
+        qunex dwi_dtifit \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --scheduler='<name_of_scheduler_and_options>' \\
+            --overwrite='yes'
+
+EOF
+exit 0
 }
 
 # ------------------------------------------------------------------------------

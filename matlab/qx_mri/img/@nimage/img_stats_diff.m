@@ -1,8 +1,8 @@
 function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)
 
-%``function [out, doIt] = img_stats_diff(img1, img2, doIt, exclude)``
+%``img_stats_diff(img1, img2, doIt, exclude)``
 %
-%	Compares the specified statistics for each voxel across frames for the two
+%    Compares the specified statistics for each voxel across frames for the two
 %   specified images and/or computes a statistical test of differences.
 %
 %   INPUTS

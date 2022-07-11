@@ -1,35 +1,39 @@
 function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 
-%	``function [snr, sd] = general_compute_snr_group(flist, fmask, target, verbose)``
-%	
+%``general_compute_snr_group(flist, target, fmask, verbose)``
+%
 %   Computes SNR and SD for the whole group.
-%	
-%	INPUTS
-%	======
 %
-%	--flist 	conc-like style list of session image files or conc files: 
+%   Parameters:
+%       --flist (str):
+%           String or file path to conc-like style list of session
+%           image files or conc files:
 %
-%               - session id:<session_id>
-%               - roi:<path to the individual's ROI file>
-%               - file:<path to bold files - one per line>
+%           - session id:<session_id>
+%           - roi:<path to the individual's ROI file>
+%           - file:<path to bold files - one per line>.
 %
-%   --target 	file to save results into
-%	--fmask		an array mask defining which frames to use (1) and which not (0)
-%	--verbose	to report on progress or not [not]
-%	
+%       --target (str, default []):
+%           Name of folder to save results into.
+%       --fmask (int | vector | bool, default []):
+%           A scalar, vector or logical mask defining which frames to use (1)
+%           and which not (0).
+%       --verbose (bool, default false):
+%           Whether to report on progress or not.
+%
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 4
-	verbose = false;
-	if nargin < 3
-	    target = [];
-	    if nargin < 2
-	    	mask = [];
-	    end
-	end
+    verbose = false;
+    if nargin < 3
+        target = [];
+        if nargin < 2
+            fmask = [];
+        end
+    end
 end
 
 % ======= Run main
@@ -49,14 +53,14 @@ for s = 1:nsessions
     
     %   --- reading in image files
     tic; 
-	if verbose, fprintf('\n ... processing %s', session(s).id); end
-	
-	nfiles = length(session(s).files);
-	for n = 1:nfiles
-		[snr(c) sd(c)] = g_compute_snr(session(s).files{n}, [], fmask, target, [], [session(s).id '_file_' num2str(n)]);
-		fprintf(fout, '%s\t%.3f\t%.3f\n', session(s).files{n}, snr(c), sd(c));
-		c = c +1;
-	end
+    if verbose, fprintf('\n ... processing %s', session(s).id); end
+
+    nfiles = length(session(s).files);
+    for n = 1:nfiles
+        [snr(c) sd(c)] = general_compute_snr(session(s).files{n}, [], fmask, target, [], [session(s).id '_file_' num2str(n)]);
+        fprintf(fout, '%s\t%.3f\t%.3f\n', session(s).files{n}, snr(c), sd(c));
+        c = c +1;
+    end
 
 end
 

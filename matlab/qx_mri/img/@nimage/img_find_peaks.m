@@ -1,6 +1,6 @@
 function [roi vol_peak peak] = img_find_peaks(img, mindim, maxdim, val, t, projection_type, options, verbose)
 
-%``function [roi vol_peak peak] = img_find_peaks(img, mindim, maxdim, val, t, projection_type, options, verbose)``
+%``img_find_peaks(img, mindim, maxdim, val, t, projection_type, options, verbose)``
 %
 %   Find peaks and uses watershed algorithm to grow regions from them.
 %

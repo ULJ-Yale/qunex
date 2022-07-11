@@ -1,6 +1,6 @@
 function [version] = general_get_qunex_version()
 
-%``function [] = general_get_qunex_version()``
+%``general_get_qunex_version()``
 %
 %   Function for retrieving qunex version.
 %

@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number of scripts and functions written in several programming languages that support a flexible and extensible framework for data organization, preprocessing, quality assurance, and various analytics across neuroimaging modalities. The QuNex suite is designed to be flexible and can be developed by adding functions developed around its component tools.
 
-The QuNex code is is co-developed and co-maintained by the:
+The QuNex code is co-developed and co-maintained by the:
 
 * [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
 * [Mind and Brain Lab, University of Ljubljana](https://mblab.si),
@@ -17,11 +17,10 @@ The QuNex code is is co-developed and co-maintained by the:
 ## Quick links
 
 * [Website](http://qunex.yale.edu/)
-* [QuNex Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
-* [SDK Wiki](https://bitbucket.org/oriadev/qunexsdk/wiki/Home)
-* [QuNex quick start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
-* [QuNex container deployment](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
-* [Installing from source and dependencies](https://bitbucket.org/oriadev/qunex/wiki/Overview/Installation.md)
+* [QuNex Documentation](https://qunex.readthedocs.io)
+* [QuNex quick start](https://qunex.readthedocs.io/en/latest/wiki/Overview/QuickStart.html)
+* [QuNex container deployment](https://qunex.readthedocs.io/en/latest/wiki/Overview/QuNexContainerUsage.html)
+* [Installing from source and dependencies](https://qunex.readthedocs.io/en/latest/wiki/Overview/Installation.html)
 
 ## Version
 

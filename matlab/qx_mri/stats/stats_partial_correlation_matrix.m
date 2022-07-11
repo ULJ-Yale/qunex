@@ -1,7 +1,7 @@
 function [p] = stats_partial_correlation_matrix(X, Z, verbose)
 
 %function [p] = stats_partial_correlation_matrix(X, Z)
-%	
+%
 %   Computes partial correlation for each column in X with each column in Z,
 %   partialing out other columns in Z.
 %
@@ -17,7 +17,7 @@ function [p] = stats_partial_correlation_matrix(X, Z, verbose)
 %
 %   p
 %       matrix n x m where n is number of column in X and m number of vars in Z
-%	
+%
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
@@ -61,7 +61,7 @@ if verbose, fprintf(' done.\n'), end
 
 
 % ======================================================
-% 	                ----> helper - compute GLM residuals
+%                     ----> helper - compute GLM residuals
 
 
 function [r] = resid(X, Z)

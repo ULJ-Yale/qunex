@@ -1,14 +1,14 @@
 function [p Z M D SE t] = img_ttest_dependent(A, B, verbose)
 
-%``function [p Z M D SE t] = img_ttest_dependent(A, B, verbose)``
+%``img_ttest_dependent(A, B, verbose)``
 %
-%	Computes dependent t-test comparing the called image object (A) to B.
+%    Computes dependent t-test comparing the called image object (A) to B.
 %
 %   INPUTS
 %   ======
 %
-%	--A         the image object the method is called on
-%	--B         the image object to compare to
+%    --A         the image object the method is called on
+%    --B         the image object to compare to
 %   --verbose   should it talk a lot [false]
 %
 %   OUTPUTS

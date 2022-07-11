@@ -1,6 +1,6 @@
 function [roi peak] = img_find_peaks_surface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)
 
-%``function [roi peak] = img_find_peaks_surface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)``
+%``img_find_peaks_surface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)``
 %
 %   Find peaks and uses watershed algorithm to grow regions from them on the
 %   brain model components constructed with surface elements (ex. left and right

@@ -1,5 +1,5 @@
 function [rd] = general_downsample_data(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurface, outSphere, wbPath)
-%``function [rd] = general_downsample_data(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurfaceProjection, wbPath)``
+%``general_downsample_data(input, inSurfaceProjection, inSphereSurface, targetVertices, outSurfaceProjection, wbPath)``
 %
 %   Downsample surface data and the corresponding surface file.
 %

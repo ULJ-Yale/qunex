@@ -2,26 +2,26 @@ function [B, rss, p] = img_glm_fit2(obj, X)
 
 %`function [B, rss, p] = img_glm_fit2(obj, X)``
 %
-%	Computes GLM fit to whole brain, optimized for ANOVA.
+%    Computes GLM fit to whole brain, optimized for ANOVA.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%	--obj   nimage image object
+%    --obj   nimage image object
 %   --X     predictor matrix (frames x predictors)
 %
 %   OUTPUTS
-%	=======
+%    =======
 %
 %   B
-%		beta weights image
+%        beta weights image
 %   rss
-%		residual sum of squares
+%        residual sum of squares
 %   p
-%		number of parameters
+%        number of parameters
 %
 %   USE
-%	===
+%    ===
 %
 %   The method computes a linear regression between dataseries of each voxel and
 %   all the columns of the X regressor matrix. The image can be a series of
@@ -35,11 +35,11 @@ function [B, rss, p] = img_glm_fit2(obj, X)
 %   points
 %
 %   EXAMPLE USE
-%	===========
+%    ===========
 %
 %   ::
 %
-%		[B, rss, p] = img.img_glm_fit2(behmatrix);
+%        [B, rss, p] = img.img_glm_fit2(behmatrix);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

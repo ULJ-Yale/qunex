@@ -1,6 +1,6 @@
 function [B, Z] = img_compute_r_type3(obj, bdata, verbose)
 
-%``function [B, Z] = img_compute_r_type3(obj, bdata, verbose)``
+%``img_compute_r_type3(obj, bdata, verbose)``
 %
 %   Computes whole brain regression and significances using Type III Sum of
 %   squares.

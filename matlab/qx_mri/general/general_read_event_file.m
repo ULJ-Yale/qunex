@@ -1,28 +1,28 @@
 function [out] = general_read_event_file(file, tunit)
 
-%``function [out] = general_read_event_file(file, tunit)``
+%``general_read_event_file(file, tunit)``
 %
-%	Reads fidl event file and returns a structure.
+%    Reads fidl event file and returns a structure.
 %
-%	INPUTS
-%	======
+%    INPUTS
+%    ======
 %
-%	--file 		fidl event file
-%	--tunit
+%    --file         fidl event file
+%    --tunit
 %
-% 	OUTPUT
-%	======
-%	
-%	out
-%		A structure that includes:
+%     OUTPUT
+%    ======
 %
-%		- frame   ... frame number of the event start
-%		- elength ... event length in frames
-%		- event_s ... start of the event in s
-%		- event_l ... length of the event in s
-%		- event   ... event code
-%		- events  ... list of event names
-%		- TR      ... TR in s
+%    out
+%        A structure that includes:
+%
+%        - frame   ... frame number of the event start
+%        - elength ... event length in frames
+%        - event_s ... start of the event in s
+%        - event_l ... length of the event in s
+%        - event   ... event code
+%        - events  ... list of event names
+%        - TR      ... TR in s
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -41,51 +41,51 @@ tevents = strread(s, '%s');
 TR = str2num(char(tevents(1)));
 tevents = tevents(2:length(tevents));
 
-frame 	= [];
+frame     = [];
 elength = [];
-event 	= [];
-beh 	= [];
+event     = [];
+beh     = [];
 event_l = [];
 event_s = [];
 
 first = 1;
 
 while feof(fin) == 0
-	s = fgetl(fin);
-	s = strrep(s, 'NA', 'NaN');
+    s = fgetl(fin);
+    s = strrep(s, 'NA', 'NaN');
 
-	data = strread(s, '%f');
+    data = strread(s, '%f');
 
-	if length(data) >= 3
+    if length(data) >= 3
 
-		frame 	= [frame floor(data(1)/TR)+1];
-		event_s = [event_s data(1)];
+        frame     = [frame floor(data(1)/TR)+1];
+        event_s = [event_s data(1)];
 
-		el      = data(3);
-		if strcmp(tunit, 'ms')
-			el  = el / 1000;
-		end
+        el      = data(3);
+        if strcmp(tunit, 'ms')
+            el  = el / 1000;
+        end
 
-		elength = [elength floor(el/TR)];
-		event_l = [event_l el];
-		event 	= [event data(2)];
+        elength = [elength floor(el/TR)];
+        event_l = [event_l el];
+        event     = [event data(2)];
 
-		if first
-			nbeh = length(data)-3;
-			first = 0;
-		end
-		if nbeh
-			beh = [beh; data(4:end)'];
-		end
-	elseif length(data) == 2
-	    if data(2) < 0
-	        frame 	= [frame floor(data(1)/TR)+1];
-    		event_s = [event_s data(1)];
-    		elength = [elength abs(data(2))];
-    		event_l = [event_l floor(abs(data(2))*TR)];
-    		event 	= [event -1];
-		end
-	end
+        if first
+            nbeh = length(data)-3;
+            first = 0;
+        end
+        if nbeh
+            beh = [beh; data(4:end)'];
+        end
+    elseif length(data) == 2
+        if data(2) < 0
+            frame     = [frame floor(data(1)/TR)+1];
+            event_s = [event_s data(1)];
+            elength = [elength abs(data(2))];
+            event_l = [event_l floor(abs(data(2))*TR)];
+            event     = [event -1];
+        end
+    end
 end
 
 
@@ -103,5 +103,5 @@ out.TR      = TR;
 out.nevents = length(frame);
 
 if max(event_l) >= 750 && min(event_l) > 10
-	out = general_read_event_file(file, 'ms');
+    out = general_read_event_file(file, 'ms');
 end

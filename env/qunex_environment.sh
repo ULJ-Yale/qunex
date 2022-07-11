@@ -327,8 +327,8 @@ geho ""
 geho "                      COPYRIGHT & LICENSE NOTICE:"
 geho ""
 geho "Use of this software is subject to the terms and conditions defined in"
-geho "'LICENSE.md' which is a part of the QuNex Suite source code package:"
-geho "https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md"
+geho "'LICENSES' which is a part of the QuNex Suite source code package:"
+geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
 geho ""
 
 # ------------------------------------------------------------------------------
