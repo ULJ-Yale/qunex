@@ -196,7 +196,7 @@ arglist = [
            ['filter',             '',                                            str,    'Filtering information.'],
            ['script',             '',                                            isNone, 'The script to be executed.'],
            ['sessionid',          '',                                            str,    "a session id for which to run the command"],
-           ['sessionids',         '',                                            str,    "list of | separated session ids for which to run the command"],
+           ['sessionids',         '',                                            str,    "list of , or | separated session ids for which to run the command"],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -672,7 +672,7 @@ def run(command, args):
     if 'filter' in args:
         options['filter'] = args['filter']
 
-    sessions, gpref = gc.getSessionList(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
+    sessions, gpref = gc.get_sessions_list(options['sessions'], filter=options['filter'], sessionids=options['sessionids'], verbose=False)
 
     # check if all sessions have subjects for longitudinal
     if command in lactions:

@@ -557,7 +557,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             print("# Source files: %s" % (sfiles), file=jfile)
             
         elif overwrite == 'append':
-            slist, parameters = gc.getSessionList(targetfile)
+            slist, parameters = gc.get_sessions_list(targetfile)
             slist = [e['id'] for e in slist]
             print("---> Appending to file %s [%s]" % (os.path.basename(targetfile), targetfile))
             if paramfile and preexist:
@@ -592,7 +592,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         missing = 0
 
         if sessions is not None:
-            sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+            sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
             files = []
             for session in sessions:
                 for sfile in sfiles:
@@ -966,7 +966,7 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("create_list", "No session found", "No sessions found to add to the list file!", "Please check your data!")
@@ -1272,7 +1272,7 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("create_conc", "No session found", "No sessions found to add to the list file!", "Please check your data!")
@@ -1934,7 +1934,7 @@ def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number'
     if bolds is None:
         raise ge.CommandError("batchTag2Num", "No bolds specified!")
 
-    sessions, options = gc.getSessionList(filename, sessionids=sessionid)
+    sessions, options = gc.get_sessions_list(filename, sessionids=sessionid)
 
     if not sessions:
         raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (sessionid, filename), "Please check your data!")
@@ -1975,7 +1975,7 @@ def get_sessions_for_slurm_array(sessions, sessionids):
     """
 
     # get sessions
-    slist, _ = gc.getSessionList(sessions, sessionids=sessionids)
+    slist, _ = gc.get_sessions_list(sessions, sessionids=sessionids)
 
     # print
     sarray = []
@@ -2217,7 +2217,7 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("gather_behavior", "No session found" , "No sessions found to process behavioral data from!", "Please check your data!")
@@ -2534,7 +2534,7 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSessionList(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+    sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
 
     if not sessions:
         raise ge.CommandFailed("pull_sequence_names", "No session found" , "No sessions found to process neuroimaging data from!", "Please check your data!")
@@ -2814,7 +2814,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
 
         # -- get list of session folders
 
-        sessions, gopts = gc.getSessionList(
+        sessions, gopts = gc.get_sessions_list(
             sessions, filter=filter, verbose=False)
 
         sfolders = []

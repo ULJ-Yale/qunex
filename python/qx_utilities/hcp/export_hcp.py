@@ -214,7 +214,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     sessionsfolder, mapto, mapexclude = gu.exportPrep("export_hcp", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
-    sessions, _ = gc.getSessionList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
+    sessions, _ = gc.get_sessions_list(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
     if not sessions:
         raise ge.CommandFailed("export_hcp", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 

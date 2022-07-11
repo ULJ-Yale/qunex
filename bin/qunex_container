@@ -15,7 +15,7 @@ import math
 from datetime import datetime
 
 
-class CommandError(Exception):
+class command_error(Exception):
     """There was an error in calling the command."""
     
     def __init__(self, function=None, error=None, *hints):
@@ -24,14 +24,14 @@ class CommandError(Exception):
         if error is None:
             error = "unspecified"
         msg = "Error '%s' occured in %s" % (error, function)
-        super(CommandError, self).__init__(msg)
+        super(command_error, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
         self.report   = (error,) + hints
 
 
-class CommandFailed(Exception):
+class command_failed(Exception):
     """A command has failed to carry out fully."""
 
     def __init__(self, function=None, error=None, *hints):
@@ -40,7 +40,7 @@ class CommandFailed(Exception):
         if error is None:
             error = "unspecified"
         msg = "Error '%s' occured in %s" % (error, function)
-        super(CommandFailed, self).__init__(msg)
+        super(command_failed, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
@@ -169,13 +169,13 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
 
     # --- check inputs
     if command is None and script is None:
-        raise CommandError("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
+        raise command_error("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
 
     if command is not None and script is not None:
-        raise CommandError("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
+        raise command_error("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
 
     if scheduler_params is None:
-        raise CommandError("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
+        raise command_error("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
 
     # --- parse settings
     try:
@@ -183,22 +183,22 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         comname   = scheduler_params.pop('comname', "")
         jobnum    = scheduler_params.pop('jobnum', "")
     except:
-        raise CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
+        raise command_error("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
 
     # --- compile command to pass
     if command is None:
         if not os.path.exists(script):
-            raise CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
+            raise command_failed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
         command = open(script, "r")
 
     if workdir is not None:
         if not os.path.exists(workdir):
-            raise CommandFailed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
+            raise command_failed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
         command = "cd %s\n" % (workdir) + command
 
     if environment is not None:
         if not os.path.exists(environment):
-            raise CommandFailed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
+            raise command_failed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
         command = open(environment, "r") + "\n" + command
 
     # --- do search replace
@@ -214,7 +214,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
             if not os.path.exists(os.path.dirname(v)) and k != 'return':
-                raise CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
+                raise command_failed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
     else:
         # log name
@@ -239,102 +239,102 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         outputs['stdout'] = outputs['both']
 
     # --- build scheduler commands
-    sCommand = ""
+    s_command = ""
 
     if scheduler_name == "PBS":
         for k, v in scheduler_params.items():
             if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
-                sCommand += "#PBS -l %s=%s\n" % (k, v)
+                s_command += "#PBS -l %s=%s\n" % (k, v)
             elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e', 'l'):
-                sCommand += "#PBS -%s %s\n" % (k, v)
+                s_command += "#PBS -%s %s\n" % (k, v)
             elif k == 'depend':
-                sCommand += "#PBS -W depend=%s\n" % (v)
+                s_command += "#PBS -W depend=%s\n" % (v)
             elif k == 'umask':
-                sCommand += "#PBS -W umask=%s\n" % (v)
+                s_command += "#PBS -W umask=%s\n" % (v)
             elif k == 'N' and jobname == 'schedule':
                 jobname = v
             elif k == 'nodes':
-                sCommand += "#PBS -l nodes=%s\n" % v
+                s_command += "#PBS -l nodes=%s\n" % v
 
         # set default nodes
         if ("nodes" not in scheduler_params.keys()):
-            sCommand += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
+            s_command += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
 
         # job name
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
         if (jobnum != ""):
             jobname = "%s(%s)" % (jobname, jobnum)
-        sCommand += "#PBS -N %s\n" % jobname
+        s_command += "#PBS -N %s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sCommand += "#PBS -o %s\n" % (outputs['stdout'])
+            sP += "#PBS -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
-            sCommand += "#PBS -e %s\n" % (outputs['stderr'])
+            s_command += "#PBS -e %s\n" % (outputs['stderr'])
         if outputs['both']:
-            sCommand += "#PBS -j oe\n"
+            s_command += "#PBS -j oe\n"
         com = 'qsub'
 
     elif scheduler_name == "LSF":
-        sCommand += "#BSUB -o %s-%s_#%s_%%J\n" % (jobname, comname, jobnum)
+        s_command += "#BSUB -o %s-%s_#%s_%%J\n" % (jobname, comname, jobnum)
         for k, v in [('queue', '#BSUB -q %s\n'), ('mem', "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n"), ('walltime', '#BSUB -W %s\n'), ('cores', '#BSUB -n %s\n')]:
             if k in scheduler_params:
-                sCommand += v % (scheduler_params[k])
+                s_command += v % (scheduler_params[k])
         for k, v in scheduler_params.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
-                sCommand += "#BSUB -%s %s\n" % (k, v)
+                s_command += "#BSUB -%s %s\n" % (k, v)
             elif k == 'jobName' and jobname == 'schedule':
                 jobname = v
 
         # set default cores
         if ("cores" not in scheduler_params.keys()):
-            sCommand += "#BSUB -n %s\n" % (parsessions * parelements)
+            s_command += "#BSUB -n %s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
-        sCommand += "#BSUB -P %s\n" % jobname
+        s_command += "#BSUB -P %s\n" % jobname
         if (jobnum != ""):
             jobname = "%s(%s)" % (jobname, jobnum)
-        sCommand += "#BSUB -J %s\n" % jobname
+        s_command += "#BSUB -J %s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sCommand += "#BSUB -o %s\n" % (outputs['stdout'])
+            s_command += "#BSUB -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
-            sCommand += "#BSUB -e %s\n" % (outputs['stderr'])
+            s_command += "#BSUB -e %s\n" % (outputs['stderr'])
         com = 'bsub'
 
     elif scheduler_name == "SLURM":
-        sCommand += "#!/bin/sh\n"
+        s_command += "#!/bin/sh\n"
         for key, value in scheduler_params.items():
             if key in ('J', 'job-name') and jobname == 'schedule':
                 jobname = v
             elif value == "QX_FLAG":
-                sCommand += "#SBATCH --%s\n" % (key.replace('--', ''))
+                s_command += "#SBATCH --%s\n" % (key.replace('--', ''))
 
             else:
-                sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+                s_command += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
         # set default cpus-per-task
         if ("cpus-per-task" not in scheduler_params.keys() and "c" not in scheduler_params.keys()):
-            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
+            s_command += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
         if (jobnum != ""):
             jobname = "%s(%s)" % (jobname, jobnum)
-        sCommand += "#SBATCH --job-name=%s\n" % jobname
+        s_command += "#SBATCH --job-name=%s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
+            s_command += "#SBATCH -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
-            sCommand += "#SBATCH -e %s\n" % (outputs['stderr'])
+            s_command += "#SBATCH -e %s\n" % (outputs['stderr'])
         com = 'sbatch'
 
     # --- run the scheduler
     print("\nSubmitting:\n------------------------------")
-    print(sCommand)
+    print(s_command)
     print(command + "\n")
 
     if outputs['return'] is None:
@@ -351,7 +351,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         sout = subprocess.PIPE
 
     run = subprocess.Popen(com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True)
-    run.stdin.write((sCommand + command).encode('utf-8'))
+    run.stdin.write((s_command + command).encode('utf-8'))
     run.stdin.close()
 
     # ---- returning results
@@ -363,9 +363,9 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         return result
 
 
-def getSessionIDsFromBatchFile(filename, batchfilter=None):
+def get_sessionids_from_batch(filename, batchfilter=None):
     '''
-    getSessionIDsFromBatchFile(filename, batchfilter=None)
+    get_sessionids_from_batch(filename, batchfilter=None)
 
     An internal function for reading batch.txt files. It reads the file and
     returns a list of sessions with the information on images and the additional
@@ -409,10 +409,6 @@ def getSessionIDsFromBatchFile(filename, batchfilter=None):
 
         # variable for storing the session id
         session = ""
-
-        # variable for determining whether to add
-        filter_out = True
-
         for line in sub:
             line = [e.strip() for e in line.split(":")]
 
@@ -426,19 +422,51 @@ def getSessionIDsFromBatchFile(filename, batchfilter=None):
                 # should I filter
                 if line[0] in filters_dict:
                     active_filter = filters_dict[line[0]].split(',')
-                    if line[1] in active_filter:
-                        filter_out = False
+                    if line[1] in active_filter or re.match(filters_dict[line[0]], line[1]):
+                        sessionids.append(session)
                         break
-
-        if batchfilter is None or not filter_out:
-            sessionids.append(session)
 
     return sessionids
 
 
-def getSessionIDsFromList(filename):
+def get_sessionids(batchfile, sessions, batchfilter=None):
     '''
-    getSessionIDsFromList(filename)
+    get_sessionids(batchfile, sessions, batchfilter=None)
+
+    An internal function for getting a list of session ids.
+
+    The batchfile parameter points to the location of the batch file.
+
+    The batchfilter parameters is used for selecting a subset of sessions
+    from the batch file.
+
+    Sessions can be:
+    - a comma, space or pipe separated list of session id codes,
+    - a path to a *.list file (identified by .list extension).
+    '''
+
+    # session have a higher priority
+    if sessions is not None:
+        if re.match(".*\.list$", sessions):
+            if os.path.isfile(sessions):
+                sessionids = get_sessionids_from_list(sessions)
+            else:
+                raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
+        else:
+            sessionids = [e.strip() for e in re.split(' +|,|\|', sessions)]
+    # batchfile
+    else:
+        if os.path.isfile(batchfile):
+            sessionids = get_sessionids_from_batch(batchfile, batchfilter)
+        else:
+            raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
+
+    return sessionids
+
+
+def get_sessionids_from_list(filename):
+    '''
+    get_sessionids_from_list(filename)
 
     An internal function for reading list files. It reads the file and
     returns a list of session ids.
@@ -460,52 +488,6 @@ def getSessionIDsFromList(filename):
 
             if len(line) == 2 and line[0] == "subject id":
                 sessionids.append(line[1])
-
-    return sessionids
-
-
-def getSessionIDs(batchfile, sessions, batchfilter=None):
-    '''
-    getSessionIDs(batchfile, sessions, batchfilter=None)
-
-    An internal function for getting a list of session ids.
-
-    The batchfile parameter points to the location of the batch file.
-
-    The batchfilter parameters is used for selecting a subset of sessions
-    from the batch file.
-
-    Sessions can be:
-    - a comma, space or pipe separated list of session id codes,
-    - a path to a *.list file (identified by .list extension).
-    '''
-
-    listString = listString.strip().replace(" ", "")
-
-    if re.match(".*\.list$", listString):
-        sessionids = getSessionIDsFromList(listString)
-
-    elif os.path.isfile(listString):
-        sessionids = getSessionIDsFromBatchFile(listString)
-
-    elif re.match(".*\.txt$", listString) or '/' in listString:
-        raise ValueError("ERROR: The specified file is not found! [%s]!" % listString)
-
-    # session have a higher priority
-    if sessions is not None:
-        if re.match(".*\.list$", sessions):
-            if os.path.isfile(sessions):
-                sessionids = getSessionIDsFromList(sessions)
-            else:
-                raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
-        else:
-            sessionids = [e.strip() for e in re.split(' +|,|\|', sessions)]
-    # batchfile
-    else:
-        if os.path.isfile(batchfile):
-            sessionids = getSessionIDsFromBatchFile(batchfile, batchfilter)
-        else:
-            raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
 
     return sessionids
 
@@ -610,7 +592,6 @@ def main(args=None):
                     mode and mount a specific folder use::
 
                         "-d -v /host/directory:/container/directory"
-
     --scheduler     A string that specifies the details to use to submit the 
                     container job to a scheduling system. 
     --output        A string specifying where to redirect the standard output 
@@ -896,7 +877,7 @@ def main(args=None):
     n_sessions = None
 
     # get sessionsids
-    sessionids = getSessionIDs(batchfile, sessions, batchfilter)
+    g_sessionids = get_sessionids(batchfile, sessions, batchfilter)
     n_sessions = len(sessionids)
 
     # array for storing session ids
@@ -918,7 +899,7 @@ def main(args=None):
 
         # check scheduler
         if scheduler_name not in ['PBS', 'LSF', 'SLURM']:
-            raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
+            raise command_error("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
 
         # parse scheduler parameters
         scheduler_params = {}
@@ -959,7 +940,7 @@ def main(args=None):
 
             # split to chunks
             for i in range(0, n_sessions, parsessions):
-                sessionids_array.append(','.join(getsessionids[i:i + parsessions]))
+                sessionids_array.append(','.join(g_sessionids[i:i + parsessions]))
 
             # calculate the number of parallel jobs
             parjobs = len(sessionids_array)
@@ -977,7 +958,7 @@ def main(args=None):
             sessionids_arrays = [[] for _ in range(parjobs)]
 
             # divide sessions among jobs
-            for idx, sessionid in enumerate(getsessionids):
+            for idx, sessionid in enumerate(g_sessionids):
                 job_id = idx % parjobs
                 sessionids_arrays[job_id].append(sessionid)
             

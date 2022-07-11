@@ -211,9 +211,9 @@ def readList(filename, verbose=False):
     return slist
 
 
-def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
+def get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
     """
-    ``getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
+    ``get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
 
     Gets a list of sessions as an array of dictionaries.
 
@@ -272,19 +272,32 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
 
     if sessionids is not None and sessionids.strip() != "":
         sessionids = re.split(' +|,|\|', sessionids)
-        slist = [e for e in slist if e['id'] in sessionids]
+        filtered_slist = []
+        for s in slist:
+            if "id" in s and s["id"] in sessionids:
+                filtered_slist.append(s)
+            elif "session" in s and s["session"] in sessionids:
+                filtered_slist.append(s)
+
+        slist = filtered_slist
 
     if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
         except:
-            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("get_sessions_list", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
         if any([len(e) != 2 for e in filters]):
-            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("get_sessions_list", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
-        for key, value in filters:
-            slist = [e for e in slist if key in e and e[key] == value]
+        filtered_slist = []
+        for s in slist:
+            for key, value in filters:
+                if key in s and (s[key] == value or re.match(value, s[key])):
+                    filtered_slist.append(s)
+                    break;
+
+        slist = filtered_slist
 
     # are we inside a SLURM job array?
     if 'SLURM_ARRAY_TASK_ID' in os.environ:
