@@ -1644,7 +1644,7 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
         run = False
     else:
         if os.path.exists(long_dir):
-            os.rmdir(long_dir)
+            shutil.rmtree(long_dir)
 
     # symlink sessions
     i = 0
