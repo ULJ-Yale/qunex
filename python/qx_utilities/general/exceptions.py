@@ -58,6 +58,28 @@ class CommandNull(Exception):
         self.hints    = hints
         self.report   = (error,) + hints
 
+class SpecFileSyntaxError(Exception):
+    """There was an error when parsing qunex spec files
+    
+    spec files include 
+      - session file 
+      - batch file
+      - parameter file
+      - list file
+    """
+    
+    def __init__(self, filename=None, error=None, *hints):
+        if filename is None:
+            filename = "unknown file"
+        if error is None:
+            error = "unspecified"
+        msg = "Error '%s' occured when parsing %s" % (error, filename)
+        super(SpecFileSyntaxError, self).__init__(msg)
+        self.filename = filename
+        self.error    = error
+        self.hints    = hints
+        self.report   = (error,) + hints
+
 
 def reportCommandFailed(comm, e):
     if e.function == comm:
@@ -79,3 +101,11 @@ def reportCommandNull(comm, e):
     else:
         eString =  "\nWhen running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
     return eString
+
+def reportSyntaxError(comm, e):
+    pass
+    # if e.filename == comm:
+    #     eString = "\nWhen running %s:\n%s" % (comm, "\n".join(e.report))
+    # else:
+    #     eString =  "\nWhen running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
+    # return eString
