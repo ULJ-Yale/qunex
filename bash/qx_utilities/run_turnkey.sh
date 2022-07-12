@@ -782,7 +782,7 @@ if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
     fi
     if [[ -z ${STUDY_PATH} ]]; then
         STUDY_PATH=${WORKDIR}/${PROJECT_NAME}
-    else
+    fi
 
     if [[ ${STUDY_PATH} == ${WORKDIR} ]]; then
             reho "ERROR: --workingdir and --path variables are set to the same location. Check your inputs and re-run."
