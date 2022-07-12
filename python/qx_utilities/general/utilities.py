@@ -2949,7 +2949,7 @@ def _apply_rules(src_session, mapping_rules):
     src_session object should not be used after this function
     """
     tgt_session = {
-        "id": src_session["id"],
+        "session": src_session["session"],
         "subject": src_session["subject"],
         "paths": src_session["paths"],
         "pipeline_ready": src_session["pipeline_ready"],
@@ -3197,9 +3197,9 @@ def _serialize_session(tgt_session):
     """Encode mapped session as a list of strings"""
     lines = []
 
-    if tgt_session.get("id") is None:
+    if tgt_session.get("session") is None:
         raise ge.SpecFileSyntaxError(error="session id cannot be empty")
-    lines.append("id: {}".format(tgt_session["id"]))
+    lines.append("session: {}".format(tgt_session["session"]))
 
     if tgt_session.get("subject") is None:
         raise ge.SpecFileSyntaxError(error="subject id cannot be empty")

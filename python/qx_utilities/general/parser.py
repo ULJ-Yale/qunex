@@ -44,7 +44,7 @@ def read_generic_session_file(session_file_path):
     Returns:
         A dict mapping with the following schema
         {
-            "id": str, # session id
+            "session": str, # session id
             "subject": str, # subject id
             "paths": Dict[str, str] # key: path_type, value: path string,
             "pipeline_ready": List[str] # ["hcp"]
@@ -178,7 +178,7 @@ def _parse_session_file_lines(lines, session_file_type):
 
     """
     session = {
-        "id": None,
+        "session": None,
         "subject": None,
         "paths": dict(),
         "pipeline_ready": [],
@@ -189,11 +189,11 @@ def _parse_session_file_lines(lines, session_file_type):
         if len(tokens) == 1 and tokens[0] == "":
             continue
 
-        if tokens[0] == "id":
+        if tokens[0] == "id" or tokens[0] == "session":
             if len(tokens) != 2 or tokens[1] == "":
                 raise ge.SpecFileSyntaxError(
                     error="unexpected number of tokens")
-            session["id"] = tokens[1]
+            session["session"] = tokens[1]
 
         elif tokens[0] == "subject":
             if len(tokens) != 2 or tokens[1] == "":
