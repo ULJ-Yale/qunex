@@ -651,9 +651,11 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
         --sessionsfolder (str, default '.'):
             The location of the sessions folder where the sessions to create the
             list reside.
+        --batchfile (str, default None):
+            A path to a batch.txt file.
         --sessions (str, default None):
-            Either a comma or pipe separated string of session names to include
-            (can be glob patterns) or a path to a batch.txt file.
+            A comma or pipe separated string of session names to include
+            (can be glob patterns).
         --filter (str, default None):
             If a batch.txt file is provided a string of key-value pairs
             (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
@@ -848,7 +850,7 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
             qunex create_list \\
                 --sessionsfolder="/studies/myStudy/sessions" \\
-                --sessions="batch.txt" \\
+                --batchfile="batch.txt" \\
                 --bolds="rest" \\
                 --listfile="lists/rest.list" \\
                 --bold_tail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
@@ -863,7 +865,7 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
             qunex create_list \\
                 --sessionsfolder="/studies/myStudy/sessions" \\
-                --sessions="batch.txt" \\
+                --batchfile="batch.txt" \\
                 --filter="EC:use" \\
                 --listfile="lists/EC.list" \\
                 --conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
@@ -1056,9 +1058,11 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         --sessionsfolder (str):
             The location of the sessions folder where the sessions to create the
             list reside.
-        --sessions (str):
-            Either a comma or pipe separated string of session names to include
-            (can be glob patterns) or a path to a batch.txt file.
+        --batchfile (str, default None):
+            A path to a batch.txt file.
+        --sessions (str, default None):
+            A comma or pipe separated string of session names to include
+            (can be glob patterns).
         --filter (str):
             If a batch.txt file is provided a string of key-value pairs
             (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
@@ -1186,7 +1190,7 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
 
             qunex create_conc \\
                 --sessionsfolder="/studies/myStudy/sessions" \\
-                --sessions="batch.txt" \\
+                --batchfile="batch.txt" \\
                 --bolds="WM" \\
                 --concname="_WM" \\
                 --bold_tail="_Atlas.dtseries.nii"
@@ -1201,7 +1205,7 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
 
             qunex create_conc \\
                 --sessionsfolder="/studies/myStudy/sessions" \\
-                --sessions="batch.txt" \\
+                --batchfile="batch.txt" \\
                 --filter="EC:use" \\
                 --concfolder="analysis/EC/concs" \\
                 --concname="_EC_s_hpss_res-mVWMWB1de" \\
@@ -1378,11 +1382,12 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
     These parameters allow spreading processing of multiple sessions across 
     multiple run_list invocations:
 
+    --batchfile             A path to a batch.txt file.
     --sessions              Either a string with pipe `|` or comma separated 
                             list of sessions (sessions ids) to be processed
                             (use of grep patterns is possible), e.g. 
-                            `"OP128,OP139,ER*"`, or a path to a batch.txt or
-                            `*list` file with a list of session ids.
+                            `"OP128,OP139,ER*"` or `*list` file with a list
+                            of session ids.
     --sessionids            An optional parameter explicitly specifying, which
                             of the sessions from the list provided by the 
                             `sessions` parameter are to be processed in this
@@ -1612,7 +1617,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
         qunex run_list \
           --listfile="/data/settings/runlist.txt" \
           --runlists="doHCP" \
-          --sessions="/data/testStudy/processing/batch_baseline.txt" \
+          --batchfile="/data/testStudy/processing/batch_baseline.txt" \
           --sperlist=4 \
           --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
@@ -1621,7 +1626,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
         qunex run_list \
           --listfile="/data/settings/runlist.txt" \
           --runlists="prepareFCPreprocessing" \
-          --sessions="/data/testStudy/processing/batch_baseline.txt" \
+          --batchfile="/data/testStudy/processing/batch_baseline.txt" \
           --sperlist=4 \
           --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
@@ -1999,12 +2004,13 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
                       the inbox and individual session folders are. If not 
                       specified, the current working folder will be taken as 
                       the location of the sessionsfolder. [.]
-    
+
+    --batchfile       A path to a `batch.txt` file.
+
     --sessions        Either a string with pipe `|` or comma separated list of 
                       sessions (sessions ids) to be processed (use of grep 
-                      patterns is possible), e.g. `"AP128,OP139,ER*"`, or a path
-                      to a `batch.txt` or `*list` file with a list of session ids.
-                      [*]
+                      patterns is possible), e.g. `"AP128,OP139,ER*"`, or
+                      `*list` file with a list of session ids. [*]
 
     --filter          Optional parameter used to filter sessions to include. It
                       is specifed as a string in format::
@@ -2323,12 +2329,13 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
                       the inbox and individual session folders are. If not 
                       specified, the current working folder will be taken as 
                       the location of the sessionsfolder. [.]
-    
+
+    --batchfile       A path to a `batch.txt` file.
+
     --sessions        Either a string with pipe `|` or comma separated list of 
                       sessions (sessions ids) to be processed (use of grep 
-                      patterns is possible), e.g. "AP128,OP139,ER*", or a path
-                      to a `batch.txt` or `*list` file with a list of session
-                      ids. [*]
+                      patterns is possible), e.g. "AP128,OP139,ER*", or
+                      `*list` file with a list of session ids. [*]
 
     --filter          Optional parameter used to filter sessions to include. It
                       is specified as a string in format::
@@ -2653,14 +2660,16 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
     mapping to a folder structure supporting specific pipeline processing.
 
     Parameters:
+        --batchfile (str, default ''):
+            Path to a batch file.
         --sessions (str, default '*'):
             Either an explicit list (space, comma or pipe separated) of sessions
-            to process or the path to a batch or list file with sessions to
-            process. If left unspecified, '*' will be used and all folders
-            within sessions' folders will be processed.
+            to process or the path to a list file with sessions to process. If
+            left unspecified, '*' will be used and all folders within sessions'
+            folders will be processed.
         --pipelines (str, default 'hcp'):
-              Specify a comma separated list of pipelines for which the session
-              info will be prepared.
+            Specify a comma separated list of pipelines for which the session
+            info will be prepared.
         --sessionsfolder (str, default '.'):
             The directory that holds sessions' folders.
         --sourcefile (str, default 'session.txt'):

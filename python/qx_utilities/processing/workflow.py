@@ -157,7 +157,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     Extracts the brain and creates a brain mask for each BOLD image.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions' information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -216,7 +216,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_bold_brain_masks
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --nifti_tail=_hp2000_clean \\
@@ -482,7 +482,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     Processes specified BOLD files and saves images/function/movement files.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the session information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -647,7 +647,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         Using the defaults::
 
             qunex compute_bold_stats \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all
@@ -655,7 +655,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         Specifying additional parameters for identification of bad frames::
 
             qunex compute_bold_stats \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
@@ -803,7 +803,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     create per session plots and fidl snippets and group reports.
 
     Parameters:
-        --sessions (str, default 'batch.txt')
+        --batchfile (str, default '')
             The batch.txt file with all the session information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -995,7 +995,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_stats_report \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
@@ -1004,7 +1004,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_stats_report \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
@@ -1013,7 +1013,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_stats_report \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
@@ -1205,7 +1205,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     Extracts nuisance signal from volume BOLD files.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the session information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -1347,7 +1347,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex extract_nuisance_signal \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
@@ -1512,7 +1512,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     Prepares BOLD files for further functional connectivity analysis.
 
     Parameters:
-        --sessions (str , default 'batch.txt'):
+        --batchfile (str , default ''):
             The batch.txt file with all the session information.
         --sessionsfolder (str , default '.'):
             The path to the study/sessions folder, where the imaging  data is
@@ -1984,7 +1984,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex preprocess_bold \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -2200,7 +2200,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     done. Use and parameter description will be intertwined.
 
     Parameters:
-        --sessions (str , default 'batch.txt'):
+        --batchfile (str , default ''):
             The batch.txt file with all the session information.
         --sessionsfolder (str , default '.'):
             The path to the study/sessions folder, where the imaging  data is
@@ -2674,7 +2674,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
         Activation analysis::
 
             qunex preprocess_conc \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -2693,7 +2693,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
         Functional connectivity preprocessing::
 
             qunex preprocess_conc \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\

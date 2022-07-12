@@ -1438,8 +1438,18 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_PASSWORD=`get_parameters "${setflag}xnatpass" $@`
     XNAT_STUDY_INPUT_PATH=`get_parameters "${setflag}xnatstudyinputpath" $@`
 
+    if [[ -n ${BATCH_FILE} ]]; then
+        CASES=${BATCH_FILE}
+    fi
+
     # -- General sessions and sessionids flags
-    CASES=`get_parameters "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+    SESSIONS=`get_parameters "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+    if [[ -z ${CASES} ]]; then
+        if [[ ! -z ${SESSIONS} ]]; then
+            CASES="$SESSIONS"
+            SESSIONS="$SESSIONS"
+        fi
+    fi
 
     # list of input cases; removing comma or pipes
     SESSIONIDS=`get_parameters "${setflag}sessionids" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
@@ -1721,6 +1731,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo "Using $BATCH_FILE for input."
         echo ""
         CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        if [[ -z $CASES ]]; then
+            CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        fi
     fi
 
     # -- Get species flag for NHP pipelines

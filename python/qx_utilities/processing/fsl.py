@@ -48,8 +48,10 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         (dwi_dtifit command in QuNex) is required.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+        --sessions (str, default ''):
+            A list of sessions to process.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
@@ -222,7 +224,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         required (dwi_f99 command in QuNex).
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -302,7 +304,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
             qunex dwi_xtract \\
                 --sessionsfolder="/data/macaque_study/sessions" \\
-                --sessions="/data/example_study/processing/batch.txt" \\
+                --batchfile="/data/example_study/processing/batch.txt" \\
                 --species="human" \\
                 --overwrite=yes
 
@@ -310,7 +312,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
             qunex dwi_xtract \\
                 --sessionsfolder="/data/macaque_study/sessions" \\
-                --sessions="hilary,jane" \\
+                --batchfile="hilary,jane" \\
                 --species="macaque" \\
                 --overwrite=no \\
                 --parsessions=2

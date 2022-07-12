@@ -163,10 +163,11 @@ def runCommand(command, args):
         gu.check_study(folders['basefolder'])
 
     # --- check if command is deprecated
-    command = gcs.check_deprecated_commands(command)
+    if command != "check_deprecated_commands":
+        command = gcs.check_deprecated_commands(command)
 
-    # -- remap deprecated arguments
-    args = gcs.check_deprecated_parameters(args, command)
+        # -- remap deprecated arguments
+        args = gcs.check_deprecated_parameters(args, command)
 
     # --- sort commands by type
     if command in gcom.commands:

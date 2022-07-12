@@ -196,7 +196,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
     print("Running setup_hcp\n================")
 
-    inf   = gc.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
+    inf   = gc.read_session_data(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
 
     # backwards compatibility (session used to be id)

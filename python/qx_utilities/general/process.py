@@ -183,7 +183,8 @@ def updateOptions(session, options):
 
 arglist = [
            ['# ---- Basic settings'],
-           ['sessions',           'batch.txt',                                   str,    "The file with sessions information."],
+           ['batchfile',           '',                                            str,   "The file with sessions information."],
+           ['sessions',           '',                                            str,    "A list of sessions to process."],
            ['sessionsfolder',     '',                                            os.path.abspath, 'The path to study sessions folder.'],
            ['logfolder',          '',                                            isNone, 'The path to log folder.'],
            ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
@@ -817,8 +818,8 @@ def run(command, args):
         if parsessions == 1 or options['run'] == 'test':
             # processing commands
             if command in pactions:
-                pending_actions = plactions[command]
-                for session in pactions:
+                pending_actions = pactions[command]
+                for session in sessions:
                     if len(session['id']) > 1:
                         if options['run'] == 'test':
                             action = 'testing'

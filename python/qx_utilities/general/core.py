@@ -34,9 +34,9 @@ import general.exceptions as ge
 import general.commands_support as gcs
 
 
-def readSessionData(filename, verbose=False):
+def read_session_data(filename, verbose=False):
     """
-    ``readSessionData(filename, verbose=False)``
+    ``read_session_data(filename, verbose=False)``
 
     Reads a `batch.txt` file.
 
@@ -157,10 +157,11 @@ def readSessionData(filename, verbose=False):
                 if ("id" not in dic) and ("session" not in dic):
                     if verbose:
                         print("WARNING: There is a record missing an id field and is being omitted from processing.")
-                # elif "data" not in dic:
-                #    if verbose:
-                #        print("WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id']))
                 else:
+                    if "id" in dic and "session" not in dic:
+                        dic["session"] = dic["id"]
+                    elif "session" in dic and "id" not in dic:
+                        dic["id"] = dic["session"]
                     slist.append(dic)
 
             # check paths
@@ -177,9 +178,9 @@ def readSessionData(filename, verbose=False):
 
 
 
-def readList(filename, verbose=False):
+def read_list(filename, verbose=False):
     """
-    ``readList(filename, verbose=False)``
+    ``read_list(filename, verbose=False)``
 
     An internal function for reading list files. It reads the file and
     returns a list of sessions each with the provided list of files.
@@ -250,10 +251,10 @@ def get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=N
     listString = listString.strip()
 
     if re.match(".*\.list$", listString):
-        slist = readList(listString, verbose=verbose)
+        slist = read_list(listString, verbose=verbose)
 
     elif os.path.isfile(listString):
-        slist, gpref = readSessionData(listString, verbose=verbose)
+        slist, gpref = read_session_data(listString, verbose=verbose)
 
     elif re.match(".*\.txt$", listString) or '/' in listString:
         raise ValueError("ERROR: The specified session file is not found! [%s]!" % listString)
