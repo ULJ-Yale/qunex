@@ -247,11 +247,9 @@ def create_study_folders(folders_spec):
     A helper function called by manage_study for creating study folder structure
     from a .txt file with structure specification.
     
-    PARAMETERS
-    ==========
-
-    --folders     Path to the file which defines the study folder structure.
-                  [$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
+    Parameters:
+        --folders (str, default '$TOOLS/python/qx_utilities/templates/study_folders_default.txt'):
+            Path to the file which defines the study folder structure.
     """
 
     # variable for storing the structure

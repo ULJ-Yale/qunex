@@ -1531,8 +1531,6 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
         <study_folder>/<sessions_folder>/<subject_id>.
 
     Examples:
-        Example run::
-
             qunex hcp_longitudibnal_freesurfer \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\

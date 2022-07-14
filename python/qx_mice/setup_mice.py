@@ -44,74 +44,59 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
 
     Runs the command to prepare a QuNex study for mice preprocessing.
 
-    REQUIREMENTS
-    ============
+    Warning:
+        Succesfull import of mice data is required to run this command.
 
-    Succesfull import of mice data.
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+        --bolds (str, default ''):
+            Which bold images to process. You can select bolds through their
+            number, name or task (e.g. rest), you can chain multiple conditions
+            together by providing a comma separated list.
+         --parsessions (int, default 1):
+            How many sessions to run in parallel.
+        --parelements (int, default 1):
+            How many elements (e.g bolds) to run in parallel.
+        --overwrite (str, default 'no'):
+            Whether to overwrite target files that already exist (yes) or not (no).
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed. When a comma or pipe ('|') separated list
+            is given, the log will be created at the first provided location and
+            then linked or copied to other locations. The valid locations are:
+                - 'study' (for the default: 
+                    `<study>/processing/logs/comlogs` location)
+                - 'session' (for `<sessionid>/logs/comlogs`)
+                - 'hcp' (for `<hcp_folder>/logs/comlogs`)
+                - '<path>' (for an arbitrary directory)
+        --tr (float, default 2.5):
+            TR of the bold data.
+        --voxel_increase (int):
+            The factor by which to increase voxel size. If not provided QuNex
+            will not increase the voxel size.
+        --orienatation (str, default 'x -y z'):
+            A string depicting how to fix the orientation. Set to "" to leave
+            orientation as is.
 
-    INPUTS
-    ======
+    Output files:
+        The results of this step will be present in the mice folder
+        in the sessions's root::
 
-    General parameters
-    ------------------
+            study
+            └─ sessions
+            ├─ session1
+            |  └─ mice
+            └─ session2
+                └─ mice
 
-    When running the command, the following *general* processing parameters are
-    taken into account:
-
-    --sessions          The batch.txt file with all the sessions information.
-                        [batch.txt]
-    --sessionsfolder    The path to the study/sessions folder, where the
-                        imaging data is supposed to go. [.]
-    --bolds             Which bold images to process. You can select bolds
-                        through their number, name or task (e.g. rest), you
-                        can chain multiple conditions together by providing a
-                        comma separated list.
-    --parsessions       How many sessions to run in parallel. [1]
-    --parelements       How many elements (e.g bolds) to run in parallel. [1]
-    --overwrite         Whether to overwrite target files that already exist
-                        (yes) or not (no). [no]
-    --logfolder         The path to the folder where runlogs and comlogs
-                        are to be stored, if other than default. []
-    --log               Whether to keep ('keep') or remove ('remove') the
-                        temporary logs once jobs are completed. ['keep']
-                        When a comma or pipe ('|') separated list is given, 
-                        the log will be created at the first provided 
-                        location and then linked or copied to other 
-                        locations. The valid locations are:
-                        
-                        - 'study' (for the default: 
-                          `<study>/processing/logs/comlogs` location)
-                        - 'session' (for `<sessionid>/logs/comlogs`)
-                        - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-                        - '<path>' (for an arbitrary directory)
-
-    Specific parameters
-    -------------------
-
-    --tr                TR of the bold data. [2.5]
-    --voxel_increase    The factor by which to increase voxel size. If not
-                        provided QuNex will not increase the voxel size. []
-    --orienatation      A string depicting how to fix the orientation.
-                        Set to "" to leave orientation as is. [x -y z]
-
-    OUTPUTS
-    =======
-
-    The results of this step will be present in the mice folder
-    in the sessions's root::
-
-        study
-        └─ sessions
-           ├─ session1
-           |  └─ mice
-           └─ session2
-              └─ mice
-
-    EXAMPLE USE
-    ===========
-
-    ::
-
+    Examples:
         qunex setup_mice \
           --sessionsfolder='/data/mice_study/sessions' \
           --sessions='/data/mice_study/processsing/batch.txt'

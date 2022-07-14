@@ -42,90 +42,72 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
 
     Runs the QuNex mice preprocessing command.
 
-    REQUIREMENTS
-    ============
+    Warning:
+        Succesfull preparation of mice data for preprocessing encompasses:
+            - data import,
+            - setup_mice,
+            - create_session_info,
+            - create_batch.
 
-    Succesfull preparation of mice data for preprocessing:
-        - data import,
-        - preprocess_mice,
-        - create_session_info,
-        - create_batch.
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+        --bolds (str, default ''):
+            Which bold images to process. You can select bolds through their
+            number, name or task (e.g. rest), you can chain multiple conditions
+            together by providing a comma separated list.
+         --parsessions (int, default 1):
+            How many sessions to run in parallel.
+        --parelements (int, default 1):
+            How many elements (e.g bolds) to run in parallel.
+        --overwrite (str, default 'no'):
+            Whether to overwrite target files that already exist (yes) or not (no).
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed. When a comma or pipe ('|') separated list
+            is given, the log will be created at the first provided location and
+            then linked or copied to other locations. The valid locations are:
+        --bias_field_correction (str, default 'yes'):
+            Whether to perform bias field correction, yes/no.
+        --melodic_anatfile (str, default 'qx_library/etc/mice_pipelines/EPI_braine'):
+            Path to the melodic anat file, without the extension,
+            e.g. without .nii.gz.
+        --fix_rdata (str, default 'qx_library/etc/mice_pipelines/zerbi_2015_neuroimage.RData'):
+            Path to the RData file used by fix.
+        --fix_threshold (int, default 2):
+            Fix ICA treshold.
+        --fix_no_motion_cleanup:
+            A flag for disabling cleanup of motion confounds. Disabled by
+            default.
+        --fix_aggressive_cleanup:
+            A flag for performing aggressive cleanup. Disabled by default.
+        --mice_highpass (float, default '0.01')
+            The value of the highpass filter.
+        --mice_lowpass (float, default '0.25')
+            The value of the lowpass filter.
+        --mice_volumes (int, default 900)
+            Number of volumes.
+        --flirt_ref (str, default 'qx_library/etc/mice_pipelines/EPI_template.nii.gz'):
+            Path to the template file.
 
-    INPUTS
-    ======
+    Output files:
+        The results of this step will be present in the nii folder
+        in the sessions's root::
 
-    General parameters
-    ------------------
+            study
+            └─ sessions
+            ├─ session1
+            |  └─ mice
+            └─ session2
+                └─ mice
 
-    When running the command, the following *general* processing parameters are
-    taken into account:
-
-    --sessions          The batch.txt file with all the sessions information.
-                        [batch.txt]
-    --sessionsfolder    The path to the study/sessions folder, where the
-                        imaging data is supposed to go. [.]
-    --bolds             Which bold images to process. You can select bolds
-                        through their number, name or task (e.g. rest), you
-                        can chain multiple conditions together by providing a
-                        comma separated list.
-    --parsessions       How many sessions to run in parallel. [1]
-    --parelements       How many elements (e.g bolds) to run in parallel. [1]
-    --overwrite         Whether to overwrite target files that already exist
-                        (yes) or not (no). [no]
-    --logfolder         The path to the folder where runlogs and comlogs
-                        are to be stored, if other than default. []
-    --log               Whether to keep ("keep") or remove ("remove") the
-                        temporary logs once jobs are completed. ["keep"]
-                        When a comma or pipe ("|") separated list is given, 
-                        the log will be created at the first provided 
-                        location and then linked or copied to other 
-                        locations. The valid locations are:
-                        
-                        - "study" (for the default: 
-                          `<study>/processing/logs/comlogs` location)
-                        - "session" (for `<sessionid>/logs/comlogs`)
-                        - "hcp" (for `<hcp_folder>/logs/comlogs`)
-                        - "<path>" (for an arbitrary directory)
-
-    Specific parameters
-    -------------------
-
-    --bias_field_correction     Whether to perform bias field correction,
-                                yes/no. [yes]
-    --melodic_anatfile          Path to the melodic anat file, without the
-                                extension, e.g. without .nii.gz.
-                                [qx_library/etc/mice_pipelines/EPI_braine]
-    --fix_rdata                 Path to the RData file used by fix.
-                                [qx_library/etc/mice_pipelines/zerbi_2015_neuroimage.RData]
-    --fix_threshold             Fix ICA treshold. [2].
-    --fix_no_motion_cleanup     A flag for disabling cleanup of motion confounds.
-                                [Disabled by default]
-    --fix_aggressive_cleanup    A flag for performing aggressive cleanup.
-                                [Disabled by default]
-    --mice_highpass             The value of the highpass filter. [0.01]
-    --mice_lowpass              The value of the lowpass filter. [0.25]
-    --mice_volumes              Number of volumes. [900]
-    --flirt_ref                 Path to the template file.
-                                [qx_library/etc/mice_pipelines/EPI_template.nii.gz]
-
-    OUTPUTS
-    =======
-
-    The results of this step will be present in the nii folder
-    in the sessions's root::
-
-        study
-        └─ sessions
-           ├─ session1
-           |  └─ mice
-           └─ session2
-              └─ mice
-
-    EXAMPLE USE
-    ===========
-
-    ::
-
+    Examples:
         qunex preprocess_mice \
           --sessionsfolder="/data/mice_study/sessions" \
           --sessions="/data/mice_study/processsing/batch.txt"

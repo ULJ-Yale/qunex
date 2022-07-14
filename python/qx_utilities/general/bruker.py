@@ -41,56 +41,39 @@ import general.exceptions as ge
 def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='move', parelements=1):
     '''
     ``bruker_to_dicom [... processing options]``
-    ``b2d [... processing options]``
 
     Converts bruker data into the dicom format which can be then imported into
     QuNex through the import_dicom command.
 
-    REQUIREMENTS
-    ============
 
-    No requirements.
+    Parameters:
+        --sessionsfolder (str, default '.'):
+            The sessions folder where all the sessions are to be mapped to. It
+            should be a folder within the <study folder>.
+        --inbox (str, default '<sessionsfolder>/inbox/bruker'):
+            The location of the folder with bruker datasets.
+        --sessions (str, default ''):
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Regular
+            expression patterns can be used. If provided, only folders within
+            the inbox that match the list of sessions will be processed.
+            Note: the session will match if the string is found within the
+            folder name. So 'S01' with match any folder that contains the string
+            'S01'!
+        --archive (str, default 'move'):
+            What to do with bruker data once it is converted. Options are:
+                - move (move the package to the study's archive folder)
+                - copy (copy the package to the study's archive folder)
+                - leave (keep the package where it was)
+                - delete (delete the package)
+        --parelements (int, default 1):
+            How many parallel processes to run the conversion  with.
 
-    INPUTS
-    ======
-
-    --sessionsfolder    The sessions folder where all the sessions are to be 
-                        mapped to. It should be a folder within the 
-                        <study folder>. [.]
-
-    --inbox             The location of the folder with bruker datasets. The
-                        default location where the command will look for bruker
-                        datasets is [<sessionsfolder>/inbox/bruker].
-
-    --sessions          An optional parameter that specifies a comma or pipe
-                        separated list of sessions from the inbox folder to be 
-                        processed. Regular expression patterns can be used. 
-                        If provided, only folders within the inbox 
-                        that match the list of sessions will be processed.
-                        Note: the session will match if the string is found
-                        within the folder name. So 'S01' with match any folder
-                        that contains the string 'S01'!
-
-    --archive           What to do with bruker data once it is converted ['move'].
-                        Options are:
-
-                        - move (move the package to the study's archive folder)
-                        - copy (copy the package to the study's archive folder)
-                        - leave (keep the package where it was)
-                        - delete (delete the package)
-
-    --parelements      How many parallel processes to run the conversion
-                       with. [1]
-
-    EXAMPLE USE
-    ===========
-
-    ::
-
+     Examples:
         qunex bruker_to_dicom \
-          --sessionsfolder='/data/mice_study/sessions' \
-          --sourcefolder='/data/raw/bruker' \
-          --sessions='S01,S02'
+        --sessionsfolder='/data/mice_study/sessions' \
+        --sourcefolder='/data/raw/bruker' \
+        --sessions='S01,S02'
 
     '''
 
