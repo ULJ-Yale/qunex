@@ -34,9 +34,9 @@ import general.exceptions as ge
 import general.commands_support as gcs
 
 
-def readSessionData(filename, verbose=False):
+def read_session_data(filename, verbose=False):
     """
-    ``readSessionData(filename, verbose=False)``
+    ``read_session_data(filename, verbose=False)``
 
     Reads a `batch.txt` file.
 
@@ -154,13 +154,14 @@ def readSessionData(filename, verbose=False):
                     dic[line[0]] = ":".join(line[1:])
 
             if len(dic) > 0:
-                if "id" not in dic:
+                if ("id" not in dic) and ("session" not in dic):
                     if verbose:
                         print("WARNING: There is a record missing an id field and is being omitted from processing.")
-                # elif "data" not in dic:
-                #    if verbose:
-                #        print("WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id']))
                 else:
+                    if "id" in dic and "session" not in dic:
+                        dic["session"] = dic["id"]
+                    elif "session" in dic and "id" not in dic:
+                        dic["id"] = dic["session"]
                     slist.append(dic)
 
             # check paths
@@ -168,7 +169,6 @@ def readSessionData(filename, verbose=False):
                 if field in dic:
                     if not os.path.exists(dic[field]) and verbose:
                         print("WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename)))
-
 
     except:
         print("\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line))
@@ -178,9 +178,9 @@ def readSessionData(filename, verbose=False):
 
 
 
-def readList(filename, verbose=False):
+def read_list(filename, verbose=False):
     """
-    ``readList(filename, verbose=False)``
+    ``read_list(filename, verbose=False)``
 
     An internal function for reading list files. It reads the file and
     returns a list of sessions each with the provided list of files.
@@ -212,9 +212,9 @@ def readList(filename, verbose=False):
     return slist
 
 
-def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
+def get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False):
     """
-    ``getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
+    ``get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
 
     Gets a list of sessions as an array of dictionaries.
 
@@ -251,10 +251,10 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
     listString = listString.strip()
 
     if re.match(".*\.list$", listString):
-        slist = readList(listString, verbose=verbose)
+        slist = read_list(listString, verbose=verbose)
 
     elif os.path.isfile(listString):
-        slist, gpref = readSessionData(listString, verbose=verbose)
+        slist, gpref = read_session_data(listString, verbose=verbose)
 
     elif re.match(".*\.txt$", listString) or '/' in listString:
         raise ValueError("ERROR: The specified session file is not found! [%s]!" % listString)
@@ -273,19 +273,32 @@ def getSessionList(listString, filter=None, sessionids=None, sessionsfolder=None
 
     if sessionids is not None and sessionids.strip() != "":
         sessionids = re.split(' +|,|\|', sessionids)
-        slist = [e for e in slist if e['id'] in sessionids]
+        filtered_slist = []
+        for s in slist:
+            if "id" in s and s["id"] in sessionids:
+                filtered_slist.append(s)
+            elif "session" in s and s["session"] in sessionids:
+                filtered_slist.append(s)
+
+        slist = filtered_slist
 
     if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(':')] for e in filter.split("|")]
         except:
-            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("get_sessions_list", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
         if any([len(e) != 2 for e in filters]):
-            raise ge.CommandFailed("getSessionList", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            raise ge.CommandFailed("get_sessions_list", "Invalid filter parameter", "The provided filter parameter is invalid: '%s'" % (filter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
-        for key, value in filters:
-            slist = [e for e in slist if key in e and e[key] == value]
+        filtered_slist = []
+        for s in slist:
+            for key, value in filters:
+                if key in s and (s[key] == value or re.match(value, s[key])):
+                    filtered_slist.append(s)
+                    break;
+
+        slist = filtered_slist
 
     # are we inside a SLURM job array?
     if 'SLURM_ARRAY_TASK_ID' in os.environ:
@@ -1065,7 +1078,7 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     sout = open(sfile, 'w')
     print("# Generated by QuNex %s on %s" % (get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=sout)
     print("#", file=sout)
-    print('id:', session, file=sout)
+    print('session:', session, file=sout)
     print('subject:', subject, file=sout)
 
     # bids

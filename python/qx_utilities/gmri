@@ -166,10 +166,11 @@ def runCommand(command, args):
         gu.check_study(folders['basefolder'])
 
     # --- check if command is deprecated
-    command = gcs.check_deprecated_commands(command)
+    if command != "check_deprecated_commands":
+        command = gcs.check_deprecated_commands(command)
 
-    # -- remap deprecated arguments
-    args = gcs.check_deprecated_parameters(args, command)
+        # -- remap deprecated arguments
+        args = gcs.check_deprecated_parameters(args, command)
 
     # --- sort commands by type
     if command in gcom.commands:
@@ -214,7 +215,7 @@ def runCommand(command, args):
             raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple sessions!" % (command))
         if folders['sessionsfolder'] is None:
             folders['sessionsfolder'] = "."
-        sessions, _ = gc.getSessionList(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get('sessionids'), sessionsfolder=folders['sessionsfolder'], verbose=False)
+        sessions, _ = gc.get_sessions_list(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get('sessionids'), sessionsfolder=folders['sessionsfolder'], verbose=False)
 
     logname = eargs.get('logname')
 

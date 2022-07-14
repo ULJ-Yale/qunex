@@ -339,7 +339,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
         # set default cores
         if ("cores" not in setDict.keys()):
-            sCommand += "#BSUB -n %s\n" % (parsessions  * parelements)
+            sCommand += "#BSUB -n %s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):

@@ -1105,21 +1105,21 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     for image in bidsData['images']['list']:
         imgn += 1
 
-        tfile = os.path.join(nfolder, "%02d.nii.gz" % (imgn))
+        tfile = os.path.join(nfolder, "%d.nii.gz" % (imgn))
         
         status = gc.moveLinkOrCopy(bidsData['images']['info'][image]['filepath'], tfile, action='link')
         if status:
-            print("--> linked %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename']))
+            print("--> linked %d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename']))
             if fileinfo == 'short':
-                print("%02d: %s" % (imgn, bidsData['images']['info'][image]['tag']), file=sout)
+                print("%d: %s" % (imgn, bidsData['images']['info'][image]['tag']), file=sout)
             elif fileinfo == 'full':
                 fullinfo = bidsData['images']['info'][image]['filename'].replace('.nii.gz', '').replace('sub-%s_' % (subject), '').replace('ses-%s_' % (sessionid), '')
-                print("%02d: %s" % (imgn, fullinfo), file=sout)
+                print("%d: %s" % (imgn, fullinfo), file=sout)
 
             print("%s => %s" % (bidsData['images']['info'][image]['filepath'], tfile), file=bout)
         else:
             allOk = False
-            print("==> ERROR: Linking failed: %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename']))
+            print("==> ERROR: Linking failed: %d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename']))
             print("FAILED: %s => %s" % (bidsData['images']['info'][image]['filepath'], tfile), file=bout)
 
         status = True
@@ -1139,8 +1139,8 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
                 status = False
 
             if not status:
-                print("==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz [%s]!" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec')), file=bout)
-                print("==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec')))
+                print("==> WARNING: bval/bvec files were not found and were not mapped for %d.nii.gz [%s]!" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec')), file=bout)
+                print("==> ERROR: bval/bvec files were not found and were not mapped: %d.bval/.bvec <-- %s" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec')))
                 allOk = False
     
     sout.close()

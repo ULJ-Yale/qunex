@@ -329,6 +329,34 @@ def check_deprecated_parameters(options, command):
         else:
             new_options[k] = v
 
+    # custom remapping for sessions, sessionids and batchfile
+    sessions = None
+    if "sessions" in new_options:
+        sessions =  new_options["sessions"]
+        if ".txt" in sessions:
+            print("WARNING: passing the batchfile through the sessions parameter will be deprecated, please use the batchfile parameter!")
+    # if sessionids was used
+    if "sessionids" in new_options:
+        print("WARNING: the sessionids parameter will be deprecated, please use the sessions parameter!")
+    if "batchfile" in new_options:
+        # if sessions and batchfile both provide a file
+        if sessions is not None and ".txt" in sessions:
+            print("ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!")
+            exit(1)
+        elif sessions is not None:
+            # did we provide a list of sessions in sessionsids as well
+            if "sessionids" in new_options:
+                print("ERROR: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!")
+                exit(1)
+            # remap so session are sessionids and batchfile is sessions
+            else:
+                new_options["sessionids"] = new_options["sessions"]
+                new_options["sessions"] = new_options["batchfile"]
+                del new_options["batchfile"]
+        else:
+            new_options["sessions"] = new_options["batchfile"]
+            del new_options["batchfile"]
+
     if remapped:
         print("\nWARNING: Use of parameters with changed name(s)!")
         print("         The following parameters have new names:")
@@ -395,7 +423,7 @@ def impute_parameters(options, command):
 #                                                               EXTRA PARAMETERS
 #
 
-extra_parameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']
+extra_parameters = ['batchfile', 'sessions', 'sessionids', 'filter', 'sessionid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']
 
 
 # ==============================================================================

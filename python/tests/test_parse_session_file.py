@@ -10,7 +10,7 @@ def test_read_generic_session_file():
     """Reading a simple bids session file"""
     filename = get_test_data_path("session1.txt")
     sess = read_generic_session_file(filename)
-    assert sess["id"] == "12345_1"
+    assert sess["session"] == "12345_1"
     assert sess["subject"] == "12345"
     assert len(sess["paths"]) == 3
     assert "bids" in sess["paths"]
@@ -22,7 +22,7 @@ def test_read_generic_session_file_complex():
     """Reading a dicom session file"""
     filename = get_test_data_path("session2.txt")
     sess = read_generic_session_file(filename)
-    assert sess["id"] == "HCPA001"
+    assert sess["session"] == "HCPA001"
     assert sess["subject"] == "HCPA001"
     assert len(sess["paths"]) == 4
     assert "dicom" in sess["paths"]
@@ -34,7 +34,7 @@ def test_read_hcpls_session():
     """Reading a dicom session file"""
     filename = get_test_data_path("session5.txt")
     sess = read_generic_session_file(filename)
-    assert sess["id"] == "06_retest"
+    assert sess["session"] == "06_retest"
     assert sess["subject"] == "06"
     assert len(sess["paths"]) == 3
     assert "hcpls" in sess["paths"]
@@ -46,7 +46,7 @@ def test_read_hcp_session_file():
     """Reading session mapped for hcp pipeline"""
     filename = get_test_data_path("session2_hcp.txt")
     sess = read_hcp_session_file(filename)
-    assert sess["id"] == "HCPA001"
+    assert sess["session"] == "HCPA001"
     assert sess["subject"] == "HCPA001"
     assert len(sess["paths"]) == 4
     assert "dicom" in sess["paths"]

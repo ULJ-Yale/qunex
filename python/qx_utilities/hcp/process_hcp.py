@@ -322,7 +322,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             FieldMap/<session id>_FieldMap_Phase.nii.gz
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -504,7 +504,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_pre_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -513,7 +513,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_pre_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -879,7 +879,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         for all of them!
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -1020,7 +1020,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10
@@ -1028,7 +1028,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -1037,7 +1037,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -1262,7 +1262,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         make a full check for all of them!
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
@@ -1349,7 +1349,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_post_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10
@@ -1357,7 +1357,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_post_freesurfer \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -1483,7 +1483,7 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
         been run and finished successfully.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -1535,7 +1535,7 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
 
             qunex hcp_longitudibnal_freesurfer \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_long_fs_template="<template_name>"
     """
 
@@ -1733,7 +1733,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         present in the Diffusion folder in the sessions's root hcp folder.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -1902,7 +1902,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_diffusion \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="no" \\
                 --test
 
@@ -1910,7 +1910,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_diffusion \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="yes" \\
                 --bash="module load CUDA/9.1.85" \\
                 --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
@@ -1919,7 +1919,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_diffusion \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="yes" \\
                 --hcp_dwi_nogpu
     """
@@ -2162,7 +2162,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         PreFS and FS steps due to the large number of files.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -2413,7 +2413,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_fmri_volume \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10
@@ -2421,7 +2421,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_fmri_volume \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
@@ -3156,7 +3156,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         run a thorough check for all the required files.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -3247,7 +3247,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_fmri_surface \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10
@@ -3705,7 +3705,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             MNINonLinear/Results/<boldname>/<boldname>.nii.gz
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
@@ -3803,13 +3803,13 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_icafix \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions
 
         ::
 
             qunex hcp_icafix \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4"
     """
@@ -4221,7 +4221,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
@@ -4308,14 +4308,14 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_post_fix \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_matlab_mode="interpreted"
 
         ::
 
             qunex hcp_post_fix \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
                 --hcp_matlab_mode="interpreted"
@@ -4590,7 +4590,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             MNINonLinear/Results/<boldname>/<boldname>.nii.gz
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -4679,14 +4679,14 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_reapply_fix \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_matlab_mode="interpreted"
 
         ::
 
             qunex hcp_reapply_fix \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
                 --hcp_matlab_mode="interpreted"
@@ -5250,7 +5250,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             <boldname>_<hcp_cifti_tail>_hp<hcp_highpass>_clean.dtseries.nii
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -5362,7 +5362,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         HCP MSMAll after application of single-run ICAFix::
 
             qunex hcp_msmall \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
                 --hcp_msmall_bolds="REST_1,REST_2" \\
@@ -5371,7 +5371,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         HCP MSMAll after application of multi-run ICAFix::
 
             qunex hcp_msmall \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
                 --hcp_msmall_bolds="REST_1,REST_2" \\
@@ -5804,7 +5804,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             <boldname>_<hcp_cifti_tail>_hp<hcp_highpass>_clean.dtseries.nii
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
@@ -5893,7 +5893,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         HCP DeDriftAndResample after application of single-run ICAFix::
 
             qunex hcp_dedrift_and_resample \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
                 --hcp_matlab_mode="interpreted"
@@ -5901,7 +5901,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         HCP DeDriftAndResample after application of multi-run ICAFix::
 
             qunex hcp_dedrift_and_resample \\
-                --sessions=processing/batch.txt \\
+                --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
                 --hcp_matlab_mode="interpreted"
@@ -6402,7 +6402,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         been run and finished successfully.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -6488,13 +6488,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_asl \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt"
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
 
         Run with scheduler, while bumbing up the number of used cores::
 
             qunex hcp_asl \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_asl_cores="8" \\
                 --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
     """
@@ -6675,7 +6675,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         HCP MSMAll and HCP make average dataset to be executed.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -6808,7 +6808,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             qunex hcp_temporal_ica \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_tica_bolds="fMRI_CONCAT_ALL" \\
                 --hcp_tica_outfmriname="fMRI_CONCAT_ALL" \\
                 --hcp_tica_mrfix_concat_name="fMRI_CONCAT_ALL" \\
@@ -7130,7 +7130,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         The code expects the HCP minimal preprocessing pipeline to be executed.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions' information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -7193,7 +7193,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
 
             qunex hcp_make_average_dataset \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --sessions="<path_to_study_folder>/processing/batch.txt" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_outgroupname="hcp_group"
 
     """
@@ -7561,7 +7561,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     See Use section for details.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -7667,7 +7667,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex map_hcp_data \\
-                --sessions=fcMRI/sessions_hcp.txt \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --hcp_cifti_tail=_Atlas \\
@@ -7900,7 +7900,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         minimal HCP preprocessing pipeline.
 
     Parameters:
-        --sessions (str, default 'batch.txt'):
+        --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -8006,7 +8006,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_task_fmri_analysis \\
                 --sessionsfolder="<study_path>/sessions" \\
-                --sessions="<study_path>/processing/batch.txt" \\
+                --batchfile="<study_path>/processing/batch.txt" \\
                 --hcp_task_lvl1tasks="tfMRI_GUESSING_PA" \\
                 --hcp_task_summaryname="tfMRI_GUESSING/tfMRI_GUESSING"
 
@@ -8014,7 +8014,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_task_fmri_analysis \\
                 --sessionsfolder="<study_path>/sessions" \\
-                --sessions="<study_path>/processing/batch.txt" \\
+                --batchfile="<study_path>/processing/batch.txt" \\
                 --hcp_task_lvl1tasks="tfMRI_GUESSING_AP@tfMRI_GUESSING_PA" \\
                 --hcp_task_lvl2task="tfMRI_GUESSING"
     """

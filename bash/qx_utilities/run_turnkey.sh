@@ -469,6 +469,12 @@ echo ""
 # -- General input flags
 
 WORKDIR=`opts_GetOpt "--workingdir" $@`
+
+# -- Check WORKDIR
+if [[ -z ${WORKDIR} ]]; then
+    WORKDIR="/output"; mageho " --> Note: Working directory where study is located is missing. Setting defaults: ${WORKDIR}"; echo ''
+fi
+
 STUDY_PATH=`opts_GetOpt "--path" $@`
 StudyFolder=`opts_GetOpt "--studyfolder" $@`
 if [[ -z ${StudyFolder} ]]; then
@@ -743,11 +749,6 @@ QCPlotMasks=`opts_GetOpt "--qcplotmasks" $@`
 # -- Define script name
 scriptName=$(basename ${0})
 
-# -- Check WORKDIR and STUDY_PATH
-if [[ -z ${WORKDIR} ]]; then
-    WORKDIR="/output"; mageho " --> Note: Working directory where study is located is missing. Setting defaults: ${WORKDIR}"; echo ''
-fi
-
 # -- Check and set turnkey type
 if [[ -z ${TURNKEY_TYPE} ]]; then
     TURNKEY_TYPE="xnat"; mageho " --> Note: Turnkey type not specified. Setting default turnkey type to: ${TURNKEY_TYPE}"; echo ''
@@ -773,20 +774,27 @@ fi
 #
 # -- Check and set non-XNAT or XNAT specific parameters
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-   if [[ -z ${PROJECT_NAME} ]]; then reho "ERROR: Project name is missing."; exit 1; echo ''; fi
-   if [[ -z ${StudyFolder} ]]; then
-       StudyFolder=${WORKDIR}/${PROJECT_NAME}
-   else
-         if [[ ${STUDY_PATH} == ${WORKDIR} ]]; then
-             reho "ERROR: --workingdir and --path variables are set to the same location. Check your inputs and re-run."
-             reho "       ${WORKDIR}"
-             exit 1
-        fi
-   fi
-   if [[ -z ${SessionsFolder} ]]; then
-       SessionsFolder=${StudyFolder}/${SessionsFolderName}
-   fi
-   if [[ -z ${CASE} ]]; then reho "ERROR: Requesting local run but --session flag is missing."; exit 1; echo ''; fi
+    if [[ -z ${PROJECT_NAME} ]]; then reho "ERROR: Project name is missing."; exit 1; echo ''; fi
+
+    # create STUDY_PATH and/or StudyFolder if not defined explicitly
+    if [[ -z ${StudyFolder} ]]; then
+        StudyFolder="${WORKDIR}/${PROJECT_NAME}"
+    fi
+    if [[ -z ${STUDY_PATH} ]]; then
+        STUDY_PATH=${WORKDIR}/${PROJECT_NAME}
+    fi
+
+    if [[ ${STUDY_PATH} == ${WORKDIR} ]]; then
+            reho "ERROR: --workingdir and --path variables are set to the same location. Check your inputs and re-run."
+            reho "       ${WORKDIR}"
+            exit 1
+    fi
+
+    if [[ -z ${SessionsFolder} ]]; then
+        SessionsFolder=${StudyFolder}/${SessionsFolderName}
+    fi
+
+    if [[ -z ${CASE} ]]; then reho "ERROR: Requesting local run but --session flag is missing."; exit 1; echo ''; fi
 fi
 
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then

@@ -196,9 +196,18 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
     print("Running setup_hcp\n================")
 
-    inf   = gc.readSessionData(os.path.join(sourcefolder, sourcefile))[0][0]
+    inf   = gc.read_session_data(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
-    sid   = inf['id']
+
+    # backwards compatibility (session used to be id)
+
+    if 'id' in inf:
+        session_key = 'id'
+        sid   = inf[session_key]
+    else:
+        session_key = 'session'
+        sid   = inf['session']
+
     bolds = collections.defaultdict(dict)
     nT1w  = 0
     nT2w  = 0
@@ -211,11 +220,11 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     if hcp_folderstructure == 'hcpya':
         fctail = '_fncb'
         fmtail = '_strc'
-        basef = os.path.join(sourcefolder, targetfolder, inf['id'] + hcp_suffix)
+        basef = os.path.join(sourcefolder, targetfolder, inf[session_key] + hcp_suffix)
     else:
         fctail = ""
         fmtail = ""
-        basef = os.path.join(sourcefolder, targetfolder, inf['id'] + hcp_suffix, 'unprocessed')
+        basef = os.path.join(sourcefolder, targetfolder, inf[session_key] + hcp_suffix, 'unprocessed')
 
     # --- Check session
 

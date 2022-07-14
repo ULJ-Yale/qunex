@@ -135,8 +135,8 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
     ======
 
     --script              The path to the script to be executed.
-    --sessions            The batch.txt file with all the session information
-                          [batch.txt].
+    --batchfile           The batch.txt file with all the session information
+                          [].
     --parsessions         How many sessions to run in parallel. [1]
 
     The parameters can be specified in command call or in a batch.txt file.
