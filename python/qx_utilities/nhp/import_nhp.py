@@ -191,7 +191,7 @@ def import_nhp(sessionsfolder=None, inbox=None, sessions=None, action="link", ov
 
     # check inputs
     if action not in ["link", "copy", "move"]:
-        raise ge.CommandError("import_nhp", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
+        raise ge.CommandError("import_nhp", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: leave, copy, link, move!")
 
     if overwrite not in ["yes", "no"]:
         raise ge.CommandError("import_nhp", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")

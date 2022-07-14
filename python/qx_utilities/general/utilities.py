@@ -2832,7 +2832,6 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
                                    "No sessions were found to process!", "Please check the data and sessions parameter!")
 
         # -- loop through sessions folders
-
         report = {'missing source': [], 'pre-existing target': [],
                   'pre-processed source': [], 'processed': [], 'error': []}
 
@@ -2841,7 +2840,8 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             stfile = os.path.join(sfolder, targetfile)
 
             if not os.path.exists(ssfile):
-                report['missing source'].append(sfolder)
+                if os.path.basename(sfolder) not in ['archive', 'specs', 'QC', 'inbox']:
+                    report['missing source'].append(sfolder)
                 continue
             print(" ... Processing folder %s" % (sfolder))
 

@@ -59,6 +59,7 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # language can either be "bash", "matlab", "python", or "r"
 all_qunex_commands = [
     # ("qx_utilities.r.bold_movement",                                "Plots movement data, creates movement reports and information for data scrubbing.",        "r"), # added as an example for R language
+    ("qx_utilities.general.bruker.bruker_to_dicom",                "Converts bruker data into the dicom format.",                                               "python"),
     ("qx_utilities.general.fidl.check_fidl",                        "Prints figures showing fidl events and their duration.",                                   "python"),
     ("qx_utilities.processing.workflow.compute_bold_stats",         "Compute BOLD movement and signal statistics.",                                             "python"),
     ("qx_utilities.general.utilities.create_batch",                 "Creates a joint batch file from source files in all session folders.",                     "python"),
@@ -141,10 +142,12 @@ all_qunex_commands = [
     ("qx_utilities.bash.parcellate_bold",                           "Parcellate BOLD data and generate pconn files.",                                           "bash"),
     ("qx_utilities.processing.workflow.preprocess_bold",            "Preprocesses single BOLD images.",                                                         "python"),
     ("qx_utilities.processing.workflow.preprocess_conc",            "Preprocesses conc bundles of BOLD images.",                                                "python"),
+    ("qx_mice.process_mice.preprocess_mice",                "Mice preprocessing pipeline.",                                                   "python"),
     ("qx_utilities.general.palm.run_palm",                          "Runs second level analysis using PALM permutation resampling.",                            "python"),
     ("qx_utilities.bash.run_qc",                                    "Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.",                  "bash"),
     ("qx_utilities.bash.run_turnkey",                               "Exectues turnkey QuNex workflow compatible with XNAT Docker engine.",                      "bash"),
     ("qx_utilities.hcp.setup_hcp.setup_hcp",                        "Maps images from the sessions's nii folder to HCP minimal preprocessing structure.",       "python"),
+    ("qx_mice.setup_mice.setup_mice",                               "Prepares mice data for the mice pipelines.",                                                   "python"),
     ("qx_utilities.general.dicom.sort_dicom",                       "Sorts DICOM files.",                                                                       "python"),
     ("qx_utilities.general.dicom.split_dicom",                      "Sorts out DICOM images from different sessions.",                                          "python"),
     ("qx_utilities.general.fidl.split_fidl",                        "Splits a multi-bold fidl file into run specific bold files.",                              "python"),
