@@ -14,13 +14,17 @@ import os
 
 # import headings from docs/conf.py
 sys.path.insert(0, "../..")
-sys.path.insert(0, "../../python")
-from conf import napoleon_custom_sections
 
+from conf import napoleon_custom_sections
 from importlib.util import spec_from_loader, module_from_spec
 from importlib.machinery import SourceFileLoader
-# this code imports python/qx_utilities/gmri to use all_qunex_commands list
+
+# paths
+sys.path.insert(0, "../../../python")
 sys.path.insert(0, "../../../python/qx_utilities")
+sys.path.insert(0, "../../../python/qx_mice")
+
+# this code imports python/qx_utilities/gmri to use all_qunex_commands list
 spec = spec_from_loader("gmri", SourceFileLoader("gmri", "../../../python/qx_utilities/gmri"))
 gmri = module_from_spec(spec)
 spec.loader.exec_module(gmri)
