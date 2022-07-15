@@ -14,6 +14,7 @@ import os
 
 # import headings from docs/conf.py
 sys.path.insert(0, "../..")
+sys.path.insert(0, "../../python")
 from conf import napoleon_custom_sections
 
 from importlib.util import spec_from_loader, module_from_spec
