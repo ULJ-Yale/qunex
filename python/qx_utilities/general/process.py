@@ -34,6 +34,7 @@ from processing import fs, fsl, simple, workflow
 from hcp import process_hcp
 
 # qx_mice
+sys.path.append('../..')
 import qx_mice
 from qx_mice import setup_mice, process_mice
 
