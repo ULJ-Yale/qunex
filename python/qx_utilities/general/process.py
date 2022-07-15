@@ -20,6 +20,7 @@ None of the code is run directly from the terminal interface.
 # imports
 import os
 import os.path
+import sys
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -32,8 +33,10 @@ from processing import fs, fsl, simple, workflow
 # pipelines imports
 from hcp import process_hcp
 
+# qx_mice
 import qx_mice.setup_mice
 import qx_mice.process_mice
+
 
 # =======================================================================
 #                                                                 GLOBALS
