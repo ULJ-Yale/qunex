@@ -745,6 +745,7 @@ def main(args=None):
     dockeropt           = None
     output              = None
     parinfo             = None
+    overwrite           = None
 
     for arg in args:
         if "env_status" in arg or "envstatus" in arg:
@@ -793,6 +794,8 @@ def main(args=None):
             k, batchfilter = arg.split("=", 1)
         elif "sessionids=" in arg:
             k, sessionids = arg.split("=", 1)
+        elif "overwrite=" in arg:
+            k, overwrite = arg.split("=", 1)
         elif "=" in arg:
             k, v = arg.split('=', 1)
             command += '%s="%s" ' % (k, v)
@@ -800,6 +803,27 @@ def main(args=None):
             parinfo = True
         else:
             command += '%s ' % (arg)
+
+    # workaround for commands that are not supported
+    commands_blacklist = [
+        'create_batch',
+        'create_list',
+        'create_conc',
+        'gather_behavior',
+        'pull_sequence_names',
+        'create_stats_report',
+        'fc_compute_roifc',
+        'fc_compute_gbc',
+        'fc_compute_seedmaps',
+        'fc_extract_roi_timeseries',
+        'general_extract_roi_values',
+        'general_extract_roi_glm_values'
+    ]
+    qx_command = command.split(' ')[0]
+    # ban parallel execution of these commands
+    if overwrite == "yes" and parsessions > 1 and qx_command in commands_blacklist:
+        print("ERROR: Parallel execution of this command is not supported when overwrite is set to yes!")
+        exit(1)
 
     # batchlogs folder
     batchlogsfolder = None

@@ -34,8 +34,10 @@ from processing import fs, fsl, simple, workflow
 from hcp import process_hcp
 
 # qx_mice
-import qx_mice.setup_mice
-import qx_mice.process_mice
+sys.path.append('../..')
+import qx_mice
+from qx_mice import setup_mice
+from qx_mice import process_mice
 
 
 # =======================================================================
@@ -187,7 +189,7 @@ def updateOptions(session, options):
 
 arglist = [
     ['# ---- Basic settings'],
-    ['batchfile',           '',                                            str,   "The file with sessions information."],
+    ['batchfile',           '',                                           str,   "The file with sessions information."],
     ['sessions',           '',                                            str,    "A list of sessions to process."],
     ['sessionsfolder',     '',                                            os.path.abspath, 'The path to study sessions folder.'],
     ['logfolder',          '',                                            isNone, 'The path to log folder.'],
