@@ -22,6 +22,7 @@ import datetime
 sys.path.append(os.path.abspath('../python'))
 sys.path.append(os.path.abspath('../python/qx_utilities'))
 sys.path.append(os.path.abspath('../matlab/qx_utilities'))
+sys.path.append(os.path.abspath('../python/qx_mice'))
 # See 'Options for MATLAB domain extension' section for additional path to
 # MATLAB files
 
