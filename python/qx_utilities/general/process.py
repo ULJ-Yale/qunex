@@ -34,8 +34,8 @@ from processing import fs, fsl, simple, workflow
 from hcp import process_hcp
 
 # qx_mice
-import qx_mice.setup_mice
-import qx_mice.process_mice
+import qx_mice
+from qx_mice import setup_mice, process_mice
 
 
 # =======================================================================
