@@ -72,4 +72,4 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
 
 # -- update commands list with information from extensions
 commands.update(extensions.compile_dict('commands')) 
-
+commands.update(extensions.commands)

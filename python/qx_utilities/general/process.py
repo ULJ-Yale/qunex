@@ -493,6 +493,7 @@ arglist = [
 
 # Add arguments used in extensions
 arglist += extensions.compile_list('arglist')
+arglist += extensions.arglist
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -605,6 +606,10 @@ lalist += extensions.compile_list('lalist')
 malist += extensions.compile_list('malist')
 salist += extensions.compile_list('salist')
 
+calist += extensions.calist
+lalist += extensions.lalist
+malist += extensions.malist
+salist += extensions.salist
 
 #   -------------------------------------------------------- COMMAND DICTIONARY
 #   Code that transcribes the comand specifications into a dictionary for
