@@ -353,8 +353,8 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
 
     ::
 
-        qunex map_mice_data \
-          --sessionsfolder="/data/mice_study/sessions" \
+        qunex map_mice_data \\
+          --sessionsfolder="/data/mice_study/sessions" \\
           --sessions="/data/mice_study/processsing/batch.txt"
 
     """

@@ -97,15 +97,15 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
                 └─ mice
 
     Examples:
-        qunex setup_mice \
-          --sessionsfolder='/data/mice_study/sessions' \
+        qunex setup_mice \\
+          --sessionsfolder='/data/mice_study/sessions' \\
           --sessions='/data/mice_study/processsing/batch.txt'
 
-       qunex setup_mice \
-          --sessionsfolder='/data/mice_study/sessions' \
-          --sessions='/data/mice_study/processsing/batch.txt'
-          --sessionids='joe01' \
-          --bolds='bold1' \
+        qunex setup_mice \\
+          --sessionsfolder='/data/mice_study/sessions' \\
+          --sessions='/data/mice_study/processsing/batch.txt' \\
+          --sessionids='joe01' \\
+          --bolds='bold1' \\
           --tr='1'
 
     '''

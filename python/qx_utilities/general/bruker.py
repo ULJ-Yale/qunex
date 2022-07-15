@@ -70,9 +70,9 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
             How many parallel processes to run the conversion  with.
 
      Examples:
-        qunex bruker_to_dicom \
-        --sessionsfolder='/data/mice_study/sessions' \
-        --sourcefolder='/data/raw/bruker' \
+        qunex bruker_to_dicom \\
+        --sessionsfolder='/data/mice_study/sessions' \\
+        --sourcefolder='/data/raw/bruker' \\
         --sessions='S01,S02'
 
     '''
