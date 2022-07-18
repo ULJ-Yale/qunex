@@ -49,6 +49,13 @@ def prefix_wiki(path_string):
     return "wiki/" + path_string
 
 
+def append_html(path_string):
+    """
+    Appends ".html" to the input string.
+    """
+    return path_string + ".html"
+
+
 def restructure_home_menu(file_lines):
     """
     Restructures a list of lines from the home page. Specifically, it prepends
@@ -61,11 +68,11 @@ def restructure_home_menu(file_lines):
         matched_path = re.search("(?<=<)[^hb].+?(?=>)", file_lines[i])
         if matched_path:
             new_path = prefix_wiki(matched_path.group(0))
-            new_path = re.sub(".md", ".html", new_path)
+            new_path = append_html(new_path)
             file_lines[i] = re.sub("(?<=<)[^hb].+?(?=>)", new_path, file_lines[i])
             if re.findall("^-+\n", file_lines[i + 1]):
-                # add the 7 missing dashes because "wiki/" has been prefixed and ".md" has been replaced with longer ".html"
-                file_lines[i + 1] = f'{"-" * 7}{file_lines[i + 1]}'
+                # add the 10 missing dashes because "wiki/" and ".html" have been added
+                file_lines[i + 1] = f'{"-" * 10}{file_lines[i + 1]}'
     return file_lines
 
 

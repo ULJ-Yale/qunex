@@ -92,9 +92,8 @@ myst_heading_anchors = 4
 
 # -- Options for Opengraph extension -----------------------------------------
 
-# TODO: change ogp_site_url to "docs.qunex.yale.edu" or other actual URL
-ogp_site_url = "https://featuredocs.readthedocs.io/"
-ogp_image = "https://bytebucket.org/oriadev/qunex/wiki/Images/QuNex_Logo_small.png"
+ogp_site_url = "https://qunex.readthedocs.io/"
+ogp_image = "https://qunex.readthedocs.io/en/latest/_images/QuNex_Logo_pantheonsite.png"
 
 
 # -- Options for HTML output -------------------------------------------------
