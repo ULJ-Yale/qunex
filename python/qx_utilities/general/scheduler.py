@@ -529,6 +529,20 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                 else:
                     settings[s.strip()] = "QX_FLAG"
 
+        # only allow HCP MPP commands with job array
+        if slurm_array:
+            qx_command = command.split(' ')[0]
+
+            array_commands = [
+                'hcp_pre_freesurfer',
+                'hcp_freesurfer',
+                'hcp_post_freesurfer',
+                'hcp_fmri_volume',
+                'hcp_fmri_surface'
+            ]
+            if qx_command not in array_commands:
+                raise ge.CommandError(qx_command, "SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines: hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.")
+
         settings['jobname'] = settings.get('jobname', command)
 
         # if job array we have a single job

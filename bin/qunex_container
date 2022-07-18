@@ -902,7 +902,7 @@ def main(args=None):
 
     # get sessionsids
     g_sessionids = get_sessionids(batchfile, sessions, batchfilter)
-    n_sessions = len(sessionids)
+    n_sessions = len(g_sessionids)
 
     # array for storing session ids
     sessionids_array = []
@@ -955,6 +955,19 @@ def main(args=None):
         # if job array we have a single job
         if slurm_array:
             parjobs = 1
+
+            # only allow HCP MPP commands with job array
+            array_commands = [
+                'hcp_pre_freesurfer',
+                'hcp_freesurfer',
+                'hcp_post_freesurfer',
+                'hcp_fmri_volume',
+                'hcp_fmri_surface'
+            ]
+            if qx_command not in array_commands:
+                print("ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines!")
+                print("         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.")
+                exit(1)
 
     # if scheduler is not None and we do not have a multi_session_command then setup parallelism
     if scheduler is not None and sessions is not None and not multi_session_command:
