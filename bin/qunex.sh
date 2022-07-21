@@ -1438,10 +1438,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_PASSWORD=`get_parameters "${setflag}xnatpass" $@`
     XNAT_STUDY_INPUT_PATH=`get_parameters "${setflag}xnatstudyinputpath" $@`
 
-    if [[ -n ${BATCH_FILE} ]]; then
-        CASES=${BATCH_FILE}
-    fi
-
     # -- General sessions and sessionids flags
     SESSIONS=`get_parameters "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
     if [[ -z ${CASES} ]]; then
