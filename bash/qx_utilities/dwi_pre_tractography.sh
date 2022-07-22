@@ -11,12 +11,6 @@
 #
 # Wrapper to run dwi_pre_tractography function
 #
-# ## LICENCE
-#
-# * The dwi_pre_tractography.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
-# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
-#
 # ## DESCRIPTION 
 #   
 # This script, dwi_pre_tractography.sh, implements ROI extraction

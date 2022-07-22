@@ -8,16 +8,13 @@ from shutil import copyfile
 
 '''
 generate_index.py is the script that performs all the necessary adjustments to
-the homepage file of the QuNex Bitbucket wiki (Home.md) in order to prepare the
+the homepage file of the QuNex Wiki (Home.md) in order to prepare the
 index file for the public GitLab QuNex documentation website.
 
 * Search for TODO to find what needs to be implemented.
 
 * Search for HARDCODED to find what is hardcoded and should be inspected and
-  modified every time there is a major change in the format of the wiki on
-  Bitbucket.
-
-Written by Aleksij Kraljic, March 19, 2021, MBLab, University of Ljubljana
+  modified every time there is a major change in the format of the Wiki.
 '''
 
 # Hardcoded values
@@ -175,7 +172,7 @@ def read_exclude_list(ex_path):
 
 
 if __name__ == "__main__":
-    # -- read Home.md file (Bitbucket wiki homepage)
+    # -- read Home.md file (Wiki homepage)
     with open('../../wiki/Home.md') as f:
         home_lines = f.readlines()
 
@@ -186,7 +183,7 @@ if __name__ == "__main__":
 
     subprocess.run('rm ../../HomeMenu.md'.split())
 
-    # -- read HomeMenu.rst file (BitBucket wiki homepage converted to .rst)
+    # -- read HomeMenu.rst file (Wiki homepage converted to .rst)
     with open('../../HomeMenu.rst') as f:
         menu_lines = f.readlines()
     restructure_home_menu(menu_lines)
