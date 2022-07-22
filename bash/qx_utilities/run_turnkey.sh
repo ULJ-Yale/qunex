@@ -10,7 +10,7 @@
 # Variables that will be passed as container launch in XNAT:
 ###################################################################
 #
-# batchfile (batch file with processing parameters)
+# paramfile (file with processing parameters)
 # mappingfile (file for mapping into desired file structure; e.g. hcp)
 # xnataccsessionid (Imaging Session Accession ID)
 # xnatsessionlabels (Imaging Session Label)
@@ -101,8 +101,8 @@ Parameters:
         Specify specific turnkey steps you wish to clean up intermediate files
         for.
         Supported: TODO
-    --batchfile (str):
-        Batch file with pre-configured header specifying processing parameters.
+    --paramfile (str):
+        File with pre-configured header specifying processing parameters.
 
         Note: This file needs to be created *manually* prior to starting
         run_turnkey.
@@ -371,7 +371,7 @@ Examples:
         qunex run_turnkey \\
             --turnkeytype=<turnkey_run_type> \\
             --turnkeysteps=<turnkey_worlflow_steps> \\
-            --batchfile=<batch_file> \\
+            --paramfile=<parameters_file> \\
             --overwritestep=yes \\
             --mappingfile=<mapping_file> \\
             --xnatsubjectlabel=<XNAT_SUBJECT_LABEL> \\
@@ -527,7 +527,7 @@ fi
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
 OVERWRITE_PROJECT_FORCE=`opts_GetOpt "--overwriteprojectforce" $@`
 OVERWRITE_PROJECT_XNAT=`opts_GetOpt "--overwriteprojectxnat" $@`
-BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
+BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--paramfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
 
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
@@ -766,7 +766,7 @@ fi
 
 # -- Check that BATCH_PARAMETERS_FILENAME flag and parameter is set
 if [[ -z ${BATCH_PARAMETERS_FILENAME} ]];
-    then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo '';
+    then reho "ERROR: --paramfile flag missing. Parameter file not specified."; echo '';
     exit 1;
 fi
 
@@ -798,8 +798,8 @@ if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
 fi
 
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-    if [[ -z ${XNAT_PROJECT_ID} ]]; then reho "ERROR: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_HOST_NAME} ]]; then reho "ERROR: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_PROJECT_ID} ]]; then reho "ERROR: --xnatprojectid flag missing. Parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_HOST_NAME} ]]; then reho "ERROR: --xnathost flag missing. Parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_USER_NAME} ]]; then reho "ERROR: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_PASSWORD} ]]; then reho "ERROR: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${WORKDIR}/${XNAT_PROJECT_ID}; fi
@@ -1001,7 +1001,7 @@ fi
 
 # -- Function to check for BATCH_PARAMETERS_FILENAME
 checkBatchFileHeader() {
-    if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; then reho "ERROR: --paramfile flag missing. Parameter file not specified."; echo ''; exit 1; fi
     if [[ -f ${BATCH_PARAMETERS_FILENAME} ]]; then
         BATCH_PARAMETERS_FILE_PATH="${BATCH_PARAMETERS_FILENAME}"
     else
@@ -1015,7 +1015,7 @@ checkBatchFileHeader() {
            fi
         fi
     fi
-    if [[ ! -f ${BATCH_PARAMETERS_FILE_PATH} ]]; then reho "ERROR: --batchfile flag set but file not found in default locations: ${BATCH_PARAMETERS_FILENAME}"; echo ''; exit 1; fi
+    if [[ ! -f ${BATCH_PARAMETERS_FILE_PATH} ]]; then reho "ERROR: --paramfile flag set but file not found in default locations: ${BATCH_PARAMETERS_FILENAME}"; echo ''; exit 1; fi
 }
 
 # -- Function to check for SCAN_MAPPING_FILENAME
@@ -1099,8 +1099,8 @@ getBoldNumberList() {
 # -- Perform explicit checks for steps which rely on BATCH_PARAMETERS_FILENAME and SCAN_MAPPING_FILENAME
 if [[ `echo ${TURNKEY_STEPS} | grep 'create_study'` ]] || [[ `echo ${TURNKEY_STEPS} | grep 'map_raw_data'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "ERROR: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "ERROR: --paramfile flag missing. Parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "ERROR: --mappingfile flag missing. Parameter file not specified."; echo ''; exit 1;  fi
     fi
     if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
         if [[ `echo ${TURNKEY_STEPS} | grep 'map_raw_data'` ]]; then
@@ -1115,7 +1115,7 @@ fi
 # -- Perform checks that batchfile is provided if create_batch has been requested
 if [[ `echo ${TURNKEY_STEPS} | grep 'create_batch'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "ERROR: --paramfile flag missing. Parameter file not specified."; echo ''; exit 1; fi
     fi
     if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
         checkBatchFileHeader
@@ -1197,7 +1197,7 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
     echo "   Local project name: ${PROJECT_NAME}"
     echo "   Raw data input path: ${RawDataInputPath}"
     echo "   QuNex Session variable name: ${CASE}"
-    echo "   QuNex Batch file input: ${BATCH_PARAMETERS_FILENAME}"
+    echo "   QuNex Parameters file input: ${BATCH_PARAMETERS_FILENAME}"
     echo "   QuNex Mapping file input: ${SCAN_MAPPING_FILENAME}"
 fi
 
@@ -1662,7 +1662,7 @@ fi
             rm -rf ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} &> /dev/null
             rm -rf ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} &> /dev/null
             rm -rf ${QuNexProcessingDir}/scenes/QC/* &> /dev/null
-            geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
+            geho " -- Fetching parameters and mapping files from ${XNAT_HOST_NAME}"; echo ""
             echo "" >> ${mapRawData_ComlogTmp}
             geho "  Logging turnkey_map_raw_data output at time ${TimeStamp}:" >> ${mapRawData_ComlogTmp}
             echo "----------------------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
@@ -1715,9 +1715,9 @@ fi
                 echo "" >> ${mapRawData_ComlogTmp}
            fi
 
-            # -- Perform checks for batch and mapping files being mapped correctly
+            # -- Perform checks for parameters and mapping files being mapped correctly
             if [[ ! -f ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} ]]; then
-                echo " ==> ERROR: Scan batch file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
+                echo " ==> ERROR: Scan parameters file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
                 BATCHFILECHECK="fail"
                 exit 1
             fi
@@ -1741,7 +1741,7 @@ fi
                 if [[ -f ${BATCH_PARAMETERS_FILE_PATH} ]]; then
                     cp ${BATCH_PARAMETERS_FILE_PATH} ${SpecsBatchFileHeader} >> ${mapRawData_ComlogTmp}
                 else
-                    echo " ==> ERROR: Batch parameters file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
+                    echo " ==> ERROR: Parameters file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
                 fi
             fi
             if [[ ! -f ${SpecsMappingFile} ]]; then
