@@ -3011,30 +3011,76 @@ def _assign_bold_number(tgt_session):
     """
     images = tgt_session["images"]
     image_numbers = list(sorted(images.keys()))
-    bold_num = 0
-    hasref = False
+    bold_pairs = []
+    IDLE_STATE = 0
+    FOUND_BOLD_REF = 1
+    state = IDLE_STATE
+    prev_boldref_imgage_number = None
     for i in image_numbers:
         image = images[i]
-        rule = image["applied_rule"]
-        hcp_image_type = rule.get("hcp_image_type")
+        hcp_image_type = image["applied_rule"].get("hcp_image_type")
         if hcp_image_type is None:
             continue
 
         # bold ref
         if hcp_image_type[0] == "boldref":
-            bold_num += 1
-            hasref = True
+            # when a ref image is found save it and wait to pair it with a bold img
+            if state == IDLE_STATE:
+                prev_boldref_imgage_number = i
+                state = FOUND_BOLD_REF
+            elif state == FOUND_BOLD_REF:
+                bold_pairs.append((prev_boldref_imgage_number,))
+                prev_boldref_imgage_number = i
+                state = FOUND_BOLD_REF
         elif hcp_image_type[0] == "bold":
-            # bold immediately following boldref should have the same bold number
-            if hasref:
-                hasref = False
-            else:
-                bold_num += 1
+            if state == IDLE_STATE:
+                bold_pairs.append((i,))
+                state = IDLE_STATE
+            elif state == FOUND_BOLD_REF:
+                bold_pairs.append((prev_boldref_imgage_number, i))
+                prev_boldref_imgage_number = None
+                state = IDLE_STATE
         else:
             continue
+    
+    if state == FOUND_BOLD_REF:
+        bold_pairs.append((prev_boldref_imgage_number,))
+        prev_boldref_imgage_number = None
+    
+    used_bold_num = set()
+    remaining_pairs = []
+    
+    for pair in bold_pairs:
+        custom_bold_num = None
+        for e in pair:
+            image = images[e]
+            hcp_image_type = image["applied_rule"].get("hcp_image_type")
+            if hcp_image_type[0] == 'bold':
+                bn = image.get("bold_num")
+                if bn is not None:
+                    custom_bold_num = bn
+        if custom_bold_num is not None:
+            if custom_bold_num in used_bold_num:
+                raise ge.CommandError("create_session_info", "Custom bold number conflict", "cannot apply the same bold number to multiple bold images")
+            used_bold_num.add(custom_bold_num)
+            for e in pair:
+                image = images[e]
+                hcp_image_type = image["applied_rule"].get("hcp_image_type")
+                image["hcp_image_type"] = (
+                    hcp_image_type[0], custom_bold_num, hcp_image_type[2])
+        else:
+            remaining_pairs.append(pair)
 
-        image["hcp_image_type"] = (
-            hcp_image_type[0], bold_num, hcp_image_type[2])
+    bold_num = 1
+    for pair in remaining_pairs:
+        while bold_num in used_bold_num:
+            bold_num += 1
+        used_bold_num.add(bold_num)
+        for e in pair:
+            image = images[e]
+            hcp_image_type = image["applied_rule"].get("hcp_image_type")
+            image["hcp_image_type"] = (
+                hcp_image_type[0], bold_num, hcp_image_type[2])
 
 
 def _find_field_maps(tgt_session, field_map_type):
@@ -3203,7 +3249,7 @@ def _serialize_session(tgt_session):
 
     if tgt_session.get("session") is None:
         raise ge.SpecFileSyntaxError(error="session id cannot be empty")
-    lines.append("session: {}".format(tgt_session["session"]))
+    lines.append("id: {}".format(tgt_session["session"]))
 
     if tgt_session.get("subject") is None:
         raise ge.SpecFileSyntaxError(error="subject id cannot be empty")
