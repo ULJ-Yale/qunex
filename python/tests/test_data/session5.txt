@@ -1,5 +1,5 @@
 # import hcp
-id: 06_retest
+session: 06_retest
 subject: 06
 hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
 raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii

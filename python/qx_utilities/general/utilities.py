@@ -3249,7 +3249,7 @@ def _serialize_session(tgt_session):
 
     if tgt_session.get("session") is None:
         raise ge.SpecFileSyntaxError(error="session id cannot be empty")
-    lines.append("id: {}".format(tgt_session["session"]))
+    lines.append("session: {}".format(tgt_session["session"]))
 
     if tgt_session.get("subject") is None:
         raise ge.SpecFileSyntaxError(error="subject id cannot be empty")

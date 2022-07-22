@@ -18,6 +18,23 @@ def test_read_generic_session_file():
     assert len(sess["images"]) == 2
 
 
+def test_read_generic_session_file_with_id():
+    """Reading a session file uses id instead of session
+    
+    This test cases ensures that a session file uses
+    "id" old format instead of "session" can be parsed by 
+    the parser
+    """
+    filename = get_test_data_path("session1_id.txt")
+    sess = read_generic_session_file(filename)
+    assert sess["session"] == "12345_1"
+    assert sess["subject"] == "12345"
+    assert len(sess["paths"]) == 3
+    assert "bids" in sess["paths"]
+    assert len(sess["pipeline_ready"]) == 0
+    assert len(sess["images"]) == 2
+
+
 def test_read_generic_session_file_complex():
     """Reading a dicom session file"""
     filename = get_test_data_path("session2.txt")

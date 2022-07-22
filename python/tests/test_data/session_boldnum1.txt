@@ -1,5 +1,5 @@
 # import hcp
-id: HCPA001
+session: HCPA001
 subject: HCPA001
 dicom: /data/sessions/HCPA001/dicom
 raw_data: /data/sessions/HCPA001/nii

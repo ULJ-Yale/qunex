@@ -1,5 +1,5 @@
 # bids format
-session: 12345_1
+id: 12345_1
 subject: 12345
 bids: /test/sessions/12345_1/bids
 raw_data: /test/sessions/12345_1/nii
