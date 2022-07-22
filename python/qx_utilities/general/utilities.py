@@ -2956,7 +2956,8 @@ def _apply_rules(src_session, mapping_rules):
         "subject": src_session["subject"],
         "paths": src_session["paths"],
         "pipeline_ready": src_session["pipeline_ready"],
-        "images": {}
+        "images": {},
+        "custom_tags": src_session["custom_tags"],
     }
 
     grp_img_num_rule = mapping_rules["group_rules"]["image_number"]
@@ -3257,6 +3258,9 @@ def _serialize_session(tgt_session):
 
     for path_name, path in tgt_session["paths"].items():
         lines.append("{}: {}".format(path_name, path))
+
+    for tag_key, tag_value in tgt_session["custom_tags"].items():
+        lines.append("{}: {}".format(tag_key, tag_value))
 
     for pipeline in tgt_session["pipeline_ready"]:
         lines.append("{}ready: true".format(pipeline))

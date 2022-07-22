@@ -5,5 +5,8 @@ bids: /test/sessions/12345_1/bids
 raw_data: /test/sessions/12345_1/nii
 hcp: /test/sessions/12345_1/hcp
 
+institution: CMRR_3T-C
+device: Siemens|Prisma|166007
+
 01: T1w run-1
 02: bold rest run-1

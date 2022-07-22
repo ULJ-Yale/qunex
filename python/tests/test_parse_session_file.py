@@ -57,6 +57,9 @@ def test_read_hcpls_session():
     assert "hcpls" in sess["paths"]
     assert len(sess["pipeline_ready"]) == 0
     assert len(sess["images"]) == 9
+    assert sess["custom_tags"]["institution"] == "CMRR_3T-C"
+    assert sess["custom_tags"]["device"] == "Siemens|Prisma|166007"
+    assert sess["custom_tags"]["gender"] == "male"
 
 
 def test_read_hcp_session_file():
