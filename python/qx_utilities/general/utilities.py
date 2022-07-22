@@ -2986,6 +2986,7 @@ def _apply_image_rule(img_info, rule):
 
     new_img_info = {
         "image_number": img_info["image_number"],
+        "raw_image_number": img_info["raw_image_number"],
         "applied_rule": rule,
         "additional_tags": [img_info["series_description"]] + img_info["additional_tags"] + rule["additional_tags"]
     }
@@ -3216,7 +3217,7 @@ def _serialize_session(tgt_session):
 
     for img_num in sorted(tgt_session["images"].keys()):
         image = tgt_session["images"][img_num]
-        image_num_str = ".".join([str(i) for i in img_num])
+        image_num_str = tgt_session["images"][img_num]["raw_image_number"]
         hcp_image_type = image.get("hcp_image_type")
 
         tags = []

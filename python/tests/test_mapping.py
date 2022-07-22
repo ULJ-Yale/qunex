@@ -85,3 +85,15 @@ def test_mapping_mix_se_fm():
     expected = _load_expected_mapping("session4_hcp.txt")
     print("\n".join(lines))
     assert result == expected
+
+
+def test_mapping_bids():
+    """Mapping bids
+    
+    import bids produces image number with leading zeros
+    """
+    _, lines = _run_mapping_test("session1.txt", "mapping1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session1_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected

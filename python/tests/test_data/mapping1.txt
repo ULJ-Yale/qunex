@@ -1,0 +1,5 @@
+#  HCP mapping file
+#  ----------------
+
+01                  => T1w
+bold rest run-1     => bold:rest
