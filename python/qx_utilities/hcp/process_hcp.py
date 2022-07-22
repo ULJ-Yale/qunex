@@ -6494,7 +6494,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_asl_cores="8" \\
-                --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000"
+                --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=8,mem-per-cpu=16000"
     """
 
     r = "\n------------------------------------------------------------"
