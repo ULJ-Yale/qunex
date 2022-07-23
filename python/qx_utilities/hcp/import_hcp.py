@@ -539,7 +539,6 @@ def processHCPLS(sessionfolder, filesort):
     hcpls = ast.literal_eval(content)
 
     # --- get a list of folders and process them
-
     dfolders = glob.glob(os.path.join(sessionfolder, '*'))
 
     # -- data: SE number, label, fodlerInfo, folderFiles, status
@@ -553,7 +552,6 @@ def processHCPLS(sessionfolder, filesort):
         missingFiles = []
 
         # --- get folder information
-
         folderName  = os.path.basename(dfolder)
         folderTags  = folderName.split('_')
         folderLabel = folderTags.pop(0)
@@ -565,18 +563,15 @@ def processHCPLS(sessionfolder, filesort):
                 folderInfo[info] = folderTags.pop(0)
 
         # --- Get files list
-
         files = sorted(glob.glob(os.path.join(dfolder, '*')))
         files = [e for e in files if e.endswith('.nii.gz')]
 
         # --- Exclude files
-
         toExclude = ['InitialFrames']
         for exclude in toExclude:
             files = [e for e in files if exclude not in e] 
 
         # --- Proces spin echo files
-
         sefile = [e for e in files if 'SpinEchoFieldMap' in e]
         if sefile:
             senum = [e for e in sefile[0].split('_') if 'SpinEchoFieldMap' in e][0].replace('SpinEchoFieldMap', "")
@@ -586,7 +581,6 @@ def processHCPLS(sessionfolder, filesort):
                 senum = 1
 
         # --- Proces fieldmap files
-
         fmfile = [e for e in files if 'FieldMap_Magnitude' in e]
         if fmfile:
             fmnum = [e for e in fmfile[0].split('_') if 'Magnitude' in e][0].replace('Magnitude', "").replace('.nii.gz', "")
@@ -602,7 +596,6 @@ def processHCPLS(sessionfolder, filesort):
             folderFiles.append({'rank': 0, 'path': file, 'name': fileName, 'parts': fileParts, 'json': None})
 
         # --- Check files
-
         check = list(hcpls['folders'][folderLabel]['check'])
         rank = 0
         for fcheck in check:
@@ -625,13 +618,11 @@ def processHCPLS(sessionfolder, filesort):
                 missingFiles.append([dfolder, fcheck])
 
         # --- Order files
-
         folderFiles.sort(key=lambda x: x['rank'])
         extraFiles = [e for e in folderFiles if e['rank'] == 0]
         folderFiles = [e for e in folderFiles if e['rank'] > 0]
 
         # --- Get json info
-
         for file in folderFiles:
             jfile = file['path'].replace('.nii.gz', '.json')
             if not os.path.exists(jfile):
@@ -643,13 +634,10 @@ def processHCPLS(sessionfolder, filesort):
                 file['json'] = jinf
 
         # --- finish up folder
-
         checkedFolders.append({'senum': senum, 'fmnum': fmnum, 'name': folderName, 'label': folderLabel, 'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles})
 
     # sort folders
-
     print("--> filesort:", filesort)
-
     for sortkey in filesort.split('_'):
         if sortkey == 'name':
             checkedFolders.sort(key=lambda x: x['name'])
@@ -873,14 +861,11 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
         raise ge.CommandError("map_hcpls2nii", "Invalid option for overwrite specified", "%s is not a valid option for the overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     # --- process hcpls folder
-
     hcplsData = processHCPLS(hfolder, filesort)
-
     if not hcplsData:
         raise ge.CommandFailed("map_hcpls2nii", "No image files in hcpls folder!", "There are no image files in the hcpls folder [%s]" % (hfolder), "Please check your data!")
 
     # --- check for presence of nifti files
-
     if os.path.exists(nfolder):
         nfiles = len(glob.glob(os.path.join(nfolder, '*.nii*')))
         if nfiles > 0:
@@ -938,7 +923,6 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     boldn   = 0
     nmapped = 0
     firstImage = True
-
 
     for folder in hcplsData:
         if folder['label'] in ['rfMRI', 'tfMRI']:
@@ -1127,7 +1111,7 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     print(out, file=sout_hcp)
 
                 # -- ASL
-                elif fileInfo['parts'][0] in ['mbPCASLhr', 'PCASLhr']:
+                elif fileInfo['parts'][0] in ['mbPCASLhr', 'PCASLhr', 'ASL']:
                     # phenc
                     phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
                     if phenc:
@@ -1135,7 +1119,10 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
                     else:
                         phenc = fileInfo['parts'][2]
 
-                    out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']), phenc)
+                    if fileInfo['parts'][1] == "SpinEchoFieldMap":
+                        phenc = "SE-FM-" + phenc
+
+                    out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "ASL", "_".join(fileInfo['parts']), phenc)
 
                     print(out, end= " ", file=sout)
                     print(out, end= " ", file=sout_hcp)

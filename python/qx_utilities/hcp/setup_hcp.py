@@ -435,13 +435,13 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             tfile = [tbase + e for e in ['.nii.gz', '.bval', '.bvec']]
             tfold = "Diffusion"
 
-        elif v['name'] in ["mbPCASLhr", "PCASLhr"]:
+        elif v['name'] in ["mbPCASLhr", "PCASLhr", "ASL"]:
             sfile = [k + e for e in ['.nii.gz']]
 
             tbase = "_".join([sid, v['filename']])
 
             tfile = [tbase + e for e in ['.nii.gz']]
-            tfold = "mbPCASLhr"
+            tfold = "ASL"
 
         else:
             print("  ... skipping %s %s [unknown sequence label, please check]" % (v['ima'], v['name']))

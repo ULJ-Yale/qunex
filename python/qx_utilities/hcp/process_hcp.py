@@ -122,7 +122,8 @@ def getHCPPaths(sinfo, options):
     d['hcp_nonlin']         = os.path.join(hcpbase, 'MNINonLinear')
     d['T1w_source']         = os.path.join(d['source'], 'T1w')
     d['DWI_source']         = os.path.join(d['source'], 'Diffusion')
-    d['ASL_source']         = os.path.join(d['source'], 'mbPCASLhr')
+    d['mbPCASLhr_source']   = os.path.join(d['source'], 'mbPCASLhr')
+    d['ASL_source']         = os.path.join(d['source'], 'ASL')
 
     d['T1w_folder']         = os.path.join(hcpbase, 'T1w')
     d['DWI_folder']         = os.path.join(hcpbase, 'Diffusion')
@@ -6536,20 +6537,24 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # mbpcasl_file image
-        asl_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "mbPCASLhr"][0]["filename"]
-        mbpcasl_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
-        if not os.path.exists(mbpcasl_file):
-            r += "\n---> ERROR: MbPCASLhr acquistion data not found [%s]" % mbpcasl_file
-            run = False
+        # ASL naming
+        asl_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] in ["ASL", "mbPCASLhr"]][0]["filename"]
+        asl_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
+        if not os.path.exists(asl_file):
+            # check mbPCASLhr naming
+            asl_file = os.path.join(hcp["mbPCASLhr_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
+            if not os.path.exists(asl_file):
+                r += "\n---> ERROR: mbPCASLhr acquistion data not found [%s]" % mbpcasl_file
+                run = False
 
         # AP and PA fieldmaps for use in distortion correction
-        asl_ap_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "PCASLhr" and v["phenc"] == "AP"][0]["filename"]
+        asl_ap_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] in ["ASL", "PCASLhr"] and v["phenc"] in ["AP", "SE-FM-AP"]][0]["filename"]
         fmap_ap_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_ap_filename + ".nii.gz")
         if not os.path.exists(fmap_ap_file):
             r += "\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file
             run = False
 
-        asl_pa_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "PCASLhr" and v["phenc"] == "PA"][0]["filename"]
+        asl_pa_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] in ["ASL", "PCASLhr"] and v["phenc"] in ["PA", "SE-FM-PA"]][0]["filename"]
         fmap_pa_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_pa_filename + ".nii.gz")
         if not os.path.exists(fmap_ap_file):
             r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
@@ -6587,7 +6592,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     "grads"                 : gdcfile,
                     "struct"                : t1w_file,
                     "sbrain"                : t1w_brain_file,
-                    "mbpcasl"               : mbpcasl_file,
+                    "mbpcasl"               : asl_file,
                     "fmap_ap"               : fmap_ap_file,
                     "fmap_pa"               : fmap_pa_file,
                     "wmparc"                : wmparc_file,
