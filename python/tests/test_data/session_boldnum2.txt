@@ -1,0 +1,15 @@
+# import hcp
+session: HCPA001
+subject: HCPA001
+dicom: /data/sessions/HCPA001/dicom
+raw_data: /data/sessions/HCPA001/nii
+data: /data/sessions/HCPA001/4dfp
+hcp: /data/sessions/HCPA001/hcp
+
+11: EXAMPLE T1
+21: EXAMPLE TASK1 REF
+31: EXAMPLE TASK1
+41: EXAMPLE REST REF
+51: EXAMPLE REST
+61: EXAMPLE REST REF
+71: EXAMPLE REST

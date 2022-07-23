@@ -1,4 +1,4 @@
-id: Z1VPF
+session: Z1VPF
 subject: Z1VPF
 raw_data: /Volumes/tigr/MBLab/fMRI/MMI/subjects.j/Z1VPF/nii
 hcp: /Volumes/tigr/MBLab/fMRI/MMI/subjects.j/Z1VPF/hcp

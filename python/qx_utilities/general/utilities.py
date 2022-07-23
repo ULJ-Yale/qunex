@@ -2956,7 +2956,8 @@ def _apply_rules(src_session, mapping_rules):
         "subject": src_session["subject"],
         "paths": src_session["paths"],
         "pipeline_ready": src_session["pipeline_ready"],
-        "images": {}
+        "images": {},
+        "custom_tags": src_session["custom_tags"],
     }
 
     grp_img_num_rule = mapping_rules["group_rules"]["image_number"]
@@ -2986,6 +2987,7 @@ def _apply_image_rule(img_info, rule):
 
     new_img_info = {
         "image_number": img_info["image_number"],
+        "raw_image_number": img_info["raw_image_number"],
         "applied_rule": rule,
         "additional_tags": [img_info["series_description"]] + img_info["additional_tags"] + rule["additional_tags"]
     }
@@ -3010,30 +3012,76 @@ def _assign_bold_number(tgt_session):
     """
     images = tgt_session["images"]
     image_numbers = list(sorted(images.keys()))
-    bold_num = 0
-    hasref = False
+    bold_pairs = []
+    IDLE_STATE = 0
+    FOUND_BOLD_REF = 1
+    state = IDLE_STATE
+    prev_boldref_imgage_number = None
     for i in image_numbers:
         image = images[i]
-        rule = image["applied_rule"]
-        hcp_image_type = rule.get("hcp_image_type")
+        hcp_image_type = image["applied_rule"].get("hcp_image_type")
         if hcp_image_type is None:
             continue
 
         # bold ref
         if hcp_image_type[0] == "boldref":
-            bold_num += 1
-            hasref = True
+            # when a ref image is found save it and wait to pair it with a bold img
+            if state == IDLE_STATE:
+                prev_boldref_imgage_number = i
+                state = FOUND_BOLD_REF
+            elif state == FOUND_BOLD_REF:
+                bold_pairs.append((prev_boldref_imgage_number,))
+                prev_boldref_imgage_number = i
+                state = FOUND_BOLD_REF
         elif hcp_image_type[0] == "bold":
-            # bold immediately following boldref should have the same bold number
-            if hasref:
-                hasref = False
-            else:
-                bold_num += 1
+            if state == IDLE_STATE:
+                bold_pairs.append((i,))
+                state = IDLE_STATE
+            elif state == FOUND_BOLD_REF:
+                bold_pairs.append((prev_boldref_imgage_number, i))
+                prev_boldref_imgage_number = None
+                state = IDLE_STATE
         else:
             continue
+    
+    if state == FOUND_BOLD_REF:
+        bold_pairs.append((prev_boldref_imgage_number,))
+        prev_boldref_imgage_number = None
+    
+    used_bold_num = set()
+    remaining_pairs = []
+    
+    for pair in bold_pairs:
+        custom_bold_num = None
+        for e in pair:
+            image = images[e]
+            hcp_image_type = image["applied_rule"].get("hcp_image_type")
+            if hcp_image_type[0] == 'bold':
+                bn = image.get("bold_num")
+                if bn is not None:
+                    custom_bold_num = bn
+        if custom_bold_num is not None:
+            if custom_bold_num in used_bold_num:
+                raise ge.CommandError("create_session_info", "Custom bold number conflict", "cannot apply the same bold number to multiple bold images")
+            used_bold_num.add(custom_bold_num)
+            for e in pair:
+                image = images[e]
+                hcp_image_type = image["applied_rule"].get("hcp_image_type")
+                image["hcp_image_type"] = (
+                    hcp_image_type[0], custom_bold_num, hcp_image_type[2])
+        else:
+            remaining_pairs.append(pair)
 
-        image["hcp_image_type"] = (
-            hcp_image_type[0], bold_num, hcp_image_type[2])
+    bold_num = 1
+    for pair in remaining_pairs:
+        while bold_num in used_bold_num:
+            bold_num += 1
+        used_bold_num.add(bold_num)
+        for e in pair:
+            image = images[e]
+            hcp_image_type = image["applied_rule"].get("hcp_image_type")
+            image["hcp_image_type"] = (
+                hcp_image_type[0], bold_num, hcp_image_type[2])
 
 
 def _find_field_maps(tgt_session, field_map_type):
@@ -3211,12 +3259,15 @@ def _serialize_session(tgt_session):
     for path_name, path in tgt_session["paths"].items():
         lines.append("{}: {}".format(path_name, path))
 
+    for tag_key, tag_value in tgt_session["custom_tags"].items():
+        lines.append("{}: {}".format(tag_key, tag_value))
+
     for pipeline in tgt_session["pipeline_ready"]:
         lines.append("{}ready: true".format(pipeline))
 
     for img_num in sorted(tgt_session["images"].keys()):
         image = tgt_session["images"][img_num]
-        image_num_str = ".".join([str(i) for i in img_num])
+        image_num_str = tgt_session["images"][img_num]["raw_image_number"]
         hcp_image_type = image.get("hcp_image_type")
 
         tags = []

@@ -55,6 +55,7 @@ def read_generic_session_file(session_file_path):
         <image_number>: Tuple[int] # one or more int separated by decimal points
         <image_info_schema>: {
             "image_number": <image_number>,
+            "raw_image_number": str,
             "series_description": str,
             "fm": int | None, # field map hint
             "se": int | None, # spin-echo hint
@@ -76,7 +77,7 @@ def read_hcp_session_file(session_file_path):
     Returns:
         A dict mapping with the following schema
         {
-            "id": str, # session id
+            "session": str, # session id
             "subject": str, # subject id
             "paths": Dict[str, str] # key: path_type, value: path string,
             "pipeline_ready": List[str] # ["hcp"]
@@ -87,6 +88,7 @@ def read_hcp_session_file(session_file_path):
         <image_number>: Tuple[int] # one or more int separated by decimal points
         <image_info_schema>: {
             "image_number": <image_number>,
+            "raw_image_number": str
             "hcp_image_type": (
                 1 tuple -> "T1w", "T2w", "FM-GE"
                 2 tuple -> ("FM", Phase/Magnitude), ("SE-FM", RL/LR/AP/PA), ("DWI", label)
@@ -183,6 +185,7 @@ def _parse_session_file_lines(lines, session_file_type):
         "paths": dict(),
         "pipeline_ready": [],
         "images": {},
+        "custom_tags": {},
     }
     for l in lines:
         tokens = [e.strip() for e in l.split(":")]
@@ -218,8 +221,10 @@ def _parse_session_file_lines(lines, session_file_type):
         elif RE_IMAGE_NUM.match(tokens[0]):
             img = _parse_session_image_line(tokens, session_file_type)
             session["images"][img["image_number"]] = img
+        
+        else:
+            session["custom_tags"][tokens[0]] = l.split(":", 1)[1].strip()
 
-    # TODO: validate completeness
     return session
 
 
@@ -275,6 +280,7 @@ def _parse_session_image_line(tokens, session_file_type):
 
     image_info = _parse_image_line_tags(tokens[1:], session_file_type)
     image_info["image_number"] = image_number
+    image_info["raw_image_number"] = tokens[0]
     return image_info
 
 
@@ -288,6 +294,8 @@ def _parse_image_number(token):
         token: str
     Returns:
         A tuple of integers
+    Exceptions:
+        ValueError: parse int error
     """
     return tuple(int(i) for i in token.split("."))
 
@@ -319,7 +327,7 @@ def _parse_image_line_tags(tokens, line_type):
         if hcp_image_type == "":
             # image type not specified
             pass
-        elif hcp_image_type in ["T1w", "T2w", "FM-GE"]:
+        elif hcp_image_type in ["T1w", "T2w", "FM-GE", "mbPCASLhr", "PCASLhr"]:
             img_info["hcp_image_type"] = (hcp_image_type,)
 
         elif RE_IMAGE_TYPE_FM_PATTERN.match(hcp_image_type):
