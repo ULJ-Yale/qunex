@@ -1,41 +1,40 @@
 function [r, doIt] = general_qa_concfile(file, doIt, target)
 
-%``function [r, doIt] = general_qa_concfile(file, doIt, target)``
+%``general_qa_concfile(file, doIt, target)``
 %
-%	Computes the specified statistics on images specified in the conc file and
+%   Computes the specified statistics on images specified in the conc file and
 %   saves them to the target file.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --file (str):
+%           The conc file that specifies the images.
+%       --do (str, default 'm,sd'):
+%           A string specifying what statistics to compute.
+%       --target (str, default ''):
+%           The root name for the files to save the results to.
 %
-%   --file      The conc file that specifies the images.
-%   --do        A string specifying what statistics to compute ['m,sd'].
-%   --target    The root name for the files to save the results to [''].
+%   Returns:
+%       r
+%           An array of nimage objects with the resulting images, one volume for
+%           each file. The volumes are in the order of files in the conc file.
+%           The objects are in the order of statistics specified.
 %
-%   OUTPUTS
-%   =======
+%       do
+%           A cell array of statistics done.
 %
-%   r
-%       An array of nimage objects with the resulting images, one volume for
-%       each file. The volumes are in the order of files in the conc file. The
-%       objects are in the order of statistics specified.
+%   Notes:
+%       The function reads the conc file and then runs img_stats(doIt) on each
+%       of the files. It saves the results for each of the statistics in a
+%       separate file named <target>.<stat>.<relevant extension>. If no target
+%       is specified no files will be saved.
 %
-%   do
-%       A cell array of statistics done.
+%   Examples:
+%       ::
 %
-%   USE
-%   ===
-%   The function reads the conc file and then runs img_stats(doIt) on each of the
-%   files. It saves the results for each of the statistics in a separate file
-%   named <target>.<stat>.<relevant extension>. If no target is specified no
-%   files will be saved.
-%
-%	EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       general_qa_concfile('OP337.conc', 'm,sd,min,max', 'OP337');
+%           qunex general_qa_concfile \
+%               --file='OP337.conc' \
+%               --do='m,sd,min,max' \
+%               --target='OP337'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

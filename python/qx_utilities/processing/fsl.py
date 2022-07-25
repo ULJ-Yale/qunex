@@ -18,8 +18,6 @@ All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
 - ``qunex ?<command>`` for command specific help
-- ``qunex -o`` for a list of relevant arguments and options
-
 There are additional support functions that are not to be used
 directly.
 """
@@ -38,77 +36,68 @@ from datetime import datetime
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_f99 [... processing options]``
+
     ``f99 [... processing options]``
 
     This command executes FSL's F99 script for registering your own diffusion
     or structural data to the F99 atlas. This atlas is used when processing
     macaque data.
 
-    REQUIREMENTS
-    ============
+    Warning:
+        To use this command, successful completion of FSL's dtifit processing
+        (dwi_dtifit command in QuNex) is required.
 
-    Succesfull completion of FSL's dtifit processing (dwi_dtifit command in
-    QuNex).
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+        --sessions (str, default ''):
+            A list of sessions to process.
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+        --log (str, default 'keep'):
+            Whether to keep ("keep") or remove ("remove") the temporary logs
+            once jobs are completed.
+            When a comma or pipe ("|") separated list is given, the log will be
+            created at the first provided location and then linked or copied to
+            other locations. The valid locations are:
 
-    INPUTS
-    ======
+            - "study" (for the default:
+              `<study>/processing/logs/comlogs` location)
+            - "session" (for `<sessionid>/logs/comlogs`)
+            - "hcp" (for `<hcp_folder>/logs/comlogs`)
+            - "<path>" (for an arbitrary directory).
 
-    General parameters
-    ------------------
+    Output files:
+        The results of this step will be present in the dMRI/NHP/F99reg
+        folder in the sessions's root::
 
-    When running the command, the following *general* processing parameters are
-    taken into account:
+            study
+            └─ sessions
+               ├─ session1
+               |  └─ dMRI
+               |    └─ NHP
+               |      └─ F99reg
+               └─ session2
+                  └─ dMRI
+                    └─ NHP
+                      └─ F99reg
 
-    --sessions              The batch.txt file with all the sessions information.
-                            [batch.txt]
-    --sessionsfolder        The path to the study/sessions folder, where the
-                            imaging data is supposed to go. [.]
-    --parsessions           How many sessions to run in parallel. [1]
-    --overwrite             Whether to overwrite existing data (yes) or not (no).
-                            [no]
-    --logfolder             The path to the folder where runlogs and comlogs
-                            are to be stored, if other than default. []
-    --log                   Whether to keep ("keep") or remove ("remove") the
-                            temporary logs once jobs are completed. ["keep"]
-                            When a comma or pipe ("|") separated list is given, 
-                            the log will be created at the first provided 
-                            location and then linked or copied to other 
-                            locations. The valid locations are:
-                          
-                            - "study" (for the default: 
-                              `<study>/processing/logs/comlogs` location)
-                            - "session" (for `<sessionid>/logs/comlogs`)
-                            - "hcp" (for `<hcp_folder>/logs/comlogs`)
-                            - "<path>" (for an arbitrary directory)
+    Examples:
+        ::
 
-    OUTPUTS
-    =======
-
-    The results of this step will be present in the dMRI/NHP/F99reg folder
-    in the sessions's root::
-
-        study
-        └─ sessions
-           ├─ session1
-           |  └─ dMRI
-           |    └─ NHP
-           |      └─ F99reg
-           └─ session2
-              └─ dMRI
-                └─ NHP
-                  └─ F99reg
-
-    EXAMPLE USE
-    ===========
-
-    ::
-
-        qunex dwi_f99 \
-          --sessionsfolder="/data/macaque_study/sessions" \
-          --sessions="hilary,jane" \
-          --overwrite=no \
-          --parsessions=2
-
+            qunex dwi_f99 \\
+                --sessionsfolder="/data/macaque_study/sessions" \\
+                --sessions="hilary,jane" \\
+                --overwrite=no \\
+                --parsessions=2
     """
 
     # get session id
@@ -220,6 +209,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_xtract [... processing options]``
+
     ``fslx [... processing options]``
 
     This command executes FSL's XTRACT (cross-species tractography) command.
@@ -228,108 +218,104 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     protocols where all the user needs to do is to define a set of masks in
     standard space (e.g. MNI152).
 
-    REQUIREMENTS
-    ============
+    Warning:
+        Successful completion of FSL's bedpostx processing (dwi_bedpostx_gpu
+        command in QuNex) is required. For macaques FSL F99 registration is also
+        required (dwi_f99 command in QuNex).
 
-    Succesfull completion of FSL's bedpostx processing (dwi_bedpostx_gpu
-    command in QuNex). For macaques FSL F99 registration is also required
-    (dwi_f99 command in QuNex).
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs
+            are to be stored, if other than default.
+        --log (str, default 'keep'):
+            Whether to keep ("keep") or remove ("remove") the
+            temporary logs once jobs are completed.
+            When a comma or pipe ("|") separated list is given,
+            the log will be created at the first provided
+            location and then linked or copied to other
+            locations. The valid locations are:
 
-    INPUTS
-    ======
+            - "study" (for the default: `<study>/processing/logs/comlogs`
+              location)
+            - "session" (for `<sessionid>/logs/comlogs`)
+            - "hcp" (for `<hcp_folder>/logs/comlogs`)
+            - "<path>" (for an arbitrary directory).
 
-    General parameters
-    ------------------
+    Specific parameters:
+        --species (str, default 'human'):
+            Species: human or macaque.
+        --nogpu (flag, optional):
+            Do not use the GPU version, this flag is not set by default.
+        --xtract_list (str, default ''):
+            Comma separated list of tract names.
+        --xtract_structures (str, default ''):
+            Path to structures file (format: <tractName> per line OR format:
+            <tractName> [samples=1], 1 means 1000, '#' to skip lines).
+        --xtract_protocols (str, default $FSLDIR/data/xtract_data/<species>):
+            Protocols folder (all masks in same standard space).
+        --xtract_stdwarp (str, default detailed below):
+            Standard2diff and Diff2standard transforms. Default for humans is
+            set to session's:
+            [acpc_dc2standard.nii.gz and standard2acpc_dc.nii.gz],
+            for macaques warp fields from F99 registration command (dwi_f99) are
+            used by default.
+        --xtract_resolution (int, default detailed below):
+            Output resolution in mm. Default is the same as in the protocols
+            folder unless --native is used.
+        --xtract_ptx_options (str, default detailed below):
+            Pass extra probtrackx2 options as a text file to override defaults
+            (e.g. --steplength=0.2).
+            For humans it defaults to '', for macaques it defaults to
+            '$TOOLS/python/qx_utilities/templates/nhp/ptx_options'.
+        --xtract_native (flag, optional):
+            Run tractography in native (diffusion) space. This flag is not set
+            by default.
+        --xtract_ref (str, default ''):
+            Reference image ("<refimage> <diff2ref> <ref2diff>") for running
+            tractography in reference space, Diff2Reference and Reference2Diff
+            transforms.
 
-    When running the command, the following *general* processing parameters are
-    taken into account:
+    Output files:
+        The results of this step will be present in the dMRI/NHP/xtract folder
+        in the sessions's root::
 
-    --sessions              The batch.txt file with all the sessions information.
-                            [batch.txt]
-    --sessionsfolder        The path to the study/sessions folder, where the
-                            imaging data is supposed to go. [.]
-    --parsessions           How many sessions to run in parallel. [1]
-    --overwrite             Whether to overwrite existing data (yes) or not (no).
-                            [no]
-    --logfolder             The path to the folder where runlogs and comlogs
-                            are to be stored, if other than default. []
-    --log                   Whether to keep ("keep") or remove ("remove") the
-                            temporary logs once jobs are completed. ["keep"]
-                            When a comma or pipe ("|") separated list is given, 
-                            the log will be created at the first provided 
-                            location and then linked or copied to other 
-                            locations. The valid locations are:
-                          
-                            - "study" (for the default: 
-                              `<study>/processing/logs/comlogs` location)
-                            - "session" (for `<sessionid>/logs/comlogs`)
-                            - "hcp" (for `<hcp_folder>/logs/comlogs`)
-                            - "<path>" (for an arbitrary directory)
+            study
+            └─ sessions
+               ├─ session1
+               |  └─ dMRI
+               |    └─ NHP
+               |      └─ xtract
+               └─ session2
+                  └─ dMRI
+                    └─ NHP
+                      └─ xtract
 
-    Specific parameters
-    -------------------
+    Examples:
+        ::
 
-    --species               Species: human or macaque. [human]
-    --nogpu                 Do not use the GPU version, this flag is not set by
-                            default.
-    --xtract_list           Comma separated list of tract names. []
-    --xtract_structures     Path to structures file (format: <tractName> per
-                            line OR format: <tractName> [samples=1], 1 means
-                            1000, '#' to skip lines). []
-    --xtract_protocols      Protocols folder (all masks in same standard space)
-                            [$FSLDIR/data/xtract_data/<species>].
-    --xtract_stdwarp        Standard2diff and Diff2standard transforms.
-                            Default for humans is set to session's:
-                            [acpc_dc2standard.nii.gz and standard2acpc_dc.nii.gz],
-                            for macaques warp fields from F99 registration
-                            command (dwi_f99) are used by default.
-    --xtract_resolution     Output resolution in mm. Default is the same as in
-                            the protocols folder unless --native is used.
-    --xtract_ptx_options    Pass extra probtrackx2 options as a text file to
-                            override defaults (e.g. --steplength=0.2).
-                            [] for humans,
-                            [$TOOLS/python/qx_utilities/templates/nhp/ptx_config]
-                            for macaques.
-    --xtract_native         Run tractography in native (diffusion) space.
-                            This flag is not set by default.
-    --xtract_ref            Reference image ("<refimage> <diff2ref> <ref2diff>")
-                            for running tractography in reference space,
-                            Diff2Reference and Reference2Diff transforms. []
+            qunex dwi_xtract \\
+                --sessionsfolder="/data/macaque_study/sessions" \\
+                --batchfile="/data/example_study/processing/batch.txt" \\
+                --species="human" \\
+                --overwrite=yes
 
-    OUTPUTS
-    =======
+        ::
 
-    The results of this step will be present in the dMRI/NHP/xtract folder
-    in the sessions's root::
-
-        study
-        └─ sessions
-           ├─ session1
-           |  └─ dMRI
-           |    └─ NHP
-           |      └─ xtract
-           └─ session2
-              └─ dMRI
-                └─ NHP
-                  └─ xtract
-
-    EXAMPLE USE
-    ===========
-
-    ::
-
-        qunex dwi_xtract \
-          --sessionsfolder="/data/macaque_study/sessions" \
-          --sessions="/data/example_study/processing/batch.txt" \
-          --species="human" \
-          --overwrite=yes
-
-        qunex dwi_xtract \
-          --sessionsfolder="/data/macaque_study/sessions" \
-          --sessions="hilary,jane" \
-          --species="macaque" \
-          --overwrite=no \
-          --parsessions=2
+            qunex dwi_xtract \\
+                --sessionsfolder="/data/macaque_study/sessions" \\
+                --batchfile="hilary,jane" \\
+                --species="macaque" \\
+                --overwrite=no \\
+                --parsessions=2
 
     """
 

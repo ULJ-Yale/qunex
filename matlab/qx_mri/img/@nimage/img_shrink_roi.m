@@ -1,8 +1,8 @@
 function [out] = img_shrink_roi(img, method, crit)
 
-%``function [out] = img_shrink_roi(img, method, crit)``
+%``img_shrink_roi(img, method, crit)``
 %
-%	Peels a layer off all regions to reduce their size.
+%    Peels a layer off all regions to reduce their size.
 %
 %   INPUTS
 %   ======
@@ -68,16 +68,16 @@ end
 
 for f = 1:img.frames
     for x = 2:img.dim(1)-1
-    	for y = 2:img.dim(2)-1
-    		for z = 2:img.dim(3)-1
-    			if(img.data(x,y,z,f))
-    				focus = img.data(x-1:x+1,y-1:y+1,z-1:z+1,f) & nearest;
-    				if (sum(sum(sum(focus))) < crit)
-    					out.data(x,y,z,f) = 0;
-    				end
-    			end
-    		end
-    	end
+        for y = 2:img.dim(2)-1
+            for z = 2:img.dim(3)-1
+                if(img.data(x,y,z,f))
+                    focus = img.data(x-1:x+1,y-1:y+1,z-1:z+1,f) & nearest;
+                    if (sum(sum(sum(focus))) < crit)
+                        out.data(x,y,z,f) = 0;
+                    end
+                end
+            end
+        end
     end
     out.data([1 out.dim(1)],:,:,f) = 0;
     out.data(:,[1 out.dim(2)],:,f) = 0;

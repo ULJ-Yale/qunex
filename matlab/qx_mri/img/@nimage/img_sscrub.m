@@ -1,6 +1,6 @@
 function [img] = img_scrub(img, com)
 
-%``function [img] = img_scrub(img, com)``
+%``img_scrub(img, com)``
 %
 %   Scrubs image according to the command
 %

@@ -339,7 +339,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
         # set default cores
         if ("cores" not in setDict.keys()):
-            sCommand += "#BSUB -n %s\n" % (parsessions  * parelements)
+            sCommand += "#BSUB -n %s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):
@@ -527,7 +527,21 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                     else:
                         settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
                 else:
-                    scheduler_params[s.strip()] = "QX_FLAG"
+                    settings[s.strip()] = "QX_FLAG"
+
+        # only allow HCP MPP commands with job array
+        if slurm_array:
+            qx_command = command.split(' ')[0]
+
+            array_commands = [
+                'hcp_pre_freesurfer',
+                'hcp_freesurfer',
+                'hcp_post_freesurfer',
+                'hcp_fmri_volume',
+                'hcp_fmri_surface'
+            ]
+            if qx_command not in array_commands:
+                raise ge.CommandError(qx_command, "SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines: hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.")
 
         settings['jobname'] = settings.get('jobname', command)
 
@@ -550,7 +564,7 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
             parjobs = chunks
 
         # do not create multiple jobs if running a multi-session command
-        if command in gp.mactions:
+        if command in gp.mactions or command in gp.lactions:
             parjobs = 1
 
         # init queues

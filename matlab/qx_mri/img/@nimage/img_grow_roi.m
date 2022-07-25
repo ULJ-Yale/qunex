@@ -1,8 +1,8 @@
 function [img] = img_grow_roi(img, voxels)
 
-%``function [img] = img_grow_roi(img, voxels)``
+%``img_grow_roi(img, voxels)``
 %
-%	Grows regions by radius of specified voxels.
+%    Grows regions by radius of specified voxels.
 %
 %   INPUTS
 %   ======

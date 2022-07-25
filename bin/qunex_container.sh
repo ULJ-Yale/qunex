@@ -52,7 +52,7 @@ usage() {
  echo ""
  echo "--inputfolder    Path to study folder"
  echo "--outputfolder   Path to output folder"
- echo "--specfolder     Path to folder with spec files (batch.txt and hcp_mapping.txt). "
+ echo "--specfolder     Path to folder with spec files (parameters.txt and hcp_mapping.txt). "
  echo "                 Not required if spec files are inside inputfolder or "
  echo "                 outputfolder. "
  echo ""

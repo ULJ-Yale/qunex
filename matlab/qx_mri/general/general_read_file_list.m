@@ -1,6 +1,6 @@
 function [session, nsessions, nfiles, listname, missing] = general_read_file_list(flist, verbose, check)
 
-%``function [session, nsessions, nfiles, listname, missing] = general_read_file_list(flist, verbose, check)``
+%``general_read_file_list(flist, verbose, check)``
 %
 %   Reads a list of files and returns a structure with file information.
 %

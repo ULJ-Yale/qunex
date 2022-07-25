@@ -11,40 +11,42 @@
 # ------------------------------------------------------------------------------
 
 usage() {
- echo ""
- echo "This function calls img_roi_extract.m and extracts data from an input file for "
- echo "every ROI in a given template file. The function needs a matching file type for "
- echo "the ROI input and the data input (i.e. both NIFTI or CIFTI). It assumes that "
- echo "the template ROI file indicates each ROI in a single volume via unique scalar "
- echo "values."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--roifile      Path ROI file (either a NIFTI or a CIFTI with distinct scalar "
- echo "               values per ROI)"
- echo "--inputfile    Path to input file to be read that is of the same type as "
- echo "               --roifile (i.e. CIFTI or NIFTI)"
- echo "--outpath      New or existing directory to save outputs in"
- echo "--outname      Output file base-name (to be appended with 'ROIn')"
- echo ""
- echo "OUTPUT"
- echo "======"
- echo ""
- echo "<output_name>.csv"
- echo "   matrix with one ROI per row and one column per frame in singleinputfile "
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "::"
- echo ""
- echo " qunex roi_extract \ "
- echo " --roifile='<path_to_roifile>' "
- echo " --inputfile='<path_to_inputfile>' "
- echo " --outdir='<path_to_outdir>' "
- echo " --outname='<output_name>'"
- echo ""
+    cat << EOF
+``extract_roi``
+
+This function calls img_roi_extract.m and extracts data from an input file for
+every ROI in a given template file. The function needs a matching file type for
+the ROI input and the data input (i.e. both NIFTI or CIFTI). It assumes that
+the template ROI file indicates each ROI in a single volume via unique scalar
+values.
+
+Parameters:
+    --roifile (str):
+        Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per
+        ROI).
+    --inputfile (str):
+        Path to input file to be read that is of the same type as --roifile
+        (i.e. CIFTI or NIFTI).
+    --outpath (str):
+        New or existing directory to save outputs in.
+    --outname (str):
+        Output file base-name (to be appended with 'ROIn').
+
+Output files:
+    <output_name>.csv
+       Matrix with one ROI per row and one column per frame in
+       singleinputfile.
+
+Examples:
+    ::
+
+        qunex roi_extract \\
+            --roifile='<path_to_roifile>' \\
+            --inputfile='<path_to_inputfile>' \\
+            --outdir='<path_to_outdir>' \\
+            --outname='<output_name>'
+
+EOF
  exit 0
 }
 
@@ -151,6 +153,9 @@ main() {
 get_options $@
 
 # -- Run img_extract_roi.m --> img_extract_roi(obj, roi, rcodes, method, weights, criterium)
+cmd="imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
+echo ${QUNEXMCOMMAND}
+echo $cmd
 ${QUNEXMCOMMAND} "imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
 
 # -- Completion check

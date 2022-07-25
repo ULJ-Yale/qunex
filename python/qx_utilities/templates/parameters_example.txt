@@ -19,10 +19,6 @@
 # parameters and their valid values, please consult the qunex documentation
 * (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
 # preprocessing) and online help for the relevant qunex commands.
-#
-#
-# --> For all supported batch parameter options run: 
-#     qunex -o
 # 
 # Please note that if a parameter is specified in the batch file qunex will set it to the value specified. 
 # This is also the case for parameters that are left '' empty (e.g. `_event_file         :`). 
@@ -55,7 +51,7 @@
 #
 # # ---- Basic settings
 # 
-# _sessions                  The file with sessions information. [batch.txt]
+# _batchfile                 The file with sessions information. [batch.txt]
 # _sessionsfolder            The path to study sessions folder. []
 # _logfolder                 The path to log folder. []
 # _logtag                    An optional additional tag to add to the log file after the command name. []
@@ -67,7 +63,6 @@
 # _printoptions              Whether to print options. [False]
 # _filter                    Filtering information. []
 # _script                    The script to be executed. [None]
-# _sessionids                List of | separated session ids for which to run the command. []
 # 
 # # ---- Preprocessing options
 # 

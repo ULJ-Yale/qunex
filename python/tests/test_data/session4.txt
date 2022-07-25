@@ -1,0 +1,32 @@
+session: Z1VPF
+subject: Z1VPF
+raw_data: /Volumes/tigr/MBLab/fMRI/MMI/subjects.j/Z1VPF/nii
+hcp: /Volumes/tigr/MBLab/fMRI/MMI/subjects.j/Z1VPF/hcp
+
+102011: T1w 1mm N2 L SENSE        : TR(0.00924): PEDirection(j-)
+103011: B0 map NSA1 2.5 [1/2] magnitude : TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033)
+103012: B0 map NSA1 2.5 [2/2] real : TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033)
+105011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.00066747484)
+106011: BOLD OPEN MB8 2.5 s56     : TR(1): PEDirection(j-): EchoSpacing(0.00074946981)
+109011: T1w 0.7mm N1              : TR(0.01227): PEDirection(j-)
+110011: T1w 0.7mm N1              : TR(0.01227): PEDirection(j-)
+111011: T2w 0.7mm N1              : TR(2.5): PEDirection(j-)
+112011: T2w 0.7mm N1              : TR(2.5): PEDirection(j-)
+113011: FLASH T1w 1.0mm           : TR(0.0067): PEDirection(j-)
+114011: SE-PA MB8 2.5 s56 : TR(8.10576): PEDirection(j-): EchoSpacing(0.00066608509)
+115011: SE-AP MB8 2.5 s56 : TR(8.10387): PEDirection(j-): EchoSpacing(0.00066608509)
+117011: DWI MB2 S3 AP80           
+118011: DWI MB2 S3 PA80           
+119011: DWI MB2 S3 AP81           
+120011: DWI MB2 S3 PA81           
+202011: T1w 1mm N2 L SENSE        : TR(0.00926): PEDirection(j-)
+203011: B0 map NSA1 2.5 [1/2] magnitude : TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033)
+203012: B0 map NSA1 2.5 [2/2] real : TR(0.65): PEDirection(j-): EchoSpacing(0.0011515033)
+205011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.0006666807)
+206011: BOLD OPEN MB8 2.5 s56     : TR(1): PEDirection(j-): EchoSpacing(0.00075463172)
+207011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.0006666807)
+208011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.0006666807)
+209011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.0006666807)
+210011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.0006666807)
+211011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.0006666807)
+212011: REFBOLD MB8 2.5 s56       : TR(1): PEDirection(j-): EchoSpacing(0.0006666807)

@@ -1,13 +1,13 @@
 function [obj] = img_fcmri_segment(obj, smask, tmask, options, verbose)
 
-%``function [obj] = img_fcmri_segment(obj, ssmask, tmask, options, verbose)``
-%	
-%	Computes WTA segmentation of source mask voxels based on target mask ROI
-%	
+%``img_fcmri_segment(obj, ssmask, tmask, options, verbose)``
+%
+%    Computes WTA segmentation of source mask voxels based on target mask ROI
+%
 %   INPUTS
 %   ======
 %
-%	--obj       bold image to use for segmentation
+%    --obj       bold image to use for segmentation
 %   --smask     source mask defining voxels to be segmented
 %   --tmask     target mask defining ROI to correlate source voxels with
 %   --options   should we use absolute, raw or partial correlations for WTA [raw]

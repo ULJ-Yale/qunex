@@ -1,29 +1,24 @@
 function [normals] = general_compute_vertex_normals(surface)
-%``function [normals] = general_compute_vertex_normals(surfaceFile)``
+%``general_compute_vertex_normals(surfaceFile)``
 %
-%	Function computes the vertex normals to the passed surface file (.surf.gii)
+%   Function computes the vertex normals to the passed surface file (.surf.gii)
 %
-%   INPUT
-%   =====
-%
-%   --surface	surface for which to compute normal vectors. It can be passed as a:
+%   Parameters:
+%       --surface: (str|gifti)
+%           surface for which to compute normal vectors. It can be passed as a:
 %               
-%				- surface file name (.surf.gii)
-%               - gifti object
+%           - surface file name (.surf.gii)
+%           - gifti object.
 %
-%   OUTPUT
-%	======
+%   Returns:
+%       normals
+%           A N by 3 vector, containing the vertex normals for each vertex (N is the
+%           number of vertices).
 %
-%   normals
-%		a N by 3 vector, containing the vertex normals for each vertex (N is the 
-%		number of vertices).
+%   Examples:
+%       To get vertex normal vectors of a surface file 'L_midthickness.surf.gii' use::
 %
-%   EXAMPLE USE
-%	===========
-%
-%   To get vertex normal vectors of a surface file 'L_midthickness.surf.gii' use::
-%
-%   normal_vectors = general_compute_vertex_normals('L_midthickness.surf.gii');
+%           normal_vectors = general_compute_vertex_normals('L_midthickness.surf.gii');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

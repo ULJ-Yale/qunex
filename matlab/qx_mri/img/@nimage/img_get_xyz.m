@@ -1,8 +1,8 @@
 function [xyz] = img_get_xyz(img, ijk)
 
-%``function [xyz] = img_get_xyz(img, ijk)``
+%``img_get_xyz(img, ijk)``
 %
-%	Returns the XYZ world coordinates for given image indeces or ROI.
+%    Returns the XYZ world coordinates for given image indeces or ROI.
 %
 %   INPUTS
 %   ======

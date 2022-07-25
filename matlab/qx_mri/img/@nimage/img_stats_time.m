@@ -1,8 +1,8 @@
 function [out, done] = img_stats_time(img, doIt, mask)
 
-%``function [out, done] = img_stats_time(img, doIt, mask)``
+%``img_stats_time(img, doIt, mask)``
 %
-%	Computes the specified statistics across all voxels of each frame specified
+%    Computes the specified statistics across all voxels of each frame specified
 %   by the mask.
 %
 %   INPUTS

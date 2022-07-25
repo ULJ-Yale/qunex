@@ -1,6 +1,6 @@
 function [out, doIt] = img_stats(img, doIt, exclude)
 
-%``function [out, doIt] = img_stats(img, doIt, exclude)``
+%``img_stats(img, doIt, exclude)``
 %
 %   Computes the specified statistics across frames excluding values specified
 %   in exclude.

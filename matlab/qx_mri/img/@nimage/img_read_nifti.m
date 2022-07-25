@@ -1,12 +1,12 @@
 function [img] = img_read_nifti(img, filename, dtype, frames, verbose)
 
-%``function [img] = img_read_nifti(img, file, dtype, frames, verbose)``
+%``img_read_nifti(img, file, dtype, frames, verbose)``
 %
-%	Reads in a NIfTI image into an image object
+%    Reads in a NIfTI image into an image object
 %
 %   INPUTS
 %   ======
-%		    
+%
 %   --img           mrimage object
 %   --filename      filename (can be a .nii, .nii.gz or .hdr file)
 %   --dtype         datatype to read into ['single']

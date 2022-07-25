@@ -1,122 +1,114 @@
 function [options] = general_parse_options(options, s, default)
 
-%``function [options] = general_parse_options(options, s, default)``
+%``general_parse_options(options, s, default)``
 %
 %   Function for compact passing of values between functions.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --options (struct):
+%           A starting structure to work with - everything will be added to 
+%           it / changed in it.
+%       --s (str):
+%           A 'key:value|key:value' string that defines what values to be 
+%           injected into the structure.
+%       --default (str, default ''):
+%           An optional 'key:value|key:value' string with the default
+%           values to be used.
 %
-%   --options   A starting structure to work with - everything will be added to 
-%               it / changed in it.
-%   --s         A "key:value|key:value' string that defines what values to be 
-%               injected into the structure.
-%   --default   An optional 'key:value|key:value' string with the default values 
-%               to be used.
+%   Returns:
+%       options
+%           A structure with the embedded values.
 %
-%   OUTPUT
-%   ======
+%   Notes:
+%       Use the function for easy creation and modification of structures
+%       that can enable passing of options from function to function.
 %
-%   options
-%       a structure with the embedded values
+%       Starting structure:
+%           The starting structure can hold the initial values. Any
+%           value not changed by the string will remain as is. Any
+%           field name not yet exisiting will becreated. If an empty
+%           array is passed, the structure will be created anew.
 %
-%   USE
-%   ===
+%       String format:
+%           The string defines key:value pairs that will be embedded in
+%           the structure. Keys will be the field names and values will
+%           be assigned to them. So::
 %
-%   Use the function for easy creation and modification of structures that can
-%   enable passing of options from function to function.
+%               a = general_parse_options([], 'id:66|name:Tom');
 %
-%   Starting structure
-%   ------------------
+%           will result in a structure::
 %
-%   The starting structure can hold the initial values. Any value not changed
-%   by the string will remain as is. Any field name not yet exisiting will be
-%   created. If an empty array is passed, the structure will be created anew.
+%               a.id   = 66
+%               a.name = 'Tom'
 %
-%   String format
-%   -------------
+%           Notice that strings are not embedded in quotes.
 %
-%   The string defines key:value pairs that will be embedded in the structure.
-%   Keys will be the field names and values will be assigned to them. So::
+%       Structure arrays:
+%           The function can generate or edit arrays of structures. To
+%           specify key-value pairs for multiple sets, separate them
+%           using semicolon::
 %
-%       a = general_parse_options([], 'id:66|name:Tom');
+%               a = general_parse_options([], ...
+%               'id:66|name:Tom;id=33|name=Mary');
 %
-%   will result in a structure::
+%           will result in a structure::
 %
-%       a.id   = 66
-%       a.name = 'Tom'
+%               a(1).id   = 66
+%               a(1).name = 'Tom'
+%               a(2).id   = 33
+%               a(2).name = 'Mary'
 %
-%   Notice that strings are not embedded in quotes.
+%           Notice that key-value pairs can be separate either using
+%           colon or equal so 'id:66' works the same as 'id=66'.
 %
-%   Structure arrays
-%   ----------------
+%       Creation of substructures:
+%           It is also possible to populate fields with structures. In
+%           this case, use greater than sign to specify that the filed
+%           contains a substructure and use a comma to separate
+%           key-value pairs of the substructure::
 %
-%   The function can generate or edit arrays of structures. To specify key-value
-%   pairs for multiple sets, separate them using semicolon::
+%               a = general_parse_options([], ...
+%               'id:66|name:Tom|demographics>age:37,sex:male');
 %
-%       a = general_parse_options([], 'id:66|name:Tom;id=33|name=Mary');
+%           will result in a structure::
 %
-%   will result in a structure::
+%               a.id    = 66
+%               a.name  = 'Tom'
+%               a.demographics.age = 37
+%               a.demographics.sex = 'male'
 %
-%       a(1).id   = 66
-%       a(1).name = 'Tom'
-%       a(2).id   = 33
-%       a(2).name = 'Mary'
+%       Default structure:
+%           It is possible to define a default structure. In this case
+%           the default strucutre will be generated first and then
+%           overwritten by the specification string::
 %
-%   Notice that key-value pairs can be separate either using colon or equal
-%   so 'id:66' works the same as 'id=66'.
+%               a = general_parse_options([], ...
+%               'id:66|name:Tom;id=33|name=Mary', 'status:ok|id=0');
 %
-%   Creation of substructures
-%   -------------------------
+%           will result in a structure::
 %
-%   It is also possible to populate fields with structures. In this case, use
-%   greater than sign to specify that the filed contains a substructure and use
-%   a comma to separate key-value pairs of the substructure::
+%               a(1).status = 'ok'
+%               a(1).id     = 66
+%               a(1).name   = 'Tom'
+%               a(2).status = 'ok'
+%               a(2).id     = 33
+%               a(2).name   = 'Mary'
 %
-%       a = general_parse_options([], 'id:66|name:Tom|demographics>age:37,sex:male');
+%       Valid values:
+%           Values can be numbers, strings or any other valid
+%           expression, also arrays and cell arrays, just be aware that
+%           strings for the cell array need to be specifed using
+%           regular double quotes::
 %
-%   will result in a structure::
+%               a = general_parse_options([], ...
+%               'id:66|name=Tom|vars={"a", "b", "c"}|values=[1, 2, 3]');
 %
-%       a.id    = 66
-%       a.name  = 'Tom'
-%       a.demographics.age = 37
-%       a.demographics.sex = 'male'
+%           will result in a structure::
 %
-%   Default structure
-%   -----------------
-%
-%   It is possible to define a default structure. In this case the default
-%   strucutre will be generated first and then overwritten by the specification
-%   string::
-%
-%       a = general_parse_options([], 'id:66|name:Tom;id=33|name=Mary', ...
-%                          'status:ok|id=0');
-%
-%   will result in a structure::
-%
-%       a(1).status = 'ok'
-%       a(1).id     = 66
-%       a(1).name   = 'Tom'
-%       a(2).status = 'ok'
-%       a(2).id     = 33
-%       a(2).name   = 'Mary'
-%
-%   Valid values
-%   ------------
-%
-%   Values can be numbers, strings or any other valid expression, also arrays
-%   and cell arrays, just be aware that strings for the cell array need to be
-%   specifed using regular double quotes::
-%
-%       a = general_parse_options([], ...
-%           'id:66|name=Tom|vars={"a", "b", "c"}|values=[1, 2, 3]');
-%
-%   will result in a structure::
-%
-%       a.id     = 66
-%       a.name   = 'Tom'
-%       a.vars   = {'a', 'b', 'c'}
-%       a.values = [1, 2, 3]
+%               a.id     = 66
+%               a.name   = 'Tom'
+%               a.vars   = {'a', 'b', 'c'}
+%               a.values = [1, 2, 3]
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

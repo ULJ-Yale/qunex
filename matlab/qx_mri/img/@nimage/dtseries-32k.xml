@@ -5,19 +5,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <CIFTI Version="2">
-	<Matrix>
-	 <MetaData>
-		 <MD>
-			 <Name>ParentProvenance</Name>
-			 <Value>{{ParentProvenance}}
-			 </Value>
-		 </MD>
-		 <MD>
-			 <Name>ProgramProvenance</Name>
-			 <Value>{{ProgramProvenance}}
+    <Matrix>
+     <MetaData>
+         <MD>
+             <Name>ParentProvenance</Name>
+             <Value>{{ParentProvenance}}
+             </Value>
+         </MD>
+         <MD>
+             <Name>ProgramProvenance</Name>
+             <Value>{{ProgramProvenance}}
 </Value>
-		 </MD>
-		 <MD>
+         </MD>
+         <MD>
 			 <Name>Provenance</Name>
 			 <Value>{{Provenance}}</Value>
 		 </MD>

@@ -1,15 +1,15 @@
 function [res] = img_save_4dfp(obj, filename, extra)
 
-%  ``function [res] = img_save_4dfp(obj, filename, extra)``
+%  ``img_save_4dfp(obj, filename, extra)``
 %
 %  Saves a 4dfp image based on the existing header information.
 %
 %  INPUTS
 %  ======
 %
-%    --obj      	 nimage object
-%    --filename 	 the filename to use
-%    --extra    	 key, value structure of fields to add to ifh header file []
+%    --obj           nimage object
+%    --filename      the filename to use
+%    --extra         key, value structure of fields to add to ifh header file []
 %
 %  OUTPUT
 %  ======
@@ -22,7 +22,7 @@ function [res] = img_save_4dfp(obj, filename, extra)
 % SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3
-	extra = [];
+    extra = [];
 end
 
 % ---> embed extra data if available
@@ -60,10 +60,10 @@ hdrf = strcat(root, '.4dfp.hdr');
 ifhf = strcat(root, '.4dfp.ifh');
 
 if (exist(hdrf))
-	delete(hdrf);
+    delete(hdrf);
 end
 if (exist(ifhf))
-	delete(ifhf);
+    delete(ifhf);
 end
 
 [fifh message] = fopen(ifhf,'w');
@@ -80,7 +80,7 @@ for n = 1:nhdr
 end
 
 for n = 1:length(extra)
-	fprintf(fifh, '%s := %s\n', char(extra(n).key), char(extra(n).value));
+    fprintf(fifh, '%s := %s\n', char(extra(n).key), char(extra(n).value));
 end
 
 fclose(fifh);

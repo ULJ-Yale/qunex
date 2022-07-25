@@ -1,6 +1,6 @@
 function [res] = img_save_nifti(img, filename, datatype, verbose)
 
-%``function [res] = img_save_nifti(obj, filename, datatype, verbose)``
+%``img_save_nifti(obj, filename, datatype, verbose)``
 %
 %   Saves a NIfTI image based on the existing header information.
 %

@@ -101,7 +101,7 @@ _bold_actions       : shrcl
    # h ... High-pass filtering.
    # r ... Regression (nuisance and/or task) with an optional number 0, 1, or 2
    #       specifying the type of regression to use (see REGRESSION below).
-   # c ... Saving of resulting beta coefficients (allways to follow 'r').
+   # c ... Saving of resulting beta coefficients (always to follow 'r').
    # l ... Low-pass filtering.
    #
    # =========================================
