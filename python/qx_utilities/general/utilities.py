@@ -26,6 +26,7 @@ import re
 import subprocess
 from datetime import datetime
 import traceback
+import itertools
 
 import general.commands_support as gcs
 import general.process as gp
@@ -2918,8 +2919,10 @@ def _process_pipeline_hcp_mapping(src_session, mapping_rules):
     # in the input session, and add the appropriate rule
     tgt_session = _apply_rules(src_session, mapping_rules)
 
+    reserved_bold_numbers = _reserved_bold_numbers(mapping_rules)
+
     # assign numbers for bold and boldref images 
-    _assign_bold_number(tgt_session)
+    _assign_bold_number(tgt_session, reserved_bold_numbers)
 
     # execute FSM to identify proper se/fm pairs
     field_map_fm = _find_field_maps(tgt_session, "fm")
@@ -3004,8 +3007,22 @@ def _apply_image_rule(img_info, rule):
 
     return new_img_info
 
+def _reserved_bold_numbers(mapping_rules):
+    """Returns the set of all bold numbers used by bold_num tag"""
+    bold_nums = set()
+    grp_img_num_rules = mapping_rules["group_rules"]["image_number"]
+    grp_img_name_rules = mapping_rules["group_rules"]["name"]
+    for rule in itertools.chain(grp_img_num_rules.values(), grp_img_name_rules.values()):
+        image_type = rule.get("hcp_image_type")
+        if image_type is None:
+            continue
+        if image_type[0] == "bold":
+            bold_num = rule.get("bold_num")
+            if bold_num is not None:
+                bold_nums.add(bold_num)
+    return bold_nums
 
-def _assign_bold_number(tgt_session):
+def _assign_bold_number(tgt_session, reserved_bold_numbers):
     """
     bold numbers are assigned sequentially, consecutively by default
     Currently, this function does not respect the bold_num hint in the mapping file 
@@ -3072,6 +3089,8 @@ def _assign_bold_number(tgt_session):
         else:
             remaining_pairs.append(pair)
 
+    # exclude bold numbers previously used and reserved globally
+    used_bold_num = used_bold_num | reserved_bold_numbers
     bold_num = 1
     for pair in remaining_pairs:
         while bold_num in used_bold_num:

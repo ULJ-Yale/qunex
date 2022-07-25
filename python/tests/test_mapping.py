@@ -5,7 +5,7 @@ from general.parser import (
     read_mapping_file,
     _parse_session_file_lines,
 )
-from general.utilities import _process_pipeline_hcp_mapping, _serialize_session
+from general.utilities import _reserved_bold_numbers, _process_pipeline_hcp_mapping, _serialize_session
 
 
 def _run_mapping_test(sf, mf):
@@ -99,6 +99,19 @@ def test_mapping_bids():
     assert result == expected
 
 
+def test_get_bold_numbers_in_mapping_file():
+    """ Get all the bold numbers used in a mapping file
+    
+    Bold numbers explicitly used in bold_num tags are considered
+    reserved and will be skipped when assign bold numbers 
+    sequentially
+    """
+    
+    mapping_file = get_test_data_path("mapping_boldnum.txt")
+    m = read_mapping_file(mapping_file)
+    assert _reserved_bold_numbers(m) == set([5,6])
+
+
 def test_mapping_bold_num():
     """Mapping bold number
 
@@ -114,5 +127,11 @@ def test_mapping_bold_num():
     _, lines = _run_mapping_test("session_boldnum2.txt", "mapping_boldnum.txt")
     result = _parse_session_file_lines(lines, "pipeline:hcp")
     expected = _load_expected_mapping("session_boldnum2_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+    _, lines = _run_mapping_test("session_boldnum3.txt", "mapping_boldnum.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_boldnum3_hcp.txt")
     print("\n".join(lines))
     assert result == expected
