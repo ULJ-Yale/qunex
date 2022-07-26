@@ -43,14 +43,14 @@ def read_session_data(filename, verbose=False):
     USE
     ===
 
-    An internal function for reading `batch.txt` files. It reads the file and
-    returns a list of sessions with the information on images and the additional
-    parameters specified in the header.
+    An internal function for reading `batch.txt` and `session.txt` files. It
+    reads the file and returns a list of sessions with the information on images
+    and the additional parameters specified in the header.
 
     """
 
     if not os.path.exists(filename):
-        print("\n\n=====================================================\nERROR: Batch file does not exist [%s]" % (filename))
+        print("\n\n=====================================================\nERROR: Source file does not exist [%s]" % (filename))
         raise ValueError("ERROR: Batch file not found: %s" % (filename))
 
     file = open(filename, 'r')
