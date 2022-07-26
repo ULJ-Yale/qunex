@@ -54,3 +54,4 @@ hcp: /data/sessions/HCPA001/hcp
 361 : dMRI_dir99_AP             
 381 : dMRI_dir99_PA_SBRef       
 391 : dMRI_dir99_PA
+401 : asl_3d_tra_iso_3.0_highres

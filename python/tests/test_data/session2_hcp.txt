@@ -54,3 +54,4 @@ hcpready: true
 361 :DWI:dir99_AP    :dMRI_dir99_AP: se(2)
 381 :                :dMRI_dir99_PA_SBRef
 391 :DWI:dir99_PA    :dMRI_dir99_PA: se(2)
+401 :ASL             :asl_3d_tra_iso_3.0_highres : se(2) 

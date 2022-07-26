@@ -3243,12 +3243,12 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
 
             if hcp_image_type is None:
                 continue
-            elif hcp_image_type[0] in ["T1w", "T2w", "DWI", "bold", "boldref"]:
+            elif hcp_image_type[0] in ["T1w", "T2w", "DWI", "ASL", "bold", "boldref"]:
                 image[field_map_type] = fm_hint
 
 
 def _assign_remaining_image_type(tgt_session):
-    """This function assigns hcp image tag for t1w, t2w, and dwi images
+    """This function assigns hcp image tag for T1,T2w,DWI,ASL images
 
     bold/boldref should be assigned in `_assign_bold_number`
     se/fm that are used are assigned in `_assign_field_map`
@@ -3259,7 +3259,7 @@ def _assign_remaining_image_type(tgt_session):
     for _, image in images.items():
         rule = image["applied_rule"]
         hcp_image_type = rule.get("hcp_image_type")
-        if hcp_image_type is not None and hcp_image_type[0] in ["T1w", "T2w", "DWI"]:
+        if hcp_image_type is not None and hcp_image_type[0] in ["T1w", "T2w", "DWI", "ASL"]:
             image["hcp_image_type"] = hcp_image_type
 
 

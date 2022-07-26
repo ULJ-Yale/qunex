@@ -3,3 +3,4 @@
 
 01                  => T1w
 bold rest run-1     => bold:rest
+asl run-1           => ASL
