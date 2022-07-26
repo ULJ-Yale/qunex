@@ -8,3 +8,4 @@ institution: CMRR_3T-C
 device: Siemens|Prisma|166007
 01: T1w: T1w run-1
 02: bold1:rest: bold rest run-1
+03: ASL: asl run-1
