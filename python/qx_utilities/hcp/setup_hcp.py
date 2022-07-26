@@ -112,6 +112,8 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                 encoding direction
             --DWI
                 Diffusion weighted image.
+            --ASL
+                Arterial Spin Labeling.
 
             In addition to these parameters, it is also possible to optionally
             specify, which spin-echo image to use for distortion correction, by
@@ -438,7 +440,10 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         elif v['name'] in ["mbPCASLhr", "PCASLhr", "ASL"]:
             sfile = [k + e for e in ['.nii.gz']]
 
-            tbase = "_".join([sid, v['filename']])
+            if filename and 'filename' in v:
+                tbase = "_".join([sid, "MR_mbPCASLhr", orient])
+            else:
+                tbase = "_".join([sid, v['filename']])
 
             tfile = [tbase + e for e in ['.nii.gz']]
             tfold = "ASL"
@@ -481,6 +486,6 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                 print("  ... %s already exists" % (tfile))
     
     if not mapped:
-        raise ge.CommandFailed("setup_hcp", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")     
+        raise ge.CommandFailed("setup_hcp", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")
 
     return

@@ -3248,7 +3248,7 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
 
 
 def _assign_remaining_image_type(tgt_session):
-    """This function assigns hcp image tag for t1w, t2w, and dwi images
+    """This function assigns hcp image tag for T1,T2w,DWI,ASL images
 
     bold/boldref should be assigned in `_assign_bold_number`
     se/fm that are used are assigned in `_assign_field_map`
