@@ -441,9 +441,9 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             sfile = [k + e for e in ['.nii.gz']]
 
             if filename and 'filename' in v:
-                tbase = "_".join([sid, "MR_mbPCASLhr", orient])
-            else:
                 tbase = "_".join([sid, v['filename']])
+            else:
+                tbase = "_".join([sid, "MR_mbPCASLhr", orient])
 
             tfile = [tbase + e for e in ['.nii.gz']]
             tfold = "ASL"
