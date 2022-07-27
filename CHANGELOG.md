@@ -6,6 +6,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.2
+
+* Fixed a container bug where the sessions and sessionids parameters were not parsed correctly.
+
+## 0.94.1
+
+* Added the ability to define custom numbering in mapping files.
+
 ## 0.94.0
 
 * Fixed a bug in `extract_roi` that caused the command to crash in some cases.
