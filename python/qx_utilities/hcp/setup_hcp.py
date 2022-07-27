@@ -443,10 +443,8 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             if filename and 'filename' in v:
                 tbase = "_".join([sid, v['filename']])
             else:
-                file_name_segments = [sid, "ASL"]
-                if orient is not None and orient != "":
-                    file_name_segments.append(orient)
-                tbase = "_".join(file_name_segments)
+                tbase = "_".join([sid, "ASL"])
+                tbase += orient
 
             tfile = [tbase + e for e in ['.nii.gz']]
             tfold = "ASL"
