@@ -719,9 +719,9 @@ def main(args=None):
     # deprecation warnings, TODO remove in 1.0.0
     for arg in args:
         if "sessionids=" in arg:
-            print("WARNING: The sessionids parameter will be deprecated in QuNex version 1.0.0, use the sessions parameter to select sessions.")
+            print("WARNING: The sessionids parameter will be deprecated, use the sessions parameter to select sessions.")
         if "sessions=" in arg and ".txt" in arg:
-            print("WARNING: It seems like you are using the sessions parameters to pass the location of the batch file to QuNex. This functionality will be deprecated in version 1.0.0, use the batchfile parameter for specifying the location of the batchfile.")
+            print("WARNING: It seems like you are using the sessions parameters to pass the location of the batch file to QuNex. This functionality will be deprecated, use the batchfile parameter for specifying the location of the batchfile.")
 
     env_status          = False
     scheduler           = None
@@ -854,10 +854,6 @@ def main(args=None):
         subprocess.Popen(env_command, shell=True)
         exit(0)
 
-    if sessions is not None and batchfile is not None:
-        print("ERROR: Please specify either sessions or a batchfile!")
-        exit(1)
-
     if command.startswith('?scheduler'):
         print(schedule.__doc__)
         exit()
@@ -891,9 +887,8 @@ def main(args=None):
 
     # if sessionids was used
     if sessionids is not None:
-        if sessions is not None:
-            print("ERROR: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!")
-            exit(1)
+        if sessions is None:
+            print("WARNING: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!")
         else:
             sessions = sessionids
 
