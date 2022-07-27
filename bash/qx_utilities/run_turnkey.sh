@@ -528,6 +528,12 @@ OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
 OVERWRITE_PROJECT_FORCE=`opts_GetOpt "--overwriteprojectforce" $@`
 OVERWRITE_PROJECT_XNAT=`opts_GetOpt "--overwriteprojectxnat" $@`
 BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--paramfile" $@`
+
+# BACKWARDS COMPATIBILITY
+if [[ -z ${BATCH_PARAMETERS_FILENAME} ]];
+    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile $@`
+fi
+
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
 
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
