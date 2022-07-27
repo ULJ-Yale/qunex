@@ -1008,7 +1008,7 @@ def main(args=None):
 
         # add session ids
         if sessionids is not None:
-            sessionids_array.append(",".join(sessionids))
+            sessionids_array.append(",".join(g_sessionids))
 
     # print out details
     if n_sessions is not None:
@@ -1070,7 +1070,9 @@ def main(args=None):
             elif 'runTurnkey' in scheduleCommand:
                 scheduleCommand = scheduleCommand.replace('runTurnkey', '')
                 print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + scheduleCommand, file=f)
-                
+            elif 'run_turnkey' in scheduleCommand:
+                scheduleCommand = scheduleCommand.replace('run_turnkey', '')
+                print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + scheduleCommand, file=f)
             else:
                 print("bash /opt/qunex/bin/qunex.sh " + scheduleCommand, file=f)
 
