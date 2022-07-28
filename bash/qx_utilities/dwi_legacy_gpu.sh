@@ -589,6 +589,9 @@ geho "${EDDY_CUDA} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${Diff
 echo ""
 ${EDDY_CUDA} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
 
+# copy nodif_brain_mask to outputs folder
+cp "${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask" "${DiffFolderOut}/nodif_brain_mask"
+
 ############################################
 # STEP 4 - Run epi_reg w/fieldmap correction
 ############################################
@@ -708,6 +711,15 @@ if [ -f  "$DiffFolderOut"/bvals ]; then
     echo ""
 else
     reho "BVALS in $DiffFolderOut missing. Something went wrong."
+    echo ""
+    RunError="yes"
+fi
+if [ -f  "$DiffFolderOut"/nodif_brain_mask ]; then
+    OutFile="$DiffFolderOut"/nodif_brain_mask
+    geho "nodif_brain_mask:                     $OutFile"
+    echo ""
+else
+    reho "nodif_brain_mask in $DiffFolderOut missing. Something went wrong."
     echo ""
     RunError="yes"
 fi
