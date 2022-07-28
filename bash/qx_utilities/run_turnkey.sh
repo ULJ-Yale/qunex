@@ -530,7 +530,7 @@ OVERWRITE_PROJECT_XNAT=`opts_GetOpt "--overwriteprojectxnat" $@`
 BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--paramfile" $@`
 
 # BACKWARDS COMPATIBILITY
-if [[ -z ${BATCH_PARAMETERS_FILENAME} ]];
+if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; then
     BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile $@`
 fi
 

@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.3
+
+* Removed a bug that caused run_turnkey to crash.
+
 ## 0.94.2
 
 * Fixed a container bug where the sessions and sessionids parameters were not parsed correctly.
