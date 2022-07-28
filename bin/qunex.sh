@@ -812,7 +812,14 @@ dwi_dtifit() {
     # gradnonlin
     if [[ -n ${gradnonlin} ]]; then
         optional_parameters="${optional_parameters} \
-        --gradnonlin='${gradnonlin}''
+        --gradnonlin='${gradnonlin}'
+        "
+    fi
+
+    # gradnonlin
+    if [[ -n ${diffdatasuffix} ]]; then
+        optional_parameters="${optional_parameters} \
+        --diffdatasuffix='${diffdatasuffix}'
         "
     fi
 
@@ -1653,6 +1660,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     xmin=`get_parameters "${setflag}xmin" $@`
     xmax=`get_parameters "${setflag}xmax" $@`
     gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
+    diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
 
     # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`

@@ -25,8 +25,8 @@ The DWI data is expected to be in the following folder::
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
-    --sessions (str):
-        Comma separated list of sessions to run.
+    --session (str):
+        The sessions to run.
     --overwrite (str):
         Delete prior run for a given session ('yes' / 'no').
     --species (str):
@@ -104,8 +104,8 @@ Examples:
     ::
 
         qunex dwi_dtifit \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --sessionsfolder='<path_to_study_sessionsfolder>' \\
+            --session='<session_id>' \\
             --scheduler='<name_of_scheduler_and_options>' \\
             --overwrite='yes'
 
@@ -138,206 +138,210 @@ fi
 # ------------------------------------------------------------------------------
 
 opts_GetOpt() {
-sopt="$1"
-shift 1
-for fn in "$@" ; do
-    if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-        echo $fn | sed "s/^${sopt}=//"
-        return 0
-    fi
-done
+    sopt="$1"
+    shift 1
+    for fn in "$@" ; do
+        if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+            echo $fn | sed "s/^${sopt}=//"
+            return 0
+        fi
+    done
 }
 
 get_flags() {
-sopt="$1"
-shift 1
-for fn in "$@" ; do
-    if [ `echo $fn | grep -- "^${sopt}" | wc -w` -gt 0 ]; then
-        echo "yes"
-        return 0
-    fi
-done
+    sopt="$1"
+    shift 1
+    for fn in "$@" ; do
+        if [ `echo $fn | grep -- "^${sopt}" | wc -w` -gt 0 ]; then
+            echo "yes"
+            return 0
+        fi
+    done
 }
 
 # -- Get the command line options for this script
 get_options() {
 
-local scriptName=$(basename ${0})
-local arguments=($@)
-# -- Initialize global output variables
-unset SessionsFolder
-unset Session
-runcmd=""
+    local script_name=$(basename ${0})
+    local arguments=($@)
+    # -- Initialize global output variables
+    runcmd=""
 
-# -- Parse arguments
-CASE=`opts_GetOpt "--session" $@`
-SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
-Overwrite=`opts_GetOpt "--overwrite" $@`
-Species=`opts_GetOpt "--species" $@`
-mask=`opts_GetOpt "--mask" $@`
-bvecs=`opts_GetOpt "--bvecs" $@`
-bvals=`opts_GetOpt "--bvals" $@`
-cni=`opts_GetOpt "--cni" $@`
-sse=`get_flags "--sse" $@`
-wls=`get_flags "--wls" $@`
-kurt=`get_flags "--kurt" $@`
-kurtdir=`get_flags "--kurtdir" $@`
-littlebit=`get_flags "--littlebit" $@`
-save_tensor=`get_flags "--save_tensor" $@`
-zmin=`opts_GetOpt "--zmin" $@`
-zmax=`opts_GetOpt "--zmax" $@`
-ymin=`opts_GetOpt "--ymin" $@`
-ymax=`opts_GetOpt "--ymax" $@`
-xmin=`opts_GetOpt "--xmin" $@`
-xmax=`opts_GetOpt "--xmax" $@`
-gradnonlin=`opts_GetOpt "--gradnonlin" $@`
+    # -- Parse arguments
+    session=`opts_GetOpt "--session" $@`
+    sessionsfolder=`opts_GetOpt "--sessionsfolder" $@`
+    overwrite=`opts_GetOpt "--overwrite" $@`
+    species=`opts_GetOpt "--species" $@`
+    mask=`opts_GetOpt "--mask" $@`
+    bvecs=`opts_GetOpt "--bvecs" $@`
+    bvals=`opts_GetOpt "--bvals" $@`
+    cni=`opts_GetOpt "--cni" $@`
+    sse=`get_flags "--sse" $@`
+    wls=`get_flags "--wls" $@`
+    kurt=`get_flags "--kurt" $@`
+    kurtdir=`get_flags "--kurtdir" $@`
+    littlebit=`get_flags "--littlebit" $@`
+    save_tensor=`get_flags "--save_tensor" $@`
+    zmin=`opts_GetOpt "--zmin" $@`
+    zmax=`opts_GetOpt "--zmax" $@`
+    ymin=`opts_GetOpt "--ymin" $@`
+    ymax=`opts_GetOpt "--ymax" $@`
+    xmin=`opts_GetOpt "--xmin" $@`
+    xmax=`opts_GetOpt "--xmax" $@`
+    gradnonlin=`opts_GetOpt "--gradnonlin" $@`
+    diffdatasuffix=`opts_GetOpt "--diffdatasuffix" $@`
 
-# -- Check required parameters
-if [ -z "$SessionsFolder" ]; then reho "Error: Sessions Folder"; exit 1; fi
-if [ -z "$CASE" ]; then reho "Error: Session missing"; exit 1; fi
+    # -- Check required parameters
+    if [ -z "$sessionsfolder" ]; then reho "Error: sessionsfolder missing"; exit 1; fi
+    if [ -z "$session" ]; then reho "Error: session missing"; exit 1; fi
 
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
+    # -- Set study_folder
+    cd $sessionsfolder/../ &> /dev/null
+    study_folder=`pwd` &> /dev/null
 
-# -- Report options
-echo ""
-echo ""
-echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   Study Folder: ${StudyFolder}"
-echo "   Sessions Folder: ${SessionsFolder}"
-echo "   Session: ${CASE}"
-echo "   Study Log Folder: ${LogFolder}"
-echo "   Overwrite prior run: ${Overwrite}"
+    # -- Report options
+    echo ""
+    echo ""
+    echo "-- ${script_name}: Specified Command-Line Options - Start --"
+    echo "   Study Folder: ${study_folder}"
+    echo "   Sessions Folder: ${sessionsfolder}"
+    echo "   Session: ${session}"
+    echo "   Study Log Folder: ${LogFolder}"
+    echo "   overwrite prior run: ${overwrite}"
 
-# Report species if not default
-if [[ -n ${Species} ]]; then
-    echo "   Species: ${Species}"
-fi
+    # Report species if not default
+    if [[ -n ${species} ]]; then
+        echo "   species: ${species}"
+    fi
 
-# -- Set paths
-if [[ ${Species} == "macaque" ]]; then
-    DiffusionFolder=${SessionsFolder}/${CASE}/NHP/dMRI
-    DiffusionFile=${DiffusionFolder}/data.nii.gz
-else
-    DiffusionFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
-    DiffusionFile=${DiffusionFolder}/dti_FA.nii.gz
-fi
+    # -- Set paths
+    if [[ ${species} == "macaque" ]]; then
+        diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
+        in_file="data"
+    else
+        if [[ -z $diffdatasuffix ]]; then
+            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
+            in_file="data"
+        else
+            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_${diffdatasuffix}
+            in_file="${session}_${diffdatasuffix}_data"
+        fi
+    fi
+    out_file=${diffusion_folder}/dti_FA.nii.gz
+
+    # mask
+    if [[ -n ${mask} ]]; then
+        echo "   mask: ${mask}"
+    else
+        mask=${diffusion_folder}/nodif_brain_mask
+    fi
+
+    # bvecs
+    if [[ -n ${bvecs} ]]; then
+        echo "   bvecs: ${bvecs}"
+    else
+        bvecs=${diffusion_folder}/bvecs
+    fi
+
+    # bvals
+    if [[ -n ${bvals} ]]; then
+        echo "   bvals: ${bvals}"
+    else
+        bvals=${diffusion_folder}/bvals
+    fi
+
+    # Optional parameters
+    optional_parameters=""
+
+    # cni
+    if [[ -n ${cni} ]]; then
+        echo "   cni: ${cni}"
+        optional_parameters="${optional_parameters} --cni='${cni}'"
+    fi
+
+    # sse
+    if [[ -n ${sse} ]]; then
+        echo "   sse: yes"
+        optional_parameters="${optional_parameters} --sse"
+    fi
+
+    # wls
+    if [[ -n ${wls} ]]; then
+        echo "   wls: yes"
+        optional_parameters="${optional_parameters} --wls"
+    fi
+
+    # kurt
+    if [[ -n ${kurt} ]]; then
+        echo "   kurt: yes"
+        optional_parameters="${optional_parameters} --kurt"
+    fi
+
+    # kurtdir
+    if [[ -n ${kurtdir} ]]; then
+        echo "   kurtdir: yes"
+        optional_parameters="${optional_parameters} --kurtdir"
+    fi
+
+    # littlebit
+    if [[ -n ${littlebit} ]]; then
+        echo "   littlebit: yes"
+        optional_parameters="${optional_parameters} --littlebit"
+    fi
+
+    # save_tensor
+    if [[ -n ${save_tensor} ]]; then
+        echo "   save_tensor: yes"
+        optional_parameters="${optional_parameters} --save_tensor"
+    fi
+
+    # zmin
+    if [[ -n ${zmin} ]]; then
+        echo "   zmin: ${zmin}"
+        optional_parameters="${optional_parameters} --zmin='${zmin}'"
+    fi
+
+    # zmax
+    if [[ -n ${zmax} ]]; then
+        echo "   zmax: ${zmax}"
+        optional_parameters="${optional_parameters} --zmax='${zmax}'"
+    fi
+
+    # ymin
+    if [[ -n ${ymin} ]]; then
+        echo "   ymin: ${ymin}"
+        optional_parameters="${optional_parameters} --ymin='${ymin}'"
+    fi
+
+    # ymax
+    if [[ -n ${ymax} ]]; then
+        echo "   ymax: ${ymax}"
+        optional_parameters="${optional_parameters} --ymax='${ymax}'"
+    fi
+
+    # xmin
+    if [[ -n ${xmin} ]]; then
+        echo "   xmin: ${xmin}"
+        optional_parameters="${optional_parameters} --xmin='${xmin}'"
+    fi
+
+    # xmax
+    if [[ -n ${xmax} ]]; then
+        echo "   xmax: ${xmax}"
+        optional_parameters="${optional_parameters} --xmax='${xmax}'"
+    fi
+
+    # gradnonlin
+    if [[ -n ${gradnonlin} ]]; then
+        echo "   gradnonlin: ${gradnonlin}"
+        optional_parameters="${optional_parameters} --gradnonlin='${gradnonlin}'"
+    fi
 
 
-# mask
-if [[ -n ${mask} ]]; then
-    echo "   mask: ${mask}"
-else
-    mask=${DiffusionFolder}/nodif_brain_mask
-fi
-
-# bvecs
-if [[ -n ${bvecs} ]]; then
-    echo "   bvecs: ${bvecs}"
-else
-    bvecs=${DiffusionFolder}/bvecs
-fi
-
-# bvals
-if [[ -n ${bvals} ]]; then
-    echo "   bvals: ${bvals}"
-else
-    bvals=${DiffusionFolder}/bvals
-fi
-
-# Optional parameters
-optional_parameters=""
-
-# cni
-if [[ -n ${cni} ]]; then
-    echo "   cni: ${cni}"
-    optional_parameters="${optional_parameters} --cni='${cni}'"
-fi
-
-# sse
-if [[ -n ${sse} ]]; then
-    echo "   sse: yes"
-    optional_parameters="${optional_parameters} --sse"
-fi
-
-# wls
-if [[ -n ${wls} ]]; then
-    echo "   wls: yes"
-    optional_parameters="${optional_parameters} --wls"
-fi
-
-# kurt
-if [[ -n ${kurt} ]]; then
-    echo "   kurt: yes"
-    optional_parameters="${optional_parameters} --kurt"
-fi
-
-# kurtdir
-if [[ -n ${kurtdir} ]]; then
-    echo "   kurtdir: yes"
-    optional_parameters="${optional_parameters} --kurtdir"
-fi
-
-# littlebit
-if [[ -n ${littlebit} ]]; then
-    echo "   littlebit: yes"
-    optional_parameters="${optional_parameters} --littlebit"
-fi
-
-# save_tensor
-if [[ -n ${save_tensor} ]]; then
-    echo "   save_tensor: yes"
-    optional_parameters="${optional_parameters} --save_tensor"
-fi
-
-# zmin
-if [[ -n ${zmin} ]]; then
-    echo "   zmin: ${zmin}"
-    optional_parameters="${optional_parameters} --zmin='${zmin}'"
-fi
-
-# zmax
-if [[ -n ${zmax} ]]; then
-    echo "   zmax: ${zmax}"
-    optional_parameters="${optional_parameters} --zmax='${zmax}'"
-fi
-
-# ymin
-if [[ -n ${ymin} ]]; then
-    echo "   ymin: ${ymin}"
-    optional_parameters="${optional_parameters} --ymin='${ymin}'"
-fi
-
-# ymax
-if [[ -n ${ymax} ]]; then
-    echo "   ymax: ${ymax}"
-    optional_parameters="${optional_parameters} --ymax='${ymax}'"
-fi
-
-# xmin
-if [[ -n ${xmin} ]]; then
-    echo "   xmin: ${xmin}"
-    optional_parameters="${optional_parameters} --xmin='${xmin}'"
-fi
-
-# xmax
-if [[ -n ${xmax} ]]; then
-    echo "   xmax: ${xmax}"
-    optional_parameters="${optional_parameters} --xmax='${xmax}'"
-fi
-
-# gradnonlin
-if [[ -n ${gradnonlin} ]]; then
-    echo "   gradnonlin: ${gradnonlin}"
-    optional_parameters="${optional_parameters} --gradnonlin='${gradnonlin}'"
-fi
-
-
-echo "-- ${scriptName}: Specified Command-Line Options - End --"
-echo ""
-geho "------------------------- Start of work --------------------------------"
-echo ""
+    echo "-- ${script_name}: Specified Command-Line Options - End --"
+    echo ""
+    geho "------------------------- Start of work --------------------------------"
+    echo ""
 
 }
 
@@ -345,72 +349,75 @@ echo ""
 
 main() {
 
-# -- Get Command Line Options
-get_options $@
+    # -- Get Command Line Options
+    get_options $@
 
-# -- Check if overwrite flag was set
-minimumfilesize=100000
-if [ "$Overwrite" == "yes" ]; then
-    echo ""
-    reho "Removing existing dtifit run for $CASE..."x
-    echo ""
-    rm -rf DiffusionFolder/dti_* > /dev/null 2>&1
-fi
+    # -- Check if overwrite flag was set
+    minimumfilesize=100000
+    if [ "$overwrite" == "yes" ]; then
+        echo ""
+        reho "Removing existing dtifit run for $session..."x
+        echo ""
+        rm -rf ${out_file} > /dev/null 2>&1
+    fi
 
-checkCompletion() {
-# -- Check file presence
-if [ -a ${DiffusionFolder}/dti_FA.nii.gz ]; then
-    actualfilesize=$(wc -c <${DiffusionFolder}/dti_FA.nii.gz)
-else
-    actualfilesize="0"
-fi
-if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
-    RunCompleted="yes"
-else
-    RunCompleted="no"
-fi
-}
+    check_completion() {
+        # -- Check file presence
+        if [ -a ${out_file} ]; then
+            actualfilesize=$(wc -c <${out_file})
+        else
+            actualfilesize="0"
+        fi
+        if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
+            run_completed="yes"
+        else
+            run_completed="no"
+        fi
+    }
 
-if [[ ${Overwrite} == "no" ]]; then
-  checkCompletion
-  if [[ ${RunCompleted} == "yes" ]]; then
-     echo ""
-     geho "--- dtifit found and successfully completed for $CASE"
-     echo ""
-     geho "------------------------- Successful completion of work --------------------------------"
-     echo ""
-     exit 0
-  else
-     echo ""
-     reho " -- Prior dtifit not found for $CASE. Setting up new run..."
-     echo ""
-  fi
-fi
+    if [[ ${overwrite} == "no" ]]; then
+    check_completion
+    if [[ ${run_completed} == "yes" ]]; then
+        echo ""
+        geho "--- dtifit found and successfully completed for $session"
+        echo ""
+        geho "------------------------- Successful completion of work --------------------------------"
+        echo ""
+        exit 0
+    else
+        echo ""
+        reho " -- Prior dtifit not found for $session. Setting up new run..."
+        echo ""
+    fi
+    fi
 
-# -- Command to run
-dtifit --data=${DiffusionFolder}/data --out=${DiffusionFolder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}
+    # -- Command to run
+    echo "Running command:"
+    echo ""
+    geho "dtifit --data=${diffusion_folder}/${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}"
+    dtifit --data=${diffusion_folder}/${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}
 
-# -- Perform completion checks
-reho "--- Checking outputs..."
-echo ""
-checkCompletion
-if [[ ${RunCompleted} == "yes" ]]; then
-    geho "dtifit completed: ${DiffusionFolder}"
+    # -- Perform completion checks
+    reho "--- Checking outputs..."
     echo ""
-    reho "--- dtifit successfully completed"
-    echo ""
-    geho "------------------------- Successful completion of work --------------------------------"
-    echo ""
-    exit 0
-else
-    echo ""
-    reho " -- dtifit run not found or incomplete for $CASE. Something went wrong." 
-    reho "    Check output: ${DiffusionFolder}"
-    echo ""
-    reho "ERROR: dtifit run did not complete successfully"
-    echo ""
-    exit 1
-fi
+    check_completion
+    if [[ ${run_completed} == "yes" ]]; then
+        geho "dtifit completed: ${diffusion_folder}"
+        echo ""
+        reho "--- dtifit successfully completed"
+        echo ""
+        geho "------------------------- Successful completion of work --------------------------------"
+        echo ""
+        exit 0
+    else
+        echo ""
+        reho " -- dtifit run not found or incomplete for $session. Something went wrong." 
+        reho "    Check output: ${diffusion_folder}"
+        echo ""
+        reho "ERROR: dtifit run did not complete successfully"
+        echo ""
+        exit 1
+    fi
 }
 
 # ---------------------------------------------------------
