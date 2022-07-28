@@ -32,6 +32,9 @@ Parameters:
     --species (str):
         dtifit currently supports processing of human and macaqu data. If
         processing macaques set this parameter to macaque.
+    --diffdatasuffix (str):
+        Name of the DWI image; e.g. if the data is called
+        <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --mask (str, default 'T1w/Diffusion/nodif_brain_mask'):
         Set binary mask file.
     --bvecs (str, default 'T1w/Diffusion/bvecs'):
@@ -137,7 +140,7 @@ fi
 # -- Check for options or flags
 # ------------------------------------------------------------------------------
 
-opts_GetOpt() {
+opts_getopt() {
     sopt="$1"
     shift 1
     for fn in "$@" ; do
@@ -168,28 +171,28 @@ get_options() {
     runcmd=""
 
     # -- Parse arguments
-    session=`opts_GetOpt "--session" $@`
-    sessionsfolder=`opts_GetOpt "--sessionsfolder" $@`
-    overwrite=`opts_GetOpt "--overwrite" $@`
-    species=`opts_GetOpt "--species" $@`
-    mask=`opts_GetOpt "--mask" $@`
-    bvecs=`opts_GetOpt "--bvecs" $@`
-    bvals=`opts_GetOpt "--bvals" $@`
-    cni=`opts_GetOpt "--cni" $@`
+    session=`opts_getopt "--session" $@`
+    sessionsfolder=`opts_getopt "--sessionsfolder" $@`
+    overwrite=`opts_getopt "--overwrite" $@`
+    species=`opts_getopt "--species" $@`
+    mask=`opts_getopt "--mask" $@`
+    bvecs=`opts_getopt "--bvecs" $@`
+    bvals=`opts_getopt "--bvals" $@`
+    cni=`opts_getopt "--cni" $@`
     sse=`get_flags "--sse" $@`
     wls=`get_flags "--wls" $@`
     kurt=`get_flags "--kurt" $@`
     kurtdir=`get_flags "--kurtdir" $@`
     littlebit=`get_flags "--littlebit" $@`
     save_tensor=`get_flags "--save_tensor" $@`
-    zmin=`opts_GetOpt "--zmin" $@`
-    zmax=`opts_GetOpt "--zmax" $@`
-    ymin=`opts_GetOpt "--ymin" $@`
-    ymax=`opts_GetOpt "--ymax" $@`
-    xmin=`opts_GetOpt "--xmin" $@`
-    xmax=`opts_GetOpt "--xmax" $@`
-    gradnonlin=`opts_GetOpt "--gradnonlin" $@`
-    diffdatasuffix=`opts_GetOpt "--diffdatasuffix" $@`
+    zmin=`opts_getopt "--zmin" $@`
+    zmax=`opts_getopt "--zmax" $@`
+    ymin=`opts_getopt "--ymin" $@`
+    ymax=`opts_getopt "--ymax" $@`
+    xmin=`opts_getopt "--xmin" $@`
+    xmax=`opts_getopt "--xmax" $@`
+    gradnonlin=`opts_getopt "--gradnonlin" $@`
+    diffdatasuffix=`opts_getopt "--diffdatasuffix" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then reho "Error: sessionsfolder missing"; exit 1; fi

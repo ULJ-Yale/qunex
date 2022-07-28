@@ -395,7 +395,7 @@ dwi_legacy_gpu() {
     --echospacing=${EchoSpacing} \
     --TE=${TE} \
     --unwarpdir=${UnwarpDir} \
-    --diffdatasuffix=${DiffDataSuffix} \
+    --diffdatasuffix=${diffdatasuffix} \
     --overwrite=${Overwrite}"
     # -- QuNex bash execute function
     bash_call_execute
@@ -856,7 +856,8 @@ dwi_bedpostx_gpu() {
     --rician='${Rician}' \
     --gradnonlin='${Gradnonlin}' \
     --overwrite='${Overwrite}' \
-    --species='${Species}'"
+    --species='${Species}' \
+    --diffdatasuffix='${diffdatasuffix}'"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1577,7 +1578,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ROIFile=`get_parameters "${setflag}roifile" $@`
     ROIFileSessionSpecific=`get_parameters "${setflag}sessionroifile" $@`
 
-    # -- Input flags for  compute_bold_fc
+    # -- Input flags for compute_bold_fc
     InputFiles=`get_parameters "${setflag}inputfiles" $@`
     OutPathFC=`get_parameters "${setflag}targetf" $@`
     Calculation=`get_parameters "${setflag}calculation" $@`
@@ -1611,12 +1612,14 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WeightsFile=`get_parameters "${setflag}weightsfile" $@`
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
 
+    # -- DWI data suffix
+    diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
+
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     PEdir=`get_parameters "${setflag}PEdir" $@`
     TE=`get_parameters "${setflag}TE" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
-    DiffDataSuffix=`get_parameters "${setflag}diffdatasuffix" $@`
     Scanner=`get_parameters "${setflag}scanner" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
 
@@ -1660,7 +1663,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     xmin=`get_parameters "${setflag}xmin" $@`
     xmax=`get_parameters "${setflag}xmax" $@`
     gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
-    diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
 
     # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`
@@ -2268,7 +2270,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
-    if [ -z "$DiffDataSuffix" ]; then reho "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
+    if [ -z "$diffdatasuffix" ]; then reho "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
 
     if [ ${UseFieldmap} == "yes" ]; then
         if [ -z "$TE" ]; then reho "ERROR: TE value for Fieldmap missing"; exit 1; fi
@@ -2295,7 +2297,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Phase Encoding Direction: ${PEdir}"
     echo "   TE value for Fieldmap: ${TE}"
     echo "   EPI Unwarp Direction: ${UnwarpDir}"
-    echo "   Diffusion Data Suffix Name: ${DiffDataSuffix}"
+    echo "   Diffusion Data Suffix Name: ${diffdatasuffix}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
 

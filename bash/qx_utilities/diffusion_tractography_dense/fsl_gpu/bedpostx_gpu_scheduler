@@ -9,7 +9,7 @@
 
 ## -- if BedpostXGPUBin is not set then set it automatically
 if [[ -z ${BedpostXGPUBin} ]]; then
-	bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_${DefaultCUDAVersion}/bedpostx_gpu
+	bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_${DEFAULT_CUDA_VERSION}/bedpostx_gpu
 else
 	bindir=${BedpostXGPUBin}/bedpostx_gpu
 fi
