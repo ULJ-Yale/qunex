@@ -67,7 +67,7 @@ Specific parameters:
 
 Output files:
      - DiffFolder=${SessionsFolder}/${Session}/Diffusion
-     - T1wDiffFolder=${SessionsFolder}/${Session}/hcp/${Session}/T1w/T1wDiffusion_"$DiffDataSuffix"
+     - T1wDiffFolder=${SessionsFolder}/${Session}/hcp/${Session}/T1w/Diffusion_"$DiffDataSuffix"
 
      ::
 
