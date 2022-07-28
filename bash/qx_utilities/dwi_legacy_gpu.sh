@@ -75,7 +75,6 @@ Output files:
          $DiffFolder/$DiffDataSuffix/eddy
          $DiffFolder/$DiffDataSuffix/data
          $DiffFolder/$DiffDataSuffix/reg
-         $DiffFolder/$DiffDataSuffix/logs
          $T1wDiffFolder
 
 Examples:
@@ -218,7 +217,6 @@ fi
 #    $DiffFolder/$DiffDataSuffix/eddy
 #    $DiffFolder/$DiffDataSuffix/data
 #    $DiffFolder/$DiffDataSuffix/reg
-#    $DiffFolder/$DiffDataSuffix/logs
 #    $T1wDiffFolder
 
 # -- Get the command line options for this script
@@ -391,13 +389,11 @@ echo ""
 T1wFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w
 DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
 T1wDiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/T1wDiffusion_"$DiffDataSuffix"
-LogFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion/"$DiffDataSuffix"/log
 DiffFolderOut="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion_"$DiffDataSuffix"
 
 echo "T1Folder:         $T1wFolder"
 echo "DiffFolder:       $DiffFolder"
 echo "T1wDiffFolder:    $T1wDiffFolder"
-echo "LogFolder:        $LogFolder"
 echo ""
 
 # -- Delete any existing output sub-directories        
@@ -415,7 +411,6 @@ fi
 
 # -- Make sure output directories exist
 mkdir -p "$T1wDiffFolder" 2> /dev/null
-mkdir -p "$LogFolder" 2> /dev/null
 mkdir -p "$DiffFolderOut" 2> /dev/null
 mkdir -p "$DiffFolder"/"$DiffDataSuffix"/rawdata 2> /dev/null
 mkdir -p "$DiffFolder"/"$DiffDataSuffix"/eddy 2> /dev/null
