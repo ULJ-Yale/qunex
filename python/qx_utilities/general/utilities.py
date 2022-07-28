@@ -2816,8 +2816,8 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         except ge.SpecFileSyntaxError as e:
             raise ge.CommandFailed(
                 "create_session_info",
-                "Invalid mapping file"
-                "Please check the specified file [{}]".format(mapping),
+                "Invalid mapping file.",
+                "Please check the specified file [{}].".format(mapping),
                 "Syntax error: {}".format(e.error))
 
         # -- get list of session folders

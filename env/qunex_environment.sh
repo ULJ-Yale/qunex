@@ -574,8 +574,6 @@ export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${Au
 export FSLGPUScripts=${HCPPIPEDIR_dMRITractFull}/fsl_gpu; PATH=${FSLGPUScripts}:${PATH}; export PATH
 export FSLGPUBinary=${QUNEXLIBRARYETC}/fsl_gpu_binaries; PATH=${FSLGPUBinary}:${PATH}; export PATH
 export DefaultCUDAVersion="9.1";
-export EDDYCUDADIR=${FSLGPUBinary}/eddy_cuda; PATH=${EDDYCUDADIR}:${PATH}; export PATH; eddy_cuda="eddy_cuda_wQC"; export eddy_cuda
-
 
 # ------------------------------------------------------------------------------
 # -- Setup ICA FIX paths and variables

@@ -17,7 +17,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -381,12 +381,12 @@ show_usage_run_turnkey() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- dwi_legacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+# -- dwi_legacy_gpu - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-dwi_legacy() {
+dwi_legacy_gpu() {
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy_gpu.sh \
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
     --scanner=${Scanner} \
@@ -401,9 +401,9 @@ dwi_legacy() {
     bash_call_execute
 }
 
-show_usage_dwi_legacy() {
+show_usage_dwi_legacy_gpu() {
     echo ""; echo "qunex ${usage_input}"
-    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh
+    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy_gpu.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1604,7 +1604,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WeightsFile=`get_parameters "${setflag}weightsfile" $@`
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
 
-    # -- Input flags for dwi_legacy
+    # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     PEdir=`get_parameters "${setflag}PEdir" $@`
     TE=`get_parameters "${setflag}TE" $@`
@@ -2249,10 +2249,10 @@ if [ "$CommandToRun" == "dwi_bedpostx_gpu" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- dwi_legacy
+# -- dwi_legacy_gpu
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "dwi_legacy" ]; then
+if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$Scanner" ]; then reho "ERROR: Scanner manufacturer missing"; exit 1; fi

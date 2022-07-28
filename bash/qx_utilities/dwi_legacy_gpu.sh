@@ -12,7 +12,7 @@ source ${HCPPIPEDIR}/global/scripts/version.shlib # version_ functions
 
 usage() {
     cat << EOF
-``dwi_legacy``
+``dwi_legacy_gpu``
 
 This function runs the DWI preprocessing using the FUGUE method for legacy data
 that are not TOPUP compatible.
@@ -22,11 +22,11 @@ preprocessing.
 
 DWI data needs to be in the following folder::
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+    <study_folder>/<session>/hcp/<session>/unprocessed/Diffusion
 
 T1w data needs to be in the following folder::
 
-    <study_folder>/<case>/hcp/<case>/T1w
+    <study_folder>/<session>/hcp/<session>/T1w
 
 Warning:
     - If PreFreeSurfer component of the HCP Pipelines was run the function will
@@ -67,7 +67,7 @@ Specific parameters:
 
 Output files:
      - DiffFolder=${SessionsFolder}/${Session}/Diffusion
-     - T1wDiffFolder=${SessionsFolder}/${Session}/T1w/Diffusion\_"$DiffDataSuffix"
+     - T1wDiffFolder=${SessionsFolder}/${Session}/hcp/${Session}/T1w/T1wDiffusion_"$DiffDataSuffix"
 
      ::
 
@@ -93,7 +93,7 @@ Examples:
 
     Run via::
 
-        qunex dwi_legacy \\
+        qunex dwi_legacy_gpu \\
             --<parameter1> \\
             --<parameter2> ... \\
             --<parameterN>
@@ -108,12 +108,17 @@ Examples:
 
          --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
+    NOTE: CUDA libraries need to be loaded for this command to work, to do this
+    you usually need to execute module load CUDA/9.1.85. When scheduling add the
+    bash parameter to the command call, e.g.:
+
+        --bash="module load CUDA/9.1.85"
+
     ::
 
-        qunex dwi_legacy \\
+        qunex dwi_legacy_gpu \\
             --sessionsfolder='<folder_with_sessions>' \\
             --sessions='<comma_separarated_list_of_cases>' \\
-            --function='dwi_legacy' \\
             --PEdir='1' \\
             --echospacing='0.69' \\
             --TE='2.46' \\
@@ -128,26 +133,26 @@ Examples:
 
     ::
 
-        qunex dwi_legacy \\
+        qunex dwi_legacy_gpu \\
             --sessionsfolder='<folder_with_sessions>' \\
             --sessions='<comma_separarated_list_of_cases>' \\
-            --function='dwi_legacy' \\
             --PEdir='1' \\
             --echospacing='0.69' \\
             --TE='2.46' \\
             --unwarpdir='x-' \\
             --diffdatasuffix='DWI_dir91_LR' \\
-            --scheduler='<name_of_scheduler_and_options>' \\
             --usefieldmap='yes' \\
             --scanner='siemens' \\
-            --overwrite='yes'
+            --overwrite='yes' \\
+            --bash="module load CUDA/9.1.85" \\
+            --scheduler='<name_of_scheduler_and_options>'
 
     Example with flagged parameters for submission to the scheduler using GE data
     without FieldMap (needs GPU-enabled queue):
 
     ::
 
-        qunex dwi_legacy \\
+        qunex dwi_legacy_gpu \\
             --sessionsfolder='<folder_with_sessions>' \\
             --sessions='<comma_separarated_list_of_cases>' \\
             --diffdatasuffix='DWI_dir91_LR' \\
@@ -180,7 +185,7 @@ geho() {
 # ------------------------------------------------------------------------------
 
 if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
-	usage
+    usage
 fi
 
 ########################################## INPUTS ########################################## 
@@ -254,7 +259,7 @@ get_options() {
                 SessionsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --sessions=*)
+            --session=*)
                 CASE=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
@@ -291,7 +296,6 @@ get_options() {
                 index=$(( index + 1 ))
                 ;;        
             *)
-                usage
                 echo "ERROR: Unrecognized Option: ${argument}"
                 exit 1
                 ;;
@@ -299,12 +303,10 @@ get_options() {
     done
     # -- check required parameters
     if [ -z ${SessionsFolder} ]; then
-        usage
         echo "ERROR: <study-path> not specified"
         exit 1
     fi
     if [ -z ${CASE} ]; then
-        usage
         echo "ERROR: <session-id> not specified"
         exit 1
     fi
@@ -313,17 +315,14 @@ get_options() {
         exit 1
     fi
     if [ -z ${PEdir} ]; then
-        usage
         echo "ERROR: <phase-encoding-dir> not specified"
         exit 1
     fi
     if [ -z ${EchoSpacing} ]; then
-        usage
         echo "ERROR: <echo-spacing> not specified"
         exit 1
     fi
     if [ -z ${UnwarpDir} ]; then
-        usage
         echo "ERROR: <unwarp-direction> not specified"
         exit 1
     fi
@@ -333,13 +332,11 @@ get_options() {
     fi    
     if [ ${UseFieldmap} == "yes" ]; then
         if [ -z ${TE} ]; then
-            usage
             echo "ERROR: <TE> not specified"
             exit 1
         fi
     fi
     if [ -z ${DiffDataSuffix} ]; then
-        usage
         echo "ERROR: <diffusion-data-suffix> not specified"
         exit 1
     fi
@@ -394,14 +391,12 @@ echo ""
 T1wFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w
 DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
 T1wDiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/T1wDiffusion_"$DiffDataSuffix"
-FieldMapFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/FieldMap_strc
 LogFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/Diffusion/"$DiffDataSuffix"/log
 DiffFolderOut="$SessionsFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion_"$DiffDataSuffix"
 
 echo "T1Folder:         $T1wFolder"
 echo "DiffFolder:       $DiffFolder"
 echo "T1wDiffFolder:    $T1wDiffFolder"
-echo "FieldMapFolder:   $FieldMapFolder"
 echo "LogFolder:        $LogFolder"
 echo ""
 
@@ -419,8 +414,6 @@ if [ "$Overwrite" == "yes" ]; then
 fi
 
 # -- Make sure output directories exist
-mkdir -p "$DiffFolder" 2> /dev/null
-mkdir -p "$DiffFolder"/"$DiffDataSuffix" 2> /dev/null
 mkdir -p "$T1wDiffFolder" 2> /dev/null
 mkdir -p "$LogFolder" 2> /dev/null
 mkdir -p "$DiffFolderOut" 2> /dev/null
@@ -431,6 +424,38 @@ mkdir -p "$DiffFolder"/"$DiffDataSuffix"/fieldmap 2> /dev/null
 mkdir -p "$DiffFolder"/"$DiffDataSuffix"/acqparams 2> /dev/null
 
 #########################################
+# STEP 0 - move the unprocessed data
+#########################################
+
+geho "--- Moving or copying unprocesed data into the Diffusion folder"
+echo ""
+UnprocFile="${SessionsFolder}/${CASE}/hcp/${CASE}/unprocessed/Diffusion/${CASE}_${DiffDataSuffix}"
+if [ -f "${UnprocFile}.bval" ]; then
+    echo "Moving ${UnprocFile}.bval"
+    mv "${UnprocFile}.bval" "${DiffFolder}/"
+fi
+if [ -f "${UnprocFile}.bvec" ]; then
+    echo "Moving ${UnprocFile}.bvec"
+    mv "${UnprocFile}.bvec" "${DiffFolder}/"
+fi
+if [ -f "${UnprocFile}.nii.gz" ]; then
+    echo "Moving ${UnprocFile}.nii.gz"
+    mv "${UnprocFile}.nii.gz" "${DiffFolder}/"
+fi
+
+if [ ${UseFieldmap} == "yes" ]; then
+    UnprocFM="${SessionsFolder}/${CASE}/hcp/${CASE}/unprocessed/FieldMap1/${CASE}"
+    if [ -f "${UnprocFM}_FieldMap_Magnitude.nii.gz" ]; then
+        echo "Copying ${UnprocFM}_FieldMap_Magnitude.nii.gz"
+        cp "${UnprocFM}_FieldMap_Magnitude.nii.gz" "${DiffFolder}/"
+    fi
+    if [ -f "${UnprocFM}_FieldMap_Phase.nii.gz" ]; then
+        echo "Copying ${UnprocFM}_FieldMap_Phase.nii.gz"
+        cp "${UnprocFM}_FieldMap_Phase.nii.gz" "${DiffFolder}/"
+    fi
+fi
+
+#########################################
 # STEP 1 - setup acquisition parameters
 #########################################
 
@@ -438,21 +463,24 @@ geho "--- Setting up acquisition parameters:"
 echo ""
 # -- Make session-specific and acquisition-specific parameter folder
 mkdir "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData" > /dev/null 2>&1
+
 # -- Create index file - parameter file for number of frames in the DWI image
 sesdimt=`fslval "$DiffFolder"/"$DiffData" dim4` #Number of datapoints per Pos series
 rm "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/index.txt > /dev/null 2>&1
-for (( j=0; j<${sesdimt}; j++ )); do echo "1" >> "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/index.txt; done        
+for (( j=0; j<${sesdimt}; j++ )); do echo "1" >> "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/index.txt; done
+
 # -- Create phase encoding and dwelltime parameter file
 rm "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt > /dev/null 2>&1
 if [ "$PEdir" == "1" ]; then
-VoxelNumber=`fslval "$DiffFolder"/"$DiffData" dim1`
-TotReadoutTime=`echo "scale=6; $DwellTimeSec*($VoxelNumber-1)" | bc`
-    echo "1 0 0 $TotReadoutTime" >> "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt
+    VoxelNumber=`fslval "$DiffFolder"/"$DiffData" dim1`
+    TotReadoutTime=`echo "scale=6; $DwellTimeSec*($VoxelNumber-1)" | bc`
+        echo "1 0 0 $TotReadoutTime" >> "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt
 else
-VoxelNumber=`fslval "$DiffFolder"/"$DiffData" dim2`
-TotReadoutTime=`echo "scale=6; $DwellTimeSec*($VoxelNumber-1)" | bc`
-    echo "0 1 0 $TotReadoutTime" >> "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt
+    VoxelNumber=`fslval "$DiffFolder"/"$DiffData" dim2`
+    TotReadoutTime=`echo "scale=6; $DwellTimeSec*($VoxelNumber-1)" | bc`
+        echo "0 1 0 $TotReadoutTime" >> "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt
 fi
+
 echo "Check acquisition parameter files:"
 echo ""
 echo "`ls $DiffFolder/$DiffDataSuffix/acqparams/$DiffData/`"
@@ -467,11 +495,11 @@ if [ ${UseFieldmap} == "yes" ]; then
     echo ""
     geho "Running conservative BET on the FieldMap Magnitude image..."
     echo ""
-    bet "$FieldMapFolder"/"$CASE"_strc_FieldMap_Magnitude.nii.gz "$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_strc_FieldMap_Magnitude_brain -m -f 0.65 -v
+    bet "$DiffFolder"/"$CASE"_FieldMap_Magnitude.nii.gz "$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_FieldMap_Magnitude_brain -m -f 0.65 -v
     echo ""
     geho "Running fsl_prepare_fieldmap assuming SIEMENS data..."  ## fsl_prepare_fieldmap <scanner> <phase_image> <magnitude_image> <out_image> <deltaTE (in ms)
     echo ""
-    fsl_prepare_fieldmap SIEMENS "$FieldMapFolder"/"$CASE"_strc_FieldMap_Phase.nii.gz "$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_strc_FieldMap_Magnitude_brain.nii.gz "$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_fmap_rads "$TE"
+    fsl_prepare_fieldmap SIEMENS "$DiffFolder"/"$CASE"_FieldMap_Phase.nii.gz "$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_FieldMap_Magnitude_brain.nii.gz "$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_fmap_rads "$TE"
     echo ""
 else 
     echo ""
@@ -550,20 +578,21 @@ fi
 ############################################
 # STEP 3 - Run eddy_cuda
 ############################################    
-    
-    # -- Performs eddy call with --fwhm=10,0,0,0,0  --ff=10 -- this performs an initial FWHM smoothing for the first step of registration, then re-run with 4 more iterations without smoothing; the --ff flag adds a fat factor for angular smoothing. 
-    # -- For best possible results you want opposing diff directions but in practice we distribute directions on the sphere. Instead we look at 'cones'. This does not smooth the data but rather the predictions to allow best possible estimation via EDDY.
-    geho "--- Running eddy_cuda..."    
-    echo ""
-    geho "Using the following eddy_cuda binary:    ${EDDYCUDADIR}/${eddy_cuda}"
-    echo ""
-    
-    # -- Eddy call with cuda with extra QC options
-    echo "Running command:"
-    echo ""
-    geho "${EDDYCUDADIR}/${eddy_cuda} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v"
-    echo ""
-    ${EDDYCUDADIR}/${eddy_cuda} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
+
+# -- Performs eddy call with --fwhm=10,0,0,0,0  --ff=10 -- this performs an initial FWHM smoothing for the first step of registration, then re-run with 4 more iterations without smoothing; the --ff flag adds a fat factor for angular smoothing. 
+# -- For best possible results you want opposing diff directions but in practice we distribute directions on the sphere. Instead we look at 'cones'. This does not smooth the data but rather the predictions to allow best possible estimation via EDDY.
+geho "--- Running eddy_cuda..."    
+echo ""
+EDDY_CUDA=${FSLGPUDIR}/eddy_cuda${DefaultCUDAVersion}
+geho "Using the following eddy_cuda binary: ${EDDY_CUDA}"
+echo ""
+
+# -- Eddy call with cuda with extra QC options
+echo "Running command:"
+echo ""
+geho "${EDDY_CUDA} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v"
+echo ""
+${EDDY_CUDA} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
 
 ############################################
 # STEP 4 - Run epi_reg w/fieldmap correction
@@ -577,7 +606,7 @@ if [ ${UseFieldmap} == "yes" ]; then
     echo ""
     geho "--- Running epi_reg for EPI--T1 data with fieldmap specification..." 
     echo ""
-    epi_reg --epi="$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif_brain --t1="$T1wImage" --t1brain="$T1wBrainImage" --out="$DiffFolder"/"$DiffDataSuffix"/reg/"$DiffData"_nodif2T1 --fmap="$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_fmap_rads --wmseg="$WMSegImage" --fmapmag="$FieldMapFolder"/"$CASE"_strc_FieldMap_Magnitude --fmapmagbrain="$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_strc_FieldMap_Magnitude_brain --echospacing="$DwellTimeSec" --pedir="$UnwarpDir" -v
+    epi_reg --epi="$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif_brain --t1="$T1wImage" --t1brain="$T1wBrainImage" --out="$DiffFolder"/"$DiffDataSuffix"/reg/"$DiffData"_nodif2T1 --fmap="$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_fmap_rads --wmseg="$WMSegImage" --fmapmag="$DiffFolder"/"$CASE"_FieldMap_Magnitude --fmapmagbrain="$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_FieldMap_Magnitude_brain --echospacing="$DwellTimeSec" --pedir="$UnwarpDir" -v
 else
     echo ""
     geho "--- Running epi_reg for EPI--T1 data without fieldmap specification..." 
@@ -604,6 +633,7 @@ flirt -in "$T1wImageMask" -ref "$T1wImage" -applyisoxfm "$DiffRes" -interp neare
 flirt -in "$WMSegImage" -ref "$T1wImage" -applyisoxfm "$DiffRes" -interp spline -out "$T1wDiffFolder"/"$CASE"_T1w_WMSegImage_"$DiffDataSuffix"_"$DiffResExt" -v    
 fslmaths "$T1wDiffFolder"/"$CASE"_T1w_brain_mask_downsampled2diff_"$DiffDataSuffix"_"$DiffResExt" -fillh "$T1wDiffFolder"/"$CASE"_T1w_brain_mask_downsampled2diff_"$DiffDataSuffix"_"$DiffResExt"
 echo ""
+
 # -- Registers the DWI data to T1w space
 if [ ${UseFieldmap} == "yes" ]; then
     geho "Applying the warp for $DiffData to T1w space with fieldmap specification..."; echo ""
