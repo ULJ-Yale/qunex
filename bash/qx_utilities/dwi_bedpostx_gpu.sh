@@ -58,19 +58,12 @@ preprocessing and completed diffusion processing. DWI data is expected to
 be in the following folder::
 
     <study_folder>/<session>/hcp/<session>/T1w/Diffusion
-    
-    or
-
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion_<diffdatasuffix>
 
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
     --sessions (str):
         Comma separated list of sessions to run.
-    --diffdatasuffix (str):
-        Name of the DWI image; e.g. if the data is called
-        <sessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --fibers (str, default '3'):
         Number of fibres per voxel.
     --weight (str, default '1'):
@@ -218,7 +211,6 @@ get_options() {
     species=`opts_getopt "--species" $@`
     session=`opts_getopt "--session" $@`
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
-    diffdatasuffix=`opts_getopt "--diffdatasuffix" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then reho "Error: sessions folder"; exit 1; fi
@@ -250,7 +242,6 @@ get_options() {
     echo "     Sample every: ${sample}"
     echo "     Model type: ${model}"
     echo "     Rician flag: ${rician}"
-    echo "     Diffusion data sufix: ${diffdatasuffix}"
     echo "     Overwrite prior run: ${overwrite}"
 
     # Report species if not default
@@ -273,14 +264,8 @@ main() {
         diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
         bedpostx_folder=${sessionsfolder}/${session}/NHP/dMRI.bedpostX
     else
-        if [[ -z $diffdatasuffix ]]; then
-            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
-            bedpostx_folder=${diffusion_folder}.bedpostX
-        else
-            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_${diffdatasuffix}
-            bedpostx_folder=${diffusion_folder}.bedpostX
-        fi
-
+        diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
+        bedpostx_folder=${diffusion_folder}.bedpostX
     fi
 
     # -- Check if overwrite flag was set

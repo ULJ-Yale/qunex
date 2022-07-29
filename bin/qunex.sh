@@ -816,13 +816,6 @@ dwi_dtifit() {
         "
     fi
 
-    # gradnonlin
-    if [[ -n ${diffdatasuffix} ]]; then
-        optional_parameters="${optional_parameters} \
-        --diffdatasuffix='${diffdatasuffix}'
-        "
-    fi
-
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \
     --sessionsfolder='${SessionsFolder}' \
@@ -856,8 +849,7 @@ dwi_bedpostx_gpu() {
     --rician='${Rician}' \
     --gradnonlin='${Gradnonlin}' \
     --overwrite='${Overwrite}' \
-    --species='${Species}' \
-    --diffdatasuffix='${diffdatasuffix}'"
+    --species='${Species}'"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1612,9 +1604,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WeightsFile=`get_parameters "${setflag}weightsfile" $@`
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
 
-    # -- DWI data suffix
-    diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
-
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     PEdir=`get_parameters "${setflag}PEdir" $@`
@@ -1622,6 +1611,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     Scanner=`get_parameters "${setflag}scanner" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
+    diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
 
     # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`

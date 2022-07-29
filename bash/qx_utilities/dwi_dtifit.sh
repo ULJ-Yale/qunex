@@ -32,9 +32,6 @@ Parameters:
     --species (str):
         dtifit currently supports processing of human and macaqu data. If
         processing macaques set this parameter to macaque.
-    --diffdatasuffix (str):
-        Name of the DWI image; e.g. if the data is called
-        <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --mask (str, default 'T1w/Diffusion/nodif_brain_mask'):
         Set binary mask file.
     --bvecs (str, default 'T1w/Diffusion/bvecs'):
@@ -192,7 +189,6 @@ get_options() {
     xmin=`opts_getopt "--xmin" $@`
     xmax=`opts_getopt "--xmax" $@`
     gradnonlin=`opts_getopt "--gradnonlin" $@`
-    diffdatasuffix=`opts_getopt "--diffdatasuffix" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then reho "Error: sessionsfolder missing"; exit 1; fi
@@ -221,11 +217,7 @@ get_options() {
     if [[ ${species} == "macaque" ]]; then
         diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
     else
-        if [[ -z $diffdatasuffix ]]; then
-            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
-        else
-            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_${diffdatasuffix}
-        fi
+        diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
     fi
     in_file="data"
     out_file=${diffusion_folder}/dti_FA.nii.gz
