@@ -10,3 +10,4 @@ device: Siemens|Prisma|166007
 
 01: T1w run-1
 02: bold rest run-1
+03: asl run-1

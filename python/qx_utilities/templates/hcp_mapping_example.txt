@@ -87,3 +87,4 @@
 # SE-FM-RL        ... Spin-echo fieldmap image recorded using the R-to-L
 #                     frequency readout direction
 # DWI             ... Diffusion weighted image 
+# ASL             ... Arterial Spin Labeling (ASL)

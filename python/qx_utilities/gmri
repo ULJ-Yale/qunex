@@ -76,7 +76,7 @@ all_qunex_commands = [
     ("qx_utilities.bash.dwi_dtifit",                                "Runs FSL's dtifit tool (cluster usable).",                                                 "bash",),
     ("qx_utilities.bash.dwi_eddy_qc",                               "Runs quality control on diffusion datasets following eddy outputs.",                       "bash"),
     ("qx_utilities.processing.fsl.dwi_f99",                         "Runs FSL F99 command.",                                                                    "python"),
-    ("qx_utilities.bash.dwi_legacy",                                "Diffusion image processing for data with or without standard fieldmaps.",                  "bash"),
+    ("qx_utilities.bash.dwi_legacy_gpu",                            "Diffusion image processing for data with or without standard fieldmaps.",                  "bash"),
     ("qx_utilities.bash.dwi_parcellate",                            "Parcellates dense tractography data.",                                                     "bash"),
     ("qx_utilities.bash.dwi_pre_tractography",                      "Generates space for dense whole-brain connectomes.",                                       "bash"),
     ("qx_utilities.bash.dwi_probtrackx_dense_gpu",                  "Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.",                     "bash"),
