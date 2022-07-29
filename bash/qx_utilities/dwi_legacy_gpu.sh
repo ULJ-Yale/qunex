@@ -66,16 +66,17 @@ Specific parameters:
         out form the operator - defaults are *usually* 2.46ms on SIEMENS.
 
 Output files:
-     - difffolder=${sessionsfolder}/${session}/Diffusion
-     - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_"$diffdatasuffix"
+    - difffolder=${sessionsfolder}/${session}/hcp/${session}/Diffusion
+    - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/T1wDiffusion_"$diffdatasuffix"
+    - diffoutfolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_"$diffdatasuffix"
 
      ::
 
-         $difffolder/$diffdatasuffix/rawdata
-         $difffolder/$diffdatasuffix/eddy
-         $difffolder/$diffdatasuffix/data
-         $difffolder/$diffdatasuffix/reg
-         $t1wdifffolder
+        $difffolder/$diffdatasuffix/rawdata
+        $difffolder/$diffdatasuffix/eddy
+        $difffolder/$diffdatasuffix/data
+        $difffolder/$diffdatasuffix/reg
+        $t1wdifffolder
 
 Examples:
     Examples using Siemens FieldMap (needs GPU-enabled node).
@@ -360,6 +361,7 @@ main() {
 
     echo "T1w folder:           $t1wfolder"
     echo "Diffusion folder:     $difffolder"
+    echo "Diffusion out folder: $difffolderout"
     echo "T1w diffusion folder: $t1wdifffolder"
     echo ""
 
