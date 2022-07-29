@@ -903,14 +903,14 @@ dwi_pre_tractography() {
     # -- Parse general parameters
     RunFolder="${SessionsFolder}/${CASE}/hcp/"
     # -- Specify command variable
-    QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh ${RunFolder} ${CASE} 0"
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh ${RunFolder} ${CASE} 0"
     # -- QuNex bash execute function
     bash_call_execute
 }
 
 show_usage_dwi_pre_tractography() {
     echo ""; echo "qunex ${usage_input}"
-    ${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh
+    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------

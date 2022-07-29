@@ -108,7 +108,7 @@ if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--
     usage
 fi
 
-scriptsdir="${HCPPIPEDIR_dMRITractFull}"/pre_tractography
+scriptsdir="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh"
 configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 
 StudyFolder=$1
