@@ -971,7 +971,7 @@ def main(args=None):
                 exit(1)
 
     # if scheduler is not None and we do not have a multi_session_command then setup parallelism
-    if scheduler is not None and sessions is not None and not multi_session_command:
+    if scheduler is not None and (sessions is not None or batchfile is not None) and not multi_session_command:
         # if parjobs is None each session is its own job
         if parjobs is None:
             parjobs = 0
