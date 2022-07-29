@@ -391,9 +391,9 @@ dwi_legacy_gpu() {
     --session=${CASE} \
     --scanner=${Scanner} \
     --usefieldmap=${UseFieldmap} \
-    --PEdir=${PEdir} \
+    --pedir=${PEdir} \
     --echospacing=${EchoSpacing} \
-    --TE=${TE} \
+    --te=${TE} \
     --unwarpdir=${UnwarpDir} \
     --diffdatasuffix=${diffdatasuffix} \
     --overwrite=${Overwrite}"
@@ -1623,6 +1623,34 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Scanner=`get_parameters "${setflag}scanner" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
 
+    # -- Input flags for dwi_bedpostx_gpu
+    Fibers=`get_parameters "${setflag}fibers" $@`
+    Weight=`get_parameters "${setflag}weight" $@`
+    Burnin=`get_parameters "${setflag}burnin" $@`
+    Jumps=`get_parameters "${setflag}jumps" $@`
+    Sample=`get_parameters "${setflag}sample" $@`
+    Model=`get_parameters "${setflag}model" $@`
+    Rician=`get_parameters "${setflag}rician" $@`
+    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
+
+    # -- Input flags for dwi_dtifit
+    bvecs=`get_parameters "${setflag}bvecs" $@`
+    bvals=`get_parameters "${setflag}bvals" $@`
+    cni=`get_parameters "${setflag}cni" $@`
+    sse=`get_flags "${setflag}sse" $@`
+    wls=`get_flags "${setflag}wls" $@`
+    kurt=`get_flags "${setflag}kurt" $@`
+    kurtdir=`get_flags "${setflag}kurtdir" $@`
+    littlebit=`get_flags "${setflag}littlebit" $@`
+    save_tensor=`get_flags "${setflag}save_tensor" $@`
+    zmin=`get_parameters "${setflag}zmin" $@`
+    zmax=`get_parameters "${setflag}zmax" $@`
+    ymin=`get_parameters "${setflag}ymin" $@`
+    ymax=`get_parameters "${setflag}ymax" $@`
+    xmin=`get_parameters "${setflag}xmin" $@`
+    xmax=`get_parameters "${setflag}xmax" $@`
+    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
+
     # -- Input flags for dwi_parcellate
     MatrixVersion=`get_parameters "${setflag}matrixversion" $@`
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
@@ -1645,34 +1673,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     GroupBar=`get_parameters "${setflag}groupvar" $@`
     OutputDir=`get_parameters "${setflag}outputdir" $@`
     Update=`get_parameters "${setflag}update" $@`
-
-    # -- Input flags for dwi_dtifit
-    bvecs=`get_parameters "${setflag}bvecs" $@`
-    bvals=`get_parameters "${setflag}bvals" $@`
-    cni=`get_parameters "${setflag}cni" $@`
-    sse=`get_flags "${setflag}sse" $@`
-    wls=`get_flags "${setflag}wls" $@`
-    kurt=`get_flags "${setflag}kurt" $@`
-    kurtdir=`get_flags "${setflag}kurtdir" $@`
-    littlebit=`get_flags "${setflag}littlebit" $@`
-    save_tensor=`get_flags "${setflag}save_tensor" $@`
-    zmin=`get_parameters "${setflag}zmin" $@`
-    zmax=`get_parameters "${setflag}zmax" $@`
-    ymin=`get_parameters "${setflag}ymin" $@`
-    ymax=`get_parameters "${setflag}ymax" $@`
-    xmin=`get_parameters "${setflag}xmin" $@`
-    xmax=`get_parameters "${setflag}xmax" $@`
-    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
-
-    # -- Input flags for dwi_bedpostx_gpu
-    Fibers=`get_parameters "${setflag}fibers" $@`
-    Weight=`get_parameters "${setflag}weight" $@`
-    Burnin=`get_parameters "${setflag}burnin" $@`
-    Jumps=`get_parameters "${setflag}jumps" $@`
-    Sample=`get_parameters "${setflag}sample" $@`
-    Model=`get_parameters "${setflag}model" $@`
-    Rician=`get_parameters "${setflag}rician" $@`
-    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
 
     # -- Input flags for dwi_probtrackx_dense_gpu
     MatrixOne=`get_parameters "${setflag}omatrix1" $@`

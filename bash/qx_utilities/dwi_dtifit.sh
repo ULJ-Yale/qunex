@@ -220,16 +220,14 @@ get_options() {
     # -- Set paths
     if [[ ${species} == "macaque" ]]; then
         diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
-        in_file="data"
     else
         if [[ -z $diffdatasuffix ]]; then
             diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
-            in_file="data"
         else
             diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_${diffdatasuffix}
-            in_file="${session}_${diffdatasuffix}_data"
         fi
     fi
+    in_file="data"
     out_file=${diffusion_folder}/dti_FA.nii.gz
 
     # mask

@@ -58,22 +58,29 @@ preprocessing and completed diffusion processing. DWI data is expected to
 be in the following folder::
 
     <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+    
+    or
+
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion_<diffdatasuffix>
 
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
     --sessions (str):
         Comma separated list of sessions to run.
+    --diffdatasuffix (str):
+        Name of the DWI image; e.g. if the data is called
+        <sessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --fibers (str, default '3'):
         Number of fibres per voxel.
     --weight (str, default '1'):
         ARD weight, more weight means less secondary fibres per voxel.
     --burnin (str, default '1000'):
-        Burnin period.
+        burnin period.
     --jumps (str, default '1250'):
         Number of jumps.
     --sample (str, default '25'):
-        Sample every.
+        sample every.
     --model (str, default '2'):
         Deconvolution model:
 
@@ -82,7 +89,7 @@ Parameters:
         - '3' ... with zeppelins.
 
     --rician (str, default 'yes'):
-        Replace the default Gaussian noise assumption with Rician noise
+        Replace the default Gaussian noise assumption with rician noise
         ('yes'/'no').
     --gradnonlin (str, default detailed below):
         Consider gradient nonlinearities ('yes'/'no'). By default set
@@ -172,222 +179,227 @@ fi
 ########################################## OUTPUTS #########################################
 
 # -- Outputs will be *pconn.nii files located here:
-#       DWIOutput="$SessionsFolder/$CASE/hcp/$CASE/T1w/Diffusion/"
+#       DWIOutput="$sessionsfolder/$session/hcp/$session/T1w/Diffusion/"
 
 # ------------------------------------------------------------------------------
 # -- Check for options
 # ------------------------------------------------------------------------------
 
-opts_GetOpt() {
-sopt="$1"
-shift 1
-for fn in "$@" ; do
-    if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-        echo $fn | sed "s/^${sopt}=//"
-        return 0
-    fi
-done
+opts_getopt() {
+    sopt="$1"
+    shift 1
+    for fn in "$@" ; do
+        if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+            echo $fn | sed "s/^${sopt}=//"
+            return 0
+        fi
+    done
 }
 
 # -- Get the command line options for this script
 get_options() {
-local scriptName=$(basename ${0})
-local arguments=($@)
-# -- Initialize global output variables
-unset SessionsFolder
-unset Session
-runcmd=""
+    local script_name=$(basename ${0})
+    local arguments=($@)
+    # -- Initialize global output variables
+    unset sessionsfolder
+    unset session
+    runcmd=""
 
-# -- Parse arguments
-Fibers=`opts_GetOpt "--fibers" $@`
-Weight=`opts_GetOpt "--weight" $@`
-Burnin=`opts_GetOpt "--burnin" $@`
-Jumps=`opts_GetOpt "--jumps" $@`
-Sample=`opts_GetOpt "--sample" $@`
-Model=`opts_GetOpt "--model" $@`
-Rician=`opts_GetOpt "--rician" $@`
-Gradnonlin=`opts_GetOpt "--gradnonlin" $@`
-Overwrite=`opts_GetOpt "--overwrite" $@`
-Species=`opts_GetOpt "--species" $@`
-CASE=`opts_GetOpt "--session" $@`
-SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
+    # -- Parse arguments
+    fibers=`opts_getopt "--fibers" $@`
+    weight=`opts_getopt "--weight" $@`
+    burnin=`opts_getopt "--burnin" $@`
+    jumps=`opts_getopt "--jumps" $@`
+    sample=`opts_getopt "--sample" $@`
+    model=`opts_getopt "--model" $@`
+    rician=`opts_getopt "--rician" $@`
+    gradnonlin=`opts_getopt "--gradnonlin" $@`
+    overwrite=`opts_getopt "--overwrite" $@`
+    species=`opts_getopt "--species" $@`
+    session=`opts_getopt "--session" $@`
+    sessionsfolder=`opts_getopt "--sessionsfolder" $@`
+    diffdatasuffix=`opts_getopt "--diffdatasuffix" $@`
 
-# -- Check required parameters
-if [ -z "$SessionsFolder" ]; then reho "Error: Sessions folder"; exit 1; fi
-if [ -z "$CASE" ]; then reho "Error: Session missing"; exit 1; fi
+    # -- Check required parameters
+    if [ -z "$sessionsfolder" ]; then reho "Error: sessions folder"; exit 1; fi
+    if [ -z "$session" ]; then reho "Error: session missing"; exit 1; fi
 
-# -- Set defaults if not provided
-if [ -z "$Fibers" ]; then geho "Note: The fibers parameter is not set, using default [3]"; Fibers=3; fi
-if [ -z "$Weight" ]; then geho "Note: The weight parameter is not set, using default [1]"; Weight=1; fi
-if [ -z "$Burnin" ]; then geho "Note: The burnin parameter is not set, using default [1000]"; Burnin=1000; fi
-if [ -z "$Jumps" ]; then geho "Note: The jumps parameter is not set, using default [1250]"; Jumps=1250; fi
-if [ -z "$Sample" ]; then geho "Note: The sample parameter is not set, using default [25]"; Sample=25; fi
-if [ -z "$Model" ]; then geho "Note: The model parameter is not set, using default [2]"; Model=2; fi
-if [ -z "$Rician" ]; then geho "Note: The Rician parameter is not set, using default [yes]"; Rician="yes"; fi
+    # -- Set defaults if not provided
+    if [ -z "$fibers" ]; then geho "Note: The fibers parameter is not set, using default [3]"; fibers=3; fi
+    if [ -z "$weight" ]; then geho "Note: The weight parameter is not set, using default [1]"; weight=1; fi
+    if [ -z "$burnin" ]; then geho "Note: The burnin parameter is not set, using default [1000]"; burnin=1000; fi
+    if [ -z "$jumps" ]; then geho "Note: The jumps parameter is not set, using default [1250]"; jumps=1250; fi
+    if [ -z "$sample" ]; then geho "Note: The sample parameter is not set, using default [25]"; sample=25; fi
+    if [ -z "$model" ]; then geho "Note: The model parameter is not set, using default [2]"; model=2; fi
+    if [ -z "$rician" ]; then geho "Note: The rician parameter is not set, using default [yes]"; rician="yes"; fi
 
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
+    # -- Set StudyFolder
+    cd $sessionsfolder/../ &> /dev/null
+    StudyFolder=`pwd` &> /dev/null
 
-# -- Report run parameters
-echo ""
-echo " --> Executing ${scriptName} dwi_bedpostx_gpu:"
-echo "     Study Folder: ${StudyFolder}"
-echo "     Sessions Folder: ${SessionsFolder}"
-echo "     Session: ${CASE}"
-echo "     Number of Fibers: ${Fibers}"
-echo "     ARD weights: ${Weight}"
-echo "     Burnin Period: ${Burnin}"
-echo "     Number of jumps: ${Jumps}"
-echo "     Sample every: ${Sample}"
-echo "     Model Type: ${Model}"
-echo "     Rician flag: ${Rician}"
-echo "     Overwrite prior run: ${Overwrite}"
+    # -- Report run parameters
+    echo ""
+    echo " --> Executing ${script_name} dwi_bedpostx_gpu:"
+    echo "     Study folder: ${StudyFolder}"
+    echo "     Sessions Folder: ${sessionsfolder}"
+    echo "     Session: ${session}"
+    echo "     Number of fibers: ${fibers}"
+    echo "     ARD weights: ${weight}"
+    echo "     Burnin period: ${burnin}"
+    echo "     Number of jumps: ${jumps}"
+    echo "     Sample every: ${sample}"
+    echo "     Model type: ${model}"
+    echo "     Rician flag: ${rician}"
+    echo "     Diffusion data sufix: ${diffdatasuffix}"
+    echo "     Overwrite prior run: ${overwrite}"
 
-# Report species if not default
-if [[ -n ${Species} ]]; then
-    echo "   Species: ${Species}"
-fi
-
+    # Report species if not default
+    if [[ -n ${species} ]]; then
+        echo "     Species: ${species}"
+    fi
 }
 
 ######################################### DO WORK ##########################################
 
 main() {
 
-geho "------------------------- Start of work --------------------------------"
+    geho "------------------------- Start of work --------------------------------"
 
-# -- Get Command Line Options
-get_options $@
+    # -- Get Command Line Options
+    get_options $@
 
-# -- Establish global directory paths
-if [[ ${Species} == "macaque" ]]; then
-    DiffusionFolder=${SessionsFolder}/${CASE}/NHP/dMRI
-    BedPostXFolder=${SessionsFolder}/${CASE}/NHP/dMRI.bedpostX
-else
-    DiffusionFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
-    BedPostXFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
-fi
-
-LogFolder="$BedPostXFolder"/logs
-
-# -- Check if overwrite flag was set
-Overwrite="$Overwrite"
-if [ "$Overwrite" == "yes" ]; then
-    echo ""
-    reho "--> Removing existing bedpostx run for $CASE..."
-    rm -rf "$BedPostXFolder" > /dev/null 2>&1
-fi
-echo ""
-geho "--> Checking if bedpostx was completed on $CASE..."
-# Set file depending on model specification
-if [ "$Model" == 2 ]; then
-    CheckFile="mean_d_stdsamples.nii.gz"
-fi
-if [ "$Model" == 3 ]; then
-    CheckFile="mean_Rsamples.nii.gz"
-fi
-
-checkCompletion() {
-# -- Check if the file exists
-if [ -f ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
-    # -- Set file sizes to check for completion
-    minimumfilesize=20000000
-    actualfilesize=`wc -c < ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
-    filecount=`ls ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
-fi
-
-# -- Then check if run is complete based on file count
-if [ "$filecount" == 9 ]; then > /dev/null 2>&1
-    echo ""
-    cyaneho " --> $filecount merged samples for $CASE found."
-    # -- Then check if run is complete based on file size
-    if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-        echo ""
-        cyaneho "--> bedpostx outputs found and completed for $CASE"
-        cyaneho "    Check prior output logs here: $LogFolder"
-        echo ""
-        echo "-----------------------------------------------------"
-        RunCompleted="yes"
+    # -- Establish global directory paths
+    if [[ ${species} == "macaque" ]]; then
+        diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
+        bedpostx_folder=${sessionsfolder}/${session}/NHP/dMRI.bedpostX
     else
-        echo ""
-        reho "--> bedpostx outputs missing or incomplete for $CASE"
-        echo ""
-        reho "----------------------------------------------------"
-        RunCompleted="no"
+        if [[ -z $diffdatasuffix ]]; then
+            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
+            bedpostx_folder=${diffusion_folder}.bedpostX
+        else
+            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_${diffdatasuffix}
+            bedpostx_folder=${diffusion_folder}.bedpostX
+        fi
+
     fi
-fi
-}
 
-checkCompletion
-if [[ ${RunCompleted} == "yes" ]]; then
-   exit 0
-else
-   echo ""
-   reho "--> Prior bedpostx run not found or incomplete for $CASE. Setting up new run..."
-fi
-
-echo ""
-geho "--> Generating log folder"
-mkdir ${BedPostXFolder} > /dev/null 2>&1
-
-# -- Set rician flag
-if [ "$Rician" == "no" ] || [ "$Rician" == "NO" ]; then
-    RicianFlag=""
-else
-    RicianFlag="--rician"
-fi
-
-# -- Gradnon lin
-# -- Set automatically by default 
-if [ -z "$Gradnonlin" ]; then
-    if [ -f "$DiffusionFolder"/grad_dev.nii.gz ]; then
+    # -- Check if overwrite flag was set
+    overwrite="$overwrite"
+    if [ "$overwrite" == "yes" ]; then
         echo ""
-        geho "--> Using gradient nonlinearities flag -g"
-        echo ""
-        GradientNonlinearitiesFlag="-g"
-    else
-        echo ""
-        geho "--> Not using gradient nonlinearities flag -g"
-        echo ""
-        GradientNonlinearitiesFlag=""
+        reho "--> Removing existing bedpostx run for $session..."
+        rm -rf "$bedpostx_folder" > /dev/null 2>&1
     fi
-else
-    if [ "$Gradnonlin" == "no" ] || [ "$Gradnonlin" == "NO" ]; then
-        GradientNonlinearitiesFlag=""
-    else
-        GradientNonlinearitiesFlag="-g"
+    echo ""
+    geho "--> Checking if bedpostx was completed on $session..."
+    # Set file depending on model specification
+    if [ "$model" == 2 ]; then
+        check_file="mean_d_stdsamples.nii.gz"
     fi
-fi
+    if [ "$model" == 3 ]; then
+        check_file="mean_Rsamples.nii.gz"
+    fi
 
-# -- Report
-geho "--> Running FSL command:"
-echo "    ${FSLGPUScripts}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model} ${GradientNonlinearitiesFlag} ${RicianFlag}"
+    checkCompletion() {
+    # -- Check if the file exists
+    if [ -f "${bedpostx_folder}/${check_file}" ]; then
+        # -- Set file sizes to check for completion
+        minimumfilesize=20000000
+        actualfilesize=`wc -c < ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
+        filecount=`ls ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+    fi
 
-# -- Execute
-${FSLGPUScripts}/bedpostx_gpu_noscheduler ${DiffusionFolder}/. -n ${Fibers} -w ${Weight} -b ${Burnin} -j ${Jumps} -s ${Sample} -model ${Model} ${GradientNonlinearitiesFlag} ${RicianFlag}
+    # -- Then check if run is complete based on file count
+    if [ "$filecount" == 9 ]; then > /dev/null 2>&1
+        echo ""
+        cyaneho " --> $filecount merged samples for $session found."
+        # -- Then check if run is complete based on file size
+        if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+            echo ""
+            cyaneho "--> bedpostx outputs found and completed for $session"
+            cyaneho "    Check prior output logs here: $bedpostx_folder/logs"
+            echo ""
+            echo "-----------------------------------------------------"
+            RunCompleted="yes"
+        else
+            echo ""
+            reho "--> bedpostx outputs missing or incomplete for $session"
+            echo ""
+            reho "----------------------------------------------------"
+            RunCompleted="no"
+        fi
+    fi
+    }
 
-# -- Perform completion checks
-echo ""
-reho "--> Checking outputs..."
-checkCompletion
-if [[ ${RunCompleted} == "yes" ]]; then
-    echo ""
-    geho "--> bedpostx completed: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
-    reho "--> bedpostx successfully completed"
-    echo ""
-    geho "------------------------- Successful completion of work --------------------------------"
-    echo ""
+    checkCompletion
+    if [[ ${RunCompleted} == "yes" ]]; then
     exit 0
-else
+    else
     echo ""
-    reho "--> bedpostx run not found or incomplete for $CASE. Something went wrong." 
-    reho "    Check output: ${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+    reho "--> Prior bedpostx run not found or incomplete for $session. Setting up new run..."
+    fi
+
     echo ""
-    reho "ERROR: bedpostx run did not complete successfully"
+    geho "--> Generating log folder"
+    mkdir ${bedpostx_folder} > /dev/null 2>&1
+
+    # -- Set rician flag
+    if [ "$rician" == "no" ] || [ "$rician" == "NO" ]; then
+        rician_flag=""
+    else
+        rician_flag=" --rician"
+    fi
+
+    # -- Gradnon lin
+    # -- Set automatically by default 
+    if [ -z "$gradnonlin" ]; then
+        if [ -f "$diffusion_folder"/grad_dev.nii.gz ]; then
+            echo ""
+            geho "--> Using gradient nonlinearities flag -g"
+            echo ""
+            gradnonlin_flag=" -g"
+        else
+            echo ""
+            geho "--> Not using gradient nonlinearities flag -g"
+            echo ""
+            gradnonlin_flag=""
+        fi
+    else
+        if [ "$gradnonlin" == "no" ] || [ "$gradnonlin" == "NO" ]; then
+            gradnonlin_flag=""
+        else
+            gradnonlin_flag=" -g"
+        fi
+    fi
+
+    # -- Report
+    geho "--> Running FSL command:"
+    echo "    ${FSL_GPU_SCRIPTS}/bedpostx_gpu_noscheduler ${diffusion_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}"
+
+    # -- Execute
+    ${FSL_GPU_SCRIPTS}/bedpostx_gpu_noscheduler ${diffusion_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
+
+    # -- Perform completion checks
     echo ""
-    exit 1
-fi
+    reho "--> Checking outputs..."
+    checkCompletion
+    if [[ ${RunCompleted} == "yes" ]]; then
+        echo ""
+        geho "--> bedpostx completed: ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/"
+        reho "--> bedpostx successfully completed"
+        echo ""
+        geho "------------------------- Successful completion of work --------------------------------"
+        echo ""
+        exit 0
+    else
+        echo ""
+        reho "--> bedpostx run not found or incomplete for $session. Something went wrong." 
+        reho "    Check output: ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/"
+        echo ""
+        reho "ERROR: bedpostx run did not complete successfully"
+        echo ""
+        exit 1
+    fi
 }
 
 # ---------------------------------------------------------

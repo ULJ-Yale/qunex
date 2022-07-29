@@ -56,7 +56,7 @@ Parameters:
         then the parameter --te becomes mandatory.
     --diffdatasuffix (str):
         Name of the DWI image; e.g. if the data is called
-        <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
+        <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --overwrite (str):
         Delete prior run for a given session ('yes' | 'no').
 
@@ -66,8 +66,8 @@ Specific parameters:
         out form the operator - defaults are *usually* 2.46ms on SIEMENS.
 
 Output files:
-     - difffolder=${sessionsfolder}/${Session}/Diffusion
-     - t1wdifffolder=${sessionsfolder}/${Session}/hcp/${Session}/T1w/Diffusion_"$diffdatasuffix"
+     - difffolder=${sessionsfolder}/${session}/Diffusion
+     - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_"$diffdatasuffix"
 
      ::
 
@@ -187,54 +187,21 @@ if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--
     usage
 fi
 
-########################################## INPUTS ########################################## 
-
-# DWI Data and T1w data needed in HCP-style format to perform legacy DWI preprocessing
-# The data should be in $difffolder="$sessionsfolder"/"$session"/hcp/"$session"/T1w/Diffusion
-# Also assumes that hcp_pre_freesurfer T1 preprocessing has been carried out with results in "$sessionsfolder"/"$session"/hcp/"$session"/T1w
-# Mandatory input parameters:
-
-    # sessionsfolder
-    # Session
-    # Scanner
-    # usefieldmap
-    
-# -- Optional input parameters:
-    
-    # pedir
-    # echospacing
-    # te
-    # unwarpdir
-    # diffdatasuffix
-    # Overwrite
-
-########################################## OUTPUTS #########################################
-
-# difffolder=${sessionsfolder}/${Session}/Diffusion
-# t1wdifffolder=${sessionsfolder}/${Session}/T1w/Diffusion_"$diffdatasuffix"
-#
-#    $difffolder/$diffdatasuffix/rawdata
-#    $difffolder/$diffdatasuffix/eddy
-#    $difffolder/$diffdatasuffix/data
-#    $difffolder/$diffdatasuffix/reg
-#    $t1wdifffolder
-
 # -- Get the command line options for this script
-
 get_options() {
     local script_name=$(basename ${0})
     local arguments=($@)
     
     # -- initialize global output variables
     unset sessionsfolder
-    unset Session
+    unset session
     unset pedir
     unset echospacing
     unset te
     unset unwarpdir
     unset diffdatasuffix
-    unset Overwrite
-    unset Scanner
+    unset overwrite
+    unset scanner
     unset usefieldmap
     runcmd=""
     # -- parse arguments
@@ -282,11 +249,11 @@ get_options() {
                 index=$(( index + 1 ))
                 ;;
             --overwrite=*)
-                Overwrite=${argument/*=/""}
+                overwrite=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
              --scanner=*)
-                Scanner=${argument/*=/""}
+                scanner=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;    
             --usefieldmap=*)
@@ -308,7 +275,7 @@ get_options() {
         echo "ERROR: <session-id> not specified"
         exit 1
     fi
-    if [ -z ${Scanner} ]; then
+    if [ -z ${scanner} ]; then
         echo "Note: <scanner> specification not set"
         exit 1
     fi
@@ -342,20 +309,20 @@ get_options() {
     echo ""
     echo ""
     echo "-- ${script_name}: Specified Command-Line Options - Start --"
-    echo "   sessionsfolder: ${sessionsfolder}"
+    echo "   Sessionsfolder: ${sessionsfolder}"
     echo "   Session: ${session}"
-    echo "   Scanner: ${Scanner}"
+    echo "   Scanner: ${scanner}"
     if [ ${usefieldmap} == "yes" ]; then
-        echo "   Using Fieldmap: ${usefieldmap}"
-        echo "   pedir: ${pedir}"
-        echo "   echospacing: ${echospacing}"
-        echo "   te: ${te}"
-        echo "   unwarpdir: ${unwarpdir}"
+        echo "   Using fieldmap: ${usefieldmap}"
+        echo "   PEdir: ${pedir}"
+        echo "   Echospacing: ${echospacing}"
+        echo "   TE: ${te}"
+        echo "   Unwarpdir: ${unwarpdir}"
     else
-        echo "   Using Fieldmap: ${usefieldmap}"
+        echo "   Using fieldmap: ${usefieldmap}"
     fi
-    echo "   diffdata: ${session}_${diffdatasuffix}.nii.gz"
-    echo "   Overwrite: ${Overwrite}"
+    echo "   Diffusion data sufix: ${diffdatasuffix}"
+    echo "   Overwrite: ${overwrite}"
     echo "-- ${script_name}: Specified Command-Line Options - End --"
     echo ""
     geho "------------------------- Start of work --------------------------------"
@@ -377,7 +344,7 @@ main() {
     pedir="$pedir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
     te="$te" #delta te in ms for field map or "NONE" if not used
     unwarpdir="$unwarpdir" # direction along which to unwarp
-    diffdata="$session"_"$diffdatasuffix" # Diffusion data suffix name - e.g. if the data is called <SessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+    diffdata="$session"_"$diffdatasuffix" # Diffusion data suffix name - e.g. if the data is called <sessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
     dwelltime="$echospacing" #same variable as echospacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
     dwelltimesec=`echo "scale=6; $dwelltime/1000" | bc` # set the dwell time to seconds
 
@@ -397,7 +364,7 @@ main() {
     echo ""
 
     # -- Delete any existing output sub-directories        
-    if [ "$Overwrite" == "yes" ]; then
+    if [ "$overwrite" == "yes" ]; then
         reho "--- Deleting prior runs for $diffdata..."
         echo ""
         rm -rf "$difffolder"/"$diffdatasuffix"/rawdata/"$diffdata"* > /dev/null 2>&1
@@ -627,35 +594,35 @@ main() {
     echo ""
     flirt -in "$t1wimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
     flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/"$session"_T1w_brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
-    flirt -in "$t1wimageMask" -ref "$t1wimage" -applyisoxfm "$diffres" -interp nearestneighbour -out "$t1wdifffolder"/"$session"_T1w_brain_mask_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
+    flirt -in "$t1wimageMask" -ref "$t1wimage" -applyisoxfm "$diffres" -interp nearestneighbour -out "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -v
     flirt -in "$wmsegimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/"$session"_T1w_wmsegimage_"$diffdatasuffix"_"$diffresext" -v    
-    fslmaths "$t1wdifffolder"/"$session"_T1w_brain_mask_downsampled2diff_"$diffdatasuffix"_"$diffresext" -fillh "$t1wdifffolder"/"$session"_T1w_brain_mask_downsampled2diff_"$diffdatasuffix"_"$diffresext"
+    fslmaths "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -fillh "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"
     echo ""
 
     # -- Registers the DWI data to T1w space
     if [ ${usefieldmap} == "yes" ]; then
         geho "Applying the warp for $diffdata to T1w space with fieldmap specification..."; echo ""
-        applywarp -i "$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" -o "$difffolderout"/"$diffdata"_data -w "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
+        applywarp -i "$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" -o "$difffolderout"/data -w "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
     else
         geho "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
-        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/"$session"_T1w_brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$difffolderout"/"$diffdata"_data --wmseg="$t1wdifffolder"/"$session"_T1w_wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
+        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/"$session"_T1w_brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$difffolderout"/data --wmseg="$t1wdifffolder"/"$session"_T1w_wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     fi
     echo ""
 
     # -- Alan edited on 1/16/17 due to poor BET performance
     geho "Getting the first volume of the registered DWI image..."
     echo ""
-    fslroi "$difffolderout"/"$diffdata"_data "$difffolderout"/"$diffdata"_data_1stframe 0 1
+    fslroi "$difffolderout"/data "$difffolderout"/data_1stframe 0 1
     geho "Running BET for final DWI data: $difffolderout/$diffdata_data"
     echo ""
-    bet "$difffolderout"/"$diffdata"_data_1stframe "$difffolderout"/"$diffdata"_data_1stframe -m -f 0.35 -v
+    bet "$difffolderout"/data_1stframe "$difffolderout"/data_1stframe -m -f 0.35 -v
 
     echo ""
     geho "Running fslmaths to brain-mask $diffdata using the down-sampled $t1wimageMask..."
-    fslmaths "$t1wdifffolder"/"$session"_T1w_brain_mask_downsampled2diff_"$diffdatasuffix"_"$diffresext" -mul "$difffolderout"/"$diffdata"_data_1stframe_mask "$difffolderout"/"$session"_T1w_brain_mask_downsampled2diff_"$diffdatasuffix"_"$diffresext"_masked_with_DWI1stframe
-    fslmaths "$difffolderout"/"$diffdata"_data.nii.gz -mul "$t1wdifffolder"/"$session"_T1w_brain_mask_downsampled2diff_"$diffdatasuffix"_"$diffresext" "$difffolderout"/"$diffdata"_data_brain_masked_with_T1.nii.gz 
-    fslmaths "$difffolderout"/"$diffdata"_data.nii.gz -mul "$difffolderout"/"$diffdata"_data_1stframe_mask "$difffolderout"/"$diffdata"_data_brain_masked_with_DWI.nii.gz 
-    fslmaths "$difffolderout"/"$diffdata"_data.nii.gz -mul "$difffolderout"/"$session"_T1w_brain_mask_downsampled2diff_"$diffdatasuffix"_"$diffresext"_masked_with_DWI1stframe "$difffolderout"/"$diffdata"_data_brain_masked_with_T1orDWI.nii.gz 
+    fslmaths "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -mul "$difffolderout"/data_1stframe_mask "$difffolderout"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"_masked_with_DWI1stframe
+    fslmaths "$difffolderout"/data.nii.gz -mul "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" "$difffolderout"/data_brain_masked_with_T1.nii.gz 
+    fslmaths "$difffolderout"/data.nii.gz -mul "$difffolderout"/data_1stframe_mask "$difffolderout"/data_brain_masked_with_DWI.nii.gz 
+    fslmaths "$difffolderout"/data.nii.gz -mul "$difffolderout"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"_masked_with_DWI1stframe "$difffolderout"/data_brain_masked_with_T1orDWI.nii.gz 
 
     echo ""
     # -- Aligns the BVECS and BVALS using HCP 
@@ -678,8 +645,8 @@ main() {
         echo ""
         run_error="yes"
     fi
-    if [ -f "$difffolderout"/"$diffdata"_data.nii.gz ]; then
-        OutFile="$difffolderout"/"$diffdata"_data.nii.gz
+    if [ -f "$difffolderout"/data.nii.gz ]; then
+        OutFile="$difffolderout"/data.nii.gz
         geho "DWI final processed data:     $OutFile"
         echo ""
     else
@@ -687,8 +654,8 @@ main() {
         echo ""
         run_error="yes"
     fi
-    if [ -f  "$difffolderout"/"$diffdata"_data_brain_masked_with_T1orDWI.nii.gz ]; then
-        OutFile="$difffolderout"/"$diffdata"_data_brain_masked_with_T1orDWI.nii.gz 
+    if [ -f  "$difffolderout"/data_brain_masked_with_T1orDWI.nii.gz ]; then
+        OutFile="$difffolderout"/data_brain_masked_with_T1orDWI.nii.gz 
         geho "DWI brain-masked data:        $OutFile"
         echo ""
     else
@@ -714,9 +681,9 @@ main() {
         echo ""
         run_error="yes"
     fi
-    if [ -f  "$difffolderout"/nodif_brain_mask ]; then
-        OutFile="$difffolderout"/nodif_brain_mask
-        geho "nodif_brain_mask:             $OutFile"
+    if [ -f  "$difffolderout"/nodif_brain_mask.nii.gz ]; then
+        OutFile="$difffolderout"/nodif_brain_mask.nii.gz
+        geho "nodif_brain_mask:              $OutFile"
         echo ""
     else
         reho "nodif_brain_mask in $difffolderout missing. Something went wrong."
@@ -728,7 +695,7 @@ main() {
         echo ""
         geho "--- DWI preprocessing successfully completed"
         echo ""
-        geho "------------------------- Successful completion of work --------------------------------"
+        geho "------------------------- Successful completion of work -------------------------"
         echo ""
     else
         echo ""
