@@ -625,7 +625,7 @@ main() {
     # -- Aligns the BVECS and BVALS using HCP 
     geho "--- Aligning BVECS to T1 space using HCP code"
     echo ""
-    $HCPPIPEDIR_GLOBAL/Rotate_bvecs.sh "$difffolder"/"$diffdata".bvec "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1.mat "$t1wdifffolder"/bvecs
+    $HCPPIPEDIR_Global/Rotate_bvecs.sh "$difffolder"/"$diffdata".bvec "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1.mat "$t1wdifffolder"/bvecs
     cp "$difffolder"/"$diffdata".bval "$t1wdifffolder"/bvals
     echo ""
 
