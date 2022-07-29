@@ -589,20 +589,20 @@ main() {
     diffresext=`echo $diffres | cut -c1-3`
     geho "Downsampling the $t1wimage, $t1wbrainimage and $t1wimageMask to $diffdata resolution: $diffresext mm ..."
     echo ""
-    flirt -in "$t1wimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
-    flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/"$session"_T1w_brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
+    flirt -in "$t1wimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
+    flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
     flirt -in "$t1wimageMask" -ref "$t1wimage" -applyisoxfm "$diffres" -interp nearestneighbour -out "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -v
-    flirt -in "$wmsegimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/"$session"_T1w_wmsegimage_"$diffdatasuffix"_"$diffresext" -v    
+    flirt -in "$wmsegimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/wmsegimage_"$diffdatasuffix"_"$diffresext" -v    
     fslmaths "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -fillh "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"
     echo ""
 
     # -- Registers the DWI data to T1w space
     if [ ${usefieldmap} == "yes" ]; then
         geho "Applying the warp for $diffdata to T1w space with fieldmap specification..."; echo ""
-        applywarp -i "$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
+        applywarp -i "$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
     else
         geho "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
-        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/"$session"_T1w_brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/"$session"_T1w_wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
+        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/ownsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     fi
     echo ""
 
@@ -633,8 +633,8 @@ main() {
     unset run_error
     geho "--- Checking outputs..."
     echo ""
-    if [ -f "$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz ]; then
-        OutFile="$t1wdifffolder"/"$session"_T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz
+    if [ -f "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz ]; then
+        OutFile="$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz
         geho "T1w data in DWI resolution:   $OutFile"
         echo ""
     else
