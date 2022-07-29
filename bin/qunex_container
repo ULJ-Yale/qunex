@@ -445,6 +445,8 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
     - a path to a *.list file (identified by .list extension).
     '''
 
+    sessionids = None
+
     # session have a higher priority
     if sessions is not None:
         if re.match(".*\.list$", sessions):
@@ -455,7 +457,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
         else:
             sessionids = [e.strip() for e in re.split(' +|,|\|', sessions)]
     # batchfile
-    else:
+    elif batchfile is not None:
         if os.path.isfile(batchfile):
             sessionids = get_sessionids_from_batch(batchfile, batchfilter)
         else:
@@ -897,7 +899,8 @@ def main(args=None):
 
     # get sessionsids
     g_sessionids = get_sessionids(batchfile, sessions, batchfilter)
-    n_sessions = len(g_sessionids)
+    if g_sessionids:
+        n_sessions = len(g_sessionids)
 
     # array for storing session ids
     sessionids_array = []
