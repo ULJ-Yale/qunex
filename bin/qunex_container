@@ -902,8 +902,6 @@ def main(args=None):
 
     # get sessionsids
     g_sessionids = get_sessionids(batchfile, sessions, batchfilter)
-    print(f"g_sessionids: {g_sessionids}")
-    exit(0)
     if g_sessionids:
         n_sessions = len(g_sessionids)
 
