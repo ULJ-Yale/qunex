@@ -31,6 +31,7 @@ All rights reserved.
 
 # general imports
 import os
+import re
 import shutil
 
 # qx imports
