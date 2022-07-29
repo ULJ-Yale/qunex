@@ -215,7 +215,7 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
     r += f'\n---> mapping the bold image to session\'s mice pipelines (mice) folder\n'
 
     # overwrite and file exists
-    if (not overwrite and os.file.exists(target_bold)):
+    if (not overwrite and os.path.exists(target_bold)):
         r += f' ... overwrite is disable and target bold [{target_bold}] already exists, skipping this bold.\n'
         report['done'].append(boldname)
     else:

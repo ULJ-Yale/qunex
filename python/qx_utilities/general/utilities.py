@@ -2789,9 +2789,9 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
 
     # loop over them
     for pipeline in pipelines:
-        if pipeline != "hcp":
+        if pipeline not in ["hcp", "mice"]:
             raise ge.CommandFailed(
-                "create_session_info", "invlida pipeline type", "Only hcp mapping is currently supported")
+                "create_session_info", "Invalid pipeline type!", "Only hcp and mice mapping are currently supported")
 
         if sessions is None:
             sessions = "*"

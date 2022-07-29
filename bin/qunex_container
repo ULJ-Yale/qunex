@@ -420,11 +420,14 @@ def get_sessionids_from_batch(filename, batchfilter=None):
                     session = line[1]
 
                 # should I filter
-                if line[0] in filters_dict:
+                if filters_dict and line[0] in filters_dict:
                     active_filter = filters_dict[line[0]].split(',')
                     if line[1] in active_filter or re.match(filters_dict[line[0]], line[1]):
                         sessionids.append(session)
                         break
+                else:
+                    sessionids.append(session)
+                    break
 
     return sessionids
 
@@ -899,6 +902,8 @@ def main(args=None):
 
     # get sessionsids
     g_sessionids = get_sessionids(batchfile, sessions, batchfilter)
+    print(f"g_sessionids: {g_sessionids}")
+    exit(0)
     if g_sessionids:
         n_sessions = len(g_sessionids)
 
