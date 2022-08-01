@@ -420,11 +420,14 @@ def get_sessionids_from_batch(filename, batchfilter=None):
                     session = line[1]
 
                 # should I filter
-                if line[0] in filters_dict:
+                if filters_dict and line[0] in filters_dict:
                     active_filter = filters_dict[line[0]].split(',')
                     if line[1] in active_filter or re.match(filters_dict[line[0]], line[1]):
                         sessionids.append(session)
                         break
+                else:
+                    sessionids.append(session)
+                    break
 
     return sessionids
 
@@ -445,6 +448,8 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
     - a path to a *.list file (identified by .list extension).
     '''
 
+    sessionids = None
+
     # session have a higher priority
     if sessions is not None:
         if re.match(".*\.list$", sessions):
@@ -455,7 +460,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
         else:
             sessionids = [e.strip() for e in re.split(' +|,|\|', sessions)]
     # batchfile
-    else:
+    elif batchfile is not None:
         if os.path.isfile(batchfile):
             sessionids = get_sessionids_from_batch(batchfile, batchfilter)
         else:
@@ -897,7 +902,8 @@ def main(args=None):
 
     # get sessionsids
     g_sessionids = get_sessionids(batchfile, sessions, batchfilter)
-    n_sessions = len(g_sessionids)
+    if g_sessionids:
+        n_sessions = len(g_sessionids)
 
     # array for storing session ids
     sessionids_array = []
@@ -965,7 +971,7 @@ def main(args=None):
                 exit(1)
 
     # if scheduler is not None and we do not have a multi_session_command then setup parallelism
-    if scheduler is not None and sessions is not None and not multi_session_command:
+    if scheduler is not None and (sessions is not None or batchfile is not None) and not multi_session_command:
         # if parjobs is None each session is its own job
         if parjobs is None:
             parjobs = 0

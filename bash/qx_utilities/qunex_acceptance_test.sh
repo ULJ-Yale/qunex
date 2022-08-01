@@ -715,7 +715,7 @@ echo ""
             #    UnitTests="hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd dwi_dtifit dwi_bedpostx_gpu preprocess_bold compute_bold_fc_seed compute_bold_fc_gbc" 
             #
             # -- Needs to be added:
-            #    UnitTests="hcpd dwi_legacy eddy_qc dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc"
+            #    UnitTests="hcpd dwi_legacy_gpu eddy_qc dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc"
             #
             # -- FILES FOR EACH UNIT
             #

@@ -65,7 +65,7 @@ QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 # source $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/env/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom run_qc_rawnii create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcp_diffusion run_qc_dwi dwi_legacy run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_dtifit run_qc_dwi_dtifit dwi_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_probtrackx_dense_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries parcellate_bold parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
+QuNexTurnkeyWorkflow="create_study map_raw_data import_dicom run_qc_rawnii create_session_info setup_hcp create_batch export_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer run_qc_t1w run_qc_t2w run_qc_myelin hcp_fmri_volume hcp_fmri_surface run_qc_bold hcp_diffusion run_qc_dwi dwi_legacy_gpu run_qc_dwi_legacy dwi_eddy_qc run_qc_dwi_eddy dwi_dtifit run_qc_dwi_dtifit dwi_bedpostx_gpu run_qc_dwi_process run_qc_dwi_bedpostx dwi_probtrackx_dense_gpu dwi_pre_tractography dwi_parcellate dwi_seed_tractography_dense run_qc_custom map_hcp_data create_bold_brain_masks compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc general_plot_bold_timeseries parcellate_bold parcellate_bold compute_bold_fc_seed compute_bold_fc_gbc run_qc_bold_fc"
 
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 
@@ -314,7 +314,7 @@ Notes:
         * run_qc_bold
         * hcp_diffusion
         * run_qc_dwi
-        * dwi_legacy
+        * dwi_legacy_gpu
         * run_qc_dwi_legacy
         * dwi_eddy_qc
         * run_qc_dwi_eddy
@@ -1149,10 +1149,10 @@ if [[ -z "$CleanupSession" ]]; then CleanupSession="no"; fi
 # -- Check and set runQC_Custom
 if [ -z "$runQC_Custom" ] || [ "$runQC_Custom" == "no" ]; then runQC_Custom=""; QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//runQC_Custom/}"`; fi
 
-# -- Check and set DWILegacy
+# -- Check and set dwi_legacy_gpu
 if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then
     DWILegacy=""
-    QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//dwi_legacy/}"`
+    QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//dwi_legacy_gpu/}"`
     QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//run_qc_dwi_legacy/}"`
 fi
 
@@ -1476,7 +1476,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp_diffusion|run_qc_dwi|dwi_legacy|run_qc_dwi_legacy|dwi_eddy_qc|run_qc_dwi_eddy|dwi_dtifit|run_qc_dwi_dtifit|dwi_bedpostx_gpu|run_qc_dwi_process|run_qc_dwi_bedpostx)
+        hcp_diffusion|run_qc_dwi|dwi_legacy_gpu|run_qc_dwi_legacy|dwi_eddy_qc|run_qc_dwi_eddy|dwi_dtifit|run_qc_dwi_dtifit|dwi_bedpostx_gpu|run_qc_dwi_process|run_qc_dwi_bedpostx)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH \
             --include='/${SessionsFolderName}' \
@@ -2293,11 +2293,11 @@ fi
         ${QuNexCommand} hcp_diffusion --sessionsfolder="${SessionsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --sessionids="${SESSIONIDS}"
     }
     # -- Diffusion Legacy (after hcp_pre_freesurfer)
-    turnkey_dwi_legacy() {
-        echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ HCP Pipelines: dwi_legacy"; echo ""
-        ${QuNexCommand} dwi_legacy --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
+    turnkey_dwi_legacy_gpu() {
+        echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ HCP Pipelines: dwi_legacy_gpu"; echo ""
+        ${QuNexCommand} dwi_legacy_gpu --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
     }
-    # -- run_qc_dwi_legacy (after hcpd)
+    # -- run_qc_dwi_legacy (after hcpd or dwi_legacy_gpu)
     turnkey_run_qc_dwi_legacy() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc step for ${Modality} legacy data."; echo ""
@@ -2347,7 +2347,7 @@ fi
 
     # --------------- DWI additional analyses start ------------------------
     #
-    # -- dwi_dtifit (after hcpd or dwi_legacy)
+    # -- dwi_dtifit (after hcpd or dwi_legacy_gpu)
     turnkey_dwi_dtifit() {
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ : dwi_dtifit for DWI data."; echo ""
         ${QuNexCommand} dwi_dtifit --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}"

@@ -38,7 +38,7 @@
 
 ## -- if ProbtrackXGPUBin is not set then set it automatically
 if [[ -z ${ProbtrackXGPUBin} ]]; then
-	bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_${DefaultCUDAVersion}
+	bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_${DEFAULT_CUDA_VERSION}
 else
 	bindir=${ProbtrackXGPUBin}
 fi

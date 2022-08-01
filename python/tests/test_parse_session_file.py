@@ -15,7 +15,7 @@ def test_read_generic_session_file():
     assert len(sess["paths"]) == 3
     assert "bids" in sess["paths"]
     assert len(sess["pipeline_ready"]) == 0
-    assert len(sess["images"]) == 2
+    assert len(sess["images"]) == 3
 
 
 def test_read_generic_session_file_with_id():
@@ -44,7 +44,7 @@ def test_read_generic_session_file_complex():
     assert len(sess["paths"]) == 4
     assert "dicom" in sess["paths"]
     assert len(sess["pipeline_ready"]) == 0
-    assert len(sess["images"]) == 49
+    assert len(sess["images"]) == 50
 
 
 def test_read_hcpls_session():
@@ -71,7 +71,7 @@ def test_read_hcp_session_file():
     assert len(sess["paths"]) == 4
     assert "dicom" in sess["paths"]
     assert len(sess["pipeline_ready"]) == 1
-    assert len(sess["images"]) == 49
+    assert len(sess["images"]) == 50
     assert "se" in sess["images"][(71,)]
     assert sess["images"][(71,)]["hcp_image_type"] == ("SE-FM", "AP")
     assert "se" in sess["images"][(131,)]
@@ -83,4 +83,4 @@ def test_read_mapping_file():
     filename = get_test_data_path("mapping2.txt")
     rules = read_mapping_file(filename)
     assert len(rules["group_rules"]["image_number"]) == 2
-    assert len(rules["group_rules"]["name"]) == 10
+    assert len(rules["group_rules"]["name"]) == 11

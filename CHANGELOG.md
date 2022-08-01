@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.4
+
+* Fixed a bug in qunex_container that caused it to crash if sessions or batchfile were not provided.
+* Fixed a bug in bruker_to_dicom that caused the command to crash.
+
 ## 0.94.3
 
 * Removed a bug that caused run_turnkey to crash.

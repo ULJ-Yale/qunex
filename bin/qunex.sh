@@ -17,7 +17,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -381,29 +381,29 @@ show_usage_run_turnkey() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- dwi_legacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+# -- dwi_legacy_gpu - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-dwi_legacy() {
+dwi_legacy_gpu() {
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy_gpu.sh \
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
     --scanner=${Scanner} \
     --usefieldmap=${UseFieldmap} \
-    --PEdir=${PEdir} \
+    --pedir=${PEdir} \
     --echospacing=${EchoSpacing} \
-    --TE=${TE} \
+    --te=${TE} \
     --unwarpdir=${UnwarpDir} \
-    --diffdatasuffix=${DiffDataSuffix} \
+    --diffdatasuffix=${diffdatasuffix} \
     --overwrite=${Overwrite}"
     # -- QuNex bash execute function
     bash_call_execute
 }
 
-show_usage_dwi_legacy() {
+show_usage_dwi_legacy_gpu() {
     echo ""; echo "qunex ${usage_input}"
-    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh
+    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy_gpu.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -812,7 +812,7 @@ dwi_dtifit() {
     # gradnonlin
     if [[ -n ${gradnonlin} ]]; then
         optional_parameters="${optional_parameters} \
-        --gradnonlin='${gradnonlin}''
+        --gradnonlin='${gradnonlin}'
         "
     fi
 
@@ -903,14 +903,14 @@ dwi_pre_tractography() {
     # -- Parse general parameters
     RunFolder="${SessionsFolder}/${CASE}/hcp/"
     # -- Specify command variable
-    QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh ${RunFolder} ${CASE} 0"
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh ${RunFolder} ${CASE} 0"
     # -- QuNex bash execute function
     bash_call_execute
 }
 
 show_usage_dwi_pre_tractography() {
     echo ""; echo "qunex ${usage_input}"
-    ${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh
+    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1570,7 +1570,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ROIFile=`get_parameters "${setflag}roifile" $@`
     ROIFileSessionSpecific=`get_parameters "${setflag}sessionroifile" $@`
 
-    # -- Input flags for  compute_bold_fc
+    # -- Input flags for compute_bold_fc
     InputFiles=`get_parameters "${setflag}inputfiles" $@`
     OutPathFC=`get_parameters "${setflag}targetf" $@`
     Calculation=`get_parameters "${setflag}calculation" $@`
@@ -1604,14 +1604,42 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WeightsFile=`get_parameters "${setflag}weightsfile" $@`
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
 
-    # -- Input flags for dwi_legacy
+    # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     PEdir=`get_parameters "${setflag}PEdir" $@`
     TE=`get_parameters "${setflag}TE" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
-    DiffDataSuffix=`get_parameters "${setflag}diffdatasuffix" $@`
     Scanner=`get_parameters "${setflag}scanner" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
+    diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
+
+    # -- Input flags for dwi_bedpostx_gpu
+    Fibers=`get_parameters "${setflag}fibers" $@`
+    Weight=`get_parameters "${setflag}weight" $@`
+    Burnin=`get_parameters "${setflag}burnin" $@`
+    Jumps=`get_parameters "${setflag}jumps" $@`
+    Sample=`get_parameters "${setflag}sample" $@`
+    Model=`get_parameters "${setflag}model" $@`
+    Rician=`get_parameters "${setflag}rician" $@`
+    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
+
+    # -- Input flags for dwi_dtifit
+    bvecs=`get_parameters "${setflag}bvecs" $@`
+    bvals=`get_parameters "${setflag}bvals" $@`
+    cni=`get_parameters "${setflag}cni" $@`
+    sse=`get_flags "${setflag}sse" $@`
+    wls=`get_flags "${setflag}wls" $@`
+    kurt=`get_flags "${setflag}kurt" $@`
+    kurtdir=`get_flags "${setflag}kurtdir" $@`
+    littlebit=`get_flags "${setflag}littlebit" $@`
+    save_tensor=`get_flags "${setflag}save_tensor" $@`
+    zmin=`get_parameters "${setflag}zmin" $@`
+    zmax=`get_parameters "${setflag}zmax" $@`
+    ymin=`get_parameters "${setflag}ymin" $@`
+    ymax=`get_parameters "${setflag}ymax" $@`
+    xmin=`get_parameters "${setflag}xmin" $@`
+    xmax=`get_parameters "${setflag}xmax" $@`
+    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
 
     # -- Input flags for dwi_parcellate
     MatrixVersion=`get_parameters "${setflag}matrixversion" $@`
@@ -1635,34 +1663,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     GroupBar=`get_parameters "${setflag}groupvar" $@`
     OutputDir=`get_parameters "${setflag}outputdir" $@`
     Update=`get_parameters "${setflag}update" $@`
-
-    # -- Input flags for dwi_dtifit
-    bvecs=`get_parameters "${setflag}bvecs" $@`
-    bvals=`get_parameters "${setflag}bvals" $@`
-    cni=`get_parameters "${setflag}cni" $@`
-    sse=`get_flags "${setflag}sse" $@`
-    wls=`get_flags "${setflag}wls" $@`
-    kurt=`get_flags "${setflag}kurt" $@`
-    kurtdir=`get_flags "${setflag}kurtdir" $@`
-    littlebit=`get_flags "${setflag}littlebit" $@`
-    save_tensor=`get_flags "${setflag}save_tensor" $@`
-    zmin=`get_parameters "${setflag}zmin" $@`
-    zmax=`get_parameters "${setflag}zmax" $@`
-    ymin=`get_parameters "${setflag}ymin" $@`
-    ymax=`get_parameters "${setflag}ymax" $@`
-    xmin=`get_parameters "${setflag}xmin" $@`
-    xmax=`get_parameters "${setflag}xmax" $@`
-    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
-
-    # -- Input flags for dwi_bedpostx_gpu
-    Fibers=`get_parameters "${setflag}fibers" $@`
-    Weight=`get_parameters "${setflag}weight" $@`
-    Burnin=`get_parameters "${setflag}burnin" $@`
-    Jumps=`get_parameters "${setflag}jumps" $@`
-    Sample=`get_parameters "${setflag}sample" $@`
-    Model=`get_parameters "${setflag}model" $@`
-    Rician=`get_parameters "${setflag}rician" $@`
-    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
 
     # -- Input flags for dwi_probtrackx_dense_gpu
     MatrixOne=`get_parameters "${setflag}omatrix1" $@`
@@ -2249,10 +2249,10 @@ if [ "$CommandToRun" == "dwi_bedpostx_gpu" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- dwi_legacy
+# -- dwi_legacy_gpu
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "dwi_legacy" ]; then
+if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$Scanner" ]; then reho "ERROR: Scanner manufacturer missing"; exit 1; fi
@@ -2260,7 +2260,7 @@ if [ "$CommandToRun" == "dwi_legacy" ]; then
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
-    if [ -z "$DiffDataSuffix" ]; then reho "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
+    if [ -z "$diffdatasuffix" ]; then reho "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
 
     if [ ${UseFieldmap} == "yes" ]; then
         if [ -z "$TE" ]; then reho "ERROR: TE value for Fieldmap missing"; exit 1; fi
@@ -2287,7 +2287,7 @@ if [ "$CommandToRun" == "dwi_legacy" ]; then
     echo "   Phase Encoding Direction: ${PEdir}"
     echo "   TE value for Fieldmap: ${TE}"
     echo "   EPI Unwarp Direction: ${UnwarpDir}"
-    echo "   Diffusion Data Suffix Name: ${DiffDataSuffix}"
+    echo "   Diffusion Data Suffix Name: ${diffdatasuffix}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
 
