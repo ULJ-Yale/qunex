@@ -1008,7 +1008,7 @@ def main(args=None):
         parjobs = 1
 
         # add session ids
-        if sessionids is not None:
+        if g_sessionids is not None:
             sessionids_array.append(",".join(g_sessionids))
 
     # print out details
