@@ -15,7 +15,7 @@ import math
 from datetime import datetime
 
 
-class command_error(Exception):
+class CommandError(Exception):
     """There was an error in calling the command."""
     
     def __init__(self, function=None, error=None, *hints):
@@ -24,14 +24,14 @@ class command_error(Exception):
         if error is None:
             error = "unspecified"
         msg = "Error '%s' occured in %s" % (error, function)
-        super(command_error, self).__init__(msg)
+        super(CommandError, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
         self.report   = (error,) + hints
 
 
-class command_failed(Exception):
+class CommandFailed(Exception):
     """A command has failed to carry out fully."""
 
     def __init__(self, function=None, error=None, *hints):
@@ -40,7 +40,7 @@ class command_failed(Exception):
         if error is None:
             error = "unspecified"
         msg = "Error '%s' occured in %s" % (error, function)
-        super(command_failed, self).__init__(msg)
+        super(CommandFailed, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
@@ -169,13 +169,13 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
 
     # --- check inputs
     if command is None and script is None:
-        raise command_error("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
+        raise CommandError("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
 
     if command is not None and script is not None:
-        raise command_error("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
+        raise CommandError("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
 
     if scheduler_params is None:
-        raise command_error("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
+        raise CommandError("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
 
     # --- parse settings
     try:
@@ -183,22 +183,22 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         comname   = scheduler_params.pop('comname', "")
         jobnum    = scheduler_params.pop('jobnum', "")
     except:
-        raise command_error("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
+        raise CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", scheduler_params)
 
     # --- compile command to pass
     if command is None:
         if not os.path.exists(script):
-            raise command_failed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
+            raise CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
         command = open(script, "r")
 
     if workdir is not None:
         if not os.path.exists(workdir):
-            raise command_failed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
+            raise CommandFailed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
         command = "cd %s\n" % (workdir) + command
 
     if environment is not None:
         if not os.path.exists(environment):
-            raise command_failed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
+            raise CommandFailed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
         command = open(environment, "r") + "\n" + command
 
     # --- do search replace
@@ -214,7 +214,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
             if not os.path.exists(os.path.dirname(v)) and k != 'return':
-                raise command_failed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
+                raise CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
     else:
         # log name
@@ -924,7 +924,7 @@ def main(args=None):
 
         # check scheduler
         if scheduler_name not in ['PBS', 'LSF', 'SLURM']:
-            raise command_error("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
+            raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
 
         # parse scheduler parameters
         scheduler_params = {}
@@ -1080,9 +1080,9 @@ def main(args=None):
             containerCommand = ""
             if bash_pre:
                 containerCommand += bash_pre + ";"
-            
+
             f.close()
-            
+
             if singularity:
                 f.close()
 
@@ -1111,7 +1111,7 @@ def main(args=None):
 
                 containerCommand +=  "%s bash %s" % (conimage, scriptPath)
             else:
-                containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
+                containerCommand = "docker run %s %s bash %s" % (dockeropt, conimage, scriptPath)
 
             if scheduler:
                 schedule(command=containerCommand, scheduler_name=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
