@@ -674,10 +674,10 @@ def from_tag(tag_value):
     Returns the tag hex string (like 0xd73829b1).
     """
     hex_tag = hex(tag_value)
-    if hex_tag[-1] != "L":
-        raise RuntimeError(
-            "Something went horribly wrong. Hex conversion does not end in 'L'")
-    return hex_tag[:-1]
+    # if hex_tag[-1] != "L":
+    #     raise RuntimeError(
+    #         "Something went horribly wrong. Hex conversion does not end in 'L'")
+    return hex_tag
 
 
 def get_tag(tag_string):
