@@ -55,43 +55,37 @@ def readDICOMBase(filename):
     gz = False
     try:
         if '.gz' in filename:
-            f = gzip.open(filename, 'r')
+            f = gzip.open(filename, 'rb')
             gz = True
         else:
-            f = open(filename, 'r')
+            f = open(filename, 'rb')
         d = dfr.read_partial(f, stop_when=_at_frame)
         f.close()
-        if not d:
-            raise ValueError
         return d, gz
     except:
-        try:
-            if '.gz' in filename:
-                f = gzip.open(filename, 'r')
-                gz = True
-            else:
-                f = open(filename, 'r')
-            d = dfr.read_file(f, stop_before_pixels=True)
-            return d, gz
-        except:
-            return None, None
+        return None, None
+    finally:
+        if f is not None and not f.closed:
+            f.close()
 
 
 def readDICOMFull(filename):
     # read the full dicom file
     try:
         if '.gz' in filename:
-            f = gzip.open(filename, 'r')
+            f = gzip.open(filename, 'rb')
             gz = True
         else:
-            f = open(filename, 'r')
+            f = open(filename, 'rb')
             gz = False
         d = dfr.read_file(f)
         f.close()
         return d, gz
     except:
-        return None
-
+        return None, None
+    finally:
+        if f is not None and not f.closed:
+            f.close()
 
 def get_dicom_name(opened_dicom, extension="dcm"):
     global dicom_counter
