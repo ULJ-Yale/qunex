@@ -275,7 +275,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
             reho "                     : $ANTSDIR is a link to a nonexisiting folder!"
         fi
     else
-        echo "        ANTs Version : $(antsJointFusion --version)"
+        echo "        ANTs Version : $(antsJointFusion --version | head -1)"
     fi
     echo ""
 
