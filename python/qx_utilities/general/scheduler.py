@@ -326,35 +326,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             sCommand += "#PBS -j oe\n"
         com = 'qsub'
 
-    elif scheduler == "LSF":
-        sCommand += "#BSUB -o %s-%s_#%s_%%J\n" % (jobname, comname, jobnum)
-        for k, v in [('queue', '#BSUB -q %s\n'), ('mem', "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n"), ('walltime', '#BSUB -W %s\n'), ('cores', '#BSUB -n %s\n')]:
-            if k in setDict:
-                sCommand += v % (setDict[k])
-        for k, v in setDict.items():
-            if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
-                sCommand += "#BSUB -%s %s\n" % (k, v)
-            elif k == 'jobName' and jobname == 'schedule':
-                jobname = v
-
-        # set default cores
-        if ("cores" not in setDict.keys()):
-            sCommand += "#BSUB -n %s\n" % (parsessions * parelements)
-
-        # jobname
-        if (comname != ""):
-            jobname = "%s-%s" % (jobname, comname)
-        sCommand += "#BSUB -P %s\n" % jobname
-        if (jobnum != ""):
-            jobname = "%s(%s)" % (jobname, jobnum)
-        sCommand += "#BSUB -J %s\n" % jobname
-
-        if outputs['stdout'] is not None:
-            sCommand += "#BSUB -o %s\n" % (outputs['stdout'])
-        if outputs['stderr'] is not None:
-            sCommand += "#BSUB -e %s\n" % (outputs['stderr'])
-        com = 'bsub'
-
     elif scheduler == "SLURM":
         sCommand += "#!/bin/sh\n"
         for key, value in setDict.items():
