@@ -15,7 +15,7 @@ import math
 from datetime import datetime
 
 
-class command_error(Exception):
+class CommandError(Exception):
     """There was an error in calling the command."""
     
     def __init__(self, function=None, error=None, *hints):
@@ -24,14 +24,14 @@ class command_error(Exception):
         if error is None:
             error = "unspecified"
         msg = "Error '%s' occured in %s" % (error, function)
-        super(command_error, self).__init__(msg)
+        super(CommandError, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
         self.report   = (error,) + hints
 
 
-class command_failed(Exception):
+class CommandFailed(Exception):
     """A command has failed to carry out fully."""
 
     def __init__(self, function=None, error=None, *hints):
@@ -40,7 +40,7 @@ class command_failed(Exception):
         if error is None:
             error = "unspecified"
         msg = "Error '%s' occured in %s" % (error, function)
-        super(command_failed, self).__init__(msg)
+        super(CommandFailed, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
@@ -169,13 +169,13 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
 
     # --- check inputs
     if command is None and script is None:
-        raise command_error("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
+        raise CommandError("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
 
     if command is not None and script is not None:
-        raise command_error("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
+        raise CommandError("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
 
     if scheduler_params is None:
-        raise command_error("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
+        raise CommandError("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
 
     # --- parse settings
     try:
@@ -183,22 +183,22 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         comname   = scheduler_params.pop('comname', "")
         jobnum    = scheduler_params.pop('jobnum', "")
     except:
-        raise command_error("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
+        raise CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", scheduler_params)
 
     # --- compile command to pass
     if command is None:
         if not os.path.exists(script):
-            raise command_failed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
+            raise CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
         command = open(script, "r")
 
     if workdir is not None:
         if not os.path.exists(workdir):
-            raise command_failed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
+            raise CommandFailed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
         command = "cd %s\n" % (workdir) + command
 
     if environment is not None:
         if not os.path.exists(environment):
-            raise command_failed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
+            raise CommandFailed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
         command = open(environment, "r") + "\n" + command
 
     # --- do search replace
@@ -214,7 +214,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
             if not os.path.exists(os.path.dirname(v)) and k != 'return':
-                raise command_failed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
+                raise CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
     else:
         # log name
@@ -243,7 +243,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
 
     if scheduler_name == "PBS":
         for k, v in scheduler_params.items():
-            if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
+            if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue', 'select'):
                 s_command += "#PBS -l %s=%s\n" % (k, v)
             elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e', 'l'):
                 s_command += "#PBS -%s %s\n" % (k, v)
@@ -256,10 +256,6 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
             elif k == 'nodes':
                 s_command += "#PBS -l nodes=%s\n" % v
 
-        # set default nodes
-        if ("nodes" not in scheduler_params.keys()):
-            s_command += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
-
         # job name
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
@@ -268,41 +264,12 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         s_command += "#PBS -N %s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sP += "#PBS -o %s\n" % (outputs['stdout'])
+            s_command += "#PBS -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
             s_command += "#PBS -e %s\n" % (outputs['stderr'])
         if outputs['both']:
             s_command += "#PBS -j oe\n"
         com = 'qsub'
-
-    elif scheduler_name == "LSF":
-        s_command += "#BSUB -o %s-%s_#%s_%%J\n" % (jobname, comname, jobnum)
-        for k, v in [('queue', '#BSUB -q %s\n'), ('mem', "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n"), ('walltime', '#BSUB -W %s\n'), ('cores', '#BSUB -n %s\n')]:
-            if k in scheduler_params:
-                s_command += v % (scheduler_params[k])
-        for k, v in scheduler_params.items():
-            if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
-                s_command += "#BSUB -%s %s\n" % (k, v)
-            elif k == 'jobName' and jobname == 'schedule':
-                jobname = v
-
-        # set default cores
-        if ("cores" not in scheduler_params.keys()):
-            s_command += "#BSUB -n %s\n" % (parsessions * parelements)
-
-        # jobname
-        if (comname != ""):
-            jobname = "%s-%s" % (jobname, comname)
-        s_command += "#BSUB -P %s\n" % jobname
-        if (jobnum != ""):
-            jobname = "%s(%s)" % (jobname, jobnum)
-        s_command += "#BSUB -J %s\n" % jobname
-
-        if outputs['stdout'] is not None:
-            s_command += "#BSUB -o %s\n" % (outputs['stdout'])
-        if outputs['stderr'] is not None:
-            s_command += "#BSUB -e %s\n" % (outputs['stderr'])
-        com = 'bsub'
 
     elif scheduler_name == "SLURM":
         s_command += "#!/bin/sh\n"
@@ -921,7 +888,7 @@ def main(args=None):
 
         # check scheduler
         if scheduler_name not in ['PBS', 'LSF', 'SLURM']:
-            raise command_error("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
+            raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
 
         # parse scheduler parameters
         scheduler_params = {}
@@ -1107,7 +1074,7 @@ def main(args=None):
 
                 container_command +=  "%s bash %s" % (conimage, script_path)
             else:
-                container_command = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
+                containerCommand = "docker run %s %s bash %s" % (dockeropt, conimage, scriptPath)
 
             if scheduler:
                 schedule(command=container_command, scheduler_name=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
