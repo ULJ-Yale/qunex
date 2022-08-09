@@ -872,7 +872,7 @@ def processBIDS(bfolder):
 
     for session in bidsData:
         bidsData[session]['images'] = {'list': [], 'info': {}}
-        for modality in ['anat', 'fmap', 'func', 'dwi']:
+        for modality in ['anat', 'fmap', 'func', 'dwi', "asl"]:
             if modality in bidsData[session]:
                 for element in bidsData[session][modality]:
                     if '.nii' in element['filename']:

@@ -1,5 +1,5 @@
 {
-    "modalities": ["anat", "func", "dwi", "fmap"],
+    "modalities": ["anat", "func", "dwi", "fmap", "asl"],
     "optional": ["code", "derivatives", "stimuli", "sourcedata", "phenotype"],
     "anat": {
         "label": ["T1w", "T2w", "T1rho", "T1map", "T2map", "T2star", "FLAIR", "FLASH", "PD", "PDMap", "PDT2", "inplaneT1", "inplaneT2", "angio", "defacemask"],
@@ -24,5 +24,11 @@
         "info":  ["acq", "run", "ses", "dir"],
         "sort":  ["run", "dir", "acq" ],
         "tag":   ["label", "dir", "acq", "run"]
+    },
+    "asl": {
+        "label": ["asl"],
+        "info": ["acq", "rec", "dir", "run", "ses"],
+        "sort": ["run", "dir", "acq", "rec"],
+        "tag": ["label", "dir", "acq", "run"]
     }
 }
