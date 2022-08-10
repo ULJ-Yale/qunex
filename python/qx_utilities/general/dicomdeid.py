@@ -17,11 +17,9 @@ import tempfile
 import zipfile
 import tarfile
 import csv
-import hashlib
 import random
 import string
 import functools
-import base64
 import struct
 import shutil
 
@@ -43,12 +41,10 @@ except:
 
 #######################
 
-
 dicom_counter = 0
 
 def _at_frame(tag, VR, length):
     return tag == (0x5200, 0x9230)
-
 
 def readDICOMBase(filename):
     # try partial read
@@ -67,7 +63,6 @@ def readDICOMBase(filename):
     finally:
         if f is not None and not f.closed:
             f.close()
-
 
 def readDICOMFull(filename):
     # read the full dicom file
@@ -117,10 +112,9 @@ def get_dicom_name(opened_dicom, extension="dcm"):
 
     return filename
 
-
-def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file=""):
+def discover_dicom(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file=""):
     """
-    ``discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file="")``
+    ``discover_dicom(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file="")``
 
     Runs deid_function on each dicom it finds.
 
@@ -143,7 +137,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
     and tar files and runs the function deid_function on each dicom it finds
     """
     if output_folder is None and rename_files:
-        raise ge.CommandFailed("discoverDICOM", "Output folder not specified", "Files can only be renamed if they are being saved in a different location.", "Please provide output_folder as an argument!")
+        raise ge.CommandFailed("discover_dicom", "Output folder not specified", "Files can only be renamed if they are being saved in a different location.", "Please provide output_folder as an argument!")
 
     for (dirpath, dirnames, filenames) in os.walk(folder):
         for filename in filenames:
@@ -219,7 +213,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                     print(" ... extracted as a zip file")
 
-                    discoverDICOM(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
+                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
 
                     if save:
                         target_file = full_filename
@@ -258,7 +252,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                     opened_dicom = True
 
-                    discoverDICOM(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
+                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
 
                     if save:
                         target_file = full_filename
@@ -296,9 +290,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
 #######################
 
-
 field_dict = {}
-
 
 def field_dict_modifier(node_id, node_path, node):
     """
@@ -323,7 +315,6 @@ def field_dict_modifier(node_id, node_path, node):
     else:
         value_list.add(str(node.value))
     field_dict[(node_id, node_path)] = value_list
-
 
 def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=False):
     """
@@ -383,12 +374,10 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
     if debug:
         print("     ... end recursing")
 
-
 def dicom_scan(opened_dicom, filename=""):
     recurse_tree(opened_dicom, field_dict_modifier)
     recurse_tree(opened_dicom.file_meta, field_dict_modifier)
     return opened_dicom
-
 
 def write_field_dict(output_file, limit):
     with open(output_file, "w") as f:
@@ -396,8 +385,9 @@ def write_field_dict(output_file, limit):
         for key, items in field_dict.items():
             row = [key[0], key[1]]
             row.extend(list(items)[:int(limit)])
-            writer.writerow(row)
-
+            # limit length of printouts
+            if (len(row[2]) <  128):
+                writer.writerow(row)
 
 def get_dicom_fields(folder=".", targetfile="dicomFields.csv", limit="20"):
     """
@@ -469,7 +459,7 @@ def get_dicom_fields(folder=".", targetfile="dicomFields.csv", limit="20"):
 
     field_dict = {}
 
-    discoverDICOM(folder, dicom_scan, save=False, archive_file="")
+    discover_dicom(folder, dicom_scan, save=False, archive_file="")
     write_field_dict(targetfile, limit)
 
 
@@ -478,7 +468,6 @@ def get_dicom_fields(folder=".", targetfile="dicomFields.csv", limit="20"):
 # Reprocessing
 
 #######################
-
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
@@ -511,7 +500,6 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
                         replaces the substring matching StudyDate with either
                         a provided date, or a randomly generated date. []
 
-
     PARAMETER FILE
     --------------
 
@@ -529,20 +517,12 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
     The possible actions are:
 
     - archive (archive the original value in the archive file)
-    - hash (replace the original value with the hashed value. An optional salt 
-      can be specified)
     - replace (replace the original value with the specified value)
     - delete (delete the field from the dicom file)
     
     If multiple actions are specified, they are carried out in the above order
-    (archive, hash, replace, delete). When hashing, to prevent the possibility
-    of reconstructing the original value by hashing candidate values, a salt 
-    is used. By default a random salt is generated each time change_dicom_files 
-    is run, however, a specific salt can be provided as the optional parameter
-    to the `hash` command. A random salt can also be explicitly specified by 
-    setting the optimal parameter to 'random'.
-
-    Lines in the parameter file that start with '#' or do not specify a mapping 
+    (archive,replace, delete). Lines in the parameter file that start with '#'
+    or do not specify a mapping 
     (i.e. lack '>') are ignored.
 
     Example spec file
@@ -553,8 +533,6 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
         0x80005  > delete
         0x100010 > delete
         0x80012  > delete, archive
-        0x82112  > hash, archive
-        0x180022 > hash:qrklejwrlke, archive
         0x180032 > replace:20070101
 
 
@@ -567,7 +545,7 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
     the date in any of the other fields in dicom is also replaced by the same
     randomly generated or specified date. Please note that any other dates 
     (e.g. participant's birth date) are not automatically replaced. These need
-    to be either deleted, replaced or hashed explicitly.
+    to be either deleted or replaced explicitly.
 
 
     DEIDENTIFICATION EFFECTIVENESS
@@ -575,7 +553,7 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
 
     Please note the following:
 
-    1. Only the fields explicitly set to be removed, replaced or hashed will
+    1. Only the fields explicitly set to be removed or replaced will
        be changed. It is the responsibility of the user to make sure that no
        dicom fields with identifiable information are left unchanged.
     2. Only valid dicom fields can be accessed and changed using this tool. Any 
@@ -640,117 +618,66 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
     except:
         raise ge.CommandFailed("change_dicom_files", "Could not create archive file", "The specifed archive file could not be created:", "%s" % (archivefile), "Please check your paths and permissions!")
 
-    if outputfolder is not None:
-        try:
-            shutil.rmtree(outputfolder)
-        except:
-            pass
-        os.mkdir(outputfolder)
+    if outputfolder is not None and not os.path.exists(outputfolder):
+            os.mkdir(outputfolder)
 
     manipulate_file = functools.partial(deid_and_date_removal, param_file=paramfile, archive_file=archivefile, replacement_date=replacementdate)
-    discoverDICOM(folder, manipulate_file, outputfolder, renamefiles, extension, save=True, archive_file=archivefile)
+    discover_dicom(folder, manipulate_file, outputfolder, renamefiles, extension, save=True, archive_file=archivefile)
 
-
-def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None, filename=""):
-    deid(opened_dicom, param_file, archive_file, filename)
-    strip_dates(opened_dicom, replacement_date)
-    return opened_dicom
-
-
-def from_tag(tag_value):
+def date_removal_func(node_id, node_path, node, target_date, replace_date):
     """
-    ``from_tag(tag_value)``
+    ``date_removal_func(node_id, node_path, node, target_date, replace_date)``
 
-    Gets the tag string from its value.
-
-    INPUT
-    =====
-    
-    --tag_value  The integer tag value.
-    
-    OUTPUT
+    INPUTS
     ======
 
-    Returns the tag hex string (like 0xd73829b1).
+    --node_id       The id (like /0x0194db21/0x238983d92) of the data element.
+    --node_path     The path (like /field1name/innername) of the data element.
+    --node          The data element in the dicom.
+    --target_date   The date string to replace.
+    --replace_date  The date string to replace the above string with.
     """
-    hex_tag = hex(tag_value)
-    # if hex_tag[-1] != "L":
-    #     raise RuntimeError(
-    #         "Something went horribly wrong. Hex conversion does not end in 'L'")
-    return hex_tag
+    if isinstance(node.value, str):
+        node.value = node.value.replace(target_date, replace_date)
 
-
-def get_tag(tag_string):
+def strip_dates(dicom_file, replacement_date=None):
     """
-    ``get_tag(tag_string)``
+    ``strip_dates(dicom_file, replacement_date=None)``
 
-    Gets the individual tag from the string representation.
-
-    INPUT
-    =====
-
-    --tag_string  The tag hex string (like 0xd73829b1).
-
-    OUTPUT
+    INPUTS
     ======
 
-    Returns the integer tag value.
+    --dicom_file        The opened dicom file to strip dates from.
+    --replacement_date  The date string to replace stripped dates with.
     """
-    removed = tag_string.lstrip("0x")
-    if len(removed) < 8:
-        removed = "0"*(8-len(removed)) + removed
-    decoded = removed.decode('hex')
-    return struct.unpack(">I", decoded)[0]
 
+    if "StudyDate" in dicom_file:
+        target_date = dicom_file.StudyDate
+    elif "SeriesDate" in dicom_file:
+        target_date = dicom_file.SeriesDate
+    else:
+        print("     -> WARNING: No StudyDate field present")
+        return
 
-def get_group(full_id):
-    """
-    ``get_group(full_id)``
+    if replacement_date is None:
+        year = random.randint(1970, 2015)
+        month = random.randint(1, 12)
+        day = random.randint(1, 28)
 
-    Gets the group from the full id of a DataElement.
-    
-    INPUT
-    =====
+        month_str = str(month)
+        if len(month_str) == 1:
+            month_str = "0" + month_str
 
-    --full_id  The id (like 0x0194db21/0x238983d92) of the element.
+        day_str = str(day)
+        if len(day_str) == 1:
+            day_str = "0" + day_str
 
-    OUTPUT
-    ======
+        replacement_date = str(year) + month_str + day_str
 
-    Returns the group id as a number.
-    """
-    try:
-        return struct.pack(">I", get_tag(full_id.split("/")[0]))
-    except TypeError as e:
-        raise e
+    modified_removal_func = functools.partial(date_removal_func, target_date=target_date, replace_date=replacement_date)
 
-
-def deid(opened_dicom, param_file="", archive_file="", filename=""):
-    action_dict, replace_map, hasher_map = read_spec_file(param_file)
-
-    archive_writer = csv.writer(open(archive_file, mode='a'))
-
-    for key in action_dict:
-        for action in action_dict[key]:
-            if action == 'archive':
-                apply_func = functools.partial(archive, archive_csv_writer=archive_writer)
-            elif action == 'hash':
-                apply_func = functools.partial(hash, hasher_map=hasher_map)
-            elif action == 'replace':
-                apply_func = functools.partial(replace, replace_map=replace_map)
-            elif action == 'delete':
-                apply_func = delete
-            else:
-                raise RuntimeError("SHOULD NEVER HAPPEN")
-
-            group = get_group(key)
-            if group == 0x02:
-                apply_action_from_field_id(opened_dicom.file_meta, key, apply_func, filename)
-            else:
-                apply_action_from_field_id(opened_dicom, key, apply_func, filename)
-
-    return opened_dicom
-
+    recurse_tree(dicom_file, modified_removal_func)
+    recurse_tree(dicom_file.file_meta, modified_removal_func)
 
 def read_spec_file(spec_file):
     """
@@ -769,8 +696,6 @@ def read_spec_file(spec_file):
     --action_dict  Action_dict is a mapping of keys to a set of actions.
     --replace_map  Replace_map is a mapping of keys to the value to replace 
                    their value with.
-    --hasher_map   Hasher map is a map of keys to the salt to use for the hash 
-                   function.
 
     USE
     ===
@@ -779,34 +704,25 @@ def read_spec_file(spec_file):
 
     Example spec file::
 
-        0x80005 > archive, delete
-        fieldname3 > hash: sdh2083uddoqew
-        fieldname5 > archive, hash:random
-        fieldname7 > hash: sdh2083uddoqew
-
         0x80005  > delete
         0x100010 > delete
-        0x80012  > delete, archive
-        0x82112  > hash, archive
-        0x180022 > hash:qrklejwrlke, archive
+        0x80012  > archive,delete
         0x180032 > replace:20070101
 
     Operations are applied in this order:
 
     1. archive
-    2. hash
-    3. replace
+    2. replace
     4. delete
 
     Lines that start with '#' or do not specify a mapping (i.e. lack '>') are
     ignored.
     """
 
-    actionOrder = ['archive', 'hash', 'replace', 'delete']
+    actionOrder = ['archive', 'replace', 'delete']
 
     action_dict = {}
     replace_map = {}
-    hasher_map  = {}
     lineNumber  = 0
 
     with open(spec_file, 'r') as f:
@@ -825,15 +741,6 @@ def read_spec_file(spec_file):
                         print("===> Warning, actions for tag %s specified more than once! [line: %d]" % (key, lineNumber))
 
                     for action in actions:
-                        if "hash" in action:
-                            parts = [e.strip() for e in action.split(':')]
-                            if len(parts) == 2:
-                                action, salt = parts
-                            else:
-                                action = "hash"
-                                salt   = ""
-                            hasher_map[key] = salt
-
                         if "replace" in action:
                             parts = [e.strip() for e in action.split(':')]
                             if len(parts) == 2:
@@ -847,10 +754,9 @@ def read_spec_file(spec_file):
     for key in action_dict:
         action_dict[key] = [e for e in actionOrder if e in action_dict[key]]
 
-    return action_dict, replace_map, hasher_map
+    return action_dict, replace_map
 
-
-def action_resolver(key, action, action_dict, replace_map, hasher_map):
+def action_resolver(key, action, action_dict, replace_map):
     action_set = action_dict.get(key, set())
 
     if action == "archive":
@@ -861,21 +767,32 @@ def action_resolver(key, action, action_dict, replace_map, hasher_map):
         action_set.add("replace")
         replace_value = ":".join(action.split(":")[1:])
         replace_map[key] = replace_value
-    elif action.startswith("hash"):
-        action_set.add("hash")
-        if action.startswith("hash:"):
-            salt = ":".join(action.split(":")[1:])
-        else:
-            if action != "hash":
-                raise RuntimeError(action + " is not a valid action.")
-            salt = DEFAULT_SALT
-
-        hasher_map[key] = salt
     else:
         raise RuntimeError(action + " is not a valid action.")
 
     action_dict[key] = action_set
 
+def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
+    """
+    ``archive(target_dicom, tag, field_id, filename, archive_csv_writer)``
+
+    Archive the field from the dicom.
+
+    INPUTS
+    ======
+
+    --target_dicom        The dicom dataset one level above the element to apply
+                          this action to.
+    --tag                 The tag to the data element is located at in
+                          target_dicom.
+    --field_id            The full id (like /0x0194db21/0x238983d92) of the
+                          element.
+    --filename            The filename for this dicom.
+    --archive_csv_writer  The csv.Writer object to write the archive to.
+    """
+    if isinstance(target_dicom, pydicom.Dataset):
+        value = str(target_dicom.get(tag))
+        archive_csv_writer.writerow([filename, field_id, value])
 
 def replace(target_dicom, tag, field_id, filename, replace_map):
     """
@@ -902,56 +819,6 @@ def replace(target_dicom, tag, field_id, filename, replace_map):
         if isinstance(target_dicom, pydicom.Dataset) and tag in target_dicom:
             target_dicom[tag].value = replace_result_string
 
-
-def hash_one_value(value, salt):
-    """
-    ``hash_one_value(value, salt)``
-
-    Apply the hash function to one value.
-    
-    INPUTS
-    ======
-
-    --value  The value to hash.
-    --salt   The salt to use for the hash.
-
-    OUTPUT
-    ======
-
-    Returns the hashed value converted to remove special characters.
-    """
-    hashed = hashlib.pbkdf2_hmac('sha256', bytearray(value), bytearray(salt), 100000)
-    return base64.urlsafe_b64encode(hashed)[:-1]
-
-
-def hash(target_dicom, tag, field_id, filename, hasher_map):
-    """
-    ``hash(target_dicom, tag, field_id, filename, hasher_map)``
-
-    Hash the value in the field in this dicom.
-
-    INPUTS
-    ======
-
-    --target_dicom  The dicom dataset one level above the element to apply this
-                    action to.
-    --tag           The tag to the data element is located at in target_dicom
-    --field_id      The full id (like /0x0194db21/0x238983d92) of the element to
-                    archive.
-    --filename      The filename for this dicom.
-    --hasher_map    The map from field ids to the salt to use for their hash.
-    """
-    salt = hasher_map[field_id]
-
-    if isinstance(target_dicom, pydicom.Sequence):
-        for elt in target_dicom:
-            if isinstance(elt, pydicom.Dataset) and elt in target_dicom:
-                elt[tag].value = hash_one_value(str(elt[tag].value), salt)
-    else:
-        if isinstance(target_dicom, pydicom.Dataset) and tag in target_dicom:
-            target_dicom[tag].value = hash_one_value(str(target_dicom[tag].value), salt)
-
-
 def delete(target_dicom, tag, field_id, filename):
     """
     ``delete(target_dicom, tag, field_id, filename)``
@@ -970,29 +837,28 @@ def delete(target_dicom, tag, field_id, filename):
     if isinstance(target_dicom, pydicom.Dataset):
         target_dicom.pop(tag, None)
 
-
-def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
+def get_group(full_id):
     """
-    ``archive(target_dicom, tag, field_id, filename, archive_csv_writer)``
+    ``get_group(full_id)``
 
-    Archive the field from the dicom.
+    Gets the group from the full id of a DataElement.
+    
+    INPUT
+    =====
 
-    INPUTS
+    --full_id  The id (like 0x0194db21/0x238983d92) of the element.
+
+    OUTPUT
     ======
 
-    --target_dicom        The dicom dataset one level above the element to apply
-                          this action to.
-    --tag                 The tag to the data element is located at in
-                          target_dicom.
-    --field_id            The full id (like /0x0194db21/0x238983d92) of the
-                          element.
-    --filename            The filename for this dicom.
-    --archive_csv_writer  The csv.Writer object to write the archive to.
+    Returns the group id as a number.
     """
-    if isinstance(target_dicom, pydicom.Dataset):
-        value = str(target_dicom.get(tag))
-        archive_csv_writer.writerow([filename, field_id, value])
 
+    try:
+        tag = get_tag(full_id.split("/")[0])
+        return tag
+    except TypeError as e:
+        raise e
 
 def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
     """
@@ -1034,60 +900,70 @@ def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
     for target in targets:
         apply_func(target, field_path_int[-1], field_id, filename)
 
+def deid(opened_dicom, param_file="", archive_file="", filename=""):
+    action_dict, replace_map = read_spec_file(param_file)
 
-def strip_dates(dicom_file, replacement_date=None):
+    archive_writer = csv.writer(open(archive_file, mode='a'))
+    for key in action_dict:
+        for action in action_dict[key]:
+            if action == 'archive':
+                apply_func = functools.partial(archive, archive_csv_writer=archive_writer)
+            elif action == 'replace':
+                apply_func = functools.partial(replace, replace_map=replace_map)
+            elif action == 'delete':
+                apply_func = delete
+            else:
+                raise RuntimeError("SHOULD NEVER HAPPEN")
+
+            group = get_group(key)
+            if group == "0x02":
+                apply_action_from_field_id(opened_dicom.file_meta, key, apply_func, filename)
+            else:
+                apply_action_from_field_id(opened_dicom, key, apply_func, filename)
+    return opened_dicom
+
+def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None, filename=""):
+    deid(opened_dicom, param_file, archive_file, filename)
+    strip_dates(opened_dicom, replacement_date)
+    return opened_dicom
+
+def from_tag(tag_value):
     """
-    ``strip_dates(dicom_file, replacement_date=None)``
+    ``from_tag(tag_value)``
 
-    INPUTS
+    Gets the tag string from its value.
+
+    INPUT
+    =====
+    
+    --tag_value  The integer tag value.
+    
+    OUTPUT
     ======
 
-    --dicom_file        The opened dicom file to strip dates from.
-    --replacement_date  The date string to replace stripped dates with.
+    Returns the tag hex string (like 0xd73829b1).
     """
+    return hex(tag_value)
 
-    if "StudyDate" in dicom_file:
-        target_date = dicom_file.StudyDate
-    elif "SeriesDate" in dicom_file:
-        target_date = dicom_file.SeriesDate
-    else:
-        print("     -> WARNING: No StudyDate field present")
-        return
-
-    if replacement_date is None:
-        year = random.randint(1970, 2015)
-        month = random.randint(1, 12)
-        day = random.randint(1, 28)
-
-        month_str = str(month)
-        if len(month_str) == 1:
-            month_str = "0" + month_str
-
-        day_str = str(day)
-        if len(day_str) == 1:
-            day_str = "0" + day_str
-
-        replacement_date = str(year) + month_str + day_str
-
-    modified_removal_func = functools.partial(date_removal_func, target_date=target_date, replace_date=replacement_date)
-
-    recurse_tree(dicom_file, modified_removal_func)
-    recurse_tree(dicom_file.file_meta, modified_removal_func)
-
-
-
-def date_removal_func(node_id, node_path, node, target_date, replace_date):
+def get_tag(tag_string):
     """
-    ``date_removal_func(node_id, node_path, node, target_date, replace_date)``
+    ``get_tag(tag_string)``
 
-    INPUTS
+    Gets the individual tag from the string representation.
+
+    INPUT
+    =====
+
+    --tag_string  The tag hex string (like 0xd73829b1).
+
+    OUTPUT
     ======
 
-    --node_id       The id (like /0x0194db21/0x238983d92) of the data element.
-    --node_path     The path (like /field1name/innername) of the data element.
-    --node          The data element in the dicom.
-    --target_date   The date string to replace.
-    --replace_date  The date string to replace the above string with.
+    Returns the integer tag value.
     """
-    if isinstance(node.value, str):
-        node.value = node.value.replace(target_date, replace_date)
+    removed = tag_string.lstrip("0x")
+    if len(removed) < 8:
+        removed = "0"*(8-len(removed)) + removed
+    hex = bytes.fromhex(removed)
+    decoded = struct.unpack(">I", hex)[0]
+    return decoded
