@@ -6,6 +6,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.5
+
+* Missing `EDDYCUDADIR` was reported erroneously inside the container.
+* `qunex_container` with PBS now supports the `select` flag.
+* Fixed a backwards compatibility and a stability issue with `qunex_continer`.
+* Update FSL verision in the container.
+* DICOM deidentification pipeline is now working again.
+* `import_bids` should now import ASL data.
+
 ## 0.94.4
 
 * Fixed a bug in qunex_container that caused it to crash if sessions or batchfile were not provided.
