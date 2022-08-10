@@ -110,8 +110,11 @@ def getHCPPaths(sinfo, options):
     d['hcp_caret7dir']      = os.path.join(base, 'global', 'binaries', 'caret7', 'bin_rh_linux64')
 
     # ---- Key folder in the hcp folder structure
-
-    hcpbase                 = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
+    if "hcp" in sinfo:
+        hcpbase = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
+    else:
+        print("ERROR: HCP path does not exists, check your parameters and the batch file!")
+        raise
 
     d['base']               = hcpbase
     if options['hcp_folderstructure'] == 'hcpya':
