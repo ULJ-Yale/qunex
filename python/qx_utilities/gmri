@@ -59,7 +59,8 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # language can either be "bash", "matlab", "python", or "r"
 all_qunex_commands = [
     # ("qx_utilities.r.bold_movement",                                "Plots movement data, creates movement reports and information for data scrubbing.",      "r"), # added as an example for R language
-    ("qx_utilities.general.bruker.bruker_to_dicom",                "Converts bruker data into the dicom format.",                                               "python"),
+    ("qx_utilities.general.bruker.bruker_to_dicom",                 "Converts bruker data into the dicom format.",                                              "python"),
+    ("qx_utilities.general.dicomdeid.change_dicom_files",           "Changes all the dicom files in the specified folder according the `paramfile`.",           "python"),
     ("qx_utilities.general.fidl.check_fidl",                        "Prints figures showing fidl events and their duration.",                                   "python"),
     ("qx_utilities.processing.workflow.compute_bold_stats",         "Compute BOLD movement and signal statistics.",                                             "python"),
     ("qx_utilities.general.utilities.create_batch",                 "Creates a joint batch file from source files in all session folders.",                     "python"),
@@ -113,6 +114,7 @@ all_qunex_commands = [
     ("qx_mri.general.general_plot_bold_timeseries",                 "Creates and saves a plot of BOLD timeseries.",                                             "matlab"),
     ("qx_mri.general.general_plot_bold_timeseries_list",            "Creates and saves a plot of BOLD timeseries for a list of sessions.",                      "matlab"),
     ("qx_mri.general.general_qa_concfile",                          "Computes and saves the specified statistics on images specified in the conc file.",        "matlab"),
+    ("qx_utilities.general.dicomdeid.get_dicom_fields",             "Returns an overview of DICOM fields across all the DICOM files.",                          "python"),
     ("qx_utilities.hcp.process_hcp.hcp_asl",                        "Runs HCP ASL pipeline.",                                                                   "python"),
     ("qx_utilities.hcp.process_hcp.hcp_dedrift_and_resample",       "Runs HCP MSMAll pipeline.",                                                                "python"),
     ("qx_utilities.hcp.process_hcp.hcp_diffusion",                  "Runs HCP DWI pipeline.",                                                                   "python"),

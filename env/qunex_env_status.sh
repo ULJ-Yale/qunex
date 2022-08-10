@@ -269,13 +269,13 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     ## -- Check for ANTs (only very few ANTs commands support --version flag)
     echo "        ANTs Binary  : $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion')"
     if [[ -z $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion') ]]; then 
-        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
+        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport ants"
         reho "        ANTs Version : Binary not found!"
         if [[ -L "$ANTSDIR"  && ! -e "$ANTSDIR" ]]; then
             reho "                     : $ANTSDIR is a link to a nonexisiting folder!"
         fi
     else
-        echo "        ANTs Version : $(antsJointFusion --version)"
+        echo "        ANTs Version : $(antsJointFusion --version | head -1)"
     fi
     echo ""
 

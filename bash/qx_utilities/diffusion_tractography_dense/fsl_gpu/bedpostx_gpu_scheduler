@@ -280,9 +280,6 @@ else
 	if [ $Scheduler == "PBS" ]; then
 		SchedulerOptions="N=bedpostx_preproc_gpu,walltime=2:00:00,nodes=1:ppn=1:cpus=1,mem=10000,q=$queue"
 	fi
-	if [ $Scheduler == "LSF" ]; then
-		SchedulerOptions="J=bedpostx_preproc_gpu,walltime=2:00:00,cores=5,mem=10000,q=$queue"
-	fi
 	
 	splitID=`gmri schedule command="${subjdir}.bedpostX/logs/pre_command.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:${subjdir}.bedpostX/logs/pre_command.output.log|stderr:${subjdir}.bedpostX/logs/pre_command.error.log" workdir="${subjdir}.bedpostX"`		
 	sleep 10
@@ -340,9 +337,6 @@ else
 	if [ $Scheduler == "PBS" ]; then
 		SchedulerOptions="N=bedpostx_gpu,d=${splitID},walltime=2:00:00,nodes=1:ppn=1:cpus=1,mem=20000,q=$queue"
 	fi
-	if [ $Scheduler == "LSF" ]; then
-		SchedulerOptions="J=bedpostx_gpu,w=${splitID},walltime=2:00:00,cores=5,mem=20000,q=$queue"
-	fi
     
     # - Loop through all commands in ${subjdir}.bedpostX/commands.txt
     rm -f ${subjdir}.bedpostX/logs/bedpostx_gpu_command_*.sh
@@ -398,9 +392,6 @@ else
 	fi
 	if [ $Scheduler == "PBS" ]; then
 		SchedulerOptions="N=bedpostx_postproc_gpu,d=${bedpostid},walltime=2:00:00,nodes=1:ppn=1:cpus=1,mem=20000,q=$queue"
-	fi
-	if [ $Scheduler == "LSF" ]; then
-		SchedulerOptions="J=bedpostx_postproc_gpu,w=${bedpostid},walltime=2:00:00,cores=5,mem=20000,q=$queue"
 	fi
 	
 	mergeid=`gmri schedule command="${subjdir}.bedpostX/logs/post_command.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:${subjdir}.bedpostX/logs/bedpostx_postproc_gpu.output.log|stderr:${subjdir}.bedpostX/logs/bedpostx_postproc_gpu.error.log" workdir="${subjdir}.bedpostX"`		

@@ -508,9 +508,11 @@ def getSessionFolders(sinfo, options):
     """
     d = {}
 
-    #!# Add a check and thow an error if options['image_source'] is hcp but d['hcp'] is not set
-
     if options['image_source'] == 'hcp':
+        if "hcp" not in sinfo or not os.path.exists(sinfo['hcp']):
+            print("ERROR: HCP path does not exists, check your parameters and the batch file!")
+            raise
+
         d['s_source'] = sinfo['hcp']
     else:
         d['s_source'] = sinfo['data']
