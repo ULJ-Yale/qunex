@@ -389,61 +389,50 @@ def write_field_dict(output_file, limit):
             if (len(row[2]) <  128):
                 writer.writerow(row)
 
-def get_dicom_fields(folder=".", targetfile="dicomFields.csv", limit="20"):
+def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     """
-    ``get_dicom_fields [folder=.] [targetfile=dicomFields.csv] [limit=20]``
+    ``get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]``
 
     Returns an overview of DICOM fields across all the DICOM files.
 
-    INPUTS
-    ======
+    Parameters:
+        --folder (str, default '.'):
+            The base folder to search for DICOM files. The command will try to
+            locate all valid DICOM files within the specified folder and its
+            subfolders.
+        --targetfile (str, default 'dicom_fields.csv'):
+            The name (and path) of the file to store the information in. 
+        --limit (int, default 20):
+            The maximum number of example values to provide for each of the
+            DICOM fields.
 
-    --folder        The base folder to search for DICOM files. 
-                    The command will try to locate all valid DICOM files
-                    within the specified folder and its subfolders. [.]
-    --targetfile    The name (and path) of the file to store the information
-                    in. [dicomFields.csv]
-    --limit         The maximum number of example values to provide for each of the
-                    DICOM fields. [20]
+    Output files:
+        After running, the command will inspect all the valid DICOM files
+        (including gzip compressed ones) in the specified folder and its 
+        subfolders. It will generate a report file that will list all the DICOM
+        fields found across all the DICOM files. For each of the fields, the
+        command will list example values up to the specified limit. The list
+        will be saved as a comma separated values (csv) file.
 
-    OUTPUTS
-    =======
+        This file can be used to identify the fields that might carry personally
+        identifiable information and therefore need to be processed
+        appropriately.
 
-    After running, the command will inspect all the valid DICOM files (including
-    gzip compressed ones) in the specified folder and its subfolders. It will 
-    generate a report file that will list all the DICOM fields found across all 
-    the DICOM files. For each of the fields, the command will list example values
-    up to the specified limit. The list will be saved as a comma separated values
-    (csv) file.
-
-    This file can be used to identify the fields that might carry personally
-    identifiable information and therefore need to be processed appropriately.
-
-    USE
-    ===
-
-    The command is used to get an overview of DICOM fields across all the DICOM
-    files in the study with example values, with the goal of identifying
-    those fields that might carry personally identifiable information.
-
-    EXAMPLE USE
-    ===========
-    
-    ::
+    Examples:
+        ::
 
         qunex get_dicom_fields
-    
-    
-    ::
+
+        ::
 
         qunex get_dicom_fields \
              --folder=/data/studies/WM/sessions/inbox/MR
-    
-    ::
+
+        ::
 
         qunex get_dicom_fields \
              --folder=/data/studies/WM/sessions/inbox/MR/original \
-             --targetfile=/data/studies/WM/sessions/specs/dicomFields.csv \
+             --targetfile=/data/studies/WM/sessions/specs/dicom_fields.csv \
              --limit=10
     """
 
@@ -476,108 +465,94 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
     ``change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``
 
     Changes all the dicom files in the specified folder according to the
-    directions provided in the `paramfile`.
+    directions provided in the `paramfile`. The command is used to change all
+    the dicom files in the specified folder according to directions provided in
+    the `paramfile`. The values to be archived are saved (appended) to
+    `archivefile` as a comma separated values formatted file. The dicom files
+    can be either changed in place or saved to the specified `outputfolder` and
+    optionally renamed by adding the specified `extension`. 
 
-    INPUTS
-    ======
+    Parameters:
+        --folder (str, default '.'):
+            The base folder to search for DICOM files. The command will try to
+            locate all valid DICOM files within the specified folder and its
+            subfolders.
+        --paramfile (str, default 'deidparam.txt'):
+            The path to the parameter file that specifies what actions to
+            perform on the dicom fields.
+        --archivefile (str, default 'archive.csv'):
+            The path to the file in which values to be archived are to be stored.
+        --outputfolder (str):
+            The optional path to the folder to which the modified dicom files
+            are to be saved. If not specified, the dicom files are changed in
+            place (overwritten).
+        --extension (str):
+            An optional extension to be added to each modified dicom file name.
+            The extension can be applied only when files are copied to the
+            outputfolder.
+        --replacementdate (str):
+            The date to replace all instances of StudyDate in the file. Looks at
+            all DICOM fields with string values, and replaces the substring
+            matching StudyDate with either a provided date, or a randomly
+            generated date.
 
-    --folder            The base folder from which the search for DICOM files 
-                        should start. The command will try to locate all valid 
-                        DICOM files within the specified folder and its 
-                        subfolders. [.]
-    --paramfile         The path to the parameter file that specifies what 
-                        actions to perform on the dicom fields. [deidparam.txt]
-    --archivefile       The path to the file in which values to be archived are 
-                        to be stored. [archive.csv]
-    --outputfolder      The optional path to the folder to which the modified 
-                        dicom files are to be saved. If not specified, the dicom 
-                        files are changed in place (overwritten). []
-    --extension         An optional extension to be added to each modified dicom 
-                        file name. The extension can be applied only when files 
-                        are copied to the `outputfolder`. []
-    --replacementdate   The date to replace all instances of StudyDate in the
-                        file. Looks at all DICOM fields with string values, and
-                        replaces the substring matching StudyDate with either
-                        a provided date, or a randomly generated date. []
+    Notes:
+        Parameter file:
+            Parameter file is a text file that specifies the operations that are
+            to be performed on the fields in the dicom files. The default name
+            for the parameter file is `deidparam.txt`, however any other name
+            can be used. The operations to be performed are specifed one dicom
+            field per line in the format:
 
-    PARAMETER FILE
-    --------------
+            <dicom field>  > <action>[:<parameter>], <action>[:<parameter>]
 
-    Parameter file is a text file that specifies the operations that are to be 
-    performed on the fields in the dicom files. The default name for the 
-    parameter file is `deidparam.txt`, however any other name can be used. The
-    operations to be performed are specifed one dicom field per line in the
-    format:
+            Dicom field is the hexdecimal code of the field, which can be found
+            in the first column of the readDICOMfields output csv. The list of
+            actions is a comma separated list of commands and their optional
+            parameters. The possible actions are:
 
-    <dicom field>  > <action>[:<parameter>], <action>[:<parameter>]
+            - archive (archive the original value in the archive file)
+            - replace (replace the original value with the specified value)
+            - delete (delete the field from the dicom file)
+            
+            If multiple actions are specified, they are carried out in the above
+            order (archive,replace, delete). Lines in the parameter file that
+            start with '#' or do not specify a mapping (i.e. lack '>') are
+            ignored. An example of the spec file would be:
 
-    Dicom field is the hexdecimal code of the field, which can be found in
-    the first column of the readDICOMfields output csv. The list of actions
-    is a comma separated list of commands and their optional parameters. 
-    The possible actions are:
+            ::
 
-    - archive (archive the original value in the archive file)
-    - replace (replace the original value with the specified value)
-    - delete (delete the field from the dicom file)
-    
-    If multiple actions are specified, they are carried out in the above order
-    (archive,replace, delete). Lines in the parameter file that start with '#'
-    or do not specify a mapping 
-    (i.e. lack '>') are ignored.
+                0x80005  > delete
+                0x100010 > delete
+                0x80012  > delete, archive
+                0x180032 > replace:20070101
 
-    Example spec file
-    ~~~~~~~~~~~~~~~~~
+        Parameter file:
+            Date replacement:
+                The date the dicom was recorded is taken from the StudyDate or
+                SeriesDate field. The date found is then replaced either by a
+                randomly generated date or the date specified by the
+                `replacementdate` parameter. Any occurrence ofthe date in any of
+                the other fields in dicom is also replaced by the same randomly
+                generated or specified date. Please note that any other dates 
+                (e.g. participant's birth date) are not automatically replaced.
+                These need to be either deleted or replaced explicitly.
 
-    ::
+        Deidentification effectiveness:
+            Please note the following:
+            1. Only the fields explicitly set to be removed or replaced will
+            be changed. It is the responsibility of the user to make sure that
+            no dicom fields with identifiable information are left unchanged.
+            2. Only valid dicom fields can be accessed and changed using this
+            tool. Any vendor specific metadata that is not stored in regular
+            dicom fields will not be changed. Please make sure that no such
+            information is present in your dicom files.
+            3. Only metadata stored in dicom fields can be processed using this
+            tool. If any information is "burnt in" into the image data itself,
+            it can not be identified and changed using this tool. Please make
+            sure that no such information is present in your dicom files.
 
-        0x80005  > delete
-        0x100010 > delete
-        0x80012  > delete, archive
-        0x180032 > replace:20070101
-
-
-    DATE REPLACEMENT
-    ----------------
-
-    The date the dicom was recorded is taken from the StudyDate or SeriesDate
-    field. The date found is then replaced either by a randomly generated date 
-    or the date specified by the `replacementdate` parameter. Any occurrence of 
-    the date in any of the other fields in dicom is also replaced by the same
-    randomly generated or specified date. Please note that any other dates 
-    (e.g. participant's birth date) are not automatically replaced. These need
-    to be either deleted or replaced explicitly.
-
-
-    DEIDENTIFICATION EFFECTIVENESS
-    ------------------------------
-
-    Please note the following:
-
-    1. Only the fields explicitly set to be removed or replaced will
-       be changed. It is the responsibility of the user to make sure that no
-       dicom fields with identifiable information are left unchanged.
-    2. Only valid dicom fields can be accessed and changed using this tool. Any 
-       vendor specific metadata that is not stored in regular dicom fields will
-       not be changed. Please make sure that no such information is present in 
-       your dicom files.
-    3. Only metadata stored in dicom fields can be processed using this tool.
-       If any information is "burnt in" into the image data itself, it can not
-       be identified and changed using this tool. Please make sure that no
-       such information is present in your dicom files.
-
-    USE
-    ===
-
-    The command is used to change all the dicom files in the specified folder
-    according to directions provided in the `paramfile`. The values to be 
-    archived are saved (appended) to `archivefile` as a comma separated values 
-    formatted file. The dicom files can be either changed in place or saved to 
-    the specified `outputfolder` and optionally renamed by adding the specified
-    `extension`. 
-
-    EXAMPLE USE
-    ===========
-    
+    Examples:
     ::
 
         qunex change_dicom_files \

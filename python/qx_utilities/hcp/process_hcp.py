@@ -1692,7 +1692,7 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
             r += comm.replace("                --", "\n    --")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test file TODO for last subject
+        # -- Test file
         last_session = sessions_list[-1]
         tfile = os.path.join(subject_dir,
                              f"{subject_id}.long.{template}",
@@ -1708,7 +1708,7 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
 
         # -- just checking
         else:
-            passed, report, r, failed = pc.checkRun(tfile, full_test, "HCP Longitudinal FS", r, overwrite=overwrite)
+            passed, report, r, failed = pc.checkRun(tfile, None, "HCP Longitudinal FS", r, overwrite=overwrite)
             if passed is None:
                 r += "\n---> HCP Longitudinal FS can be run"
                 report = "HCP Longitudinal FS can be run"
@@ -4911,7 +4911,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
             # -- Run
             if run and boldok:
                 if options['run'] == "run":
-                    r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                    r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(printbold)
@@ -4920,7 +4920,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = pc.checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r, overwrite=overwrite)
+                    passed, _, r, failed = pc.checkRun(tfile, fullTest, 'single-run HCP ReApplyFix ' + boldtarget, r)
                     if passed is None:
                         r += "\n---> single-run HCP ReApplyFix can be run"
                         report['ready'].append(printbold)
@@ -5074,7 +5074,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options['run'] == "run":
-                    r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(groupname)
@@ -5083,7 +5083,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, r, failed = pc.checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r, overwrite=overwrite)
+                    passed, _, r, failed = pc.checkRun(tfile, fullTest, 'multi-run HCP ReApplyFix ' + groupname, r)
                     if passed is None:
                         r += "\n---> multi-run HCP ReApplyFix can be run"
                         report['ready'].append(groupname)
@@ -5167,7 +5167,7 @@ def executeHCPHandReclassification(sinfo, options, hcp, run, singleFix, boldtarg
                 if os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP HandReclassification', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP HandReclassification', thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
@@ -6547,7 +6547,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             # check mbPCASLhr naming
             asl_file = os.path.join(hcp["mbPCASLhr_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
             if not os.path.exists(asl_file):
-                r += "\n---> ERROR: mbPCASLhr acquistion data not found [%s]" % mbpcasl_file
+                r += "\n---> ERROR: mbPCASLhr acquistion data not found [%s]" % asl_file
                 run = False
 
         # AP and PA fieldmaps for use in distortion correction
