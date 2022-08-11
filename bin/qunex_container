@@ -1000,7 +1000,7 @@ def main(args=None):
                 if not old_sessions_naming:
                     qx_command += '--batchfile="%s" ' % (batchfile)
                 else:
-                    qx_command += '--batchfile="%s" ' % (sessions)
+                    qx_command += '--sessions="%s" ' % (batchfile)
 
             # add sessions to command?
             if i < len(sessionids_array):
