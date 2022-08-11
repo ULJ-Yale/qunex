@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.6
+
+* Fixed a backwards compatibility bug in `qunex_container`.
+
 ## 0.94.5
 
 * Missing `EDDYCUDADIR` was reported erroneously inside the container.
