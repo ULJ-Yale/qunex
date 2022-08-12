@@ -6,6 +6,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.7
+
+* Fixed a bug where `overwrite` was not used with `qunex_container`.
 ## 0.94.6
 
 * Fixed a backwards compatibility bug in `qunex_container`.

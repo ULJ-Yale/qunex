@@ -767,6 +767,7 @@ def main(args=None):
             k, sessionids = arg.split("=", 1)
         elif "overwrite=" in arg:
             k, overwrite = arg.split("=", 1)
+            command += '%s ' % (arg)
         elif "=" in arg:
             k, v = arg.split('=', 1)
             command += '%s="%s" ' % (k, v)
