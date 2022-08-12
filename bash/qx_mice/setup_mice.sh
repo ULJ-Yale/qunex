@@ -103,7 +103,7 @@ fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}
 # ------------------------------------------------------------------------------
 # -- orientation correction
 # ------------------------------------------------------------------------------
-if [ -n $orientation ]; then
+if [[ -n ${orientation} ]]; then
     echo " --> Correcting orientation"
 
     echo " ... Running fslswapdim ${bold}_SM.nii.gz ${orientation} ${bold}_SM.nii.gz"
@@ -144,8 +144,8 @@ echo " --> Removing intermediate files"
 rm ${bold}_DS+orig.BRIK
 rm ${bold}_DS+orig.HEAD
 rm ${bold}_SM*
-rm ${bold}_VI*
 rm *${bold}_VI.m
+
 echo ""
 echo " --> setup_mice successfully completed"
 echo ""
