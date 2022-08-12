@@ -246,7 +246,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         setList   = [e.strip() for e in settings.split(",")]
         scheduler = setList.pop(0)
         setDict   = dict([e.strip().split("=", 1) for e in setList])
-        jobname   = setDict.pop('jobname', "schedule")
+        jobname   = setDict.pop('jobname', "qx_schedule")
         comname   = setDict.pop('comname', "")
         jobnum    = setDict.pop('jobnum', "")
     except:
@@ -302,7 +302,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 sCommand += "#PBS -W depend=%s\n" % (v)
             elif k == 'umask':
                 sCommand += "#PBS -W umask=%s\n" % (v)
-            elif k == 'N' and jobname == 'schedule':
+            elif k == 'N' and jobname == 'qx_schedule':
                 jobname = v
             elif k == 'nodes':
                 sCommand += "#PBS -l nodes=%s\n" % v
@@ -315,7 +315,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
         if (jobnum != ""):
-            jobname = "%s(%s)" % (jobname, jobnum)
+            jobname = "%s_%s" % (jobname, jobnum)
         sCommand += "#PBS -N %s\n" % jobname
 
         if outputs['stdout'] is not None:
@@ -329,7 +329,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     elif scheduler == "SLURM":
         sCommand += "#!/bin/sh\n"
         for key, value in setDict.items():
-            if key in ('J', 'job-name') and jobname == 'schedule':
+            if key in ('J', 'job-name') and jobname == 'qx_schedule':
                 jobname = v
             elif value == "QX_FLAG":
                 sCommand += "#SBATCH --%s\n" % (key.replace('--', ''))
@@ -344,7 +344,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
         if (jobnum != ""):
-            jobname = "%s(%s)" % (jobname, jobnum)
+            jobname = "%s_%s" % (jobname, jobnum)
         sCommand += "#SBATCH --job-name=%s\n" % jobname
 
         if outputs['stdout'] is not None:
@@ -584,7 +584,8 @@ def runThroughScheduler(command, sessions=None, args=[], parsessions=1, logfolde
                 cStr = cBase + ' --sessionids="%s"' % sessionids_array[i]
 
                 # ---- set sheduler settings
-                settings['jobnum'] = str(i)
+                if parjobs > 1:
+                    settings['jobnum'] = str(i)
                 sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
                 exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
