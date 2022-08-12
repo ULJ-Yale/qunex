@@ -125,6 +125,7 @@ for i in "${work_dir}/${bold}_rsfMRI_Standard.fsf"; do
     sed -e 's@OUTPUT@'${melodic_output}'@g' \
     -e 's@ANATFILE@'${melodic_anatfile}'@g' \
     -e 's@VOLUMES@'${volumes}'@g' \
+    -e 's@FSLDIR@'${FSLDIR}'@g' \
     -e 's@DATA@'${work_dir}/${bold}_${bold_suffix}'@g' <$i> ${work_dir}/${bold}_${bold_suffix}.fsf
 done
 
