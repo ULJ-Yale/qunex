@@ -297,9 +297,9 @@ arglist = [
     ['hcp_grayordinatesres',   '2',                                        int,    "Usually 2mm."],
     ['hcp_regname',            'MSMSulc',                                  str,    "What registration is used FS or MSMSulc. FS if none is provided."],
     ['hcp_fs_longitudinal',    '',                                         str,    "Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO]."],
-    ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
+    ['hcp_cifti_tail',         '_Atlas',                                   str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
     ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' folder. '' by default."],
-    ['hcp_nifti_tail',          '',                                        str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
+    ['hcp_nifti_tail',         '',                                         str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
 
     ['# --- hcp_pre_freesurfer options'],
     ['hcp_brainsize',          '150',                                      int,    "Human brain size in mm."],
