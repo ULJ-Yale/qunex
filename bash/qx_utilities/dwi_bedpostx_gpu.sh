@@ -57,7 +57,7 @@ It explicitly assumes the Human Connectome Project folder structure for
 preprocessing and completed diffusion processing. DWI data is expected to
 be in the following folder::
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion<_diffdatasuffix>
 
 Parameters:
     --sessionsfolder (str):
@@ -88,6 +88,9 @@ Parameters:
         Consider gradient nonlinearities ('yes'/'no'). By default set
         automatically. Set to 'yes' if the file grad_dev.nii.gz is present, set
         to 'no' if it is not.
+    --diffdatasuffix (str):
+        Name of the DWI image; e.g. if the data is called
+        <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --overwrite (str, default 'no'):
         Delete prior run for a given session.
     --scheduler (str):
@@ -171,9 +174,6 @@ fi
 
 ########################################## OUTPUTS #########################################
 
-# -- Outputs will be *pconn.nii files located here:
-#       DWIOutput="$sessionsfolder/$session/hcp/$session/T1w/Diffusion/"
-
 # ------------------------------------------------------------------------------
 # -- Check for options
 # ------------------------------------------------------------------------------
@@ -211,6 +211,7 @@ get_options() {
     species=`opts_getopt "--species" $@`
     session=`opts_getopt "--session" $@`
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
+    diffdatasuffix=`opts_getopt "--diffdatasuffix" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then reho "Error: sessions folder"; exit 1; fi
@@ -242,6 +243,7 @@ get_options() {
     echo "     Sample every: ${sample}"
     echo "     Model type: ${model}"
     echo "     Rician flag: ${rician}"
+    echo "     Diffusion data suffix: ${diffdatasuffix}"
     echo "     Overwrite prior run: ${overwrite}"
 
     # Report species if not default
@@ -265,7 +267,12 @@ main() {
         bedpostx_folder=${sessionsfolder}/${session}/NHP/dMRI.bedpostX
     else
         diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
-        bedpostx_folder=${diffusion_folder}.bedpostX
+
+        if [[ -n ${diffdatasuffix} ]]; then
+            diffusion_folder=${diffusion_folder}_${diffdatasuffix}
+        fi
+
+        bedpostx_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX
     fi
 
     # -- Check if overwrite flag was set

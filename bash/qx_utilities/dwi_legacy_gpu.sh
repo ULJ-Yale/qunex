@@ -59,8 +59,6 @@ Parameters:
         <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --overwrite (str):
         Delete prior run for a given session ('yes' | 'no').
-
-Specific parameters:
     --te (float):
         This is the echo time difference of the fieldmap sequence - find this
         out form the operator - defaults are *usually* 2.46ms on SIEMENS.
@@ -386,20 +384,20 @@ main() {
     # STEP 0 - move the unprocessed data
     #########################################
 
-    geho "--- Moving or copying unprocesed data into the Diffusion folder"
+    geho "--- Copying unprocesed data into the Diffusion folder"
     echo ""
     unproc_file="${sessionsfolder}/${session}/hcp/${session}/unprocessed/Diffusion/${session}_${diffdatasuffix}"
     if [ -f "${unproc_file}.bval" ]; then
-        echo "Moving ${unproc_file}.bval"
-        mv "${unproc_file}.bval" "${difffolder}/"
+        echo "Copying ${unproc_file}.bval"
+        cp "${unproc_file}.bval" "${difffolder}/"
     fi
     if [ -f "${unproc_file}.bvec" ]; then
-        echo "Moving ${unproc_file}.bvec"
-        mv "${unproc_file}.bvec" "${difffolder}/"
+        echo "Copying ${unproc_file}.bvec"
+        cp "${unproc_file}.bvec" "${difffolder}/"
     fi
     if [ -f "${unproc_file}.nii.gz" ]; then
-        echo "Moving ${unproc_file}.nii.gz"
-        mv "${unproc_file}.nii.gz" "${difffolder}/"
+        echo "Copying ${unproc_file}.nii.gz"
+        cp "${unproc_file}.nii.gz" "${difffolder}/"
     fi
 
     if [ ${usefieldmap} == "yes" ]; then
@@ -590,7 +588,7 @@ main() {
     geho "Downsampling the $t1wimage, $t1wbrainimage and $t1wimageMask to $diffdata resolution: $diffresext mm ..."
     echo ""
     flirt -in "$t1wimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
-    flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
+    flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
     flirt -in "$t1wimageMask" -ref "$t1wimage" -applyisoxfm "$diffres" -interp nearestneighbour -out "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -v
     flirt -in "$wmsegimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/wmsegimage_"$diffdatasuffix"_"$diffresext" -v    
     fslmaths "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -fillh "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"
@@ -602,11 +600,10 @@ main() {
         applywarp -i "$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
     else
         geho "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
-        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/ownsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
+        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     fi
     echo ""
 
-    # -- Alan edited on 1/16/17 due to poor BET performance
     geho "Getting the first volume of the registered DWI image..."
     echo ""
     fslroi "$t1wdifffolder"/data "$t1wdifffolder"/data_1stframe 0 1
