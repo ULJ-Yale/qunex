@@ -353,7 +353,7 @@ main() {
     # -- Establish global directory paths
     t1wfolder="$sessionsfolder"/"$session"/hcp/"$session"/T1w
     difffolder="$sessionsfolder"/"$session"/hcp/"$session"/Diffusion
-    t1wdifffolder="$sessionsfolder"/"$session"/hcp/"$session"/T1w/Diffusion_"$diffdatasuffix"
+    t1wdifffolder="$t1wfolder"/Diffusion_"$diffdatasuffix"
 
     echo "T1w folder:           $t1wfolder"
     echo "Diffusion folder:     $difffolder"
@@ -658,7 +658,7 @@ main() {
         run_error="yes"
     fi
     if [ -f  "$t1wdifffolder"/bvecs ]; then
-        OutFile="$t1wdifffolder"/_bvecs
+        OutFile="$t1wdifffolder"/bvecs
         geho "DWI bvecs:                    $OutFile"
         echo ""
     else

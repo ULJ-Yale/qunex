@@ -297,8 +297,8 @@ main() {
     if [ -f "${bedpostx_folder}/${check_file}" ]; then
         # -- Set file sizes to check for completion
         minimumfilesize=20000000
-        actualfilesize=`wc -c < ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
-        filecount=`ls ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+        actualfilesize=`wc -c < ${bedpostx_folder}/merged_f1samples.nii.gz` > /dev/null 2>&1
+        filecount=`ls ${bedpostx_folder}/merged_*nii.gz | wc | awk {'print $1'}`
     fi
 
     # -- Then check if run is complete based on file count
@@ -366,10 +366,10 @@ main() {
 
     # -- Report
     geho "--> Running FSL command:"
-    echo "    ${FSL_GPU_SCRIPTS}/bedpostx_gpu_noscheduler ${diffusion_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}"
+    echo "    ${FSL_GPU_SCRIPTS}/bedpostx_gpu ${diffusion_folder}/. ${bedpostx_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}"
 
     # -- Execute
-    ${FSL_GPU_SCRIPTS}/bedpostx_gpu_noscheduler ${diffusion_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
+    ${FSL_GPU_SCRIPTS}/bedpostx_gpu ${diffusion_folder}/. ${bedpostx_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
 
     # -- Perform completion checks
     echo ""
@@ -377,7 +377,7 @@ main() {
     checkCompletion
     if [[ ${RunCompleted} == "yes" ]]; then
         echo ""
-        geho "--> bedpostx completed: ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/"
+        geho "--> bedpostx completed: ${bedpostx_folder}"
         reho "--> bedpostx successfully completed"
         echo ""
         geho "------------------------- Successful completion of work --------------------------------"
@@ -386,7 +386,7 @@ main() {
     else
         echo ""
         reho "--> bedpostx run not found or incomplete for $session. Something went wrong." 
-        reho "    Check output: ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/"
+        reho "    Check output: ${bedpostx_folder}"
         echo ""
         reho "ERROR: bedpostx run did not complete successfully"
         echo ""
