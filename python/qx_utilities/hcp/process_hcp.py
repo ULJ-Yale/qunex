@@ -6783,7 +6783,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             - 'ClassifyTICA',
             - 'CleanData'.
 
-        --hcp_tica_stop_after_step (str, default ''):
+        --hcp_tica_stop_after_step (str, default 'ComputeTICAFeatures'):
             What step to stop processing after, same valid values as for
             hcp_tica_starting_step.
         --hcp_tica_remove_manual_components (str, default ''):
@@ -6992,7 +6992,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 --subject-expected-timepoints="%(timepoints)s" \
                 --num-wishart="%(num_wishart)s" \
                 --low-res="%(low_res)s" \
-                --matlab-run-mode="%(matlabrunmode)s"' % {
+                --matlab-run-mode="%(matlabrunmode)s" \
+                --stop-after-step="%(stopafterstep)s"' % {
                     "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
                     "study_dir"         : study_dir,
                     "subject_list"      : subject_list,
@@ -7006,7 +7007,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     "timepoints"        : timepoints,
                     "num_wishart"       : num_wishart,
                     "low_res"           : options["hcp_lowresmesh"],
-                    "matlabrunmode"     : matlabrunmode
+                    "matlabrunmode"     : matlabrunmode,
+                    "stopafterstep"     : options["hcp_tica_stop_after_step"]
                 }
 
             # -- Optional parameters
@@ -7065,10 +7067,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             # hcp_tica_starting_step
             if options["hcp_tica_starting_step"] is not None:
                 comm += "                    --starting-step=\"%s\"" % options['hcp_tica_starting_step']
-
-            # hcp_tica_stop_after_step
-            if options["hcp_tica_stop_after_step"] is not None:
-                comm += "                    --stop-after-step=\"%s\"" % options['hcp_tica_stop_after_step']
 
             # hcp_tica_remove_manual_components
             if options["hcp_tica_remove_manual_components"] is not None:
