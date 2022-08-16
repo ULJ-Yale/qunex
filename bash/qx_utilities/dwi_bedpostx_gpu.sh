@@ -252,6 +252,46 @@ get_options() {
     fi
 }
 
+
+checkCompletion() {
+    # Set file depending on model specification
+    if [ "$model" == 2 ]; then
+        check_file="mean_d_stdsamples.nii.gz"
+    fi
+    if [ "$model" == 3 ]; then
+        check_file="mean_Rsamples.nii.gz"
+    fi
+
+    # -- Check if the file exists
+    if [ -f "${bedpostx_folder}/${check_file}" ]; then
+        # -- Set file sizes to check for completion
+        minimumfilesize=2000000
+        actualfilesize=`wc -c < ${bedpostx_folder}/merged_f1samples.nii.gz` > /dev/null 2>&1
+        filecount=`ls ${bedpostx_folder}/merged_*nii.gz | wc | awk {'print $1'}`
+    fi
+
+    # -- Then check if run is complete based on file count
+    if [ "$filecount" == 9 ]; then > /dev/null 2>&1
+        echo ""
+        cyaneho " --> $filecount merged samples for $session found."
+        # -- Then check if run is complete based on file size
+        if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+            echo ""
+            cyaneho "--> bedpostx outputs found and completed for $session"
+            cyaneho "    Check prior output logs here: $bedpostx_folder/logs"
+            echo ""
+            echo "-----------------------------------------------------"
+            RunCompleted="yes"
+        else
+            echo ""
+            reho "--> bedpostx outputs missing or incomplete for $session"
+            echo ""
+            reho "----------------------------------------------------"
+            RunCompleted="no"
+        fi
+    fi
+}
+
 ######################################### DO WORK ##########################################
 
 main() {
@@ -284,45 +324,6 @@ main() {
     fi
     echo ""
     geho "--> Checking if bedpostx was completed on $session..."
-    # Set file depending on model specification
-    if [ "$model" == 2 ]; then
-        check_file="mean_d_stdsamples.nii.gz"
-    fi
-    if [ "$model" == 3 ]; then
-        check_file="mean_Rsamples.nii.gz"
-    fi
-
-    checkCompletion() {
-    # -- Check if the file exists
-    if [ -f "${bedpostx_folder}/${check_file}" ]; then
-        # -- Set file sizes to check for completion
-        minimumfilesize=20000000
-        actualfilesize=`wc -c < ${bedpostx_folder}/merged_f1samples.nii.gz` > /dev/null 2>&1
-        filecount=`ls ${bedpostx_folder}/merged_*nii.gz | wc | awk {'print $1'}`
-    fi
-
-    # -- Then check if run is complete based on file count
-    if [ "$filecount" == 9 ]; then > /dev/null 2>&1
-        echo ""
-        cyaneho " --> $filecount merged samples for $session found."
-        # -- Then check if run is complete based on file size
-        if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-            echo ""
-            cyaneho "--> bedpostx outputs found and completed for $session"
-            cyaneho "    Check prior output logs here: $bedpostx_folder/logs"
-            echo ""
-            echo "-----------------------------------------------------"
-            RunCompleted="yes"
-        else
-            echo ""
-            reho "--> bedpostx outputs missing or incomplete for $session"
-            echo ""
-            reho "----------------------------------------------------"
-            RunCompleted="no"
-        fi
-    fi
-    }
-
     checkCompletion
     if [[ ${RunCompleted} == "yes" ]]; then
     exit 0
