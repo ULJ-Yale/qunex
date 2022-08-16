@@ -272,7 +272,7 @@ main() {
             diffusion_folder=${diffusion_folder}_${diffdatasuffix}
         fi
 
-        bedpostx_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX
+        bedpostx_folder=${diffusion_folder}.bedpostX
     fi
 
     # -- Check if overwrite flag was set
@@ -370,6 +370,21 @@ main() {
 
     # -- Execute
     ${FSL_GPU_SCRIPTS}/bedpostx_gpu ${diffusion_folder}/. ${bedpostx_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
+
+    # -- Link and backup if legacy processing
+    if [[ -n ${diffdatasuffix} ]]; then
+        original_bedpostx_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX
+        echo ""
+        geho "--> Linking ${bedpostx_folder} to ${original_bedpostx_folder}"
+
+        # backup the old folder when running legacy
+        if [[ -d ${original_bedpostx_folder} ]]; then
+            mv ${original_bedpostx_folder} ${original_bedpostx_folder}.bkp
+        fi
+
+        # link
+        ln -sf ${bedpostx_folder} ${original_bedpostx_folder}
+    fi
 
     # -- Perform completion checks
     echo ""

@@ -1156,7 +1156,7 @@ runscene_BOLDfc() {
         echo ""
         RemoveScenePath="${HCPFolder}"
         ComRunBoldfc8="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip &> /dev/null "
-        ComRunBoldfc9="cp ${OutPath}/${WorkingSceneFile} ${SessionsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
+        ComRunBoldfc9="cp ${OutPath}/${WorkingSceneFile} ${SessionsFolder}/${CASE}/hcp/${CASE}${HCPSuffix}/"
         ComRunBoldfc10="mkdir -p ${HCPFolder}/qc &> /dev/null"
         ComRunBoldfc11="cp ${BOLDfcPath}/${BOLDfcInput} ${HCPFolder}/qc"
         ComRunBoldfc12="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingSceneFile}"
