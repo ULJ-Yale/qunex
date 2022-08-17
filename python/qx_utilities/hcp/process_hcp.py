@@ -217,7 +217,7 @@ def checkInlineParameterUse(modality, parameter, options):
     return any([e in options['use_sequence_info'] for e in ['all', parameter, '%s:all' % (modality), '%s:%s' % (modality, parameter)]])
 
 
-def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
+def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
     """
     Function that extract the information on the correct gdc file to be used and tests for its presence;
     """
@@ -714,7 +714,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- lookup gdcoeffs file if needed
 
-        gdcfile, r, run = checkGDCoeffFile(options['hcp_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
+        gdcfile, r, run = check_gdc_coeff_file(options['hcp_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # --- see if we have set up to use custom mask
 
@@ -2035,7 +2035,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     run = False
 
         # --- lookup gdcoeffs file if needed
-        gdcfile, r, run = checkGDCoeffFile(options['hcp_dwi_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
+        gdcfile, r, run = check_gdc_coeff_file(options['hcp_dwi_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # -- set echospacing
         dwiinfo = [v for (k, v) in sinfo.items() if k.isdigit() and v['name'] == 'DWI'][0]
@@ -2483,7 +2483,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         # -> lookup gdcoeffs file if needed
 
-        gdcfile, r, run = checkGDCoeffFile(options['hcp_bold_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
+        gdcfile, r, run = check_gdc_coeff_file(options['hcp_bold_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # -> default parameter values
 
@@ -6521,7 +6521,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
 
         # lookup gdcoeffs file
-        gdcfile, r, run = checkGDCoeffFile(options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run)
+        gdcfile, r, run = check_gdc_coeff_file(options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run)
         if gdcfile == "NONE":
             r += "\n---> ERROR: Gradient coefficient file is required!"
             run = False
@@ -6539,26 +6539,66 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: Brain-extracted ACPC-aligned DC-restored structural image not found [%s]" % t1w_brain_file
             run = False
 
-        # mbpcasl_file image
-        # ASL naming
-        asl_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] in ["ASL", "mbPCASLhr"]][0]["filename"]
-        asl_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
-        if not os.path.exists(asl_file):
-            # check mbPCASLhr naming
-            asl_file = os.path.join(hcp["mbPCASLhr_source"], sinfo["id"] + "_" + asl_filename + ".nii.gz")
-            if not os.path.exists(asl_file):
-                r += "\n---> ERROR: mbPCASLhr acquistion data not found [%s]" % asl_file
+        # extract ASL and SE info
+        asl_info = []
+        asl_se_info = []
+        for (k, v) in sinfo.items():
+            if k.isdigit():
+                if v["name"] in ["ASL", "mbPCASLhr"]:
+                    asl_info = v
+                elif v["name"] in ["PCASLhr"]:
+                    asl_se_info.append(v)
+
+        # ASL file
+        if len(asl_info) == 0:
+            r += f"\n---> ERROR: No ASL images found in the batch file!"
+            run = False
+
+        if "filename" in asl_info:
+            asl_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_info["filename"] + ".nii.gz")
+        else:
+            asl_files = glob.glob(os.path.join(hcp['ASL_source'], "*.nii.gz"))
+            if len(asl_files) == 0:
+                r += f"\n---> ERROR: No .nii.gz files found in {hcp['ASL_source']}!"
                 run = False
+            else:
+                asl_file = asl_files[0]
+
+        # file exists?
+        if not os.path.exists(asl_file):
+            r += "\n---> ERROR: ASL acquistion data not found [%s]" % asl_file
+            run = False
 
         # AP and PA fieldmaps for use in distortion correction
-        asl_ap_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] in ["ASL", "PCASLhr"] and v["phenc"] in ["AP", "SE-FM-AP"]][0]["filename"]
-        fmap_ap_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_ap_filename + ".nii.gz")
+        # asl_se_info is populated through the PCASLhr tag
+        if len(asl_se_info) > 0:
+            for se in asl_se_info:
+                if "phenc" in se:
+                    if se["phenc"] in ["AP", "SE-FM-AP"] and "filename" in se:
+                        fmap_ap_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + se["filename"] + ".nii.gz")
+                    elif se["phenc"] in ["PA", "SE-FM-PA"]:
+                        fmap_pa_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + se["filename"] + ".nii.gz")
+
+        # else we need to get the files from se
+        elif "se" in asl_info:
+            senum = asl_info["se"]
+            sefolder = os.path.join(hcp['source'], f"SpinEchoFieldMap{senum}{options['fctail']}")
+            fmap_ap_file = glob.glob(os.path.join(sefolder, "*AP*.nii.gz"))
+            fmap_pa_file = glob.glob(os.path.join(sefolder, "*PA*.nii.gz"))
+            if len(fmap_ap_file) == 0 or len(fmap_pa_file) == 0:
+                r += "\n---> ERROR: SE pair not found in the batch file"
+                run = False
+            else:
+                fmap_ap_file = fmap_ap_file[0]
+                fmap_pa_file = fmap_pa_file[0]
+        else:
+            r += "\n---> ERROR: SE pair not found in the batch file"
+            run = False
+
+        # check
         if not os.path.exists(fmap_ap_file):
             r += "\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file
             run = False
-
-        asl_pa_filename = [v for (k, v) in sinfo.items() if k.isdigit() and v["name"] in ["ASL", "PCASLhr"] and v["phenc"] in ["PA", "SE-FM-PA"]][0]["filename"]
-        fmap_pa_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + asl_pa_filename + ".nii.gz")
         if not os.path.exists(fmap_ap_file):
             r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
             run = False
@@ -6658,8 +6698,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         failed = 1
-    except:
-        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+    except Exception as e:
+        r += f"\nERROR: {e}"
+        r += f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         failed = 1
 
     r += "\n\nHCP ASL Preprocessing %s on %s\n------------------------------------------------------------" % (pc.action("completed", options["run"]), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
