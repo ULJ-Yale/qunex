@@ -3458,7 +3458,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     return {'r': r, 'report': report}
 
 
-def parseICAFixBolds(options, bolds, r, msmall=False):
+def parse_icafix_bolds(options, bolds, r, msmall=False):
     # --- Use hcp_icafix parameter to determine if a single fix or a multi fix should be used
     singleFix = True
 
@@ -3838,7 +3838,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parse_icafix_bolds(options, bolds, r)
 
         # --- Multi threading
         if singleFix:
@@ -4345,7 +4345,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parse_icafix_bolds(options, bolds, r)
         if not parsOK:
             raise ge.CommandFailed("hcp_post_fix", "... invalid input parameters!")
 
@@ -4716,7 +4716,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r)
+        singleFix, icafixBolds, icafixGroups, parsOK, r = parse_icafix_bolds(options, bolds, r)
         if not parsOK:
             raise ge.CommandFailed("hcp_reapply_fix", "... invalid input parameters!")
 
@@ -5210,28 +5210,42 @@ def executeHCPHandReclassification(sinfo, options, hcp, run, singleFix, boldtarg
     return {'r': r, 'report': report}
 
 
-def parseMSMAllBolds(options, bolds, r):
+def parse_msmall_bolds(options, bolds, r):
     # parse the same way as with icafix first
-    singleRun, hcpBolds, icafixGroups, parsOK, r = parseICAFixBolds(options, bolds, r, True)
+    single_run, hcp_bolds, icafix_groups, pars_ok, r = parse_icafix_bolds(options, bolds, r, True)
 
     # extract the first one
-    icafixGroup = icafixGroups[0]
+    icafix_group = icafix_groups[0]
 
     # if more than one group print a WARNING
-    if (len(icafixGroups) > 1):
+    if (len(icafix_groups) > 1):
         # extract the first group
-        r += "\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [%s]!" % icafixGroup["name"]
+        r += f"\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [{icafix_group['name']}]!"
 
     # validate that msmall bolds is a subset of icafixGroups
     if options['hcp_msmall_bolds'] is not None:
-        msmallBolds = options['hcp_msmall_bolds'].split(",")
+        msmall_bolds = options['hcp_msmall_bolds'].split(",")
+        hcp_msmall_bolds = []
+        for mb in msmall_bolds:
+            hmb = mb
+            # if we are not providing filenames as bolds
+            for b in bolds:
+                # are we providing names from batch file or a tag
+                if mb == b[1] or mb == b[2]:
+                    if "filename" in b[3]:
+                        hmb = b[3]["filename"]
+                    else:
+                        hmb = f"BOLD_{b[0]}"
 
-        for b in msmallBolds:
-            if b not in hcpBolds:
-                r += "\n---> ERROR: bold %s defined in hcp_msmall_bolds but not found in the used hcp_icafix_bolds!" % b
-                parsOK = False
+                    if hmb not in hcp_msmall_bolds:
+                        hcp_msmall_bolds.append(hmb)
 
-    return (singleRun, icafixGroup, parsOK, r)
+        for hmb in hcp_msmall_bolds:
+            if hmb not in hcp_bolds:
+                r += f"\n---> ERROR: bold {b} %s used in hcp_msmall_bolds but not found in hcp_icafix_bolds!"
+                pars_ok = False
+
+    return (single_run, icafix_group, pars_ok, r)
 
 
 def hcp_msmall(sinfo, options, overwrite=True, thread=0):
@@ -5402,7 +5416,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse msmall_bolds
-        singleRun, msmallGroup, parsOK, r = parseMSMAllBolds(options, bolds, r)
+        singleRun, msmallGroup, parsOK, r = parse_msmall_bolds(options, bolds, r)
         if not parsOK:
             raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")
 
@@ -5931,7 +5945,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse msmall_bolds
-        singleRun, icafixBolds, dedriftGroups, parsOK, r = parseICAFixBolds(options, bolds, r, True)
+        singleRun, icafixBolds, dedriftGroups, parsOK, r = parse_icafix_bolds(options, bolds, r, True)
 
         if not parsOK:
             raise ge.CommandFailed("hcp_dedrift_and_resample", "... invalid input parameters!")
