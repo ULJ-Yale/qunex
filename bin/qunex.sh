@@ -393,7 +393,7 @@ dwi_legacy_gpu() {
     --usefieldmap=${UseFieldmap} \
     --pedir=${PEdir} \
     --echospacing=${EchoSpacing} \
-    --te=${TE} \
+    --te=${te} \
     --unwarpdir=${UnwarpDir} \
     --diffdatasuffix=${diffdatasuffix} \
     --overwrite=${Overwrite}"
@@ -849,6 +849,7 @@ dwi_bedpostx_gpu() {
     --rician='${Rician}' \
     --gradnonlin='${Gradnonlin}' \
     --overwrite='${Overwrite}' \
+    --diffdatasuffix='${diffdatasuffix}' \
     --species='${Species}'"
     # -- QuNex bash execute function
     bash_call_execute
@@ -1607,7 +1608,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     PEdir=`get_parameters "${setflag}PEdir" $@`
-    TE=`get_parameters "${setflag}TE" $@`
+    te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     Scanner=`get_parameters "${setflag}scanner" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
@@ -2263,7 +2264,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     if [ -z "$diffdatasuffix" ]; then reho "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
 
     if [ ${UseFieldmap} == "yes" ]; then
-        if [ -z "$TE" ]; then reho "ERROR: TE value for Fieldmap missing"; exit 1; fi
+        if [ -z "$te" ]; then reho "ERROR: TE (--te) value for Fieldmap missing"; exit 1; fi
     elif [ ${UseFieldmap} == "no" ]; then
         echo "NOTE: Processing without FieldMap (TE option not needed)"
     fi

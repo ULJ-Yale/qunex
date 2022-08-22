@@ -57,7 +57,7 @@ It explicitly assumes the Human Connectome Project folder structure for
 preprocessing and completed diffusion processing. DWI data is expected to
 be in the following folder::
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+    <study_folder>/<session>/hcp/<session>/T1w/Diffusion<_diffdatasuffix>
 
 Parameters:
     --sessionsfolder (str):
@@ -88,6 +88,9 @@ Parameters:
         Consider gradient nonlinearities ('yes'/'no'). By default set
         automatically. Set to 'yes' if the file grad_dev.nii.gz is present, set
         to 'no' if it is not.
+    --diffdatasuffix (str):
+        Name of the DWI image; e.g. if the data is called
+        <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --overwrite (str, default 'no'):
         Delete prior run for a given session.
     --scheduler (str):
@@ -171,9 +174,6 @@ fi
 
 ########################################## OUTPUTS #########################################
 
-# -- Outputs will be *pconn.nii files located here:
-#       DWIOutput="$sessionsfolder/$session/hcp/$session/T1w/Diffusion/"
-
 # ------------------------------------------------------------------------------
 # -- Check for options
 # ------------------------------------------------------------------------------
@@ -211,6 +211,7 @@ get_options() {
     species=`opts_getopt "--species" $@`
     session=`opts_getopt "--session" $@`
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
+    diffdatasuffix=`opts_getopt "--diffdatasuffix" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then reho "Error: sessions folder"; exit 1; fi
@@ -242,6 +243,7 @@ get_options() {
     echo "     Sample every: ${sample}"
     echo "     Model type: ${model}"
     echo "     Rician flag: ${rician}"
+    echo "     Diffusion data suffix: ${diffdatasuffix}"
     echo "     Overwrite prior run: ${overwrite}"
 
     # Report species if not default
@@ -250,33 +252,8 @@ get_options() {
     fi
 }
 
-######################################### DO WORK ##########################################
 
-main() {
-
-    geho "------------------------- Start of work --------------------------------"
-
-    # -- Get Command Line Options
-    get_options $@
-
-    # -- Establish global directory paths
-    if [[ ${species} == "macaque" ]]; then
-        diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
-        bedpostx_folder=${sessionsfolder}/${session}/NHP/dMRI.bedpostX
-    else
-        diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
-        bedpostx_folder=${diffusion_folder}.bedpostX
-    fi
-
-    # -- Check if overwrite flag was set
-    overwrite="$overwrite"
-    if [ "$overwrite" == "yes" ]; then
-        echo ""
-        reho "--> Removing existing bedpostx run for $session..."
-        rm -rf "$bedpostx_folder" > /dev/null 2>&1
-    fi
-    echo ""
-    geho "--> Checking if bedpostx was completed on $session..."
+checkCompletion() {
     # Set file depending on model specification
     if [ "$model" == 2 ]; then
         check_file="mean_d_stdsamples.nii.gz"
@@ -285,13 +262,12 @@ main() {
         check_file="mean_Rsamples.nii.gz"
     fi
 
-    checkCompletion() {
     # -- Check if the file exists
     if [ -f "${bedpostx_folder}/${check_file}" ]; then
         # -- Set file sizes to check for completion
-        minimumfilesize=20000000
-        actualfilesize=`wc -c < ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
-        filecount=`ls ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+        minimumfilesize=2000000
+        actualfilesize=`wc -c < ${bedpostx_folder}/merged_f1samples.nii.gz` > /dev/null 2>&1
+        filecount=`ls ${bedpostx_folder}/merged_*nii.gz | wc | awk {'print $1'}`
     fi
 
     # -- Then check if run is complete based on file count
@@ -314,8 +290,40 @@ main() {
             RunCompleted="no"
         fi
     fi
-    }
+}
 
+######################################### DO WORK ##########################################
+
+main() {
+
+    geho "------------------------- Start of work --------------------------------"
+
+    # -- Get Command Line Options
+    get_options $@
+
+    # -- Establish global directory paths
+    if [[ ${species} == "macaque" ]]; then
+        diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
+        bedpostx_folder=${sessionsfolder}/${session}/NHP/dMRI.bedpostX
+    else
+        diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
+
+        if [[ -n ${diffdatasuffix} ]]; then
+            diffusion_folder=${diffusion_folder}_${diffdatasuffix}
+        fi
+
+        bedpostx_folder=${diffusion_folder}.bedpostX
+    fi
+
+    # -- Check if overwrite flag was set
+    overwrite="$overwrite"
+    if [ "$overwrite" == "yes" ]; then
+        echo ""
+        reho "--> Removing existing bedpostx run for $session..."
+        rm -rf "$bedpostx_folder" > /dev/null 2>&1
+    fi
+    echo ""
+    geho "--> Checking if bedpostx was completed on $session..."
     checkCompletion
     if [[ ${RunCompleted} == "yes" ]]; then
     exit 0
@@ -359,10 +367,25 @@ main() {
 
     # -- Report
     geho "--> Running FSL command:"
-    echo "    ${FSL_GPU_SCRIPTS}/bedpostx_gpu_noscheduler ${diffusion_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}"
+    echo "    ${FSL_GPU_SCRIPTS}/bedpostx_gpu ${diffusion_folder}/. ${bedpostx_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}"
 
     # -- Execute
-    ${FSL_GPU_SCRIPTS}/bedpostx_gpu_noscheduler ${diffusion_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
+    ${FSL_GPU_SCRIPTS}/bedpostx_gpu ${diffusion_folder}/. ${bedpostx_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
+
+    # -- Link and backup if legacy processing
+    if [[ -n ${diffdatasuffix} ]]; then
+        original_bedpostx_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX
+        echo ""
+        geho "--> Linking ${bedpostx_folder} to ${original_bedpostx_folder}"
+
+        # backup the old folder when running legacy
+        if [[ -d ${original_bedpostx_folder} ]]; then
+            mv ${original_bedpostx_folder} ${original_bedpostx_folder}.bkp
+        fi
+
+        # link
+        ln -sf ${bedpostx_folder} ${original_bedpostx_folder}
+    fi
 
     # -- Perform completion checks
     echo ""
@@ -370,7 +393,7 @@ main() {
     checkCompletion
     if [[ ${RunCompleted} == "yes" ]]; then
         echo ""
-        geho "--> bedpostx completed: ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/"
+        geho "--> bedpostx completed: ${bedpostx_folder}"
         reho "--> bedpostx successfully completed"
         echo ""
         geho "------------------------- Successful completion of work --------------------------------"
@@ -379,7 +402,7 @@ main() {
     else
         echo ""
         reho "--> bedpostx run not found or incomplete for $session. Something went wrong." 
-        reho "    Check output: ${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion.bedpostX/"
+        reho "    Check output: ${bedpostx_folder}"
         echo ""
         reho "ERROR: bedpostx run did not complete successfully"
         echo ""

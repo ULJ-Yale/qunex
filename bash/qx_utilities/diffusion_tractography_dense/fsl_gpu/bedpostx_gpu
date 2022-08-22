@@ -18,7 +18,7 @@
 #
 # ## Description 
 #   
-# This script, bedpostx_gpu_scheduler_clean.sh, implements gpu-based bedpostX
+# This script, bedpostx_gpu.sh, implements gpu-based bedpostX
 # 
 # ## Prerequisite Installed Software
 #
@@ -36,9 +36,9 @@
 
 ## -- if BedpostXGPUDir is not set then set it automatically
 if [[ -z ${BedpostXGPUBin} ]]; then
-	bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_${DEFAULT_CUDA_VERSION}/bedpostx_gpu
+    bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_${DEFAULT_CUDA_VERSION}/bedpostx_gpu
 else
-	bindir=${BedpostXGPUBin}/bedpostx_gpu
+    bindir=${BedpostXGPUBin}/bedpostx_gpu
 fi
 
 Usage() {
@@ -71,7 +71,7 @@ Usage() {
 }
 
 monitor(){
-    cat <<EOM > ${subjdir}.bedpostX/monitor
+    cat <<EOM > ${bedpostxdir}/monitor
 #!/bin/sh
 nparts=0
 if [ $njobs -eq 1 ]; then
@@ -97,7 +97,7 @@ havedad=2
 while [ \$finished -eq 0 ] ; do
     nfin=0
     part=0
-    errorFiles=\`ls ${subjdir}.bedpostX/logs/*.e* 2> /dev/null \`
+    errorFiles=\`ls ${bedpostxdir}/logs/*.e* 2> /dev/null \`
     for errorFile in \$errorFiles
     do
         if [ -s \$errorFile ]; then
@@ -107,7 +107,7 @@ while [ \$finished -eq 0 ] ; do
         fi
     done
     while [ \$part -le \$nparts ];do
-        if [ -e ${subjdir}.bedpostX/logs/monitor/\$part ]; then
+        if [ -e ${bedpostxdir}/logs/monitor/\$part ]; then
             nfin=\$((\$nfin + 1))
         fi
         part=\$((\$part + 1))
@@ -118,7 +118,7 @@ while [ \$finished -eq 0 ] ; do
         echo \$lastprinted parts processed out of \$nparts
         newmessages=\$((\$newmessages - 1))
     done
-    if [ -f ${subjdir}.bedpostX/xfms/eye.mat ] ; then
+    if [ -f ${bedpostxdir}/xfms/eye.mat ] ; then
         finished=1
         echo "All parts processed"
     exit 
@@ -132,7 +132,7 @@ while [ \$finished -eq 0 ] ; do
     sleep 50;
 done
 EOM
-    chmod +x ${subjdir}.bedpostX/monitor
+    chmod +x ${bedpostxdir}/monitor
 }
 
 make_absolute(){
@@ -152,12 +152,18 @@ make_absolute(){
 
 subjdir=`make_absolute $1`
 subjdir=`echo $subjdir | sed 's/\/$/$/g'`
+shift
 
 echo "---------------------------------------------"
 echo "------------ BedpostX GPU Version -----------"
 echo "---------------------------------------------"
 echo ""
 echo subjectdir is $subjdir
+echo ""
+
+bedpostxdir=`make_absolute $1`
+shift
+echo bedpostxdir is $bedpostxdir
 echo ""
 
 #parse option arguments
@@ -172,24 +178,21 @@ model=2
 gflag=0
 other=""
 
-shift
 while [ ! -z "$1" ]
 do
-  case "$1" in
-      -n) nfibres=$2;shift;;
-      -w) fudge=$2;shift;;
-      -b) burnin=$2;shift;;
-      -j) njumps=$2;shift;;
-      -s) sampleevery=$2;shift;;
-      -model) model=$2;shift;;
-      -g) gflag=1;; 
-      *) other=$other" "$1;;
-  esac
-  shift
+    case "$1" in
+        -n) nfibres=$2;shift;;
+        -w) fudge=$2;shift;;
+        -b) burnin=$2;shift;;
+        -j) njumps=$2;shift;;
+        -s) sampleevery=$2;shift;;
+        -model) model=$2;shift;;
+        -g) gflag=1;; 
+        *) other=$other" "$1;;
+    esac
+    shift
 done
-opts="--nf=$nfibres --fudge=$fudge --bi=$burnin --nj=$njumps --se=$sampleevery --model=$model"
-defopts="--cnonlinear"
-opts="$opts $defopts $other"
+opts="--nf=$nfibres --fudge=$fudge --bi=$burnin --nj=$njumps --se=$sampleevery --model=$model --cnonlinear$other"
 
 # -------------------------------------------------------------------------------------------------
 # -- Initial setup stage
@@ -204,19 +207,19 @@ fi
 
 if [ ! -e ${subjdir}/bvecs ]; then
     if [ -e ${subjdir}/bvecs.txt ]; then
-    mv ${subjdir}/bvecs.txt ${subjdir}/bvecs
+        mv ${subjdir}/bvecs.txt ${subjdir}/bvecs
     else
-    echo "${subjdir}/bvecs not found"
-    exit 1
+        echo "${subjdir}/bvecs not found"
+        exit 1
     fi
 fi
 
 if [ ! -e ${subjdir}/bvals ]; then
     if [ -e ${subjdir}/bvals.txt ]; then
-    mv ${subjdir}/bvals.txt ${subjdir}/bvals
+        mv ${subjdir}/bvals.txt ${subjdir}/bvals
     else
-    echo "${subjdir}/bvals not found"
-    exit 1
+        echo "${subjdir}/bvals not found"
+        exit 1
     fi
 fi
 
@@ -237,9 +240,9 @@ if [ `${FSLDIR}/bin/imtest ${subjdir}/nodif_brain_mask` -eq 0 ]; then
     exit 1
 fi
 
-if [ -e ${subjdir}.bedpostX/xfms/eye.mat ]; then
-    echo "${subjdir} has already been processed: ${subjdir}.bedpostX." 
-    echo "Delete or rename ${subjdir}.bedpostX before repeating the process."
+if [ -e ${bedpostxdir}/xfms/eye.mat ]; then
+    echo "${subjdir} has already been processed: ${bedpostxdir}." 
+    echo "Delete or rename ${bedpostxdir} before repeating the process."
     exit 1
 fi
 
@@ -247,22 +250,22 @@ echo ""
 echo "-- Making bedpostx directory structure"
 echo ""
 
-mkdir -p ${subjdir}.bedpostX/
-mkdir -p ${subjdir}.bedpostX/diff_parts
-mkdir -p ${subjdir}.bedpostX/logs
-mkdir -p ${subjdir}.bedpostX/logs/logs_gpu
-mkdir -p ${subjdir}.bedpostX/logs/monitor
-rm -f ${subjdir}.bedpostX/logs/monitor/*
-mkdir -p ${subjdir}.bedpostX/xfms
+mkdir -p ${bedpostxdir}/
+mkdir -p ${bedpostxdir}/diff_parts
+mkdir -p ${bedpostxdir}/logs
+mkdir -p ${bedpostxdir}/logs/logs_gpu
+mkdir -p ${bedpostxdir}/logs/monitor
+rm -f ${bedpostxdir}/logs/monitor/*
+mkdir -p ${bedpostxdir}/xfms
 
 echo ""
 echo "-- Copying files to bedpostx directory"
 echo ""
 
-cp ${subjdir}/bvecs ${subjdir}/bvals ${subjdir}.bedpostX
-${FSLDIR}/bin/imcp ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX
+cp ${subjdir}/bvecs ${subjdir}/bvals ${bedpostxdir}
+${FSLDIR}/bin/imcp ${subjdir}/nodif_brain_mask ${bedpostxdir}
 if [ `${FSLDIR}/bin/imtest ${subjdir}/nodif` = 1 ] ; then
-    ${FSLDIR}/bin/fslmaths ${subjdir}/nodif -mas ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX/nodif_brain
+    ${FSLDIR}/bin/fslmaths ${subjdir}/nodif -mas ${subjdir}/nodif_brain_mask ${bedpostxdir}/nodif_brain
 fi
 
 # -------------------------------------------------------------------------------------------------
@@ -275,14 +278,13 @@ echo "-- Pre-processing stage"
 echo ""
 
 if [ ${gflag} -eq 1 ]; then
-    pre_command="$bindir/bin/split_parts_gpu ${subjdir}/data ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX/bvals ${subjdir}.bedpostX/bvecs ${subjdir}/grad_dev 1 $njobs ${subjdir}.bedpostX"
+    pre_command="$bindir/bin/split_parts_gpu ${subjdir}/data ${subjdir}/nodif_brain_mask ${bedpostxdir}/bvals ${bedpostxdir}/bvecs ${subjdir}/grad_dev 1 $njobs ${bedpostxdir}"
 else
-    pre_command="$bindir/bin/split_parts_gpu ${subjdir}/data ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX/bvals ${subjdir}.bedpostX/bvecs NULL 0 $njobs ${subjdir}.bedpostX"
+    pre_command="$bindir/bin/split_parts_gpu ${subjdir}/data ${subjdir}/nodif_brain_mask ${bedpostxdir}/bvals ${bedpostxdir}/bvecs NULL 0 $njobs ${bedpostxdir}"
 fi
+$pre_command
 
-splitID=`$pre_command`                             ########## <<< PRECOMMAND <<< #########
-
-nvox=`${FSLDIR}/bin/fslstats $subjdir.bedpostX/nodif_brain_mask -V  | cut -d ' ' -f1 `
+nvox=`${FSLDIR}/bin/fslstats ${bedpostxdir}/nodif_brain_mask -V  | cut -d ' ' -f1 `
 
 # -------------------------------------------------------------------------------------------------
 # -- bedpostx_gpu setup stage
@@ -292,27 +294,27 @@ echo ""
 echo "-- Queuing parallel processing stage"
 echo ""
 
-[ -f ${subjdir}.bedpostX/commands.txt ] && rm ${subjdir}.bedpostX/commands.txt
+[ -f ${bedpostxdir}/commands.txt ] && rm ${bedpostxdir}/commands.txt
 
 monitor
 if [ "x$SGE_ROOT" = "x" ]; then
-    ${subjdir}.bedpostX/monitor&
+    ${bedpostxdir}/monitor&
 fi
 
 part=0
 while [ $part -lt $njobs ]
 do
-        partzp=`$FSLDIR/bin/zeropad $part 4`
+    partzp=`$FSLDIR/bin/zeropad $part 4`
     
     if [ ${gflag} -eq 1 ]; then
-        gopts="$opts --gradnonlin=${subjdir}.bedpostX/grad_dev_$part"
+        gopts="$opts --gradnonlin=${bedpostxdir}/grad_dev_$part"
     else
         gopts=$opts
-    fi    
+    fi
 
-    echo "${bindir}/bin/xfibres_gpu --data=${subjdir}.bedpostX/data_$part --mask=$subjdir.bedpostX/nodif_brain_mask -b ${subjdir}.bedpostX/bvals -r ${subjdir}.bedpostX/bvecs --forcedir --logdir=$subjdir.bedpostX/diff_parts/data_part_$partzp $gopts ${subjdir} $part $njobs $nvox" >> ${subjdir}.bedpostX/commands.txt
+    echo "${bindir}/bin/xfibres_gpu --data=${bedpostxdir}/data_$part --mask=${bedpostxdir}/nodif_brain_mask -b ${bedpostxdir}/bvals -r ${bedpostxdir}/bvecs --forcedir --logdir=${bedpostxdir}/diff_parts/data_part_$partzp $gopts ${subjdir} $part $njobs $nvox" >> ${bedpostxdir}/commands.txt
     
-        part=$(($part + 1))
+    part=$(($part + 1))
 done
 
 # -------------------------------------------------------------------------------------------------
@@ -320,8 +322,8 @@ done
 # -------------------------------------------------------------------------------------------------
 
 # -- Run Locally
-chmod +x ${subjdir}.bedpostX/commands.txt
-. ${subjdir}.bedpostX/commands.txt                 ########## <<< XFIBERS <<< ############ 
+chmod +x ${bedpostxdir}/commands.txt
+. ${bedpostxdir}/commands.txt
 
 # -------------------------------------------------------------------------------------------------
 # -- post processing stage
@@ -331,13 +333,67 @@ echo ""
 echo "-- Queuing post processing stage"
 echo ""
 
-post_command="${FSL_GPU_SCRIPTS}/bedpostx_postproc_gpu.sh --data=${subjdir}/data --mask=$subjdir.bedpostX/nodif_brain_mask -b ${subjdir}.bedpostX/bvals -r ${subjdir}.bedpostX/bvecs --forcedir --logdir=$subjdir.bedpostX/diff_parts $gopts $nvox $njobs ${subjdir} ${FSLDIR}"
+echo "-- Merging parts"
+echo ""
 
-# -- Run Locally
-mergeid=`$post_command`                            ########## <<< POSTCOMMAND <<< ########
+merge_parts_gpu --data=${subjdir}/data --mask=${bedpostxdir}/nodif_brain_mask -b ${bedpostxdir}/bvals -r ${bedpostxdir}/bvecs --forcedir --logdir=${bedpostxdir}/diff_parts $gopts $nvox $njobs ${subjdir}
+
+fib=1
+while [ $fib -le $nfibres ]
+do
+    ${FSLDIR}/bin/fslmaths ${bedpostxdir}/merged_th${fib}samples -Tmean ${bedpostxdir}/mean_th${fib}samples
+    ${FSLDIR}/bin/fslmaths ${bedpostxdir}/merged_ph${fib}samples -Tmean ${bedpostxdir}/mean_ph${fib}samples
+    ${FSLDIR}/bin/fslmaths ${bedpostxdir}/merged_f${fib}samples -Tmean ${bedpostxdir}/mean_f${fib}samples
+
+    ${FSLDIR}/bin/make_dyadic_vectors ${bedpostxdir}/merged_th${fib}samples ${bedpostxdir}/merged_ph${fib}samples ${subjdir}/nodif_brain_mask ${bedpostxdir}/dyads${fib}
+    if [ $fib -ge 2 ];then
+    ${FSLDIR}/bin/maskdyads ${bedpostxdir}/dyads${fib} ${bedpostxdir}/mean_f${fib}samples
+    ${FSLDIR}/bin/fslmaths ${bedpostxdir}/mean_f${fib}samples -div ${bedpostxdir}/mean_f1samples ${bedpostxdir}/mean_f${fib}_f1samples
+    ${FSLDIR}/bin/fslmaths ${bedpostxdir}/dyads${fib}_thr0.05 -mul ${bedpostxdir}/mean_f${fib}_f1samples ${bedpostxdir}/dyads${fib}_thr0.05_modf${fib}
+    ${FSLDIR}/bin/imrm ${bedpostxdir}/mean_f${fib}_f1samples
+    fi
+
+    fib=$(($fib + 1))
+done
+
+if [ `${FSLDIR}/bin/imtest ${bedpostxdir}/mean_f1samples` -eq 1 ]; then
+    ${FSLDIR}/bin/fslmaths ${bedpostxdir}/mean_f1samples -mul 0 ${bedpostxdir}/mean_fsumsamples
+    fib=1
+    while [ $fib -le $nfibres ]
+    do
+      ${FSLDIR}/bin/fslmaths ${bedpostxdir}/mean_fsumsamples -add ${bedpostxdir}/mean_f${fib}samples ${bedpostxdir}/mean_fsumsamples
+      fib=$(($fib + 1))
+    done
+fi
+
+echo ""
+echo "-- Removing intermediate files"
+echo ""
+
+if [ `${FSLDIR}/bin/imtest ${bedpostxdir}/merged_th1samples` -eq 1 ];then
+    if [ `${FSLDIR}/bin/imtest ${bedpostxdir}/merged_ph1samples` -eq 1 ];then
+        if [ `${FSLDIR}/bin/imtest ${bedpostxdir}/merged_f1samples` -eq 1 ];then
+            rm -rf ${bedpostxdir}/diff_parts
+            rm -rf ${bedpostxdir}/data*
+            rm -rf ${bedpostxdir}/grad_dev*
+        fi
+    fi
+fi
+
+echo ""
+echo "-- Creating identity xfm"
+echo ""
+
+xfmdir=${bedpostxdir}/xfms
+echo 1 0 0 0 > ${xfmdir}/eye.mat
+echo 0 1 0 0 >> ${xfmdir}/eye.mat
+echo 0 0 1 0 >> ${xfmdir}/eye.mat
+echo 0 0 0 1 >> ${xfmdir}/eye.mat
 
 # -------------------------------------------------------------------------------------------------
 # -- Finish things up
 # -------------------------------------------------------------------------------------------------
 
-echo $mergeid > ${subjdir}.bedpostX/logs/postproc_ID
+echo ""
+echo "-- Finished bedpostx_gpu"
+echo ""

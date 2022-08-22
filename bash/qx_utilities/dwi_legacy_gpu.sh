@@ -59,8 +59,6 @@ Parameters:
         <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
     --overwrite (str):
         Delete prior run for a given session ('yes' | 'no').
-
-Specific parameters:
     --te (float):
         This is the echo time difference of the fieldmap sequence - find this
         out form the operator - defaults are *usually* 2.46ms on SIEMENS.
@@ -355,7 +353,7 @@ main() {
     # -- Establish global directory paths
     t1wfolder="$sessionsfolder"/"$session"/hcp/"$session"/T1w
     difffolder="$sessionsfolder"/"$session"/hcp/"$session"/Diffusion
-    t1wdifffolder="$sessionsfolder"/"$session"/hcp/"$session"/T1w/Diffusion_"$diffdatasuffix"
+    t1wdifffolder="$t1wfolder"/Diffusion_"$diffdatasuffix"
 
     echo "T1w folder:           $t1wfolder"
     echo "Diffusion folder:     $difffolder"
@@ -386,20 +384,20 @@ main() {
     # STEP 0 - move the unprocessed data
     #########################################
 
-    geho "--- Moving or copying unprocesed data into the Diffusion folder"
+    geho "--- Copying unprocesed data into the Diffusion folder"
     echo ""
     unproc_file="${sessionsfolder}/${session}/hcp/${session}/unprocessed/Diffusion/${session}_${diffdatasuffix}"
     if [ -f "${unproc_file}.bval" ]; then
-        echo "Moving ${unproc_file}.bval"
-        mv "${unproc_file}.bval" "${difffolder}/"
+        echo "Copying ${unproc_file}.bval"
+        cp "${unproc_file}.bval" "${difffolder}/"
     fi
     if [ -f "${unproc_file}.bvec" ]; then
-        echo "Moving ${unproc_file}.bvec"
-        mv "${unproc_file}.bvec" "${difffolder}/"
+        echo "Copying ${unproc_file}.bvec"
+        cp "${unproc_file}.bvec" "${difffolder}/"
     fi
     if [ -f "${unproc_file}.nii.gz" ]; then
-        echo "Moving ${unproc_file}.nii.gz"
-        mv "${unproc_file}.nii.gz" "${difffolder}/"
+        echo "Copying ${unproc_file}.nii.gz"
+        cp "${unproc_file}.nii.gz" "${difffolder}/"
     fi
 
     if [ ${usefieldmap} == "yes" ]; then
@@ -497,12 +495,12 @@ main() {
         t1wimage="$t1wfolder"/T1w_acpc_dc_restore
         t1wbrainimage="$t1wfolder"/T1w_acpc_dc_restore_brain
         wmsegimage="$t1wfolder"/T1w_acpc_dc_restore_brain_pve_2
-        t1wimageMask="$t1wfolder"/T1w_acpc_brain_mask
+        t1wimagemask="$t1wfolder"/T1w_acpc_brain_mask
         geho ""
         geho "--> T1w Data:             $t1wimage"
         geho "--> T1w BET+FAST Data:    $t1wbrainimage"
         geho "--> WM Segment FAST Data: $wmsegimage"
-        geho "--> T1w Brain Mask Data:  $t1wimageMask"
+        geho "--> T1w Brain Mask Data:  $t1wimagemask"
         echo ""
     else
         geho "PreFreeSurfer data not found. Using raw ${session}_strc_T1w_MPR1.nii.gz as input..."
@@ -525,12 +523,12 @@ main() {
         t1wimage="$t1wfolder"/"$session"_strc_T1w_MPR1
         t1wbrainimage="$t1wdifffolder"/"$session"_strc_T1w_MPR1_brain_restore
         wmsegimage="$t1wdifffolder"/"$session"_strc_T1w_MPR1_brain_pve_2
-        t1wimageMask="$t1wfolder"/"$session"_strc_T1w_MPR1_brain_mask
+        t1wimagemask="$t1wfolder"/"$session"_strc_T1w_MPR1_brain_mask
         geho ""
         geho "--> T1w data:             $t1wimage"
         geho "--> T1w BET+FAST data:    $t1wbrainimage"
         geho "--> WM segment FAST data: $wmsegimage"
-        geho "--> T1w brain mask data:  $t1wimageMask"
+        geho "--> T1w brain mask data:  $t1wimagemask"
         echo ""
     fi
 
@@ -552,9 +550,6 @@ main() {
     geho "${eddy_cuda} --imain=${difffolder}/${diffdata} --mask=${difffolder}/${diffdatasuffix}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/${diffdatasuffix}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/${diffdatasuffix}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/${diffdatasuffix}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v"
     echo ""
     ${eddy_cuda} --imain=${difffolder}/${diffdata} --mask=${difffolder}/${diffdatasuffix}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/${diffdatasuffix}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/${diffdatasuffix}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/${diffdatasuffix}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
-
-    # copy nodif_brain_mask to outputs folder
-    cp "${difffolder}/${diffdatasuffix}/rawdata/${diffdata}_nodif_brain_mask.nii.gz" "${t1wdifffolder}/nodif_brain_mask.nii.gz"
 
     ############################################
     # STEP 4 - Run epi_reg w/fieldmap correction
@@ -587,26 +582,25 @@ main() {
     # -- First create a downsampled T1w image to use a target
     diffres=`fslval "$difffolder"/"$diffdata" pixdim1`
     diffresext=`echo $diffres | cut -c1-3`
-    geho "Downsampling the $t1wimage, $t1wbrainimage and $t1wimageMask to $diffdata resolution: $diffresext mm ..."
+    geho "Downsampling the $t1wimage, $t1wbrainimage and $t1wimagemask to $diffdata resolution: $diffresext mm ..."
     echo ""
-    flirt -in "$t1wimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
-    flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
-    flirt -in "$t1wimageMask" -ref "$t1wimage" -applyisoxfm "$diffres" -interp nearestneighbour -out "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -v
-    flirt -in "$wmsegimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/wmsegimage_"$diffdatasuffix"_"$diffresext" -v    
-    fslmaths "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -fillh "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"
+    flirt -in "$t1wimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
+    flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/T1w_brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" -v
+    flirt -in "$t1wimagemask" -ref "$t1wimage" -applyisoxfm "$diffres" -interp nearestneighbour -out "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -v
+    flirt -in "$wmsegimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/T1w_wmsegimage_"$diffdatasuffix"_"$diffresext" -v
+    fslmaths "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -fillh "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"
     echo ""
 
     # -- Registers the DWI data to T1w space
     if [ ${usefieldmap} == "yes" ]; then
         geho "Applying the warp for $diffdata to T1w space with fieldmap specification..."; echo ""
-        applywarp -i "$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
+        applywarp -i "$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
     else
         geho "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
-        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/ownsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
+        epi_reg --epi="$difffolder"/"$diffdatasuffix"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext" --t1brain="$t1wdifffolder"/T1w_brain_downsampled2diff_"$diffdatasuffix"_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/T1w_wmsegimage_"$diffdatasuffix"_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     fi
     echo ""
 
-    # -- Alan edited on 1/16/17 due to poor BET performance
     geho "Getting the first volume of the registered DWI image..."
     echo ""
     fslroi "$t1wdifffolder"/data "$t1wdifffolder"/data_1stframe 0 1
@@ -615,11 +609,11 @@ main() {
     bet "$t1wdifffolder"/data_1stframe "$t1wdifffolder"/data_1stframe -m -f 0.35 -v
 
     echo ""
-    geho "Running fslmaths to brain-mask $diffdata using the down-sampled $t1wimageMask..."
-    fslmaths "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"_masked_with_DWI1stframe
-    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" "$t1wdifffolder"/data_brain_masked_with_T1.nii.gz 
+    geho "Running fslmaths to brain-mask $diffdata using the down-sampled $t1wimagemask..."
+    fslmaths "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"_masked_with_DWI1stframe
+    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}" "$t1wdifffolder"/data_brain_masked_with_T1.nii.gz 
     fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/data_brain_masked_with_DWI.nii.gz 
-    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"_masked_with_DWI1stframe "$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz 
+    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}"_masked_with_DWI1stframe "$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz 
 
     echo ""
     # -- Aligns the BVECS and BVALS using HCP 
@@ -628,6 +622,9 @@ main() {
     $HCPPIPEDIR_Global/Rotate_bvecs.sh "$difffolder"/"$diffdata".bvec "$difffolder"/"$diffdatasuffix"/reg/"$diffdata"_nodif2T1.mat "$t1wdifffolder"/bvecs
     cp "$difffolder"/"$diffdata".bval "$t1wdifffolder"/bvals
     echo ""
+
+    # copy the T1w brain mask
+    cp "${t1wdifffolder}/T1w_brain_mask_downsampled2diff_${diffdatasuffix}_${diffresext}.nii.gz" $t1wdifffolder/nodif_brain_mask.nii.gz
 
     # -- Perform completion checks
     unset run_error
@@ -661,7 +658,7 @@ main() {
         run_error="yes"
     fi
     if [ -f  "$t1wdifffolder"/bvecs ]; then
-        OutFile="$t1wdifffolder"/_bvecs
+        OutFile="$t1wdifffolder"/bvecs
         geho "DWI bvecs:                    $OutFile"
         echo ""
     else
@@ -678,16 +675,6 @@ main() {
         echo ""
         run_error="yes"
     fi
-    if [ -f  "$t1wdifffolder"/nodif_brain_mask.nii.gz ]; then
-        OutFile="$t1wdifffolder"/nodif_brain_mask.nii.gz
-        geho "nodif_brain_mask:              $OutFile"
-        echo ""
-    else
-        reho "nodif_brain_mask in $t1wdifffolder missing. Something went wrong."
-        echo ""
-        run_error="yes"
-    fi
-
     if [[ -z ${run_error} ]]; then 
         echo ""
         geho "--- DWI preprocessing successfully completed"
@@ -700,7 +687,6 @@ main() {
         echo ""
         exit 1
     fi
-
 }
 
 ######################################### END OF WORK ##########################################

@@ -89,6 +89,11 @@ fi
 
 echo ""
 
+# go to work dir and set user - required by feat
+pushd ${work_dir}
+if [[ -z $USER ]]; then
+    export USER=`whoami`
+fi
 
 # ------------------------------------------------------------------------------
 # -- BIAS FIELD CORRECTION
@@ -213,6 +218,10 @@ rm ${work_dir}/${bold}_${bold_suffix}.fsf
 rm ${work_dir}/${bold}*_BP+orig.BRIK
 rm ${work_dir}/${bold}*_BP+orig.HEAD
 rm ${work_dir}/${bold}*_BP.nii.gz
+
+# go back to start dir
+popd
+
 echo ""
 echo " --> preprocess_mice successfully completed"
 echo ""
