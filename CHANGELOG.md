@@ -5,9 +5,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 # Change Log
+
 ## 0.94.8
 
 * BedpostX support for `dwi_legacy_gpu`.
+* Improved parsing of BOLDs in the `hcp_msmall` command.
 
 ## 0.94.7
 
