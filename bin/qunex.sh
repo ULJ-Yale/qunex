@@ -85,7 +85,6 @@ show_splash() {
     geho "               \\___\\_\\  \\____| | | |_| \\_|  \\___| /_/\\_\\"
     geho "                               |_|                      "
     geho ""
-    geho ""
     geho "                              $QuNexVer"
     geho ""
     geho ""
