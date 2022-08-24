@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.9
+
+* Updated the version of HCP Pipelines.
+
 ## 0.94.8
 
 * BedpostX support for `dwi_legacy_gpu`.
