@@ -144,7 +144,6 @@ def getHCPPaths(sinfo, options):
         d['T1w'] = 'NONE'
 
     # --- T2w related paths
-
     if options['hcp_t2'] == 'NONE':
         d['T2w'] = 'NONE'
     else:
@@ -160,7 +159,7 @@ def getHCPPaths(sinfo, options):
 
     # --- Fieldmap related paths
     d['fieldmap'] = {}
-    if options['hcp_avgrdcmethod'] in ['SiemensFieldMap', 'PhilipsFieldMap'] or options['hcp_bold_dcmethod'] in ['SiemensFieldMap', 'PhilipsFieldMap']:
+    if options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap', 'PhilipsFieldMap'] or options['hcp_bold_dcmethod'] in ['SiemensFieldMap', 'PhilipsFieldMap']:
         fmapmag = glob.glob(os.path.join(d['source'], 'FieldMap*' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
         for imagepath in fmapmag:
             fmnum = re.search(r'(?<=FieldMap)[0-9]{1,2}',imagepath)
@@ -184,7 +183,6 @@ def getHCPPaths(sinfo, options):
                 d['fieldmap'].update({fmnum: {'GE': imagepath}})
 
     # --- default check files
-
     for pipe, default in [('hcp_prefs_check',     'check_PreFreeSurfer.txt'),
                           ('hcp_fs_check',        'check_FreeSurfer.txt'),
                           ('hcp_postfs_check',    'check_PostFreeSurfer.txt'),
@@ -223,7 +221,6 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
     """
 
     if gdcstring not in ['', 'NONE']:
-
         if any([e in gdcstring for e in ['|', 'default']]):
             try:
                 try:
@@ -538,7 +535,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
-
         if 'hcp' not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
@@ -583,7 +579,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     run = False
 
         # --- do we need spinecho images
-
         sepos       = ''
         seneg       = ''
         topupconfig = ''
