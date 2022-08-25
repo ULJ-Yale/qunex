@@ -2053,8 +2053,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             identified. The possible values are:
 
             - 'no'  ... report and continue w/o additional checks
-            - 'any' ... continue if any packages are ready to process report
-                        error otherwise.
+            - 'any' ... continue if any packages are ready to process report error otherwise.
 
         --pattern (str, default '(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)'):
             The regex pattern to use to find the packages and to extract the
