@@ -118,11 +118,6 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
             do.append(subj)
         print("")
 
-    s = input("\n===> Do we process the listed sessions? [y/n]: ")
-    if s != "y":
-        print("===> Aborting processing\n\n")
-        return
-
     for s in do:
         try:
             run_nil(s, overwrite, sourcefile)

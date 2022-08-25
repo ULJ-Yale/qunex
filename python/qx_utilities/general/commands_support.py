@@ -253,8 +253,11 @@ deprecated_values = {
         'standard': 'automated'
     },
     'hcp_folderstructure': {'initial': 'hcpya'},
-    'gzip': {'yes': 'file'}
+    'gzip': {'yes': 'folder', 'ask': 'folder'},
+    'clean': {'ask': 'no'},
+    'unzip': {'ask': 'yes'}
 }
+
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 
 # they were not specified and therefore have value None, and in those cases use values from

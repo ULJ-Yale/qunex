@@ -509,18 +509,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         targetfile = os.path.join(os.path.dirname(sessionsfolder), 'processing', 'batch.txt')
 
     if os.path.exists(targetfile):
-        if overwrite == 'ask':
-            print("WARNING: target file %s already exists!" % (os.path.abspath(targetfile)))
-            s = input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
-            if s == 'o':
-                print("         Overwriting exisiting file.")
-                overwrite = 'yes'
-            elif s == 'a':
-                print("         Appending to exisiting file.")
-                overwrite = 'append'
-            else:
-                raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
-        elif overwrite == 'yes':
+        if overwrite == 'yes':
             print("WARNING: target file %s already exists!" % (os.path.abspath(targetfile)))
             print("         Overwriting exisiting file.")
         elif overwrite == 'append':
@@ -935,17 +924,7 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
 
     if os.path.exists(listfile):
         print("WARNING: Target list file %s already exists!" % (os.path.abspath(listfile)))
-        if overwrite == 'ask':
-            s = input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
-            if s == 'o':
-                print("         Overwriting exisiting file.")
-                overwrite = 'yes'
-            elif s == 'a':
-                print("         Appending to exisiting file.")
-                overwrite = 'append'
-            else:
-                raise ge.CommandFailed("create_list", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
-        elif overwrite == 'yes':
+        if overwrite == 'yes':
             print("         Overwriting the exisiting file.")
         elif overwrite == 'append':
             print("         Appending to the exisiting file.")
@@ -1319,15 +1298,7 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
 
         if os.path.exists(concfile):
             print("     WARNING: Conc file %s already exists!" % (os.path.abspath(concfile)))
-            if overwrite == 'ask':
-                s = input("              Do you want to overwrite it (o) or skip (s) creating this file? [o/s]: ")
-                if s == 'o':
-                    print("              Overwriting exisiting file.")
-                    overwrite = 'yes'
-                else:
-                    print("              Skipping.")
-                    continue
-            elif overwrite == 'yes':
+            if overwrite == 'yes':
                 print("              Overwriting the exisiting file.")
             elif overwrite == 'no':
                 print("              Skipping this conc file.")
