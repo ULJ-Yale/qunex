@@ -1077,7 +1077,7 @@ def main(args=None):
 
                 container_command +=  "%s bash %s" % (conimage, script_path)
             else:
-                containerCommand = "docker run %s %s bash %s" % (dockeropt, conimage, script_path)
+                container_command = "docker run %s %s bash %s" % (dockeropt, conimage, script_path)
 
             if scheduler:
                 schedule(command=container_command, scheduler_name=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
