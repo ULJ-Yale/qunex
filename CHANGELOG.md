@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.10
+
+* Removed some warnings from the MATLAB code.
+
 ## 0.94.9
 
 * Updated the version of HCP Pipelines.
