@@ -630,8 +630,8 @@ main() {
     unset run_error
     geho "--- Checking outputs..."
     echo ""
-    if [ -f "$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz ]; then
-        OutFile="$t1wdifffolder"/downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz
+    if [ -f "$t1wdifffolder"/T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz ]; then
+        OutFile="$t1wdifffolder"/T1w_downsampled2diff_"$diffdatasuffix"_"$diffresext".nii.gz
         geho "T1w data in DWI resolution:   $OutFile"
         echo ""
     else
