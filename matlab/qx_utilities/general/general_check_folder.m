@@ -8,10 +8,13 @@ function [ok] = general_check_folder(filename, description, create, v)
 %   Parameters:
 %       --filename (str):
 %           The path to the folder to check for.
+%
 %       --description (str, default 'a folder'):
 %           The description for the folder.
+%
 %       --create (bool, default true):
 %           Whether to create a folder if it does not exist.
+%
 %       --v (bool, default true):
 %           Whether to notify of results.
 %

@@ -40,25 +40,34 @@ Warning:
 Parameters:
     --sessionsfolder (str, default '.'):
         Path to study data folder.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --scanner (str):
         Name of scanner manufacturer ('siemens' or 'ge' supported).
+
     --echospacing (str):
         EPI Echo Spacing for data [in msec]; e.g. 0.69
+
     --pedir (int):
         Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior.
+
     --unwarpdir (str):
         Direction for EPI image unwarping; e.g. 'x' or 'x-' for LR/RL, 'y' or
         'y-' for AP/PA; may been to try out both -/+ combinations.
+
     --usefieldmap (str):
         Whether to use the standard field map ('yes' | 'no'). If set to <yes>
         then the parameter --te becomes mandatory.
+
     --diffdatasuffix (str):
         Name of the DWI image; e.g. if the data is called
         <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
+
     --overwrite (str):
         Delete prior run for a given session ('yes' | 'no').
+
     --te (float):
         This is the echo time difference of the fieldmap sequence - find this
         out form the operator - defaults are *usually* 2.46ms on SIEMENS.

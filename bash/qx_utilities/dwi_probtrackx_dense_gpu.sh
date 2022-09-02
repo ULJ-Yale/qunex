@@ -52,40 +52,57 @@ T1w images need to be in MNINonLinear space here::
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --overwrite (str):
         Delete a prior run for a given session ('yes' / 'no').
         Note: this will delete only the Matrix run specified by the -omatrix
         flag.
+
     --omatrix1 (str):
         Specify if you wish to run matrix 1 model [yes or omit flag]
+
     --omatrix3 (str):
         Specify if you wish to run matrix 3 model [yes or omit flag]
+
     --nsamplesmatrix1 (str, default '10000'):
         Number of samples.
+
     --nsamplesmatrix3 (str, default '3000'):
         Number of samples.
+
     --distancecorrection (str, default 'no'):
         Use distance correction.
+
     --storestreamlineslength (str, default 'no'):
         Store average length of the streamlines.
+
     --scriptsfolder (str):
         Location of the probtrackX GPU scripts.
+
     --loopcheck (flag):
         Generic parameter set by default (will be parameterized in the future).
+
     --forcedir (flag):
         Generic parameter set by default (will be parameterized in the future).
+
     --fibthresh (str, default '0.01'):
         Generic parameter set by default (will be parameterized in the future).
+
     --c (str, default '0.2'):
         Generic parameter set by default (will be parameterized in the future).
+
     --sampvox (str, default '2'):
         Generic parameter set by default (will be parameterized in the future).
+
     --randfib (str, default '1'):
         Generic parameter set by default (will be parameterized in the future).
+
     --S (str, default '2000'):
         Generic parameter set by default (will be parameterized in the future).
+
     --steplength (str, default '0.5'):
         Generic parameter set by default (will be parameterized in the future).
 

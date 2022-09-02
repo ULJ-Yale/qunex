@@ -10,14 +10,19 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %           File list with information on sessions bold runs and
 %           segmentation files, or a well strucutured string (see
 %           general_read_file_list).
+%
 %       --smask (str):
 %           Path to .names file for source mask definition.
+%
 %       --tmask (str):
 %           Path to .names file for target mask roi definition.
-%       --mask (int | logical | vector, default []):
+%
+%       --mask (int | logical | vector, default '')
 %           Either number of frames to omit or a mask of frames to use.
-%       --root (str, default []):
+%
+%       --root (str, default '')
 %           The root of the filename where results are to be saved.
+%
 %       --options (str, default 'g'):
 %           A string specifying what correlations to save:
 %

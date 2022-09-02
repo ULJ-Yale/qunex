@@ -8,11 +8,14 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 %       --filea (str):
 %           Either a single image or a conc file with data of the group to
 %           compare to.
+%
 %       --fileb (str):
 %           Either a single image or a conc file with data of the group to
 %           compare with.
+%
 %       --target (str):
 %           The base filename (and path) to be used when saving the results.
+%
 %       --output (str, default 'medtpz'):
 %           The type of results to save:
 % 
@@ -26,8 +29,10 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 %       --vartype (str, default 'equal'):
 %           String specifying whether the variances of the two groups are equal
 %           ('equal') or not ('unequal').
-%       --exclude (vector, default []):
+%
+%       --exclude (vector, default '')
 %           Values to be excluded from computation.
+%
 %       --verbose (bool, default false):
 %           Whether to report each step.
 %

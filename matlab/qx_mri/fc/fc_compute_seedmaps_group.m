@@ -9,9 +9,11 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %           A .list file listing the sessions and their files for which to
 %           compute seedmaps, or a well strucutured string (see
 %           general_read_file_list).
+%
 %       --roiinfo (str):
 %           A names file for the ROI seeds.
-%       --frames (matrix | int | str, default []):
+%
+%       --frames (matrix | int | str, default '')
 %           The definition of which frames to use, it can be one of:
 %
 %           - a numeric array mask defining which frames to use (1) and
@@ -26,6 +28,7 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %
 %       --targetf (str, default '.'):
 %           The folder to save images in.
+%
 %       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|saveindname=no|itargetf=sfolder|verbose=false'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::

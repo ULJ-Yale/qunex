@@ -12,45 +12,63 @@
 #   Parameters:
 #       --folder, -f (str, default '.'):
 #           The folder to look for .dat data.
+#
 #       --mreport, -mr (str, default 'none'):
 #           The file to write movement report to.
+#
 #       --preport, -pr (str, default 'none'):
 #           The file to write movement report after scrubbing to.
+#
 #       --sreport, -sr (str, default 'none'):
 #           The file to write scrubbing report to.
+#
 #       --session, -s (str, default 'none'):
 #           Session id to use in plots and reports.
+#
 #       --dvars, -d (numeric, default 3):
 #           Threshold to use for computing dvars rejections.
+#
 #       --dvarsme, -e (numeric, default 1.5):
 #           Threshold to use for computing dvarsme rejections.
+#
 #       --movement, -m (numeric, default 0.5):
 #           Threshold to use for computing frame-to-frame movement rejections.
+#
 #       --radius, -rd (numeric, default 50):
 #           Radius (in mm) from center of head to cortex to estimate rotation
 #           size.
+#
 #       --tr (numeric, default 2.5):
 #           TR to be used when generating .fidl files.
+#
 #       --fidl (str, default 'none'):
 #           Whether to output and what to base fild on ('fd', 'dvars',
 #           'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme', 'none').
+#
 #       --plotr (str, default 'mov_report'):
 #           Root name of the plot file, 'none' to omit plotting.
+#
 #       --post (str, default 'none'):
 #           Whether to create report of scrubbing effect and what to base it on
 #           ('fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars',
 #           'idvarsme', 'none').
+#
 #       --bolds (str, default ''):
 #           Vertical line | separated list of bold indeces for which to do the
 #           stat report.
+#
 #       --pref (str, default ''):
 #           Prefix for the reports.
+#
 #       --verbose, -v (bool, default TRUE):
 #           Be talkative when running the script.
+#
 #       --plot(bool, default FALSE):
 #           Whether to plot.
+#
 #       --rname (str, default 'bold'):
 #           Root name for the bold files.
+#
 #       --bold_tail (str, default ''):
 #           Tail of bold files.
 #

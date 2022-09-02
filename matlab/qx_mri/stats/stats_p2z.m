@@ -7,8 +7,10 @@ function [img] = stats_p2z(img, out, tail)
 %   Parameters:
 %       --img (nimage | str):
 %           A nimage object or a path to an image file.
+%
 %       --out (str, default ''):
 %           A path to the file to save the image to.
+%
 %       --tail (str, default 'two'):
 %           Should one ('one') or two ('two') tails be considered.
 %

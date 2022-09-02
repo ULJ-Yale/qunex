@@ -8,8 +8,10 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %       --flist (str):
 %           A .list file, or a well strucutured string (see
 %           general_read_file_list).
+%
 %       --roiinfo (str):
 %           A .names ROI definition file.
+%
 %       --inmask (str, default ''):
 %           Per run mask information:
 %
@@ -21,6 +23,7 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %
 %       --targetf (str):
 %           The name for the file to save timeseries in.
+%
 %       --options (str, default 'm'):
 %           A string defining which outputs to create:
 %
@@ -29,6 +32,7 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %
 %       --method (str, default 'mean'):
 %           Method for extracting timeseries - 'mean', 'median', 'pca' or 'all'.
+%
 %       --ignore (str, default 'no'):
 %           Do we omit frames to be ignored:
 %
@@ -38,11 +42,13 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %             to be used for ignore mask
 %           - usevec - as specified in the use vector.
 %
-%       --rcodes (str | vector | cell array, default []):
+%       --rcodes (str | vector | cell array, default '')
 %           A list of region codes for which to extract the time-series.
+%
 %       --mcodes (str | vector | cell array, default specification from roiinfo):
 %           A list of region codes from session's roi file to use for masking if
 %           empty the specification from roiinfo will be used.
+%
 %       --bmask (bool, default false):
 %           Should a BOLD brain mask be used to further mask the regions used.
 %

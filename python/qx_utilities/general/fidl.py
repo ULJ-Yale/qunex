@@ -109,10 +109,13 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     Parameters:
         --concfile (str):
             The conc file to use as reference.
+
         --fidlroot (str):
             The root to use to find fidl files.
+
         --outfolder (str, default '.'):
             The folder in which to save the results.
+
         --fidlname (str, default ''):
             Optional fidl name.
 

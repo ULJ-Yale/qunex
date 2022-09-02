@@ -20,41 +20,55 @@ nimage.img_compute_gbc> or <help fc_compute_seedmaps_multiple> inside MATLAB.
 Parameters:
     --calculation (str):
         Run <seed>, <gbc> or <dense> calculation for functional connectivity.
+
     --runtype (str):
         Run calculation on a <list> (requires a list input), on 'individual'
         sessions (requires manual specification) or a 'group' of individual
         sessions (equivalent to a list, but with manual specification).
+
     --targetf (str):
         Specify the absolute path for output folder. If using
         --runtype='individual' and left empty the output will default to
-        --inputpath location for each session
+        --inputpath location for each session.
+
     --overwrite (str, default 'no'):
         Delete prior run for a given session.
+
     --covariance (str, default 'false'):
         Whether to compute covariances instead of correlations ('true' /
         'false').
+
     --flist (str):
         Specify ∗.list file of session information. If specified then
         --sessionsfolder, --inputfile, --session and --outname are omitted.
+
     --sessionsfolder (str):
         Path to study sessions folder.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --inputfiles (str):
         Specify the comma separated file names you want to use (e.g.
         /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii).
+
     --inputpath (str):
         Specify path of the file you want to use relative to the master study
         folder and session directory (e.g. '/images/functional/').
+
     --outname (str):
         Specify the suffix name of the output file name.
+
     --target (str, default detailed below):
         Array of ROI codes that define target ROI. Defaults to FreeSurfer cortex
         codes.
+
     --rsmooth (str, default ''):
         Radius for smoothing (no smoothing if empty).
+
     --rdilate (str, default ''):
         Radius for dilating mask (no dilation if empty).
+
     --gbc-command (str):
         Specify the the type of gbc to run. This is a string describing GBC to
         compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2'
@@ -99,14 +113,19 @@ Parameters:
 
     --verbose (str, default 'false'):
         Report what is going on.
+
     --time (str, default 'false'):
         Whether to print timing information.
+
     --vstep (str, default '1200'):
         How many voxels to process in a single step.
+
     --roinfo (str):
         An ROI file for the seed connectivity.
+
     --method (str, default 'mean'):
         Method for extracting timeseries - 'mean' or 'pca'.
+
     --options (str, default ''):
         A string defining which session files to save. Default assumes all:
 
@@ -118,13 +137,16 @@ Parameters:
     --extractdata (str):
         Specify if you want to save out the matrix as a CSV file (only available
         if the file is a ptseries).
+
     --ignore (str, default ''):
         The column in ∗_scrub.txt file that matches bold file to be used for
         ignore mask. All if empty.
+
     --mask (str):
         An array mask defining which frames to use (1) and which not (0). All if
         empty. If single value is specified then this number of frames is
         skipped.
+
     --mem-limit (str, default '4'):
         Restrict memory. Memory limit expressed in gigabytes.
 

@@ -8,9 +8,11 @@ function [ts, er, dr] = simulate_generate_correlated_timeseries(r, len, md)
 %   Parameters:
 %       --r (matrix):
 %           Correlation matrix.
+%
 %       --len (int):
 %           Desired timeseries length.
-%       --md (float, default []):
+%
+%       --md (float, default '')
 %           Maximal allowed difference between desired and actual
 %           correlation.
 %

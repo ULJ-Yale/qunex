@@ -8,8 +8,10 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 %   Parameters:
 %       --file (str):
 %           The conc file that specifies the images.
+%
 %       --do (str, default 'm,sd'):
 %           A string specifying what statistics to compute.
+%
 %       --target (str, default ''):
 %           The root name for the files to save the results to.
 %

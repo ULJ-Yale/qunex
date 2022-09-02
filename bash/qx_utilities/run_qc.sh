@@ -40,8 +40,10 @@ Note: For raw NIFTI QC outputs are generated in:
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --modality (str):
         Specify the modality to perform QC on.
         Supported: 'rawNII', 'T1w', 'T2w', 'myelin', 'BOLD', 'DWI', 'general',
@@ -62,11 +64,14 @@ Parameters:
 
         This will work on any input file within the
         session-specific data hierarchy.
+
     --datapath (str):
         Required ==> Specify path for input path relative to the
         <sessions_folder> if scene is 'general'.
+
     --datafile (str):
         Required ==> Specify input data file name if scene is 'general'.
+
     --batchfile (str):
         Absolute path to local batch file with pre-configured processing
         parameters.
@@ -77,21 +82,26 @@ Parameters:
         used in combination with --bolddata to select only specific BOLD runs
         to work on from the batch file. If --bolddata is omitted (see below),
         all BOLD runs in the batch file will be processed.
+
     --overwrite (str, default 'no'):
         Delete prior QC run: yes/no.
+
     --hcp_suffix (str, default ''):
         Allows user to specify session id suffix if running HCP preprocessing
         variants. E.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' would be
         specified as --hcp_suffix='-run2'
+
     --scenetemplatefolder (str, default '${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc'):
         Specify the absolute path name of the template folder.
 
         Note: relevant scene template data has to be in the same folder as the
         template scenes.
+
     --outpath (str, default '<path_to_study_sessions_folder>/QC/<input_modality_for_qc>'):
         Specify the absolute path name of the QC folder you wish the individual
         images and scenes saved to. If --outpath is unspecified then files are
         saved to: '<path_to_study_sessions_folder>/QC/<input_modality_for_qc>'.
+
     --scenezip (str, default 'yes'):
         Yes or no. Generates a ZIP file with the scene and all relevant files
         for Connectome Workbench visualization.
@@ -101,48 +111,63 @@ Parameters:
         <path_to_study_sessions_folder>/<session_id>/hcp/<session_id>
         The scene zip file will be saved to:
         <path_for_output_file>/<session_id>.<input_modality_for_qc>.QC.wb.zip
+
     --userscenefile (str, default ''):
         User-specified scene file name. --modality info is still required to
         ensure correct run. Relevant data needs to be provided.
+
     --userscenepath (str, default ''):
         Path for user-specified scene and relevant data in the same location.
         --modality info is still required to ensure correct run.
+
     --timestamp (str, default detailed below):
         Allows user to specify unique time stamp or to parse a time stamp from
         QuNex bash wrapper. Current time is used if no value is provided.
+
     --suffix (str, default '<session_id>_<timestamp>'):
         Allows user to specify unique suffix or to parse a time stamp from QuNex
         bash wrapper.
+
     --dwipath (str):
         Specify the input path for the DWI data (may differ across studies; e.g.
         'Diffusion' or 'Diffusion' or 'Diffusion_DWI_dir74_AP_b1000b2500').
+
     --dwidata (str):
         Specify the file name for DWI data (may differ across studies; e.g.
         'data' or 'DWI_dir74_AP_b1000b2500_data').
+
     --dtifitqc (str):
         Specify if dtifit visual QC should be completed (e.g. 'yes' or 'no').
+
     --bedpostxqc (str):
         Specify if BedpostX visual QC should be completed (e.g. 'yes' or 'no').
+
     --eddyqcstats (str):
         Specify if EDDY QC stats should be linked into QC folder and motion
         report generated (e.g. 'yes' or 'no').
+
     --dwilegacy (str):
         Specify if DWI data was processed via legacy pipelines (e.g. 'yes' or
         'no').
+
     --boldprefix (str):
         Specify the prefix file name for BOLD dtseries data (may differ across
         studies depending on processing; e.g. 'BOLD' or 'TASK' or 'REST').
         Note: If unspecified then QC script will assume that folder names
         containing processed BOLDs are named numerically only (e.g. 1, 2, 3).
+
     --boldsuffix (str):
         Specify the suffix file name for BOLD dtseries data (may differ across
         studies depending on processing; e.g. 'Atlas' or 'MSMAll').
+
     --skipframes (str):
         Specify the number of initial frames you wish to exclude from the BOLD
         QC calculation.
+
     --snronly (str, default 'no'):
         Specify if you wish to compute only SNR BOLD QC calculation and skip
         image generation ('yes'/'no').
+
     --bolddata (str):
         Specify BOLD data numbers separated by comma or pipe. E.g.
         --bolddata='1,2,3,4,5'. This flag is interchangeable with --bolds or
@@ -152,15 +177,18 @@ Parameters:
         --batchfile or an error will be reported. If --bolddata is empty and
         --batchfile is provided, by default QuNex will use the information in
         the batch file to identify all BOLDS to process.
+
     --boldfc (str, default ''):
         Specify if you wish to compute BOLD QC for FC-type BOLD results.
         Supported: pscalar or pconn.
         Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
         --bolddata or --boldruns or --bolds.
+
     --boldfcpath (str, default '<study_folder>/sessions/<session_id>/images/functional'):
         Specify path for input FC data.
         Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
         --bolddata or --boldruns or --bolds.
+
     --boldfcinput (str):
         Required. If no --boldfcpath is provided then specify only data input
         name after bold<Number>_ which is searched for in
@@ -173,6 +201,7 @@ Parameters:
 
         Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
         --bolddata or --boldruns or --bolds.
+
     --processcustom (str, default 'no'):
         Either 'yes' or 'no'. If set to 'yes' then the script looks into:
         ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes.
@@ -182,6 +211,7 @@ Parameters:
 
         See $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/ for example templates.
         The qc path has to contain relevant files for the provided scene.
+
     --omitdefaults (str, default 'no'):
         Either 'yes' or 'no'. If set to 'yes' then the script omits defaults.
 

@@ -8,10 +8,13 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %   Parameters:
 %       --sessionf (str):
 %           The session’s folder with images and data.
+%
 %       --bold (int):
 %           The number of the bold file to process.
-%       --omit (int, default []):
+%
+%       --omit (int, default '')
 %           The number of frames to omit at the start of each bold.
+%
 %       --doIt (str, default 's,h,r,c,l'):
 %           A string specifying, which steps to perform and in what order:
 %
@@ -39,20 +42,27 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %           - t     - task
 %           - e     - event.
 %
-%       --task (matrix, default []):
+%       --task (matrix, default '')
 %           A matrix of custom regressors to be entered in GLM.
+%
 %       --efile (str, default ''):
 %           An event (fidl) file to be used for removing task structure.
+%
 %       --TR (float, default 2.5):
 %           TR of the data, in seconds.
+%
 %       --eventstring (str, default ''):
 %           A string specifying the events to regress and the regressors to use.
+%
 %       --variant (str, default ''):
 %           A string to be prepended to files.
+%
 %       --overwrite (bool, default false):
 %           Whether old files should be overwritten.
+%
 %       --tail (str, default '.nii.gz'):
 %           What file extension to expect and use for images.
+%
 %       --scrub (str, default Existing scrubbing data):
 %           The description of how to compute scrubbing - a string in
 %           `'param:value|param:value'` format.
@@ -96,27 +106,28 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %           running the command. Copying the above line containing modifier
 %           colons will result in an error - use normal colons with the command
 %           instead.
+%
 %       --options (str, default ''):
 %           Additional options that can be set using the
-%           'key=value|key=value' string:
+%           `key=value|key=value` string::
 %
-%           - surface_smooth  : 6
-%           - volume_smooth   : 6
-%           - voxel_smooth    : 2
-%           - lopass_filter   : 0.08
-%           - hipass_filter   : 0.009
-%           - framework_path  :
-%           - wb_command_path :
-%           - omp_threads     : 0
-%           - smooth_mask     : false
-%           - dilate_mask     : false
-%           - boldname        : bold
-%           - bold_tail       :
-%           - bold_variant    :
-%           - img_suffix      :
-%           - glm_matrix      : none  ('none' / 'text' / 'image' / 'both')
-%           - glm_residuals   : save
-%           - glm_name        :
+%               - surface_smooth  : 6
+%               - volume_smooth   : 6
+%               - voxel_smooth    : 2
+%               - lopass_filter   : 0.08
+%               - hipass_filter   : 0.009
+%               - framework_path  :
+%               - wb_command_path :
+%               - omp_threads     : 0
+%               - smooth_mask     : false
+%               - dilate_mask     : false
+%               - boldname        : bold
+%               - bold_tail       :
+%               - bold_variant    :
+%               - img_suffix      :
+%               - glm_matrix      : none  ('none' / 'text' / 'image' / 'both')
+%               - glm_residuals   : save
+%               - glm_name        :
 %
 %   Notes:
 %       fc_preprocess is a complex function initially used to prepare BOLD files

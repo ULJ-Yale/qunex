@@ -9,24 +9,30 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %       --flist (str):
 %           Path to the list file or a well structured string of files or
 %           sessions to process.
+%
 %       --roif (str):
 %           Path to a .names ROI file descriptor or a comma separated list of
 %           parcels to be extracted, specified as 'parcels:<parcel1>,<parcel2>'.
 %           'parcels:all' will export data for all parcels. Note that in this
 %           case the list of parcels will be based on glm file from the first
 %           session in the list.
-%       --outf (str, default []):
+%
+%       --outf (str, default '')
 %           Name of the output file. If left empty the it is set to list root
 %           with '.tsv' extension.
-%       --effects (str, default []):
+%
+%       --effects (str, default '')
 %           A cell array or a comma separated list of effects of interest. If
 %           none specified, all but trend and baseline are exported.
-%       --frames (int, default []):
+%
+%       --frames (int, default '')
 %           List of frames to extract from all effects. All if empty or not
 %           specified.
+%
 %       --values (str, default 'raw'):
 %           In what form to extract the estimates. Possibilities are raw beta
 %           values ('raw') or percent signal change ('psc') values.
+%
 %       --tformat (str, default 'wide,long,mat'):
 %           A comma separated string specifying in what format the data is to be
 %           extracted. It can be a combination of:

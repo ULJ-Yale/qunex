@@ -7,11 +7,14 @@ function [] = general_cluster_threshold(fname, tname, csize, t)
 %   Parameters:
 %       --fname (str):
 %           A path to a Z image.
+%
 %       --tname (str, default fname):
 %           The name for the new, thresholded image. If none provided, the
 %           specified fname is used instead.
+%
 %       --csize (int):
 %           Minimal cluster size threshold.
+%
 %       --t (int, default 3):
 %           Z magnitude threshold (always does positive and negative).
 %

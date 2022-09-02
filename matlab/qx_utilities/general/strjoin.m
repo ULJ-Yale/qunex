@@ -8,6 +8,7 @@ function [s] = strjoin(list, delim)
 %   Parameters:
 %       --list (cell):
 %           A cell array of strings to be joined.
+%
 %       --delim (str, default ' '):
 %           Delimiter between strings.
 %

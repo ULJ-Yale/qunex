@@ -7,6 +7,7 @@ function [elements] = general_filename_split(filename, delim)
 %   Parameters:
 %       --filename (str):
 %           The filename to be split.
+%
 %       --delim (str, default '_'):
 %           The delimiter to be used.
 %

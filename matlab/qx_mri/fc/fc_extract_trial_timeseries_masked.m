@@ -9,17 +9,22 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %           File list with information on .conc, .fidl, and individual roi
 %           (segmentation) files, or a well strucutured string (see
 %           general_read_file_list).
+%
 %       --roif (str):
 %           Region "names" file that specifies the ROI to extract trial
 %           timeseries for.
+%
 %       --targetf (str):
 %           The target matlab file with results.
+%
 %       --tevents (cell array):
 %           The indeces of the events for which to extract timeseries, can be a
 %           cell array of combinations of event indeces.
+%
 %       --frames (vector):
 %           Limits of frames to include in the extracted timeseries.
-%       --scrubvar (str, default []):
+%
+%       --scrubvar (str, default '')
 %           Critera to use for scrubbing data - scrub based on:
 %
 %           - [] do not scrub

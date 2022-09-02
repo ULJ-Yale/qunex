@@ -7,16 +7,22 @@ function [] = general_plot_bold_timeseries(images, elements, masks, filename, sk
 %   Parameters:
 %       --images (str | cell array):
 %           Input image(s) as gmri images or paths.
+%
 %       --elements (struct | str):
 %           Plot element specifications.
-%       --masks (str | matrix | cell array | nimage, default []):
+%
+%       --masks (str | matrix | cell array | nimage, default '')
 %           One or multiple masks to use for extracting BOLD data.
+%
 %       --filename (str, default 'BoldTSPlot.pdf'):
 %           Filename to save the plot to.
+%
 %       --skip (int, default 0):
 %           How many frames to skip at the start of the bold run.
-%       --sessionid (str, default []):
+%
+%       --sessionid (str, default '')
 %           Session code to display on the page.
+%
 %       --verbose (bool, default false):
 %           Whether to be talkative.
 %

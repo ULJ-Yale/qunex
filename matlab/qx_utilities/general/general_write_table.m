@@ -7,21 +7,28 @@ function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, 
 %   Parameters:
 %       --filename (str):
 %           The path to the file.
+%
 %       --data (DataMatrix):
 %           The data matrix to be saved.
+%
 %       --hdr (cell/str, default {}):
 %           Optional header (cell array of strings or a list of columns).
-%       --extra (str, default []):
+%
+%       --extra (str, default '')
 %           Optional summary rows to be added at the end (e.g. 
 %           'mean|sd|min|max|%|sum').
+%
 %       --sform (str, default '%s|%d|%.5g|%s'):
 %           Format string for the header, first data column, rest of the 
 %           data columns and extra row names.
+%
 %       --sep (str, default '⧵t'):
 %           Separator.
-%       --pre (str, default []):
+%
+%       --pre (str, default '')
 %           Optional text to prepend before the header.
-%       --post (str, default []):
+%
+%       --post (str, default '')
 %           Optional text to append at the end of the file.
 %
 %   Returns:

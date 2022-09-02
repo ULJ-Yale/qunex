@@ -21,18 +21,24 @@ subcortical labels included).
 Parameters:
     --sessionsfolder (str):
         Path to study data folder.
+
     --session (str):
-        Comma separated list of sessions to run
+        Comma separated list of sessions to run.
+
     --inputdatatype (str):
         Specify the type of dense data for the input file (e.g. MyelinMap_BC or
         corrThickness).
+
     --parcellationfile (str):
         Specify the absolute path of the ∗.dlabel file you want to use for
         parcellation.
+
     --outname (str):
         Specify the suffix output name of the pconn file.
+
     --overwrite (str):
         Delete prior run for a given session ('yes' / 'no').
+
     --extractdata (flag):
         Specify if you want to save out the matrix as a CSV file.
 

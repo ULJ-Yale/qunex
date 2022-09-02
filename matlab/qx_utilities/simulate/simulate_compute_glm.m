@@ -7,6 +7,7 @@ function [B, res rvar, Xdof] = simulate_compute_glm(y, X)
 %   Parameters:
 %       --y (timeseries):
 %           Timeseries (timepoints x voxels).
+%
 %       --X (matrix):
 %           Regressor.
 %

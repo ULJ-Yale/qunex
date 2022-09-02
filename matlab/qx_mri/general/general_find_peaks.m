@@ -8,17 +8,23 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %   Parameters:
 %       --fin (str | matrix | cell array | nimage):
 %           Input image.
+%
 %       --fout (str):
 %           Output filename.
+%
 %       --mins (vector, default [0, 0]):
 %           [minimal size, minimal area] of the resulting ROI.
+%
 %       --maxs (vector, default [inf, inf]):
 %           [maximum size, maximum area] of the resulting ROI.
+%
 %       --val (str, default 'b'):
 %           Whether to find positive, negative or both peaks ('n', 'p', 'b').
+%
 %       --t (int, default 0):
 %           Threshold value.
-%       --presmooth (str, default []):
+%
+%       --presmooth (str, default '')
 %           String containing presmoothing parameters:
 %
 %           String format::

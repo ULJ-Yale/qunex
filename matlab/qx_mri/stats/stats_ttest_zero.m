@@ -7,6 +7,7 @@ function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 %   Parameters:
 %       --dfile (str):
 %           The data file to work on - either a single image or a conc file.
+%
 %       --output (str, default 'metpz'):
 %           The type of results to save:
 %
@@ -16,8 +17,9 @@ function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 %           - 'p' ... p-value for each voxel
 %           - 'z' ... Z-score for each voxel.
 %
-%       --exclude (int, default []):
+%       --exclude (int, default '')
 %           Values to be excluded from computation.
+%
 %       --verbose (bool, default false):
 %           Whether to report each step.
 %

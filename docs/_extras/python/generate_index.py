@@ -80,8 +80,10 @@ def export_file(file_name, file_lines, new_line=False):
     Parameters:
         file_name:
            File name (include the extension).
+
         file_lines:
             A list of strings, each corresponding to a line.
+
         new_line:
             A boolean indicating whether to insert a newline character after
             every line.
@@ -105,6 +107,7 @@ def get_captions_line_indices(lines, captions):
         lines:
             A list of strings corresponding to file lines in which to search for
             the patterns passed with captions.
+
         captions:
             A list of strings, patterns to search for in the lines list.
     """

@@ -325,19 +325,25 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -356,6 +362,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             should be treated as requirements ('HCPStyleData') or if additional
             processing functionality is allowed ('LegacyStyleData'). In this
             case running processing w/o a T2w image.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP
             Young Adults study is used. Specifically, the source files are
@@ -366,30 +373,38 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             all stored within their individual subfolders located in the joint
             'unprocessed' folder in the main 'hcp' folder, parallel to the
             working folders and the 'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped intothe hcp input folder
             structure. The default ('automated') will automatically name each
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
+
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should be
             run without them, anything else otherwise [t2]. 'NONE' is only valid
             if 'LegacyStyleData' processing mode was specified.
+
         --hcp_brainsize (int, default 150):
              Specifies the size of the brain in mm. 170 is FSL default and seems
              to be a good choice, HCP uses 150, which can lead to problems with
              larger heads.
+
         --hcp_t1samplespacing (str, default 'NONE'):
             T1 image sample spacing, 'NONE' if not used.
+
         --hcp_t2samplespacing (str, default 'NONE'):
             T2 image sample spacing, 'NONE' if not used.
+
         --hcp_gdcoeffs (str, default 'NONE):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see below), or
             "NONE", if not used.
+
         --hcp_bfsigma (str, default ''):
             Bias Field Smoothing Sigma (optional).
+
         --hcp_avgrdcmethod (str, default 'NONE'):
             Averaging and readout distortion correction method.
             Can take the following values:
@@ -409,20 +424,27 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_unwarpdir (str, default 'NONE'):
             Readout direction of the T1w and T2w images (x, y, z or NONE); used
             with either a regular field map or a spin echo field map.
+
         --hcp_echodiff (str, default 'NONE'):
             Difference in TE times if a fieldmap image is used, set to NONE if
             not used.
+
         --hcp_seechospacing (str, default 'NONE'):
             Echo Spacing or Dwelltime of Spin Echo Field Map or "NONE" if not
             used.
+
         --hcp_sephasepos (str, default ''):
             Label for the positive image of the Spin Echo Field Map pair.
+
         --hcp_sephaseneg (str, default ''):
             Label for the negative image of the Spin Echo Field Map pair.
+
         --hcp_seunwarpdir (str, default 'NONE'):
             Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
+
         --hcp_topupconfig (str, default 'NONE'):
             Path to a configuration file for TOPUP method or "NONE" if not used.
+
         --hcp_prefs_custombrain (str, default 'NONE'):
             Whether to only run the final registration using either a custom
             prepared brain mask (MASK) or custom prepared brain images
@@ -442,6 +464,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             The resolution (in mm) of the structural images templates to use in
             the preFS step. Note: it should match the resolution of the
             acquired structural images.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence information
             to use in preprocessing of specific image modalities.
@@ -878,19 +901,25 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -908,6 +937,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             should be treated as requirements ('HCPStyleData') or if additional
             processing functionality is allowed ('LegacyStyleData'). In this case
             running processing w/o a T2w image.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP
             Young Adults study is used. Specifically, the source files are
@@ -918,16 +948,19 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             all stored within their individual subfolders located in the joint
             'unprocessed' folder in the main 'hcp' folder, parallel to the
             working folders and the 'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped intothe hcp input folder
             structure. The default ('automated') will automatically name each
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
+
         --hcp_fs_seed (str, default ''):
             Recon-all seed value. If not specified, none will be used.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_existing_session (str, default 'FALSE'):
             Indicates that the command is to be run on top of an already
             existing analysis/subject. This excludes the `-i` flag from the
@@ -936,6 +969,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             parameter. Accepted values are 'TRUE' and 'FALSE'.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_extra_reconall (str, default ''):
             A string with extra parameters to pass to FreeSurfer recon-all.
             The extra parameters are to be listed in a pipe ('|') separated
@@ -944,6 +978,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             string has to be: "-norm3diters|3".
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_flair (str, default 'FALSE'):
             If set to 'TRUE' indicates that recon-all is to be run with the
             -FLAIR/-FLAIRpial options (rather than the -T2/-T2pial options).
@@ -951,29 +986,35 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             image.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_no_conf2hires (str, default 'FALSE'):
             Indicates that (most commonly due to low resolution—1mm or less—of
             structural image(s), high-resolution steps of recon-all should be
             excluded. Accepted values are 'TRUE' or 'FALSE'.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should be
             run without them, anything else otherwise. 'NONE' is only
             valid if 'LegacyStyleData' processing mode was specified.
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
+
         --hcp_expert_file (str, default ''):
             Path to the read-in expert options file for FreeSurfer if one is
             prepared and should be used empty otherwise.
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
+
         --hcp_control_points (str, default ''):
             Specify YES to use manual control points or empty otherwise.
             (currently not available)
+
         --hcp_wm_edits (str, default ''):
             Specify YES to use manually edited WM mask or empty otherwise.
             (currently not available)
+
         --hcp_fs_brainmask (str, default 'fs'):
             Specify:
 
@@ -983,11 +1024,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
               mri_watershed.
 
             (currently not available)
+
         --hcp_autotopofix_off (str, default ''):
             Specify YES to turn off the automatic topologic fix step in FS and
             compute WM surface deterministically from manual WM mask, or empty
             otherwise.
             (currently not available)
+
         --hcp_freesurfer_home (str, default ''):
             Path for FreeSurfer home folder can be manually specified to
             override default environment variable to ensure backwards
@@ -1259,19 +1302,25 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -1291,6 +1340,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             should be treated as requirements ('HCPStyleData') or if additional
             processing functionality is allowed ('LegacyStyleData'). In this
             case running processing w/o a T2w image.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP
             Young Adults study is used. Specifically, the source files are
@@ -1301,29 +1351,37 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             all stored within their individual subfolders located in the joint
             'unprocessed' folder in the main 'hcp' folder, parallel to the
             working folders and the 'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped intothe hcp input folder
             structure. The default ('automated') will automatically name each
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
+
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should
             be run without them, anything else otherwise. 'NONE' is
             only valid if 'LegacyStyleData' processing mode was specified.
+
         --hcp_grayordinatesres (int, default 2):
             The resolution of the volume part of the grayordinate representation
             in mm.
+
         --hcp_hiresmesh (int, default 164):
             The number of vertices for the high resolution mesh of each
             hemisphere (in thousands).
+
         --hcp_lowresmesh (int, default 32):
             The number of vertices for the low resolution mesh of each
             hemisphere (in thousands).
+
         --hcp_regname (str, default 'MSMSulc'):
             The registration used, FS or MSMSulc.
+
         --hcp_mcsigma (str, default 'sqrt(200)'):
             Correction sigma used for metric smoothing.
+
         --hcp_inflatescale (int, default 1):
             Inflate extra scale parameter.
 
@@ -1478,19 +1536,25 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -1505,12 +1569,14 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
 
         --hcp_long_fs_template (str, default 'base'):
             Name of the base template.
+
         --hcp_long_fs_extra_reconall_base (str, default ''):
             A string with extra parameters to pass to Longitudinal FreeSurfer
             recon-all base template creation. The extra parameters are to be
             listed in a pipe ('|') separated string. Parameters and their values
             need to be listed separately. E.g. to pass `-norm3diters 3` to
             reconall, the string has to be: '-norm3diters|3'.
+
         --hcp_long_fs_extra_reconall (str, default ''):
             A string with extra parameters to pass to Longitudinal FreeSurfer
             recon-all processing. The extra parameters are to be listed in a
@@ -1725,19 +1791,25 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ("keep") or remove ("remove") the temporary logs
             once jobs are completed.
@@ -1754,6 +1826,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         --hcp_dwi_echospacing (str, default detailed below):
             Echo Spacing or Dwelltime of DWI images in msec. Default is
             image specific.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence
             information to use in preprocessing of specific image
@@ -1779,22 +1852,28 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             If information is not specified it will not be used. More
             general specification (e.g. `all`) implies all more specific
             cases (e.g. `T1w:all`).
+
         --hcp_dwi_phasepos (str, default 'PA'):
             The direction of unwarping for positive phase. Can be AP,
             PA, LR, or RL. Negative phase isset automatically based on
             this setting.
+
         --hcp_dwi_gdcoeffs (str, default 'NONE'):
             A path to a file containing gradient distortion
             coefficients, alternatively a string describing multiple
             options (see below), or "NONE", if not used.
+
         --hcp_dwi_topupconfig (str, default $HCPPIPEDIR/global/config/b02b0.cnf):
             A full path to the topup configuration file to use.
+
         --hcp_dwi_dof (int, default 6):
             Degrees of Freedom for post eddy registration to structural
             images.
+
         --hcp_dwi_b0maxbval (int, default 50):
             Volumes with a bvalue smaller than this value will be
             considered as b0s.
+
         --hcp_dwi_combinedata (int, default 1):
             Specified value is passed as the CombineDataFlag value for
             the eddy_postproc.sh script. If JAC resampling has been
@@ -1814,6 +1893,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             is identified as the least distorted (i.e., most similar to
             the average b0 after registration). The flag is not set by
             default.
+
         --hcp_dwi_extraeddyarg (str, default ''):
             A string specifying additional arguments to pass to the
             DiffPreprocPipeline_Eddy.sh script and subsequently to the
@@ -1824,16 +1904,20 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             To provide multiple arguments divide them with the pipe (|)
             character, e.g.
             --hcp_dwi_extraeddyarg="--niter=8|--nvoxhp=2000".
+
         --hcp_dwi_name (str, default 'Diffusion'):
             Name to give DWI output directories.
+
         --hcp_dwi_cudaversion (str, default ''):
             If using the GPU-enabled version of eddy, then this option
             can be used to specify which eddy_cuda binary version to
             use. If X.Y is specified, then FSLDIR/bin/eddy_cudaX.Y will
             be used. Note that CUDA 9.1 is installed in the container.
+
         --hcp_dwi_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of eddy. The
             flag is not set by default.
+
         --hcp_dwi_even_slices (flag, optional):
             If set will ensure the input images to FSL's topup and eddy
             have an even number of slices by removing one slice if
@@ -2153,25 +2237,33 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
             How many elements (e.g. bolds) to run in parallel.
+
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
             process. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to process all.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -2192,6 +2284,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             processing functionality is allowed ('LegacyStyleData'). In this
             case running processing with slice timing correction, external BOLD
             reference, or without a distortion correction method.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP Young
             Adults study is used. Specifically, the source files are stored in
@@ -2202,6 +2295,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             individual subfolders located in the joint 'unprocessed' folder in
             the main 'hcp' folder, parallel to the working folders and the
             'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
@@ -2211,16 +2305,21 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_bold_biascorrection (str, default 'NONE'):
             Whether to perform bias correction for BOLD images. NONE or Legacy.
+
         --hcp_bold_usejacobian (str, default 'FALSE'):
             Whether to apply the jacobian of the distortion correction to fMRI
             data.
+
         --hcp_bold_prefix (str, default 'BOLD'):
             The prefix to use when generating BOLD names (see --hcp_filename)
             for BOLD working folders and results.
+
         --hcp_bold_echospacing (float, default 0.00035):
             Echo Spacing or Dwelltime of BOLD images.
+
         --hcp_bold_sbref (str, default 'NONE'):
             Whether BOLD Reference images should be used - NONE or USE.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence information
             to use in preprocessing of specific image modalities.
@@ -2242,62 +2341,80 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             If information is not specified it will not be used. More general
             specification (e.g. `all`) implies all more specific cases (e.g.
             `T1w:all`).
+
         --hcp_bold_dcmethod (str, default 'TOPUP'):
             BOLD image deformation correction that should be used: TOPUP,
             FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap,
             PhilipsFieldMap or NONE.
+
         --hcp_bold_echodiff (str, default 'NONE'):
             Delta TE for BOLD fieldmap images or NONE if not used.
+
         --hcp_bold_sephasepos (str, default ''):
             Label for the positive image of the Spin Echo Field Map pair.
+
         --hcp_bold_sephaseneg (str, default ''):
             Label for the negative image of the Spin Echo Field Map pair.
+
         --hcp_bold_unwarpdir (str, default 'y'):
             The direction of unwarping. Can be specified separately for
             LR/RL : `'LR=x|RL=-x|x'` or separately for PA/AP :
             `'PA=y|AP=y-|y-'`.
+
         --hcp_bold_res (int, default 2):
             Target image resolution. 2mm recommended.
+
         --hcp_bold_gdcoeffs (str, default 'NONE'):
             Gradient distortion correction coefficients or NONE.
+
         --hcp_bold_topupconfig (str, default detailed below):
             A full path to the topup configuration file to use. Set to
             '' if the default is to be used or of TOPUP distortion
             correction is not used.
+
         --hcp_bold_doslicetime (str, default 'FALSE'):
             Whether to do slice timing correction 'TRUE' or 'FALSE'.
+
         --hcp_bold_slicetimerparams (str, default ''):
             A comma or pipe separated string of parameters for FSL slicetimer.
+
         --hcp_bold_stcorrdir (str, default 'up'):
             The direction of slice acquisition ('up' or 'down').
             This parameter is deprecated. If specified, it will be added to
             --hcp_bold_slicetimerparams.
+
         --hcp_bold_stcorrint (str, default 'odd'):
             Whether slices were acquired in an interleaved fashion ('odd') or
             not ('empty').
             This parameter is deprecated. If specified, it will be added to
             --hcp_bold_slicetimerparams.
+
         --hcp_bold_preregistertool (str, default 'epi_reg'):
             What tool to use to preregister BOLDs before FSL BBR is 'run',
             'epi_reg' (default) or 'flirt'.
+
         --hcp_bold_movreg (str, default 'FLIRT'):
             Whether to use 'FLIRT' (default and best for multiband images) or
             'MCFLIRT' for motion correction.
+
         --hcp_bold_movref (str, default 'independent'):
             What reference to use for movement correction ('independent',
             'first').
             This parameter is only valid when running HCPpipelines using the
             LegacyStyleData processing mode!
+
         --hcp_bold_seimg (str, default 'independent'):
             What image to use for spin-echo distortion correction
             ('independent' | 'first').
             This parameter is only valid when running HCPpipelines
             using the LegacyStyleData processing mode!
+
         --hcp_bold_refreg (str, default 'linear'):
             Whether to use only 'linear' (default) or also 'nonlinear'
             registration of motion corrected bold to reference.
             This parameter is only valid when running HCPpipelines
             using the LegacyStyleData processing mode!
+
         --hcp_bold_mask (str, default 'T1_fMRI_FOV'):
             Specifies what mask to use for the final bold:
 

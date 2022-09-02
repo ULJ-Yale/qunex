@@ -7,14 +7,19 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %   Parameters:
 %       --flist (str):
 %           List of files in the standard format.
+%
 %       --elements (struct | str, default 'type=stats|stats>type=dvarsme,img=1>type=fd,img=1;type=image|name=V|mask=1;type=image|name=WM|mask=1;type=image|name=GM|mask=1;type=image|name=V|mask=1|img=2|use=1|scale=2;type=image|name=GM|mask=1|img=2|use=1|scale=4'):
 %           Plot element specification.
+%
 %       --filename (str, default ''):
 %           Prefix of root filename to save the plot to.
+%
 %       --skip (int, default 0):
 %           How many frames to skip at the stat of the bold run.
+%
 %       --fformat (str, default 'pdf'):
 %           Plot output format.
+%
 %       --verbose (bool, default false):
 %           Whether to be talkative.
 %

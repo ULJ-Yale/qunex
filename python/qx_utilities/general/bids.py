@@ -183,6 +183,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
         --sessionsfolder (str, default '.'):
             The sessions folder where all the sessions are to be mapped to. It
             should be a folder within the <study folder>.
+
         --inbox (str, default <sessionsfolder>/inbox/BIDS):
             The location of the BIDS dataset. It can be any of the following:
             the BIDS dataset top folder, a folder that contains the BIDS
@@ -192,6 +193,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             can specify "<path>/<bids_file>.zip" or "<path>" to a folder that
             contains multiple packages. The default location where the command
             will look for a BIDS dataset is.
+
         --sessions (str, default ):
             An optional parameter that specifies a comma or pipe separated list
             of sessions from the inbox folder to be processed. Glob patterns
@@ -202,6 +204,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             a valid bids datastructure folder or archive, then the sessions can
             be specified either in `<subject id>[_<session name>]` format or as
             explicit `sub-<subject id>[/ses-<session name>]` names.
+
         --action (str, default 'link'):
             How to map the files to QuNex structure.
             These are the options:
@@ -236,10 +239,12 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             Please note that there can be an interaction with the `action`
             parameter. If files are moved during action, they will be missing
             if `archive` is set to 'move' or 'copy'.
+
         --bidsname (str, default detailed below):
             The optional name of the BIDS dataset. If not provided it will be
             set to the name of the inbox folder or the name of the compressed
             package.
+
         --fileinfo (str, default 'short'):
             What file information to include in the session.txt file. Options
             are:

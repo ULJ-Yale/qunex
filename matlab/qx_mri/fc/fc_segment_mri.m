@@ -9,17 +9,23 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 %       --flist (str):
 %           A .list file information on sessions bold runs and segmentation
 %           files.
+%
 %       --smask (str):
 %           A .names file for source mask definition.
+%
 %       --tmask (str):
-%           A .names file for target mask roi definition
-%       --mask (int | logical | vector, default []):
+%           A .names file for target mask roi definition.
+%
+%       --mask (int | logical | vector, default '')
 %           Either number of frames to omit or a mask of frames to use.
+%
 %       --root (str, default ''):
 %           The root of the filename where results are to be saved. If no root
 %           is specified, the root of the flist is used.
+%
 %       --options (str, default 'raw'):
 %           Whether to use 'raw', 'absolute' or 'partial' correlations.
+%
 %       --verbose (str, default 'none'):
 %           Whether to report the progress 'full', 'script', 'none'.
 %

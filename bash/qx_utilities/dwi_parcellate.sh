@@ -26,17 +26,23 @@ preprocessing. Dense Connectome DWI data needs to be in the following folder::
 Parameters:
     --sessionsfolder (str):
         Path to study data folder.
+
     --session (str):
         Comma separated list of sessions to run.
+
     --matrixversion (str):
         Matrix solution version to run parcellation on; e.g. 1 or 3.
+
     --parcellationfile (str):
         Specify the absolute path of the file you want to use for parcellation
         (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii).
+
     --outname (str):
         Specify the suffix output name of the pconn file.
+
     --lengths (str, defaults 'no'):
         Parcellate lengths matrix ('yes' / 'no').
+
     --waytotal (str, defaults 'none'):
         Use the waytotal normalized version of the DWI dense connectome.
         Default:

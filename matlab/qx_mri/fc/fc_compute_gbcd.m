@@ -14,6 +14,7 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %           - file:<path to bold files - one per line>
 %
 %           or a well strucutured string (see general_read_file_list).
+%
 %       --command (str):
 %           The type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp,
 %           aFzp, ...
@@ -42,27 +43,37 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %
 %       --roi (str):
 %           The roi names file.
-%       --rcodes (vector, default []):
+%
+%       --rcodes (vector, default '')
 %           Codes of regions from roi file to compute GBC for (all if not
 %           provided or left empty).
-%       --nbands (int, default []):
+%
+%       --nbands (int, default '')
 %           Number of distance bands to compute GBC for.
-%       --mask (int | logical | vector, default []):
+%
+%       --mask (int | logical | vector, default '')
 %           An array mask defining which frames to use (1) and which not (0).
 %           All if empty.
+%
 %       --verbose (bool, default false):
 %           Report what is going on.
+%
 %       --target (vector, default FreeSurfer scortex codes):
 %           Array of ROI codes that define target ROI.
+%
 %       --targetf (str, default ''):
 %           Target folder for results.
-%       --rsmooth (int, default []):
+%
+%       --rsmooth (int, default '')
 %           Radius for smoothing (no smoothing if empty).
-%       --rdilate (int, default []):
+%
+%       --rdilate (int, default '')
 %           Radius for dilating mask (no dilation if empty).
+%
 %       --ignore (str, default 'usevec'):
 %           The column in `*_scrub.txt` file that matches bold file to be
 %           used for ignore mask.
+%
 %       --time (bool, default true):
 %           Whether to time the processing.
 %

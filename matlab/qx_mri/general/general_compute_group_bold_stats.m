@@ -7,14 +7,18 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %   Parameters:
 %       --flist (str):
 %           Path to a sessions list file.
-%       --tfile (str, default []):
+%
+%       --tfile (str, default '')
 %           The file root to save the results to.
+%
 %       --stats (str, default 'sd'):
 %           A cell array or a comma separated string specifying, which
 %           statistics to compute.
+%
 %       --inmask (int, default 5):
 %           A mask of frames to exclude or an event string specifying which
 %           frames to use.
+%
 %       --ignore (str, default 'no'):
 %           Do we omit frames to be ignored:
 %
