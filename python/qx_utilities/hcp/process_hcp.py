@@ -372,8 +372,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
-
-    Specific parameters:
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should be
             run without them, anything else otherwise [t2]. 'NONE' is only valid
@@ -926,8 +924,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
-
-    Specific parameters:
         --hcp_fs_seed (str, default ''):
             Recon-all seed value. If not specified, none will be used.
             (Please note that it will only be used when HCP Pipelines are
@@ -1311,8 +1307,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
-
-    Specific parameters:
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should
             be run without them, anything else otherwise. 'NONE' is
@@ -1509,7 +1503,6 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_long_fs_template (str, default 'base'):
             Name of the base template.
         --hcp_long_fs_extra_reconall_base (str, default ''):
@@ -1758,7 +1751,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             - "hcp" (for "<hcp_folder>/logs/comlogs")
             - "<path>" (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_dwi_echospacing (str, default detailed below):
             Echo Spacing or Dwelltime of DWI images in msec. Default is
             image specific.
@@ -2217,7 +2209,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ('userdefined') is to use the file names, which can be defined by
             the user prior to mapping (e.g. `rfMRI_REST1_AP`).
 
-    Specific parameters:
         --hcp_bold_biascorrection (str, default 'NONE'):
             Whether to perform bias correction for BOLD images. NONE or Legacy.
         --hcp_bold_usejacobian (str, default 'FALSE'):
@@ -3205,7 +3196,6 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
 
-    Specific parameters:
         --hcp_bold_prefix (str, default 'BOLD')꞉
             The prefix to use when generating BOLD names (see 'hcp_filename')
             for BOLD working folders and results.
@@ -3732,7 +3722,6 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
             separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
@@ -4249,7 +4238,6 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
             separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
@@ -4615,7 +4603,6 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
             separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
@@ -5286,7 +5273,6 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
@@ -5842,7 +5828,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default detailed below):
             List of bolds on which ICAFix was applied, with the same format as
             for ICAFix. Typically, this should be identical to the list used in
@@ -6440,7 +6425,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_gdcoeffs (str, default ''):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see
@@ -6754,7 +6738,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_tica_bolds (str, default ''):
             A comma separated list of fmri run names. Set to all session BOLDs
             by default.
@@ -7208,7 +7191,6 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_surface_atlas_dir (str, default '${HCPPIPEDIR}/global/templates/standard_mesh_atlases'):
             Path to the location of the standard surfaces.
         --hcp_grayordinates_dir (str, default '${HCPPIPEDIR}/global/templates/91282_Greyordinates'):
@@ -7979,7 +7961,6 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_task_lvl1tasks (str, default ''):
             List of task fMRI scan names, which are the prefixes of the time
             series filename for the TaskName task. Multiple task fMRI scan

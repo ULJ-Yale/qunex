@@ -325,7 +325,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               For volume formats the images will be smoothed using the
 %               img_smooth_3d nimage method. For cifti format the smooting will
 %               be done by calling the relevant wb_command command. The
-%               smoothing specific parameters can be set in the options string:
+%               smoothing parameters can be set in the options string:
 %
 %               - voxel_smooth
 %                   Gaussian smoothing FWHM in voxels. Defaults to 2.

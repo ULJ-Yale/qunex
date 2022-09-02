@@ -165,7 +165,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         --parsessions (int, default 1):
             How many sessions to run in parallel.
         --parelements (int, default 1):
-            How many elements (e.g bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
         --overwrite (str, 'no'):
             Whether to overwrite existing data (yes) or not (no).
         --bolds (str, default 'rest'):
@@ -215,7 +215,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     Examples:
         ::
 
-            qunex create_bold_brain_masks
+            qunex create_bold_brain_masks \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
@@ -523,7 +523,6 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
             - '<path>'  (for an arbitrary directory).
 
-    Specific parameters:
         --mov_radius (int, default 50):
             Estimated head radius (in mm) for computing frame displacement
             statistics.
@@ -842,7 +841,6 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     ... for `<hcp_folder>/logs/comlogs`
             - '<path>'  ... for an arbitrary directory.
 
-    Specific parameters:
         --mov_radius (int, default 50):
             Estimated head radius (in mm) for computing frame displacement
             statistics.
@@ -1246,7 +1244,6 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
             - '<path>'  (for an arbitrary directory).
 
-    Specific parameters:
         --wbmask (str, default ''):
             A path to an optional file that specifies which regions are to be
             excluded from the whole-brain mask. It can be used in the case of
@@ -1272,7 +1269,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
               A text file that lists for each volume frame the information
               on mean intensity across the ventricle, white matter and whole
               brain voxels, and any additional nuisance ROI specified using
-              specific parameters. The file is stored in
+              parameters. The file is stored in the
               `images<img_suffix>/functional<bold_variant>/movement` folder.
 
         --`bold[N]<nifti_tail>_nuisance.png`
@@ -1303,9 +1300,9 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         parts of the brain that are not ventricles or white matter, which results
         in whole brain to mostly overlap with gray matter.
 
-        Using specific parameters listed below, it is also possible to specify
-        additional ROIs for which nuisance signal is to be extracted and/or ROI that
-        are to be excluded from the whole brain mask.
+        Using parameters listed below, it is also possible to specify additional
+        ROIs for which nuisance signal is to be extracted and/or ROI that are to
+        be excluded from the whole brain mask.
 
         To exclude specific ROI from the whole brain mask, use the '--wbmask'
         option. This should be a path to a file that specifies, which ROI are to
@@ -1544,7 +1541,6 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
 
-    Specific parameters:
         --bolds  (str, default 'all'):
             A pipe ('|') separated list of conc names to process.
         --event_file  (str, default ''):
@@ -1728,7 +1724,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 For volume formats the images will be smoothed using the
                 img_smooth_3d nimage method. For cifti format the smooting will
                 be done by calling the relevant wb_command command. The
-                smoothing specific parameters are:
+                smoothing parameters are:
 
                 --voxel_smooth (int, default 2):
                     Gaussian smoothing FWHM in voxels.
@@ -1795,7 +1791,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             Temporal filtering is accomplished using img_filter nimage method.
             The code is adopted from the FSL C++ code enabling appropriate
             handling of bad frames (as described above - see SCRUBBING). The
-            specific parameters are:
+            parameters are:
 
             --hipass_filter (float, default 0.008):
                 The frequency for high-pass filtering in Hz.
@@ -1821,7 +1817,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             from BOLD files, removing unwanted potential sources of correlation
             for further functional connectivity analyses, and (2) to get task
             beta estimates for further activation analyses. The following
-            specific parameters are used in this step:
+            parameters are used in this step:
 
             --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
                 A comma separated list of regressors to include in GLM.
@@ -2230,7 +2226,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
 
-    Specific parameters:
         --bolds  (str, default 'all'):
             A pipe ('|') separated list of conc names to process.
         --event_file  (str, default ''):
@@ -2427,7 +2422,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 For volume formats the images will be smoothed using the
                 img_smooth_3d nimage method. For cifti format the smooting will
                 be done by calling the relevant wb_command command. The
-                smoothing specific parameters are:
+                smoothing parameters are:
 
                 --voxel_smooth (int, default 2):
                     Gaussian smoothing FWHM in voxels.
@@ -2494,7 +2489,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             Temporal filtering is accomplished using img_filter nimage method.
             The code is adopted from the FSL C++ code enabling appropriate
             handling of bad frames (as described above - see SCRUBBING). The
-            specific parameters are:
+            parameters are:
 
             --hipass_filter (float, default 0.008):
                 The frequency for high-pass filtering in Hz.
@@ -2520,7 +2515,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             from BOLD files, removing unwanted potential sources of correlation
             for further functional connectivity analyses, and (2) to get task
             beta estimates for further activation analyses. The following
-            specific parameters are used in this step:
+            parameters are used in this step:
 
             --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
                 A comma separated list of regressors to include in GLM.

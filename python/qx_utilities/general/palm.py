@@ -192,7 +192,6 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
             colons will result in an error - use normal colons with the command
             instead.
 
-    Specific parameters:
         --T2DHEC (str, default '2:1:26'):
             Sets H, E and C parameters for 2D part of analysis.
 

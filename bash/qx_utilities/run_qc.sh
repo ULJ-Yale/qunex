@@ -113,8 +113,6 @@ Parameters:
     --suffix (str, default '<session_id>_<timestamp>'):
         Allows user to specify unique suffix or to parse a time stamp from QuNex
         bash wrapper.
-
-Specific parameters:
     --dwipath (str):
         Specify the input path for the DWI data (may differ across studies; e.g.
         'Diffusion' or 'Diffusion' or 'Diffusion_DWI_dir74_AP_b1000b2500').

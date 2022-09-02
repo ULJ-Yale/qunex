@@ -33,8 +33,6 @@ Parameters:
     --covariance (str, default 'false'):
         Whether to compute covariances instead of correlations ('true' /
         'false').
-
-Specific parameters:
     --flist (str):
         Specify ∗.list file of session information. If specified then
         --sessionsfolder, --inputfile, --session and --outname are omitted.

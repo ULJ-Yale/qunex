@@ -250,7 +250,6 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             - "hcp" (for `<hcp_folder>/logs/comlogs`)
             - "<path>" (for an arbitrary directory).
 
-    Specific parameters:
         --species (str, default 'human'):
             Species: human or macaque.
         --nogpu (flag, optional):

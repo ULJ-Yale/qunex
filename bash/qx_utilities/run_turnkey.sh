@@ -129,8 +129,6 @@ Parameters:
         - IF executing a run via the XNAT WebUI then provide the name of the
           file. This file should be created and uploaded manually as the
           project-level resource on XNAT.
-
-Specific parameters:
     --acceptancetest (str, default 'no'):
         Specify if you wish to run a final acceptance test after each unit of
         processing.

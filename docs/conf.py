@@ -77,10 +77,9 @@ matlab_src_dir = os.path.abspath('../matlab')
 # Google style is used throughout the project, so NumPy style can be ignored
 napoleon_numpy_docstring = False
 
-# The heading 'Specific parameters' is not part of the default Napoleon set of
-# section headings, so it has been added manually. (list is not case-sensitive)
+# The heading 'Output files' is not part of the default Napoleon set of section
+# headings, so it has been added manually (list is case-insensitive).
 napoleon_custom_sections = [
-    ('specific parameters', 'params_style'),
     ('output files'),
 ]
 

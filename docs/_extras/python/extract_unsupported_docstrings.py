@@ -31,11 +31,7 @@ spec.loader.exec_module(gmri)
 
 def docstring_to_parameters(docstring, headings):
     """
-    Extracts parameters to be included in Python function definition - def().
-
-    Warning:
-        This function is currently hardcoded not to include parameters from
-        `Specific parameters` section. This can easily be adjusted in the code.
+    Extracts parameters to be included in Python function definition.
     """
 
     headings_string = "|".join(headings)
@@ -45,7 +41,6 @@ def docstring_to_parameters(docstring, headings):
     parameters = []
 
     sections["parameters"] = re.findall(r'(?i)(Parameters:[\s\S]*?(?:\n\n(?:' + headings_string + r'):|\Z))', docstring)
-    sections["specific_parameters"] = re.findall(r'(?i)(Specific parameters:[\s\S]*?(?:\n\n(?:' + headings_string + r'):|\Z))', docstring)
 
     for heading, section in sections.items():
         if sections[heading]:
@@ -56,16 +51,13 @@ def docstring_to_parameters(docstring, headings):
 
     for heading, section in sections.items():
         if section:
-            # "if" below hardcoded to only include parameters from the "Parameters" section
-            # remove "if" to include Specific parameters
-            if heading == "parameters":
-                for result in re.findall("\n {4}--(\w+).*?(default .*)?\):", section):
-                    parameter = result[0]
-                    if result[1] not in ['', "default detailed below"]:
-                        parameter += f'={result[1].strip("default ")}'
-                        parameters.append((parameter, True))
-                    else:
-                        parameters.append((parameter, False))
+            for result in re.findall("\n {4}--(\w+).*?(default .*)?\):", section):
+                parameter = result[0]
+                if result[1] not in ['', "default detailed below"]:
+                    parameter += f'={result[1].strip("default ")}'
+                    parameters.append((parameter, True))
+                else:
+                    parameters.append((parameter, False))
 
     # sort parameters - False first
     parameters.sort(key = lambda x: x[1])
