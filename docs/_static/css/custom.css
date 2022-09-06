@@ -1,12 +1,175 @@
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-Thin.ttf');
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto-Thin';
+    src: url('fonts/Roboto-Thin.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-ThinItalic.ttf');
+    font-weight: 100;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Roboto-ThinItalic';
+    src: url('fonts/Roboto-ThinItalic.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-Light.ttf');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto-Light';
+    src: url('fonts/Roboto-Light.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-LightItalic.ttf');
+    font-weight: 300;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Roboto-LightItalic';
+    src: url('fonts/Roboto-LightItalic.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-Regular.ttf');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto-Regular';
+    src: url('fonts/Roboto-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-Italic.ttf');
+    font-weight: 400;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Roboto-Italic';
+    src: url('fonts/Roboto-Italic.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-Medium.ttf');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto-Medium';
+    src: url('fonts/Roboto-Medium.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-MediumItalic.ttf');
+    font-weight: 500;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Roboto-MediumItalic';
+    src: url('fonts/Roboto-MediumItalic.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-Bold.ttf');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto-Bold';
+    src: url('fonts/Roboto-Bold.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-BoldItalic.ttf');
+    font-weight: 700;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Roboto-BoldItalic';
+    src: url('fonts/Roboto-BoldItalic.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-Black.ttf');
+    font-weight: 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto-Black';
+    src: url('fonts/Roboto-Black.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('fonts/Roboto-BlackItalic.ttf');
+    font-weight: 900;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Roboto-BlackItalic';
+    src: url('fonts/Roboto-BlackItalic.ttf');
+}
+
 :root {
-    --pst-font-size-h2: 28px !important;
-    --pst-font-size-h3: 22px !important;
-    --pst-font-size-h4: 18px !important;
-    --pst-font-size-h5: 17px !important;
+	--pst-font-size-h1: 32px !important;
+	--pst-font-size-h2: 26px !important;
+	--pst-font-size-h3: 22px !important;
+	--pst-font-size-h4: 18px !important;
+	--pst-font-size-h5: 16px !important;
+	--pst-font-family-base: "Roboto" !important;
+	--pst-font-family-base-system: var(--pst-font-family-base);
+	--font-family-sans-serif: var(--pst-font-family-base);
+	--qunex-blue: #0f4d92;
+	--qunex-orange: #ff6600;
+}
+
+@media (max-width: 768px) {
+    #site-navigation,
+    .bd-toc {
+        margin-top: 52px !important;
+        padding-top: 8px !important;
+    }
+
+    .bd-toc li {
+        font-size: .85em !important;
+    }
 }
 
 #site-navigation {
     width: 300px !important;
+    font-size: 14px;
 }
 
 #site-navigation .bd-sidebar__bottom {
@@ -17,7 +180,7 @@
     display: none !important;
 }
 
-.sig{
+.sig {
     display: none !important;
 }
 
@@ -36,7 +199,7 @@ h4 a,
 .prev-next-title,
 .toctree-wrapper.compound a /* not sure about this one (used in List of commands) */
 {
-    color: #ff6600 !important;
+    color: var(--qunex-orange) !important;
 }
 
 .toc-entry>.nav-link.active {
@@ -52,7 +215,7 @@ h4 a,
 main code,
 .sig-name,
 .fas {
-    color: #0F4D92 !important;
+    color: var(--qunex-blue) !important;
 }
 
 .caption a {
@@ -60,18 +223,9 @@ main code,
 }
 
 .caption a:hover,
-.caption a.active{
+.caption a.active {
     color: rgba(var(--pst-color-link),1);
     background-color: transparent;
     text-decoration: none;
 }
 
-.paragraph-with-image {
-    text-align: center;
-}
-
-.paragraph-with-image img {
-    display: table;
-    margin-left: auto;
-    margin-right: auto;
-}

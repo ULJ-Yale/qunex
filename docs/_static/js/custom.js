@@ -1,20 +1,40 @@
 window.addEventListener('load', function () {
-  extractImgDescriptions();
-  hamburgerScrollingFix();
   hideTerminalSig();
+  parameterDetails();
+  hamburgerScrollingFix();
+  extractImgDescriptions();
 });
 
 function extractImgDescriptions() {
   /*
   The jQuery script below extracts image descriptions that are "hidden" into
   the alt attribute by the myst_parser Sphinx extension and makes them visible
-  by appending them to the parent paragraphs (just as they appear in the Wiki).
+  by building an HTML figure around them.
   */
 
   $("main p").has("img").each(function () {
-    var imageAlt = $(this).find("img").attr("alt");
-    $(this).append(imageAlt);
-    $(this).addClass("paragraph-with-image");
+    var figureImg = $(this).find("img");
+    figureImg.addClass("figure-img img-fluid rounded");
+
+    var imageAlt = figureImg.attr("alt");
+    var figureCaption = $('<figcaption class="figure-caption text-center"></figcaption>').text(imageAlt);
+    $(this).append(figureCaption);
+
+    $(this).replaceWith("<figure class='text-center'>" + this.innerHTML + "</figure>"); // centered without figure class
+  });
+}
+
+function parameterDetails() {
+  /*
+  Adds code tag to parameter details.
+  */
+  $("p:contains('Parameters')").next().find("dt").each(function () {
+    let contents = $(this).html();
+    if (contents.match("--\\S+(?:, -{1,2}\\S+)* \\(.+\\):$") && $(this).parent().prev().hasClass("rubric")) {
+      contents = contents.replace(" \(", " (<code>");
+      contents = contents.substring(0, contents.length - 2) + "</code>):";
+      $(this).html(contents);
+    }
   });
 }
 

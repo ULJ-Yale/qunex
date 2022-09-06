@@ -13,18 +13,12 @@ build:
   jobs:
     pre_build:
       - docs/_extras/bash/pre_build.sh
-#    post_build:
-#      - docs/_extras/bash/post_build.sh
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
    configuration: docs/conf.py
 
-# If using Sphinx, optionally build your docs in additional formats such as PDF
-# formats:
-#    - pdf
-
-# Optionally declare the Python requirements required to build your docs
+# The Python PyPi requirements required to build your docs
 python:
    install:
    - requirements: docs/_extras/requirements.txt
