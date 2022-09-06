@@ -2,26 +2,20 @@
 # encoding: utf-8
 
 """
-Extracts docstrings from unsupported languages to files named ``<language>.py`` in the python/qx_utilities folder.
-
-Warning:
-    Only qx_utilities commands in bash and R can currently be used with this script.
+Extracts docstrings from files in unsupported languages (Bash and R) to files
+named ``<language>.py`` in subdirectories of the $QUNEX_PATH/python/ folder.
 """
 
 import re
 import sys
 import os
 
-# import headings from docs/conf.py
-sys.path.insert(0, "../..")
+sys.path.append("../..")  # for $QUNEXPATH/docs/conf.py import
+sys.path.append("../../../python")
 
 from conf import napoleon_custom_sections
 from importlib.util import spec_from_loader, module_from_spec
 from importlib.machinery import SourceFileLoader
-
-# paths
-sys.path.insert(0, "../../../python")
-sys.path.insert(0, "../../../python/qx_utilities")
 
 # this code imports python/qx_utilities/gmri to use all_qunex_commands list
 spec = spec_from_loader("gmri", SourceFileLoader("gmri", "../../../python/qx_utilities/gmri"))
@@ -54,13 +48,18 @@ def docstring_to_parameters(docstring, headings):
             for result in re.findall("\n {4}--(\w+).*?(default .*)?\):", section):
                 parameter = result[0]
                 if result[1] not in ['', "default detailed below"]:
-                    parameter += f'={result[1].strip("default ")}'
+                    stripped = re.sub("^default ", "", result[1])
+                    if stripped.lower() == "true":
+                        stripped = "True"
+                    elif stripped.lower() == "false":
+                        stripped = "False"
+                    parameter += f'={stripped}'
                     parameters.append((parameter, True))
                 else:
                     parameters.append((parameter, False))
 
     # sort parameters - False first
-    parameters.sort(key = lambda x: x[1])
+    parameters.sort(key=lambda x: x[1])
 
     return [parameter for parameter, has_default_value in parameters]
 
@@ -117,20 +116,20 @@ def extract_docstrings(input_dict):
 
     output_dict = {}
     for lang, commands in input_dict.items():
-        # if there is at least one command per language
         if len(commands) > 0:
-            # hardcoded module description
-            output_dict[lang] = ['#!/usr/bin/env python\n# encoding: utf-8\n\n"""\nThis file consists of docstrings from ' + lang + ' commands.\n"""\n\n\n']
+            output_dict[lang] = {}
             for command in commands:
                 command_split = command.split(".")
                 function_name = command_split[-1]
-                file_path = os.path.abspath("../../../" + lang + "/" + command_split[0] + "/" + "/".join(command_split[2:]))
+                module_path = "/".join(command_split[:-2])
+                # if there is at least one command per language
+                source_file_path = os.path.abspath("../../../" + lang + "/" + module_path + "/" + function_name)
                 if lang == "bash":
-                    file_path += ".sh"
+                    source_file_path += ".sh"
                 elif lang == "r":
-                    file_path += ".R"
+                    source_file_path += ".R"
 
-                with open(file_path, "r") as file:
+                with open(source_file_path, "r") as file:
                     if lang == "bash":
                         docstring = re.findall("usage\(\) \{\n *cat << EOF\n([\s\S]*?)\nEOF", file.read())[0]
                     elif lang == "r":
@@ -142,20 +141,36 @@ def extract_docstrings(input_dict):
                     docstring = "    " + "\n    ".join(docstring.split("\n"))
                     docstring = f'def {function_name}({", ".join(parameters)}):\n    """\n{docstring}    """\n\n\n'
 
-                    output_dict[lang].append(docstring)
+                    if not module_path in output_dict[lang]:
+                        output_dict[lang][module_path] = []
+                    output_dict[lang][module_path].append(docstring)
     return output_dict
 
 
 def write_python_files(docstring_dict):
-    for lang, lines in docstring_dict.items():
-        if len(lines) > 0:
-            output_file_path = "../../../python/qx_utilities/" + lang + ".py"
-            # join strings and write file to python/qx_utilities directory
-            with open(output_file_path, "w") as output_file:
-                output_file.write("".join(lines).strip())
+    for lang, inner_dict in docstring_dict.items():
+        for module_path, functions in inner_dict.items():
+            if len(functions) > 0:
+                module_path = os.path.join("..", "..", "..", "python", module_path)
+                os.makedirs(module_path, exist_ok=True)
+                # create empty file __init__.py if it doesn't exist to mark
+                # the directory as a module
+                if not os.path.isfile(os.path.join(module_path, "__init__.py")):
+                    with open(os.path.join(module_path, "__init__.py"), 'w'):
+                        pass
+                output_file_path = os.path.join(module_path, lang + ".py")
+                with open(output_file_path, "w") as output_file:
+                    # hardcoded module description
+                    output_file.write('#!/usr/bin/env python\n'
+                                      '# encoding: utf-8\n\n'
+                                      '"""\n'
+                                      'This file consists of docstrings extracted from functions in' + lang + '.\n'
+                                                                                                              '"""\n\n\n')
+                    output_file.write("".join(functions).strip())
 
 
 if __name__ == "__main__":
+    print("==> Generating Python-like docstrings from unsupported (bash and R) commands")
     unsupported_languages = [
         "bash",
         "r",
@@ -164,7 +179,6 @@ if __name__ == "__main__":
     unsupported_commands = {}
     for language in unsupported_languages:
         unsupported_commands[language] = []
-
     for full_name, description, language in gmri.all_qunex_commands:
         if language in unsupported_languages:
             unsupported_commands[language].append(full_name)

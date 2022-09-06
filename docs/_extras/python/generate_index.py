@@ -175,6 +175,8 @@ def read_exclude_list(ex_path):
 
 
 if __name__ == "__main__":
+    print("==> Converting Home.md to index.rst and HomeMenu.rst")
+
     # -- read Home.md file (Wiki homepage)
     with open('../../wiki/Home.md') as f:
         home_lines = f.readlines()

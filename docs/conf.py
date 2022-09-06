@@ -9,23 +9,23 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+
 import os
 import sys
 import datetime
 
-# These directories are specified in order to make Sphinx structure
-# modules from Python files at the same level as MATLAB folders, e.g.:
-# * Python: qx_utilities.general.fidl.check_fidl
-# * MATLAB: qx_utilities.general.general_check_file
-# This way they both share qx_utilities.general.
-sys.path.append(os.path.abspath('../python'))
-sys.path.append(os.path.abspath('../python/qx_utilities'))
-sys.path.append(os.path.abspath('../matlab/qx_utilities'))
-sys.path.append(os.path.abspath('../python/qx_mice'))
-# See 'Options for MATLAB domain extension' section for additional path to
-# MATLAB files
+sys.path.append(os.path.join("..", "python"))
+matlab_src_dir = os.path.join("..", "matlab")  # MATLAB domain root folder
 
+# Modules or directories that are shared between multiple languages (e.g.
+# qx_utilities) have to be added to sys.path separately for each language.
+for lang in ["python", "matlab"]:
+    path_with_modules = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", lang))
+    if os.path.isdir(path_with_modules):
+        for each in os.listdir(path_with_modules):
+            full_path = os.path.join(path_with_modules, each)
+            if os.path.isdir(full_path):
+                sys.path.append(os.path.abspath(full_path))
 
 # -- Project information -----------------------------------------------------
 
@@ -36,7 +36,7 @@ version_path = "../VERSION.md"
 # check if file exists to avoid error when using this script as import
 if os.path.isfile(version_path):
     with open(version_path, "r") as version_file:
-        # The full version, including alpha/beta/rc tags
+        # The full version name, including alpha/beta/rc tags
         release = version_file.read()
 
 # -- General configuration ---------------------------------------------------
@@ -53,7 +53,6 @@ extensions = [
     'sphinxext.opengraph',
 ]
 
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -66,34 +65,25 @@ exclude_patterns = []
 # ellipses (...) etc.
 smartquotes = False
 
-
-# -- Options for MATLAB domain extension -------------------------------------
-
-matlab_src_dir = os.path.abspath('../matlab')
-
-
 # -- Options for Napoleon extension ------------------------------------------
 
 # Google style is used throughout the project, so NumPy style can be ignored
 napoleon_numpy_docstring = False
 
-# The heading 'Output files' is not part of the default Napoleon set of section
-# headings, so it has been added manually (list is case-insensitive).
 napoleon_custom_sections = [
+    ('parameters'),
+    ('returns'),
     ('output files'),
 ]
-
 
 # -- Options for MyST parser extension --------------------------------------
 # Depth of auto-generated header anchors
 myst_heading_anchors = 4
 
-
 # -- Options for Opengraph extension -----------------------------------------
 
 ogp_site_url = "https://qunex.readthedocs.io/"
 ogp_image = "https://qunex.readthedocs.io/en/latest/_images/QuNex_Logo_pantheonsite.png"
-
 
 # -- Options for HTML output -------------------------------------------------
 

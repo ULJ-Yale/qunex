@@ -4,7 +4,7 @@
 """
 Automatically generates .rst files in docs/api/gmri directory.
 """
-
+import os
 import sys
 from importlib.util import spec_from_loader, module_from_spec
 from importlib.machinery import SourceFileLoader
@@ -19,7 +19,9 @@ gmri = module_from_spec(spec)
 spec.loader.exec_module(gmri)
 
 if __name__ == "__main__":
-    directory_path = "../../api/gmri"
+    print("==> Generating .rst files for individual commands")
+
+    directory_path = os.path.join("..", "..", "api", "gmri")
 
     for full_name, description, language in gmri.all_qunex_commands:
         function_name = full_name.split(".")[-1]
