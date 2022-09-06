@@ -431,9 +431,9 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             In case that the specified batch file already exists, whether to
             interactively ask ('ask'), overwrite ('yes'), abort action ('no') or
             append ('append') the found / specified sessions to the batch file.
-        --paramfile (str, default <sessionsfolder>/specs/batch.txt):
+        --paramfile (str, default <sessionsfolder>/specs/parameters.txt):
             The path to the parameter file header to be used. If not explicitly
-            provided it defaults to <sessionsfolder>/specs/batch.txt.
+            provided it defaults to <sessionsfolder>/specs/parameters.txt.
 
     Notes:
         The command combines all the sourcefiles in all session folders in
