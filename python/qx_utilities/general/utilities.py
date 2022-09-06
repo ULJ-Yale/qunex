@@ -1610,39 +1610,39 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
 
     ::
 
-        qunex run_list \
-          --listfile="/data/settings/runlist.txt" \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
           --runlists="dataImport,prepareHCP"
     
     ::
 
-        qunex run_list \
-          --listfile="/data/settings/runlist.txt" \
-          --runlists="doHCP" \
-          --batchfile="/data/testStudy/processing/batch_baseline.txt" \
-          --sperlist=4 \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
+          --runlists="doHCP" \\
+          --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
+          --sperlist=4 \\
           --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
     ::
 
-        qunex run_list \
-          --listfile="/data/settings/runlist.txt" \
-          --runlists="prepareFCPreprocessing" \
-          --batchfile="/data/testStudy/processing/batch_baseline.txt" \
-          --sperlist=4 \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
+          --runlists="prepareFCPreprocessing" \\
+          --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
+          --sperlist=4 \\
           --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
     ::
 
-        qunex run_list
-          --listfile="/data/settings/runlist.txt" \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
           --runlists="runFCPreprocessing" 
 
     ::
 
-        qunex run_list
-          --listfile="/data/settings/runlist.txt" \
-          --runlists="doPreFS" \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
+          --runlists="doPreFS" \\
           --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt" 
 
     The first call will execute all the commands in lists `dataImport` and 
@@ -2664,27 +2664,35 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
     Parameters:
         --batchfile (str, default ''):
             Path to a batch file.
+
         --sessions (str, default '*'):
             Either an explicit list (space, comma or pipe separated) of sessions
             to process or the path to a list file with sessions to process. If
             left unspecified, '*' will be used and all folders within sessions'
             folders will be processed.
+
         --pipelines (str, default 'hcp'):
             Specify a comma separated list of pipelines for which the session
             info will be prepared.
+
         --sessionsfolder (str, default '.'):
             The directory that holds sessions' folders.
+
         --sourcefile (str, default 'session.txt'):
             The "source" session.txt file.
+
         --targetfile (str, default session_<pipeline>.txt):
             The "target" session.txt file.
+
         --mapping (str, default specs/<pipeline>_mapping.txt):
             The path to the text file describing the mapping.
+
         --filter (str, default None):
             An optional "key:value|key:value" string used as a filter if a batch
             file is used. Only sessions for which all the key:value pairs are
             true will be processed. All the sessions will be processed if no
             filter is provided.
+
         --overwrite (str, default 'no'):
             Whether to overwrite target files that already exist ('yes') or not
             ('no').

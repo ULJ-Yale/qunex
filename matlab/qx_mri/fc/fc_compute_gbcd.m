@@ -44,14 +44,14 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       --roi (str):
 %           The roi names file.
 %
-%       --rcodes (vector, default '')
+%       --rcodes (vector, default ''):
 %           Codes of regions from roi file to compute GBC for (all if not
 %           provided or left empty).
 %
-%       --nbands (int, default '')
+%       --nbands (int, default ''):
 %           Number of distance bands to compute GBC for.
 %
-%       --mask (int | logical | vector, default '')
+%       --mask (int | logical | vector, default ''):
 %           An array mask defining which frames to use (1) and which not (0).
 %           All if empty.
 %
@@ -64,10 +64,10 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       --targetf (str, default ''):
 %           Target folder for results.
 %
-%       --rsmooth (int, default '')
+%       --rsmooth (int, default ''):
 %           Radius for smoothing (no smoothing if empty).
 %
-%       --rdilate (int, default '')
+%       --rdilate (int, default ''):
 %           Radius for dilating mask (no dilation if empty).
 %
 %       --ignore (str, default 'usevec'):

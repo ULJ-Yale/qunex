@@ -186,7 +186,7 @@ def reslice(inf, slices, outf=None):
     tf.close
 
 def reorder(inf, outf=None):
-    '''
+    """
     ``reorder inf=<input_image> [outf=<output_image>]``
 
     Reorders the slices (y dimension) for images that are upside down.
@@ -197,7 +197,7 @@ def reorder(inf, outf=None):
     --inf       input image filename to be reordered
     --outf      output image filename. If not provided, it replaces the original
                 file.
-    '''
+    """
 
     # ---> check data format
 

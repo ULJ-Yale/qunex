@@ -50,14 +50,14 @@ logname = ""
 #                                                       SUPPORT FUNCTIONS
 
 def writelog(item):
-    '''
+    """
     ``writelog(item)``
 
     Splits the passed item into two parts and appends the first to the
     global log list, and the second to the global stati list. It also
     prints the contents to the file specified in the global logname
     variable.
-    '''
+    """
     global logname
     global log
     global stati
@@ -70,15 +70,15 @@ def writelog(item):
 
 
 def procResponse(r):
-    '''
+    """
     ``procResponse(r)``
 
     It processes the response returned from the utilities functions
     called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple. If the 
+    no status tupple is present, it adds an "Unknown" tupple. If the
     third element is missing, it assumes it ran ok and sets it to
     0.
-    '''
+    """
 
     if type(r) is tuple:
         if len(r) == 2:
@@ -95,13 +95,13 @@ def procResponse(r):
 
 
 def torf(s):
-    '''
+    """
     ``torf(s)``
 
     First checks if string is "None", 'none', or "NONE" and returns
     None, then Checks if s is any of the possible true strings: "True", "true",
     or "TRUE" and retuns a boolean result of the check.
-    '''
+    """
     if s in ['None', 'none', 'NONE']:
         return None
     else:
@@ -109,11 +109,11 @@ def torf(s):
 
 
 def flag(f):
-    '''
+    """
     ``flag(f)``
 
     Converts a flag (f) passed as a string to a boolean.
-    '''
+    """
 
     if type(f) == bool:
         return f
@@ -124,12 +124,12 @@ def flag(f):
 
 
 def isNone(s):
-    '''
+    """
     ``isNone(s)``
 
     Check if the string is "" and returns None, otherwise
     returns the passed string.
-    '''
+    """
 
     if s in ['']:
         return None
@@ -138,12 +138,12 @@ def isNone(s):
 
 
 def updateOptions(session, options):
-    '''
+    """
     ``updateOptions(session, options)``
 
-    Returns an updated copy of options dictionary where all keys from 
+    Returns an updated copy of options dictionary where all keys from
     sessions that started with an underscore '_' are mapped into options.
-    '''
+    """
     soptions = dict(options)
     for key, value in session.items():
         if key.startswith('_'):

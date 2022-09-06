@@ -70,11 +70,14 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --sessionsfolder (str):
             The path to study sessions folder.
+
         --bold_prefix (str):
             An optional prefix to place in front of processing name extensions
             in the resulting files.
+
         --bolds (str):
             Which bolds to process (can be multiple joind with '|' ).
+
         --event_file (str):
             The root name of the fidl event file for task regression.
 

@@ -42,7 +42,7 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %             to be used for ignore mask
 %           - usevec - as specified in the use vector.
 %
-%       --rcodes (str | vector | cell array, default '')
+%       --rcodes (str | vector | cell array, default ''):
 %           A list of region codes for which to extract the time-series.
 %
 %       --mcodes (str | vector | cell array, default specification from roiinfo):

@@ -31,7 +31,7 @@ Parameters:
     --session (str):
         Session ID to run EDDY QC on.
 
-    --eddybase (str) :
+    --eddybase (str):
         This is the basename specified when running EDDY (e.g.
         eddy_unwarped_images)
 

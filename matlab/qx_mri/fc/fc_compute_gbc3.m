@@ -64,7 +64,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %               computes proportion of voxels within n strength ranges of
 %               negative r.
 %
-%       --mask (int | logical | vector, default '')
+%       --mask (int | logical | vector, default ''):
 %           A mask defining which frames to use (1) and which not (0). All if
 %           empty.
 %
@@ -77,13 +77,13 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %       --targetf (str):
 %           Path to target folder for results.
 %
-%       --rsmooth (int, default '')
+%       --rsmooth (int, default ''):
 %           Radius for smoothing (no smoothing if empty).
 %
-%       --rdilate (int, default '')
+%       --rdilate (int, default ''):
 %           Radius for dilating mask (no dilation if empty).
 %
-%       --ignore (str, default '')
+%       --ignore (str, default ''):
 %           The column in `*_scrub.txt` file that matches bold file to be
 %           used for ignore mask. All if empty.
 %

@@ -13,7 +13,7 @@ function [] = fc_compute_seedmaps_group(flist, roiinfo, frames, targetf, options
 %       --roiinfo (str):
 %           A names file for the ROI seeds.
 %
-%       --frames (matrix | int | str, default '')
+%       --frames (matrix | int | str, default ''):
 %           The definition of which frames to use, it can be one of:
 %
 %           - a numeric array mask defining which frames to use (1) and

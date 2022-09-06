@@ -196,11 +196,11 @@ def useOrSkipBOLD(sinfo, options, r=""):
     return bolds, bskip, len(bskip), r
 
 def _filter_bolds(bolds, bolds_filter):
-    '''
+    """
     An internal function for filtering a list of bolds.
 
     A list of bolds is filter according to the filter parameter.
-    '''
+    """
 
     # prepare filter
     filters = [e.strip() for e in re.split(" +|\||, *", bolds_filter)]
@@ -564,9 +564,9 @@ def getSessionFolders(sinfo, options):
 
 
 def missingReport(missing, message, prefix):
-    '''
+    """
     Takes a list of missing files and prepares a list report.
-    '''
+    """
 
     r = message + "\n"
     for file in missing:
@@ -948,10 +948,10 @@ def checkForFiles(r, checkfiles, ok, bad, all=False, status=True):
 
 
 def action(action, run):
-    '''
+    """
     action(action, run)
     A function that prepends "test" to action name if run is set to "test".
-    '''
+    """
     if run == "test":
         if action.istitle():
             return "Test " + action.lower()

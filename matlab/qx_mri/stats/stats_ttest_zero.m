@@ -17,7 +17,7 @@ function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 %           - 'p' ... p-value for each voxel
 %           - 'z' ... Z-score for each voxel.
 %
-%       --exclude (int, default '')
+%       --exclude (int, default ''):
 %           Values to be excluded from computation.
 %
 %       --verbose (bool, default false):

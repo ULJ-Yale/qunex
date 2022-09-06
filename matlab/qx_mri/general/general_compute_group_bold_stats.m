@@ -8,7 +8,7 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %       --flist (str):
 %           Path to a sessions list file.
 %
-%       --tfile (str, default '')
+%       --tfile (str, default ''):
 %           The file root to save the results to.
 %
 %       --stats (str, default 'sd'):

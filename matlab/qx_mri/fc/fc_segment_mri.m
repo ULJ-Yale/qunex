@@ -16,7 +16,7 @@ function [] = fc_segment_mri(flist, smask, tmask, mask, root, options, verbose)
 %       --tmask (str):
 %           A .names file for target mask roi definition.
 %
-%       --mask (int | logical | vector, default '')
+%       --mask (int | logical | vector, default ''):
 %           Either number of frames to omit or a mask of frames to use.
 %
 %       --root (str, default ''):

@@ -24,19 +24,6 @@ Currently Supported: ${SupportedQC}
 This function is compatible with both legacy data [without T2w scans] and
 HCP-compliant data [with T2w scans and DWI].
 
-With the exception of rawNII, the function generates 3 types of outputs, which
-are stored within the Study in <path_to_folder_with_sessions>/QC :
-
-- .scene files that contain all relevant data loadable into Connectome Workbench
-- .png images that contain the output of the referenced scene file.
-- .zip file that contains all relevant files to download and re-generate the
-  scene in Connectome Workbench.
-
-Note: For BOLD data there is also an SNR txt output if specified.
-
-Note: For raw NIFTI QC outputs are generated in:
-<sessions_folder>/<case>/nii/slicesdir
-
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
@@ -214,6 +201,20 @@ Parameters:
 
     --omitdefaults (str, default 'no'):
         Either 'yes' or 'no'. If set to 'yes' then the script omits defaults.
+
+Output files:
+    With the exception of rawNII, the function generates 3 types of outputs, which
+    are stored within the Study in <path_to_folder_with_sessions>/QC :
+
+    - .scene files that contain all relevant data loadable into Connectome Workbench
+    - .png images that contain the output of the referenced scene file.
+    - .zip file that contains all relevant files to download and re-generate the
+      scene in Connectome Workbench.
+
+    Note: For BOLD data there is also an SNR txt output if specified.
+
+    Note: For raw NIFTI QC outputs are generated in:
+    <sessions_folder>/<case>/nii/slicesdir
 
 Examples:
     Run directly via::

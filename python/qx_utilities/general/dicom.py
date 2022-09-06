@@ -411,19 +411,24 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
         --folder (str, default '.'):
             The base session folder with the dicom subfolder that holds session
             numbered folders with dicom files.
+
         --clean (str, default 'no'):
             Whether to remove preexisting NIfTI files ('yes'), leave them and
             abort ('no').
+
         --unzip (str, default 'yes'):
             If the dicom files are gziped whether to unzip them ('yes'), leave
             them be and abort ('no').
+
         --gzip (str, default 'folder'):
             Whether to gzip individual DICOM files after they were processed
             ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
             ('folder'), or leave them ungzipped ('no'). Valid options are
             'folder', 'file', 'no'.
+
         --verbose (bool, default True):
              Whether to be report on the progress (True) or not (False).
+
         --parelements (int | str, default 1):
               How many parallel processes to run dcm2nii conversion with. The
               number is 1 by default, if specified as 'all', all available
@@ -888,26 +893,33 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
         --folder (str, default '.'):
             The base session folder with the dicom subfolder that holds session
             numbered folders with dicom files.
+
         --clean (str, default 'no'):
             Whether to remove preexisting NIfTI files ('yes'), leave them and
             abort ('no').
+
         --unzip (str, default 'yes'):
             If the dicom files are gziped whether to unzip them ('yes'), leave
             them be and abort ('no').
+
         --gzip (str, default 'folder'):
             Whether to gzip individual DICOM files after they were processed
             ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
             ('folder'), or leave them ungzipped ('no'). Valid options are
             'folder', 'file', 'no'.
+
         --sessionid (str, default extracted from dicom files):
             The id code to use for this session. If not provided, the session id
             is extracted from dicom files.
+
         --verbose (bool, default True):
             Whether to be report on the progress (True) or not (False).
+
         --parelements (int | str, default 1):
             How many parallel processes to run dcm2nii conversion with. The
             number is one by defaults, if specified as 'all', all available
             resources are utilized.
+
         --tool (str, default 'auto'):
             What tool to use for the conversion. It can be one of:
 
@@ -920,6 +932,7 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
             Adds image type information to the sequence name (Siemens scanners).
             The value should specify how many of image type labels from the end
             of the image type list to add.
+
         --add_json_info (str, default ''):
             What sequence information to extract from JSON sidecar files and add
             to session.txt file. Specify a comma separated list of fields or
@@ -1723,15 +1736,18 @@ def sort_dicom(folder=".", **kwargs):
 
     Sorts DICOM files.
 
-    Paramters:
+    Parameters:
         --folder (str, default '.'):
             The base session folder that contains the inbox subfolder with the
             unsorted DICOM files.
+
         --copy (str, default 'move'):
             Should we 'copy' or 'move'.
+
         --outdir (str, default detailed below):
             Optional directory where the sorted files are to be saved. Defaults
             to `folder` parameter if not set.
+
         --files (str, default detailed below):
             List of files to sort. Defaults to files in `folder`.
 
@@ -2033,6 +2049,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             The base study sessions folder (e.g. WM44/sessions) where the inbox
             and individual session folders are. If not specified, the current
             working folder will be taken as the location of the sessionsfolder.
+
         --sessions (str, default ''):
             A comma delimited string that lists the sessions to process. If
             master inbox folder is used, the parameter is optional and it can
@@ -2041,6 +2058,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             sessions list will be processed. If `masterinbox` is set to none,
             the list specifies the session folders to process, and it can
             include glob patterns.
+
         --masterinbox (str, default <sessionsfolder>/inbox/MR):
             The master inbox folder with packages to process. By default
             masterinbox is in sessions folder: <sessionsfolder>/inbox/MR. If
@@ -2048,6 +2066,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             set to "none", the data is assumed to already exist in the
             individual sessions' inbox folder:
             <studyfolder>/<sessionsfolder>/<session id>/inbox.
+
         --check (str, default 'any'):
             The type of check to perform when packages or session folders are
             identified. The possible values are:
@@ -2058,9 +2077,11 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
         --pattern (str, default '(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)'):
             The regex pattern to use to find the packages and to extract the
             session id.
+
         --nameformat (str, default '(?P<subject_id>.*)'):
             The regex pattern to use to extract subject id and (optionally) the
             session name from the session or packet name.
+
         --tool (str, default 'auto'):
             What tool to use for the conversion. It can be one of:
 
@@ -2073,6 +2094,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             The number of parallel processes to use when running converting
             DICOM images to NIfTI files. If specified as 'all', all avaliable
             resources will be utilized.
+
         --logfile (str, default ''):
             A string specifying the location of the log file and the columns in
             which packetname, subject id and session name information are
@@ -2081,6 +2103,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             pattern>|subjectid:<the column with subjectid
             information>[|sessionid:<the column with sesion id
             information>]"``.
+
         --archive (str, default 'move'):
             What to do with a processed package. Options are:
 
@@ -2093,25 +2116,31 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             In case of processing data from a sessions folder, the
             `archive` parameter is only valid for compressed
             packages.
+
         --add_image_type (int, default 0):
             Adds image type information to the sequence name (Siemens scanners).
             The value should specify how many of image type labels from the end
             of the image type list to add.
+
         --add_json_info (str, default ''):
             What sequence information to extract from JSON sidecar files and add
             to session.txt file. Specify a comma separated list of fields or
             'all'. See list in session.txt file description below.
+
         --unzip (str, default 'yes'):
             Whether to unzip individual DICOM files that are gzipped. Valid
             options are 'yes', 'no'.
+
         --gzip (str, default 'folder'):
             Whether to gzip individual DICOM files after they were processed
             ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
             ('folder'), or leave them ungzipped ('no'). Valid options are
             'folder', 'file', 'no'.
+
         --verbose (str, default 'yes'):
             Whether to provide detailed report also of packets that could not be
             identified and/or are not matched with log file.
+
         --overwrite (str, default 'no'):
             Whether to remove existing data in the dicom and nii folders.
 

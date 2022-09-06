@@ -11,14 +11,14 @@ function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, 
 %       --mfs (str):
 %           Comma separated list of files to extract values from.
 %
-%       --sefs (str, default '')
+%       --sefs (str, default ''):
 %           Optional list of comma separate files that hold SE for value files.
 %
-%       --vnames (str, default '')
+%       --vnames (str, default ''):
 %           Optional comma separated list of value names to use for each of the
 %           files.
 %
-%       --output (str, default '')
+%       --output (str, default ''):
 %           Comma separated list of files to save to. If a file contains the
 %           word long, it will save the data in a long format. By default it
 %           saves the data in a wide format.

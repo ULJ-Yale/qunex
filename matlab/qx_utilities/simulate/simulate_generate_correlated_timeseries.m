@@ -12,7 +12,7 @@ function [ts, er, dr] = simulate_generate_correlated_timeseries(r, len, md)
 %       --len (int):
 %           Desired timeseries length.
 %
-%       --md (float, default '')
+%       --md (float, default ''):
 %           Maximal allowed difference between desired and actual
 %           correlation.
 %

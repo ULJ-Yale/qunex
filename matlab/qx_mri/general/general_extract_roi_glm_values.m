@@ -17,15 +17,15 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %           case the list of parcels will be based on glm file from the first
 %           session in the list.
 %
-%       --outf (str, default '')
+%       --outf (str, default ''):
 %           Name of the output file. If left empty the it is set to list root
 %           with '.tsv' extension.
 %
-%       --effects (str, default '')
+%       --effects (str, default ''):
 %           A cell array or a comma separated list of effects of interest. If
 %           none specified, all but trend and baseline are exported.
 %
-%       --frames (int, default '')
+%       --frames (int, default ''):
 %           List of frames to extract from all effects. All if empty or not
 %           specified.
 %

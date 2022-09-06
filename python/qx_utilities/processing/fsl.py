@@ -50,18 +50,24 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessions (str, default ''):
             A list of sessions to process.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ("keep") or remove ("remove") the temporary logs
             once jobs are completed.
@@ -226,16 +232,21 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs
             are to be stored, if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ("keep") or remove ("remove") the
             temporary logs once jobs are completed.
@@ -252,32 +263,41 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
         --species (str, default 'human'):
             Species: human or macaque.
+
         --nogpu (flag, optional):
             Do not use the GPU version, this flag is not set by default.
+
         --xtract_list (str, default ''):
             Comma separated list of tract names.
+
         --xtract_structures (str, default ''):
             Path to structures file (format: <tractName> per line OR format:
             <tractName> [samples=1], 1 means 1000, '#' to skip lines).
+
         --xtract_protocols (str, default $FSLDIR/data/xtract_data/<species>):
             Protocols folder (all masks in same standard space).
+
         --xtract_stdwarp (str, default detailed below):
             Standard2diff and Diff2standard transforms. Default for humans is
             set to session's:
             [acpc_dc2standard.nii.gz and standard2acpc_dc.nii.gz],
             for macaques warp fields from F99 registration command (dwi_f99) are
             used by default.
+
         --xtract_resolution (int, default detailed below):
             Output resolution in mm. Default is the same as in the protocols
             folder unless --native is used.
+
         --xtract_ptx_options (str, default detailed below):
             Pass extra probtrackx2 options as a text file to override defaults
             (e.g. --steplength=0.2).
             For humans it defaults to '', for macaques it defaults to
             '$TOOLS/python/qx_utilities/templates/nhp/ptx_options'.
+
         --xtract_native (flag, optional):
             Run tractography in native (diffusion) space. This flag is not set
             by default.
+
         --xtract_ref (str, default ''):
             Reference image ("<refimage> <diff2ref> <ref2diff>") for running
             tractography in reference space, Diff2Reference and Reference2Diff

@@ -26,7 +26,7 @@ function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbo
 %           - 'p' ... p-value for each voxel
 %           - 'z' ... Z-score for each voxel.
 %
-%       --exclude (vector, default '')
+%       --exclude (vector, default ''):
 %           Values to be excluded from computation.
 %
 %       --verbose (bool, default false):

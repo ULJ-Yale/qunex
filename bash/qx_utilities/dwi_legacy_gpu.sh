@@ -74,9 +74,9 @@ Parameters:
 
 Output files:
     - difffolder=${sessionsfolder}/${session}/hcp/${session}/Diffusion
-    - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion_"$diffdatasuffix"
+    - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion\_"$diffdatasuffix"
 
-     ::
+    ::
 
         $difffolder/$diffdatasuffix/rawdata
         $difffolder/$diffdatasuffix/eddy
@@ -118,7 +118,7 @@ Examples:
     you usually need to execute module load CUDA/9.1.85. When scheduling add the
     bash parameter to the command call, e.g.:
 
-        --bash="module load CUDA/9.1.85"
+    ``--bash="module load CUDA/9.1.85"``
 
     ::
 
@@ -362,7 +362,7 @@ main() {
     # -- Establish global directory paths
     t1wfolder="$sessionsfolder"/"$session"/hcp/"$session"/T1w
     difffolder="$sessionsfolder"/"$session"/hcp/"$session"/Diffusion
-    t1wdifffolder="$t1wfolder"/Diffusion_"$diffdatasuffix"
+    t1wdifffolder="$t1wfolder"/Diffusion\_"$diffdatasuffix"
 
     echo "T1w folder:           $t1wfolder"
     echo "Diffusion folder:     $difffolder"

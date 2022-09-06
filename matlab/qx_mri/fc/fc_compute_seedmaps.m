@@ -18,7 +18,7 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %           separated by a pipe '|' symbol, a path to an image file holding
 %           subject/session specific ROI definition.
 %
-%       --frames (matrix | int | str, default '')
+%       --frames (matrix | int | str, default ''):
 %           The definition of which frames to extract, specifically:
 %
 %           - a numeric array mask defining which frames to use (1) and

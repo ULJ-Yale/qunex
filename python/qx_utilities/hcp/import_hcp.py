@@ -39,9 +39,9 @@ PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL',
 
 
 def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
-    '''
+    """
     Identifies and returns the intended location of the file based on its name.
-    '''
+    """
 
     try:
         if sessionsfolder[-1] == '/':
@@ -520,8 +520,8 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
 
 def processHCPLS(sessionfolder, filesort):
-    '''
-    '''
+    """
+    """
 
     if not os.path.exists(sessionfolder):
         raise ge.CommandFailed("processHCPLS", "No hcpls folder present!", "There is no hcpls data in session folder %s" % (sessionfolder), "Please import HCPLS data first!")

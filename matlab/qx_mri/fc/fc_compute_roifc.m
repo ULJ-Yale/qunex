@@ -17,7 +17,7 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %           separated by a pipe '|' symbol, a path to an image file holding
 %           subject/session specific ROI definition.
 %
-%       --frames (cell array | int | str, default '')
+%       --frames (cell array | int | str, default ''):
 %           The definition of which frames to extract, specifically
 %
 %           - a numeric array mask defining which frames to use (1) and

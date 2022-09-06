@@ -17,10 +17,10 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %       --tmask (str):
 %           Path to .names file for target mask roi definition.
 %
-%       --mask (int | logical | vector, default '')
+%       --mask (int | logical | vector, default ''):
 %           Either number of frames to omit or a mask of frames to use.
 %
-%       --root (str, default '')
+%       --root (str, default ''):
 %           The root of the filename where results are to be saved.
 %
 %       --options (str, default 'g'):

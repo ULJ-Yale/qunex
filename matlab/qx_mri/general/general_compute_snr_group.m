@@ -13,10 +13,10 @@ function [snr, sd] = general_compute_snr_group(flist, target, fmask, verbose)
 %           - roi:<path to the individual's ROI file>
 %           - file:<path to bold files - one per line>.
 %
-%       --target (str, default '')
+%       --target (str, default ''):
 %           Name of folder to save results into.
 %
-%       --fmask (int | vector | bool, default '')
+%       --fmask (int | vector | bool, default ''):
 %           A scalar, vector or logical mask defining which frames to use (1)
 %           and which not (0).
 %

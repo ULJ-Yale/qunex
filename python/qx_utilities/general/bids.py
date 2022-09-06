@@ -37,9 +37,9 @@ import general.filelock as fl
 from datetime import datetime
 
 def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
-    '''
+    """
     Identifies and returns the intended location of the file based on its name.
-    '''
+    """
     try:
         if sessionsfolder[-1] == '/':
             sessionsfolder = sessionsfolder[:-1]
@@ -799,8 +799,8 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
 
 
 def processBIDS(bfolder):
-    '''
-    '''
+    """
+    """
 
     bidsData = {}
     sourceFiles = []
@@ -920,6 +920,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
         --sourcefolder (str, default '.'):
             The base session folder in which bids folder with data and files for
             the session is present.
+
         --overwrite (str, default 'no'):
             Parameter that specifies what should be done in cases where there
             are existing data stored in `nii` folder.
@@ -1157,8 +1158,8 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
 
 
 def mapBIDS2behavior(sfolder='.', behavior=[], overwrite='no'):
-    '''
-    '''
+    """
+    """
 
     # -- set up variables
 

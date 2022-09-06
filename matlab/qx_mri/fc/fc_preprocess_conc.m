@@ -39,7 +39,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %       --TR (float, default 2.5):
 %           TR of the data, in seconds.
 %
-%       --omit (int, default '')
+%       --omit (int, default ''):
 %           The number of frames to omit at the start of each bold.
 %
 %       --rgss (str, default 'm,V,WM,WB,1d'):
@@ -58,7 +58,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %           - 't'     ... task
 %           - 'e'     ... events.
 %
-%       --task (matrix, default '')
+%       --task (matrix, default ''):
 %           A matrix of custom regressors to be entered in GLM.
 %
 %       --efile (str, default ''):

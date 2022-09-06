@@ -12,14 +12,14 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %           be a `glm:` file listed that is a result of GLM analyses (a 'Bcoeff'
 %           file).
 %
-%       --outf (str, default '')
+%       --outf (str, default ''):
 %           Root file name for the results. If empty, the flist name is used.
 %
-%       --effects (cell array | str, default '')
+%       --effects (cell array | str, default ''):
 %           A cell array of strings or a comma separated list of effects of
 %           interest. If empty all effects but Baseline and Trend are extracted.
 %
-%       --frames (int, default '')
+%       --frames (int, default ''):
 %           Frame indeces to extract. If empty, all frames are extracted.
 %
 %       --saveoption (str, default 'by_session'):
@@ -33,7 +33,7 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %       --verbose (bool, default false):
 %           Whether to report on the progress or not.
 %
-%       --txtf (str, default '')
+%       --txtf (str, default ''):
 %           An optional designator in what text file to also output the data.
 %           Only saved if an option is provided and the input is ptseries. Valid
 %           options are 'long' to save the data in long format or empty to skip

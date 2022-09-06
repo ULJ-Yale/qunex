@@ -14,10 +14,10 @@ function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, targe
 %       --fmask (int | vector | bool, default false):
 %           Which frames to use / skip.
 %
-%       --target (str, default '')
+%       --target (str, default ''):
 %           Path to target folder for the figure.
 %
-%       --slice (vector, default '')
+%       --slice (vector, default ''):
 %           Vector of the two dimensions that define a slice.
 %
 %       --fname (str, default filename):

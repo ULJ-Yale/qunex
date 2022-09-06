@@ -31,23 +31,25 @@ calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh.
 Note that this function needs to send work to a GPU-enabled queue or you need
 to run it locally from a GPU-equiped machine.
 
-It explicitly assumes the Human Connectome Project folder structure and
-completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:
+Warning:
 
-- HCP Pipelines
-- FSL 5.0.9 or greater
+    It explicitly assumes the Human Connectome Project folder structure and
+    completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:
 
-Processed DWI data needs to be here::
+    - HCP Pipelines
+    - FSL 5.0.9 or greater
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+    Processed DWI data needs to be here::
 
-BedpostX output data needs to be here::
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
+    BedpostX output data needs to be here::
 
-T1w images need to be in MNINonLinear space here::
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
 
-    <study_folder>/<session>/hcp/<session>/MNINonLinear
+    T1w images need to be in MNINonLinear space here::
+
+        <study_folder>/<session>/hcp/<session>/MNINonLinear
 
 Parameters:
     --sessionsfolder (str):

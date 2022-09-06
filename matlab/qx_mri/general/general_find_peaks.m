@@ -24,7 +24,7 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %       --t (int, default 0):
 %           Threshold value.
 %
-%       --presmooth (str, default '')
+%       --presmooth (str, default ''):
 %           String containing presmoothing parameters:
 %
 %           String format::

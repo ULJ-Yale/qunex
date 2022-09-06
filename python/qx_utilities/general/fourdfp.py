@@ -332,7 +332,7 @@ def map2pals(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
 
 
 def map2hcp(volume, method='trilinear'):
-    '''
+    """
     ``map2hcp volume=<volume file> [method=trilinear]``
 
     Maps volume files to dense scalar files using HCP templates.
@@ -340,17 +340,17 @@ def map2hcp(volume, method='trilinear'):
     INPUTS
     ======
 
-    --volume      a volume file or a space separated list of volume files - put 
+    --volume      a volume file or a space separated list of volume files - put
                   in quotes
     --method      one of: trilinear, enclosing, cubic, ribbon constrained
-    
+
     USE
     ===
 
-    Maps volume files to dense scalar files using HCP templates. It expects 
-    "HCPATLAS" environment variable to be set, to be able to find the right 
+    Maps volume files to dense scalar files using HCP templates. It expects
+    "HCPATLAS" environment variable to be set, to be able to find the right
     templates.
-    '''
+    """
 
     if not "HCPATLAS" in os.environ:
         raise ge.CommandError("map2hcp", "HCPATLAS environment variable not set.", "Can not find HCP Template files!", "Please check your environment settings!")

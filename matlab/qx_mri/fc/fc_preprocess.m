@@ -12,7 +12,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %       --bold (int):
 %           The number of the bold file to process.
 %
-%       --omit (int, default '')
+%       --omit (int, default ''):
 %           The number of frames to omit at the start of each bold.
 %
 %       --doIt (str, default 's,h,r,c,l'):
@@ -42,7 +42,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %           - t     - task
 %           - e     - event.
 %
-%       --task (matrix, default '')
+%       --task (matrix, default ''):
 %           A matrix of custom regressors to be entered in GLM.
 %
 %       --efile (str, default ''):

@@ -24,7 +24,7 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %       --frames (vector):
 %           Limits of frames to include in the extracted timeseries.
 %
-%       --scrubvar (str, default '')
+%       --scrubvar (str, default ''):
 %           Critera to use for scrubbing data - scrub based on:
 %
 %           - [] do not scrub

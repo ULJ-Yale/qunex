@@ -4,7 +4,7 @@ function [normals] = general_compute_vertex_normals(surface)
 %   Function computes the vertex normals to the passed surface file (.surf.gii)
 %
 %   Parameters:
-%       --surface: (str|gifti)
+%       --surface: (str|gifti):
 %           surface for which to compute normal vectors. It can be passed as a:
 %               
 %           - surface file name (.surf.gii)

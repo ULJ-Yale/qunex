@@ -299,19 +299,18 @@ Parameters:
         Only set if general_plot_bold_timeseries is requested then this is a
         required setting.
 
-    --qcplotmasks (str)
+    --qcplotmasks (str):
         Absolute path to one or multiple masks to use for extracting BOLD data.
         See 'qunex general_plot_bold_timeseries' for help.
 
         Only set if general_plot_bold_timeseries is requested then this is a
         required setting.
 
-    --qcplotelements (str, default TODO):
+    --qcplotelements (str):
         Plot element specifications for general_plot_bold_timeseries. See
         'qunex general_plot_bold_timeseries' for help.
 
-        Only set if general_plot_bold_timeseries is requested. If not set then
-        the default is: TODO
+        Only set if general_plot_bold_timeseries is requested.
 
 Notes:
     List of Turnkey Steps:

@@ -11,7 +11,7 @@ function [m] = simulate_voronoi_map(w, h, p)
 %       --h (int):
 %           Height.
 %
-%       --p (int)
+%       --p (int):
 %           Points.
 %
 %   Returns:

@@ -14,7 +14,7 @@ function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, 
 %       --hdr (cell/str, default {}):
 %           Optional header (cell array of strings or a list of columns).
 %
-%       --extra (str, default '')
+%       --extra (str, default ''):
 %           Optional summary rows to be added at the end (e.g. 
 %           'mean|sd|min|max|%|sum').
 %
@@ -25,10 +25,10 @@ function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, 
 %       --sep (str, default '⧵t'):
 %           Separator.
 %
-%       --pre (str, default '')
+%       --pre (str, default ''):
 %           Optional text to prepend before the header.
 %
-%       --post (str, default '')
+%       --post (str, default ''):
 %           Optional text to append at the end of the file.
 %
 %   Returns:

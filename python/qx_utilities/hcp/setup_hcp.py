@@ -40,14 +40,18 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         --sourcefolder (str, default '.'):
             The base session folder that contains the nifti images and
             session.txt file.
+
         --targetfolder (str, default 'hcp'):
             The folder (within the base folder) to which the data is to be
             mapped.
+
         --sourcefile (str, default 'session_hcp.txt'):
             The name of the source session.txt file.
+
         --check (str, default 'yes'):
             Whether to check if session is marked ready for setting up hcp
             folder.
+
         --existing (str, default 'add'):
             What to do if the hcp folder already exists.
             Options are:
@@ -62,8 +66,10 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             file by their number (e.g. `BOLD_1`). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. `rfMRI_REST1_AP`).
+
         --hcp_folderstructure (str, default 'hcpls'):
             Which HCP folder structure to use 'hcpya' or 'hcpls'.
+
         --hcp_suffix (str, default ''):
             Optional suffix to append to session id when creating session folder
             within the hcp folder. The final path to HCP session is then:
@@ -125,7 +131,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             If this information is not provided the spin-echo image to use
             will be deduced based on the order of images, and phase encoding
             direction will be taken as default from the relevant HCP processing
-            parameters (e.g `--hcp_bold_unwarpdir='y'`).
+            parameters (e.g. `--hcp_bold_unwarpdir='y'`).
 
             Do note that if you provide `se` information for the spin-echo
             image, you have to also provide it for all the images that are to

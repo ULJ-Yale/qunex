@@ -11,13 +11,13 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %       --mask (str | matrix | cell | nimage):
 %           An nimage object or a path to a mask file to use.
 %
-%       --target (str, default '')
+%       --target (str, default ''):
 %           A folder to save results into:
 %
 %           - []: where bold image is,
 %           - 'none': do not save results in an external file.
 %
-%       --store (str, default '')
+%       --store (str, default ''):
 %           Whether to store the data in the image file:
 %
 %           - 'same': in the same file,

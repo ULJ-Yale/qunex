@@ -30,7 +30,7 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 %           String specifying whether the variances of the two groups are equal
 %           ('equal') or not ('unequal').
 %
-%       --exclude (vector, default '')
+%       --exclude (vector, default ''):
 %           Values to be excluded from computation.
 %
 %       --verbose (bool, default false):
