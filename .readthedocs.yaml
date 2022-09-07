@@ -11,18 +11,23 @@ build:
   tools:
     python: "3.8"
   jobs:
+    post_checkout:
+      - rm -rf qx_library # cannot clone into existing folder
+      # TODO: replace "<replace_with_actual_token>" with the actual repo token
+      # TODO: remove "-b develop" option to use master branch
+      - git clone -b develop https://token:<replace_with_actual_token>@gitlab.qunex.yale.edu/qunex/library.git qx_library
     pre_build:
-      - docs/_extras/bash/pre_build.sh
+      - qx_library/etc/docs/_extras/bash/pre_build.sh
 
-# Build documentation in the docs/ directory with Sphinx
+# Sphinx build configuration
 sphinx:
-   configuration: docs/conf.py
+   configuration: qx_library/etc/docs/conf.py
 
 # The Python PyPi requirements required to build your docs
 python:
    install:
-   - requirements: docs/_extras/requirements.txt
+   - requirements: qx_library/etc/docs/_extras/requirements.txt
 
-# Exclude submodules to suppress Read the Docs invalid token error
+# Exclude submodules to suppress Read the Docs invalid submodule token error
 submodules:
   exclude: all

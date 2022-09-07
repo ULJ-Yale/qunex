@@ -60,15 +60,9 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation build time stuff
-/docs/_build
-/docs/wiki
-/docs/api/gmri/*
-!/docs/api/gmri/.gitkeep
-/docs/index.rst
-/docs/HomeMenu.rst
-/python/qx_utilities/bash.py
-/python/qx_utilities/r.py
+# Sphinx documentation build time files
+/python/**/bash.py
+/python/**/r.py
 
 # PyBuilder
 target/
