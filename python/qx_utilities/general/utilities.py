@@ -304,6 +304,7 @@ def create_study(studyfolder=None, folders=None):
     Parameters:
         --studyfolder (str):
             The path to the study folder to be generated.
+
         --folders (str, default $TOOLS/python/python/qx_utilities/templates/study_folders_default.txt):
             Path to the file which defines the subfolder structure.
 
@@ -413,24 +414,30 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
     Parameters:
         --sessionsfolder (str):
             The location of the <study>/sessions folder.
+
         --sourcefiles (str, default 'session_hcp.txt'):
             Comma separated names of source files to take from each specified
             session folder and add to batch file.
+
         --targetfile (str, default <study>/processing/batch.txt):
-            The path to the batch file to be generated. By default it is created
+            The path to the batch file to be generated. By default, it is created
             as <study>/processing/batch.txt.
+
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
             will be processed. They are to be specified as a pipe or comma
             separated list, grob patterns are valid session specifiers.
+
         --filter (str, default None):
             An optional parameter given as "key:value|key:value" string. Only
             sessions with the specified key-value pairs in their source files
             will be added to the batch file.
+
         --overwrite (str, default 'yes'):
             In case that the specified batch file already exists, whether to
             interactively ask ('ask'), overwrite ('yes'), abort action ('no') or
             append ('append') the found / specified sessions to the batch file.
+
         --paramfile (str, default <sessionsfolder>/specs/parameters.txt):
             The path to the parameter file header to be used. If not explicitly
             provided it defaults to <sessionsfolder>/specs/parameters.txt.
@@ -639,54 +646,68 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
         --sessionsfolder (str, default '.'):
             The location of the sessions folder where the sessions to create the
             list reside.
+
         --batchfile (str, default None):
             A path to a batch.txt file.
+
         --sessions (str, default None):
             A comma or pipe separated string of session names to include
             (can be glob patterns).
+
         --filter (str, default None):
             If a batch.txt file is provided a string of key-value pairs
             (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
             key-value pairs will be added to the list.
+
         --listfile (str, default None):
             The path to the generated list file. If no path is provided, the
             list is created as: `<studyfolder>/processing/lists/sessions.list`
+
         --bold_variant (str, default ''):
             Specifies an optional suffix for 'functional` folder when functional
             files are to be taken from a folder that enables a parallel workflow
             with functional images.
+
         --bolds (str, default None):
             If provided the specified bold files will be added to the list. The
             value should be a string that lists bold numbers or bold tags in a
             space, comma or pipe separated string.
+
         --boldname (str, default 'bold'):
             The prefix to be added to the bold number specified in bolds
             parameter.
+
         --bold_tail (str, default '.nii.gz'):
             The full tail to be added to the bold number specified in bolds
             parameter or bold names that match the tag specified in the bolds
             parameter.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows (e.g. <session id>/images<img_suffix>).
             Empty if not used.
+
         --conc (str, default None):
             If provided, the specified conc file that resides in
             `<session id>/images<img_suffix>/functional/concs/` folder will be
             added to the list.
+
         --fidl (str, default None):
             If provided, the specified fidl file that resides in
             `<session id>/images<img_suffix>/functional/events/` folder will be
             added to the list.
+
         --glm (str, default None):
             If provided, the specified glm file that resides in
             `<session id>/images<img_suffix>/functional/` folder will be added
             to the list.
+
         --roi (str, default None):
             If provided, the specified ROI file that resides in
             `<session id>/images<img_suffix>/<roi>` will be added to the list.
             Note that `<roi>` can include a path, e.g.:
             `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`.
+
         --overwrite (str, default 'no'):
             If the specified list file already exists:
 
@@ -1036,39 +1057,50 @@ def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None,
         --sessionsfolder (str):
             The location of the sessions folder where the sessions to create the
             list reside.
+
         --batchfile (str, default None):
             A path to a batch.txt file.
+
         --sessions (str, default None):
             A comma or pipe separated string of session names to include
             (can be glob patterns).
+
         --filter (str):
             If a batch.txt file is provided a string of key-value pairs
             (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
             key-value pairs will be added to the list.
+
         --img_suffix (str, default ''):
             Specifies an optional suffix for 'images' folder when files are to
             be taken from a folder that enables a parallel workflow.
+
         --bold_variant (str, default ''):
             Specifies an optional suffix for 'functional` folder when functional
             files are to be taken from a folder that enables a parallel workflow
             with functional images.
+
         --concfolder (str, default <studyfolder>/<session id>/inbox/concs/):
             The path to the folder where conc files are to be generated. If not
             provided, the conc files will be saved to the folder:
             `<studyfolder>/<session id>/inbox/concs/`
+
         --concname (str, default ''):
             The name of the conc files to generate. The formula:
             `<session id><concname>.conc` will be used.
+
         --bolds (str, default 'all'):
             A space, comma or pipe separated string that lists bold numbers or
             bold tags to be included in the conc file.
+
         --boldname (str, 'bold'):
             The prefix to be added to the bold number specified in bolds
             parameter.
+
         --bold_tail (str, default '.nii.gz'):
             The full tail to be added to the bold number specified in bolds
             parameter or bold names that match the tag specified in the bolds
             parameter.
+
         --overwrite (str, default 'no'):
             If the specified list file already exists:
 
@@ -1578,39 +1610,39 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
 
     ::
 
-        qunex run_list \
-          --listfile="/data/settings/runlist.txt" \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
           --runlists="dataImport,prepareHCP"
     
     ::
 
-        qunex run_list \
-          --listfile="/data/settings/runlist.txt" \
-          --runlists="doHCP" \
-          --batchfile="/data/testStudy/processing/batch_baseline.txt" \
-          --sperlist=4 \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
+          --runlists="doHCP" \\
+          --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
+          --sperlist=4 \\
           --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
     ::
 
-        qunex run_list \
-          --listfile="/data/settings/runlist.txt" \
-          --runlists="prepareFCPreprocessing" \
-          --batchfile="/data/testStudy/processing/batch_baseline.txt" \
-          --sperlist=4 \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
+          --runlists="prepareFCPreprocessing" \\
+          --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
+          --sperlist=4 \\
           --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
     ::
 
-        qunex run_list
-          --listfile="/data/settings/runlist.txt" \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
           --runlists="runFCPreprocessing" 
 
     ::
 
-        qunex run_list
-          --listfile="/data/settings/runlist.txt" \
-          --runlists="doPreFS" \
+        qunex run_list \\
+          --listfile="/data/settings/runlist.txt" \\
+          --runlists="doPreFS" \\
           --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt" 
 
     The first call will execute all the commands in lists `dataImport` and 
@@ -2632,27 +2664,35 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
     Parameters:
         --batchfile (str, default ''):
             Path to a batch file.
+
         --sessions (str, default '*'):
             Either an explicit list (space, comma or pipe separated) of sessions
             to process or the path to a list file with sessions to process. If
             left unspecified, '*' will be used and all folders within sessions'
             folders will be processed.
+
         --pipelines (str, default 'hcp'):
             Specify a comma separated list of pipelines for which the session
             info will be prepared.
+
         --sessionsfolder (str, default '.'):
             The directory that holds sessions' folders.
+
         --sourcefile (str, default 'session.txt'):
             The "source" session.txt file.
+
         --targetfile (str, default session_<pipeline>.txt):
             The "target" session.txt file.
+
         --mapping (str, default specs/<pipeline>_mapping.txt):
             The path to the text file describing the mapping.
+
         --filter (str, default None):
             An optional "key:value|key:value" string used as a filter if a batch
             file is used. Only sessions for which all the key:value pairs are
             true will be processed. All the sessions will be processed if no
             filter is provided.
+
         --overwrite (str, default 'no'):
             Whether to overwrite target files that already exist ('yes') or not
             ('no').

@@ -13,6 +13,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %           - file:<path to bold files - one per line>
 %
 %           or a well strucutured string (see general_read_file_list).
+%
 %       --command (str):
 %           The type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, aFzp ...
 %
@@ -62,26 +63,36 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %           - nDs:n
 %               computes proportion of voxels within n strength ranges of
 %               negative r.
-%       --mask (int | logical | vector, default []):
+%
+%       --mask (int | logical | vector, default ''):
 %           A mask defining which frames to use (1) and which not (0). All if
 %           empty.
+%
 %       --verbose (bool, default false):
 %           Report what is going on.
+%
 %       --target (vector, default FreeSurfer cortex codes):
 %           Array of ROI codes that define target ROI.
+%
 %       --targetf (str):
 %           Path to target folder for results.
-%       --rsmooth (int, default []):
+%
+%       --rsmooth (int, default ''):
 %           Radius for smoothing (no smoothing if empty).
-%       --rdilate (int, default []):
+%
+%       --rdilate (int, default ''):
 %           Radius for dilating mask (no dilation if empty).
-%       --ignore (str, default []):
+%
+%       --ignore (str, default ''):
 %           The column in `*_scrub.txt` file that matches bold file to be
 %           used for ignore mask. All if empty.
+%
 %       --time (bool, default false):
 %           Whether to print timing information.
+%
 %       --cv (bool, default false):
 %           Whether to compute covariances instead of correlations.
+%
 %       --vstep (int, default 1200):
 %           How many voxels to process in a single step.
 %

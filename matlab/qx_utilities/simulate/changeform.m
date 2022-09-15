@@ -8,6 +8,7 @@ function [y] = changeform(x, d)
 %   Parameters:
 %       --x (vector | matrix):
 %           Input vector or matrix.
+%
 %       --d (int, default 1):
 %           Value for diagonal.
 %

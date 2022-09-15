@@ -7,14 +7,19 @@ function [snr, sd, slicesnr] = general_compute_snr(filename, imask, fmask, targe
 %   Parameters:
 %       --filename (str):
 %           The filename of the image.
+%
 %       --imask (str | matrix | cell array | nimage | bool, default false):
 %           Mask that defines voxels to compute snr over.
+%
 %       --fmask (int | vector | bool, default false):
 %           Which frames to use / skip.
-%       --target (str, default '')
+%
+%       --target (str, default ''):
 %           Path to target folder for the figure.
-%       --slice (vector, default []):
+%
+%       --slice (vector, default ''):
 %           Vector of the two dimensions that define a slice.
+%
 %       --fname (str, default filename):
 %           The name to use when saving file. The filename parameter is used if
 %           fname is not given.

@@ -7,6 +7,7 @@ function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model,
 %   Parameters:
 %       --TR (float):
 %           TR of the simulated timecourse in seconds.
+%
 %       --eventlist (matrix | cell array):
 %           Matrix or cell array of matrices with columns:
 %
@@ -14,7 +15,7 @@ function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model,
 %           - duration in seconds
 %           - weight.
 %
-%       --model (str, default 'boynton')
+%       --model (str, default 'boynton'):
 %           Can be one of the following:
 %
 %           - 'boynton'
@@ -24,7 +25,7 @@ function [ts, hrf, tso, te] = simulate_generate_timeseries(TR, eventlist, model,
 %           - 'raw'
 %           - 'unassumed'.
 %
-%       --modeldata (str, default []):
+%       --modeldata (str, default ''):
 %           Parameters or the actual HRF timecourse depending on model.
 %
 %   Returns:

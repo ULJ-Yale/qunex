@@ -293,12 +293,12 @@ towarn_parameters = {
 #
 
 def check_deprecated_parameters(options, command):
-    '''
+    """
     ``check_deprecated_parameters(options, command)``
-    
+
     Checks for deprecated parameters, remaps deprecated ones
     and notifies the user.
-    '''
+    """
 
     remapped   = []
     deprecated = []
@@ -407,12 +407,12 @@ def check_deprecated_parameters(options, command):
 #
 
 def impute_parameters(options, command):
-    '''
+    """
     ``impute_parameters(options, command)``
-    
-    Checks if specific parameters are not specified and assigns them the value
-    of another relevant parameter.
-    '''
+
+    Checks if parameters are not specified and assigns them the value of another
+    relevant parameter.
+    """
 
     for target_option, source_option in to_impute:
         if options[target_option] is None:

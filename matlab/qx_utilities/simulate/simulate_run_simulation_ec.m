@@ -8,14 +8,19 @@ function [cors, sim] = simulate_run_simulation_ec(r, models, timepoints, nruns, 
 %   Parameters:
 %       --r (matrix):
 %           List of correlations, one for each model.
+%
 %       --models (cell array):
 %           Array of structures specifying data models to generate.
+%
 %       --timepoints (vector):
 %           What timepoints to extract for correlation analyses.
+%
 %       --nruns (int, default 100):
 %           How many simulations to run.
+%
 %       --k (int, default 6):
 %           Division coefficient for corr timeseries.
+%
 %       --md (float, default 0.01):
 %           Maximal allowed difference between desired and actual 
 %           correlation.

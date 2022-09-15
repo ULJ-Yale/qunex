@@ -71,8 +71,10 @@ Warning:
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --scheduler (str):
         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
         relevant options e.g. for SLURM the string would look like this::

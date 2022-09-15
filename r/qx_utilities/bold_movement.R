@@ -12,32 +12,45 @@
 #   Parameters:
 #       --folder, -f (str, default '.'):
 #           The folder to look for .dat data.
+#
 #       --mreport, -mr (str, default 'none'):
 #           File to write movement report to.
+#
 #       --preport, -pr (str, default 'none'):
 #           The file to write movement report after scrubbing to.
+#
 #       --sreport, -sr (str, default 'none'):
 #           File to write scrubbing report to.
+#
 #       --session, -s (str, default 'none'):
 #           Session id to use in plots and reports.
+#
 #       --dvars, -d (numeric, default 3):
 #           Threshold to use for computing dvars rejections.
+#
 #       --dvarsme, -e (numeric, default 1.5):
 #           Threshold to use for computing dvarsme rejections.
+#
 #       --movement, -m (numeric, default 0.5):
 #           Threshold to use for computing frame-to-frame movement rejections.
+#
 #       --radius, -rd (numeric, default 50):
 #           Radius (in mm) from center of head to cortex to estimate rotation
 #           size.
+#
 #       --tr (numeric, default 2.5):
 #           TR to be used when generating .fidl files.
+#
 #       --scrub (str, default 'no'):
 #           Whether to output scrub file or not.
+#
 #       --fidl (str, default 'none'):
 #           Whether to output and what to base fild on ('fd', 'dvars',
 #           'dvarsme', 'u'/'ume' - union, 'i'/'ime' - intersection, 'none').
+#
 #       --plot (str, default 'yes'):
 #           Whether to create plots or not.
+#
 #       --post (str, default 'none'):
 #           Whether to create report of scrubbing effect and what to base it on
 #           ('fd', 'dvars', 'dvarsme', 'u'/'ume' - union, 'i'/'ime' -

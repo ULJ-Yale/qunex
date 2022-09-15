@@ -25,48 +25,69 @@ The DWI data is expected to be in the following folder::
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --session (str):
         The sessions to run.
+
     --overwrite (str):
         Delete prior run for a given session ('yes' / 'no').
+
     --species (str):
         dtifit currently supports processing of human and macaqu data. If
         processing macaques set this parameter to macaque.
+
     --mask (str, default 'T1w/Diffusion/nodif_brain_mask'):
         Set binary mask file.
+
     --bvecs (str, default 'T1w/Diffusion/bvecs'):
         b vectors file.
+
     --bvals (str, default 'T1w/Diffusion/bvals'):
         b values file.
+
     --cni (str):
         Input confound regressors [not set by default].
+
     --sse (str):
         Output sum of squared errors [not set by default].
+
     --wls (str):
         Fit the tensor with weighted least square [not set by default].
+
     --kurt (str):
         Output mean kurtosis map (for multi-shell data [not set by default].
+
     --kurtdir (str):
         Output parallel/perpendicular kurtosis map (for multi-shell data) [not
         set by default].
+
     --littlebit (str):
         Only process small area of brain [not set by default].
+
     --save_tensor (str):
         Save the elements of the tensor [not set by default].
+
     --zmin (str):
         Min z [not set by default].
+
     --zmax (str):
         Max z [not set by default].
+
     --ymin (str):
         Min y [not set by default].
+
     --ymax (str):
         Max y [not set by default].
+
     --xmin (str):
         Min x [not set by default].
+
     --xmax (str):
         Max x [not set by default].
+
     --gradnonlin (str):
         Gradient nonlinearity tensor file [not set by default].
+
     --scheduler (str):
         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
         relevant options; e.g. for SLURM the string would look like this::

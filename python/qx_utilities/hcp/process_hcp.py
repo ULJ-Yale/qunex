@@ -293,8 +293,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         for folders and files::
 
-            T1w/∗T1w_MPR[N]∗
-            T2w/∗T2w_MPR[N]∗
+            T1w/\*T1w_MPR[N]\*
+            T2w/\*T2w_MPR[N]\*
 
         There has to be at least one T1w image present. If there are more than
         one T1w or T2w images, they will all be used and averaged together.
@@ -305,8 +305,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         **TOPUP**::
 
-            SpinEchoFieldMap[N]∗/∗_<hcp_sephasepos>_∗
-            SpinEchoFieldMap[N]∗/∗_<hcp_sephaseneg>_∗
+            SpinEchoFieldMap[N]\*/\*_<hcp_sephasepos>_\*
+            SpinEchoFieldMap[N]\*/\*_<hcp_sephaseneg>_\*
 
         **SiemensFieldMap**::
 
@@ -325,19 +325,25 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -356,6 +362,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             should be treated as requirements ('HCPStyleData') or if additional
             processing functionality is allowed ('LegacyStyleData'). In this
             case running processing w/o a T2w image.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP
             Young Adults study is used. Specifically, the source files are
@@ -366,6 +373,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             all stored within their individual subfolders located in the joint
             'unprocessed' folder in the main 'hcp' folder, parallel to the
             working folders and the 'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped intothe hcp input folder
             structure. The default ('automated') will automatically name each
@@ -373,25 +381,30 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
 
-    Specific parameters:
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should be
             run without them, anything else otherwise [t2]. 'NONE' is only valid
             if 'LegacyStyleData' processing mode was specified.
+
         --hcp_brainsize (int, default 150):
              Specifies the size of the brain in mm. 170 is FSL default and seems
              to be a good choice, HCP uses 150, which can lead to problems with
              larger heads.
+
         --hcp_t1samplespacing (str, default 'NONE'):
             T1 image sample spacing, 'NONE' if not used.
+
         --hcp_t2samplespacing (str, default 'NONE'):
             T2 image sample spacing, 'NONE' if not used.
+
         --hcp_gdcoeffs (str, default 'NONE):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see below), or
             "NONE", if not used.
+
         --hcp_bfsigma (str, default ''):
             Bias Field Smoothing Sigma (optional).
+
         --hcp_avgrdcmethod (str, default 'NONE'):
             Averaging and readout distortion correction method.
             Can take the following values:
@@ -411,20 +424,27 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_unwarpdir (str, default 'NONE'):
             Readout direction of the T1w and T2w images (x, y, z or NONE); used
             with either a regular field map or a spin echo field map.
+
         --hcp_echodiff (str, default 'NONE'):
             Difference in TE times if a fieldmap image is used, set to NONE if
             not used.
+
         --hcp_seechospacing (str, default 'NONE'):
             Echo Spacing or Dwelltime of Spin Echo Field Map or "NONE" if not
             used.
+
         --hcp_sephasepos (str, default ''):
             Label for the positive image of the Spin Echo Field Map pair.
+
         --hcp_sephaseneg (str, default ''):
             Label for the negative image of the Spin Echo Field Map pair.
+
         --hcp_seunwarpdir (str, default 'NONE'):
             Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
+
         --hcp_topupconfig (str, default 'NONE'):
             Path to a configuration file for TOPUP method or "NONE" if not used.
+
         --hcp_prefs_custombrain (str, default 'NONE'):
             Whether to only run the final registration using either a custom
             prepared brain mask (MASK) or custom prepared brain images
@@ -444,6 +464,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             The resolution (in mm) of the structural images templates to use in
             the preFS step. Note: it should match the resolution of the
             acquired structural images.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence information
             to use in preprocessing of specific image modalities.
@@ -880,19 +901,25 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -910,6 +937,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             should be treated as requirements ('HCPStyleData') or if additional
             processing functionality is allowed ('LegacyStyleData'). In this case
             running processing w/o a T2w image.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP
             Young Adults study is used. Specifically, the source files are
@@ -920,6 +948,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             all stored within their individual subfolders located in the joint
             'unprocessed' folder in the main 'hcp' folder, parallel to the
             working folders and the 'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped intothe hcp input folder
             structure. The default ('automated') will automatically name each
@@ -927,11 +956,11 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
 
-    Specific parameters:
         --hcp_fs_seed (str, default ''):
             Recon-all seed value. If not specified, none will be used.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_existing_session (str, default 'FALSE'):
             Indicates that the command is to be run on top of an already
             existing analysis/subject. This excludes the `-i` flag from the
@@ -940,6 +969,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             parameter. Accepted values are 'TRUE' and 'FALSE'.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_extra_reconall (str, default ''):
             A string with extra parameters to pass to FreeSurfer recon-all.
             The extra parameters are to be listed in a pipe ('|') separated
@@ -948,6 +978,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             string has to be: "-norm3diters|3".
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_flair (str, default 'FALSE'):
             If set to 'TRUE' indicates that recon-all is to be run with the
             -FLAIR/-FLAIRpial options (rather than the -T2/-T2pial options).
@@ -955,29 +986,35 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             image.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_fs_no_conf2hires (str, default 'FALSE'):
             Indicates that (most commonly due to low resolution—1mm or less—of
             structural image(s), high-resolution steps of recon-all should be
             excluded. Accepted values are 'TRUE' or 'FALSE'.
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
+
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should be
             run without them, anything else otherwise. 'NONE' is only
             valid if 'LegacyStyleData' processing mode was specified.
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
+
         --hcp_expert_file (str, default ''):
             Path to the read-in expert options file for FreeSurfer if one is
             prepared and should be used empty otherwise.
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
+
         --hcp_control_points (str, default ''):
             Specify YES to use manual control points or empty otherwise.
             (currently not available)
+
         --hcp_wm_edits (str, default ''):
             Specify YES to use manually edited WM mask or empty otherwise.
             (currently not available)
+
         --hcp_fs_brainmask (str, default 'fs'):
             Specify:
 
@@ -987,11 +1024,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
               mri_watershed.
 
             (currently not available)
+
         --hcp_autotopofix_off (str, default ''):
             Specify YES to turn off the automatic topologic fix step in FS and
             compute WM surface deterministically from manual WM mask, or empty
             otherwise.
             (currently not available)
+
         --hcp_freesurfer_home (str, default ''):
             Path for FreeSurfer home folder can be manually specified to
             override default environment variable to ensure backwards
@@ -1263,19 +1302,25 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -1295,6 +1340,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             should be treated as requirements ('HCPStyleData') or if additional
             processing functionality is allowed ('LegacyStyleData'). In this
             case running processing w/o a T2w image.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP
             Young Adults study is used. Specifically, the source files are
@@ -1305,6 +1351,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             all stored within their individual subfolders located in the joint
             'unprocessed' folder in the main 'hcp' folder, parallel to the
             working folders and the 'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped intothe hcp input folder
             structure. The default ('automated') will automatically name each
@@ -1312,24 +1359,29 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
 
-    Specific parameters:
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should
             be run without them, anything else otherwise. 'NONE' is
             only valid if 'LegacyStyleData' processing mode was specified.
+
         --hcp_grayordinatesres (int, default 2):
             The resolution of the volume part of the grayordinate representation
             in mm.
+
         --hcp_hiresmesh (int, default 164):
             The number of vertices for the high resolution mesh of each
             hemisphere (in thousands).
+
         --hcp_lowresmesh (int, default 32):
             The number of vertices for the low resolution mesh of each
             hemisphere (in thousands).
+
         --hcp_regname (str, default 'MSMSulc'):
             The registration used, FS or MSMSulc.
+
         --hcp_mcsigma (str, default 'sqrt(200)'):
             Correction sigma used for metric smoothing.
+
         --hcp_inflatescale (int, default 1):
             Inflate extra scale parameter.
 
@@ -1484,19 +1536,25 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -1509,15 +1567,16 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_long_fs_template (str, default 'base'):
             Name of the base template.
+
         --hcp_long_fs_extra_reconall_base (str, default ''):
             A string with extra parameters to pass to Longitudinal FreeSurfer
             recon-all base template creation. The extra parameters are to be
             listed in a pipe ('|') separated string. Parameters and their values
             need to be listed separately. E.g. to pass `-norm3diters 3` to
             reconall, the string has to be: '-norm3diters|3'.
+
         --hcp_long_fs_extra_reconall (str, default ''):
             A string with extra parameters to pass to Longitudinal FreeSurfer
             recon-all processing. The extra parameters are to be listed in a
@@ -1732,19 +1791,25 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ("keep") or remove ("remove") the temporary logs
             once jobs are completed.
@@ -1758,10 +1823,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             - "hcp" (for "<hcp_folder>/logs/comlogs")
             - "<path>" (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_dwi_echospacing (str, default detailed below):
             Echo Spacing or Dwelltime of DWI images in msec. Default is
             image specific.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence
             information to use in preprocessing of specific image
@@ -1787,22 +1852,28 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             If information is not specified it will not be used. More
             general specification (e.g. `all`) implies all more specific
             cases (e.g. `T1w:all`).
+
         --hcp_dwi_phasepos (str, default 'PA'):
             The direction of unwarping for positive phase. Can be AP,
             PA, LR, or RL. Negative phase isset automatically based on
             this setting.
+
         --hcp_dwi_gdcoeffs (str, default 'NONE'):
             A path to a file containing gradient distortion
             coefficients, alternatively a string describing multiple
             options (see below), or "NONE", if not used.
+
         --hcp_dwi_topupconfig (str, default $HCPPIPEDIR/global/config/b02b0.cnf):
             A full path to the topup configuration file to use.
+
         --hcp_dwi_dof (int, default 6):
             Degrees of Freedom for post eddy registration to structural
             images.
+
         --hcp_dwi_b0maxbval (int, default 50):
             Volumes with a bvalue smaller than this value will be
             considered as b0s.
+
         --hcp_dwi_combinedata (int, default 1):
             Specified value is passed as the CombineDataFlag value for
             the eddy_postproc.sh script. If JAC resampling has been
@@ -1822,6 +1893,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             is identified as the least distorted (i.e., most similar to
             the average b0 after registration). The flag is not set by
             default.
+
         --hcp_dwi_extraeddyarg (str, default ''):
             A string specifying additional arguments to pass to the
             DiffPreprocPipeline_Eddy.sh script and subsequently to the
@@ -1832,16 +1904,20 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             To provide multiple arguments divide them with the pipe (|)
             character, e.g.
             --hcp_dwi_extraeddyarg="--niter=8|--nvoxhp=2000".
+
         --hcp_dwi_name (str, default 'Diffusion'):
             Name to give DWI output directories.
+
         --hcp_dwi_cudaversion (str, default ''):
             If using the GPU-enabled version of eddy, then this option
             can be used to specify which eddy_cuda binary version to
             use. If X.Y is specified, then FSLDIR/bin/eddy_cudaX.Y will
             be used. Note that CUDA 9.1 is installed in the container.
+
         --hcp_dwi_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of eddy. The
             flag is not set by default.
+
         --hcp_dwi_even_slices (flag, optional):
             If set will ensure the input images to FSL's topup and eddy
             have an even number of slices by removing one slice if
@@ -2161,25 +2237,33 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
             How many elements (e.g. bolds) to run in parallel.
+
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
             process. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to process all.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -2200,6 +2284,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             processing functionality is allowed ('LegacyStyleData'). In this
             case running processing with slice timing correction, external BOLD
             reference, or without a distortion correction method.
+
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP Young
             Adults study is used. Specifically, the source files are stored in
@@ -2210,6 +2295,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             individual subfolders located in the joint 'unprocessed' folder in
             the main 'hcp' folder, parallel to the working folders and the
             'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
@@ -2217,19 +2303,23 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ('userdefined') is to use the file names, which can be defined by
             the user prior to mapping (e.g. `rfMRI_REST1_AP`).
 
-    Specific parameters:
         --hcp_bold_biascorrection (str, default 'NONE'):
             Whether to perform bias correction for BOLD images. NONE or Legacy.
+
         --hcp_bold_usejacobian (str, default 'FALSE'):
             Whether to apply the jacobian of the distortion correction to fMRI
             data.
+
         --hcp_bold_prefix (str, default 'BOLD'):
             The prefix to use when generating BOLD names (see --hcp_filename)
             for BOLD working folders and results.
+
         --hcp_bold_echospacing (float, default 0.00035):
             Echo Spacing or Dwelltime of BOLD images.
+
         --hcp_bold_sbref (str, default 'NONE'):
             Whether BOLD Reference images should be used - NONE or USE.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence information
             to use in preprocessing of specific image modalities.
@@ -2251,62 +2341,80 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             If information is not specified it will not be used. More general
             specification (e.g. `all`) implies all more specific cases (e.g.
             `T1w:all`).
+
         --hcp_bold_dcmethod (str, default 'TOPUP'):
             BOLD image deformation correction that should be used: TOPUP,
             FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap,
             PhilipsFieldMap or NONE.
+
         --hcp_bold_echodiff (str, default 'NONE'):
             Delta TE for BOLD fieldmap images or NONE if not used.
+
         --hcp_bold_sephasepos (str, default ''):
             Label for the positive image of the Spin Echo Field Map pair.
+
         --hcp_bold_sephaseneg (str, default ''):
             Label for the negative image of the Spin Echo Field Map pair.
+
         --hcp_bold_unwarpdir (str, default 'y'):
             The direction of unwarping. Can be specified separately for
             LR/RL : `'LR=x|RL=-x|x'` or separately for PA/AP :
             `'PA=y|AP=y-|y-'`.
+
         --hcp_bold_res (int, default 2):
             Target image resolution. 2mm recommended.
+
         --hcp_bold_gdcoeffs (str, default 'NONE'):
             Gradient distortion correction coefficients or NONE.
+
         --hcp_bold_topupconfig (str, default detailed below):
             A full path to the topup configuration file to use. Set to
             '' if the default is to be used or of TOPUP distortion
             correction is not used.
+
         --hcp_bold_doslicetime (str, default 'FALSE'):
             Whether to do slice timing correction 'TRUE' or 'FALSE'.
+
         --hcp_bold_slicetimerparams (str, default ''):
             A comma or pipe separated string of parameters for FSL slicetimer.
+
         --hcp_bold_stcorrdir (str, default 'up'):
             The direction of slice acquisition ('up' or 'down').
             This parameter is deprecated. If specified, it will be added to
             --hcp_bold_slicetimerparams.
+
         --hcp_bold_stcorrint (str, default 'odd'):
             Whether slices were acquired in an interleaved fashion ('odd') or
             not ('empty').
             This parameter is deprecated. If specified, it will be added to
             --hcp_bold_slicetimerparams.
+
         --hcp_bold_preregistertool (str, default 'epi_reg'):
             What tool to use to preregister BOLDs before FSL BBR is 'run',
             'epi_reg' (default) or 'flirt'.
+
         --hcp_bold_movreg (str, default 'FLIRT'):
             Whether to use 'FLIRT' (default and best for multiband images) or
             'MCFLIRT' for motion correction.
+
         --hcp_bold_movref (str, default 'independent'):
             What reference to use for movement correction ('independent',
             'first').
             This parameter is only valid when running HCPpipelines using the
             LegacyStyleData processing mode!
+
         --hcp_bold_seimg (str, default 'independent'):
             What image to use for spin-echo distortion correction
             ('independent' | 'first').
             This parameter is only valid when running HCPpipelines
             using the LegacyStyleData processing mode!
+
         --hcp_bold_refreg (str, default 'linear'):
             Whether to use only 'linear' (default) or also 'nonlinear'
             registration of motion corrected bold to reference.
             This parameter is only valid when running HCPpipelines
             using the LegacyStyleData processing mode!
+
         --hcp_bold_mask (str, default 'T1_fMRI_FOV'):
             Specifies what mask to use for the final bold:
 
@@ -3155,25 +3263,33 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
-            How many elements (e.g bolds) to run in parallel.
+            How many elements (e.g.bolds) to run in parallel.
+
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
             process. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to process all.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -3198,6 +3314,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             individual subfolders located in the joint 'unprocessed' folder in
             the main 'hcp' folder, parallel to the working folders and the
             'MNINonLinear' folder.
+
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
@@ -3205,20 +3322,24 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             is to use the file names, which can be defined by the user prior to
             mapping (e.g. rfMRI_REST1_AP).
 
-    Specific parameters:
-        --hcp_bold_prefix (str, default 'BOLD')꞉
+        --hcp_bold_prefix (str, default 'BOLD'):
             The prefix to use when generating BOLD names (see 'hcp_filename')
             for BOLD working folders and results.
+
         --hcp_lowresmesh (int, default 32):
             The number of vertices to be used in the low-resolution grayordinate
             mesh (in thousands).
+
         --hcp_bold_res (int, default 2):
             The resolution of the BOLD volume data in mm.
+
         --hcp_grayordinatesres (int, default 2):
             The size of voxels for the subcortical and cerebellar data in
             grayordinate space in mm.
+
         --hcp_bold_smoothFWHM (int, default 2):
             The size of the smoothing kernel (in mm).
+
         --hcp_regname (str, default 'MSMSulc'):
             The name of the registration used.
 
@@ -3704,24 +3825,32 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
             How many elements (e.g. bolds) to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
+
             When a comma or pipe ('|') separated list is given,
             the log will be created at the first provided
             location and then linked or copied to other
@@ -3732,7 +3861,6 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
             separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
@@ -3745,28 +3873,35 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             provided ICAFix will bundle all bolds together and execute
             multi-run HCP ICAFix, the concatenated file will be named
             fMRI_CONCAT_ALL.
+
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'.
+
         --hcp_icafix_domotionreg (str, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
             default value for single-run HCP ICAFix is [TRUE], while the
             default for multi-run HCP ICAFix is [FALSE].
+
         --hcp_icafix_traindata (str, default detailed below):
             Which file to use for training data. You can provide a full path to
             a file or just a filename if the file is in the
             ${FSL_FIXDIR}/training_files folder. [] for single-run HCP ICAFix
             and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP
             ICAFix.
+
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.
+
         --hcp_icafix_deleteintermediates (bool, default False):
             If True, deletes both the concatenated high-pass filtered and
             non-filtered timeseries files that are prerequisites to FIX
             cleaning.
+
         --hcp_icafix_postfix (str, default 'TRUE'):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
             successfully.
@@ -4220,21 +4355,28 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
             How many elements (e.g. bolds) to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -4249,7 +4391,6 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
             separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
@@ -4262,18 +4403,23 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             provided ICAFix will bundle all bolds together and execute
             multi-run HCP ICAFix, the concatenated file will be named
             fMRI_CONCAT_ALL.
+
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be 'interpreted', 'compiled'
             or 'octave'.
+
         --hcp_postfix_dualscene (str, default ''):
             Path to an alternative template scene, if empty HCP default dual
             scene will be used.
+
         --hcp_postfix_singlescene (str, default ''):
             Path to an alternative template scene, if empty HCP default single
             scene will be used.
+
         --hcp_postfix_reusehighpass (bool, default True):
             Whether to reuse highpass.
 
@@ -4589,19 +4735,25 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
-            How many elements (e.g bolds) to run in parallel.
+            How many elements (e.g.bolds) to run in parallel.
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -4615,7 +4767,6 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
             separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
@@ -4628,22 +4779,28 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             provided ICAFix will bundle all bolds together and execute
             multi-run HCP ICAFix, the concatenated file will be named
             fMRI_CONCAT_ALL.
+
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the MATLAB version, can be interpreted, compiled or
             octave.
+
         --hcp_icafix_domotionreg (str, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
             default value for single-run HCP ICAFix is [TRUE], while the
             default for multi-run HCP ICAFix is [FALSE].
+
         --hcp_icafix_deleteintermediates (str, default 'FALSE'):
             If TRUE, deletes both the concatenated high-pass filtered and
             non-filtered timeseries files that are prerequisites to FIX
             cleaning.
+
         --hcp_icafix_regname (str, default 'NONE'):
             Specifies surface registration name. If 'NONE' MSMSulc will be used.
+
         --hcp_lowresmesh (int, default 32):
             Specifies the low res mesh number.
 
@@ -5263,17 +5420,22 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -5286,7 +5448,6 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default ''):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
@@ -5297,6 +5458,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             If not provided MSMAll will assume multi-run ICAFix was executed
             with all bolds bundled together in a single concatenation called
             fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
+
         --hcp_msmall_bolds (str, default detailed below):
             A comma separated list that defines the bolds that will be used
             in the computation of the MSMAll registration. Typically, this
@@ -5305,28 +5467,38 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             [if not specified all bolds specified in hcp_icafix_bolds will
             be used, which is probably NOT what you want to do if
             hcp_icafix_bolds includes non-resting-state scans].
+
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix. Should be identical to the value
             used for ICAFix.
+
         --hcp_msmall_outfmriname (str, default 'rfMRI_REST'):
             The name which will be given to the concatenation of scans specified
             by the hcp_msmall_bold parameter.
+
         --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):
             Path to directory containing MSMAll template files.
+
         --hcp_msmall_outregname (str, default 'MSMAll_InitialReg'):
             Output registration name.
+
         --hcp_hiresmesh (int, default 164):
             High resolution mesh node count.
+
         --hcp_lowresmesh (int, default 32):
             Low resolution mesh node count.
+
         --hcp_regname (str, default 'MSMSulc'):
             Input registration name.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the MATLAB version, can be 'interpreted', 'compiled'
             or 'octave'.
+
         --hcp_msmall_procstring (str, default <hcp_cifti_tail>_hp<hcp_highpass>_clean):
             Identification for FIX cleaned dtseries to use.
+
         --hcp_msmall_resample (str, default 'TRUE'):
             Whether to automatically run HCP DeDriftAndResample if HCP MSMAll
             finishes successfully.
@@ -5817,18 +5989,23 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-        --log (str, default 'keep')
+
+        --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
             When a comma or pipe ('|') separated list is given,
@@ -5842,24 +6019,29 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_icafix_bolds (str, default detailed below):
             List of bolds on which ICAFix was applied, with the same format as
             for ICAFix. Typically, this should be identical to the list used in
             the ICAFix run [same default as for hcp_icafix and hcp_msmall].
+
         --hcp_resample_concatregname (str, default 'MSMAll'):
             Output name of the dedrifted registration.
+
         --hcp_resample_regname (str, default '<hcp_msmall_outregname>_2_d40_WRN'):
-            Registration sphere name.                            
+            Registration sphere name.
+
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix. Should be identical to the value
             used for ICAFix.
+
         --hcp_hiresmesh (int, default 164):
             High resolution mesh node count.
+
         --hcp_lowresmeshes (str, default 32):
             Low resolution meshes node count. To provide more values separate
             them with commas.
+
         --hcp_resample_reg_files (str, default detailed below):
             Comma separated paths to the spheres output from the
             MSMRemoveGroupDrift pipeline [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
@@ -5869,30 +6051,38 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             164k_fs_LR.surf.gii and <file2> is equal
             to DeDriftingGroup.R.sphere.DeDriftMSMAll.
             164k_fs_LR.surf.gii
+
         --hcp_resample_maps (str, default 'sulc,curvature,corrThickness,thickness'):
             Comma separated paths to maps that will have the MSMAll registration
             applied that are not myelin maps.
+
         --hcp_resample_myelinmaps (str, default 'MyelinMap,SmoothedMyelinMap'):
             Comma separated paths to myelin maps.
+
         --hcp_bold_smoothFWHM (int, default 2):
             Smoothing FWHM that matches what was used in the fMRISurface
             pipeline.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be:
             - 'interpreted'
             - 'compiled' or
             - 'octave'.
+
         --hcp_icafix_domotionreg (bool, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
             default value after a single-run HCP ICAFix is [TRUE], while the
             default after a multi-run HCP ICAFix is [FALSE].
+
         --hcp_resample_dontfixnames (str, default 'NONE'):
             A list of comma separated bolds that will not have HCP ICAFix
             reapplied to them. Only applicable if single-run ICAFix was used.
             Generally not recommended.
+
         --hcp_resample_myelintarget (str, default 'NONE'):
             A myelin target file is required to run this pipeline when using a
             different mesh resolution than the original MSMAll registration.
+
         --hcp_resample_inregname (str, default 'NONE'):
             A string to enable multiple fMRI resolutions (e.g._1.6mm).
 
@@ -6415,22 +6605,29 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
+
             When a comma or pipe ('|') separated list is given, the log will be
             created at the first provided location and then linked or copied to
             other locations. The valid locations are:
@@ -6440,27 +6637,33 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_gdcoeffs (str, default ''):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see
             below) can be provided.
+
         --hcp_asl_mtname (str, default ''):
             Filename for empirically estimated MT-correction scaling factors.
+
         --hcp_asl_territories_atlas (str, default ''):
             Atlas of vascular territories from Mutsaerts.
+
         --hcp_asl_territories_labels (str, default ''):
             Labels corresponding to territories_atlas.
+
         --hcp_asl_cores (int, default 1)
             Number of cores to use when applying motion correction and
             other potentially multi-core operations.
+
         --hcp_asl_use_t1 (flag, optional):
             If specified, the T1 estimates from the satrecov model fit
             will be used in perfusion estimation in oxford_asl. The
             flag is not set by default.
+
         --hcp_asl_interpolation (int, default 1):
             Interpolation order for registrations corresponding to
             scipy’s map_coordinates function.
+
         --hcp_asl_nobandingcorr (flag, optional):
             If this option is provided, MT and ST banding corrections
             won’t be applied. The flag is not set by default.
@@ -6733,15 +6936,19 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -6754,34 +6961,44 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_tica_bolds (str, default ''):
             A comma separated list of fmri run names. Set to all session BOLDs
             by default.
+
         --hcp_tica_outfmriname (str, default 'rfMRI_REST'):
             Name to use for tICA pipeline outputs.
+
         --hcp_tica_surfregname (str, default ''):
             The registration string corresponding to the input files.
+
         --hcp_icafix_highpass (str, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
+
         --hcp_tica_procstring (str, default '<hcp_cifti_tail>_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean'):
             File name component representing the preprocessing already done,
             e.g. '_Atlas_MSMAll_hp0_clean'.
+
         --hcp_outgroupname (str, default ''):
             Name to use for the group output folder.
+
         --hcp_bold_res (int, default 2):
             Resolution of data.
+
         --hcp_tica_timepoints (str, default ''):
             Output spectra size for sICA individual projection,
             RunsXNumTimePoints, like '4800'.
+
         --hcp_tica_num_wishart (str, default ''):
             How many wisharts to use in icaDim.
+
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
+
         --hcp_tica_mrfix_concat_name (str, default ''):
             If multi-run FIX was used, you must specify the concat name
             with this option.
+
         --hcp_tica_icamode (str, default 'NEW'):
             Whether to use parts of a previous tICA run (for instance, if this
             group has too few subjects to simply estimate a new tICA). Defaults
@@ -6798,28 +7015,39 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         --hcp_tica_precomputed_clean_folder (str, default ''):
             Group folder containing an existing tICA cleanup to make use
             of for REUSE or INITIALIZE modes.
+
         --hcp_tica_precomputed_fmri_name (str, default ''):
             The output fMRI name used in the previously computed tICA.
+
         --hcp_tica_precomputed_group_name (str, default ''):
             The group name used during the previously computed tICA.
+
         --hcp_tica_extra_output_suffix (str, default ''):
             Add something extra to most output filenames, for collision
             avoidance.
+
         --hcp_tica_pca_out_dim (str, default ''):
             Override number of PCA components to use for group sICA.
+
         --hcp_tica_pca_internal_dim (str, default ''):
             Override internal MIGP dimensionality.
+
         --hcp_tica_migp_resume (str, default 'YES'):
             Resume from a previous interrupted MIGP run, if present.
+
         --hcp_tica_sicadim_iters (int, default 100):
             Number of iterations or mode for estimating sICA dimensionality.
+
         --hcp_tica_sicadim_override (str, default ''):
             Use this dimensionality instead of icaDim's estimate.
-        --hcp_low_sica_dims (str, default '7@8@9@10@11@12@13@14@15@16@17@18@19@20@21')
+
+        --hcp_low_sica_dims (str, default '7@8@9@10@11@12@13@14@15@16@17@18@19@20@21'):
             The low sICA dimensionalities to use for determining weighting for
             individual projection.
+
         --hcp_tica_reclean_mode (str, default ''):
             Whether the data should use ReCleanSignal.txt for DVARS.
+
         --hcp_tica_starting_step (str, default ''):
             What step to start processing at, one of:
 
@@ -6836,20 +7064,25 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         --hcp_tica_stop_after_step (str, default 'ComputeTICAFeatures'):
             What step to stop processing after, same valid values as for
             hcp_tica_starting_step.
+
         --hcp_tica_remove_manual_components (str, default ''):
             Text file containing the component numbers to be removed by
             cleanup, separated by spaces, requires either:
             --hcp_tica_icamode=REUSE_TICA or
             --hcp_tica_starting_step=CleanData.
+
         --hcp_tica_fix_legacy_bias (str, default 'YES'):
             Whether the input data used the legacy bias correction, YES or NO.
+
         --hcp_parallel_limit (str, default ''):
             How many subjects to do in parallel (local, not
             cluster-distributed) during individual projection.
+
         --hcp_tica_config_out (flag, optional):
             A flag that determines whether to generate config file for rerunning
             with similar settings, or for reusing these results for future
             cleaning. Not set by default.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'.
@@ -7186,15 +7419,19 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions' information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -7208,32 +7445,43 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_surface_atlas_dir (str, default '${HCPPIPEDIR}/global/templates/standard_mesh_atlases'):
             Path to the location of the standard surfaces.
+
         --hcp_grayordinates_dir (str, default '${HCPPIPEDIR}/global/templates/91282_Greyordinates'):
             Path to the location of the standard grayorinates space.
+
         --hcp_hiresmesh (int, default 164):
             High resolution mesh node count.
+
         --hcp_lowresmeshes (int, default 32):
             Low resolution meshes node count. To provide more values
             separate them with commas.
+
         --hcp_free_surfer_labels (str, default '${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt'):
             Path to the location of the FreeSurfer look up table file.
+
         --hcp_pregradient_smoothing (int, default 1):
             Sigma of the pregradient smoothing.
+
         --hcp_mad_regname (str, default 'MSMALL'):
             Name of the registration.
+
         --hcp_mad_videen_maps (str, default 'corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC'):
             Maps you want to use for the videen palette.
+
         --hcp_mad_greyscale_maps (str, default 'sulc,curvature'):
             Maps you want to use for the greyscale palette.
+
         --hcp_mad_distortion_maps (str, default 'SphericalDistortion,ArealDistortion,EdgeDistortion'):
             Distortion maps.
+
         --hcp_mad_gradient_maps (str, default 'MyelinMap_BC,SmoothedMyelinMap_BC,corrThickness'):
             Maps you want to compute the gradient on.
+
         --hcp_mad_std_maps (str, default 'sulc@curvature,corrThickness,thickness,MyelinMap_BC'):
             Maps you want to compute the standard deviation on.
+
         --hcp_mad_multi_maps (str, default 'NONE'):
             Maps with more than one map (column) that cannot be merged and must
             be averaged.
@@ -7617,36 +7865,47 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
-        --overwrite (str, default 'no') :
+
+        --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --hcp_bold_variant (str, default ''):
             Optional variant of HCP BOLD preprocessing. If specified, the
             results will be copied/linked from `Results<hcp_bold_variant>`.
+
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
             copy over. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to copy all.
+
         --boldname (str, default 'bold'):
             The prefix for the fMRI files in the images folder.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows. Empty if not used.
+
         --qx_nifti_tail (str, default detailed below):
             The tail to use for the mapped volume files in the QuNex file
             structure. If not specified or if set to 'None', the value of
             hcp_nifti_tail will be used.
+
         --qx_cifti_tail (str, default detailed below):
             The tail to use for the mapped cifti files in the QuNex file
             structure. If not specified or if set to 'None', the value of
             hcp_cifti_tail will be used.
+
         --bold_variant (str, default ''):
             Optional variant for functional images. If specified, functional
             images will be mapped into `functional<bold_variant>` folder.
@@ -7956,17 +8215,22 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -7979,11 +8243,11 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-    Specific parameters:
         --hcp_task_lvl1tasks (str, default ''):
             List of task fMRI scan names, which are the prefixes of the time
             series filename for the TaskName task. Multiple task fMRI scan
             names should be provided as a comma separated list.
+
         --hcp_task_lvl1fsfs (str, default ''):
             List of design names, which are the prefixes of the fsf filenames
             for each scan run. Should contain same number of design files as
@@ -7991,63 +8255,78 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             be used for N-th time series image). Provide a comma separated list
             of design names. If no value is passed to --hcp_task_lvl1fsfs, the
             value will be set to --hcp_task_lvl1tasks.
+
         --hcp_task_lvl2task (str, default NONE):
             Name of Level2 subdirectory in which all Level2 feat directories are
             written for TaskName.
+
         --hcp_task_lvl2fsf (str, default ''):
             Prefix of design.fsf filename for the Level2 analysis for TaskName.
             If no value is passed to --hcp_task_lvl2fsf, the value will be set
             to the same list passed to --hcp_task_lvl2task.
+
         --hcp_task_summaryname (str, default 'NONE'):
             Naming convention for single-subject summary directory. Mandatory
             when running Level1 analysis only, and should match naming of
             Level2 summary directories. Default when running Level2 analysis is
             derived from --hcp_task_lvl2task and --hcp_task_lvl2fsf options
             'tfMRI_TaskName/DesignName_TaskName'.
+
         --hcp_task_confound (str, default 'NONE'):
             Confound matrix text filename (e.g., output of fsl_motion_outliers).
             Assumes file is in <SubjectID>/MNINonLinear/Results/<ScanName>.
+
         --hcp_bold_smoothFWHM (int, default 2):
             Smoothing FWHM that matches what was used in the fMRISurface
             pipeline.
+
         --hcp_bold_final_smoothFWHM
             Value (in mm FWHM) of total desired smoothing, reached by
             calculating the additional smoothing required and applying that
             additional amount to data previously smoothed in fMRISurface.
             Default=2, which is no additional smoothing above HCP minimal
             preprocessing pipelines outputs.
+
         --hcp_task_highpass (int, default 200):
             Apply additional highpass filter (in seconds) to time series and
             task design. This is above and beyond temporal filter applied
             during preprocessing. To apply no additional filtering, set to
             'NONE'.
+
         --hcp_task_lowpass (str, default 'NONE'):
             Apply additional lowpass filter (in seconds) to time series and task
             design. This is above and beyond temporal filter applied during
             preprocessing. Low pass filter is generally not advised for Task
             fMRI analyses.
+
         --hcp_task_procstring (str, default 'NONE'):
             String value in filename of time series image, specifying the
             additional processing that was previously applied (e.g.,
             FIX-cleaned data with 'hp2000_clean' in filename).
+
         --hcp_regname (str, default 'MSMSulc'):
             Name of surface registration technique.
+
         --hcp_grayordinatesres (int, default 2)
             Value (in mm) that matches value in 'Atlas_ROIs' filename.
+
         --hcp_lowresmesh (int, default 32):
             Value (in mm) that matches surface resolution for fMRI data.
+
         --hcp_task_vba (flag, optional):
             A flag for using VBA. Only use this flag if you want unconstrained
             volumetric blurring of your data, otherwise set to NO for faster,
             less biased, and more senstive processing (grayordinates results do
             not use unconstrained volumetric blurring and are always produced).
             This flag is not set by defult.
+
         --hcp_task_parcellation (str, default 'NONE'):
             Name of parcellation scheme to conduct parcellated analysis. Default
             setting is NONE, which will perform dense analysis instead.
             Non-greyordinates parcellations are not supported because they are
             not valid for cerebral cortex. Parcellation supersedes smoothing
             (i.e. no smoothing is done).
+
         --hcp_task_parcellation_file (str, default 'NONE'):
             Absolute path to the parcellation dlabel file.
 

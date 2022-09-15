@@ -31,61 +31,80 @@ calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh.
 Note that this function needs to send work to a GPU-enabled queue or you need
 to run it locally from a GPU-equiped machine.
 
-It explicitly assumes the Human Connectome Project folder structure and
-completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:
+Warning:
 
-- HCP Pipelines
-- FSL 5.0.9 or greater
+    It explicitly assumes the Human Connectome Project folder structure and
+    completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:
 
-Processed DWI data needs to be here::
+    - HCP Pipelines
+    - FSL 5.0.9 or greater
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+    Processed DWI data needs to be here::
 
-BedpostX output data needs to be here::
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
+    BedpostX output data needs to be here::
 
-T1w images need to be in MNINonLinear space here::
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
 
-    <study_folder>/<session>/hcp/<session>/MNINonLinear
+    T1w images need to be in MNINonLinear space here::
+
+        <study_folder>/<session>/hcp/<session>/MNINonLinear
 
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --overwrite (str):
         Delete a prior run for a given session ('yes' / 'no').
         Note: this will delete only the Matrix run specified by the -omatrix
         flag.
+
     --omatrix1 (str):
         Specify if you wish to run matrix 1 model [yes or omit flag]
+
     --omatrix3 (str):
         Specify if you wish to run matrix 3 model [yes or omit flag]
+
     --nsamplesmatrix1 (str, default '10000'):
         Number of samples.
+
     --nsamplesmatrix3 (str, default '3000'):
         Number of samples.
+
     --distancecorrection (str, default 'no'):
         Use distance correction.
+
     --storestreamlineslength (str, default 'no'):
         Store average length of the streamlines.
+
     --scriptsfolder (str):
         Location of the probtrackX GPU scripts.
+
     --loopcheck (flag):
         Generic parameter set by default (will be parameterized in the future).
+
     --forcedir (flag):
         Generic parameter set by default (will be parameterized in the future).
+
     --fibthresh (str, default '0.01'):
         Generic parameter set by default (will be parameterized in the future).
+
     --c (str, default '0.2'):
         Generic parameter set by default (will be parameterized in the future).
+
     --sampvox (str, default '2'):
         Generic parameter set by default (will be parameterized in the future).
+
     --randfib (str, default '1'):
         Generic parameter set by default (will be parameterized in the future).
+
     --S (str, default '2000'):
         Generic parameter set by default (will be parameterized in the future).
+
     --steplength (str, default '0.5'):
         Generic parameter set by default (will be parameterized in the future).
 

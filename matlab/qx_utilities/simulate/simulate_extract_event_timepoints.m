@@ -7,10 +7,13 @@ function [tp] = simulate_extract_event_timepoints(TR, ts, eventlist, timepoints)
 %   Parameters:
 %       --TR (float):
 %           TR of the timeseries in seconds.
+%
 %       --ts (timeseries):
 %           Timeseries.
+%
 %       --eventlist (array):
 %           List of events to extract data for.
+%
 %       --timepoints (vector):
 %           Timepoints within each event to extract values for.
 %

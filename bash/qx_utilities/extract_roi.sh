@@ -24,11 +24,14 @@ Parameters:
     --roifile (str):
         Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per
         ROI).
+
     --inputfile (str):
         Path to input file to be read that is of the same type as --roifile
         (i.e. CIFTI or NIFTI).
+
     --outpath (str):
         New or existing directory to save outputs in.
+
     --outname (str):
         Output file base-name (to be appended with 'ROIn').
 

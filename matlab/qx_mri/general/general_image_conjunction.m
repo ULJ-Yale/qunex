@@ -13,6 +13,7 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, ps
 %   Parameters:
 %       --imgf (str):
 %           Input file, a z-score image file of concatenated individual files.
+%
 %       --maskf (str, default 'nonzero'):
 %           Optional mask image
 %
@@ -34,15 +35,16 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, ps
 %           - 'neg'    ... negative effect only (one tailed test)
 %           - 'all'    ... both effects (two tailed test).
 %
-%       --q (float, default 0.05)
+%       --q (float, default 0.05):
 %           The FDR q value at which to threshold.
+%
 %       --data (str, default 'z'):
 %           The values in image
 %
 %           - 'z' ... z-values
 %           - 'p' ... p-values.
 %
-%       --psign (str | matrix | cell array | nimage, default []):
+%       --psign (str | matrix | cell array | nimage, default ''):
 %           In case of two-tailed test for p-values input, an image that
 %           includes signs for the effect direction if p-values are not signed.
 %           It can be signed z-scores image.

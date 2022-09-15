@@ -8,11 +8,14 @@ function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbo
 %       --filea (str):
 %           Either a single image or a conc file with data of the group to
 %           compare to.
+%
 %       --fileb (str):
 %           Either a single image or a conc file with data of the group to
 %           compare with.
+%
 %       --target (str):
 %           The base filename (and path) to be used when saving the results.
+%
 %       --output (str, default 'medtpz'):
 %           The type of results to save:
 % 
@@ -23,8 +26,9 @@ function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbo
 %           - 'p' ... p-value for each voxel
 %           - 'z' ... Z-score for each voxel.
 %
-%       --exclude (vector, default []):
+%       --exclude (vector, default ''):
 %           Values to be excluded from computation.
+%
 %       --verbose (bool, default false):
 %           Should report each step.
 % 

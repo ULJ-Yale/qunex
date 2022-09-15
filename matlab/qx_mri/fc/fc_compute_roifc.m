@@ -11,11 +11,13 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %           The first element has to be the name of the file or group to be used
 %           when saving the data.
 %           E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'.
+%
 %       --roiinfo (str):
 %           A path to the names file specifying group based ROI. Additionaly,
 %           separated by a pipe '|' symbol, a path to an image file holding
 %           subject/session specific ROI definition.
-%       --frames (cell array | int | str, default []):
+%
+%       --frames (cell array | int | str, default ''):
 %           The definition of which frames to extract, specifically
 %
 %           - a numeric array mask defining which frames to use (1) and
@@ -59,6 +61,7 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %
 %       --targetf (str, default '.'):
 %           The folder to save images in.
+%
 %       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname='):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::

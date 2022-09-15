@@ -21,40 +21,53 @@ included).
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --inputfile (str):
         Specify the name of the file you want to use for parcellation (e.g.
         'bold1_Atlas_MSMAll_hp2000_clean').
+
     --inputpath (str):
         Specify path of the file you want to use for parcellation relative to
         the master study folder and session directory (e.g.
         '/images/functional/').
+
     --inputdatatype (str):
         Specify the type of data for the input file (e.g. 'dscalar' or
         'dtseries').
+
     --parcellationfile (str):
        Specify the absolute path of the file you want to use for parcellation
        (e.g. '/gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii').
+
     --singleinputfile (str):
        Parcellate only a single file in any location. Individual flags are not
        needed (--session, --sessionsfolder, --inputfile).
+
     --overwrite (str):
         Delete prior run ('yes' / 'no').
+
     --computepconn (str, default 'no'):
         Specify if a parcellated connectivity file should be computed (pconn).
         This is done using covariance and correlation ('yes' / 'no').
+
     --outname (str):
         Specify the suffix output name of the pconn file.
+
     --outpath (str):
         Specify the output path name of the pconn file relative to the master
         study folder (e.g. '/images/functional/').
+
     --useweights (str, default 'no'):
         If computing a parcellated connectivity file you can specify which
         frames to omit (e.g. 'yes' or 'no').
+
     --weightsfile (str):
         Specify the location of the weights file relative to the master study
         folder (e.g. '/images/functional/movement/bold1.use').
+
     --extractdata (str):
         Specify if you want to save out the matrix as a CSV file.
 

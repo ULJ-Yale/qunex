@@ -9,8 +9,10 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %           A .list file listing the subjects and their files for which to
 %           compute ROI functional connectivity, or a well strucutured string
 %           (see general_read_file_list).
+%
 %       --roiinfo (str):
 %           A names file for definition of ROI to include in the analysis.
+%
 %       --frames (str, default ''):
 %           The definition of which frames to use, it can be one of:
 %

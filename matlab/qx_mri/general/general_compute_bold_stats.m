@@ -7,15 +7,17 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %   Parameters:
 %       --img (str | matrix | cell | nimage):
 %           An nimage object or a path to a BOLD file to process.
+%
 %       --mask (str | matrix | cell | nimage):
 %           An nimage object or a path to a mask file to use.
-%       --target (str, default []):
+%
+%       --target (str, default ''):
 %           A folder to save results into:
 %
 %           - []: where bold image is,
 %           - 'none': do not save results in an external file.
 %
-%       --store (str, default []):
+%       --store (str, default ''):
 %           Whether to store the data in the image file:
 %
 %           - 'same': in the same file,
@@ -27,6 +29,7 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 %           information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or 'none' for
 %           no scrubbing (see img_compute_scrub_nimage method for more
 %           information).
+%
 %       --verbose (bool, default false):
 %            To report the progress or not.
 %
