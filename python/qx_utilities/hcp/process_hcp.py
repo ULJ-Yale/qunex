@@ -3890,9 +3890,9 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_traindata (str, default detailed below):
             Which file to use for training data. You can provide a full path to
             a file or just a filename if the file is in the
-            ${FSL_FIXDIR}/training_files folder. [] for single-run HCP ICAFix
-            and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP
-            ICAFix.
+            ${FSL_FIXDIR}/training_files folder. [HCP_hp<high-pass>.RData] for
+            single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData]
+            for multi-run HCP ICAFix.
 
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.
@@ -4122,7 +4122,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         inputfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s" % (boldtarget))
 
         # bandpass value
-        bandpass = 2000 if options['hcp_icafix_highpass'] is None else options['hcp_icafix_highpass']
+        bandpass = 2000 if options['hcp_icafix_highpass'] is None else int(options['hcp_icafix_highpass'])
 
         comm = '%(script)s \
                 "%(inputfile)s" \
@@ -4133,9 +4133,9 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
                 'inputfile'             : inputfile,
-                'bandpass'              : int(bandpass),
+                'bandpass'              : bandpass,
                 'domot'                 : "TRUE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'trainingdata'          : options['hcp_icafix_traindata'],
+                'trainingdata'          : f"HCP_hp{bandpass}.RData" if options['hcp_icafix_traindata'] is None else options['hcp_icafix_traindata'],
                 'fixthreshold'          : options['hcp_icafix_threshold'],
                 'deleteintermediates'   : options['hcp_icafix_deleteintermediates']}
 

@@ -382,7 +382,7 @@ arglist = [
     ['hcp_icafix_deleteintermediates', 'FALSE',                            torf,   "If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]."],
 
     ['# --- hcp_icafix options'],
-    ['hcp_icafix_traindata',   '',                                         str,    "Which file to use for training data. [] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix."],
+    ['hcp_icafix_traindata',   '',                                         isNone, "Which file to use for training data. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix."],
     ['hcp_icafix_threshold',   '10',                                       int,    "ICAFix threshold that controls the sensitivity/specificity tradeoff."],
     ['hcp_icafix_postfix',     'TRUE',                                     torf,   "Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully."],
 
