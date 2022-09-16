@@ -465,6 +465,44 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             the preFS step. Note: it should match the resolution of the
             acquired structural images.
 
+        --hcp_prefs_t1template (str, default ""):
+            Path to the T1 template to be used by PreFreeSurfer. By default the
+            used template is determined through the resolution provided by the
+            hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t1templatebrain (str, default ""):
+            Path to the T1 brain template to be used by PreFreeSurfer. By
+            default the used template is determined through the resolution
+            provided by the hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t1template2mm (str, default ""):
+            Path to the T1 2mm template to be used by PreFreeSurfer. By default
+            the used template is HCP's MNI152_T1_2mm.nii.gz.
+
+        --hcp_prefs_t2template (str, default ""):
+            Path to the T2 template to be used by PreFreeSurfer. By default the
+            used template is determined through the resolution provided by the
+            hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t2templatebrain (str, default ""):
+            Path to the T2 brain template to be used by PreFreeSurfer. By
+            default the used template is determined through the resolution
+            provided by the hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t2template2mm (str, default ""):
+            Path to the T2 2mm template to be used by PreFreeSurfer. By default
+            the used template is HCP's MNI152_T2_2mm.nii.gz.
+
+        --hcp_prefs_templatemask (str, default ""):
+            Path to the template mask to be used by PreFreeSurfer. By default
+            the used template mask is determined through the resolution provided
+            by the hcp_prefs_template_res parameter.
+
+        --hcp_prefs_template2mmmask (str, default ""):
+            Path to the template mask to be used by PreFreeSurfer. By default
+            the used 2mm template mask is HCP's
+            MNI152_T1_2mm_brain_mask_dil.nii.gz.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence information
             to use in preprocessing of specific image modalities.
@@ -729,11 +767,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += "\n---> WARNING: No distortion correction method specified."
 
         # --- lookup gdcoeffs file if needed
-
         gdcfile, r, run = check_gdc_coeff_file(options['hcp_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # --- see if we have set up to use custom mask
-
         if options['hcp_prefs_custombrain'] == 'MASK':
             tfile = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')
             mfile = os.path.join(hcp['T1w_folder'], 'custom_acpc_dc_restore_mask.nii.gz')
@@ -755,7 +791,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... ERROR: Custom mask missing as well! [%s]!." % (mfile)
 
         # --- check if we are using a custom brain
-
         if options['hcp_prefs_custombrain'] == 'CUSTOM':
             t1files = ['T1w_acpc_dc_restore_brain.nii.gz', 'T1w_acpc_dc_restore.nii.gz']
             t2files = ['T2w_acpc_dc_restore_brain.nii.gz', 'T2w_acpc_dc_restore.nii.gz']
@@ -778,22 +813,70 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     r += "\n                %s" % tfile
 
 
-        # --- Set up the command
+        # -- Prepare templates
+        # hcp_prefs_t1template
+        if options['hcp_prefs_t1template'] is None:
+            t1template = os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm.nii.gz' % (options['hcp_prefs_template_res']))
+        else:
+            t1template = options['hcp_prefs_t1template']
 
+        # hcp_prefs_t1templatebrain
+        if options['hcp_prefs_t1templatebrain'] is None:
+            t1templatebrain = os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))
+        else:
+            t1templatebrain = options['hcp_prefs_t1templatebrain']
+
+        # hcp_prefs_t1template2mm
+        if options['hcp_prefs_t1template2mm'] is None:
+            t1template2mm = os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz')
+        else:
+            t1template2mm = options['hcp_prefs_t1template2mm']
+
+        # hcp_prefs_t2template
+        if options['hcp_prefs_t2template'] is None:
+            t2template = os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm.nii.gz' % (options['hcp_prefs_template_res']))
+        else:
+            t2template = options['hcp_prefs_t2template']
+
+        # hcp_prefs_t2templatebrain
+        if options['hcp_prefs_t2templatebrain'] is None:
+            t2templatebrain = os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))
+        else:
+            t2templatebrain = options['hcp_prefs_t2templatebrain']
+
+        # hcp_prefs_t2template2mm
+        if options['hcp_prefs_t2template2mm'] is None:
+            t2template2mm = os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz')
+        else:
+            t2template2mm = options['hcp_prefs_t2template2mm']
+
+        # hcp_prefs_templatemask
+        if options['hcp_prefs_templatemask'] is None:
+            templatemask = os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain_mask.nii.gz' % (options['hcp_prefs_template_res']))
+        else:
+            templatemask = options['hcp_prefs_templatemask']
+
+        # hcp_prefs_template2mmmask
+        if options['hcp_prefs_template2mmmask'] is None:
+            template2mmmask = os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz')
+        else:
+            template2mmmask = options['hcp_prefs_template2mmmask']
+
+        # --- Set up the command
         comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh') + " "
 
         elements = [("path", sinfo['hcp']),
                     ('subject', sinfo['id'] + options['hcp_suffix']),
                     ('t1', hcp['T1w']),
                     ('t2', hcp['T2w']),
-                    ('t1template', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
-                    ('t1templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
-                    ('t1template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz')),
-                    ('t2template', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
-                    ('t2templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
-                    ('t2template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz')),
-                    ('templatemask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain_mask.nii.gz' % (options['hcp_prefs_template_res']))),
-                    ('template2mmmask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz')),
+                    ('t1template', t1template),
+                    ('t1templatebrain', t1templatebrain),
+                    ('t1template2mm', t1template2mm),
+                    ('t2template', t2template),
+                    ('t2templatebrain', t2templatebrain),
+                    ('t2template2mm', t2template2mm),
+                    ('templatemask', templatemask),
+                    ('template2mmmask', template2mmmask),
                     ('brainsize', options['hcp_brainsize']),
                     ('fnirtconfig', os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf')),
                     ('fmapmag', fmmag),
