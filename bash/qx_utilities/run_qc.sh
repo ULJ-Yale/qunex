@@ -1301,7 +1301,6 @@ main() {
             fi
         else
             # -- Proceed with other QC steps
-            
             TemplateSceneFile="template_${modality_lower}_qc.wb.scene"
             WorkingSceneFile="${CASEName}.${Modality}.QC.wb.scene"
             
@@ -1333,14 +1332,7 @@ main() {
             # -- Check of overwrite flag was set
             if [ ${Overwrite} == "yes" ]; then
                 echo ""
-                if [ ${Modality} == "BOLD" ]; then
-                    echo " --- Note: Overwrite requested. "
-                    for BOLD in $BOLDS
-                    do
-                        echo " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASEName}.${Modality}.${BOLD}.* "
-                        rm -f ${OutPath}/${CASEName}.${Modality}.${BOLD}.* &> /dev/null
-                    done
-                elif [ ${Modality} == "DWI" ]; then
+                if [ ${Modality} == "DWI" ]; then
                     echo " --- Note: Overwrite requested. "
 
                     # delete general DWI qc
@@ -1441,6 +1433,7 @@ main() {
                         return 1
                     fi
                 fi
+
                 # -- Check if session_hcp is used
                 if [ "$BOLDS" == "${SessAcqInfoFile}" ]; then
                     geho "---> ${SessAcqInfoFile} parameter file specified. Verifying presence of ${SessAcqInfoFile} before running QC on all BOLDs..."; echo ""
@@ -1461,8 +1454,17 @@ main() {
                     # -- Remove commas or pipes from BOLD input list if still present if using manual input
                     BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
                 fi
-                #
-                #
+
+                if [ ${Overwrite} == "yes" ]; then
+                    echo ""
+                    echo " --- Note: Overwrite requested. "
+                    for BOLD in $BOLDS
+                    do
+                        echo " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASEName}.${Modality}.${BOLD}.* "
+                        rm -f ${OutPath}/${CASEName}.${Modality}.${BOLD}.* &> /dev/null
+                    done
+                fi
+
                 # ----------------------------------------------------------------------
                 # -- Code block to run BOLD loop across BOLD runs
                 # ----------------------------------------------------------------------
