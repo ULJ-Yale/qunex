@@ -812,7 +812,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 for tfile in missingfiles:
                     r += "\n                %s" % tfile
 
-
         # -- Prepare templates
         # hcp_prefs_t1template
         if options['hcp_prefs_t1template'] is None:
